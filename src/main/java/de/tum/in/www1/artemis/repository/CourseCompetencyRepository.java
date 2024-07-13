@@ -158,6 +158,12 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
         return getValueElseThrow(findByIdWithExercisesAndLectureUnitsBidirectional(competencyId), competencyId);
     }
 
+    /**
+     * Finds the set of ids of course competencies that are linked to a given learning object
+     *
+     * @param learningObject the learning object to find the course competencies for
+     * @return the set of ids of course competencies linked to the learning object
+     */
     default Set<Long> findAllIdsByLearningObject(LearningObject learningObject) {
         return switch (learningObject) {
             case LectureUnit lectureUnit -> findAllIdsByLectureUnit(lectureUnit);
