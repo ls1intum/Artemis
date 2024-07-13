@@ -596,9 +596,16 @@ export class MetisService implements OnDestroy {
             case MetisPostAction.UPDATE:
                 const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToUpdate > -1) {
+                    // WebSocket does not currently update the author and authorRole of posts correctly, so this is implemented as a workaround
                     postDTO.post.author = this.cachedPosts[indexToUpdate].author;
                     postDTO.post.authorRole = this.cachedPosts[indexToUpdate].authorRole;
-                    postDTO.post.answers = this.cachedPosts[indexToUpdate].answers;
+                    postDTO.post.answers?.forEach((answer: AnswerPost) => {
+                        const cachedAnswer = this.cachedPosts[indexToUpdate].answers?.find((a) => a.id === answer.id);
+                        if (cachedAnswer) {
+                            answer.author = cachedAnswer.author;
+                            answer.authorRole = cachedAnswer.authorRole;
+                        }
+                    });
                     this.cachedPosts[indexToUpdate] = postDTO.post;
                 }
                 this.addTags(postDTO.post.tags);
