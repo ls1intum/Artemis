@@ -52,7 +52,7 @@ public class CompetencyProgress implements Serializable {
     @ManyToOne
     @MapsId("competencyId")
     @JsonIgnore
-    private Competency competency;
+    private CourseCompetency competency;
 
     @Column(name = "progress")
     private Double progress;
@@ -81,11 +81,11 @@ public class CompetencyProgress implements Serializable {
         this.user = user;
     }
 
-    public Competency getCompetency() {
+    public CourseCompetency getCompetency() {
         return competency;
     }
 
-    public void setCompetency(Competency competency) {
+    public void setCompetency(CourseCompetency competency) {
         this.competency = competency;
     }
 

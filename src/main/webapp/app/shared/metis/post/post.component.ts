@@ -3,7 +3,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ContextInformation, PageType, RouteComponents } from '../metis.util';
+import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
@@ -44,6 +44,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     pageType: PageType;
     contextInformation: ContextInformation;
     readonly PageType = PageType;
+    readonly DisplayPriority = DisplayPriority;
 
     // Icons
     faBullhorn = faBullhorn;

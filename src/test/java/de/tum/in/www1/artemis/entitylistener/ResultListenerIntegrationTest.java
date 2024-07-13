@@ -124,7 +124,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         request.put("/api/text-exercises", exercise, HttpStatus.OK);
         List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
-        ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
+        ParticipantScore savedParticipantScore = savedParticipantScores.getFirst();
         assertThat(savedParticipantScore.getLastPoints()).isEqualTo(200.0);
         assertThat(savedParticipantScore.getLastRatedPoints()).isEqualTo(200.0);
     }
@@ -390,10 +390,10 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         StudentParticipation studentParticipation;
         SecurityUtils.setAuthorizationObject();
         if (isTeamTest) {
-            studentParticipation = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(idOfTeamTextExercise, idOfStudent1).get(0);
+            studentParticipation = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(idOfTeamTextExercise, idOfStudent1).getFirst();
         }
         else {
-            studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1).get(0);
+            studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1).getFirst();
         }
         return participationUtilService.createSubmissionAndResult(studentParticipation, 100, isRated);
     }
@@ -421,7 +421,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).hasSize(1);
-        ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
+        ParticipantScore savedParticipantScore = savedParticipantScores.getFirst();
         Double pointsAchieved = round(persistedResult.getScore() * 0.01 * 10.0);
         if (isRatedResult) {
             assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), persistedResult.getId(),
@@ -456,7 +456,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScore).isNotEmpty();
         assertThat(savedParticipantScore).hasSize(1);
-        ParticipantScore updatedParticipantScore = savedParticipantScore.get(0);
+        ParticipantScore updatedParticipantScore = savedParticipantScore.getFirst();
         Double lastPoints = null;
         Double lastRatedPoints = null;
         if (expectedLastScore != null) {

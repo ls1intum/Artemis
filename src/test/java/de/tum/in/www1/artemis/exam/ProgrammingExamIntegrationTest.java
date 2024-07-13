@@ -224,7 +224,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     void lockAllRepositories() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
-        ExerciseGroup exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
 
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExerciseRepository.save(programmingExercise);
@@ -260,7 +260,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     void unlockAllRepositories() throws Exception {
         assertThat(studentExamRepository.findStudentExam(new ProgrammingExercise(), null)).isEmpty();
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
-        ExerciseGroup exerciseGroup1 = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup1 = exam.getExerciseGroups().getFirst();
 
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExerciseRepository.save(programmingExercise);
@@ -342,7 +342,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_programmingExerciseSameShortNameOrTitle(String shortName1, String shortName2, String title1, String title2) throws Exception {
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
         ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
 

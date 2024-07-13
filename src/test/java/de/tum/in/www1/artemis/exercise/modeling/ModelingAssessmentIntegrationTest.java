@@ -644,8 +644,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks()).as("element is assessed automatically").hasSize(1);
-        assertThat(automaticResult.getFeedbacks().get(0).getCredits()).as("credits of element are correct").isEqualTo(20);
-        assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("wrong text");
+        assertThat(automaticResult.getFeedbacks().getFirst().getCredits()).as("credits of element are correct").isEqualTo(20);
+        assertThat(automaticResult.getFeedbacks().getFirst().getText()).as("feedback text of element is correct").isEqualTo("wrong text");
 
         createAssessment(submission2, Collections.singletonList(feedbackOnePoint.text("long feedback text")), "/assessment?submit=true", HttpStatus.OK);
 
@@ -667,8 +667,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks()).as("element is assessed automatically").hasSize(1);
-        assertThat(automaticResult.getFeedbacks().get(0).getCredits()).as("credits of element are correct").isEqualTo(1);
-        assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("very long feedback text");
+        assertThat(automaticResult.getFeedbacks().getFirst().getCredits()).as("credits of element are correct").isEqualTo(1);
+        assertThat(automaticResult.getFeedbacks().getFirst().getText()).as("feedback text of element is correct").isEqualTo("very long feedback text");
     }
 
     @Test
@@ -691,21 +691,21 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks()).as("element is assessed automatically").hasSize(1);
-        assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
+        assertThat(automaticResult.getFeedbacks().getFirst().getText()).as("feedback text of element is correct").isEqualTo("feedback text");
 
         createAssessment(submission2, Collections.singletonList(feedbackOnePoint.text("short")), "/assessment?submit=true", HttpStatus.OK);
 
         automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks()).as("element is assessed automatically").hasSize(1);
-        assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
+        assertThat(automaticResult.getFeedbacks().getFirst().getText()).as("feedback text of element is correct").isEqualTo("feedback text");
 
         createAssessment(submission3, Collections.singletonList(feedbackOnePoint.text("very long feedback text")), "/assessment?submit=true", HttpStatus.OK);
 
         automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks()).as("element is assessed automatically").hasSize(1);
-        assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("very long feedback text");
+        assertThat(automaticResult.getFeedbacks().getFirst().getText()).as("feedback text of element is correct").isEqualTo("very long feedback text");
     }
 
     @Test
@@ -984,7 +984,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         Result resultWithFeedback = submissionWithAutomaticAssessment.getLatestResult();
         List<Feedback> existingFeedback = resultWithFeedback.getFeedbacks();
-        Feedback feedback = existingFeedback.get(0);
+        Feedback feedback = existingFeedback.getFirst();
         existingFeedback.set(0, feedback.credits(feedback.getCredits() + 0.5));
         feedback = existingFeedback.get(2);
         existingFeedback.set(2, feedback.text(feedback.getText() + " foo"));
@@ -1053,7 +1053,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(modelingSubmission, Collections.singletonList(originalFeedback), "/assessment?submit=true", HttpStatus.OK);
 
         Result originalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).orElseThrow();
-        Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
+        Feedback changedFeedback = originalResult.getFeedbacks().getFirst().credits(2.0).text("another text");
         ModelingAssessmentDTO body = new ModelingAssessmentDTO(Collections.singletonList(changedFeedback), "text");
         request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + originalResult.getId() + "/assessment?submit=true", body, HttpStatus.OK);
 
@@ -1085,7 +1085,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(modelingSubmission2, Arrays.asList(originalFeedback, originalFeedbackWithoutReference), "/assessment?submit=true", HttpStatus.OK);
 
         Result originalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).orElseThrow();
-        Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
+        Feedback changedFeedback = originalResult.getFeedbacks().getFirst().credits(2.0).text("another text");
         Feedback feedbackWithoutReference = new Feedback().credits(1.0).text("another feedback text again").reference(null).type(FeedbackType.MANUAL_UNREFERENCED);
         ModelingAssessmentDTO body = new ModelingAssessmentDTO(Arrays.asList(changedFeedback, feedbackWithoutReference), "text");
         request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + originalResult.getId() + "/assessment?submit=true", body, HttpStatus.OK);
@@ -1284,7 +1284,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         exam = examRepository.save(exam);
 
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
-        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         ModelingExercise exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         exercise = exerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
@@ -1316,8 +1316,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).toList();
@@ -1333,8 +1333,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isNotNull();
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isNotNull();
         assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
 
         // verify that the result contains the relationship
@@ -1353,7 +1353,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
@@ -1388,7 +1388,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
@@ -1411,8 +1411,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class, paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1)).isEqualTo(secondSubmittedManualResult);
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(1)).isEqualTo(secondSubmittedManualResult);
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
@@ -1580,14 +1580,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"));
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
-        Submission submission = submissions.get(0);
+        Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(2);
-        Result firstResult = submission.getResults().get(0);
+        Result firstResult = submission.getResults().getFirst();
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/modeling-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(1);
-        assertThat(submission.getResults().get(0)).isEqualTo(lastResult);
+        assertThat(submission.getResults().getFirst()).isEqualTo(lastResult);
     }
 }

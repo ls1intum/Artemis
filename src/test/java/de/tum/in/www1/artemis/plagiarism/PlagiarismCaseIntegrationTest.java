@@ -74,7 +74,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         // We need at least 3 cases
         textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         coursePlagiarismCases = createPlagiarismCases(numberOfPlagiarismCases, textExercise);
-        plagiarismCase1 = coursePlagiarismCases.get(0);
+        plagiarismCase1 = coursePlagiarismCases.getFirst();
 
         examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examPlagiarismCases = createPlagiarismCases(2, examTextExercise);
@@ -140,7 +140,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     void testGetPlagiarismCasesForCourseForInstructor() throws Exception {
         var plagiarismCasesResponse = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK, PlagiarismCase.class);
         assertThat(plagiarismCasesResponse).as("should get course plagiarism cases for instructor").containsExactlyInAnyOrderElementsOf(coursePlagiarismCases);
-        for (var submission : plagiarismCasesResponse.get(0).getPlagiarismSubmissions()) {
+        for (var submission : plagiarismCasesResponse.getFirst().getPlagiarismSubmissions()) {
             assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isNull();
             assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isNull();
             assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isNull();
@@ -200,7 +200,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         var plagiarismCasesResponse = request.getList("/api/courses/" + examCourse.getId() + "/exams/" + exam.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK,
                 PlagiarismCase.class);
         assertThat(plagiarismCasesResponse).as("should get exam plagiarism cases for instructor").containsExactlyInAnyOrderElementsOf(examPlagiarismCases);
-        for (var submission : plagiarismCasesResponse.get(0).getPlagiarismSubmissions()) {
+        for (var submission : plagiarismCasesResponse.getFirst().getPlagiarismSubmissions()) {
             assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should remove unneeded elements from the response").isNull();
             assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should filter out submission A").isNull();
             assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should filter out submission B").isNull();

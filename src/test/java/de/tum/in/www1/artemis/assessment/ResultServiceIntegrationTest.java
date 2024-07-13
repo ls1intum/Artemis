@@ -162,7 +162,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Exam exam = examUtilService.addExamWithExerciseGroup(this.course, true);
         this.examModelingExercise = new ModelingExercise();
         this.examModelingExercise.setMaxPoints(100D);
-        this.examModelingExercise.setExerciseGroup(exam.getExerciseGroups().get(0));
+        this.examModelingExercise.setExerciseGroup(exam.getExerciseGroups().getFirst());
         this.modelingExerciseRepository.save(this.examModelingExercise);
         this.examRepository.save(exam);
 
@@ -389,7 +389,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         final List<GradingInstruction> gradingInstructions1 = List.copyOf(criterion1.getStructuredGradingInstructions());
         // as long as credits are equal we can choose any two here
         assertThat(gradingInstructions1).allMatch(instruction -> instruction.getCredits() == 1);
-        final GradingInstruction instruction1a = gradingInstructions1.get(0);
+        final GradingInstruction instruction1a = gradingInstructions1.getFirst();
         final GradingInstruction instruction1b = gradingInstructions1.get(1);
         final Set<GradingInstruction> gradingInstructions2 = criterion2.getStructuredGradingInstructions();
         assertThat(gradingInstructions2).hasSize(1);

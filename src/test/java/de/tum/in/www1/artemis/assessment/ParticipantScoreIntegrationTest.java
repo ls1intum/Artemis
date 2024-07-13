@@ -114,7 +114,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
         lecture = lectureUtilService.addLectureUnitsToLecture(lecture, List.of(exerciseUnit));
-        idOfExerciseUnit = lecture.getLectureUnits().get(0).getId();
+        idOfExerciseUnit = lecture.getLectureUnits().getFirst().getId();
 
         competencyUtilService.createCompetencyWithExercise(course, textExercise);
 
@@ -136,7 +136,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exam = examUtilService.addExamWithUser(course, student1, true, pastTimestamp, pastTimestamp, pastTimestamp);
 
         idOfExam = exam.getId();
-        var examTextExercise = textExerciseUtilService.createTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var examTextExercise = textExerciseUtilService.createTextExerciseForExam(exam.getExerciseGroups().getFirst());
         long getIdOfIndividualTextExerciseOfExam = examTextExercise.getId();
         participationUtilService.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
 
