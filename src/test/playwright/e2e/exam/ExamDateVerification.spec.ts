@@ -7,11 +7,6 @@ import { generateUUID } from '../../support/utils';
 import { Fixtures } from '../../fixtures/fixtures';
 
 test.describe('Exam date verification', () => {
-    test.describe.configure({
-        mode: 'default',
-        timeout: 60000,
-    });
-
     let course: Course;
     let examTitle: string;
 
