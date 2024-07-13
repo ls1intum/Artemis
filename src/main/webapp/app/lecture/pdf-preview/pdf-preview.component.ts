@@ -1,8 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { Attachment } from 'app/entities/attachment.model';
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
-import { HttpResponse } from '@angular/common/http';
+import * as PDFJS from 'pdfjs-dist';
+import 'pdfjs-dist/build/pdf.worker.mjs';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
@@ -11,9 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 })
 export class PdfPreviewComponent implements OnInit {
     @Input() attachmentId: number;
-
-    attachment: Attachment;
-    imageUrls: string[] = [];
+    @ViewChild('pdfContainer', { static: true }) pdfContainer: ElementRef;
 
     constructor(
         private route: ActivatedRoute,
@@ -22,24 +20,43 @@ export class PdfPreviewComponent implements OnInit {
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            this.attachmentId = +params['attachmentId']; // Make sure this is always defined
-            if (this.attachmentId) {
-                this.attachmentService.find(this.attachmentId).subscribe((attachmentResponse: HttpResponse<Attachment>) => {
-                    this.attachment = attachmentResponse.body!;
-                    if (this.attachment && this.attachment.id) {
-                        // Check if id is defined
-                        this.attachmentService.getPdfImages(this.attachment.id).subscribe(
-                            (imageUrls) => {
-                                console.log(imageUrls);
-                                this.imageUrls = imageUrls;
-                            },
-                            (error) => {
-                                console.error('Failed to load images', error);
-                            },
-                        );
-                    }
-                });
+            const attachmentId = +params['attachmentId'];
+            if (attachmentId) {
+                this.attachmentService.getAttachmentFile(attachmentId).subscribe(
+                    (blob: Blob) => {
+                        const fileURL = URL.createObjectURL(blob);
+                        this.loadPdf(fileURL);
+                    },
+                    (error) => console.error('Failed to load PDF file', error),
+                );
             }
         });
+    }
+
+    private loadPdf(fileUrl: string) {
+        const loadingTask = PDFJS.getDocument(fileUrl);
+        loadingTask.promise.then(
+            (pdf: { numPages: number; getPage: (arg0: number) => Promise<any> }) => {
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    pdf.getPage(i).then((page) => {
+                        const viewport = page.getViewport({ scale: 0.5 });
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+
+                        const renderTask = page.render({
+                            canvasContext: context,
+                            viewport: viewport,
+                        });
+                        renderTask.promise.then(() => {
+                            this.pdfContainer.nativeElement.appendChild(canvas);
+                            URL.revokeObjectURL(fileUrl);
+                        });
+                    });
+                }
+            },
+            (error: any) => {
+                console.error('Error loading PDF: ', error);
+            },
+        );
     }
 }

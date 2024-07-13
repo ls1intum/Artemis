@@ -136,9 +136,7 @@ export class AttachmentService {
         return formData;
     }
 
-    getPdfImages(attachmentId: number): Observable<string[]> {
-        return this.http.get<string[]>(`${this.resourceUrl}/${attachmentId}/pdf-to-images`).pipe(
-            map((response) => response), // Assuming response is directly the array of base64 strings
-        );
+    getAttachmentFile(attachmentId: number): Observable<Blob> {
+        return this.http.get(`${this.resourceUrl}/${attachmentId}/file`, { responseType: 'blob' });
     }
 }

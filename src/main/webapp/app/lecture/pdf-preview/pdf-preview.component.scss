@@ -1,16 +1,20 @@
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
-    border: 1px solid lightgrey;
+.pdf-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: left;
+    border: 1px solid #ccc;
     padding: 10px;
-    background: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 10px;
+    margin: 0 auto;
+    width: 95%;
+    height: 60vh;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.thumbnail {
-    width: 100%;
-    height: auto;
-    object-fit: cover;
+.pdf-container canvas {
+    margin: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    height: 200px;
+    width: auto;
+    object-fit: contain;
 }

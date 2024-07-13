@@ -4,14 +4,7 @@
             <div>
                 <hr class="mt-2 mb-2" />
                 <div class="row">
-                    <div class="col-12">
-                        {{ attachment?.name }}
-                        <div class="grid">
-                            @for (imageUrl of imageUrls; track imageUrl) {
-                                <img alt="title" [src]="imageUrl" class="thumbnail" />
-                            }
-                        </div>
-                    </div>
+                    <div class="pdf-container" #pdfContainer></div>
                 </div>
             </div>
         </div>
