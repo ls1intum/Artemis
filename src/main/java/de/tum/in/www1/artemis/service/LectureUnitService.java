@@ -63,7 +63,7 @@ public class LectureUnitService {
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository, Optional<PyrisWebhookService> pyrisWebhookService,
-            CourseCompetencyRepository courseCompetencyRepository) {
+            CompetencyProgressService competencyProgressService, CourseCompetencyRepository courseCompetencyRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;

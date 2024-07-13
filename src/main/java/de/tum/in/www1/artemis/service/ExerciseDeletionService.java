@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -139,7 +139,7 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
-        Set<Competency> competencies = exercise.getCompetencies();
+        Set<CourseCompetency> competencies = exercise.getCompetencies();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         long start = System.nanoTime();

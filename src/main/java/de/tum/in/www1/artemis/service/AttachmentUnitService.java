@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
@@ -104,7 +104,7 @@ public class AttachmentUnitService {
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
             boolean keepFilename) {
-        Set<Competency> existingCompetencies = existingAttachmentUnit.getCompetencies();
+        Set<CourseCompetency> existingCompetencies = existingAttachmentUnit.getCompetencies();
 
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
         existingAttachmentUnit.setName(updateUnit.getName());
