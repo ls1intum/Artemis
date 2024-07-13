@@ -36,14 +36,6 @@ export function isMessagingEnabled(course: Course | undefined) {
     return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
 }
 
-/**
- * Note: Keep in sync with method in CourseRepository.java
- */
-export function isMessagingOrCommunicationEnabled(course: Course | undefined) {
-    const config = course?.courseInformationSharingConfiguration;
-    return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-}
-
 export const enum Language {
     ENGLISH = 'ENGLISH',
     GERMAN = 'GERMAN',

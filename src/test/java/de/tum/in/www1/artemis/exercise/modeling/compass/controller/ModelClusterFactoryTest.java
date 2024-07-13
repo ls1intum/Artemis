@@ -41,7 +41,7 @@ class ModelClusterFactoryTest {
         List<ModelCluster> modelClusters = modelClusterFactory.buildClusters(List.of(submission1, submission2, submission3, submission4, submission5), exercise);
 
         assertThat(modelClusters).as("model clusters created").hasSize(10);
-        ModelCluster modelCluster = modelClusters.get(0);
+        ModelCluster modelCluster = modelClusters.getFirst();
         assertThat(modelCluster.getModelElements()).as("all elements are created").hasSize(4);
         for (ModelElement element : modelCluster.getModelElements()) {
             assertThat(element.getCluster()).as("created elements keeps the cluster").isEqualTo(modelCluster);
@@ -65,7 +65,7 @@ class ModelClusterFactoryTest {
         List<ModelCluster> modelClusters = modelClusterFactory.buildClusters(List.of(submission1, submission2, submission3, submission4, submission5), exercise);
 
         assertThat(modelClusters).as("model clusters created").hasSize(10);
-        ModelCluster modelCluster = modelClusters.get(0);
+        ModelCluster modelCluster = modelClusters.getFirst();
         assertThat(modelCluster.getModelElements()).as("all elements are created").hasSize(4);
         for (ModelElement element : modelCluster.getModelElements()) {
             assertThat(element.getCluster()).as("created elements keeps the cluster").isEqualTo(modelCluster);

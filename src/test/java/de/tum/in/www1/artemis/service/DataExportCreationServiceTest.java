@@ -282,7 +282,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     private void createPlagiarismData(String userLogin, ProgrammingExercise programmingExercise, List<Exercise> exercises) {
         exerciseUtilService.createPlagiarismCaseForUserForExercise(programmingExercise, userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
-        exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(0), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
+        exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.getFirst(), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
         exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(1), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
     }
 
@@ -300,7 +300,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
         examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, programmingExerciseTestService.studentRepo.localRepoFile.toURI());
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
-        var submission = studentExams.iterator().next().getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().iterator().next();
+        var submission = studentExams.iterator().next().getExercises().getFirst().getStudentParticipations().iterator().next().getSubmissions().iterator().next();
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         var feedback = new Feedback();
         feedback.setCredits(1.0);
@@ -323,7 +323,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var loginUser2 = TEST_PREFIX + "student2";
         conversationUtilService.addMessageInChannelOfCourseForUser(loginUser2, course, "student 2 message");
         var posts = postRepository.findPostsByAuthorIdAndCourseId(userUtilService.getUserByLogin(loginUser2).getId(), course.getId());
-        conversationUtilService.addReactionForUserToPost(TEST_PREFIX + "student1", posts.get(0));
+        conversationUtilService.addReactionForUserToPost(TEST_PREFIX + "student1", posts.getFirst());
     }
 
     private void assertNoResultsFile(Path exerciseDirPath) {
@@ -448,7 +448,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
         paths.sort(Comparator.comparing(Path::getFileName));
         if (firstResult) {
-            return paths.get(0);
+            return paths.getFirst();
         }
         if (paths.size() > 1) {
             return paths.get(1);
@@ -499,7 +499,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var loginUser2 = TEST_PREFIX + "student2";
         conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
         var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userUtilService.getUserByLogin(loginUser2).getId());
-        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.get(0));
+        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.getFirst());
     }
 
     @Test
@@ -548,7 +548,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var loginUser2 = TEST_PREFIX + "student2";
         conversationUtilService.addMessageInChannelOfCourseForUser(loginUser2, course, "message student2");
         var posts = postRepository.findPostsByAuthorIdAndCourseId(userUtilService.getUserByLogin(loginUser2).getId(), course.getId());
-        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", posts.get(0));
+        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", posts.getFirst());
     }
 
     @Test

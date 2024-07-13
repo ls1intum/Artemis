@@ -763,7 +763,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         assertThat(importResult).hasSize(1);
         assertTutorialWithTitleDoesNotExistInDb(emptyTitle);
-        var importResultDTO = importResult.get(0);
+        var importResultDTO = importResult.getFirst();
         assertThat(importResultDTO.importSuccessful()).isFalse();
         assertThat(importResultDTO.error()).isEqualTo(TutorialGroupResource.TutorialGroupImportErrors.NO_TITLE);
         // student1 should still be registered in the old tutorial group
@@ -785,7 +785,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
         assertThat(importResult).hasSize(1);
-        var importResultDTO = importResult.get(0);
+        var importResultDTO = importResult.getFirst();
         assertThat(importResultDTO.importSuccessful()).isFalse();
         assertThat(importResultDTO.error()).isEqualTo(TutorialGroupResource.TutorialGroupImportErrors.NO_USER_FOUND);
     }
