@@ -58,6 +58,6 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
     private escapeTaskSpecialCharactersForMarkdown = (text: string) => {
         // We want to avoid special characters (such as underscores) in the task or test case names to be interpreted as markdown, as this may interfere with the preview.
-        return text.replace(/[`.*_<>+?^${}()|[\]\\]/g, '\\$&');
+        return text.replace(/[`.*_<+\-!${}()|[\]\\]/g, '\\$&');
     };
 }
