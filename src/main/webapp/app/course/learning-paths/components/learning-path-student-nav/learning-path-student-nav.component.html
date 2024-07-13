@@ -12,7 +12,7 @@
                 }
             </div>
         </div>
-        <div ngbDropdown class="col-4 dropdown" (openChange)="setShowNavigationOverview($event)" #navOverview="ngbDropdown">
+        <div ngbDropdown class="col-4 dropdown" (openChange)="setIsDropdownOpen($event)" #navOverview="ngbDropdown">
             @if (!isLoading()) {
                 <div type="button" class="row justify-content-center align-items-center h-100" id="navigation-overview" ngbDropdownToggle>
                     <span class="col-md-auto fw-bold">
@@ -22,7 +22,9 @@
                 </div>
             }
             <div ngbDropdownMenu class="mt-3 col p-0" aria-labelledby="navigation-overview">
-                <jhi-learning-path-nav-overview (onLearningObjectSelected)="navOverview.close()" [learningPathId]="learningPathId()" />
+                @if (isDropdownOpen()) {
+                    <jhi-learning-path-nav-overview (onLearningObjectSelected)="navOverview.close()" [learningPathId]="learningPathId()" />
+                }
             </div>
         </div>
         <div class="col-4">

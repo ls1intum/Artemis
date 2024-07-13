@@ -344,8 +344,8 @@ public class ParticipationFactory {
         final GradingInstruction gradingInstructionWithNoLimit = GradingCriterionUtil.findInstructionByMaxUsageCount(receivedExercise.getGradingCriteria(), 0);
         final GradingInstruction gradingInstructionWithLimit = GradingCriterionUtil.findInstructionByMaxUsageCount(receivedExercise.getGradingCriteria(), 1);
 
-        feedbacks.get(0).setGradingInstruction(gradingInstructionWithLimit);
-        feedbacks.get(0).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
+        feedbacks.getFirst().setGradingInstruction(gradingInstructionWithLimit);
+        feedbacks.getFirst().setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
         feedbacks.get(1).setGradingInstruction(gradingInstructionWithLimit);
         feedbacks.get(1).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
         feedbacks.get(2).setGradingInstruction(gradingInstructionWithNoLimit);
