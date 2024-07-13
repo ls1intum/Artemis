@@ -277,7 +277,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
      * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
      */
     private void verifyRepositoryCallWithCorrectNotification(String expectedNotificationTitle) {
-        Notification capturedNotification = notificationRepository.findAll().get(0);
+        Notification capturedNotification = notificationRepository.findAll().getFirst();
         assertThat(capturedNotification.getTitle()).as("Title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
     }
 
@@ -371,8 +371,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         List<Notification> sentNotifications = notificationRepository.findAll();
 
         assertThat(sentNotifications).as("Only one notification should have been created (for the user with a valid participation, submission, and manual result)").hasSize(1);
-        assertThat(sentNotifications.get(0)).isInstanceOf(SingleUserNotification.class);
-        assertThat(((SingleUserNotification) sentNotifications.get(0)).getRecipient()).isEqualTo(studentWithParticipationAndSubmissionAndManualResult);
+        assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
+        assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(studentWithParticipationAndSubmissionAndManualResult);
     }
 
     // Plagiarism related

@@ -42,36 +42,26 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "modelingsubmissionintegration";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -107,13 +97,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     private PostRepository postRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -284,13 +268,13 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = TEST_PREFIX + "student1")
     void saveAndSubmitModelingSubmission_isTeamMode() throws Exception {
         useCaseExercise.setMode(ExerciseMode.TEAM);
-        exerciseRepo.save(useCaseExercise);
+        exerciseRepository.save(useCaseExercise);
         Team team = new Team();
         team.setName("Team");
         team.setShortName(TEST_PREFIX + "team");
         team.setExercise(useCaseExercise);
-        team.addStudents(userRepo.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
-        team.addStudents(userRepo.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
+        team.addStudents(userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        team.addStudents(userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
         teamRepository.save(useCaseExercise, team);
 
         participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
@@ -479,7 +463,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         plagiarismCase.setExercise(classExercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         Post post = new Post();
-        post.setAuthor(userRepo.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
+        post.setAuthor(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
         post.setTitle("Title Plagiarism Case Post");
         post.setContent("Content Plagiarism Case Post");
         post.setVisibleForStudents(true);
@@ -777,7 +761,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
         exerciseGroup.addExercise(modelingExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        modelingExercise = exerciseRepo.save(modelingExercise);
+        modelingExercise = exerciseRepository.save(modelingExercise);
 
         examRepository.save(exam);
 
@@ -800,7 +784,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
         exerciseGroup.addExercise(modelingExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        modelingExercise = exerciseRepo.save(modelingExercise);
+        modelingExercise = exerciseRepository.save(modelingExercise);
 
         exam = examRepository.save(exam);
 

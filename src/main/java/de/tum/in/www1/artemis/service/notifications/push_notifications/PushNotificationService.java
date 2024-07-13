@@ -124,7 +124,8 @@ public abstract class PushNotificationService implements InstantNotificationServ
      * @param notificationSubject that is used to provide further information for mails (e.g. exercise, attachment, post, etc.)
      */
     @Override
-    public final void sendNotification(Notification notification, User user, Object notificationSubject) {
+    @Async
+    public void sendNotification(Notification notification, User user, Object notificationSubject) {
         sendNotification(notification, Set.of(user), notificationSubject);
     }
 

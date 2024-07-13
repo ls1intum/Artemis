@@ -58,7 +58,7 @@
                     </div>
                 }
                 <!-- no message exist -->
-                @if (!isFetchingPosts && (totalNumberOfPosts === 0 || !_activeConversation)) {
+                @if (!isFetchingPosts && (posts.length === 0 || !_activeConversation)) {
                     <div class="envelope">
                         <fa-icon size="5x" [icon]="faEnvelope" />
                     </div>
@@ -68,7 +68,7 @@
                     id="scrollableDiv"
                     #container
                     class="body-bg"
-                    [ngClass]="{ 'posting-infinite-scroll-container': totalNumberOfPosts !== 0 }"
+                    [ngClass]="{ 'posting-infinite-scroll-container': posts.length !== 0 }"
                     infinite-scroll
                     [scrollWindow]="false"
                     (scrolledUp)="fetchNextPage()"

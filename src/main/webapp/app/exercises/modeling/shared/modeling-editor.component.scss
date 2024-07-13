@@ -47,6 +47,11 @@ $draggable-width: 15px;
     overflow: hidden;
 }
 
+.readonly-diagram {
+    height: 100%;
+    overflow: hidden;
+}
+
 @keyframes spin {
     0% {
         transform: rotate(0);

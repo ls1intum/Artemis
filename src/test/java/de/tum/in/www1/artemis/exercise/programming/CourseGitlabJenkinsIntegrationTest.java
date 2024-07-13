@@ -25,10 +25,7 @@ import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseTestService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -41,19 +38,10 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private CourseRepository courseRepo;
-
-    @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @BeforeEach
     void setup() {
@@ -236,15 +224,15 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         // Create editor in the course
         User user = userUtilService.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-editor-group"));
-        userRepo.save(user);
+        userRepository.save(user);
 
         user = userUtilService.createAndSaveUser("new-ta");
         user.setGroups(Set.of("new-ta-group"));
-        userRepo.save(user);
+        userRepository.save(user);
 
         user = userUtilService.createAndSaveUser("new-instructor");
         user.setGroups(Set.of("new-instructor-group"));
-        userRepo.save(user);
+        userRepository.save(user);
 
         gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTaGroup);
         jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
@@ -265,7 +253,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         // Create editor in the course
         User user = userUtilService.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-instructor-group"));
-        user = userRepo.save(user);
+        user = userRepository.save(user);
 
         gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true, true);
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
@@ -280,7 +268,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         // Create editor in the course
         User user = userUtilService.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-instructor-group"));
-        user = userRepo.save(user);
+        user = userRepository.save(user);
 
         gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
@@ -298,7 +286,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         var exercise = courseExercise.stream().findFirst();
         assertThat(exercise).isPresent();
 
-        var user = userRepo.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().findFirst();
+        var user = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().findFirst();
         assertThat(user).isPresent();
 
         gitlabRequestMockProvider.mockFailToUpdateOldGroupMembers(exercise.get(), user.get());
@@ -312,13 +300,13 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
      * @param groups    the groups to change
      */
     private void changeUserGroup(String userLogin, Set<String> groups) {
-        Optional<User> user = userRepo.findOneWithGroupsByLogin(userLogin);
+        Optional<User> user = userRepository.findOneWithGroupsByLogin(userLogin);
         assertThat(user).isPresent();
 
         User updatedUser = user.get();
         updatedUser.setGroups(groups);
 
-        userRepo.save(updatedUser);
+        userRepository.save(updatedUser);
     }
 
     @Test
@@ -327,7 +315,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         course.setInstructorGroupName("new-instructor-group");
 
-        Optional<User> user = userRepo.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
+        Optional<User> user = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
         assertThat(user).isPresent();
 
         gitlabRequestMockProvider.mockFailToGetUserWhenUpdatingOldMembers(user.get());
@@ -340,7 +328,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         course.setInstructorGroupName("new-instructor-group");
 
-        Optional<User> user = userRepo.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
+        Optional<User> user = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
         assertThat(user).isPresent();
 
         var exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).stream().findFirst();
@@ -579,10 +567,10 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRemoveTutorFromCourse_removeUserFromGitlabGroupFails() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course = courseRepo.save(course);
+        course = courseRepository.save(course);
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
-        Optional<User> optionalTutor = userRepo.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1");
+        Optional<User> optionalTutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1");
         assertThat(optionalTutor).isPresent();
 
         String tutorGroup = course.getTeachingAssistantGroupName();
@@ -603,7 +591,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
         var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course = courseRepo.save(course);
+        course = courseRepository.save(course);
 
         request.performMvcRequest(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
 

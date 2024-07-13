@@ -76,7 +76,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
         examInThePast = examUtilService.addExam(course1, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1));
         examInTheFuture = examUtilService.addExam(course1, ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(1));
-        exerciseGroup1 = exam1.getExerciseGroups().get(0);
+        exerciseGroup1 = exam1.getExerciseGroups().getFirst();
         examRepository.save(exam1);
     }
 
@@ -117,7 +117,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(examResult).isEqualTo(exam1);
         examResult = examRepository.findByIdWithExerciseGroupsElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
-        assertThat(examResult.getExerciseGroups().get(0)).isEqualTo(exerciseGroup1);
+        assertThat(examResult.getExerciseGroups().getFirst()).isEqualTo(exerciseGroup1);
     }
 
     @Test

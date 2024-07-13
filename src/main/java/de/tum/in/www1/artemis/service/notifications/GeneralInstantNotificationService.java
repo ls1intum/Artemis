@@ -9,7 +9,6 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -17,7 +16,6 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 
@@ -81,11 +79,8 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
      * @param users               who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
-    @Async
     @Override
     public void sendNotification(Notification notification, Set<User> users, Object notificationSubject) {
-        SecurityUtils.setAuthorizationObject();
-
         var emailRecipients = filterRecipients(notification, users, EMAIL);
         var pushRecipients = filterRecipients(notification, users, PUSH);
 
