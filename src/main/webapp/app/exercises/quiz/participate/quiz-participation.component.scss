@@ -7,10 +7,10 @@
     height: 70px;
     position: sticky;
     padding: 0 10px;
-    bottom: 0;
+    bottom: 2px;
     left: 0;
     right: 0;
-    z-index: 30;
+    z-index: 15;
     box-shadow: 0 0 3px var(--quiz-participation-footer-box-shadow);
     background: var(--quiz-participation-footer-background);
 
@@ -269,5 +269,5 @@
 .sticky-top-quiz {
     position: sticky;
     top: 85px;
-    z-index: 1020;
+    z-index: 18;
 }
