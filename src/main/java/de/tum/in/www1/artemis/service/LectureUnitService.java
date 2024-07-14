@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)
@@ -56,11 +57,13 @@ public class LectureUnitService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
+    private final CompetencyProgressService competencyProgressService;
+
     private final CourseCompetencyRepository courseCompetencyRepository;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository, Optional<PyrisWebhookService> pyrisWebhookService,
-            CourseCompetencyRepository courseCompetencyRepository) {
+            CompetencyProgressService competencyProgressService, CourseCompetencyRepository courseCompetencyRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -69,6 +72,7 @@ public class LectureUnitService {
         this.exerciseRepository = exerciseRepository;
         this.pyrisWebhookService = pyrisWebhookService;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -176,6 +180,11 @@ public class LectureUnitService {
         // Creating a new list of lecture units without the one we want to remove
         lecture.getLectureUnits().removeIf(unit -> unit == null || unit.getId().equals(lectureUnitToDelete.getId()));
         lectureRepository.save(lecture);
+
+        if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
+            // update associated competency progress objects
+            competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
+        }
     }
 
     /**

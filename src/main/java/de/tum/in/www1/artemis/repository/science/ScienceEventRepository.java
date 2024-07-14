@@ -32,4 +32,6 @@ public interface ScienceEventRepository extends ArtemisJpaRepository<ScienceEven
             WHERE se.identity = :oldIdentity
             """)
     void renameIdentity(@Param("oldIdentity") String oldIdentity, @Param("newIdentity") String newIdentity);
+
+    Set<ScienceEvent> findAllByIdentity(String identity);
 }

@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 
 /**
@@ -27,15 +26,12 @@ public class CompetencyRelationService {
 
     private final CompetencyService competencyService;
 
-    private final CompetencyRepository competencyRepository;
-
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    public CompetencyRelationService(CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService, CompetencyRepository competencyRepository,
+    public CompetencyRelationService(CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.competencyService = competencyService;
-        this.competencyRepository = competencyRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
     }
 

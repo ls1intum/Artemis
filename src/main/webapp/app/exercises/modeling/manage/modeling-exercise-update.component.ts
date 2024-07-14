@@ -5,7 +5,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseMode, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -176,7 +176,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.modelingExercise.exerciseGroup = undefined;
                         }
-                        resetDates(this.modelingExercise);
+                        resetForImport(this.modelingExercise);
                     }
 
                     loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {

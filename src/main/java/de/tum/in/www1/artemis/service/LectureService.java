@@ -18,10 +18,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -42,13 +44,16 @@ public class LectureService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<PyrisWebhookService> pyrisWebhookService) {
+            Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressService competencyProgressService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.pyrisWebhookService = pyrisWebhookService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -136,9 +141,10 @@ public class LectureService {
     /**
      * Deletes the given lecture (with its lecture units).
      *
-     * @param lecture the lecture to be deleted
+     * @param lecture                  the lecture to be deleted
+     * @param updateCompetencyProgress whether the competency progress should be updated
      */
-    public void delete(Lecture lecture) {
+    public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         if (pyrisWebhookService.isPresent()) {
             Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
             List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
@@ -147,6 +153,12 @@ public class LectureService {
                 pyrisWebhookService.get().deleteLectureFromPyrisDB(attachmentUnitList);
             }
         }
+
+        if (updateCompetencyProgress) {
+            lecture.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
+                    .forEach(lectureUnit -> competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnit, Optional.empty()));
+        }
+
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
         lectureRepository.deleteById(lecture.getId());
