@@ -157,7 +157,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private async loadFeedbackSuggestions(exercise: ModelingExercise, submission: Submission): Promise<Feedback[]> {
         try {
             return (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(exercise, submission))) ?? [];
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
             return [];

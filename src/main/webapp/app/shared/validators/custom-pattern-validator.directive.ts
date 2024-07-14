@@ -17,7 +17,6 @@ export class CustomPatternValidatorDirective implements Validator {
         try {
             new RegExp(control.value);
             return null;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             return { validPattern: true };
         }

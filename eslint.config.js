@@ -91,6 +91,7 @@ module.exports = [
                     ignoreDeclarationSort: true,
                 },
             ],
+            '@typescript-eslint/no-unused-vars': ['error', { caughtErrors: 'none' }],
         },
     },
     {

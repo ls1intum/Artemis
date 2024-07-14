@@ -57,7 +57,6 @@ export class Commands {
             try {
                 await locator.waitFor({ state: 'visible', timeout: interval });
                 return;
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (error) {
                 await page.reload();
             }

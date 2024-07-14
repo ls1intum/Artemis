@@ -186,7 +186,6 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             if (control) {
                 control.value = '';
             }
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             alert('Import Quiz Failed! Invalid quiz file.');
         }

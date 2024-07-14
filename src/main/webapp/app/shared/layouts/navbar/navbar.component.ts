@@ -428,7 +428,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.lastRouteUrlSegment = segment;
                 }
             }
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             /* empty */
         }

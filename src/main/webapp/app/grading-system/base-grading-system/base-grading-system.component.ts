@@ -728,7 +728,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         let csvGradeSteps: CsvGradeStep[] = [];
         try {
             csvGradeSteps = await this.parseCSVFile(csvFile);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             return [];
         }
