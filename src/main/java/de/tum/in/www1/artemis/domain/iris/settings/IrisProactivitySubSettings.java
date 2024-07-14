@@ -23,13 +23,13 @@ import de.tum.in.www1.artemis.domain.iris.settings.event.IrisEventSettings;
 public class IrisProactivitySubSettings extends IrisSubSettings {
 
     @OneToMany(mappedBy = "proactivitySubSettings", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private Set<IrisEventSettings> eventSettingsList = new HashSet<>();
+    private Set<IrisEventSettings> eventSettings = new HashSet<>();
 
-    public Set<IrisEventSettings> getEventSettingsList() {
-        return eventSettingsList;
+    public Set<IrisEventSettings> getEventSettings() {
+        return eventSettings;
     }
 
-    public void setEventSettingsList(HashSet<IrisEventSettings> proactivityStatuses) {
-        this.eventSettingsList = proactivityStatuses;
+    public void setEventSettings(Set<IrisEventSettings> proactivityStatuses) {
+        this.eventSettings = proactivityStatuses;
     }
 }

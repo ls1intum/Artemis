@@ -2,12 +2,16 @@ package de.tum.in.www1.artemis.service.iris.settings;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -18,14 +22,21 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisCompetencyGenerationSubSe
 import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisHestiaSubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisLectureIngestionSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisProactivitySubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisEventSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisJolEventSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisSubmissionFailedEventSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisSubmissionSuccessfulEventSettings;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedEventSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedHestiaSubSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedProactivitySubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.
@@ -110,6 +121,28 @@ public class IrisSubSettingsService {
         }
 
         return currentSettings;
+    }
+
+    public IrisProactivitySubSettings update(IrisProactivitySubSettings currentSettings, IrisProactivitySubSettings newSettings,
+            IrisCombinedProactivitySubSettingsDTO parentSettings, IrisSettingsType settingsType) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the Proactivity settings");
+            }
+            return null;
+        }
+        if (currentSettings == null) {
+            currentSettings = new IrisProactivitySubSettings();
+        }
+        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+        }
+        IrisProactivitySubSettings finalCurrentSettings = currentSettings;
+        newSettings.getEventSettings().forEach(eventSettings -> {
+            eventSettings.setProactivitySubSettings(finalCurrentSettings);
+        });
+        finalCurrentSettings.setEventSettings(newSettings.getEventSettings());
+        return finalCurrentSettings;
     }
 
     /**
@@ -287,6 +320,22 @@ public class IrisSubSettingsService {
     }
 
     /**
+     * Combines the proactivity settings of multiple {@link IrisSettings} objects.
+     * If minimal is true, the returned object will only contain the enabled field.
+     * The minimal version can safely be sent to students.
+     *
+     * @param settingsList
+     * @param minimal
+     * @return
+     */
+    public IrisCombinedProactivitySubSettingsDTO combineProactivitySettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
+        var enabled = getCombinedEnabled(actualSettingsList, IrisSettings::getIrisProactivitySettings);
+        var eventSettings = minimal ? getCombinedEventSettings(actualSettingsList, IrisSettings::getIrisProactivitySettings) : null;
+        return new IrisCombinedProactivitySubSettingsDTO(enabled, eventSettings);
+    }
+
+    /**
      * Combines the enabled field of multiple {@link IrisSettings} objects.
      * Simply &&s all enabled fields together.
      *
@@ -358,5 +407,45 @@ public class IrisSubSettingsService {
             Function<S, IrisTemplate> templateFunction) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(templateFunction)
                 .filter(template -> template != null && template.getContent() != null && !template.getContent().isBlank()).reduce((first, second) -> second).orElse(null);
+    }
+
+    /**
+     * Combines the event settings of multiple {@link IrisSettings} objects.
+     * Simply takes the last of each event type.
+     *
+     * @param settingsList                   List of {@link IrisSettings} objects to combine.
+     * @param proactivitySubSettingsFunction Function to get the proactivity settings from the sub settings from an IrisSettings object.
+     * @return Combined event settings.
+     */
+    private Set<IrisCombinedEventSettingsDTO> getCombinedEventSettings(List<IrisSettings> settingsList,
+            Function<IrisSettings, IrisProactivitySubSettings> proactivitySubSettingsFunction) {
+        var combinedSet = new HashSet<IrisCombinedEventSettingsDTO>();
+
+        // Create a supplier for the stream instead of a single stream
+        Supplier<Stream<Set<IrisEventSettings>>> streamSupplier = () -> settingsList.stream().filter(Objects::nonNull).map(proactivitySubSettingsFunction).filter(Objects::nonNull)
+                .map(IrisProactivitySubSettings::getEventSettings).filter(Objects::nonNull);
+
+        combinedSet.addAll(getCombinedEventSettingsOf(IrisSubmissionSuccessfulEventSettings.class, streamSupplier.get(), IrisCombinedEventSettingsDTO::of));
+        combinedSet.addAll(getCombinedEventSettingsOf(IrisSubmissionFailedEventSettings.class, streamSupplier.get(), IrisCombinedEventSettingsDTO::of));
+        combinedSet.addAll(getCombinedEventSettingsOf(IrisJolEventSettings.class, streamSupplier.get(), IrisCombinedEventSettingsDTO::of));
+
+        return combinedSet;
+    }
+
+    /**
+     * Combines the event settings of multiple {@link IrisEventSettings} objects of a specific type.
+     * Simply takes the last event settings of the specified type.
+     *
+     * @param settingClass
+     * @param settingsStream
+     * @param eventSettingsFunction
+     * @return Combined event settings.
+     * @param <S>
+     */
+    private <S extends IrisEventSettings> Set<IrisCombinedEventSettingsDTO> getCombinedEventSettingsOf(Class<S> settingClass, Stream<Set<IrisEventSettings>> settingsStream,
+            Function<S, IrisCombinedEventSettingsDTO> eventSettingsFunction) {
+        return settingsStream
+                .map(s -> s.stream().filter(e -> e != null && e.getClass() == settingClass).map(settingClass::cast).map(eventSettingsFunction).collect(Collectors.toSet()))
+                .reduce((first, second) -> second).orElse(new HashSet<>());
     }
 }

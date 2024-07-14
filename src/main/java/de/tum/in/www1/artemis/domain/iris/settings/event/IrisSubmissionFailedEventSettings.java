@@ -19,7 +19,7 @@ public class IrisSubmissionFailedEventSettings extends IrisEventSettings {
 
     @Nullable
     @Column(name = "success_threshold")
-    private Integer successThreshold;
+    private Double successThreshold;
 
     public Integer getNumberOfFailedAttempts() {
         return numberOfFailedAttempts;
@@ -29,8 +29,21 @@ public class IrisSubmissionFailedEventSettings extends IrisEventSettings {
         this.numberOfFailedAttempts = numberOfFailedAttempts;
     }
 
+    public Double getSuccessThreshold() {
+        return successThreshold;
+    }
+
+    public void setSuccessThreshold(Double successThreshold) {
+        this.successThreshold = successThreshold;
+    }
+
     @Override
     public IrisEventLevel getDefaultLevel() {
         return IrisEventLevel.EXERCISE;
+    }
+
+    @Override
+    public String getDefaultPipelineVariant() {
+        return "submission_failed";
     }
 }

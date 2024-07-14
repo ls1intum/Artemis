@@ -7,6 +7,7 @@ import static de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType.GLOBA
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -27,9 +28,14 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisGlobalSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisHestiaSubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisLectureIngestionSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisProactivitySubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisEventSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisJolEventSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisSubmissionFailedEventSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisSubmissionSuccessfulEventSettings;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.IrisDefaultTemplateService;
@@ -63,6 +69,14 @@ public class IrisSettingsService {
         this.irisSubSettingsService = irisSubSettingsService;
         this.irisDefaultTemplateService = irisDefaultTemplateService;
         this.authCheckService = authCheckService;
+    }
+
+    private static <T extends IrisSubSettings> T initializeSettings(T settings, Supplier<T> constructor) {
+        if (settings == null) {
+            settings = constructor.get();
+            settings.setEnabled(false);
+        }
+        return settings;
     }
 
     private Optional<Integer> loadGlobalTemplateVersion() {
@@ -115,6 +129,7 @@ public class IrisSettingsService {
         initializeIrisLectureIngestionSettings(settings);
         initializeIrisHestiaSettings(settings);
         initializeIrisCompetencyGenerationSettings(settings);
+        initializeIrisProactiveSettings(settings);
 
         irisSettingsRepository.save(settings);
     }
@@ -139,18 +154,13 @@ public class IrisSettingsService {
             if (settings.isEnableAutoUpdateCompetencyGeneration() || settings.getIrisCompetencyGenerationSettings() == null) {
                 initializeIrisCompetencyGenerationSettings(settings);
             }
+            if (settings.isEnableAutoUpdateProactivity() || settings.getIrisProactivitySettings() == null) {
+                initializeIrisProactiveSettings(settings);
+            }
 
             globalVersion.ifPresent(settings::setCurrentVersion);
             saveIrisSettings(settings);
         }
-    }
-
-    private static <T extends IrisSubSettings> T initializeSettings(T settings, Supplier<T> constructor) {
-        if (settings == null) {
-            settings = constructor.get();
-            settings.setEnabled(false);
-        }
-        return settings;
     }
 
     private void initializeIrisChatSettings(IrisGlobalSettings settings) {
@@ -171,6 +181,32 @@ public class IrisSettingsService {
         irisHestiaSettings = initializeSettings(irisHestiaSettings, IrisHestiaSubSettings::new);
         irisHestiaSettings.setTemplate(loadDefaultHestiaTemplate());
         settings.setIrisHestiaSettings(irisHestiaSettings);
+    }
+
+    private void initializeIrisProactiveSettings(IrisGlobalSettings settings) {
+        var irisProactivitySettings = settings.getIrisProactivitySettings();
+        irisProactivitySettings = initializeSettings(irisProactivitySettings, IrisProactivitySubSettings::new);
+        initializeIrisEventSettings(irisProactivitySettings);
+        settings.setIrisProactivitySettings(irisProactivitySettings);
+    }
+
+    private void initializeIrisEventSettings(IrisProactivitySubSettings settings) {
+        HashSet<IrisEventSettings> eventSettings = new HashSet<>();
+
+        var jolEventSettings = new IrisJolEventSettings();
+        jolEventSettings.setActive(false);
+        eventSettings.add(jolEventSettings);
+
+        var submissionFailedEventSettings = new IrisSubmissionFailedEventSettings();
+        submissionFailedEventSettings.setActive(false);
+        eventSettings.add(submissionFailedEventSettings);
+
+        var submissionSuccessfulEventSettings = new IrisSubmissionSuccessfulEventSettings();
+        submissionSuccessfulEventSettings.setActive(false);
+        eventSettings.add(submissionSuccessfulEventSettings);
+
+        eventSettings.stream().forEach(event -> event.setProactivitySubSettings(settings));
+        settings.setEventSettings(eventSettings);
     }
 
     private void initializeIrisCompetencyGenerationSettings(IrisGlobalSettings settings) {
@@ -274,13 +310,20 @@ public class IrisSettingsService {
         existingSettings.setEnableAutoUpdateLectureIngestion(settingsUpdate.isEnableAutoUpdateLectureIngestion());
         existingSettings.setEnableAutoUpdateHestia(settingsUpdate.isEnableAutoUpdateHestia());
         existingSettings.setEnableAutoUpdateCompetencyGeneration(settingsUpdate.isEnableAutoUpdateCompetencyGeneration());
+        existingSettings.setEnableAutoUpdateProactivity(settingsUpdate.isEnableAutoUpdateProactivity());
 
         existingSettings.setIrisLectureIngestionSettings(
                 irisSubSettingsService.update(existingSettings.getIrisLectureIngestionSettings(), settingsUpdate.getIrisLectureIngestionSettings(), null, GLOBAL));
+
         existingSettings.setIrisChatSettings(irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), null, GLOBAL));
+
         existingSettings.setIrisHestiaSettings(irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), null, GLOBAL));
+
         existingSettings.setIrisCompetencyGenerationSettings(
                 irisSubSettingsService.update(existingSettings.getIrisCompetencyGenerationSettings(), settingsUpdate.getIrisCompetencyGenerationSettings(), null, GLOBAL));
+
+        existingSettings.setIrisProactivitySettings(
+                irisSubSettingsService.update(existingSettings.getIrisProactivitySettings(), settingsUpdate.getIrisProactivitySettings(), null, GLOBAL));
 
         return irisSettingsRepository.save(existingSettings);
     }
@@ -302,6 +345,9 @@ public class IrisSettingsService {
                 irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), parentSettings.irisHestiaSettings(), COURSE));
         existingSettings.setIrisCompetencyGenerationSettings(irisSubSettingsService.update(existingSettings.getIrisCompetencyGenerationSettings(),
                 settingsUpdate.getIrisCompetencyGenerationSettings(), parentSettings.irisCompetencyGenerationSettings(), COURSE));
+
+        existingSettings.setIrisProactivitySettings(irisSubSettingsService.update(existingSettings.getIrisProactivitySettings(), settingsUpdate.getIrisProactivitySettings(),
+                parentSettings.irisProactivitySettings(), COURSE));
 
         return irisSettingsRepository.save(existingSettings);
     }
@@ -382,7 +428,7 @@ public class IrisSettingsService {
 
         return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, false),
                 irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, false), irisSubSettingsService.combineHestiaSettings(settingsList, false),
-                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, false));
+                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, false), irisSubSettingsService.combineProactivitySettings(settingsList, false));
     }
 
     /**
@@ -402,7 +448,7 @@ public class IrisSettingsService {
 
         return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal),
                 irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal),
-                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal));
+                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal), irisSubSettingsService.combineProactivitySettings(settingsList, minimal));
     }
 
     /**
@@ -423,7 +469,7 @@ public class IrisSettingsService {
 
         return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal),
                 irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal),
-                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal));
+                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal), irisSubSettingsService.combineProactivitySettings(settingsList, minimal));
     }
 
     /**
@@ -451,6 +497,17 @@ public class IrisSettingsService {
         settings.setIrisChatSettings(new IrisChatSubSettings());
         settings.setIrisHestiaSettings(new IrisHestiaSubSettings());
         settings.setIrisCompetencyGenerationSettings(new IrisCompetencyGenerationSubSettings());
+
+        var eventSettings = new HashSet<IrisEventSettings>();
+        eventSettings.add(new IrisJolEventSettings());
+        eventSettings.add(new IrisSubmissionFailedEventSettings());
+        eventSettings.add(new IrisSubmissionSuccessfulEventSettings());
+
+        var proactivitySettings = new IrisProactivitySubSettings();
+        proactivitySettings.setEventSettings(eventSettings);
+        eventSettings.forEach(event -> event.setProactivitySubSettings(proactivitySettings));
+
+        settings.setIrisProactivitySettings(proactivitySettings);
         return settings;
     }
 
@@ -525,7 +582,7 @@ public class IrisSettingsService {
             case HESTIA -> settings.irisHestiaSettings().enabled();
             case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().enabled();
             case LECTURE_INGESTION -> settings.irisLectureIngestionSettings().enabled();
-            case PROACTIVITY -> false; // TODO: Implement proactivity
+            case PROACTIVITY -> settings.irisProactivitySettings().enabled();
         };
     }
 }

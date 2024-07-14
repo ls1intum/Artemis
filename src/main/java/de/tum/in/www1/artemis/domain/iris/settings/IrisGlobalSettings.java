@@ -69,7 +69,9 @@ public class IrisGlobalSettings extends IrisSettings {
         var competencyGenerationSettingsValid = !Hibernate.isInitialized(irisCompetencyGenerationSettings) || irisCompetencyGenerationSettings == null
                 || (irisCompetencyGenerationSettings.getTemplate() != null && irisCompetencyGenerationSettings.getTemplate().getContent() != null
                         && !irisCompetencyGenerationSettings.getTemplate().getContent().isEmpty());
-        return chatSettingsValid && hestiaSettingsValid && competencyGenerationSettingsValid;
+        var proactivitySettingsValid = !Hibernate.isInitialized(irisProactivitySettings) || irisProactivitySettings == null
+                || (irisProactivitySettings.getEventSettings() != null && !irisProactivitySettings.getEventSettings().isEmpty());
+        return chatSettingsValid && hestiaSettingsValid && competencyGenerationSettingsValid && proactivitySettingsValid;
     }
 
     public int getCurrentVersion() {

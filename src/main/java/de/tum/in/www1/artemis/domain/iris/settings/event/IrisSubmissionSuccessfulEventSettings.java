@@ -15,18 +15,23 @@ public class IrisSubmissionSuccessfulEventSettings extends IrisEventSettings {
 
     @Nullable
     @Column(name = "success_threshold")
-    private Integer successThreshold;
+    private Double successThreshold;
 
-    public Integer getSuccessThreshold() {
+    public Double getSuccessThreshold() {
         return successThreshold;
     }
 
-    public void setSuccessThreshold(Integer successThreshold) {
+    public void setSuccessThreshold(Double successThreshold) {
         this.successThreshold = successThreshold;
     }
 
     @Override
     public IrisEventLevel getDefaultLevel() {
         return IrisEventLevel.COURSE;
+    }
+
+    @Override
+    public String getDefaultPipelineVariant() {
+        return "submission_successful";
     }
 }

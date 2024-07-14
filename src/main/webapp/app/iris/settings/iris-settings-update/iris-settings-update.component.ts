@@ -14,8 +14,10 @@ import {
     IrisCompetencyGenerationSubSettings,
     IrisHestiaSubSettings,
     IrisLectureIngestionSubSettings,
+    IrisProactivitySubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { JolEventSettings, SubmissionFailedEventSettings, SubmissionSuccessfulEventSettings } from 'app/entities/iris/settings/iris-event-settings.model';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -121,6 +123,16 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
         if (!this.irisSettings.irisCompetencyGenerationSettings) {
             this.irisSettings.irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
+        }
+        if (!this.irisSettings.irisProactivitySettings) {
+            const proactivitySubSettings = new IrisProactivitySubSettings();
+            this.irisSettings.irisProactivitySettings = proactivitySubSettings;
+        }
+        if (!this.irisSettings.irisProactivitySettings.eventSettings) {
+            const jolEventSettings = new JolEventSettings();
+            const submissionSuccessfulEventSettings = new SubmissionSuccessfulEventSettings();
+            const submissionFailedEventSettings = new SubmissionFailedEventSettings();
+            this.irisSettings.irisProactivitySettings.eventSettings = [jolEventSettings, submissionSuccessfulEventSettings, submissionFailedEventSettings];
         }
     }
 

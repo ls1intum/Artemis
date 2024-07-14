@@ -14,4 +14,9 @@ public class IrisJolEventSettings extends IrisEventSettings {
     public IrisEventLevel getDefaultLevel() {
         return IrisEventLevel.COURSE;
     }
+
+    @Override
+    public String getDefaultPipelineVariant() {
+        return "jol";
+    }
 }

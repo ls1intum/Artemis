@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -69,6 +70,7 @@ public abstract class IrisEventSettings extends DomainObject {
     @Column(name = "level")
     private IrisEventLevel level;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "iris_proactivity_settings_id")
     private IrisProactivitySubSettings proactivitySubSettings;
@@ -78,6 +80,9 @@ public abstract class IrisEventSettings extends DomainObject {
     protected void onCreate() {
         if (level == null) {
             level = getDefaultLevel();
+        }
+        if (pipelineVariant == null) {
+            pipelineVariant = getDefaultPipelineVariant();
         }
     }
 
@@ -135,4 +140,6 @@ public abstract class IrisEventSettings extends DomainObject {
     }
 
     public abstract IrisEventLevel getDefaultLevel();
+
+    public abstract String getDefaultPipelineVariant();
 }

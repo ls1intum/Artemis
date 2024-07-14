@@ -4,6 +4,7 @@ import {
     IrisCompetencyGenerationSubSettings,
     IrisHestiaSubSettings,
     IrisLectureIngestionSubSettings,
+    IrisProactivitySubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 export enum IrisSettingsType {
@@ -19,6 +20,7 @@ export abstract class IrisSettings implements BaseEntity {
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisHestiaSettings?: IrisHestiaSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
+    irisProactivitySettings?: IrisProactivitySubSettings;
 }
 
 export class IrisGlobalSettings implements IrisSettings {
@@ -29,10 +31,12 @@ export class IrisGlobalSettings implements IrisSettings {
     enableAutoUpdateLectureIngestion?: boolean;
     enableAutoUpdateHestia?: boolean;
     enableAutoUpdateCompetencyGeneration?: boolean;
+    enableAutoUpdateProactivity?: boolean;
     irisChatSettings?: IrisChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisHestiaSettings?: IrisHestiaSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
+    irisProactivitySettings?: IrisProactivitySubSettings;
 }
 
 export class IrisCourseSettings implements IrisSettings {
@@ -43,6 +47,7 @@ export class IrisCourseSettings implements IrisSettings {
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisHestiaSettings?: IrisHestiaSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
+    irisProactivitySettings?: IrisProactivitySubSettings;
 }
 
 export class IrisExerciseSettings implements IrisSettings {
