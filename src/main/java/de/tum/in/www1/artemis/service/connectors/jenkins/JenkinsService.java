@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -68,13 +67,11 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final ProfileService profileService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public JenkinsService(JenkinsServer jenkinsServer, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate,
             JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository,
+            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
@@ -83,7 +80,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.aeolusTemplateService = aeolusTemplateService;
         this.profileService = profileService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
