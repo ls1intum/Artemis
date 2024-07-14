@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.service.ExerciseImportService;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Profile(PROFILE_CORE)
@@ -50,12 +51,16 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
+            CompetencyProgressService competencyProgressService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
         this.channelService = channelService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -78,6 +83,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
         QuizExercise newQuizExercise = quizExerciseService.save(newExercise);
 
         channelService.createExerciseChannel(newQuizExercise, Optional.ofNullable(importedExercise.getChannelName()));
+
+        competencyProgressService.updateProgressByLearningObjectAsync(newQuizExercise);
+
         return newQuizExercise;
     }
 

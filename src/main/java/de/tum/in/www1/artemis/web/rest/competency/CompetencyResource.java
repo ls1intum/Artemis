@@ -421,7 +421,7 @@ public class CompetencyResource {
     @GetMapping("courses/{courseId}/competencies/{competencyId}/student-progress")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CompetencyProgress> getCompetencyStudentProgress(@PathVariable long courseId, @PathVariable long competencyId,
-            @RequestParam(defaultValue = "false") Boolean refresh) {
+            @RequestParam(defaultValue = "false") boolean refresh) {
         log.debug("REST request to get student progress for competency: {}", competencyId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
