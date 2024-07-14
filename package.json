@@ -93,7 +93,7 @@
         },
         "axios": "1.7.2",
         "braces": "3.0.3",
-        "critters": "0.0.22",
+        "critters": "0.0.24",
         "debug": "4.3.5",
         "eslint-plugin-deprecation": {
             "eslint": "^9.7.0"
