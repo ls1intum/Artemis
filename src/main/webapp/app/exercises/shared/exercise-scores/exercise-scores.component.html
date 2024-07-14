@@ -314,7 +314,12 @@
                                                         Repository
                                                     </a>
                                                 } @else {
-                                                    <jhi-clone-repo-button class="me-1" [smallButtons]="true" [repositoryUri]="getRepositoryLink(value) || ''" />
+                                                    <jhi-code-button
+                                                        class="me-1"
+                                                        [routerLinkForRepositoryView]="['/courses', course.id, 'exercises', exercise.id, 'repository', value.id]"
+                                                        [smallButtons]="true"
+                                                        [repositoryUri]="getRepositoryLink(value) || ''"
+                                                    />
                                                 }
                                             }
                                             @if (buildPlanId(value) && !localVCEnabled) {

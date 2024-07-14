@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
@@ -26,11 +26,11 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterTestingModule } from '@angular/router/testing';
 
-describe('CloneRepoButtonComponent', () => {
-    let component: CloneRepoButtonComponent;
-    let fixture: ComponentFixture<CloneRepoButtonComponent>;
+describe('CodeButtonComponent', () => {
+    let component: CodeButtonComponent;
+    let fixture: ComponentFixture<CodeButtonComponent>;
     let profileService: ProfileService;
     let accountService: AccountService;
 
@@ -83,15 +83,14 @@ describe('CloneRepoButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule],
+            imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule, RouterTestingModule.withRoutes([])],
             declarations: [
-                CloneRepoButtonComponent,
+                CodeButtonComponent,
                 MockComponent(ExerciseActionButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeUrlPipe),
                 MockDirective(FeatureToggleDirective),
                 MockComponent(HelpIconComponent),
-                MockDirective(TranslateDirective),
             ],
             providers: [
                 MockProvider(AlertService),
@@ -103,7 +102,7 @@ describe('CloneRepoButtonComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CloneRepoButtonComponent);
+        fixture = TestBed.createComponent(CodeButtonComponent);
         component = fixture.componentInstance;
         profileService = TestBed.inject(ProfileService);
         accountService = TestBed.inject(AccountService);
@@ -296,7 +295,7 @@ describe('CloneRepoButtonComponent', () => {
         expect(localStorageUseSshObserveStub).toHaveBeenNthCalledWith(1, 'useSsh');
         expect(component.useSsh).toBeFalsy();
 
-        fixture.debugElement.query(By.css('.clone-repository')).nativeElement.click();
+        fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
         tick();
         fixture.debugElement.query(By.css('#useSSHButton')).nativeElement.click();
         tick();

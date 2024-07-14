@@ -85,10 +85,10 @@ class QuizComparisonTest {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
         List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
-        Long id1 = quizQuestions.get(0).getId();
+        Long id1 = quizQuestions.getFirst().getId();
 
         // create a submission for each questionType
-        QuizSubmission mcSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(0), false);
+        QuizSubmission mcSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.getFirst(), false);
         QuizSubmission dndSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), false);
         QuizSubmission saSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(2), false);
 
@@ -108,7 +108,7 @@ class QuizComparisonTest {
         List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
 
         // create a submission for each questionType
-        QuizSubmission mcSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(0), true);
+        QuizSubmission mcSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.getFirst(), true);
         QuizSubmission dndSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), true);
         QuizSubmission saSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(2), true);
 
@@ -131,7 +131,7 @@ class QuizComparisonTest {
     void compareExamQuizSubmittedAnswers() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course, true);
-        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam.getExerciseGroups().get(0));
+        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam.getExerciseGroups().getFirst());
 
         createSubmissionsForQuizQuestionsAndAssert(quizExercise);
     }
@@ -192,7 +192,7 @@ class QuizComparisonTest {
                 List<DragAndDropMapping> dragAndDropMappings = changedSubmittedAnswer.getMappings().stream().toList();
                 assertThat(dragAndDropMappings.size()).isEqualTo(4);
 
-                DragAndDropMapping mapping1 = dragAndDropMappings.get(0);
+                DragAndDropMapping mapping1 = dragAndDropMappings.getFirst();
                 DragAndDropMapping mapping2 = dragAndDropMappings.get(1);
                 DragAndDropMapping mapping3 = dragAndDropMappings.get(2);
 
@@ -242,7 +242,7 @@ class QuizComparisonTest {
                 List<ShortAnswerSubmittedText> shortAnswerSubmittedTexts = changedSubmittedAnswer.getSubmittedTexts().stream().toList();
                 assertThat(shortAnswerSubmittedTexts.size()).isEqualTo(2);
 
-                ShortAnswerSubmittedText submittedText1 = shortAnswerSubmittedTexts.get(0);
+                ShortAnswerSubmittedText submittedText1 = shortAnswerSubmittedTexts.getFirst();
                 ShortAnswerSubmittedText submittedText2 = shortAnswerSubmittedTexts.get(1);
                 ShortAnswerSpot spot1 = submittedText1.getSpot();
                 String answerText1 = submittedText1.getText();
@@ -315,7 +315,7 @@ class QuizComparisonTest {
                 List<DragAndDropMapping> dragAndDropMappings = changedSubmittedAnswer.getMappings().stream().toList();
                 assertThat(dragAndDropMappings.size()).isEqualTo(4);
 
-                DragAndDropMapping mapping1 = dragAndDropMappings.get(0);
+                DragAndDropMapping mapping1 = dragAndDropMappings.getFirst();
                 DragAndDropMapping mapping2 = dragAndDropMappings.get(1);
 
                 // filter for mapping1 and mapping2 that should get removed
@@ -350,7 +350,7 @@ class QuizComparisonTest {
                 var shortAnswerMappings = changedSubmittedAnswer.getSubmittedTexts().stream().toList();
                 assertThat(shortAnswerMappings.size()).isEqualTo(2);
 
-                ShortAnswerSubmittedText submittedText1 = shortAnswerMappings.get(0);
+                ShortAnswerSubmittedText submittedText1 = shortAnswerMappings.getFirst();
                 ShortAnswerSubmittedText submittedText2 = shortAnswerMappings.get(1);
 
                 var temporaryRemoved = originalAnswer.getSubmittedTexts().stream()
@@ -415,7 +415,7 @@ class QuizComparisonTest {
             else if (submittedAnswer2 instanceof DragAndDropSubmittedAnswer changedSubmittedAnswer) {
                 List<DragAndDropMapping> dragAndDropMappings = changedSubmittedAnswer.getMappings().stream().toList();
                 assertThat(dragAndDropMappings.size()).isEqualTo(4);
-                DragAndDropMapping mapping1 = dragAndDropMappings.get(0);
+                DragAndDropMapping mapping1 = dragAndDropMappings.getFirst();
                 DragAndDropMapping mapping2 = dragAndDropMappings.get(1);
                 DragAndDropMapping mapping3 = dragAndDropMappings.get(1);
 
@@ -437,7 +437,7 @@ class QuizComparisonTest {
             else if (submittedAnswer2 instanceof ShortAnswerSubmittedAnswer changedSubmittedAnswer) {
                 var shortAnswerMappings = changedSubmittedAnswer.getSubmittedTexts().stream().toList();
                 assertThat(shortAnswerMappings.size()).isEqualTo(2);
-                ShortAnswerSubmittedText mapping1 = shortAnswerMappings.get(0);
+                ShortAnswerSubmittedText mapping1 = shortAnswerMappings.getFirst();
                 ShortAnswerSubmittedText mapping2 = shortAnswerMappings.get(1);
 
                 // remove the first text

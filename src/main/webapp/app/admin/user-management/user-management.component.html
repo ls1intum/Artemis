@@ -111,8 +111,10 @@
                             <span jhiTranslate="artemisApp.userManagement.langKey"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        <th><span jhiTranslate="artemisApp.userManagement.profiles"></span></th>
-                        <th><span>Groups</span></th>
+                        <th jhiSortBy="langKey">
+                            <span jhiTranslate="artemisApp.userManagement.internal"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
                         <th jhiSortBy="createdDate">
                             <span jhiTranslate="artemisApp.userManagement.createdDate"></span>
                             <fa-icon [icon]="faSort" />
@@ -169,20 +171,7 @@
                                     }
                                 </td>
                                 <td>{{ user.langKey }}</td>
-                                <td>
-                                    @for (authority of user.authorities; track authority) {
-                                        <div>
-                                            <span class="badge bg-info">{{ authority }}</span>
-                                        </div>
-                                    }
-                                </td>
-                                <td>
-                                    @for (group of user.groups; track group) {
-                                        <div>
-                                            <span class="badge bg-info">{{ group }}</span>
-                                        </div>
-                                    }
-                                </td>
+                                <td>{{ (user.internal ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                                 <td>{{ user.createdDate | artemisDate }}</td>
                                 <td>{{ user.lastModifiedBy }}</td>
                                 <td>{{ user.lastModifiedDate | artemisDate }}</td>

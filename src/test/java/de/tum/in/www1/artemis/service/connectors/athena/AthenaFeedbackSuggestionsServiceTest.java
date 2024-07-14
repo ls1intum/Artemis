@@ -70,8 +70,8 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.text").value(textSubmission.getText()));
         List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true);
-        assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
-        assertThat(suggestions.get(0).indexStart()).isEqualTo(3);
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().indexStart()).isEqualTo(3);
         athenaRequestMockProvider.verify();
     }
 
@@ -83,8 +83,8 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
                 jsonPath("$.submission.repositoryUri")
                         .value("https://artemislocal.ase.in.tum.de/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true);
-        assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
-        assertThat(suggestions.get(0).lineStart()).isEqualTo(3);
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().lineStart()).isEqualTo(3);
         athenaRequestMockProvider.verify();
     }
 

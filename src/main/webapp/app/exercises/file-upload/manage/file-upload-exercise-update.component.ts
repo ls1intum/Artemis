@@ -6,7 +6,7 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetDates } from 'app/entities/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForImport } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -204,7 +204,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
                 // We reference normal exercises by their course, having both would lead to conflicts on the server
                 this.fileUploadExercise.exerciseGroup = undefined;
             }
-            resetDates(this.fileUploadExercise);
+            resetForImport(this.fileUploadExercise);
         }
     }
 
