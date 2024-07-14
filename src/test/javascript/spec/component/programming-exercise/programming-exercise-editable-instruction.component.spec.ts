@@ -9,7 +9,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -28,6 +27,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -59,7 +59,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
             declarations: [
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
-                MockComponent(MarkdownEditorComponent),
+                MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
@@ -121,6 +121,12 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
         expect(comp.exerciseTestCases).toHaveLength(2);
         expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
+        const testCaseValues = comp.testCaseAction.getValues();
+        expect(testCaseValues).toHaveLength(2);
+        expect(testCaseValues).toEqual([
+            { value: 'test1', id: 'test1' },
+            { value: 'test2', id: 'test2' },
+        ]);
 
         fixture.destroy();
         flush();
@@ -221,18 +227,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should update the code editor annotations when receiving a new ProblemStatementAnalysis', fakeAsync(() => {
-        const session = {
-            clearAnnotations: jest.fn(),
-            setAnnotations: jest.fn(),
-        };
-        const editor = {
-            getSession: () => session,
-        };
-        const aceEditorContainer = {
-            getEditor: () => editor,
-        };
-        // @ts-ignore
-        comp.markdownEditor = { aceEditorContainer };
+        const setAnnotationsStub = jest.fn();
+        // The component is mocked, so we need to set the monacoEditor property to a mock object.
+        comp.markdownEditorMonaco = { monacoEditor: { setAnnotations: setAnnotationsStub } } as unknown as MarkdownEditorMonacoComponent;
 
         const analysis = new Map();
         analysis.set(0, { lineNumber: 0, invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] });
@@ -247,11 +244,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         ];
 
         comp.onAnalysisUpdate(analysis);
-        tick();
 
-        expect(session.clearAnnotations).toHaveBeenCalledOnce();
-        expect(session.setAnnotations).toHaveBeenCalledOnce();
-        expect(session.setAnnotations).toHaveBeenCalledWith(expectedWarnings);
+        expect(setAnnotationsStub).toHaveBeenCalledExactlyOnceWith(expectedWarnings);
 
         fixture.destroy();
         flush();

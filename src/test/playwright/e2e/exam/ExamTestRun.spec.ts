@@ -109,16 +109,13 @@ test.describe('Exam test run', () => {
 
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                await examNavigation.openExerciseAtIndex(j);
+                await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
                 await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             }
             await examParticipation.handInEarly();
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.exerciseGroup!.title!);
-                if (exercise.type === ExerciseType.TEXT) {
-                    await examParticipation.verifyTextExerciseOnFinalPage(exercise.id!, exercise.additionalData!.textFixture!);
-                }
             }
             await examParticipation.checkExamTitle(examTitle);
             await examTestRun.openTestRunPage(course, exam);

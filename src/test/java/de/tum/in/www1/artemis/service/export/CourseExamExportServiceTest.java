@@ -17,7 +17,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -38,9 +37,6 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private ExerciseRepository exerciseRepository;

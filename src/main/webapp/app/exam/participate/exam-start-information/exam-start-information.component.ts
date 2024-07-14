@@ -6,6 +6,7 @@ import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import dayjs from 'dayjs/esm';
+import { SafeHtml } from '@angular/platform-browser';
 
 @Component({
     selector: 'jhi-exam-start-information',
@@ -18,6 +19,7 @@ export class ExamStartInformationComponent implements OnInit {
 
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
+    @Input() formattedStartText?: SafeHtml;
 
     totalPoints?: number;
     totalWorkingTimeInMinutes?: number;

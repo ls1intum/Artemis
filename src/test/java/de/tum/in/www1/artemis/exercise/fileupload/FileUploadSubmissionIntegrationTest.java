@@ -40,14 +40,12 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -61,13 +59,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
     private ParticipationRepository participationRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -262,8 +254,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
                 HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(submissions).as("one file upload submission was found").hasSize(1);
-        assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
-        final StudentParticipation participation1 = (StudentParticipation) submissions.get(0).getParticipation();
+        assertThat(submissions.getFirst().getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
+        final StudentParticipation participation1 = (StudentParticipation) submissions.getFirst().getParticipation();
         assertThat(participation1.getStudent()).as("contains no student details").isEmpty();
     }
 
@@ -277,8 +269,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
                 HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(submissions).as("one file upload submission was found").hasSize(1);
-        assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
-        final StudentParticipation participation1 = (StudentParticipation) submissions.get(0).getParticipation();
+        assertThat(submissions.getFirst().getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
+        final StudentParticipation participation1 = (StudentParticipation) submissions.getFirst().getParticipation();
         assertThat(participation1.getStudent()).as("contains student details").isNotEmpty();
     }
 

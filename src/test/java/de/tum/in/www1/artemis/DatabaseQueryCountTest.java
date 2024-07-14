@@ -69,7 +69,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 DB call to get the active exams
         // 1 DB call to get the batch of a live quiz. No Batches of other quizzes are retrieved
 
-        var course = courses.get(0);
+        var course = courses.getFirst();
         assertThatDb(() -> {
             log.info("Start course for dashboard call for one course");
             var userCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);

@@ -83,7 +83,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         var exerciseList = new ArrayList<>(course.getExercises());
         exerciseList.sort(Comparator.comparing(Exercise::getId));
 
-        var exercise = exerciseList.get(0);
+        var exercise = exerciseList.getFirst();
         exercise.setDueDate(null);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
 
@@ -130,7 +130,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(studentParticipations).isNotEmpty();
 
         // Test with multiple results to assert they are sorted.
-        StudentParticipation studentParticipation = studentParticipations.get(0);
+        StudentParticipation studentParticipation = studentParticipations.getFirst();
         participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
         participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
         participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
@@ -183,7 +183,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         var exerciseList = new ArrayList<>(course.getExercises());
         exerciseList.sort(Comparator.comparing(Exercise::getId));
 
-        var exercise = exerciseList.get(0);
+        var exercise = exerciseList.getFirst();
         exercise.setDueDate(null);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
 
@@ -309,14 +309,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(studentParticipations).isNotEmpty();
 
         // Test with multiple results to assert they are sorted.
-        StudentParticipation studentParticipation = studentParticipations.get(0);
+        StudentParticipation studentParticipation = studentParticipations.getFirst();
         participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
         participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
         Result latestResult = participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
 
         // Test getting the latest rated result.
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
-        assertThat(courseScoreCalculationService.getResultForParticipation(studentParticipations.get(0), dueDate).getScore()).isEqualTo(latestResult.getScore());
+        assertThat(courseScoreCalculationService.getResultForParticipation(studentParticipations.getFirst(), dueDate).getScore()).isEqualTo(latestResult.getScore());
 
         // Test with latest rated result after the due date and grace period.
         latestResult.setCompletionDate(dueDate.plusSeconds(30L)); // Due date was set 10 seconds in the future, add more than that.
@@ -324,6 +324,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
         // Should retrieve the latest result before the due date.
-        assertThat(courseScoreCalculationService.getResultForParticipation(studentParticipations.get(0), dueDate).getScore()).isEqualTo(40L);
+        assertThat(courseScoreCalculationService.getResultForParticipation(studentParticipations.getFirst(), dueDate).getScore()).isEqualTo(40L);
     }
 }

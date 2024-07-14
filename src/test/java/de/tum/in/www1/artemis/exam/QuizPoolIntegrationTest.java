@@ -13,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -25,8 +24,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
 import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
-import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -36,16 +33,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private QuizPoolService quizPoolService;
 
     @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private RequestUtilService request;
 
     private Course course;
 
@@ -85,7 +73,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         QuizPool responseQuizPool = createQuizPool();
         assertThat(responseQuizPool.getExam().getId()).isEqualTo(exam.getId());
         assertThat(responseQuizPool.getQuizGroups()).hasSize(quizPool.getQuizGroups().size()).extracting("name")
-                .containsExactlyInAnyOrder(quizPool.getQuizGroups().get(0).getName(), quizPool.getQuizGroups().get(1).getName(), quizPool.getQuizGroups().get(2).getName());
+                .containsExactlyInAnyOrder(quizPool.getQuizGroups().getFirst().getName(), quizPool.getQuizGroups().get(1).getName(), quizPool.getQuizGroups().get(2).getName());
         assertThat(responseQuizPool.getQuizQuestions()).hasSize(quizPool.getQuizQuestions().size()).extracting("title", "quizGroup.name").containsExactlyInAnyOrder(
                 tuple(mcQuizQuestion0.getTitle(), quizGroup0.getName()), tuple(mcQuizQuestion1.getTitle(), quizGroup0.getName()),
                 tuple(dndQuizQuestion0.getTitle(), quizGroup1.getName()), tuple(dndQuizQuestion1.getTitle(), quizGroup2.getName()), tuple(saQuizQuestion0.getTitle(), null));
@@ -183,9 +171,9 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         QuizPool responseQuizPool = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", HttpStatus.OK, QuizPool.class);
         assertThat(responseQuizPool.getExam().getId()).isEqualTo(exam.getId());
-        assertThat(responseQuizPool.getQuizGroups()).hasSize(savedQuizPool.getQuizGroups().size()).containsExactlyInAnyOrder(savedQuizPool.getQuizGroups().get(0),
+        assertThat(responseQuizPool.getQuizGroups()).hasSize(savedQuizPool.getQuizGroups().size()).containsExactlyInAnyOrder(savedQuizPool.getQuizGroups().getFirst(),
                 savedQuizPool.getQuizGroups().get(1));
-        assertThat(responseQuizPool.getQuizQuestions()).hasSize(savedQuizPool.getQuizQuestions().size()).containsExactlyInAnyOrder(savedQuizPool.getQuizQuestions().get(0),
+        assertThat(responseQuizPool.getQuizQuestions()).hasSize(savedQuizPool.getQuizQuestions().size()).containsExactlyInAnyOrder(savedQuizPool.getQuizQuestions().getFirst(),
                 savedQuizPool.getQuizQuestions().get(1), savedQuizPool.getQuizQuestions().get(2));
     }
 

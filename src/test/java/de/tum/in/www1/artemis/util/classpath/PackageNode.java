@@ -92,7 +92,7 @@ public class PackageNode extends ClassPathNode {
             return ownClasses.add(new ClassNode(this, clazz, classInfo));
         }
         // Otherwise, more package segments left, so the class needs to be added to a sub-package
-        String subPackageName = remainingSegments.get(0);
+        String subPackageName = remainingSegments.getFirst();
         PackageNode subPackage = subPackages.computeIfAbsent(subPackageName, newSubPackageName -> new PackageNode(this, newSubPackageName));
         return subPackage.add(classInfo, clazz, remainingSegments.subList(1, remainingSegementCount));
     }
