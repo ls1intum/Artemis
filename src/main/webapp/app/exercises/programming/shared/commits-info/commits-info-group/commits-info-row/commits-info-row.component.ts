@@ -21,14 +21,14 @@ export class CommitsInfoRowComponent {
     @Input() firstCommit: boolean;
     @Input() groupCommitCount: number;
     @Input() groupCommitIndex: number;
+    @Input() localVC: boolean;
     @Output() toggleExpandEvent = new EventEmitter<void>();
 
     onToggleExpand() {
         this.toggleExpandEvent.emit();
     }
 
-    localVC = false;
-    faCircle = faCircle;
-    faAngleLeft = faAngleLeft;
-    faAngleDown = faAngleDown;
+    readonly faCircle = faCircle;
+    readonly faAngleLeft = faAngleLeft;
+    readonly faAngleDown = faAngleDown;
 }

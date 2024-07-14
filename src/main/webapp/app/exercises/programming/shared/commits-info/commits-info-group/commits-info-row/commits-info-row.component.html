@@ -1,4 +1,4 @@
-<tr class="{{ isExpanded ? (groupCommitIndex === groupCommitCount - 1 ? 'bg-light border-bottom' : 'bg-light') : '' }}">
+<tr [class.bg-light]="isExpanded" [class.border-bottom]="isExpanded && groupCommitIndex === groupCommitCount - 1">
     <th scope="row" class="p-2">
         @if (groupCommitIndex === 0) {
             {{ pushNumber }}
