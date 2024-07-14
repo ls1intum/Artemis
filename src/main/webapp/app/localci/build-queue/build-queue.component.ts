@@ -642,13 +642,4 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
             this.getBuildJobStatistics(span);
         }
     }
-
-    /**
-     * Returns the unique identifier for items in the collection
-     * @param index of a finished buildjob in the collection
-     * @param item current buildjob
-     */
-    trackIdentity(index: number, item: FinishedBuildJob) {
-        return item.id ?? -1;
-    }
 }
