@@ -572,7 +572,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (finishedBuildJob of finishedBuildJobs; track trackIdentity($index, finishedBuildJob)) {
+                    @for (finishedBuildJob of finishedBuildJobs; track finishedBuildJob.id ?? -1) {
                         <tr>
                             <td class="finish-jobs-column-tiny">
                                 <span
