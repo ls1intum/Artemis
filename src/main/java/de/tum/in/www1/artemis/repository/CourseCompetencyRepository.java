@@ -7,8 +7,11 @@ import java.util.Set;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -97,6 +100,22 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             """)
     Optional<CourseCompetency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") long competencyId);
 
+    @Query("""
+            SELECT c.id
+            FROM CourseCompetency c
+                LEFT JOIN c.exercises ex
+            WHERE :exercise = ex
+            """)
+    Set<Long> findAllIdsByExercise(@Param("exercise") Exercise exercise);
+
+    @Query("""
+            SELECT c.id
+            FROM CourseCompetency c
+                LEFT JOIN c.lectureUnits lu
+            WHERE :lectureUnit = lu
+            """)
+    Set<Long> findAllIdsByLectureUnit(@Param("lectureUnit") LectureUnit lectureUnit);
+
     /**
      * Finds a list of competencies by id and verifies that the user is at least editor in the respective courses.
      * If any of the competencies are not accessible, throws a {@link EntityNotFoundException}
@@ -137,6 +156,20 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
 
     default CourseCompetency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
         return getValueElseThrow(findByIdWithExercisesAndLectureUnitsBidirectional(competencyId), competencyId);
+    }
+
+    /**
+     * Finds the set of ids of course competencies that are linked to a given learning object
+     *
+     * @param learningObject the learning object to find the course competencies for
+     * @return the set of ids of course competencies linked to the learning object
+     */
+    default Set<Long> findAllIdsByLearningObject(LearningObject learningObject) {
+        return switch (learningObject) {
+            case LectureUnit lectureUnit -> findAllIdsByLectureUnit(lectureUnit);
+            case Exercise exercise -> findAllIdsByExercise(exercise);
+            default -> throw new IllegalArgumentException("Unknown LearningObject type: " + learningObject.getClass());
+        };
     }
 
     List<CourseCompetency> findByCourseIdOrderById(long courseId);
