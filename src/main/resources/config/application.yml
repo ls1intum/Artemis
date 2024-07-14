@@ -184,9 +184,9 @@ spring:
     messages:
         basename: i18n/messages
     main:
-        allow-bean-definition-overriding: true
-        lazy-initialization: false
+        allow-bean-definition-overriding: false
         allow-circular-references: false
+        lazy-initialization: false # cannot set this to true (even if we would want, because then LocalCI does not process build results correctly)
     task:
         execution:
             thread-name-prefix: artemis-task-

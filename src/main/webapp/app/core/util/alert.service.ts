@@ -5,7 +5,7 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { Subscription } from 'rxjs';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -68,7 +68,7 @@ export class AlertService {
         private sanitizer: DomSanitizer,
         private ngZone: NgZone,
         private translateService: TranslateService,
-        private eventManager: EventManager,
+        eventManager: EventManager,
     ) {
         this.errorListener = eventManager.subscribe('artemisApp.error', (response: EventWithContent<unknown> | string) => {
             const errorResponse = (response as EventWithContent<AlertError>).content;

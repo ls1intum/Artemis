@@ -87,7 +87,7 @@ test.describe('Exam Results', () => {
                 test.beforeEach('Participate in exam', async ({ login, examParticipation, examNavigation, examStartEnd }) => {
                     await login(admin);
                     await examParticipation.startParticipation(studentOne, course, exam);
-                    await examNavigation.openExerciseAtIndex(0);
+                    await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
                     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
                     await examParticipation.handInEarly();
                     await examStartEnd.pressShowSummary();

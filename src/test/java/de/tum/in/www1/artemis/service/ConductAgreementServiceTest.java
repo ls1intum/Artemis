@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseFactory;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ConductAgreementServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -21,9 +20,6 @@ class ConductAgreementServiceTest extends AbstractSpringIntegrationIndependentTe
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 
     private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private ConductAgreementService conductAgreementService;

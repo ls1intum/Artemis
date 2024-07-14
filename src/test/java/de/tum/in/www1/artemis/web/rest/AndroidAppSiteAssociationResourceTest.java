@@ -19,9 +19,9 @@ class AndroidAppSiteAssociationResourceTest extends AbstractSpringIntegrationInd
         List<AndroidAppSiteAssociationResource.AndroidAssetLinksEntry> androidAssetLinksEntry = androidAppSiteAssociationResource.getAndroidAssetLinks().getBody();
 
         assertThat(androidAssetLinksEntry).hasSize(2);
-        assertThat(androidAssetLinksEntry.get(0).relation().get(0)).isEqualTo("delegate_permission/common.handle_all_urls");
-        assertThat(androidAssetLinksEntry.get(0).target().package_name()).isEqualTo("de.tum.informatics.www1.artemis.native_app.android");
-        assertThat(androidAssetLinksEntry.get(1).relation().get(0)).isEqualTo("delegate_permission/common.get_login_creds");
+        assertThat(androidAssetLinksEntry.getFirst().relation().getFirst()).isEqualTo("delegate_permission/common.handle_all_urls");
+        assertThat(androidAssetLinksEntry.getFirst().target().package_name()).isEqualTo("de.tum.informatics.www1.artemis.native_app.android");
+        assertThat(androidAssetLinksEntry.get(1).relation().getFirst()).isEqualTo("delegate_permission/common.get_login_creds");
         assertThat(androidAssetLinksEntry.get(1).target().package_name()).isEqualTo("de.tum.informatics.www1.artemis.native_app.android");
     }
 

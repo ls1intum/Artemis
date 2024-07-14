@@ -34,12 +34,10 @@ import de.tum.in.www1.artemis.domain.metis.UserRole;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
@@ -55,12 +53,6 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private ConversationUtilService conversationUtilService;

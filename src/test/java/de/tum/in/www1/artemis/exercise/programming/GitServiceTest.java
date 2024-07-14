@@ -385,8 +385,8 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
         prepareRepositoryContent();
         var commitsInfos = gitService.getCommitInfos(gitUtilService.getRepoUriByType(GitUtilService.REPOS.LOCAL));
         assertThat(commitsInfos).hasSize(3);
-        assertThat(commitsInfos.get(0).hash()).isEqualTo(getCommitHash("my second commit"));
-        assertThat(commitsInfos.get(0).message()).isEqualTo("my second commit");
+        assertThat(commitsInfos.getFirst().hash()).isEqualTo(getCommitHash("my second commit"));
+        assertThat(commitsInfos.getFirst().message()).isEqualTo("my second commit");
         assertThat(commitsInfos.get(1).hash()).isEqualTo(getCommitHash("my first commit"));
         assertThat(commitsInfos.get(1).message()).isEqualTo("my first commit");
         assertThat(commitsInfos.get(2).hash()).isEqualTo(getCommitHash("initial commit"));

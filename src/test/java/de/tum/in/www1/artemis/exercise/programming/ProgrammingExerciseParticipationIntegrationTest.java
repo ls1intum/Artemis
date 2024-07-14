@@ -37,14 +37,11 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -65,19 +62,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     private ParticipationRepository participationRepository;
 
     @Autowired
-    private ResultRepository resultRepository;
-
-    @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -363,7 +351,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
         addStudentParticipationWithResult(assessmentType, null);
         StudentParticipation participation = studentParticipationRepository
-                .findByExerciseIdAndStudentId(programmingExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId()).get(0);
+                .findByExerciseIdAndStudentId(programmingExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId()).getFirst();
 
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
         assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
