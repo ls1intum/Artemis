@@ -101,7 +101,6 @@
             "templateBuildPlanId": "Vorlagen-Build-Plan-Id",
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
-            "openRepository": "Repository Öffnen",
             "buildplans": "Build-Pläne",
             "buildplan": "Build-Plan",
             "buildConfiguration": "Build Konfiguration",

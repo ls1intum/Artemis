@@ -22,7 +22,6 @@
             "choseGradedMode": "Graded participation chosen",
             "openModelingEditor": "Open modeling editor",
             "importIntoIDE": "Open in your IDE",
-            "openRepository": "Open repository",
             "openOnlineIDE": "Open online IDE",
             "practiceMode": {
                 "title": "Practice Mode",
@@ -46,7 +45,7 @@
                 "success": "Resetting repository was successful. You can start over now."
             },
             "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will setup a separate repository for you to clone.",
-            "cloneRepository": "Clone Repository",
+            "code": "Code",
             "cloneRatedRepository": "Clone your repository for this exercise:",
             "clonePracticeRepository": "Clone your practice repository for this exercise:",
             "cloneExerciseRepository": "Clone a repository for this exercise",
