@@ -17,6 +17,9 @@ class TestResultXmlParser {
 
     private static final XmlMapper mapper = new XmlMapper();
 
+    // https://stackoverflow.com/a/4237934
+    private static final String INVALID_XML_CHARS = "[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]";
+
     /**
      * Parses the test result file and extracts failed and successful tests.
      *
@@ -27,6 +30,7 @@ class TestResultXmlParser {
      */
     static void processTestResultFile(String testResultFileString, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests)
             throws IOException {
+        testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
         TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
         // If the xml file is only one test suite, parse it directly

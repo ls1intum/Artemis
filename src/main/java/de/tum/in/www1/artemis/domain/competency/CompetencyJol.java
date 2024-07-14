@@ -26,7 +26,7 @@ public class CompetencyJol extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "competency_id", nullable = false)
-    private Competency competency;
+    private CourseCompetency competency;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -44,11 +44,11 @@ public class CompetencyJol extends DomainObject {
     @Column(name = "competency_confidence")
     private double competencyConfidence;
 
-    public Competency getCompetency() {
+    public CourseCompetency getCompetency() {
         return this.competency;
     }
 
-    public void setCompetency(Competency competency) {
+    public void setCompetency(CourseCompetency competency) {
         this.competency = competency;
     }
 
