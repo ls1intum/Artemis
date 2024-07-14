@@ -26,7 +26,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
@@ -51,7 +50,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseFactory;
@@ -69,13 +67,10 @@ import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -105,16 +100,10 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private SubmissionRepository submissionRepository;
@@ -126,13 +115,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -142,9 +125,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private Course course;
 
@@ -182,7 +162,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Exam exam = examUtilService.addExamWithExerciseGroup(this.course, true);
         this.examModelingExercise = new ModelingExercise();
         this.examModelingExercise.setMaxPoints(100D);
-        this.examModelingExercise.setExerciseGroup(exam.getExerciseGroups().get(0));
+        this.examModelingExercise.setExerciseGroup(exam.getExerciseGroups().getFirst());
         this.modelingExerciseRepository.save(this.examModelingExercise);
         this.examRepository.save(exam);
 
@@ -409,7 +389,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         final List<GradingInstruction> gradingInstructions1 = List.copyOf(criterion1.getStructuredGradingInstructions());
         // as long as credits are equal we can choose any two here
         assertThat(gradingInstructions1).allMatch(instruction -> instruction.getCredits() == 1);
-        final GradingInstruction instruction1a = gradingInstructions1.get(0);
+        final GradingInstruction instruction1a = gradingInstructions1.getFirst();
         final GradingInstruction instruction1b = gradingInstructions1.get(1);
         final Set<GradingInstruction> gradingInstructions2 = criterion2.getStructuredGradingInstructions();
         assertThat(gradingInstructions2).hasSize(1);

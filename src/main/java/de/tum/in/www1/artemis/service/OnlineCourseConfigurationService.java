@@ -101,7 +101,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
                     .authorizationUri(ltiPlatformConfiguration.getAuthorizationUri()) //
                     .jwkSetUri(ltiPlatformConfiguration.getJwkSetUri()) //
                     .tokenUri(ltiPlatformConfiguration.getTokenUri()) //
-                    .redirectUri(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH) //
+                    .redirectUri(artemisServerUrl + "/" + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH) //
                     .scope("openid") //
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) //
                     .build();

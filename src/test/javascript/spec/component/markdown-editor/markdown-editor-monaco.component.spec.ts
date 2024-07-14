@@ -19,6 +19,7 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor
 import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
 import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
+import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -177,5 +178,26 @@ describe('MarkdownEditorMonacoComponent', () => {
             comp.onSelectColor(color);
             expect(executeInCurrentEditorStub).toHaveBeenNthCalledWith(i + 1, { color: comp.colorToClassMap.get(color) });
         }
+    });
+
+    it('should pass the entire element to the fullscreen action for external height', () => {
+        comp.initialEditorHeight = 'external';
+        const fullscreenAction = new MonacoFullscreenAction();
+        comp.metaActions = [fullscreenAction];
+        fixture.detectChanges();
+        expect(fullscreenAction.element).toBe(comp.fullElement.nativeElement);
+    });
+
+    it('should pass the wrapper element to the fullscreen action for a set initial height', () => {
+        comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
+        const fullscreenAction = new MonacoFullscreenAction();
+        comp.metaActions = [fullscreenAction];
+        fixture.detectChanges();
+        expect(fullscreenAction.element).toBe(comp.wrapper.nativeElement);
+    });
+
+    it('should compute height 0 for a missing element', () => {
+        fixture.detectChanges();
+        expect(comp.getElementClientHeight(undefined)).toBe(0);
     });
 });

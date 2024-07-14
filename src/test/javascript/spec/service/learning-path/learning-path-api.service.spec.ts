@@ -37,13 +37,20 @@ describe('LearningPathApiService', () => {
     });
 
     it('should get learning path navigation', async () => {
-        const learningObjectId = 2;
+        const methodCall = learningPathApiService.getLearningPathNavigation(learningPathId);
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/navigation` });
+        response.flush({});
+        await methodCall;
+    });
 
+    it('should get relative learning path navigation', async () => {
+        const learningObjectId = 2;
+        const competencyId = 3;
         const learningObjectType = LearningObjectType.LECTURE;
-        const methodCall = learningPathApiService.getLearningPathNavigation(learningPathId, learningObjectId, learningObjectType);
+        const methodCall = learningPathApiService.getRelativeLearningPathNavigation(learningPathId, learningObjectId, learningObjectType, competencyId);
         const response = httpClient.expectOne({
             method: 'GET',
-            url: `${baseUrl}/learning-path/${learningPathId}/navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}`,
+            url: `${baseUrl}/learning-path/${learningPathId}/relative-navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}&competencyId=${competencyId}`,
         });
         response.flush({});
         await methodCall;

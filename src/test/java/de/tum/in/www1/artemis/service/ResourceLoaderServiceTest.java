@@ -94,7 +94,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
         final String content = "filesystem";
         setupJavaFiles(content);
 
-        Resource[] resources = resourceLoaderService.getFileResources(jenkinsFilesystemPaths.get(0).getParent(), pathPattern);
+        Resource[] resources = resourceLoaderService.getFileResources(jenkinsFilesystemPaths.getFirst().getParent(), pathPattern);
         assertThat(resources).hasSize(2);
 
         for (final Resource resource : resources) {

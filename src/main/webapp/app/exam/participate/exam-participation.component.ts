@@ -652,7 +652,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.problemStatementUpdateEventsSubscription = this.liveEventsService
             .observeNewEventsAsSystem([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE])
             .subscribe((event: ProblemStatementUpdateEvent) => {
-                this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
+                this.updateProblemStatement(event);
                 this.liveEventsService.acknowledgeEvent(event, false);
             });
     }
@@ -941,5 +941,27 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
             });
+    }
+
+    /**
+     * Updates the problem statement of an exercise.
+     * If the exercise was already opened, the problem statement is updated using ExamExerciseUpdateService,
+     * and differences between the old and new problem statements are highlighted.
+     *
+     * If the exercise wasn't previously opened, the problem statement will be updated without highlighting differences.
+     * This is because ExamExerciseUpdateHighlighterComponents are initialized only when a student opens an exercise.
+     *
+     * We avoid initializing all exercise components when a student opens an exam to prevent system overload.
+     * For large exams, initializing all components at once could result in even 16,000 REST calls, potentially overloading the system.
+     */
+    private updateProblemStatement(event: ProblemStatementUpdateEvent): void {
+        const index = this.studentExam.exercises!.findIndex((exercise) => exercise.id === event.exerciseId);
+        const wasExerciseOpened = this.pageComponentVisited[index];
+        if (wasExerciseOpened) {
+            this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
+        } else {
+            const exercise = this.studentExam.exercises![index];
+            exercise.problemStatement = event.problemStatement;
+        }
     }
 }

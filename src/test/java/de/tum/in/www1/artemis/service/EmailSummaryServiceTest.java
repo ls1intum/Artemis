@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -46,9 +45,6 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private UserUtilService userUtilService;
