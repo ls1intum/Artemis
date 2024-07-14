@@ -327,7 +327,11 @@ public class ProgrammingExerciseResource {
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }
 
+        // Update the auxiliary repositories in the DB and ProgrammingExercise instance
         auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        // Update the auxiliary repositories in the VCS. This needs to be decoupled to break circular dependencies.
+        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             // make sure the default value is set properly
