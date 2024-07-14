@@ -145,12 +145,14 @@ function evaluateTemplateLiteralExpressions(templateLiteral: TSESTree.TemplateLi
 // Example usage
 const clientDirPath = resolve('../../../../../src/main/webapp/app');
 
-// const tsFiles = collectTypeScriptFiles(clientDirPath);
-const tsFiles: string[] = [];
+const tsFiles = collectTypeScriptFiles(clientDirPath);
+// const tsFiles: string[] = [];
 
 // tsFiles.push('');
 
-tsFiles.push('src/main/webapp/app/complaints/complaint.service.ts');
+// tsFiles.push('src/main/webapp/app/admin/standardized-competencies/admin-standardized-competency.service.ts');
+// tsFiles.push('src/main/webapp/app/admin/logs/logs.service.ts');
+// tsFiles.push('src/main/webapp/app/complaints/complaint.service.ts');
 // tsFiles.push('src/main/webapp/app/admin/organization-management/organization-management.service.ts');
 // tsFiles.push('src/main/webapp/app/account/activate/activate.service.ts');
 //
@@ -159,20 +161,20 @@ tsFiles.push('src/main/webapp/app/complaints/complaint.service.ts');
 // tsFiles.push('src/main/webapp/app/exercises/shared/manage/exercise-paging.service.ts');
 // tsFiles.push('/src/main/webapp/app/exercises/programming/manage/services/code-analysis-paging.service.ts');
 // Parse each TypeScript file
+
+// preprocess each file
 tsFiles.forEach((filePath) => {
-    const ast = parseTypeScriptFile('../../../../../' + filePath);
-    // console.log(`AST for ${filePath}:`, ast);
-    // let preProcessor = new Preprocessor(filePath);
-    // preProcessor.preprocessFile();
-
-    let postProcessor = new Postprocessor(filePath);
-    postProcessor.extractRestCalls();
-
-
-
-    // const restCalls = extractRestCalls(ast, filePath);
+    let preProcessor = new Preprocessor(filePath);
+    preProcessor.preprocessFile();
 });
 
+tsFiles.forEach((filePath) => {
+    let postProcessor = new Postprocessor(filePath);
+    if (filePath.endsWith('/exercise-paging.service.ts')) {
+        console.log('found exercise-paging.service.ts');
+    }
+    postProcessor.extractRestCalls();
+});
 
 let counter = 0;
 for (let restCallFile of Postprocessor.filesWithRestCalls) {

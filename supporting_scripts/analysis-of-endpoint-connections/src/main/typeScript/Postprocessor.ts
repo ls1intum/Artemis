@@ -40,12 +40,12 @@ export class Postprocessor {
     extractRestCallsFromClassDeclaration(classBody: TSESTree.ClassDeclaration) {
         for (const propertyDefinition of classBody.body.body) {
             if (propertyDefinition.type === 'MethodDefinition' && propertyDefinition.key.type === 'Identifier') {
-                this.extractRestCallsFromMethodDefinition(propertyDefinition);
+                this.extractRestCallsFromMethodDefinition(propertyDefinition, classBody);
             }
         }
     }
 
-    extractRestCallsFromMethodDefinition(methodDefinition: TSESTree.MethodDefinition) {
+    extractRestCallsFromMethodDefinition(methodDefinition: TSESTree.MethodDefinition, classBody: TSESTree.ClassDeclaration) {
         simpleTraverse(methodDefinition, {
             enter: (node) => {
                 if (node.type === 'CallExpression') {
@@ -63,7 +63,7 @@ export class Postprocessor {
 
                                     if (node.arguments.length > 0) {
                                         // Check if the first argument is a TemplateLiteral
-                                        url = this.evaluateUrl(node.arguments[0], methodDefinition, node);
+                                        url = this.evaluateUrl(node.arguments[0], methodDefinition, node, classBody);
                                     }
 
                                     const fileName = this.filePath;
@@ -93,48 +93,51 @@ export class Postprocessor {
         return false;
     }
 
-    evaluateTemplateLiteralExpression(templateLiteral: TSESTree.TemplateLiteral): string {
+    evaluateTemplateLiteralExpression(templateLiteral: TSESTree.TemplateLiteral, classBody: TSESTree.ClassDeclaration): string {
         return templateLiteral.quasis.reduce((acc, quasi, index) => {
             let expression = '';
             if (index < templateLiteral.expressions.length) {
-                // console.log('templateLiteral.expressions[index]: ' + templateLiteral.expressions[index]);
+                expression = 'Unknown URL';
                 const expr = templateLiteral.expressions[index];
-                // Example: Evaluate simple numeric expressions or return the original
                 if (expr.type === 'Literal' && expr.value) {
                     expression = expr.value.toString();
                 } else if (expr.type === 'TemplateLiteral') {
-                    expression = this.evaluateTemplateLiteralExpression(expr);
+                    expression = this.evaluateTemplateLiteralExpression(expr, classBody);
                 } else if (expr.type === 'MemberExpression') {
                     let memberExprKey = '';
                     if (expr.property.type === 'Identifier' && expr.property.name) {
                         memberExprKey = expr.property.name;
-                    } else if (expr.object.type === 'ThisExpression' && expr.property.type === 'Identifier') {
-                        memberExprKey = `this.${expr.property.name}`;
                     } else {
-                        // Handle the case where expr.object or expr.property are not Identifiers
                         console.error('expr.object or expr.property are not Identifiers');
-                        // Use a placeholder or alternative logic as needed
                     }
 
                     const memberExpressionValue = this.getMemberExpressionValueFromName(memberExprKey);
 
-                    if (memberExpressionValue.length > 0) {
+                    if (memberExpressionValue === 'Unknown URL') {
+                        if (expr.type === 'MemberExpression' && expr.object.type === 'ThisExpression') {
+                            return acc + this.evaluateMemberVariableFromConstructorCall(classBody, memberExprKey)
+                        }
+                    } else if (memberExpressionValue.length > 0) {
                         return acc + memberExpressionValue;
                     }
                 } else {
                     // For complex or undefined expressions, keep as-is
-                    expression = '${' + expr.type + '}';
+                    if (expr.type === 'Identifier') {
+                        expression = '${' + expr.name + '}';
+                    } else {
+                        expression = '${' + expr.type + '}';
+                    }
                 }
             }
             return acc + quasi.value.raw + expression;
         }, '');
     }
 
-    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression) {
+    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
         const left = binaryExpression.left;
         const right = binaryExpression.right;
-        let leftValue = this.evaluateUrl(left, methodDefinition, restCall);
-        let rightValue = this.evaluateUrl(right, methodDefinition, restCall);
+        let leftValue = this.evaluateUrl(left, methodDefinition, restCall, classBody);
+        let rightValue = this.evaluateUrl(right, methodDefinition, restCall, classBody);
 
         if (typeof leftValue === 'string' && typeof rightValue === 'string') {
             return leftValue + rightValue;
@@ -143,20 +146,33 @@ export class Postprocessor {
         return 'Unknown URL';
     }
 
-    evaluateUrl(node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression): string | string[] {
+    /**
+     * Evaluates the URL from a given AST node within the context of a method definition and a REST call expression.
+     * This method processes different types of nodes to extract or compute the URL string or parts of it.
+     * It supports handling `TemplateLiteral`, `BinaryExpression`, `MemberExpression`, `Identifier`, and `Literal` nodes.
+     * The method aims to return a single URL string or an array of strings if multiple URLs are derived from the node.
+     * If the node type does not match any of the expected types or if the URL cannot be determined, it returns 'Unknown URL'.
+     *
+     * @param node - The AST node to evaluate for URL extraction.
+     * @param methodDefinition - The method definition context in which the node is evaluated.
+     * @param restCall - The REST call expression context for the evaluation.
+     * @returns The evaluated URL as a string or an array of strings if multiple URLs are found, or 'Unknown URL' if the URL cannot be determined.
+     */
+    evaluateUrl(node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): string | string[] {
         let result: (string | string[]) = 'Unknown URL';
         if (node.type === 'TemplateLiteral') {
-            return this.evaluateTemplateLiteralExpression(node);
+            return this.evaluateTemplateLiteralExpression(node, classBody);
         } else if (node.type === 'BinaryExpression') {
-            return this.evaluateBinaryExpression(node, methodDefinition, restCall);
+            return this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
         } else if (node.type === 'MemberExpression' && node.property.type === 'Identifier' && node.object.type === 'ThisExpression') {
             result =  this.getMemberExpressionValueFromName(node.property.name);
-            // Todo: if the return value is '', then check the Classes Children for the value
+            if (result === 'Unknown URL' && Preprocessor.PREPROCESSING_RESULTS.has(this.getClassNameFromClassBody(classBody))) {
+                result = this.evaluateMemberVariableFromConstructorCall(classBody, node.property.name);
+            }
             return result;
         } else if (node.type === 'Identifier') {
-            result = this.getMethodVariableValueFromNameAndMethod(node.name, methodDefinition);
-            // Todo: if the entire URL is passed on as an argument, find the calling Method and get the value of the argument
-            if (result === '' && methodDefinition.key.type === 'Identifier') {
+            result = this.getMethodVariableValueFromNameAndMethod(node.name, methodDefinition, classBody);
+            if (result === 'Unknown URL' && methodDefinition.key.type === 'Identifier') {
                 let tempResult: string[] = [];
                 for (let methodCall of this.findMethodCallsFromMethodName(methodDefinition.key.name)) {
                     tempResult.push(methodCall.parameterValue);
@@ -169,45 +185,53 @@ export class Postprocessor {
         return result;
     }
 
-    isMethodVariableOnlyArgument(name: string, restCall: TSESTree.CallExpression) {
-// Todo: remove if not needed
-        return false;
-    }
-
+    /**
+     * Searches for method calls of a given method name within the AST of the current file.
+     * This method iterates over all nodes in the AST's body. For each node that is a class declaration
+     * (either directly or through an export declaration), it delegates the search to `findMethodCallsFromMethodNameAndClassBody`,
+     * which looks for method calls within the class body that match the given method name.
+     *
+     * @param methodName - The name of the method to search for calls to.
+     * @returns An array of objects, each containing a `callExpression` (the AST node representing the call expression)
+     *          and a `parameterValue` (the value of the parameter passed to the method call, as a string).
+     */
     findMethodCallsFromMethodName(methodName: string) {
         let methodCalls: { callExpression: TSESTree.CallExpression, parameterValue: string }[] = [];
-
         for (const node of this.ast.body) {
             let classBody;
             if (node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'ClassDeclaration') {
-                methodCalls.push(... this.findMethodCallsFromMethodNameAndClassBody(methodName, node.declaration.body));
+                methodCalls.push(... this.findMethodCallsFromMethodNameAndClassBody(methodName, node.declaration));
             } else if (node.type === 'ClassDeclaration') {
-                methodCalls.push(... this.findMethodCallsFromMethodNameAndClassBody(methodName, node.body));
+                methodCalls.push(... this.findMethodCallsFromMethodNameAndClassBody(methodName, node));
             }
-
         }
-
-        // simpleTraverse(this.ast, {
-        //     enter: (node) => {
-        //         if (node.type === 'CallExpression' && node.callee.type === 'Identifier' && node.callee.name === methodName) {
-        //             methodCalls.push(node);
-        //         }
-        //     }
-        // });
-
         return methodCalls;
     }
 
-    findMethodCallsFromMethodNameAndClassBody(methodName: string, classBody: TSESTree.ClassBody) {
-        // Todo: Not sure if this does what I want it to do
+    /**
+     * Finds and collects method calls by a specified method name within a given class body.
+     * This function iterates through all method definitions in the class body. For each method,
+     * it uses a simple traversal to search for call expressions that match the specified method name.
+     * If a matching call expression is found, the function extracts the value of the first argument
+     * (assuming it's an identifier) and stores both the call expression and the extracted parameter value
+     * in an array. This array is then returned, providing insights into where and how the specified method
+     * is being called within the class.
+     *
+     * @param methodName - The name of the method to search for within the class body.
+     * @param classBody - The AST representation of the class to search within.
+     * @returns An array of objects, each containing a `callExpression` and a `parameterValue`.
+     *          `callExpression` is the AST node representing the found call expression,
+     *          and `parameterValue` is the value of the first argument passed to the call expression.
+     */
+    findMethodCallsFromMethodNameAndClassBody(methodName: string, classBody: TSESTree.ClassDeclaration) {
         let methodCalls: { callExpression: TSESTree.CallExpression, parameterValue: string }[] = [];
-        for (const methodNode of classBody.body) {
+        for (const methodNode of classBody.body.body) {
             if (methodNode.type === 'MethodDefinition' && methodNode.key.type === 'Identifier') {
                 simpleTraverse(methodNode, {
                     enter: (node) => {
                         if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression' && node.callee.property.type === 'Identifier' &&
                             node.callee.property.name === methodName && node.arguments[0].type === 'Identifier') {
-                            let parameterValue = this.getMethodVariableValueFromNameAndMethod(node.arguments[0].name, methodNode);
+                            let parameterValue = this.getMethodVariableValueFromNameAndMethod(node.arguments[0].name, methodNode, classBody);
                             methodCalls.push({ callExpression: node, parameterValue: parameterValue });
                         }
                     }
@@ -218,7 +242,7 @@ export class Postprocessor {
     }
 
     getMemberExpressionValueFromName(name: string) {
-        let memberExpression = '';
+        let memberExpression = 'Unknown URL';
         simpleTraverse(this.ast, {
             enter(node) {
                 if (node.type === 'PropertyDefinition' && node.value?.type === 'Literal' && node.key.type === 'Identifier' && node.value.value) {
@@ -232,7 +256,7 @@ export class Postprocessor {
     }
 
     getMemberExpressionTypeFromName(name: string) {
-        let memberExpressionType = '';
+        let memberExpressionType = 'Unknown Type';
         simpleTraverse(this.ast, {
             enter: (node) => {
                 if (node.type === 'PropertyDefinition' && node.value?.type === 'Literal' && node.key.type === 'Identifier' && node.value.value && node.key.name === name) {
@@ -247,8 +271,8 @@ export class Postprocessor {
         return memberExpressionType;
     }
 
-    getMethodVariableValueFromNameAndMethod(name: string, method: TSESTree.MethodDefinition) {
-        let methodVariableValue = '';
+    getMethodVariableValueFromNameAndMethod(name: string, method: TSESTree.MethodDefinition, classBody: TSESTree.ClassDeclaration) {
+        let methodVariableValue = 'Unknown URL';
         simpleTraverse(method, {
             enter: (node) => {
                 if (node.type === 'VariableDeclaration') {
@@ -257,7 +281,7 @@ export class Postprocessor {
                             if (decl.init?.type === 'Literal' && decl.init.value) {
                                 methodVariableValue = decl.init.value.toString();
                             } else if (decl.init?.type === 'TemplateLiteral') {
-                                methodVariableValue = this.evaluateTemplateLiteralExpression(decl.init);
+                                methodVariableValue = this.evaluateTemplateLiteralExpression(decl.init, classBody);
                             }
                             return;
                         }
@@ -268,4 +292,37 @@ export class Postprocessor {
         return methodVariableValue;
     }
 
+    getClassNameFromClassBody(classBody: TSESTree.ClassDeclaration) {
+        if (classBody.id?.type === 'Identifier') {
+            return classBody.id.name;
+        }
+        return 'Unknown URL';
+    }
+
+    getConstructorArgumentsFromClassBody(classBody: TSESTree.ClassBody) {
+        for (let node of classBody.body) {
+            if (node.type === 'MethodDefinition' && node.key.type === 'Identifier' && node.key.name === 'constructor') {
+                return node.value.params;
+            }
+        }
+
+        return [];
+    }
+
+    evaluateMemberVariableFromConstructorCall(classBody: TSESTree.ClassDeclaration, memberExprKey: string) {
+        const superClass = Preprocessor.PREPROCESSING_RESULTS.get(this.getClassNameFromClassBody(classBody));
+        if (superClass) {
+            const constructorArguments = this.getConstructorArgumentsFromClassBody(classBody.body);
+            for (let superConstructorCallArguments of superClass.superConstructorCalls) {
+                for (let i = 0; i < superConstructorCallArguments.arguments.length; i++) {
+                    let constructorArgument = constructorArguments[i];
+                    if (superConstructorCallArguments.arguments[i] !== '' && constructorArgument.type === 'TSParameterProperty'
+                    && constructorArgument.parameter.type === 'Identifier' && constructorArgument.parameter.name === memberExprKey) {
+                        return superConstructorCallArguments.arguments[i];  // Todo: this should return a string[] containing all the possible values
+                    }
+                }
+            }
+        }
+        return 'Unknown URL';
+    }
 }

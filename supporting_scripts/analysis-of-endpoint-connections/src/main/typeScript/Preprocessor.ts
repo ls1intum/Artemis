@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 interface SuperClass {
     name: string;
     path: string;
+    superConstructorCalls: { arguments: string[] }[];
     childClasses: ChildClass[];
 }
 
@@ -27,12 +28,12 @@ interface MemberVariable {
 
 
 export class Preprocessor {
-    public static PREPROCESSING_RESULTS = new Map();
+    public static PREPROCESSING_RESULTS = new Map<string, SuperClass>();
     public static readonly pathPrefix = '../../../../../'
     private readonly directoryPrefix = 'src/main/webapp/';
     private readonly fileToPreprocess: string;
     private ast: TSESTree.Program;
-    private superClassMap: Map<string, SuperClass> = new Map<string, SuperClass>();
+
     private memberVariables: Map<string, MemberVariable> = new Map<string, MemberVariable>();
 
     constructor(fileToPreprocess: string) {
@@ -60,6 +61,7 @@ export class Preprocessor {
         if (classDeclaration.superClass) {
             let superClass = classDeclaration.superClass;
             this.identifySuperClass(classDeclaration);
+
         }
 
         classDeclaration.body.body.forEach((node) => {
@@ -106,10 +108,11 @@ export class Preprocessor {
     evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression) { // todo: finish implementation
         let left = binaryExpression.left;
         let right = binaryExpression.right;
+        let result = '';
         [left, right].forEach((node) => {
             let parameterValue = '';
             if (node.type === 'MemberExpression') {
-                if(node.object.type === 'Identifier' && node.property.type === 'Identifier') {
+                if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
                     let parameterObjectName = node.object.name;
                     let parameterName = node.property.name;
                     parameterValue = this.findParameterValueByParameterNameAndFilePath(parameterName, this.identifyImportedClassByName(parameterObjectName));
@@ -120,13 +123,14 @@ export class Preprocessor {
                 } else if (node.object.type === 'Literal' && node.object.value) {
                     parameterValue = node.object.value.toString();
                 }
+                result += parameterValue;
+            } else if (node.type === 'Literal' && node.value) {
+                result += node.value.toString();
             }
         });
-    }
 
-    // evaluateIdentifierInSuperConstructorCall(identifier: TSESTree.Identifier) {
-    //
-    // }
+        return result;
+    }
 
     /**
      * Identifies and stores member variables of a class.
@@ -141,8 +145,8 @@ export class Preprocessor {
     identifyMemberVariablesFromClassBody(classDeclaration: TSESTree.ClassDeclaration) {
         classDeclaration.body.body.forEach((node) => {
             if (node.type === 'PropertyDefinition' && node.key.type === 'Identifier') {
-                if (node.value?.type === 'Literal') {
-                    this.memberVariables.set(node.key.name, { name: node.key.name, type: 'string', value: node.value.value!.toString() });
+                if (node.value?.type === 'Literal' && node.value.value) {
+                    this.memberVariables.set(node.key.name, { name: node.key.name, type: 'string', value: node.value.value.toString() });
                 } else if (node.value?.type === 'TemplateLiteral') {
                     this.memberVariables.set(node.key.name, { name: node.key.name, type: 'string' });
                 }
@@ -188,7 +192,7 @@ export class Preprocessor {
      * If a superclass is identified, the method retrieves its name and the path to its definition.
      * It then constructs a `ChildClass` object containing information about the current class, such as its name,
      * an empty map for member variables, and an empty array for parent method calls.
-     * This `ChildClass` object is added to the `superClassMap`, which tracks the relationships between superclasses
+     * This `ChildClass` object is added to the `PREPROCESSING_RESULTS`, which track the relationships between superclasses
      * and their child classes. If the superclass is already present in the map, the current class is added to its
      * list of child classes. Otherwise, a new entry for the superclass is created in the map.
      * Finally, the method calls `identifySuperConstructorCalls` to process any calls to the superclass constructor
@@ -204,37 +208,50 @@ export class Preprocessor {
             superClassPath = this.identifyImportedClassByName(superClassName);
             let childClassName = classDeclaration.id!.name;
             let childClass = { superClass: superClassName, name: childClassName, memberVariables: this.memberVariables, parentMethodCalls: [] };
-            if (this.superClassMap.has(superClassName)) {
-                this.superClassMap.get(superClassName)?.childClasses.push(childClass);
-            } else {
-                this.superClassMap.set(superClassName, { name: superClassName, path: superClassPath, childClasses: [childClass] });
-            }
 
-            this.identifySuperConstructorCalls(classDeclaration, superClassName)
+            let superConstructorCall = this.identifySuperConstructorCalls(classDeclaration, superClassName);
+
+            if (Preprocessor.PREPROCESSING_RESULTS.has(superClassName)) {
+                Preprocessor.PREPROCESSING_RESULTS.get(superClassName)?.childClasses.push(childClass);
+                Preprocessor.PREPROCESSING_RESULTS.get(superClassName)?.superConstructorCalls.concat(... superConstructorCall)
+            } else {
+                Preprocessor.PREPROCESSING_RESULTS.set(superClassName, { name: superClassName, path: superClassPath, childClasses: [childClass], superConstructorCalls: superConstructorCall});
+            }
         }
     }
 
     identifySuperConstructorCalls(classDeclaration: TSESTree.ClassDeclaration, superClassName: string) {
+        let result: {arguments: string[]}[]= [];
         classDeclaration.body.body.forEach((node) => {
             if (node.type === 'MethodDefinition' && node.kind === 'constructor' && node.value.type === 'FunctionExpression') {
                 node.value.body.body.forEach((statement) => {
                     if (statement.type === 'ExpressionStatement' && statement.expression.type === 'CallExpression' && statement.expression.callee.type === 'Super') {
                         let superConstructorCall = statement.expression;
                         let superConstructorCallParameters = superConstructorCall.arguments;
+                        let superConstructorCallParameterValues: string[] = [];
                         superConstructorCallParameters.forEach((parameter) => {
                             // Todo: Find the parameter values and store them in the according array
-                            let parameterValue = this.evaluateCallExpressionArgument(parameter);
+                            superConstructorCallParameterValues.push(this.evaluateCallExpressionArgument(parameter));
                         });
+                        result.push({arguments: superConstructorCallParameterValues});
                     }
                 })
             }
         });
+
+        return result;
     }
 
     evaluateCallExpressionArgument(callExpressionArgument: TSESTree.CallExpressionArgument) {
+        let result = '';
         if (callExpressionArgument.type === 'Identifier') {
-            this.evaluateIdentifierArgument(callExpressionArgument);
+            result = this.evaluateIdentifierArgument(callExpressionArgument)!;
+        } else if (callExpressionArgument.type === 'BinaryExpression') {
+            result = this.evaluateBinaryExpression(callExpressionArgument);
+        } else if (callExpressionArgument.type === 'Literal' && callExpressionArgument.value) {
+            result = callExpressionArgument.value.toString();
         }
+        return result? result : '';
     }
 
     evaluateIdentifierArgument(identifier: TSESTree.Identifier) {
