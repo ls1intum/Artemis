@@ -1,31 +1,23 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, Event, NavigationEnd, Router } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { LectureService } from 'app/lecture/lecture.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { LANGUAGES } from 'app/core/language/language.constants';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import {
     faBars,
     faBell,
@@ -53,9 +45,7 @@ import {
     faUserPlus,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -141,28 +131,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private lastRouteUrlSegment?: string;
 
     constructor(
+        public guidedTourService: GuidedTourService,
+        private accountService: AccountService,
         private loginService: LoginService,
         private translateService: TranslateService,
-        private languageHelper: JhiLanguageHelper,
-        private localeConversionService: LocaleConversionService,
-        private sessionStorage: SessionStorageService,
-        private accountService: AccountService,
         private profileService: ProfileService,
         private participationWebsocketService: ParticipationWebsocketService,
-        public guidedTourService: GuidedTourService,
         private router: Router,
         private route: ActivatedRoute,
         private examParticipationService: ExamParticipationService,
         private serverDateService: ArtemisServerDateService,
         private alertService: AlertService,
-        private courseManagementService: CourseManagementService,
         private exerciseService: ExerciseService,
-        private exerciseHintService: ExerciseHintService,
-        private apollonDiagramService: ApollonDiagramService,
-        private lectureService: LectureService,
-        private examService: ExamManagementService,
-        private organisationService: OrganizationManagementService,
-        public themeService: ThemeService,
         private entityTitleService: EntityTitleService,
         private titleService: Title,
         private featureToggleService: FeatureToggleService,
@@ -448,6 +428,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.lastRouteUrlSegment = segment;
                 }
             }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             /* empty */
         }

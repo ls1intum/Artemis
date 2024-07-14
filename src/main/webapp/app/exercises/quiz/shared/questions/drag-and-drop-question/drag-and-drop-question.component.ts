@@ -19,10 +19,11 @@ polyfill({
 });
 
 // Drag-enter listener for mobile devices: without this code, mobile drag and drop will not work correctly!
+// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 (event: any) => {
     event.preventDefault();
 };
-/* eslint-enable */
+
 window.addEventListener('touchmove', () => {}, { passive: false });
 
 enum MappingResult {

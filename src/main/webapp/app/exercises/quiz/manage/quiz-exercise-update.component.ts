@@ -556,7 +556,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return [];
         }
         // Release Date valid but lies in the past
-        // eslint-disable-next-line no-constant-condition
+
         if (false /*this.quizExercise.isPlannedToStart*/) {
             // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
             if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {

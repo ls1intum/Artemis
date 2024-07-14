@@ -157,6 +157,7 @@ export class AdminImportStandardizedCompetenciesComponent {
 
         try {
             this.importData = JSON.parse(this.fileReader.result as string);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileSyntax');
         }
@@ -166,6 +167,7 @@ export class AdminImportStandardizedCompetenciesComponent {
                 this.importCount.knowledgeAreas -= 1;
                 this.dataSource.data = this.importData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
             }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             this.importData = undefined;
             this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileStructure');

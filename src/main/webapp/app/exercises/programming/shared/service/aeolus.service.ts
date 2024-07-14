@@ -74,6 +74,7 @@ export class AeolusService {
             delete windFile['scriptActions'];
             windFile.actions = actions;
             return windFile;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (SyntaxError) {
             return undefined;
         }

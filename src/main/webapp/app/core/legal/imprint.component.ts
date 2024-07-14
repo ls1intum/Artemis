@@ -45,6 +45,7 @@ export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
                 if (fragment !== null) {
                     fragment.scrollIntoView();
                 }
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (e) {
                 /* empty */
             }
