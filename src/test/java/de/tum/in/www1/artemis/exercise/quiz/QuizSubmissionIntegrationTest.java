@@ -35,7 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -62,17 +61,13 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -84,12 +79,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private static final int NUMBER_OF_STUDENTS = 4;
 
     private static final int NUMBER_OF_TUTORS = 1;
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private QuizExerciseService quizExerciseService;
@@ -107,19 +96,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private SubmissionRepository submissionRepository;
 
     @Autowired
-    private ResultRepository resultRepository;
-
-    @Autowired
     private QuizBatchService quizBatchService;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -224,12 +204,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     void testQuizSubmit_partial_points() {
         QuizExercise quizExercise = setupQuizExerciseParameters();
         // force getting partial points
-        quizExercise.getQuizQuestions().get(0).setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+        quizExercise.getQuizQuestions().getFirst().setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
         quizExercise.getQuizQuestions().get(1).score(1);
         quizExercise.getQuizQuestions().get(2).score(1);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
 
@@ -638,7 +618,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         assertThat(results).hasSize(1);
-        var result = results.get(0);
+        var result = results.getFirst();
 
         assertThat(result.getScore()).isEqualTo(11.1);
 
@@ -679,7 +659,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         assertThat(results).hasSize(1);
-        var result = results.get(0);
+        var result = results.getFirst();
 
         double expectedScore = switch (scoringType) {
             case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> 0;
@@ -712,13 +692,13 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().getFirst();
         ShortAnswerSubmittedAnswer submittedAnswer = new ShortAnswerSubmittedAnswer();
         submittedAnswer.setQuizQuestion(saQuestion);
         List<ShortAnswerSpot> spots = saQuestion.getSpots();
 
         ShortAnswerSubmittedText text = new ShortAnswerSubmittedText();
-        text.setSpot(spots.get(0));
+        text.setSpot(spots.getFirst());
         char[] chars = new char[(int) (Constants.MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH + (tooLarge ? 1 : 0))];
         Arrays.fill(chars, 'a');
         text.setText(new String(chars));

@@ -307,3 +307,17 @@ jhi-secured-image {
 .dropdown-toggle::after {
     display: none;
 }
+
+@media print {
+    mat-sidenav {
+        display: none; /* Hide the sidebar */
+    }
+
+    .mat-drawer-container,
+    .mat-drawer-container.container-closed {
+        .mat-drawer-content {
+            margin-left: 0 !important; /* Remove any left margin or padding if necessary */
+            width: 100% !important; /* Make the content full width */
+        }
+    }
+}

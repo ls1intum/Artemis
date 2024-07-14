@@ -181,7 +181,7 @@ class ObjectMethodTest {
             tests.add(dynamicTest(GENERATE_TESTS, () -> fail("No id test values found for " + idType)));
         }
         else {
-            var idA = testValues.get(0);
+            var idA = testValues.getFirst();
             var idB = testValues.get(1);
 
             if (isClassNotExcludedFrom(domainClass, ID_GET_AND_SET)) {

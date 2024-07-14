@@ -15,21 +15,27 @@ export class LearningPathNavigationService {
 
     readonly isCurrentLearningObjectCompleted: WritableSignal<boolean> = signal(false);
 
-    async loadInitialLearningPathNavigation(learningPathId: number): Promise<void> {
-        this.isLoading.set(true);
-        await this.loadLearningPathNavigation(learningPathId, undefined);
-        this.isLoading.set(false);
+    async loadLearningPathNavigation(learningPathId: number): Promise<void> {
+        try {
+            this.isLoading.set(true);
+            const learningPathNavigation = await this.learningPathApiService.getLearningPathNavigation(learningPathId);
+            this.learningPathNavigation.set(learningPathNavigation);
+        } catch (error) {
+            this.alertService.error(error);
+        } finally {
+            this.isLoading.set(false);
+        }
     }
 
     async loadRelativeLearningPathNavigation(learningPathId: number, selectedLearningObject: LearningPathNavigationObjectDTO): Promise<void> {
-        await this.loadLearningPathNavigation(learningPathId, selectedLearningObject);
-    }
-
-    private async loadLearningPathNavigation(learningPathId: number, selectedLearningObject: LearningPathNavigationObjectDTO | undefined): Promise<void> {
         try {
-            const learningPathNavigation = await this.learningPathApiService.getLearningPathNavigation(learningPathId, selectedLearningObject?.id, selectedLearningObject?.type);
+            const learningPathNavigation = await this.learningPathApiService.getRelativeLearningPathNavigation(
+                learningPathId,
+                selectedLearningObject.id,
+                selectedLearningObject.type,
+                selectedLearningObject.competencyId,
+            );
             this.learningPathNavigation.set(learningPathNavigation);
-            this.setCurrentLearningObjectCompletion(selectedLearningObject?.completed ?? false);
         } catch (error) {
             this.alertService.error(error);
         }
