@@ -22,23 +22,7 @@
                         <div jhiExerciseDetail [detail]="detail"></div>
                     }
                     @case (DetailType.Link) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            @if (detail.data.text) {
-                                @if (detail.data.routerLink?.length) {
-                                    <a [routerLink]="detail.data.routerLink" [queryParams]="detail.data.queryParams">
-                                        {{ detail.data.text }}
-                                    </a>
-                                } @else if (detail.data.href) {
-                                    <a href="{{ detail.data.href }}">
-                                        {{ detail.data.text }}
-                                    </a>
-                                } @else {
-                                    <span>{{ detail.data.text }}</span>
-                                }
-                            } @else {
-                                <ng-container *ngTemplateOutlet="noData" />
-                            }
-                        </dd>
+                        <div jhiExerciseDetail [detail]="detail"></div>
                     }
                     @case (DetailType.Boolean) {
                         <dd id="detail-value-{{ detail.title }}">

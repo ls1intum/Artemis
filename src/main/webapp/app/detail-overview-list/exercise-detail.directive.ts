@@ -3,6 +3,7 @@ import type { Detail, ShownDetail } from 'app/detail-overview-list/detail.model'
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TextDetailComponent } from 'app/detail-overview-list/components/text-detail.component';
 import { DateDetailComponent } from 'app/detail-overview-list/components/date-detail.component';
+import { LinkDetailComponent } from 'app/detail-overview-list/components/link-detail.component';
 
 @Directive({
     selector: '[jhiExerciseDetail]',
@@ -24,6 +25,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
         const detailTypeToComponent = {
             [DetailType.Text]: TextDetailComponent,
             [DetailType.Date]: DateDetailComponent,
+            [DetailType.Link]: LinkDetailComponent,
         };
 
         const detailComponent = detailTypeToComponent[this.detail.type];
