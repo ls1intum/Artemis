@@ -270,7 +270,7 @@ export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
     }
 }
 
-export function resetDates(exercise: Exercise) {
+export function resetForImport(exercise: Exercise) {
     exercise.releaseDate = undefined;
     exercise.startDate = undefined;
     exercise.dueDate = undefined;
@@ -280,4 +280,6 @@ export function resetDates(exercise: Exercise) {
     // without dates set, they can only be false
     exercise.allowComplaintsForAutomaticAssessments = false;
     exercise.allowFeedbackRequests = false;
+
+    exercise.competencies = [];
 }

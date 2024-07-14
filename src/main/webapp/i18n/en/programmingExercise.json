@@ -371,7 +371,8 @@
                 "successMessageRepo": "Export of repo was successful. The exported zip file is currently being downloaded.",
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
                 "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded.",
-                "notFoundMessageRepos": "No repos exported for exercise {{exerciseId}}: There are no submissions from the given students."
+                "notFoundMessageRepos": "No repos exported for exercise {{exerciseId}}: There are no submissions from the given students.",
+                "errorMessageRepo": "Export of repo failed. The requested repository does not exist."
             },
             "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
@@ -477,7 +478,7 @@
                 "invalidRepositoryName": "A repository with that name already exists in this exercise!",
                 "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
                 "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
-                "warning": "Auxiliary repositories can be added, edited and removed. Changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
+                "warning": "Auxiliary repositories can be added, edited and removed. Edit-Changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
                 "editedWarning": "You changed the auxiliary repositories. These changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
                 "editedWarningLocalCI": "You changed the auxiliary repositories. These changes in Artemis do not carry over to the VCS and the build script must be adjusted manually.",
                 "repositoryNameRequired": {

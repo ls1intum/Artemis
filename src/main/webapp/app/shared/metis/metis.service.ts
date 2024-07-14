@@ -274,6 +274,7 @@ export class MetisService implements OnDestroy {
                     const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === updatedAnswerPost.id) ?? -1;
                     if (indexOfAnswer > -1) {
                         updatedAnswerPost.post = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
+                        updatedAnswerPost.authorRole = this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer].authorRole;
                         this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = updatedAnswerPost;
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
@@ -560,7 +561,6 @@ export class MetisService implements OnDestroy {
             return;
         }
 
-        postDTO.post.answers = this.cachedPosts.find((post) => post.id === postDTO.post.id)?.answers ?? postDTO.post.answers;
         postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
         postDTO.post.answers?.forEach((answer: AnswerPost) => {
             answer.creationDate = dayjs(answer.creationDate);
@@ -597,6 +597,14 @@ export class MetisService implements OnDestroy {
             case MetisPostAction.UPDATE:
                 const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToUpdate > -1) {
+                    // WebSocket does not currently update the author and authorRole of posts correctly, so this is implemented as a workaround
+                    postDTO.post.authorRole = this.cachedPosts[indexToUpdate].authorRole;
+                    postDTO.post.answers?.forEach((answer: AnswerPost) => {
+                        const cachedAnswer = this.cachedPosts[indexToUpdate].answers?.find((a) => a.id === answer.id);
+                        if (cachedAnswer) {
+                            answer.authorRole = cachedAnswer.authorRole;
+                        }
+                    });
                     this.cachedPosts[indexToUpdate] = postDTO.post;
                 }
                 this.addTags(postDTO.post.tags);
