@@ -48,7 +48,7 @@ export interface TextDetail extends DetailBase {
     data: { text?: string | number };
 }
 
-interface DateDetail extends DetailBase {
+export interface DateDetail extends DetailBase {
     type: DetailType.Date;
     data: { date?: dayjs.Dayjs };
 }
@@ -88,14 +88,13 @@ interface ProgrammingRepositoryButtonsDetail extends DetailBase {
     data: {
         exerciseId?: number;
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
-        showOpenLink?: boolean;
         type: ProgrammingExerciseInstructorRepositoryType;
     };
 }
 
 interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase {
     type: DetailType.ProgrammingAuxiliaryRepositoryButtons;
-    data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number; showOpenLink?: boolean };
+    data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number };
 }
 
 interface ProgrammingTestStatusDetail extends DetailBase {
