@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { Exercise, ExerciseType, resetDates } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, resetForImport } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
@@ -9,6 +9,7 @@ import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { BuildLogStatisticsDTO } from 'app/entities/build-log-statistics-dto';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export class BuildAction {
     name: string;
@@ -146,10 +147,11 @@ export class ProgrammingExercise extends Exercise {
     }
 }
 
-export function resetProgrammingDates(exercise: ProgrammingExercise) {
-    resetDates(exercise);
+export function resetProgrammingForImport(exercise: ProgrammingExercise) {
+    resetForImport(exercise);
 
     // without dates set, they have to be reset as well
     exercise.releaseTestsWithExampleSolution = false;
     exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+    exercise.assessmentType = AssessmentType.AUTOMATIC;
 }

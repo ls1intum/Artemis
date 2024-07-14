@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingDates } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -560,7 +560,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.isExamMode = false;
         }
         this.loadCourseExerciseCategories(courseId);
-        resetProgrammingDates(this.programmingExercise);
+        resetProgrammingForImport(this.programmingExercise);
 
         this.programmingExercise.projectKey = undefined;
         if (this.programmingExercise.submissionPolicy) {
@@ -1056,7 +1056,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.programmingExercise.course = undefined;
         this.programmingExercise.projectKey = undefined;
 
-        resetProgrammingDates(this.programmingExercise);
+        resetProgrammingForImport(this.programmingExercise);
 
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
         // we need to get it from the history object as setting the programming language

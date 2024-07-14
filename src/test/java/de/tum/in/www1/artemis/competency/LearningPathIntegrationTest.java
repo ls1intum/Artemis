@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.competency;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -409,11 +411,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         assertThat(learningPath.getProgress()).as("contains no completed competency").isEqualTo(0);
 
-        // force update to avoid waiting for scheduler
-        competencyProgressService.updateCompetencyProgress(createdCompetency.getId(), student);
-
-        learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        assertThat(learningPath.getProgress()).as("contains completed competency").isNotEqualTo(0);
+        verify(competencyProgressService).updateProgressByCompetencyAndUsersInCourseAsync(eq(createdCompetency));
     }
 
     /**
@@ -650,7 +648,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
-        competencyProgressService.updateProgressByLearningObject(textUnit, Set.of(student));
+        competencyProgressService.updateProgressByLearningObjectSync(textUnit, Set.of(student));
 
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
 
