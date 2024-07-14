@@ -34,7 +34,7 @@ public class TestUriParamsUtil {
         assertThat(matching).as("No URI param with name '" + name + "'").isNotEmpty();
         assertThat(matching).as("Multiple URI param with name '" + name + "'").hasSizeLessThanOrEqualTo(1);
 
-        NameValuePair param = matching.get(0);
+        NameValuePair param = matching.getFirst();
 
         if (allowValueSubString) {
             assertThat(param.getValue())

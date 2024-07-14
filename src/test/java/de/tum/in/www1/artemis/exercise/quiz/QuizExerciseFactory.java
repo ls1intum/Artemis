@@ -127,7 +127,7 @@ public class QuizExerciseFactory {
         sa.addSolution(shortAnswerSolution1);
         sa.addSolution(shortAnswerSolution2);
 
-        var mapping1 = new ShortAnswerMapping().spot(sa.getSpots().get(0)).solution(sa.getSolutions().get(0));
+        var mapping1 = new ShortAnswerMapping().spot(sa.getSpots().getFirst()).solution(sa.getSolutions().getFirst());
 
         var mapping2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
         sa.addCorrectMapping(mapping1);
@@ -311,7 +311,7 @@ public class QuizExerciseFactory {
             var submittedAnswer = new DragAndDropSubmittedAnswer();
             submittedAnswer.setQuizQuestion(question);
 
-            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
+            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().getFirst();
             dragItem1.setQuestion((DragAndDropQuestion) question);
 
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
@@ -323,7 +323,7 @@ public class QuizExerciseFactory {
             DragItem dragItem4 = ((DragAndDropQuestion) question).getDragItems().get(3);
             dragItem4.setQuestion((DragAndDropQuestion) question);
 
-            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
+            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().getFirst();
             dropLocation1.setQuestion((DragAndDropQuestion) question);
 
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
@@ -553,7 +553,7 @@ public class QuizExerciseFactory {
      */
     public static QuizSubmission generateSubmissionForThreeQuestions(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
         QuizSubmission quizSubmission = new QuizSubmission();
-        QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
+        QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().getFirst();
         QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
         QuizQuestion quizQuestion3 = quizExercise.getQuizQuestions().get(2);
         quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion1, studentID % 2 == 0));
@@ -586,7 +586,7 @@ public class QuizExerciseFactory {
             var submittedAnswer = new DragAndDropSubmittedAnswer();
             submittedAnswer.setQuizQuestion(question);
 
-            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
+            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().getFirst();
             dragItem1.setQuestion((DragAndDropQuestion) question);
 
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
@@ -595,7 +595,7 @@ public class QuizExerciseFactory {
             DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
             dragItem3.setQuestion((DragAndDropQuestion) question);
 
-            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
+            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().getFirst();
             dropLocation1.setQuestion((DragAndDropQuestion) question);
 
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);

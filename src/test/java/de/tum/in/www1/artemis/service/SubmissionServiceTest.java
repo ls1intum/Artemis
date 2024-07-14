@@ -136,7 +136,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam = examRepository.save(exam);
 
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
-        examTextExercise = (TextExercise) exam.getExerciseGroups().get(0).getExercises().stream().filter(ex -> ex instanceof TextExercise).findAny().orElse(null);
+        examTextExercise = (TextExercise) exam.getExerciseGroups().getFirst().getExercises().stream().filter(ex -> ex instanceof TextExercise).findAny().orElse(null);
         examModelingExercise = (ModelingExercise) exam.getExerciseGroups().get(3).getExercises().stream().filter(ex -> ex instanceof ModelingExercise).findAny().orElse(null);
         examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findAny()
                 .orElse(null);
@@ -324,7 +324,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor2).contains(submission1);
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).isEmpty();
@@ -355,7 +355,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).isEmpty();
@@ -384,11 +384,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).hasSize(1);
-        assertThat(submissionListTutor2CorrectionRound1.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor2CorrectionRound1.getFirst()).isEqualTo(submission1);
 
     }
 
@@ -420,11 +420,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).hasSize(1);
-        assertThat(submissionListTutor2CorrectionRound1.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor2CorrectionRound1.getFirst()).isEqualTo(submission1);
     }
 
     @Test
@@ -477,7 +477,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor2).contains(submission1);
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
 
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
@@ -509,7 +509,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).isEmpty();
@@ -538,11 +538,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).hasSize(1);
-        assertThat(submissionListTutor2CorrectionRound1.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor2CorrectionRound1.getFirst()).isEqualTo(submission1);
 
     }
 
@@ -572,11 +572,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).hasSize(1);
-        assertThat(submissionListTutor2CorrectionRound1.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor2CorrectionRound1.getFirst()).isEqualTo(submission1);
     }
 
     @Test
@@ -692,7 +692,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         List<Feedback> newFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
 
         assertThat(newFeedbacks).isEqualTo(newResult.getFeedbacks()).hasSameSizeAs(oldFeedbacks);
-        assertThat(newFeedbacks.get(0).isPositive()).isTrue();
+        assertThat(newFeedbacks.getFirst().isPositive()).isTrue();
         assertThat(newFeedbacks.get(1).isPositive()).isTrue();
         assertThat(newFeedbacks.get(2).isPositive()).isTrue();
         assertThat(newFeedbacks.get(2).getCredits()).isZero();
