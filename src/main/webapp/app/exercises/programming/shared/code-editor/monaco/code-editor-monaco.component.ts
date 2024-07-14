@@ -160,7 +160,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
         const code = this.fileSession[fileName].code;
         this.binaryFileSelected = this.fileTypeService.isBinaryContent(code);
 
-        if (!this.binaryFileSelected) {
+        // Since fetching the file may take some time, we need to check if the file is still selected.
+        if (!this.binaryFileSelected && this.selectedFile === fileName) {
             this.editor.changeModel(fileName, code);
             this.editor.setPosition(this.fileSession[fileName].cursor);
         }
