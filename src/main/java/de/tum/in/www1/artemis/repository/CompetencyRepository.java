@@ -17,7 +17,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
@@ -117,14 +116,6 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             """)
     @Cacheable(cacheNames = "competencyTitle", key = "#competencyId", unless = "#result == null")
     String getCompetencyTitle(@Param("competencyId") long competencyId);
-
-    @Query("""
-            SELECT c
-            FROM Competency c
-                LEFT JOIN FETCH c.learningPaths lp
-            WHERE lp = :learningPath
-            """)
-    Set<Competency> findAllByLearningPath(@Param("learningPath") LearningPath learningPath);
 
     default Competency findByIdWithExercisesElseThrow(long competencyId) {
         return getValueElseThrow(findByIdWithExercises(competencyId), competencyId);
