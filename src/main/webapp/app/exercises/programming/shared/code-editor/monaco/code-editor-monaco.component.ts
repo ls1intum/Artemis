@@ -88,14 +88,13 @@ export class CodeEditorMonacoComponent implements OnChanges {
      */
     loadingCount = 0;
 
-    static readonly FILE_TIMEOUT = 10000;
-
     fileSession: FileSession = {};
     newFeedbackLines: number[] = [];
     binaryFileSelected = false;
 
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
+    static readonly FILE_TIMEOUT = 10000;
 
     // Expose to template
     protected readonly Feedback = Feedback;
