@@ -98,7 +98,7 @@ describe('CodeEditorMonacoComponent', () => {
         comp.sessionId = 'test';
         comp.selectedFile = 'file';
         fixture.detectChanges();
-        comp.isLoading = true;
+        comp.loadingCount = 1;
         fixture.detectChanges();
         const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
@@ -108,7 +108,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should display the usable editor when a file is selected', () => {
         comp.sessionId = 'test';
         comp.selectedFile = 'file';
-        comp.isLoading = false;
+        comp.loadingCount = 0;
         comp.isTutorAssessment = false;
         fixture.detectChanges();
         const element = document.getElementById('monaco-editor-test');
