@@ -113,7 +113,6 @@
             "templateBuildPlanId": "Template Build Plan Id",
             "solutionBuildPlanId": "Solution Build Plan Id",
             "repositories": "Repositories",
-            "openRepository": "Open Repository",
             "buildplans": "Build Plans",
             "buildplan": "Build Plan",
             "buildConfiguration": "Build Configuration",
