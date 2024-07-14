@@ -188,6 +188,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
                 programmingExercise.setTemplateParticipation(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(programmingExercise.getId()));
             }
             String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUri());
+            // saved
             programmingExercise.getBuildConfig().setBranch(branch);
             programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
             programmingExerciseRepository.save(programmingExercise);

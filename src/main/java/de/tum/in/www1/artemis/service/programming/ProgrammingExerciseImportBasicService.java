@@ -137,6 +137,7 @@ public class ProgrammingExerciseImportBasicService {
 
         if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
+            // saved
             newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalBuildConfig.getBuildPlanConfiguration());
         }
 
@@ -205,7 +206,7 @@ public class ProgrammingExerciseImportBasicService {
         if (originalProgrammingExercise.hasBuildPlanAccessSecretSet()) {
             newProgrammingExercise.generateAndSetBuildPlanAccessSecret();
         }
-
+        // saved
         newProgrammingExercise.getBuildConfig().setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
     }
 
