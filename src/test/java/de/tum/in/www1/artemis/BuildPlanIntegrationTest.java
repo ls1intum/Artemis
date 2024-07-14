@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -27,6 +28,9 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private BuildPlanRepository buildPlanRepository;
@@ -52,11 +56,14 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        var buildConfig = new ProgrammingExerciseBuildConfig();
         programmingExercise.getBuildConfig().setProjectType(ProjectType.MAVEN_MAVEN);
         programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
         programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+
+        programmingExercise.setBuildConfig(buildConfig);
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
