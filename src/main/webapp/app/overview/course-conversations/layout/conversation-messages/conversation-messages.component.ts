@@ -217,7 +217,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.openThread.emit(post);
     }
     handleScrollOnNewMessage = () => {
-        if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop <= this.messagesContainerHeight) {
+        if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
     };
