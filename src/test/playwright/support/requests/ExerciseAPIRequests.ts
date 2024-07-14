@@ -322,7 +322,6 @@ export class ExerciseAPIRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
         let newModelingExercise;
-
         if (body.hasOwnProperty('course')) {
             newModelingExercise = Object.assign({}, templateCopy, dates, body);
         } else {

@@ -113,15 +113,12 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // reference closing tag: [/referenceType] (wrapped between 3 characters)
                     // referenceStr: string to be displayed for the reference
                     // linkToReference: link to be navigated to on reference click
-
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
-
                     linkToReference = [this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex))];
                 } else if (ReferenceType.ATTACHMENT === referenceType || ReferenceType.ATTACHMENT_UNITS === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click
                     // attachmentRefDir: directory of the attachment
-
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
                     const attachmentRefDir = this.ATTACHMENT_DIR;
                     attachmentToReference =
@@ -129,24 +126,19 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                 } else if (ReferenceType.SLIDE === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // slideToReference: location of attachment to be opened on reference click
-
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
                     const attachmentUnitRefDir = this.ATTACHMENT_DIR;
                     slideToReference =
                         attachmentUnitRefDir + this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
                 } else if (ReferenceType.USER === referenceType) {
                     // referenceStr: string to be displayed for the reference
-
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
-
                     queryParams = {
                         referenceUserLogin: this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)),
                     } as Params;
                 } else if (ReferenceType.CHANNEL === referenceType) {
                     // referenceStr: string to be displayed for the reference
-
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
-
                     const channelId = parseInt(this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)));
                     queryParams = {
                         channelId: isNaN(channelId) ? undefined : channelId,

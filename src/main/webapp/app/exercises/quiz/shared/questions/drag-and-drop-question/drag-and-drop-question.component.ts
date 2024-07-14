@@ -23,7 +23,6 @@ polyfill({
 (event: any) => {
     event.preventDefault();
 };
-
 window.addEventListener('touchmove', () => {}, { passive: false });
 
 enum MappingResult {

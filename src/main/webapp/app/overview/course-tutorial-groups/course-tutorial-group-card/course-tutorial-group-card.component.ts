@@ -7,7 +7,6 @@ import { Course, isMessagingEnabled } from 'app/entities/course.model';
     selector: 'jhi-course-tutorial-group-card',
     templateUrl: './course-tutorial-group-card.component.html',
     styleUrls: ['./course-tutorial-group-card.component.scss'],
-
     host: { class: 'card tutorial-group-card' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
