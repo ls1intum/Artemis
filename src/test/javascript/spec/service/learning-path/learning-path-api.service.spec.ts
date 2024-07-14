@@ -1,7 +1,8 @@
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningObjectType } from 'app/entities/competency/learning-path.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('LearningPathApiService', () => {
     let httpClient: HttpTestingController;
@@ -14,8 +15,8 @@ describe('LearningPathApiService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [LearningPathApiService],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), LearningPathApiService],
         });
 
         learningPathApiService = TestBed.inject(LearningPathApiService);

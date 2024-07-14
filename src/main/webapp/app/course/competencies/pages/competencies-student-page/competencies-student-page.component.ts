@@ -24,12 +24,15 @@ export class CompetenciesStudentPageComponent {
 
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly alertService = inject(AlertService);
+
     private readonly competencyApiService = inject(CompetencyApiService);
     private readonly prerequisiteApiService = inject(PrerequisiteApiService);
+
     private readonly courseOverviewService = inject(CourseOverviewService);
 
-    readonly collapseState = signal(<CollapseState>{
+    readonly collapseState = signal<CollapseState>({
         competencies: true,
+        prerequisites: false,
     }).asReadonly();
 
     private readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
@@ -41,7 +44,7 @@ export class CompetenciesStudentPageComponent {
     readonly prerequisites = signal<Prerequisite[]>([]);
 
     constructor() {
-        // Fetch competencies when the course id is available
+        // Fetch data when the course id is available
         effect(() => this.loadData(this.courseId()), { allowSignalWrites: true });
     }
 
