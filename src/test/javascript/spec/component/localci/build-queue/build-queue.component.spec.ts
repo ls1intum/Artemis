@@ -574,7 +574,7 @@ describe('BuildQueueComponent', () => {
         for (const finishedBuildJob of component.finishedBuildJobs) {
             const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
             if (buildDuration && buildCompletionDate && buildStartDate) {
-                expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3));
+                expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
             }
         }
     });
