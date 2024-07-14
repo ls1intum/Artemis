@@ -149,7 +149,7 @@ test.describe('Programming exercise participation', () => {
             await page.waitForURL(/\/courses/);
             await courseList.openCourse(course.id!);
             await courseOverview.openExercise(exercise.title!);
-            await expect(programmingExerciseOverview.getCloneRepositoryButton()).not.toBeVisible();
+            await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
         });
 
         test('Students without a team can not participate in the team exercise', async ({ login, page, courseList, courseOverview, programmingExerciseOverview }) => {
@@ -159,7 +159,7 @@ test.describe('Programming exercise participation', () => {
             await courseOverview.openExercise(exercise.title!);
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('No team yet')).toBeVisible();
             await expect(courseOverview.getStartExerciseButton(exercise.id!)).not.toBeVisible();
-            await expect(programmingExerciseOverview.getCloneRepositoryButton()).not.toBeVisible();
+            await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
         });
 
         test('Students of other teams have their own submission', async ({
@@ -180,7 +180,7 @@ test.describe('Programming exercise participation', () => {
             await page.waitForURL(/\/courses/);
             await courseList.openCourse(course.id!);
             await courseOverview.openExercise(exercise.title!);
-            await expect(programmingExerciseOverview.getCloneRepositoryButton()).not.toBeVisible();
+            await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('Not yet started')).toBeVisible();
             await courseOverview.startExercise(exercise.id!);
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('No graded result')).toBeVisible();
@@ -201,14 +201,7 @@ test.describe('Programming exercise participation', () => {
                 }
             });
 
-            test('Instructor checks the participation', async ({
-                login,
-                navigationBar,
-                courseManagement,
-                courseManagementExercises,
-                programmingExerciseRepository,
-                programmingExerciseParticipations,
-            }) => {
+            test('Instructor checks the participation', async ({ login, navigationBar, courseManagement, courseManagementExercises, programmingExerciseParticipations }) => {
                 await login(instructor);
                 await navigationBar.openCourseManagement();
                 await courseManagement.openExercisesOfCourse(course.id!);
@@ -218,8 +211,7 @@ test.describe('Programming exercise participation', () => {
                 await programmingExerciseParticipations.checkParticipationBuildPlan(participation);
                 const studentUsernames = submissions.map(({ student }) => student.username!);
                 await programmingExerciseParticipations.checkParticipationStudents(participation.id!, studentUsernames);
-
-                await programmingExerciseParticipations.openRepository(participation.id!);
+                const programmingExerciseRepository = await programmingExerciseParticipations.openRepositoryOnNewPage(participation.id!);
                 await programmingExerciseRepository.openCommitHistory();
                 const commitMessage = 'Changes by Online Editor';
                 const commits: ExerciseCommit[] = submissions.map(({ submission }) => ({ message: commitMessage, result: submission.expectedResult }));
