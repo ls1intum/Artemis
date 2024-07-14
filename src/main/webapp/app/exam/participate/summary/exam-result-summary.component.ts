@@ -102,7 +102,6 @@ export class ExamResultSummaryComponent implements OnInit {
     instructorView = false;
 
     courseId: number;
-    studentExamId: number;
 
     isTestRun = false;
     isTestExam = false;
