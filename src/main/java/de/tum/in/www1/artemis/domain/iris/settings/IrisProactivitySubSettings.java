@@ -11,8 +11,7 @@ import jakarta.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.iris.IrisEventType;
-import de.tum.in.www1.artemis.domain.iris.IrisProactiveEventStatus;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisEventSettings;
 
 /**
  * Represents the specific ingestion sub-settings of lectures for Iris.
@@ -24,29 +23,13 @@ import de.tum.in.www1.artemis.domain.iris.IrisProactiveEventStatus;
 public class IrisProactivitySubSettings extends IrisSubSettings {
 
     @OneToMany(mappedBy = "proactivitySubSettings", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private Set<IrisProactiveEventStatus> proactivityStatuses = new HashSet<>();
+    private Set<IrisEventSettings> eventSettingsList = new HashSet<>();
 
-    public Set<IrisProactiveEventStatus> getProactivityStatuses() {
-        return proactivityStatuses;
+    public Set<IrisEventSettings> getEventSettingsList() {
+        return eventSettingsList;
     }
 
-    public void setProactivityStatuses(HashSet<IrisProactiveEventStatus> proactivityStatuses) {
-        this.proactivityStatuses = proactivityStatuses;
-    }
-
-    public void setActiveFor(IrisEventType eventType) {
-        proactivityStatuses.stream().findFirst().filter(e -> e.getType() == eventType).ifPresent(selectedEvent -> selectedEvent.setActive(true));
-    }
-
-    public void setInactiveFor(IrisEventType eventType) {
-        proactivityStatuses.stream().findFirst().filter(e -> e.getType() == eventType).ifPresent(selectedEvent -> selectedEvent.setActive(false));
-    }
-
-    public void addProactiveEventStatus(IrisProactiveEventStatus event) {
-        var eventMatch = proactivityStatuses.stream().anyMatch(e -> e.getType().equals(event.getType()));
-        if (eventMatch || proactivityStatuses.contains(event)) {
-            return;
-        }
-        proactivityStatuses.add(event);
+    public void setEventSettingsList(HashSet<IrisEventSettings> proactivityStatuses) {
+        this.eventSettingsList = proactivityStatuses;
     }
 }

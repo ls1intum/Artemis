@@ -51,6 +51,17 @@ public class IrisExerciseSettings extends IrisSettings {
     }
 
     @Override
+    public IrisProactivitySubSettings getIrisProactivitySettings() {
+        // TODO: enable getting exercise level proactivity settings
+        return null;
+    }
+
+    @Override
+    public void setIrisProactivitySettings(IrisProactivitySubSettings irisProactivitySettings) {
+        // TODO: enable setting exercise level proactivity settings
+    }
+
+    @Override
     public IrisChatSubSettings getIrisChatSettings() {
         return irisChatSettings;
     }

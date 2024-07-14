@@ -525,6 +525,7 @@ public class IrisSettingsService {
             case HESTIA -> settings.irisHestiaSettings().enabled();
             case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().enabled();
             case LECTURE_INGESTION -> settings.irisLectureIngestionSettings().enabled();
+            case PROACTIVITY -> false; // TODO: Implement proactivity
         };
     }
 }
