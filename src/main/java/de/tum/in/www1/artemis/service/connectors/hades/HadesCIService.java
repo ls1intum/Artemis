@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 @Profile(PROFILE_HADES)
 public class HadesCIService extends AbstractContinuousIntegrationService {
 
-    private final Logger log = LoggerFactory.getLogger(HadesCIService.class);
+    private static final Logger log = LoggerFactory.getLogger(HadesCIService.class);
 
     private final ObjectMapper objectMapper;
 

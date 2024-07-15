@@ -14,35 +14,35 @@ import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestwiseCov
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
+/**
+ * Note: due to limitations with inheritance, we cannot declare this as a record,
+ * but we can use it in a similar way with final fields.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class HadesBuildResultNotificationDTO extends AbstractBuildResultNotificationDTO {
 
-    private String jobName;
+    private final String jobName;
 
     @JsonProperty("assignmentRepoBranchName")
-    private String assignmentRepoBranchName;
+    private final String assignmentRepoBranchName;
 
     @JsonProperty("assignmentRepoCommitHash")
-    private String assignmentRepoCommitHash;
+    private final String assignmentRepoCommitHash;
 
     @JsonProperty("testsRepoCommitHash")
-    private String testsRepoCommitHash;
+    private final String testsRepoCommitHash;
 
     @JsonProperty("isBuildSuccessful") // For some reason this annotation is necessary for jackson to work
-    private boolean isBuildSuccessful;
+    private final boolean isBuildSuccessful;
 
     // This is the timestamp when the build was completed
     // Hades sends an RFC3339 formatted date string, e.g. "2024-01-24T14:11:46Z"
     @JsonProperty("buildCompletionTime")
-    private ZonedDateTime buildRunDate;
+    private final ZonedDateTime buildRunDate;
 
     @JsonProperty("buildJobs") // For some reason this annotation is necessary for jackson to work
-    private List<HadesBuildJobResultDTO> buildJobs;
-
-    // empty constructor needed for Jackson
-    public HadesBuildResultNotificationDTO() {
-    }
+    private final List<HadesBuildJobResultDTO> buildJobs;
 
     public HadesBuildResultNotificationDTO(String jobName, String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful,
             ZonedDateTime buildRunDate, List<HadesBuildJobResultDTO> buildJobs) {

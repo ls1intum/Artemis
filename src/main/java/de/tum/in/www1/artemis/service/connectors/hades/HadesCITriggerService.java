@@ -55,7 +55,7 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
     @Value("${server.port}")
     private String artemisServerPort;
 
-    private final Logger log = LoggerFactory.getLogger(HadesCIService.class);
+    private static final Logger log = LoggerFactory.getLogger(HadesCIService.class);
 
     private final RestTemplate restTemplate;
 
