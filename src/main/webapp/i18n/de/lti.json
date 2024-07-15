@@ -87,7 +87,8 @@
                 "linkedSuccessfully": "Verknüpfung der Übungen erfolgreich",
                 "linkedFailed": "Fehler beim Deep-Linking",
                 "link": "Verlinken",
-                "unknownError": "Aufgrund eines unbekannten Fehlers nicht erfolgreich. Bitte kontaktiere einen Admin!"
+                "unknownError": "Aufgrund eines unbekannten Fehlers nicht erfolgreich. Bitte kontaktiere einen Admin!",
+                "noCoursesError": "Keiner deiner Artemis-Kurse hat LTI aktiviert. Bitte fahre mit der Konfiguration mindestens eines Kurses fort."
             },
             "missingConfigurationWarning": "Fehlende Werte in der LTI1.3-Konfiguration. Starts werden nicht funktionieren. Bitte wende dich für die Konfiguration an den Administrator.",
             "selectContentFromCourse": "Wähle Inhalte aus dem Kurs {{ title }} aus",
