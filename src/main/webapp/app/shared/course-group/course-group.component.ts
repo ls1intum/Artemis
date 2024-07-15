@@ -222,7 +222,7 @@ export class CourseGroupComponent implements OnDestroy {
     exportUserInformation = () => {
         if (this.allGroupUsers.length > 0) {
             const rows: any[] = this.allGroupUsers.map((user: User) => {
-                const data = {};
+                const data: { [key: string]: string } = {};
                 data[NAME_KEY] = user.name?.trim() ?? '';
                 data[USERNAME_KEY] = user.login?.trim() ?? '';
                 data[EMAIL_KEY] = user.email?.trim() ?? '';
