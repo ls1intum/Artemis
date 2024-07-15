@@ -115,10 +115,15 @@ export class Postprocessor {
 
                     if (memberExpressionValue === 'Unknown URL') {
                         if (expr.type === 'MemberExpression' && expr.object.type === 'ThisExpression') {
-                            return acc + this.evaluateMemberVariableFromConstructorCall(classBody, memberExprKey)
+                            expression = this.evaluateMemberVariableFromConstructorCall(classBody, memberExprKey)
+                            if (expression === 'Unknown URL' && expr.property.type === 'Identifier') {
+                                expression = '${' + `this.${expr.property.name}` + '}';
+                            }
+                        } else if (expr.object.type === 'Identifier' && expr.property.type === 'Identifier') {
+                            expression = '${' + `${expr.object.name}.${expr.property.name}`  + '}';
                         }
                     } else if (memberExpressionValue.length > 0) {
-                        return acc + memberExpressionValue;
+                        expression = memberExpressionValue;
                     }
                 } else {
                     // For complex or undefined expressions, keep as-is

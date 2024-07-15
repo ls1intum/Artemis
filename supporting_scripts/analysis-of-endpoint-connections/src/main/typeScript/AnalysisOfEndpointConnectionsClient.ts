@@ -150,6 +150,7 @@ const tsFiles = collectTypeScriptFiles(clientDirPath);
 
 // tsFiles.push('');
 
+// tsFiles.push('src/main/webapp/app/exam/participate/exam-participation-live-events.service.ts');
 // tsFiles.push('src/main/webapp/app/admin/standardized-competencies/admin-standardized-competency.service.ts');
 // tsFiles.push('src/main/webapp/app/admin/logs/logs.service.ts');
 // tsFiles.push('src/main/webapp/app/complaints/complaint.service.ts');
