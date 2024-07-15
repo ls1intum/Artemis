@@ -109,7 +109,7 @@
                 <!-- TODO: Exam mode reuses the whole component at the moment. We need the code button but not the open
         code editor button. We should think about refactoring the code button into an own component -->
                 @if (shouldDisplayIDEButtons()) {
-                    <ng-container *jhiExtensionPoint="overrideCloneOnlineEditorButton; context: { exercise: exercise }">
+                    <ng-container *jhiExtensionPoint="overrideCodeAndOnlineEditorButton; context: { exercise: exercise }">
                         @if (!examMode && programmingExercise?.allowOnlineEditor) {
                             <jhi-open-code-editor-button
                                 [loading]="!!exercise.loading"

@@ -41,7 +41,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() examMode: boolean;
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
+    @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
 
     uninitializedQuiz: boolean;
     quizNotStarted: boolean;
