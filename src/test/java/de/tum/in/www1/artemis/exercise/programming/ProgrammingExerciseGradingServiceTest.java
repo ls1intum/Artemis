@@ -1114,6 +1114,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // Also remove max penalty from exercise
         programmingExerciseSCAEnabled.getBuildConfig().setMaxStaticCodeAnalysisPenalty(null);
+        programmingExerciseBuildConfigRepository.save(programmingExerciseSCAEnabled.getBuildConfig());
         programmingExerciseRepository.save(programmingExerciseSCAEnabled);
 
         // create results for tests without any limits
@@ -1189,6 +1190,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // Remove max penalty from exercise
         programmingExerciseSCAEnabled.getBuildConfig().setMaxStaticCodeAnalysisPenalty(null);
+        programmingExerciseBuildConfigRepository.save(programmingExerciseSCAEnabled.getBuildConfig());
         programmingExerciseRepository.save(programmingExerciseSCAEnabled);
 
         // Remove category penalty limits
@@ -1237,6 +1239,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCalculateScoreWithStaticCodeAnalysisPenalties_cappedByExerciseMaxPenalty() {
         programmingExerciseSCAEnabled.getBuildConfig().setMaxStaticCodeAnalysisPenalty(20);
+        programmingExerciseBuildConfigRepository.save(programmingExerciseSCAEnabled.getBuildConfig());
         programmingExerciseSCAEnabled = exerciseRepository.save(programmingExerciseSCAEnabled);
 
         activateAllTestCases(false);

@@ -40,6 +40,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         // Set the branch to null to force the usage of LocalVCService#getDefaultBranchOfRepository().
         programmingExercise.getBuildConfig().setBranch(null);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
