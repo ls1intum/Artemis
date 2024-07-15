@@ -118,9 +118,9 @@ Exam Conduction
     - When there are unsaved **or** unsubmitted changes, the exercise representation in the navigation sidebar becomes |exam_unsaved|.
     - When your changes are saved **and** submitted, the exercise representation in the navigation sidebar becomes |exam_saved|.
     - |exam_started| indicates that you have not started this exercise.
-    - |saved_exercises| indicates the number of saved **and** submitted exercises out of the total number of exercises. Here, there are 5 exercises in total, and 2 out of the 5 have been saved and submitted. 
+    - |saved_exercises| indicates the number of saved **and** submitted exercises out of the total number of exercises. Here, there are 5 exercises in total, and 2 out of the 5 have been saved and submitted.
 
-- Once you click on another exercise in the navigation sidebar, your changes will be saved and submitted automatically. 
+- Once you click on another exercise in the navigation sidebar, your changes will be saved and submitted automatically.
 - You can also collapse the navigation sidebar to maximize the size of the exercises by clicking on |collapse_sidebar|. When the sidebar is collapsed, you can still see the exercise type and current status of the exercise.
 
     .. warning::
@@ -251,7 +251,7 @@ Participating in Programming Exercises
 
    Participating in Programming Exercises with the online code editor and local IDE enabled
 
-- If your exercise allows the use of the local IDE you will have access to the button |clone_repo|.
+- If your exercise allows the use of the local IDE, you can clone your repository using the |code| button.
 - When you click it you can choose to clone the exercise via ``HTTPS`` or ``SSH``, if you have configured your private key.
 
     .. note::
@@ -452,7 +452,7 @@ Grades
 .. |left_arrow| image:: student/buttons/left_arrow.png
 .. |outline_box| image:: student/buttons/outline_box.png
 .. |build_passed| image:: student/buttons/hidden.png
-.. |clone_repo| image:: student/buttons/clone_repo.png
+.. |code| image:: student/buttons/code.png
 .. |help| image:: student/buttons/help.png
 .. |continue| image:: student/buttons/continue.png
 .. |complain| image:: student/buttons/complain.png

@@ -59,10 +59,18 @@ describe('LearningPathNavOverviewComponent', () => {
     });
 
     it('should load competencies', async () => {
+        const loadLearningPathCompetenciesSpy = jest.spyOn(component, 'loadCompetencies');
         const getLearningPathCompetenciesSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockResolvedValue(competencies);
-        await component.loadCompetencies(learningPathId);
 
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(loadLearningPathCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
         expect(getLearningPathCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
         expect(component.competencies()).toEqual(competencies);
     });
 

@@ -370,7 +370,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         final List<Feedback> scaFeedbacks = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(List.of(scaReport));
         assertThat(scaFeedbacks).hasSize(1);
 
-        final Feedback scaFeedback = scaFeedbacks.get(0);
+        final Feedback scaFeedback = scaFeedbacks.getFirst();
         assertThat(scaFeedback.getHasLongFeedbackText()).isFalse();
         assertThat(scaFeedback.getLongFeedback()).isEmpty();
         assertThat(scaFeedback.getDetailText()).hasSizeGreaterThan(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH)

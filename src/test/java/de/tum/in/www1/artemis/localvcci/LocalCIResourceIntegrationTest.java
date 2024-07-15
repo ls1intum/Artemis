@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
@@ -72,9 +71,6 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @BeforeEach
     void createJobs() {
@@ -251,7 +247,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
         var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).id()).isEqualTo(finishedJob1.getBuildJobId());
+        assertThat(result.getFirst().id()).isEqualTo(finishedJob1.getBuildJobId());
         assertThat(result.get(1).id()).isEqualTo(finishedJob2.getBuildJobId());
     }
 

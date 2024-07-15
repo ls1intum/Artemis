@@ -42,6 +42,9 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "competencies" })
+    Optional<ModelingExercise> findWithEagerCompetenciesById(Long exerciseId);
+
     @Query("""
             SELECT modelingExercise
             FROM ModelingExercise modelingExercise
@@ -111,5 +114,10 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @NotNull
     default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
         return findWithStudentParticipationsSubmissionsResultsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+    }
+
+    @NotNull
+    default ModelingExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
     }
 }
