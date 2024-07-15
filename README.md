@@ -120,7 +120,7 @@ The following members of the project management team are responsible for specifi
 | Communication                  | [@rabeatwork](https://github.com/rabeatwork)                                                        |
 | Notifications                  | [@rabeatwork](https://github.com/rabeatwork)                                                        |
 | Team Exercises                 | [@krusche](https://github.com/krusche)                                                              |
-| Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner)     |
+| Lectures                       | [@maximiliananzinger](https://github.com/maximiliananzinger)     |
 | Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner)     |
 | Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                                  |
 | Learning analytics             | [@bassner](https://github.com/bassner)                                                              |
