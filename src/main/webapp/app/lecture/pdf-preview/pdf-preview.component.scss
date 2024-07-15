@@ -1,20 +1,44 @@
 .pdf-container {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: left;
+    position: relative; /* Set as a positioning context */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 30px;
+    max-height: 75vh;
+    overflow-y: auto;
     border: 1px solid #ccc;
     padding: 10px;
-    margin: 0 auto;
+    margin: 10px;
     width: 95%;
-    height: 60vh;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    align-items: start;
 }
 
-.pdf-container canvas {
-    margin: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    height: 200px;
-    width: auto;
-    object-fit: contain;
+.enlarged-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.2);
+    z-index: 1050;
+}
+
+.btn-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}
+
+@media (max-width: 800px) {
+    .pdf-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns for smaller screens */
+    }
+}
+
+@media (max-width: 500px) {
+    .pdf-container {
+        grid-template-columns: 1fr; /* 1 column for very small screens */
+    }
 }
