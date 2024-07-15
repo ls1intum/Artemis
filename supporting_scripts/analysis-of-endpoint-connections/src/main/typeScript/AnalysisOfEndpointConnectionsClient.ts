@@ -2,6 +2,7 @@ import { readdirSync } from 'fs';
 import { join, resolve } from 'path';
 import { Preprocessor } from './Preprocessor';
 import { Postprocessor } from './Postprocessor';
+import { writeFileSync } from 'node:fs';
 
 // Recursively collect all TypeScript files in a directory
 function collectTypeScriptFiles(dir: string, files: string[] = []) {
@@ -56,3 +57,5 @@ for (let restCallFile of Postprocessor.filesWithRestCalls) {
         console.log(`REST calls in ${restCallFile.filePath}:`, restCallFile.restCalls);
     }
 }
+
+writeFileSync('../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
