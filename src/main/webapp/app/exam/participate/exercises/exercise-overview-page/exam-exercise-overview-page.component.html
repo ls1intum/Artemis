@@ -1,11 +1,10 @@
-<div class="container d-flex flex-column align-items-left justify-content-left">
-    <h2 style="text-align: left; font-weight: normal; margin-bottom: 30px">
-        <span>
-            {{ 'artemisApp.studentExamDetail.exercises' | artemisTranslate }}
-        </span>
-        <br />
-    </h2>
-</div>
+<h3 style="text-align: left; font-weight: normal">
+    <span>
+        {{ 'artemisApp.studentExamDetail.overview' | artemisTranslate }}
+    </span>
+</h3>
+<hr />
+
 <div class="container d-flex flex-column align-items-center justify-content-center">
     <table class="table table-striped table-bordered exercise-table">
         <thead>
@@ -42,20 +41,20 @@
                         {{ i + 1 }}
                     </td>
                     <td style="max-width: 30px">
-                        <div [ngbTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate">
-                            <fa-icon [icon]="getIcon(item.exercise.type)" placement="right auto" />
+                        <div>
+                            <fa-icon [ngbTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate" [icon]="getIcon(item.exercise.type)" placement="right auto" />
                         </div>
                     </td>
                     <td style="max-width: 100px; font-weight: bold">
                         <a class="w-100" (click)="openExercise(item.exercise)">
-                            {{ item.exercise.exerciseGroup?.title }}
+                            {{ item.exercise.title }}
                         </a>
                     </td>
                     <td style="max-width: 30px">
                         {{ item.exercise.maxPoints }}
                     </td>
                     <td style="max-width: 50px; font-weight: bold">
-                        <div style="display: flex; align-items: center">
+                        <div class="d-flex justify-content-between gap-3" style="align-items: center">
                             <div
                                 style="max-width: 10px; margin-right: 10px"
                                 [ngClass]="setExerciseIconStatus(item)"

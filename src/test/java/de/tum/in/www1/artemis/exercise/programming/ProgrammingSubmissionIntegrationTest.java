@@ -53,7 +53,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
@@ -61,7 +60,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
@@ -90,13 +88,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -154,7 +146,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(submissions).hasSize(1);
 
-        ProgrammingSubmission submission = submissions.get(0);
+        ProgrammingSubmission submission = submissions.getFirst();
         var optionalSubmission = submissionRepository.findWithEagerResultsById(submission.getId());
         assertThat(optionalSubmission).isPresent();
         assertThat(optionalSubmission.get().getLatestResult()).isNull();
@@ -193,7 +185,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(submissions).hasSize(1);
 
-        ProgrammingSubmission submission = submissions.get(0);
+        ProgrammingSubmission submission = submissions.getFirst();
         var optionalSubmission = submissionRepository.findWithEagerResultsById(submission.getId());
         assertThat(optionalSubmission).isPresent();
         assertThat(optionalSubmission.get().getLatestResult()).isNull();
@@ -204,7 +196,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
         var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(updatedSubmissions).hasSize(1);
-        assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
+        assertThat(updatedSubmissions.getFirst().getId()).isEqualTo(submission.getId());
     }
 
     @Test
@@ -421,7 +413,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
         var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(updatedSubmissions).hasSize(1);
-        assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
+        assertThat(updatedSubmissions.getFirst().getId()).isEqualTo(submission.getId());
     }
 
     @Test
@@ -623,7 +615,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         final var responseSubmissions = request.getList(url, HttpStatus.OK, ProgrammingSubmission.class, paramMap);
 
         assertThat(responseSubmissions).containsExactly(assessedSubmission);
-        assertThat(responseSubmissions.get(0).getResults()).hasSize(1);
+        assertThat(responseSubmissions.getFirst().getResults()).hasSize(1);
     }
 
     @Test
@@ -797,7 +789,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId());
         assertThat(latestSubmissions).hasSize(1);
-        assertThat(latestSubmissions.get(0).getId()).isEqualTo(submission.getId());
+        assertThat(latestSubmissions.getFirst().getId()).isEqualTo(submission.getId());
 
         // Check that grading instructions are loaded
         ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();

@@ -13,7 +13,13 @@
                     </a>
                 }
                 @if (exercise?.allowOfflineIde) {
-                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" />
+                    <jhi-code-button
+                        [loading]="!!exercise.loading"
+                        [smallButtons]="false"
+                        [routerLinkForRepositoryView]="'.'"
+                        [repositoryUri]="repositoryUri"
+                        [exercise]="exercise"
+                    />
                 }
 
                 @if (exercise.id) {
@@ -26,7 +32,6 @@
             </div>
         </div>
         <jhi-code-editor-container
-            [useMonacoEditor]="true"
             [forRepositoryView]="true"
             [editable]="false"
             [buildable]="false"

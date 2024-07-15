@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
+import de.tum.in.www1.artemis.service.dto.BuildJobResultCountDTO;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -89,5 +90,17 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
              WHERE b.result.id IN :resultIds
             """)
     Set<ResultBuildJob> findBuildJobIdsForResultIds(@Param("resultIds") List<Long> resultIds);
+
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.service.dto.BuildJobResultCountDTO(
+                b.buildStatus,
+                COUNT(b.buildStatus)
+            )
+            FROM BuildJob b
+            WHERE b.buildStartDate >= :fromDateTime
+                AND (:courseId IS NULL OR b.courseId = :courseId)
+            GROUP BY b.buildStatus
+            """)
+    List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime, @Param("courseId") Long courseId);
 
 }

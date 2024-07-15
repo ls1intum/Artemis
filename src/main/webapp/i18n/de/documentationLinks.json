@@ -8,6 +8,7 @@
             "quiz": "Quiz-Aufgaben.",
             "model": "Modellierungs-Aufgaben.",
             "programming": "Programmieraufgaben.",
+            "sshsetup": "SSH Setup.",
             "text": "Text-Aufgaben.",
             "fileupload": "Dateiupload-Aufgaben.",
             "notifications": "Benachrichtigungen.",

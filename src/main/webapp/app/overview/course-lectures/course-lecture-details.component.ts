@@ -169,7 +169,6 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.lecture) {
             instance.lecture = this.lecture;
-            instance.isCommunicationPage = false;
         }
     }
 

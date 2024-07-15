@@ -41,7 +41,8 @@ You can also verify the attendance in the web application by pressing the |verif
 
 Download App
 ============
-The App is currently only available via TestFlight. It can be downloaded via the following link: https://testflight.apple.com/join/hlwcUa0b
+The iOS application is available in the `App Store <https://apps.apple.com/de/app/artemis-exam-supervision/id6478390011>`_.
+To test the beta version, install Apple's TestFlight app and follow the link `TestFlight <https://testflight.apple.com/join/HiKcHAQ3>`_.
 
 App Usage
 =========

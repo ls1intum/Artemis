@@ -1,4 +1,4 @@
-import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 export const buildLogs = [
     {

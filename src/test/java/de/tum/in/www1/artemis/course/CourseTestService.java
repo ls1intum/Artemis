@@ -485,7 +485,7 @@ public class CourseTestService {
     // Test
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, communication = false, messaging = true
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, null, 5, 5, 14, 2000, 2000, false, true, 0);
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, null, 5, 5, 14, 2000, 2000, false, false, 0);
 
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
@@ -498,7 +498,7 @@ public class CourseTestService {
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
         assertThat(getFromRepo.getMaxComplaintTimeDays()).as("Course has right maxComplaintTimeDays Value").isEqualTo(14);
         assertThat(getFromRepo.getCourseInformationSharingConfiguration()).as("Course has right information sharing config value")
-                .isEqualTo(CourseInformationSharingConfiguration.MESSAGING_ONLY);
+                .isEqualTo(CourseInformationSharingConfiguration.DISABLED);
         assertThat(getFromRepo.getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled value").isFalse();
 
         // Test edit course
@@ -1808,7 +1808,7 @@ public class CourseTestService {
         course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
-        course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
+        course = courseRepo.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(course.getId());
         assertThat(course.getLearningPaths()).isNotEmpty();
         // TODO check that the roles have changed accordingly
     }

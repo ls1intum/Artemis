@@ -145,9 +145,6 @@ public class CourseFactory {
         else if (communicationEnabled) {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
         }
-        else if (messagingEnabled) {
-            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.MESSAGING_ONLY);
-        }
         else {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         }

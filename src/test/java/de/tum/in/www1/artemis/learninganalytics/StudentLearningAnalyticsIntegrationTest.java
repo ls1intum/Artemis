@@ -13,10 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseTestService;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 class StudentLearningAnalyticsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -24,19 +21,10 @@ class StudentLearningAnalyticsIntegrationTest extends AbstractSpringIntegrationI
     private static final String TEST_PREFIX = "studentlearninganalytics";
 
     @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
     protected RequestUtilService request;
 
     @Autowired
     private CourseTestService courseTestService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -49,7 +37,7 @@ class StudentLearningAnalyticsIntegrationTest extends AbstractSpringIntegrationI
     void setupTestScenario() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
-        course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).get(0);
+        course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).getFirst();
     }
 
     @Test

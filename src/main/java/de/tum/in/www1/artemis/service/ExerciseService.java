@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -37,7 +38,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
@@ -373,6 +374,7 @@ public class ExerciseService {
      * @param originalExercise the original exercise
      * @param updatedExercise  the updatedExercise
      */
+    @Async
     public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
         if (originalExercise.getMaxPoints().equals(updatedExercise.getMaxPoints()) && originalExercise.getBonusPoints().equals(updatedExercise.getBonusPoints())) {
             return; // nothing to do since points are still correct
@@ -546,12 +548,13 @@ public class ExerciseService {
                 exercise -> exercise.getAssessmentDueDate() != null ? exercise.getAssessmentDueDate() : exercise.getDueDate(), Comparator.nullsLast(Comparator.naturalOrder()));
 
         List<Exercise> lastFivePastExercises = pastExercises.stream().sorted(exerciseDateComparator.reversed()).limit(5).toList();
-
-        // Calculate the average score for all five exercises at once
-        var averageScore = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
         Map<Long, Double> averageScoreById = new HashMap<>();
-        for (var element : averageScore) {
-            averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
+        if (!lastFivePastExercises.isEmpty()) {
+            // Calculate the average score for all five exercises at once
+            var averageScore = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
+            for (var element : averageScore) {
+                averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
+            }
         }
 
         // Fill statistics for all exercises potentially displayed on the client
@@ -755,7 +758,7 @@ public class ExerciseService {
      * @param exercises  set of exercises
      * @param competency competency to remove
      */
-    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
+    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull CourseCompetency competency) {
         exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
         exerciseRepository.saveAll(exercises);
     }
@@ -773,7 +776,8 @@ public class ExerciseService {
             groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
         }
         else if (originalExercise.isExamExercise() && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+            User instructor = userRepository.getUser();
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
         }
     }
 }
