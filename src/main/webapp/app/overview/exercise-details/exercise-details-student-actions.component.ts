@@ -265,7 +265,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     /**
-     * Display the 'open code editor' or 'clone repo' buttons if
+     * Display the 'open code editor' or 'code' buttons if
      * - the participation is initialized (build plan exists, this is always the case during an exam), or
      * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
      *

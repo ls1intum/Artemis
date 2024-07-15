@@ -19,7 +19,7 @@
             <div class="d-flex flex-wrap flex-column justify-content-center">
                 <h4 class="mb-0 me-1">Online Code Editor</h4>
             </div>
-            <!-- ngIf offline-ide clone button -->
+            <!-- ngIf offline-ide code button -->
             @if (exercise.allowOfflineIde) {
                 <jhi-exercise-details-student-actions [examMode]="true" [exercise]="exercise" [courseId]="courseId" />
             }
@@ -63,7 +63,7 @@
         </jhi-code-editor-container>
     </div>
 }
-<!-- ngIf Offline IDE clone button start -->
+<!-- ngIf Offline IDE code button start -->
 @if (!exercise.allowOnlineEditor && exercise.allowOfflineIde) {
     <div>
         <div class="d-flex gap-3 my-3 ms-1 align-items-center">
