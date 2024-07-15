@@ -88,7 +88,8 @@
                 "linkedFailed": "Error during deep linking",
                 "link": "Link",
                 "unknownError": "Unsuccessful due to an unknown error. Please contact an admin!",
-                "noCoursesError": "You do not have any LTI-enabled courses in Artemis yet. Please configure at least one course to use this feature."
+                "noCoursesError": "You do not have any LTI-enabled courses in Artemis yet. Please configure at least one course to use this feature.",
+                "learnMore": "Learn more about enabling LTI in your course.."
             },
             "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work. Please contact the administrator for configuration.",
             "selectContentFromCourse": "Select content from course {{ title }}",

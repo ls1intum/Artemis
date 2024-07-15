@@ -2,8 +2,15 @@
     @for (course of courses; track course) {
         <jhi-overview-lti-course-card class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" />
     } @empty {
-        <div class="items-center">
-            <span jhiTranslate="artemisApp.lti.deepLinking.noCoursesError"></span>
+        <div class="mb-3">
+            <span jhiTranslate="artemisApp.lti13.deepLinking.noCoursesError"></span>
+            <br />
+            <a
+                href="https://docs.artemis.cit.tum.de/user/lti.html#enabling-online-course"
+                target="_blank"
+                rel="external noopener noreferrer"
+                jhiTranslate="artemisApp.lti13.deepLinking.learnMore"
+            ></a>
         </div>
     }
 </div>
