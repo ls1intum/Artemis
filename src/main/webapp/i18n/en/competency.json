@@ -195,7 +195,7 @@
                 "typeExplanation": {
                     "ASSUMES": "The head competency assumes that the student mastered the tail competency and teaches new knowledge that builds upon the tail competency.",
                     "EXTENDS": "The head competency assumes that the student mastered the tail competency and deepens that knowledge further.",
-                    "MATCHES": "The head and tail competency match each other and cover the same knowledge."
+                    "MATCHES": "The head and tail competency match and cover the same knowledge."
                 }
             }
         },

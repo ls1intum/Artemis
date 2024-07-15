@@ -67,15 +67,15 @@ Manage Relations
 | An Instructor can create relations between competencies by selecting a source and target competency from the dropdown menus.
   They can also set a relation type, which can be one of the following:
 
-* *Assumes*: The head competency assumes the knowledge of the tail competency but does not deepen it. E.g. Class diagrams assume knowledge about object oriented programming.
-* *Extends*: The head competency builds upon the knowledge of the tail competency and deepens it. E.g. Inheritance deepens the knowledge about object oriented programming.
+* *Assumes*: The head competency assumes the knowledge of the tail competency but does not deepen it. E.g. Class diagrams assume knowledge about object-oriented programming.
+* *Extends*: The head competency builds upon the knowledge of the tail competency and deepens it. E.g. Inheritance deepens the knowledge about object-oriented programming.
 * *Matches*: The knowledge of the head and tail competency match each other.
 
 | The relations are displayed in a diagram below the form and can be deleted by clicking on them.
 
 .. note::
 
-    Relations are necessary for the learning path generation. Without them Artemis cannot suggest a reasonable order of competencies for students.
+    Relations are necessary for the learning path generation. Without them, Artemis cannot suggest a reasonable order of competencies for students.
 
 |instructor-competency-relations|
 
