@@ -27,6 +27,33 @@
                     },
                     "hestiaSettings": "Hestia Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
+                    "proactivitySettings": {
+                        "title": "Proaktivitätseinstellungen",
+                        "eventSettings": {
+                            "title": "Ereigniseinstellungen",
+                            "submissionSuccessful": "Einstellungen für erfolgreiche Einreichungen",
+                            "submissionFailed": "Einstellungen für fehlgeschlagene Einreichungen",
+                            "jol": "Einstellungen für Lernbeurteilungsereignisse",
+                            "active": "Aktiv",
+                            "inactive": "Inaktiv",
+                            "level": "Stufe",
+                            "successThreshold": "Erfolgsschwelle",
+                            "pipelineVariant": "Pipeline-Variante",
+                            "numberOfFailedAttempts": "Anzahl fehlgeschlagener Versuche",
+                            "priority": "Priorität",
+                            "deferredUntil": "Aufgeschoben bis",
+                            "tooltips": {
+                                "active": "Wenn das Ereignis aktiv ist, wird es für Proaktivität berücksichtigt.",
+                                "inactive": "Wenn das Ereignis inaktiv ist, wird es nicht für Proaktivität berücksichtigt.",
+                                "level": "Die Stufe des Ereignisses. Die Stufe bestimmt, in welcher Iris-Chat-Sitzung das Ereignis ausgelöst wird.",
+                                "successThreshold": "Die Erfolgsschwelle, die erreicht werden muss, damit das Ereignis ausgelöst wird.",
+                                "pipelineVariant": "Die Pyris-Pipeline-Variante, die für das Ereignis verwendet werden soll.",
+                                "numberOfFailedAttempts": "Die Anzahl der fehlgeschlagenen Versuche, die erreicht werden muss, damit das Ereignis ausgelöst wird.",
+                                "priority": "Die Priorität des Ereignisses. Je höher die Zahl, desto höher die Priorität.",
+                                "deferredUntil": "Das Datum und die Uhrzeit, bis zu der das Ereignis aufgeschoben ist. Das Ereignis wird nicht vor diesem Datum und dieser Uhrzeit ausgelöst. Wenn das Ereignis dann noch aktiv ist, wird es nach dem Aufschubdatum und der Aufschubzeit ausgelöst."
+                            }
+                        }
+                    },
                     "enabled-disabled": "Aktiviert/Deaktiviert",
                     "models": {
                         "title": "Modelle",

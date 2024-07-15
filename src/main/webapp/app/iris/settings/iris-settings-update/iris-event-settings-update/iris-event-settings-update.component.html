@@ -1,0 +1,18 @@
+<div class="btn-group">
+    <div
+        class="btn"
+        [ngClass]="{ 'btn-success selected': active(), 'btn-default': !active() }"
+        [class.disabled]="isSettingsSwitchDisabled()"
+        (click)="updateSetting('active', !active())"
+    >
+        {{ 'artemisApp.iris.settings.subSettings.enabled.on' | artemisTranslate }}
+    </div>
+    <div
+        class="btn"
+        [ngClass]="{ 'btn-danger selected': !active(), 'btn-default': active() }"
+        [class.disabled]="isSettingsSwitchDisabled()"
+        (click)="updateSetting('active', !active())"
+    >
+        {{ 'artemisApp.iris.settings.subSettings.enabled.off' | artemisTranslate }}
+    </div>
+</div>

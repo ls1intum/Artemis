@@ -27,6 +27,33 @@
                     },
                     "hestiaSettings": "Hestia Settings",
                     "competencyGenerationSettings": "Competency Generation Settings",
+                    "proactivitySettings": {
+                        "title": "Proactivity Settings",
+                        "eventSettings": {
+                            "title": "Event Settings",
+                            "submissionSuccessful": "Submission Successful Event Settings",
+                            "submissionFailed": "Submission Failed Event Settings",
+                            "jol": "Judgement of Learning Event Settings",
+                            "active": "Active",
+                            "inactive": "Inactive",
+                            "level": "Level",
+                            "successThreshold": "Success Threshold",
+                            "pipelineVariant": "Pipeline Variant",
+                            "numberOfFailedAttempts": "Number of Failed Attempts",
+                            "priority": "Priority",
+                            "deferredUntil": "Deferred Until",
+                            "tooltips": {
+                                "active": "If the event is active, it will be considered for proactivity.",
+                                "inactive": "If the event is inactive, it will not be considered for proactivity.",
+                                "level": "The level of the event. Level determines which Iris Chat session the event will be fired in.",
+                                "successThreshold": "The success threshold that needs to be reached for the event to be fired.",
+                                "pipelineVariant": "The Pyris pipeline variant that should be used for the event.",
+                                "numberOfFailedAttempts": "The number of failed attempts that need to be reached for the event to be fired.",
+                                "priority": "The priority of the event. The higher the number, the higher the priority.",
+                                "deferredUntil": "The date and time until the event is deferred. The event will not be fired until this date and time. If the event is still active, it will be fired after the deferred date and time."
+                            }
+                        }
+                    },
                     "enabled-disabled": "Enabled/Disabled",
                     "models": {
                         "title": "Models",
@@ -70,7 +97,8 @@
                     "chatLabel": "Auto Update Chat Settings",
                     "hestiaLabel": "Auto Update Hestia Settings",
                     "lectureIngestionLabel": "Auto Update Lecture Ingestion Settings",
-                    "competencyGenerationLabel": "Auto Update Competency Generation Settings"
+                    "competencyGenerationLabel": "Auto Update Competency Generation Settings",
+                    "proactivityLabel": "Auto Update Proactivity Settings"
                 }
             },
             "error": {

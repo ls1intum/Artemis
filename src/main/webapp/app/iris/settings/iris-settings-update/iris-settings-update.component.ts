@@ -17,7 +17,13 @@ import {
     IrisProactivitySubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { JolEventSettings, SubmissionFailedEventSettings, SubmissionSuccessfulEventSettings } from 'app/entities/iris/settings/iris-event-settings.model';
+import {
+    IrisEventSettings,
+    IrisEventType,
+    JolEventSettings,
+    SubmissionFailedEventSettings,
+    SubmissionSuccessfulEventSettings,
+} from 'app/entities/iris/settings/iris-event-settings.model';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -33,6 +39,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     public irisSettings?: IrisSettings;
     public parentIrisSettings?: IrisSettings;
     public allIrisModels?: IrisModel[];
+    public parentIrisEventSettings?: { [key: string]: IrisEventSettings };
 
     originalIrisSettings?: IrisSettings;
 
@@ -105,6 +112,12 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.alertService.error('artemisApp.iris.settings.error.noParentSettings');
             }
             this.parentIrisSettings = settings;
+            this.parentIrisEventSettings = {};
+            if (settings?.irisProactivitySettings?.eventSettings) {
+                settings.irisProactivitySettings.eventSettings.forEach((eventSetting) => {
+                    this.parentIrisEventSettings![eventSetting.type] = eventSetting;
+                });
+            }
         });
     }
 
@@ -125,8 +138,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             this.irisSettings.irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
         }
         if (!this.irisSettings.irisProactivitySettings) {
-            const proactivitySubSettings = new IrisProactivitySubSettings();
-            this.irisSettings.irisProactivitySettings = proactivitySubSettings;
+            this.irisSettings.irisProactivitySettings = new IrisProactivitySubSettings();
         }
         if (!this.irisSettings.irisProactivitySettings.eventSettings) {
             const jolEventSettings = new JolEventSettings();
@@ -195,4 +207,17 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return this.irisSettingsService.setProgrammingExerciseSettings(this.exerciseId!, this.irisSettings!);
         }
     }
+
+    eventSettingsChanged(eventSettings: IrisEventSettings): void {
+        if (!this.irisSettings?.irisProactivitySettings) {
+            return;
+        }
+        const eventSettingsIndex = this.irisSettings.irisProactivitySettings.eventSettings.findIndex((setting) => setting.type === eventSettings.type);
+        if (eventSettingsIndex >= 0) {
+            this.irisSettings.irisProactivitySettings.eventSettings[eventSettingsIndex] = eventSettings;
+            this.isDirty = true;
+        }
+    }
+
+    protected readonly IrisEventType = IrisEventType;
 }

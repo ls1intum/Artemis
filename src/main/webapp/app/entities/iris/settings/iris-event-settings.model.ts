@@ -27,6 +27,7 @@ export class JolEventSettings extends IrisEventSettings {
     type = IrisEventType.JOL;
     pipelineVariant = 'jol';
     priority = 1;
+    successThreshold = 0;
 }
 
 export class SubmissionSuccessfulEventSettings extends IrisEventSettings {
@@ -43,4 +44,5 @@ export class SubmissionFailedEventSettings extends IrisEventSettings {
     pipelineVariant = 'submission_failed';
     priority = 0;
     numberOfFailedAttempts = 3;
+    successThreshold = 80.0;
 }
