@@ -164,6 +164,15 @@ describe('LectureWizardUnitComponent', () => {
             releaseDate: dayjs().year(2010).month(3).date(5),
             description: 'Lorem Ipsum',
             source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
+            competencies: [
+                {
+                    id: 1,
+                    masteryThreshold: 0,
+                    optional: false,
+                    taxonomy: undefined,
+                    title: 'Test',
+                },
+            ],
         };
 
         const response: HttpResponse<VideoUnit> = new HttpResponse({
@@ -192,6 +201,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(videoUnitCallArgument.description).toEqual(formData.description);
             expect(videoUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
             expect(videoUnitCallArgument.source).toEqual(formData.source);
+            expect(videoUnitCallArgument.competencies).toEqual(formData.competencies);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
@@ -227,6 +237,15 @@ describe('LectureWizardUnitComponent', () => {
             name: 'Test',
             releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
+            competencies: [
+                {
+                    id: 1,
+                    masteryThreshold: 0,
+                    optional: false,
+                    taxonomy: undefined,
+                    title: 'Test',
+                },
+            ],
         };
 
         const persistedTextUnit: TextUnit = new TextUnit();
@@ -254,6 +273,15 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.createEditTextUnit(formData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
+            const textUnitCallArgument: TextUnit = createStub.mock.calls[0][0];
+            const lectureIdCallArgument: number = createStub.mock.calls[0][1];
+
+            expect(textUnitCallArgument.name).toEqual(formData.name);
+            expect(textUnitCallArgument.content).toEqual(formData.content);
+            expect(textUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
+            expect(textUnitCallArgument.competencies).toEqual(formData.competencies);
+            expect(lectureIdCallArgument).toBe(1);
+
             expect(createStub).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledOnce();
 
@@ -368,6 +396,15 @@ describe('LectureWizardUnitComponent', () => {
             releaseDate: dayjs().year(2010).month(3).date(5),
             description: 'Lorem Ipsum',
             source: 'https://www.example.com',
+            competencies: [
+                {
+                    id: 1,
+                    masteryThreshold: 0,
+                    optional: false,
+                    taxonomy: undefined,
+                    title: 'Test',
+                },
+            ],
         };
 
         const response: HttpResponse<OnlineUnit> = new HttpResponse({
@@ -396,6 +433,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(onlineUnitCallArgument.description).toEqual(formDate.description);
             expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
             expect(onlineUnitCallArgument.source).toEqual(formDate.source);
+            expect(onlineUnitCallArgument.competencies).toEqual(formDate.competencies);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
@@ -436,6 +474,15 @@ describe('LectureWizardUnitComponent', () => {
                 releaseDate: dayjs().year(2010).month(3).date(5),
                 version: 2,
                 updateNotificationText: 'lorem ipsum',
+                competencies: [
+                    {
+                        id: 1,
+                        masteryThreshold: 0,
+                        optional: false,
+                        taxonomy: undefined,
+                        title: 'Test',
+                    },
+                ],
             },
             fileProperties: {
                 file: fakeFile,
@@ -479,7 +526,11 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
+            const lectureIdCallArgument: number = createAttachmentUnitStub.mock.calls[0][1];
+
+            expect(lectureIdCallArgument).toBe(1);
             expect(createAttachmentUnitStub).toHaveBeenCalledWith(formData, 1);
+
             expect(updateSpy).toHaveBeenCalledOnce();
 
             updateSpy.mockRestore();
