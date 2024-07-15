@@ -1,8 +1,9 @@
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
+import { Attachment } from 'app/entities/attachment.model';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
@@ -10,7 +11,7 @@ import 'pdfjs-dist/build/pdf.worker';
     styleUrls: ['./pdf-preview.component.scss'],
 })
 export class PdfPreviewComponent implements OnInit {
-    @Input() attachmentId: number;
+    attachment: Attachment;
     @ViewChild('pdfContainer', { static: true }) pdfContainer: ElementRef;
     @ViewChild('enlargedCanvas') enlargedCanvas: ElementRef;
     isEnlargedView: boolean = false;
@@ -21,13 +22,15 @@ export class PdfPreviewComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.route.params.subscribe((params) => {
-            const attachmentId = +params['attachmentId'];
-            if (attachmentId) {
-                this.attachmentService.getAttachmentFile(attachmentId).subscribe({
+        this.route.data.subscribe((data: { attachment: Attachment }) => {
+            this.attachment = data.attachment;
+            if (this.attachment && this.attachment.id) {
+                this.attachmentService.getAttachmentFile(this.attachment.id).subscribe({
                     next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
                     error: (error) => console.error('Failed to load PDF file', error),
                 });
+            } else {
+                console.error('Invalid attachment or attachment ID.');
             }
         });
     }
