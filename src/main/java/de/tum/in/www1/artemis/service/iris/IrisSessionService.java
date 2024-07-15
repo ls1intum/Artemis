@@ -107,7 +107,7 @@ public class IrisSessionService {
     public <S extends IrisSession> void sendOverWebsocket(IrisMessage message, S session) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            chatWrapper.sendOverWebsocket(message);
+            chatWrapper.sendOverWebsocket(session, message);
         }
         else {
             throw new BadRequestException("Invalid Iris session type " + message.getSession().getClass().getSimpleName());

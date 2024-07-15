@@ -9,11 +9,11 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 /**
  * A service to send a message over the websocket to a specific user
  */
-public abstract class IrisWebsocketService {
+public class IrisWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisWebsocketService.class);
 
-    private static final String IRIS_WEBSOCKET_TOPIC_PREFIX = "/topic/iris";
+    private static final String TOPIC_PREFIX = "/topic/iris/";
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -21,10 +21,10 @@ public abstract class IrisWebsocketService {
         this.websocketMessagingService = websocketMessagingService;
     }
 
-    protected void send(User user, Long sessionId, Object payload) {
-        String irisWebsocketTopic = String.format("%s/%s", IRIS_WEBSOCKET_TOPIC_PREFIX, sessionId);
-        log.debug("Sending message to user {} on topic {}: {}", user.getLogin(), irisWebsocketTopic, payload);
-        websocketMessagingService.sendMessageToUser(user.getLogin(), irisWebsocketTopic, payload);
+    public void send(User user, String topicSuffix, Object payload) {
+        String topic = TOPIC_PREFIX + topicSuffix;
+        log.debug("Sending message to Iris user {} on topic {}: {}", user.getLogin(), topic, payload);
+        websocketMessagingService.sendMessageToUser(user.getLogin(), topic, payload);
     }
 
 }

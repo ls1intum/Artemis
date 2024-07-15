@@ -58,15 +58,12 @@ public class PublicPyrisStatusUpdateResource {
     @PostMapping("pipelines/tutor-chat/runs/{runId}/status") // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
     @EnforceNothing
     public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request);
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ExerciseChatJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
-        if (!(job instanceof ExerciseChatJob exerciseChatJob)) {
-            throw new ConflictException("Run ID is not a exercise chat job", "Job", "invalidRunId");
-        }
 
-        pyrisStatusUpdateService.handleStatusUpdate(exerciseChatJob, statusUpdateDTO);
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
 
         return ResponseEntity.ok().build();
     }
@@ -86,15 +83,12 @@ public class PublicPyrisStatusUpdateResource {
     @PostMapping("pipelines/course-chat/runs/{runId}/status")
     @EnforceNothing
     public ResponseEntity<Void> setStatusOfCourseChatJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request);
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, CourseChatJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
-        if (!(job instanceof CourseChatJob courseChatJob)) {
-            throw new ConflictException("Run ID is not a course chat job", "Job", "invalidRunId");
-        }
 
-        pyrisStatusUpdateService.handleStatusUpdate(courseChatJob, statusUpdateDTO);
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
 
         return ResponseEntity.ok().build();
     }
