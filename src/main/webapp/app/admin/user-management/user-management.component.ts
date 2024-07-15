@@ -218,7 +218,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         const tempInStorage = temp
             ? temp
                   .split(',')
-                  .map((filter: string) => type[filter as keyof Filter])
+                  .map((filter: string) => type[filter])
                   .filter(Boolean)
             : new Set();
         return new Set(tempInStorage);
@@ -295,7 +295,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Generic method to return all possible filter values per category.
      */
     getFilter(type: Filter) {
-        return Object.keys(type).map((value) => type[value as keyof Filter]);
+        return Object.keys(type).map((value) => type[value]);
     }
 
     /**
