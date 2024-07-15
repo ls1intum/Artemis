@@ -58,7 +58,7 @@ export interface LinkDetail extends DetailBase {
     data: { text?: string | number; href?: string | false; routerLink?: (string | number | undefined)[]; queryParams?: Record<string, string | number | undefined> };
 }
 
-interface BooleanDetail extends DetailBase {
+export interface BooleanDetail extends DetailBase {
     type: DetailType.Boolean;
     data: { boolean?: boolean };
 }

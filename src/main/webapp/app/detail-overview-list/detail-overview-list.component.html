@@ -25,9 +25,7 @@
                         <div jhiExerciseDetail [detail]="detail"></div>
                     }
                     @case (DetailType.Boolean) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            <jhi-checklist-check [checkAttribute]="detail.data.boolean" />
-                        </dd>
+                        <div jhiExerciseDetail [detail]="detail"></div>
                     }
                     @case (DetailType.ProgrammingRepositoryButtons) {
                         <dd id="detail-value-{{ detail.title }}">
