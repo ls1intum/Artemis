@@ -369,4 +369,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private isInitialHeightExternal(): boolean {
         return this.initialEditorHeight === EXTERNAL_HEIGHT;
     }
+
+    setTextFieldMode(): void {
+        this.monacoEditor.setSimpleTextFieldMode();
+    }
 }

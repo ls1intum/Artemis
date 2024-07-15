@@ -356,4 +356,23 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             wordWrap: value ? 'on' : 'off',
         });
     }
+
+    setSimpleTextFieldMode() {
+        this._editor.updateOptions({
+            lineNumbers: 'off',
+            glyphMargin: false,
+            folding: false,
+            lineDecorationsWidth: '1ch',
+            lineNumbersMinChars: 0,
+            renderLineHighlight: 'none',
+            fontFamily: 'Helvetica',
+            scrollbar: {
+                vertical: 'auto',
+            },
+            padding: {
+                top: 5,
+            },
+        });
+        this.setWordWrap(false);
+    }
 }

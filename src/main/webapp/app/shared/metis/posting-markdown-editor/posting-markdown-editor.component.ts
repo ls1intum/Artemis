@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, forwardRef } from '@angular/core';
+import { AfterContentChecked, AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation, forwardRef } from '@angular/core';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
@@ -25,7 +25,7 @@ import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/mo
 import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/monaco-quote.action';
 import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
 import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
-import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -39,7 +39,9 @@ import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-u
     ],
     encapsulation: ViewEncapsulation.None,
 })
-export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked {
+export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
+    @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
+
     @Input() maxContentLength: number;
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.SMALL;
     @Input() isInputLengthDisplayed = true;
@@ -85,9 +87,12 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new MonacoQuoteAction(),
             new MonacoCodeAction(),
             new MonacoCodeBlockAction(),
-            new MonacoUrlAction(),
             /* TODO: Exercise/Lecture reference & messaging */
         ];
+    }
+
+    ngAfterViewInit(): void {
+        this.markdownEditor.setTextFieldMode();
     }
 
     /**
