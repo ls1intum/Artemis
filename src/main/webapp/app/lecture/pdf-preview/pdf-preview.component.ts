@@ -42,7 +42,6 @@ export class PdfPreviewComponent implements OnInit {
             const loadingTask = PDFJS.getDocument(fileUrl);
             const pdf = await loadingTask.promise;
             const numPages = pdf.numPages;
-            const pages = [];
 
             for (let i = 1; i <= numPages; i++) {
                 const page = await pdf.getPage(i);
@@ -58,27 +57,60 @@ export class PdfPreviewComponent implements OnInit {
                         viewport: viewport,
                     }).promise;
 
-                    pages.push({ canvas, i });
-                }
+                    const fixedWidth = 250;
+                    const scaleFactor = fixedWidth / viewport.width;
+                    const fixedHeight = viewport.height * scaleFactor;
 
-                // Sort and append canvases to the container
-                pages.sort((a, b) => a.i - b.i);
-                pages.forEach((page) => {
-                    page.canvas.style.width = 'auto';
-                    page.canvas.style.height = '150px';
-                    page.canvas.style.margin = '20px';
-                    page.canvas.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.1)';
-                    page.canvas.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
-                    page.canvas.style.cursor = 'pointer';
-                    this.pdfContainer.nativeElement.appendChild(page.canvas);
+                    canvas.style.width = `${fixedWidth}px`;
+                    canvas.style.height = `${fixedHeight}px`;
 
-                    page.canvas.addEventListener('click', () => {
-                        this.displayEnlargedCanvas(page.canvas);
+                    const container = document.createElement('div');
+                    container.classList.add('pdf-page-container');
+                    container.style.position = 'relative';
+                    container.style.display = 'inline-block';
+                    container.style.width = `${fixedWidth}px`;
+                    container.style.height = `${fixedHeight}px`;
+                    container.style.margin = '20px'; // Margin for the container, not the canvas
+                    container.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.1)';
+
+                    const overlay = document.createElement('div');
+                    overlay.classList.add('pdf-page-overlay');
+                    overlay.innerHTML = `<span>${i}</span>`;
+                    overlay.style.position = 'absolute';
+                    overlay.style.top = '0';
+                    overlay.style.left = '0';
+                    overlay.style.width = '100%';
+                    overlay.style.height = '100%';
+                    overlay.style.display = 'flex';
+                    overlay.style.justifyContent = 'center';
+                    overlay.style.alignItems = 'center';
+                    overlay.style.fontSize = '24px';
+                    overlay.style.color = 'white';
+                    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+                    overlay.style.zIndex = '1';
+                    overlay.style.transition = 'opacity 0.3s ease';
+                    overlay.style.opacity = '0';
+                    overlay.style.cursor = 'pointer';
+
+                    container.appendChild(canvas);
+                    container.appendChild(overlay);
+
+                    this.pdfContainer.nativeElement.appendChild(container);
+
+                    container.addEventListener('mouseenter', () => {
+                        overlay.style.opacity = '1';
                     });
-                });
+                    container.addEventListener('mouseleave', () => {
+                        overlay.style.opacity = '0';
+                    });
 
-                URL.revokeObjectURL(fileUrl);
+                    overlay.addEventListener('click', () => {
+                        this.displayEnlargedCanvas(canvas);
+                    });
+                }
             }
+
+            URL.revokeObjectURL(fileUrl);
         } catch (error) {
             console.error('Error loading PDF:', error);
         }
