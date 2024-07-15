@@ -119,7 +119,7 @@
                                 }
                             </div>
                         } @else {
-                            @if (exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission?.submitted) {
+                            @if (exerciseInfos[exercise.id!]?.participation) {
                                 @switch (exercise.type) {
                                     @case (TEXT) {
                                         <jhi-text-exam-summary
@@ -155,7 +155,12 @@
                                         />
                                     }
                                 }
-                                @if (exerciseInfos[exercise.id!]!.submission! && exercise.type !== QUIZ && isAfterStudentReviewStart) {
+                                @if (
+                                    exerciseInfos[exercise.id!]!.submission! &&
+                                    exercise.type !== QUIZ &&
+                                    isAfterStudentReviewStart &&
+                                    exerciseInfos[exercise.id!]?.submission?.submitted
+                                ) {
                                     <jhi-complaint-student-view
                                         class="mb-2 mt-2 ms-3"
                                         [exercise]="exercise"
@@ -165,7 +170,8 @@
                                         [testRun]="isTestRun"
                                     />
                                 }
-                            } @else {
+                            }
+                            @if (!exerciseInfos[exercise.id!]?.submission?.submitted) {
                                 {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
                             }
                         }
@@ -174,7 +180,7 @@
                 }
                 @if (exercise.type === PROGRAMMING) {
                     <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
-                    @if (exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission!) {
+                    @if (exerciseInfos[exercise.id!]?.participation) {
                         <jhi-programming-exam-summary
                             [exercise]="exercise"
                             [participation]="exerciseInfos[exercise.id!]!.participation!"
@@ -186,7 +192,8 @@
                             [isPrinting]="isPrinting"
                             [isAfterResultsArePublished]="resultsArePublished"
                         />
-                    } @else {
+                    }
+                    @if (!exerciseInfos[exercise.id!]?.submission!) {
                         {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
                     }
                 }
