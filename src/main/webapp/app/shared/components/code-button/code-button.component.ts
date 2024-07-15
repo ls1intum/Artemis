@@ -11,14 +11,14 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'jhi-clone-repo-button',
-    templateUrl: './clone-repo-button.component.html',
-    styleUrls: ['./clone-repo-button.component.scss'],
+    selector: 'jhi-code-button',
+    templateUrl: './code-button.component.html',
+    styleUrls: ['./code-button.component.scss'],
 })
-export class CloneRepoButtonComponent implements OnInit, OnChanges {
+export class CodeButtonComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
 
@@ -28,6 +28,8 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     smallButtons: boolean;
     @Input()
     repositoryUri?: string;
+    @Input()
+    routerLinkForRepositoryView?: string | (string | number)[];
     @Input()
     participations?: ProgrammingExerciseStudentParticipation[];
     @Input()
@@ -51,8 +53,8 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     isPracticeMode: boolean | undefined;
 
     // Icons
-    faDownload = faDownload;
-    faExternalLink = faExternalLink;
+    readonly faCode = faCode;
+    readonly faExternalLink = faExternalLink;
 
     constructor(
         private translateService: TranslateService,
@@ -155,15 +157,10 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Used for the Button to open the repository in a separate browser-window
-     * @return HTTPS-Repository link of the student
+     * Gets the external link of the repository. For LocalVC, undefined is returned.
      */
     getHttpRepositoryUri(): string {
-        if (this.isTeamParticipation) {
-            return this.repositoryUriForTeam(this.getRepositoryUri());
-        } else {
-            return this.getRepositoryUri();
-        }
+        return this.isTeamParticipation ? this.repositoryUriForTeam(this.getRepositoryUri()) : this.getRepositoryUri();
     }
 
     /**
