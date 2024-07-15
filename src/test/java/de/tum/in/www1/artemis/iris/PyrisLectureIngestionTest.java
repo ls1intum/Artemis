@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
@@ -38,9 +37,6 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private PyrisWebhookService pyrisWebhookService;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private LectureRepository lectureRepository;

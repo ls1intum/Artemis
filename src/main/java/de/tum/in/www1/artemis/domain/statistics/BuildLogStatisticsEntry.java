@@ -128,7 +128,7 @@ public class BuildLogStatisticsEntry extends DomainObject {
         }
 
         public int limitSmallInt(int value) {
-            return Math.max(0, Math.min(value, 65535));
+            return Math.clamp(value, 0, 65535);
         }
     }
 }

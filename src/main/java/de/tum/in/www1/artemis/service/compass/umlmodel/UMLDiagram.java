@@ -79,8 +79,7 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram>, Serializable
             similarity += weight * similarityValue;
         }
 
-        // Make sure that the similarity value is between 0 and 1.
-        return Math.min(Math.max(similarity, 0), 1);
+        return Math.clamp(similarity, 0, 1);
     }
 
     /**

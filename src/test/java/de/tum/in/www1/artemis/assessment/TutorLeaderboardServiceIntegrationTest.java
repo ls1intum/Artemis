@@ -19,10 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
 class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -31,15 +28,6 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private TutorLeaderboardService tutorLeaderboardService;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -87,16 +75,16 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationIn
 
     private void assertLeaderboardData(List<TutorLeaderboardDTO> leaderboardData) {
         assertThat(leaderboardData).hasSize(TUTOR_COUNT);
-        assertThat(leaderboardData.get(0).numberOfAssessments()).isEqualTo(2);
-        assertThat(leaderboardData.get(0).numberOfAcceptedComplaints()).isZero();
-        assertThat(leaderboardData.get(0).numberOfTutorComplaints()).isZero();
-        assertThat(leaderboardData.get(0).numberOfNotAnsweredMoreFeedbackRequests()).isZero();
-        assertThat(leaderboardData.get(0).numberOfComplaintResponses()).isZero();
-        assertThat(leaderboardData.get(0).numberOfAnsweredMoreFeedbackRequests()).isZero();
-        assertThat(leaderboardData.get(0).numberOfTutorMoreFeedbackRequests()).isZero();
-        assertThat(leaderboardData.get(0).points()).isEqualTo(exercise.getMaxPoints() * ASSESSMENT_COUNT);
-        assertThat(leaderboardData.get(0).averageScore()).isEqualTo(50);
-        assertThat(leaderboardData.get(0).averageRating()).isEqualTo(3.5);
+        assertThat(leaderboardData.getFirst().numberOfAssessments()).isEqualTo(2);
+        assertThat(leaderboardData.getFirst().numberOfAcceptedComplaints()).isZero();
+        assertThat(leaderboardData.getFirst().numberOfTutorComplaints()).isZero();
+        assertThat(leaderboardData.getFirst().numberOfNotAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(leaderboardData.getFirst().numberOfComplaintResponses()).isZero();
+        assertThat(leaderboardData.getFirst().numberOfAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(leaderboardData.getFirst().numberOfTutorMoreFeedbackRequests()).isZero();
+        assertThat(leaderboardData.getFirst().points()).isEqualTo(exercise.getMaxPoints() * ASSESSMENT_COUNT);
+        assertThat(leaderboardData.getFirst().averageScore()).isEqualTo(50);
+        assertThat(leaderboardData.getFirst().averageRating()).isEqualTo(3.5);
     }
 
     @Test

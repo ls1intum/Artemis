@@ -1,6 +1,6 @@
 <div
     class="d-flex sidebar justify-content-between flex-column rounded-3"
-    [ngClass]="{ 'sidebar-height-dev content-height-dev': !isProduction || isTestServer, collapsed: isCollapsed, 'sidebar-height-testRun': isTestRun }"
+    [ngClass]="{ 'sidebar-height-dev content-height-dev sidebar-height-testRun-dev': !isProduction || isTestServer, collapsed: isCollapsed, 'sidebar-height-testRun': isTestRun }"
 >
     <div class="px-3 py-3">
         <div class="w-100 bg-module">

@@ -61,7 +61,7 @@ public class StandardizedCompetency extends BaseCompetency {
 
     @OneToMany(mappedBy = "linkedStandardizedCompetency", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("linkedStandardizedCompetency")
-    private Set<Competency> linkedCompetencies = new HashSet<>();
+    private Set<CourseCompetency> linkedCompetencies = new HashSet<>();
 
     public StandardizedCompetency(String title, String description, CompetencyTaxonomy taxonomy, String version) {
         super(title, description, taxonomy);
@@ -112,11 +112,11 @@ public class StandardizedCompetency extends BaseCompetency {
         this.childVersions = childVersions;
     }
 
-    public Set<Competency> getLinkedCompetencies() {
+    public Set<CourseCompetency> getLinkedCompetencies() {
         return linkedCompetencies;
     }
 
-    public void setLinkedCompetencies(Set<Competency> linkedCompetencies) {
+    public void setLinkedCompetencies(Set<CourseCompetency> linkedCompetencies) {
         this.linkedCompetencies = linkedCompetencies;
     }
 }
