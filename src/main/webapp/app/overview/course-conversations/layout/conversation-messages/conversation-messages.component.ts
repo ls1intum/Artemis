@@ -223,6 +223,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     };
 
     scrollToBottomOfMessages() {
+        // Use setTimeout to ensure the scroll happens after the new message is rendered
         setTimeout(() => {
             this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
         }, 0);
