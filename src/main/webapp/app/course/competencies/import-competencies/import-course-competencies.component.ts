@@ -13,6 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { forkJoin } from 'rxjs';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 /**
  * An abstract component used to import course competencies. Its concrete implementations are
@@ -76,6 +77,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
     protected readonly router: Router = inject(Router);
     protected readonly competencyService: CompetencyService = inject(CompetencyService);
     protected readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
+    protected readonly courseCompetencyService: CourseCompetencyService = inject(CourseCompetencyService);
     protected readonly alertService: AlertService = inject(AlertService);
     private readonly translateService: TranslateService = inject(TranslateService);
     private readonly sortingService: SortService = inject(SortService);
@@ -84,12 +86,13 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
         //load competencies and prerequisites of this course to disable their import buttons
         const competencySubscription = this.competencyService.getAllForCourse(this.courseId);
-        const prerequisiteSubscription = this.prerequisiteService.getAllPrerequisitesForCourse(this.courseId);
+        const prerequisiteSubscription = this.prerequisiteService.getAllForCourse(this.courseId);
         forkJoin([competencySubscription, prerequisiteSubscription]).subscribe({
-            next: ([competenciesResponse, prerequisites]) => {
+            next: ([competenciesResponse, prerequisitesResponse]) => {
                 const competencies = competenciesResponse.body ?? [];
                 const competencyIds = competencies.map((competency) => competency.id).filter((id): id is number => !!id);
                 // do not allow import of competencies that are already imported as prerequisites
+                const prerequisites = prerequisitesResponse.body ?? [];
                 const referencedIds = prerequisites.map((prerequisite) => prerequisite.linkedCourseCompetency?.id).filter((id): id is number => !!id);
                 this.disabledIds = [...competencyIds, ...referencedIds];
                 this.performSearch();
@@ -131,7 +134,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
      */
     performSearch() {
         this.isLoading = true;
-        this.competencyService.getForImport({ ...this.filter, ...this.search }).subscribe({
+        this.courseCompetencyService.getForImport({ ...this.filter, ...this.search }).subscribe({
             next: (res) => {
                 this.searchedCourseCompetencies = res;
                 this.isLoading = false;

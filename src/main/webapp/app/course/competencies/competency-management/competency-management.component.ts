@@ -62,6 +62,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
     private readonly competencyService: CompetencyService = inject(CompetencyService);
     private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
+    private readonly courseCompetencyService: CompetencyService = inject(CompetencyService);
     private readonly alertService: AlertService = inject(AlertService);
     private readonly modalService: NgbModal = inject(NgbModal);
     private readonly profileService: ProfileService = inject(ProfileService);
@@ -112,7 +113,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      * @param prerequisiteId the id of the prerequisite
      */
     deletePrerequisite(prerequisiteId: number) {
-        this.prerequisiteService.deletePrerequisite(prerequisiteId, this.courseId).subscribe({
+        this.prerequisiteService.delete(prerequisiteId, this.courseId).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.prerequisite.manage.deleted');
                 this.prerequisites = this.prerequisites.filter((prerequisite) => prerequisite.id !== prerequisiteId);
@@ -145,9 +146,9 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      */
     loadData() {
         this.isLoading = true;
-        const relationsObservable = this.competencyService.getCompetencyRelations(this.courseId);
-        const prerequisitesObservable = this.prerequisiteService.getAllPrerequisitesForCourse(this.courseId);
-        const competencyProgressObservable = this.competencyService.getAllForCourse(this.courseId).pipe(
+        const relationsObservable = this.courseCompetencyService.getCompetencyRelations(this.courseId);
+        const prerequisitesObservable = this.prerequisiteService.getAllForCourse(this.courseId);
+        const competencyProgressObservable = this.courseCompetencyService.getAllForCourse(this.courseId).pipe(
             switchMap((res) => {
                 if (!res.body || res.body.length === 0) {
                     // return observable with empty array as an empty forkJoin never emits a value, causing infinite loading
@@ -156,7 +157,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 this.competencies = res.body;
 
                 const progressObservable = this.competencies.map((lg) => {
-                    return this.competencyService.getCourseProgress(lg.id!, this.courseId);
+                    return this.courseCompetencyService.getCourseProgress(lg.id!, this.courseId);
                 });
 
                 return forkJoin(progressObservable);
@@ -164,7 +165,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         );
         forkJoin([relationsObservable, prerequisitesObservable, competencyProgressObservable]).subscribe({
             next: ([competencyRelations, prerequisites, competencyProgressResponses]) => {
-                this.prerequisites = prerequisites;
+                this.prerequisites = prerequisites.body ?? [];
                 this.courseCompetencies = [...this.competencies, ...this.prerequisites];
                 this.relations = (competencyRelations.body ?? []).map((relationDTO) => dtoToCompetencyRelation(relationDTO));
 
@@ -231,7 +232,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      * @param relation the given competency relation
      */
     createRelation(relation: CompetencyRelation) {
-        this.competencyService
+        this.courseCompetencyService
             .createCompetencyRelation(relation, this.courseId)
             .pipe(
                 filter((res) => res.ok),
@@ -274,7 +275,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      * @param relationId the given id
      */
     private removeRelation(relationId: number) {
-        this.competencyService.removeCompetencyRelation(relationId, this.courseId).subscribe({
+        this.courseCompetencyService.removeCompetencyRelation(relationId, this.courseId).subscribe({
             next: () => {
                 this.relations = this.relations.filter((relation) => relation.id !== relationId);
             },

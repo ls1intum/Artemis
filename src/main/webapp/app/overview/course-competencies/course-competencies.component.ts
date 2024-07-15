@@ -11,6 +11,7 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 @Component({
     selector: 'jhi-course-competencies',
@@ -43,6 +44,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         private courseStorageService: CourseStorageService,
         private competencyService: CompetencyService,
         private prerequisiteService: PrerequisiteService,
+        private courseCompetencyService: CourseCompetencyService,
     ) {}
 
     ngOnInit(): void {
@@ -89,13 +91,13 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         this.isLoading = true;
 
         const getAllCompetenciesObservable = this.competencyService.getAllForCourse(this.courseId);
-        const prerequisitesObservable = this.prerequisiteService.getAllPrerequisitesForCourse(this.courseId);
-        const competencyJolObservable = this.judgementOfLearningEnabled ? this.competencyService.getJoLAllForCourse(this.courseId) : of(undefined);
+        const prerequisitesObservable = this.prerequisiteService.getAllForCourse(this.courseId);
+        const competencyJolObservable = this.judgementOfLearningEnabled ? this.courseCompetencyService.getJoLAllForCourse(this.courseId) : of(undefined);
 
         forkJoin([getAllCompetenciesObservable, prerequisitesObservable, competencyJolObservable]).subscribe({
             next: ([competencies, prerequisites, judgementOfLearningMap]) => {
-                this.competencies = competencies.body! as Competency[];
-                this.prerequisites = prerequisites;
+                this.competencies = competencies.body!;
+                this.prerequisites = prerequisites.body!;
 
                 if (judgementOfLearningMap !== undefined) {
                     const competenciesMap: { [key: number]: Competency } = Object.fromEntries(this.competencies.map((competency) => [competency.id, competency]));

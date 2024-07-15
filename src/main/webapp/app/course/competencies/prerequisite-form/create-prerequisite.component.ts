@@ -35,7 +35,7 @@ export class CreatePrerequisiteComponent implements OnInit {
     createPrerequisite(prerequisite: Prerequisite) {
         this.isLoading = true;
         this.prerequisiteService
-            .createPrerequisite(prerequisite, this.courseId)
+            .create(prerequisite, this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

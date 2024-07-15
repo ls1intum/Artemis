@@ -32,12 +32,12 @@ export class EditPrerequisiteComponent implements OnInit {
                 switchMap((params) => {
                     const prerequisiteId = Number(params['prerequisiteId']);
                     this.courseId = Number(params['courseId']);
-                    return this.prerequisiteService.getPrerequisite(prerequisiteId, this.courseId);
+                    return this.prerequisiteService.findById(prerequisiteId, this.courseId);
                 }),
             )
             .subscribe({
                 next: (prerequisite) => {
-                    this.existingPrerequisite = prerequisite;
+                    this.existingPrerequisite = prerequisite.body!;
                     this.isLoading = false;
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -47,7 +47,7 @@ export class EditPrerequisiteComponent implements OnInit {
     updatePrerequisite(prerequisite: Prerequisite) {
         this.isLoading = true;
         this.prerequisiteService
-            .updatePrerequisite(prerequisite, this.existingPrerequisite.id!, this.courseId)
+            .update(prerequisite, this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

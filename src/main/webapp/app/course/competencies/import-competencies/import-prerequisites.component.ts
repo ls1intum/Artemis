@@ -12,10 +12,9 @@ export class ImportPrerequisitesComponent extends ImportCourseCompetenciesCompon
     allowRelationImport = false;
 
     onSubmit() {
-        const idsToImport = this.selectedCourseCompetencies.resultsOnPage.map((c) => c.id).filter((c): c is number => c !== undefined);
-        this.prerequisiteService.importPrerequisites(idsToImport, this.courseId).subscribe({
+        this.prerequisiteService.importBulk(this.selectedCourseCompetencies.resultsOnPage, this.courseId, false).subscribe({
             next: (res) => {
-                this.alertService.success('artemisApp.prerequisite.import.success', { numPrerequisites: res.length });
+                this.alertService.success('artemisApp.prerequisite.import.success', { numPrerequisites: res.body?.length ?? 0 });
                 this.isSubmitted = true;
                 this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },

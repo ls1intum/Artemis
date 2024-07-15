@@ -44,6 +44,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
         protected alertService: AlertService,
         protected lectureService: LectureService,
         protected competencyService: CompetencyService,
+        protected courseCompetencyService: CompetencyService,
         protected translateService: TranslateService,
     ) {}
 
@@ -212,7 +213,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
         this.isLoadingCompetencies = true;
         this.isLoadingCompetencyForm = true;
 
-        this.subscribeToLoadCompetenciesResponse(this.competencyService.getAllForCourse(this.lecture.course!.id!));
+        this.subscribeToLoadCompetenciesResponse(this.courseCompetencyService.getAllForCourse(this.lecture.course!.id!));
         this.subscribeToLoadUnitResponse(this.lectureService.findWithDetails(this.lecture.id!));
     }
 

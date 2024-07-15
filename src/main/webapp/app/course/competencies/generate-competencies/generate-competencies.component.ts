@@ -15,6 +15,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -47,6 +48,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     readonly documentationType: DocumentationType = 'GenerateCompetencies';
 
     constructor(
+        private courseCompetencyService: CourseCompetencyService,
         private competencyService: CompetencyService,
         private alertService: AlertService,
         private activatedRoute: ActivatedRoute,
@@ -69,7 +71,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      */
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
-        this.competencyService
+        this.courseCompetencyService
             .generateCompetenciesFromCourseDescription(courseDescription, this.courseId)
             .pipe(
                 finalize(() => {
