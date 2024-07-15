@@ -12,10 +12,10 @@ public interface ParserStrategy {
     }
 
     /**
-     * Parse a static code analysis report from an XML string into a common Java representation.
+     * Parse a static code analysis report from its serialized form into a common Java representation.
      *
-     * @param xmlContent The XML content as a String
+     * @param reportContent The report content as a String
      * @return Report object containing the parsed report information
      */
-    StaticCodeAnalysisReportDTO parse(String xmlContent);
+    StaticCodeAnalysisReportDTO parse(String reportContent);
 }

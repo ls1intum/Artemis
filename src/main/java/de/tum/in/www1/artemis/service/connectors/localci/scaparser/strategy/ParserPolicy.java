@@ -27,7 +27,8 @@ public class ParserPolicy {
             case CHECKSTYLE -> new CheckstyleParser();
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
-            // so far, we do not support swiftlint and gcc only SCA for Java
+            case CLIPPY -> new SarifParser();
+            // so far, we do not support swiftlint and gcc
             default -> throw new UnsupportedToolException("Tool " + tool + " is not supported");
         };
     }

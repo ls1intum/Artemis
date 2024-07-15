@@ -371,8 +371,8 @@ public class BuildJobExecutionService {
         int lastIndexOfSlash = name.lastIndexOf('/');
         String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
 
-        // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
-        return !tarArchiveEntry.isDirectory() && result.endsWith(".xml") && !result.equals("pom.xml");
+        // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml", SCA result files are named "*.sarif".
+        return !tarArchiveEntry.isDirectory() && (result.endsWith(".xml") || result.endsWith(".sarif")) && !result.equals("pom.xml");
     }
 
     /**
