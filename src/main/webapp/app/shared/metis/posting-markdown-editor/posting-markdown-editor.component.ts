@@ -18,6 +18,14 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ChannelMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/channelMentionCommand';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { isCommunicationEnabled } from 'app/entities/course.model';
+import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
+import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
+import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
+import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/monaco-quote.action';
+import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
+import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
+import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -37,6 +45,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() isInputLengthDisplayed = true;
     @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];
+    defaultActions: MonacoEditorAction[];
     content?: string;
     previewMode = false;
 
@@ -68,6 +77,17 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new ExerciseReferenceCommand(this.metisService),
             new LectureAttachmentReferenceCommand(this.metisService, this.lectureService),
         ];
+
+        this.defaultActions = [
+            new MonacoBoldAction(),
+            new MonacoItalicAction(),
+            new MonacoUnderlineAction(),
+            new MonacoQuoteAction(),
+            new MonacoCodeAction(),
+            new MonacoCodeBlockAction(),
+            new MonacoUrlAction(),
+            /* TODO: Exercise/Lecture reference & messaging */
+        ];
     }
 
     /**
@@ -97,9 +117,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * @param value
      */
     writeValue(value: any): void {
-        if (value !== undefined) {
-            this.content = value;
-        }
+        this.content = value ?? '';
     }
 
     /**
@@ -124,4 +142,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         this.onChange(this.content);
         this.valueChanged();
     }
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }

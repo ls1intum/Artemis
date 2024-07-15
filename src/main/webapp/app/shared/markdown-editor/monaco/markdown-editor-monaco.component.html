@@ -58,10 +58,10 @@
                         @if (displayedActions.header.length > 0) {
                             <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
                                 <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
-                                    <span [jhiTranslate]="headerActions.translationKey"></span>
+                                    <span [jhiTranslate]="headerActions!.translationKey"></span>
                                 </button>
                                 <div class="dropdown-menu" ngbDropdownMenu>
-                                    @for (action of headerActions.actions; track action.id) {
+                                    @for (action of displayedActions.header; track action.id) {
                                         <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor()">
                                             <span [jhiTranslate]="action.translationKey"></span>
                                         </button>

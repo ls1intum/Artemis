@@ -1,27 +1,28 @@
 <div class="col-12">
-    <jhi-markdown-editor
+    <jhi-markdown-editor-monaco
         class="markdown-editor background-editor-color w-100"
         [markdown]="content"
         (markdownChange)="updateField($event)"
         [resizableMinHeight]="editorHeight"
         (onEditSelect)="previewMode = false"
         (onPreviewSelect)="previewMode = true"
-        [metaCommands]="[]"
-        [headerCommands]="[]"
-        [defaultCommands]="defaultCommands"
+        [metaActions]="[]"
+        [headerActions]="undefined"
+        [defaultActions]="defaultActions"
         [enableFileUpload]="false"
-        [colorCommands]="[]"
-        [showDefaultPreview]="false"
+        [colorAction]="undefined"
+        [enableFileUpload]="true"
+        [initialEditorHeight]="MarkdownEditorHeight.SMALL"
     >
-        <!-- Preview -->
-        <ng-container id="preview">
+        <!-- Preview todo showdefaultpreview-->
+        <ng-container id="previewMonaco">
             @if (previewMode) {
                 <jhi-posting-content [content]="content" />
             }
             <hr />
         </ng-container>
         <!-- End of Preview-->
-    </jhi-markdown-editor>
+    </jhi-markdown-editor-monaco>
 </div>
 @if (isInputLengthDisplayed || (content?.length ?? 0) > maxContentLength) {
     <div class="col text-end">

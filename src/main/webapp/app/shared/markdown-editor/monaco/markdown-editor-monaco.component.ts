@@ -102,7 +102,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ];
 
     @Input()
-    headerActions: MonacoEditorActionGroup<MonacoHeadingAction> = new MonacoEditorActionGroup<MonacoHeadingAction>(
+    headerActions?: MonacoEditorActionGroup<MonacoHeadingAction> = new MonacoEditorActionGroup<MonacoHeadingAction>(
         'artemisApp.multipleChoiceQuestion.editor.style',
         [1, 2, 3].map((level) => new MonacoHeadingAction(level)),
         undefined,
@@ -121,7 +121,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     markdownChange = new EventEmitter<string>();
 
     @Output()
-    onPreviewSelect = new EventEmitter();
+    onPreviewSelect = new EventEmitter<void>();
+
+    @Output()
+    onEditSelect = new EventEmitter<void>();
 
     inPreviewMode = false;
     uniqueMarkdownEditorId: string;
@@ -168,7 +171,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
             standard: this.defaultActions,
-            header: this.headerActions.actions,
+            header: this.headerActions?.actions ?? [],
             color: this.colorAction,
             domain: {
                 withoutOptions: this.domainActions.filter((action) => !(action instanceof MonacoEditorDomainActionWithOptions)),
@@ -190,7 +193,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.fileUploadFooter?.nativeElement) {
             this.resizeObserver.observe(this.fileUploadFooter.nativeElement);
         }
-        [this.defaultActions, this.headerActions.actions, this.domainActions, ...(this.colorAction ? [this.colorAction] : []), this.metaActions].flat().forEach((action) => {
+        [this.defaultActions, this.headerActions?.actions ?? [], this.domainActions, ...(this.colorAction ? [this.colorAction] : []), this.metaActions].flat().forEach((action) => {
             if (action instanceof MonacoFullscreenAction) {
                 // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
                 action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
