@@ -1,42 +1,12 @@
 <div>
-    <div class="d-flex flex-wrap">
-        <div class="d-flex align-items-center">
-            <h2 jhiTranslate="artemisApp.competency.manageCompetencies.title"></h2>
-            <jhi-documentation-button [type]="documentationType" />
-        </div>
+    <div class="d-flex flex-wrap mt-4">
+        <h2 jhiTranslate="artemisApp.competency.manage.title"></h2>
+        <jhi-documentation-button [type]="documentationType" />
         <div class="ms-auto justify-content-end">
-            @if (irisCompetencyGenerationEnabled) {
-                <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
-                    <fa-icon [icon]="faRobot" />
-                    <span>{{ 'artemisApp.competency.manageCompetencies.generateButton' | artemisTranslate }}</span>
-                </a>
-            }
-            <div ngbDropdown class="d-inline">
-                <button id="importCompetenciesDropdown" class="btn btn-primary" ngbDropdownToggle>
-                    <fa-icon [icon]="faFileImport" />
-                    {{ 'artemisApp.competency.manageCompetencies.importButton' | artemisTranslate }}
-                </button>
-                <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
-                    <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
-                        <fa-icon [icon]="faFileImport" />
-                        <span>{{ 'artemisApp.competency.manageCompetencies.importAllButton' | artemisTranslate }}</span>
-                    </button>
-                    <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import']" ngbDropdownItem>
-                        <fa-icon [icon]="faFileImport" />
-                        <span>{{ 'artemisApp.competency.manageCompetencies.importFromCoursesButton' | artemisTranslate }}</span>
-                    </a>
-                    @if (standardizedCompetenciesEnabled) {
-                        <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import-standardized']" ngbDropdownItem>
-                            <fa-icon [icon]="faFileImport" />
-                            <span>{{ 'artemisApp.competency.manageCompetencies.importStandardizedButton' | artemisTranslate }}</span>
-                        </a>
-                    }
-                </div>
-            </div>
-            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
-                <fa-icon [icon]="faPlus" />
-                <span>{{ 'artemisApp.competency.manageCompetencies.createButton' | artemisTranslate }}</span>
-            </a>
+            <button class="btn btn-primary" id="courseCompetencyImportAllButton" (click)="openImportAllModal('courseCompetency')">
+                <fa-icon [icon]="faFileImport" />
+                <span>{{ 'artemisApp.courseCompetency.manage.importAllButton' | artemisTranslate }}</span>
+            </button>
         </div>
     </div>
     @if (isLoading) {
@@ -52,7 +22,43 @@
         (onCreateRelation)="createRelation($event)"
         (onRemoveRelation)="onRemoveRelation($event)"
     />
-    <h2>{{ 'artemisApp.competency.competencies' | artemisTranslate }}</h2>
+    <div class="d-flex flex-wrap mt-4">
+        <h2>{{ 'artemisApp.competency.competencies' | artemisTranslate }}</h2>
+        <div class="ms-auto justify-content-end">
+            @if (irisCompetencyGenerationEnabled) {
+                <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
+                    <fa-icon [icon]="faRobot" />
+                    <span>{{ 'artemisApp.competency.manage.generateButton' | artemisTranslate }}</span>
+                </a>
+            }
+            <div ngbDropdown class="d-inline">
+                <button id="importCompetenciesDropdown" class="btn btn-primary" ngbDropdownToggle>
+                    <fa-icon [icon]="faFileImport" />
+                    {{ 'artemisApp.competency.manage.importButton' | artemisTranslate }}
+                </button>
+                <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
+                    <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal('competency')" ngbDropdownItem>
+                        <fa-icon [icon]="faFileImport" />
+                        <span>{{ 'artemisApp.competency.manage.importAllButton' | artemisTranslate }}</span>
+                    </button>
+                    <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import']" ngbDropdownItem>
+                        <fa-icon [icon]="faFileImport" />
+                        <span>{{ 'artemisApp.competency.manage.importFromCoursesButton' | artemisTranslate }}</span>
+                    </a>
+                    @if (standardizedCompetenciesEnabled) {
+                        <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import-standardized']" ngbDropdownItem>
+                            <fa-icon [icon]="faFileImport" />
+                            <span>{{ 'artemisApp.competency.manage.importStandardizedButton' | artemisTranslate }}</span>
+                        </a>
+                    }
+                </div>
+            </div>
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
+                <fa-icon [icon]="faPlus" />
+                <span>{{ 'artemisApp.competency.manage.createButton' | artemisTranslate }}</span>
+            </a>
+        </div>
+    </div>
     <div class="container-fluid overflow-auto">
         @if (competencies.length) {
             <table class="table table-striped">
@@ -135,19 +141,37 @@
                 </tbody>
             </table>
         } @else {
-            <span jhiTranslate="artemisApp.competency.manageCompetencies.empty"></span>
+            <span jhiTranslate="artemisApp.competency.manage.empty"></span>
         }
     </div>
     <div class="d-flex flex-wrap mt-4">
         <h2 jhiTranslate="artemisApp.prerequisite.title"></h2>
-        <div class="ms-auto text-truncate justify-content-end">
-            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'import-prerequisites']">
-                <fa-icon [icon]="faFileImport" />
-                <span jhiTranslate="artemisApp.prerequisite.manage.importButton"></span>
-            </a>
-            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'prerequisites', 'create']">
+        <div class="ms-auto justify-content-end">
+            <div ngbDropdown class="d-inline">
+                <button id="importPrerequisitesDropdown" class="btn btn-primary" ngbDropdownToggle>
+                    <fa-icon [icon]="faFileImport" />
+                    {{ 'artemisApp.prerequisite.manage.importButton' | artemisTranslate }}
+                </button>
+                <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
+                    <button class="btn" id="prerequisiteImportAllButton" (click)="openImportAllModal('prerequisite')" ngbDropdownItem>
+                        <fa-icon [icon]="faFileImport" />
+                        <span>{{ 'artemisApp.prerequisite.manage.importAllButton' | artemisTranslate }}</span>
+                    </button>
+                    <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import']" ngbDropdownItem>
+                        <fa-icon [icon]="faFileImport" />
+                        <span>{{ 'artemisApp.prerequisite.manage.importFromCoursesButton' | artemisTranslate }}</span>
+                    </a>
+                    @if (standardizedCompetenciesEnabled) {
+                        <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import-standardized']" ngbDropdownItem>
+                            <fa-icon [icon]="faFileImport" />
+                            <span>{{ 'artemisApp.prerequisite.manage.importStandardizedButton' | artemisTranslate }}</span>
+                        </a>
+                    }
+                </div>
+            </div>
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
                 <fa-icon [icon]="faPlus" />
-                <span jhiTranslate="artemisApp.prerequisite.manage.createButton"></span>
+                <span>{{ 'artemisApp.prerequisite.manage.createButton' | artemisTranslate }}</span>
             </a>
         </div>
     </div>

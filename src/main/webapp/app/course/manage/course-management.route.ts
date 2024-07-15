@@ -201,7 +201,7 @@ export const courseManagementState: Routes = [
                         component: CompetencyManagementComponent,
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                            pageTitle: 'artemisApp.competency.manageCompetencies.title',
+                            pageTitle: 'artemisApp.competency.manage.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -209,7 +209,7 @@ export const courseManagementState: Routes = [
                         // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered
                         path: 'competency-management',
                         data: {
-                            pageTitle: 'artemisApp.competency.manageCompetencies.title',
+                            pageTitle: 'artemisApp.competency.manage.title',
                         },
                         children: [
                             {

@@ -21,7 +21,7 @@ export class PrerequisiteService extends CourseCompetencyService {
     }
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<Prerequisite[]>(`${this.resourceURL}/courses/${courseId}/prerequisites/`, { observe: 'response' }).pipe(
+        return this.httpClient.get<Prerequisite[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.convertArrayResponseDatesFromServer(res)),
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );

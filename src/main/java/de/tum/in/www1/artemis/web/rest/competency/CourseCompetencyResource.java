@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +36,7 @@ import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
@@ -52,6 +55,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -235,6 +239,42 @@ public class CourseCompetencyResource {
     public ResponseEntity<SearchResultPageDTO<CourseCompetency>> getCompetenciesForImport(CompetencyPageableSearchDTO search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(courseCompetencyService.getOnPageWithSizeForImport(search, user));
+    }
+
+    /**
+     * POST courses/{courseId}/course-competencies/import-all/{sourceCourseId} : Imports all course competencies of the source course (and optionally their relations) into another.
+     *
+     * @param courseId        the id of the course to import into
+     * @param sourceCourseId  the id of the course to import from
+     * @param importRelations if relations should be imported as well
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies (and relations)
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/course-competencies/import-all/{sourceCourseId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @PathVariable long sourceCourseId,
+            @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
+        log.info("REST request to all course competencies from course {} into course {}", sourceCourseId, courseId);
+
+        if (courseId == sourceCourseId) {
+            throw new BadRequestAlertException("Cannot import from a course into itself", "Course", "courseCycle");
+        }
+        var targetCourse = courseRepository.findByIdElseThrow(courseId);
+        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
+
+        var competencies = courseCompetencyRepository.findAllForCourse(sourceCourse.getId());
+        Set<CompetencyWithTailRelationDTO> importedCompetencies;
+
+        if (importRelations) {
+            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(sourceCourse.getId());
+            importedCompetencies = courseCompetencyService.importCourseCompetenciesAndRelations(targetCourse, competencies, relations);
+        }
+        else {
+            importedCompetencies = courseCompetencyService.importCourseCompetencies(targetCourse, competencies);
+        }
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }
 
     // Competency Relation Endpoints

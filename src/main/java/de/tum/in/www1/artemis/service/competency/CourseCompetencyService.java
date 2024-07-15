@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
+import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
@@ -135,6 +137,33 @@ public class CourseCompetencyService {
     }
 
     /**
+     * Imports the given course competencies and relations into a course
+     *
+     * @param course             the course to import into
+     * @param courseCompetencies the course competencies to import
+     * @param relations          the relations to import
+     * @return The set of imported course competencies, each also containing the relations it is the tail competency for.
+     */
+    public Set<CompetencyWithTailRelationDTO> importCourseCompetenciesAndRelations(Course course, Collection<CourseCompetency> courseCompetencies,
+            Set<CompetencyRelation> relations) {
+        var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
+
+        for (var courseCompetency : courseCompetencies) {
+            CourseCompetency importedCompetency = switch (courseCompetency) {
+                case Competency competency -> new Competency(competency);
+                case Prerequisite prerequisite -> new Prerequisite(prerequisite);
+                default -> throw new IllegalStateException("Unexpected value: " + courseCompetency);
+            };
+            importedCompetency.setCourse(course);
+
+            importedCompetency = courseCompetencyRepository.save(importedCompetency);
+            idToImportedCompetency.put(courseCompetency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
+        }
+
+        return importCourseCompetenciesAndRelations(course, idToImportedCompetency, relations);
+    }
+
+    /**
      * Imports the given competencies and relations into a course
      *
      * @param course                 the course to import into
@@ -202,6 +231,22 @@ public class CourseCompetencyService {
         }
 
         return importedCompetencies;
+    }
+
+    /**
+     * Imports the given course competencies into a course
+     *
+     * @param course             the course to import into
+     * @param courseCompetencies the course competencies to import
+     * @return The list of imported competencies
+     */
+    public Set<CompetencyWithTailRelationDTO> importCourseCompetencies(Course course, Collection<CourseCompetency> courseCompetencies) {
+        Function<CourseCompetency, CourseCompetency> courseCompetencyFunction = courseCompetency -> switch (courseCompetency) {
+            case Competency competency -> new Competency(competency);
+            case Prerequisite prerequisite -> new Prerequisite(prerequisite);
+            default -> throw new IllegalStateException("Unexpected value: " + courseCompetency);
+        };
+        return importCourseCompetencies(course, courseCompetencies, courseCompetencyFunction);
     }
 
     /**

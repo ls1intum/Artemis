@@ -28,6 +28,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -62,7 +63,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
     private readonly competencyService: CompetencyService = inject(CompetencyService);
     private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
-    private readonly courseCompetencyService: CompetencyService = inject(CompetencyService);
+    private readonly courseCompetencyService: CourseCompetencyService = inject(CourseCompetencyService);
     private readonly alertService: AlertService = inject(AlertService);
     private readonly modalService: NgbModal = inject(NgbModal);
     private readonly profileService: ProfileService = inject(ProfileService);
@@ -182,13 +183,24 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     /**
      * Opens a modal for selecting a course to import all competencies from.
      */
-    openImportAllModal() {
+    openImportAllModal(competencyType: 'competency' | 'prerequisite' | 'courseCompetency') {
         const modalRef = this.modalService.open(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
         //unary operator is necessary as otherwise courseId is seen as a string and will not match.
         modalRef.componentInstance.disabledIds = [+this.courseId];
+        modalRef.componentInstance.competencyType = competencyType;
         modalRef.result.then((result: ImportAllFromCourseResult) => {
             const courseTitle = result.courseForImportDTO.title ?? '';
-            this.competencyService
+
+            let service: CourseCompetencyService;
+            if (competencyType === 'competency') {
+                service = this.competencyService;
+            } else if (competencyType === 'prerequisite') {
+                service = this.prerequisiteService;
+            } else {
+                service = this.courseCompetencyService;
+            }
+
+            service
                 .importAll(this.courseId, result.courseForImportDTO.id!, result.importRelations)
                 .pipe(
                     filter((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.ok),
@@ -197,10 +209,10 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: (res: Array<CompetencyWithTailRelationDTO>) => {
                         if (res.length > 0) {
-                            this.alertService.success('artemisApp.competency.importAll.success', { noOfCompetencies: res.length, courseTitle: courseTitle });
+                            this.alertService.success(`artemisApp.${competencyType}.importAll.success`, { noOfCompetencies: res.length, courseTitle: courseTitle });
                             this.updateDataAfterImportAll(res);
                         } else {
-                            this.alertService.warning('artemisApp.competency.importAll.warning', { courseTitle: courseTitle });
+                            this.alertService.warning(`artemisApp.${competencyType}.importAll.warning`, { courseTitle: courseTitle });
                         }
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -215,6 +227,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is Competency => !!element);
+        const importedPrerequisites = res.map((dto) => dto.competency).filter((element): element is Prerequisite => !!element);
         const importedRelations = res
             .map((dto) => dto.tailRelations)
             .flat()
@@ -222,6 +235,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             .map((dto) => dtoToCompetencyRelation(dto));
 
         this.competencies = this.competencies.concat(importedCompetencies);
+        this.prerequisites = this.prerequisites.concat(importedPrerequisites);
         this.courseCompetencies = [...this.competencies, ...this.prerequisites];
         this.relations = this.relations.concat(importedRelations);
     }
@@ -261,8 +275,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         const titleTail = this.courseCompetencies.find((competency) => competency.id === tailId)?.title ?? '';
 
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-        modalRef.componentInstance.title = 'artemisApp.competency.manageCompetencies.deleteRelationModalTitle';
-        modalRef.componentInstance.text = this.translateService.instant('artemisApp.competency.manageCompetencies.deleteRelationModalText', {
+        modalRef.componentInstance.title = 'artemisApp.competency.manage.deleteRelationModalTitle';
+        modalRef.componentInstance.text = this.translateService.instant('artemisApp.competency.manage.deleteRelationModalText', {
             titleTail: titleTail,
             titleHead: titleHead,
         });

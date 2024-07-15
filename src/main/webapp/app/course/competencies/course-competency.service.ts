@@ -7,6 +7,7 @@ import {
     CompetencyProgress,
     CompetencyRelation,
     CompetencyRelationDTO,
+    CompetencyWithTailRelationDTO,
     CourseCompetency,
     CourseCompetencyProgress,
 } from 'app/entities/competency.model';
@@ -112,6 +113,14 @@ export class CourseCompetencyService {
 
     getCourseCompetencyTitles(courseId: number) {
         return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/course-competencies/titles`, {
+            observe: 'response',
+        });
+    }
+
+    importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
+        const params = new HttpParams().set('importRelations', importRelations);
+        return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(`${this.resourceURL}/courses/${courseId}/course-competencies/import-all/${sourceCourseId}`, null, {
+            params: params,
             observe: 'response',
         });
     }

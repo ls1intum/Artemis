@@ -48,7 +48,7 @@
             "table": {
                 "panelHeader": "Deine Fortentwicklung"
             },
-            "manageCompetencies": {
+            "manage": {
                 "title": "Kompetenzmanagement",
                 "importButton": "Kompetenzen importieren",
                 "importFromCoursesButton": "Aus anderen Kursen importieren",
@@ -200,7 +200,10 @@
             "course": "Kurs",
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
-            "softDueDate": "Empfohlen bis"
+            "softDueDate": "Empfohlen bis",
+            "manage": {
+                "importAllButton": "Alles eines Kurses importieren"
+            }
         },
         "prerequisite": {
             "title": "Voraussetzungen",
@@ -213,7 +216,10 @@
                 "delete": {
                     "question": "Willst du wirklich die Voraussetzung <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
                     "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der Voraussetzung ein."
-                }
+                },
+                "importAllButton": "Alle Voraussetzungen eines Kurses importieren",
+                "importStandardizedButton": "Standardisierte Kompetenzen importieren",
+                "empty": "Es existieren keine Kompetenzen für diesen Kurs"
             },
             "import": {
                 "title": "Voraussetzungen importieren",

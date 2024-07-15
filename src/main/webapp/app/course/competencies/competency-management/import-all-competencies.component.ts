@@ -1,5 +1,4 @@
-import { Component } from '@angular/core';
-
+import { Component, Input } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/entities/course.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Router } from '@angular/router';
@@ -40,6 +39,8 @@ export type ImportAllFromCourseResult = {
 export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> {
     //import relations by default
     protected importRelations = true;
+
+    @Input() public competencyType: 'competency' | 'prerequisite' | 'courseCompetency' = 'competency';
 
     constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: CourseForImportDTOPagingService) {
         super(router, sortService, activeModal, pagingService);

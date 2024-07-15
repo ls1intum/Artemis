@@ -139,7 +139,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c
             FROM CourseCompetency c
-            WHERE (:isAdmin OR c.course.instructorGroupName IN :groups OR c.course.editorGroupName IN :groups)
+            WHERE (:isAdmin = TRUE OR c.course.instructorGroupName IN :groups OR c.course.editorGroupName IN :groups)
                 AND (:partialTitle IS NULL OR c.title LIKE %:partialTitle%)
                 AND (:partialDescription IS NULL OR c.description LIKE %:partialDescription%)
                 AND (:partialCourseTitle IS NULL OR c.course.title LIKE %:partialCourseTitle%)
