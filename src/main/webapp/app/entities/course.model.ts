@@ -17,7 +17,6 @@ import { Prerequisite } from 'app/entities/prerequisite.model';
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
     COMMUNICATION_ONLY = 'COMMUNICATION_ONLY',
-    MESSAGING_ONLY = 'MESSAGING_ONLY',
     DISABLED = 'DISABLED',
 }
 
@@ -34,19 +33,7 @@ export function isCommunicationEnabled(course: Course | undefined) {
  */
 export function isMessagingEnabled(course: Course | undefined) {
     const config = course?.courseInformationSharingConfiguration;
-    return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.MESSAGING_ONLY;
-}
-
-/**
- * Note: Keep in sync with method in CourseRepository.java
- */
-export function isMessagingOrCommunicationEnabled(course: Course | undefined) {
-    const config = course?.courseInformationSharingConfiguration;
-    return (
-        config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING ||
-        config === CourseInformationSharingConfiguration.MESSAGING_ONLY ||
-        config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY
-    );
+    return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
 }
 
 export const enum Language {

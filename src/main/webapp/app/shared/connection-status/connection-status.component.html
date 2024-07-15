@@ -1,10 +1,21 @@
 <div class="connection-status" [ngClass]="{ disconnected: disconnected }">
-    <fa-icon [icon]="faCircle" size="sm" />
-    @if (!disconnected) {
-        <span jhiTranslate="connectionStatus.connected"></span>
+    @if (!isExamMode) {
+        <fa-icon [icon]="faCircle" size="sm" />
     }
-    @if (disconnected) {
-        <span jhiTranslate="connectionStatus.disconnected"></span>
+    @if (!disconnected) {
+        <div [ngClass]="{ 'badge bg-success connectedExam': isExamMode }">
+            @if (isExamMode) {
+                <fa-icon [fixedWidth]="true" [icon]="faTowerBroadcast" />
+            }
+            <span jhiTranslate="connectionStatus.connected"></span>
+        </div>
+    } @else {
+        <div [ngClass]="{ 'badge bg-danger connectedExam': isExamMode }">
+            @if (isExamMode) {
+                <fa-icon [fixedWidth]="true" [icon]="faExclamation" />
+            }
+            <span jhiTranslate="connectionStatus.disconnected"></span>
+        </div>
     }
     <ng-content select="[innerContent]" />
 </div>

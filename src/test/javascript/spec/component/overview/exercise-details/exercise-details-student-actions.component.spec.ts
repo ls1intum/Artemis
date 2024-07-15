@@ -15,7 +15,7 @@ import { Team } from 'app/entities/team.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
-import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
@@ -33,6 +33,7 @@ import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-c
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { PROFILE_THEIA } from 'app/app.constants';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -78,7 +79,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             declarations: [
                 ExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),
-                MockComponent(CloneRepoButtonComponent),
+                MockComponent(CodeButtonComponent),
                 MockComponent(StartPracticeModeButtonComponent),
                 MockPipe(ArtemisTranslatePipe, (query: any, args?: any) => query + (args ? args : '')),
                 ExtensionPointDirective,
@@ -211,9 +212,9 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
         expect(startExerciseButton).toBeNull();
 
-        // Check that button "Clone repository" is not shown (repo_url is null)
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).toBeNull();
+        // Check that button "Code" is not shown (repo_url is null)
+        const codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         fixture.destroy();
         flush();
@@ -237,8 +238,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         let startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).not.toBeNull();
 
-        let cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).toBeNull();
+        let codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         comp.exercise.studentParticipations = [initPart];
         comp.practiceParticipation = initPart;
@@ -249,14 +250,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
 
-        cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).toBeNull();
+        codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         fixture.destroy();
         flush();
     }));
 
-    it('should correctly not show the clone repository button for exam test runs', fakeAsync(() => {
+    it('should correctly not show the Code button for exam test runs', fakeAsync(() => {
         testRunParticipation.repositoryUri = undefined;
         testRunExercise.studentParticipations = [testRunParticipation];
 
@@ -270,14 +271,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
 
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).toBeNull();
+        const codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         fixture.destroy();
         flush();
     }));
 
-    it('should correctly show the clone repository button for exam test runs', fakeAsync(() => {
+    it('should correctly show the Code button for exam test runs', fakeAsync(() => {
         testRunParticipation.repositoryUri = 'https://clone-me.git';
         testRunExercise.studentParticipations = [testRunParticipation];
 
@@ -291,8 +292,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
 
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).not.toBeNull();
+        const codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).not.toBeNull();
 
         fixture.destroy();
         flush();
@@ -326,8 +327,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).toBeNull();
         let codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
         expect(codeEditorButton).toBeNull();
-        let cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepoButton).toBeNull();
+        let codeButton = debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         exercise.allowOfflineIde = true;
 
@@ -338,11 +339,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).toBeNull();
         codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
         expect(codeEditorButton).toBeNull();
-        cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepoButton).toBeNull();
+        codeButton = debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
     }));
 
-    it('should show correct buttons in exam mode, including clone repo button', fakeAsync(() => {
+    it('should show correct buttons in exam mode, including code button', fakeAsync(() => {
         const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
         exercise.studentParticipations = [
             { initializationState: InitializationState.INITIALIZED, repositoryUri: 'https://clone-me.git' } as ProgrammingExerciseStudentParticipation,
@@ -358,8 +359,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).toBeNull();
         let codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
         expect(codeEditorButton).toBeNull();
-        let cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepoButton).toBeNull();
+        let codeButton = debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         exercise.allowOfflineIde = true;
 
@@ -370,8 +371,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).toBeNull();
         codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
         expect(codeEditorButton).toBeNull();
-        cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepoButton).not.toBeNull();
+        codeButton = debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).not.toBeNull();
     }));
 
     // Quiz not supported yet
@@ -602,5 +603,38 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.maxAthenaResultsReached');
         expect(result).toBeFalse();
+    });
+
+    it.each([
+        [
+            'start theia button should be visible when profile is active and url is set',
+            {
+                activeProfiles: [PROFILE_THEIA],
+                theiaPortalURL: 'https://theia.test',
+            },
+            true,
+        ],
+        [
+            'start theia button should not be visible when profile is active but url is not set',
+            {
+                activeProfiles: [PROFILE_THEIA],
+            },
+            false,
+        ],
+        [
+            'start theia button should not be visible when profile is not active but url is set',
+            {
+                theiaPortalURL: 'https://theia.test',
+            },
+            false,
+        ],
+    ])('%s', (description, profileInfo, expectedVisibility) => {
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
+        comp.exercise = exercise;
+
+        fixture.detectChanges();
+
+        expect(comp.theiaEnabled).toBe(expectedVisibility);
     });
 });

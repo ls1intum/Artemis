@@ -53,7 +53,10 @@ export class LectureUnitService {
 
     setCompletion(lectureUnitId: number, lectureId: number, completed: boolean): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('completed', completed.toString());
-        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, { params, observe: 'response' });
+        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, {
+            params,
+            observe: 'response',
+        });
     }
 
     convertLectureUnitDatesFromClient<T extends LectureUnit>(lectureUnit: T): T {
@@ -160,16 +163,8 @@ export class LectureUnitService {
             observe: 'response',
         });
     }
-    /**
-     * triggers the ingestion of one Lecture Unit
-     *
-     * @param lectureId The lecture to be ingested in pyris
-     */
-    ingestLectureUnitInPyris(lectureUnitId: number): Observable<HttpResponse<boolean>> {
-        const params = new HttpParams();
-        return this.httpClient.post<boolean>(`api/lecture-units/${lectureUnitId}/ingest`, null, {
-            params: params,
-            observe: 'response',
-        });
+
+    getLectureUnitById(lectureUnitId: number): Observable<LectureUnit> {
+        return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
     }
 }

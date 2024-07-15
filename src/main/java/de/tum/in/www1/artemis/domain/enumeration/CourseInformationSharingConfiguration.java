@@ -17,13 +17,9 @@ public enum CourseInformationSharingConfiguration {
     /**
      * Only Communication is enabled VALUE = 2
      */
-    COMMUNICATION_ONLY,
-    /**
-     * Only Messaging is enabled VALUE = 3
-     */
-    MESSAGING_ONLY;
+    COMMUNICATION_ONLY;
 
     public boolean isMessagingEnabled() {
-        return this == MESSAGING_ONLY || this == COMMUNICATION_AND_MESSAGING;
+        return this == COMMUNICATION_AND_MESSAGING;
     }
 }

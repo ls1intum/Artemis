@@ -7,6 +7,7 @@ import {
     CompetencyRelation,
     CompetencyRelationDTO,
     CompetencyWithTailRelationDTO,
+    CourseCompetency,
     CourseCompetencyProgress,
     dtoToCompetencyRelation,
     getIcon,
@@ -43,6 +44,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     competencies: Competency[] = [];
     prerequisites: Prerequisite[] = [];
+    courseCompetencies: CourseCompetency[] = [];
     relations: CompetencyRelation[] = [];
 
     // Icons
@@ -96,6 +98,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         this.competencyService.delete(competencyId, this.courseId).subscribe({
             next: () => {
                 this.competencies = this.competencies.filter((competency) => competency.id !== competencyId);
+                this.courseCompetencies = [...this.competencies, ...this.prerequisites];
                 this.relations = this.relations.filter((relation) => relation.tailCompetency?.id !== competencyId && relation.headCompetency?.id !== competencyId);
                 this.dialogErrorSource.next('');
             },
@@ -113,6 +116,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             next: () => {
                 this.alertService.success('artemisApp.prerequisite.manage.deleted');
                 this.prerequisites = this.prerequisites.filter((prerequisite) => prerequisite.id !== prerequisiteId);
+                this.courseCompetencies = [...this.competencies, ...this.prerequisites];
+                this.relations = this.relations.filter((relation) => relation.tailCompetency?.id !== prerequisiteId && relation.headCompetency?.id !== prerequisiteId);
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -160,6 +165,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         forkJoin([relationsObservable, prerequisitesObservable, competencyProgressObservable]).subscribe({
             next: ([competencyRelations, prerequisites, competencyProgressResponses]) => {
                 this.prerequisites = prerequisites;
+                this.courseCompetencies = [...this.competencies, ...this.prerequisites];
                 this.relations = (competencyRelations.body ?? []).map((relationDTO) => dtoToCompetencyRelation(relationDTO));
 
                 for (const competencyProgressResponse of competencyProgressResponses) {
@@ -215,6 +221,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             .map((dto) => dtoToCompetencyRelation(dto));
 
         this.competencies = this.competencies.concat(importedCompetencies);
+        this.courseCompetencies = [...this.competencies, ...this.prerequisites];
         this.relations = this.relations.concat(importedRelations);
     }
 
@@ -227,13 +234,13 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         this.competencyService
             .createCompetencyRelation(relation, this.courseId)
             .pipe(
-                filter((res: HttpResponse<CompetencyRelation>) => res.ok),
-                map((res: HttpResponse<CompetencyRelation>) => res.body),
+                filter((res) => res.ok),
+                map((res) => res.body),
             )
             .subscribe({
                 next: (relation) => {
                     if (relation) {
-                        this.relations = this.relations.concat(relation);
+                        this.relations = this.relations.concat(dtoToCompetencyRelation(relation));
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -249,8 +256,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         const relation = this.relations.find((relation) => relation.id === relationId);
         const headId = relation?.headCompetency?.id;
         const tailId = relation?.tailCompetency?.id;
-        const titleHead = this.competencies.find((competency) => competency.id === headId)?.title ?? '';
-        const titleTail = this.competencies.find((competency) => competency.id === tailId)?.title ?? '';
+        const titleHead = this.courseCompetencies.find((competency) => competency.id === headId)?.title ?? '';
+        const titleTail = this.courseCompetencies.find((competency) => competency.id === tailId)?.title ?? '';
 
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
         modalRef.componentInstance.title = 'artemisApp.competency.manageCompetencies.deleteRelationModalTitle';

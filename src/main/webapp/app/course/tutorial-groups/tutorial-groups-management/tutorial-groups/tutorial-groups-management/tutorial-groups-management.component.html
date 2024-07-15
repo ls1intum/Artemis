@@ -23,24 +23,28 @@
                             <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
                         </a>
                         <div ngbDropdown class="d-inline-block">
-                            <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                            <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
                                 {{ 'artemisApp.generic.more' | artemisTranslate }}
                             </button>
                             <div ngbDropdownMenu>
                                 @if (course?.tutorialGroupsConfiguration) {
                                     <a
-                                        ngbDropDownItem
+                                        ngbDropdownItem
                                         class="btn"
                                         [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
                                     >
-                                        <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
+                                        <span>{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
                                     </a>
                                 }
                                 <jhi-tutorial-groups-import-button
-                                    ngbDropDownItem
                                     ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
                                     [courseId]="courseId"
                                     (importFinished)="loadTutorialGroups()"
+                                />
+                                <jhi-tutorial-groups-export-button
+                                    ngbTooltip="{{ 'artemisApp.tutorialGroupExportDialog.toolTip' | artemisTranslate }}"
+                                    [courseId]="courseId"
+                                    (exportFinished)="loadTutorialGroups()"
                                 />
                             </div>
                         </div>

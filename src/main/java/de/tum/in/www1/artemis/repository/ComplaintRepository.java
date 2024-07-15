@@ -148,7 +148,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      *
      * @param exerciseIds   - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
-     * @return number of complaints associated to exercise exerciseId
+     * @return list of exercise ids with the number of complaints based on the complaint type
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
@@ -163,11 +163,11 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
     /**
-     * This method counts the number of complaints by complaint type associated to an exercise id
+     * This method counts the number of complaints by complaint type associated to an exercise id ignoring test runs
      *
      * @param exerciseIds   - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
-     * @return number of complaints associated to exercise exerciseId
+     * @return list of exercise ids with the number of complaints based on the complaint type
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(

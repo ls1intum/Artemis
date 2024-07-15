@@ -168,7 +168,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             softDueDate: [undefined],
             taxonomy: [undefined as CompetencyTaxonomy | undefined],
-            masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
+            masteryThreshold: [DEFAULT_MASTERY_THRESHOLD, [Validators.min(0), Validators.max(100)]],
             optional: [false],
         });
         this.selectedLectureUnitsInTable = [];

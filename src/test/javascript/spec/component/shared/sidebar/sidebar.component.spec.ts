@@ -77,4 +77,36 @@ describe('SidebarComponent', () => {
         expect(noDataMessageElement).toBeTruthy();
         expect(noDataMessageElement.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.courseOverview.general.noDataFound');
     });
+
+    it('should give the correct size for exercises', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exercise',
+        };
+        fixture.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('M');
+    });
+
+    it('should give the correct size for exams', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exam',
+        };
+        fixture.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('L');
+    });
+
+    it('should give the correct size for default', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+        };
+        fixture.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('M');
+    });
 });

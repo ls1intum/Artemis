@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Comparator;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
@@ -34,6 +35,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.lectureunit.LectureUnitForLearningPathNodeDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -64,7 +66,7 @@ public class LectureUnitResource {
     private final CompetencyProgressService competencyProgressService;
 
     public LectureUnitResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, LectureRepository lectureRepository,
-            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, CompetencyProgressService competencyProgressService) {
+            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, CompetencyProgressService competencyProgressService, UserService userService) {
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -140,7 +142,7 @@ public class LectureUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), user);
 
         lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
-        competencyProgressService.updateProgressByLearningObjectAsync(lectureUnit, user);
+        competencyProgressService.updateProgressByLearningObjectForParticipantAsync(lectureUnit, user);
 
         return ResponseEntity.ok().build();
     }
@@ -191,16 +193,18 @@ public class LectureUnitResource {
     }
 
     /**
-     * POST /lectureUnit/{lectureUnitId}/ingest
-     * This endpoint is for starting the ingestion of one lecture Unit.
+     * GET /lecture-units/:lectureUnitId : get the lecture unit with the given id.
      *
-     * @param lectureUnitId The Id of the lecture unit to be ingested.
-     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
+     * @param lectureUnitId the id of the lecture unit that should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the lecture unit in the body, or with status 404 (Not Found) if the lecture unit could not be found
      */
-    @PostMapping("lecture-units/{lectureUnitId}/ingest")
-    public ResponseEntity<Boolean> ingestLectureUnit(@PathVariable Long lectureUnitId) {
-        log.debug("REST request to ingest lectures of course : {}", lectureUnitId);
-        LectureUnit lectureUnit = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnitId);
-        return ResponseEntity.ok().body(lectureUnitService.ingestLectureUnitInPyris((AttachmentUnit) lectureUnit));
+    @GetMapping("lecture-units/{lectureUnitId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid Long lectureUnitId) {
+        log.debug("REST request to get lecture unit with id: {}", lectureUnitId);
+        var lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
+        lectureUnit.setCompleted(lectureUnit.isCompletedFor(userRepository.getUser()));
+        return ResponseEntity.ok(lectureUnit);
     }
 }

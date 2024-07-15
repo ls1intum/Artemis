@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "buildQueue": {
-            "title": "Build Warteschlange",
+            "title": "Build Übersicht",
             "pageTitle": "Build Job Informationen",
             "queuedBuildJobs": "Wartende Build Jobs",
             "runningBuildJobs": "Laufende Build Jobs",
@@ -59,6 +59,21 @@
                 "close": "Schließen",
                 "apply": "Anwenden",
                 "open": "Filter ({{ num }})"
+            },
+            "statistics": {
+                "title": "Übersicht",
+                "titleTooltip": "Daten für den definierten Zeitraum werden abgerufen.",
+                "totalBuilds": "Anzahl der Builds:",
+                "successfulBuildsWithColon": "Erfolgreiche Builds:",
+                "successfulBuilds": "Erfolgreiche Builds",
+                "successfulBuildsPercentage": "Erfolgreiche Builds %:",
+                "failedBuilds": "Fehlgeschlagene Builds:",
+                "failedBuildsPercentage": "Fehlgeschlagene Builds %:",
+                "cancelledBuilds": "Abgebrochene Builds:",
+                "cancelledBuildsPercentage": "Abgebrochene Builds %:",
+                "daySpan": "1 Tag",
+                "weekSpan": "7 Tage",
+                "monthSpan": "30 Tage"
             }
         }
     }

@@ -16,9 +16,9 @@ import { Course } from 'app/entities/course.model';
 
 export type Detail = NotShownDetail | ShownDetail;
 
-type NotShownDetail = false | undefined;
+export type NotShownDetail = false | undefined;
 
-type ShownDetail =
+export type ShownDetail =
     | TextDetail
     | DateDetail
     | LinkDetail
@@ -36,19 +36,19 @@ type ShownDetail =
     | ProgrammingBuildStatisticsDetail
     | ProgrammingCheckoutDirectoriesDetail;
 
-interface DetailBase {
+export interface DetailBase {
     type: DetailType;
     title?: string;
     titleTranslationProps?: Record<string, string>;
     titleHelpText?: string;
 }
 
-interface TextDetail extends DetailBase {
+export interface TextDetail extends DetailBase {
     type: DetailType.Text;
     data: { text?: string | number };
 }
 
-interface DateDetail extends DetailBase {
+export interface DateDetail extends DetailBase {
     type: DetailType.Date;
     data: { date?: dayjs.Dayjs };
 }
@@ -88,14 +88,13 @@ interface ProgrammingRepositoryButtonsDetail extends DetailBase {
     data: {
         exerciseId?: number;
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
-        showOpenLink?: boolean;
         type: ProgrammingExerciseInstructorRepositoryType;
     };
 }
 
 interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase {
     type: DetailType.ProgrammingAuxiliaryRepositoryButtons;
-    data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number; showOpenLink?: boolean };
+    data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number };
 }
 
 interface ProgrammingTestStatusDetail extends DetailBase {

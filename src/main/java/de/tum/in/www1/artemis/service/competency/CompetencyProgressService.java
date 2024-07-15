@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeUtil.toRelativeTime;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,18 +23,16 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.enumeration.CompetencyProgressConfidenceReason;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
@@ -51,21 +50,17 @@ public class CompetencyProgressService {
 
     private static final Logger log = LoggerFactory.getLogger(CompetencyProgressService.class);
 
-    private final CompetencyRepository competencyRepository;
-
     private final CompetencyProgressRepository competencyProgressRepository;
-
-    private final ExerciseRepository exerciseRepository;
-
-    private final LectureUnitRepository lectureUnitRepository;
-
-    private final UserRepository userRepository;
 
     private final LearningPathService learningPathService;
 
     private final ParticipantScoreService participantScoreService;
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    private final UserRepository userRepository;
+
+    private final CourseCompetencyRepository courseCompetencyRepository;
 
     private static final int MIN_EXERCISES_RECENCY_CONFIDENCE = 3;
 
@@ -77,17 +72,15 @@ public class CompetencyProgressService {
 
     private static final double CONFIDENCE_REASON_DEADZONE = 0.05;
 
-    public CompetencyProgressService(CompetencyRepository competencyRepository, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
-            LectureUnitRepository lectureUnitRepository, UserRepository userRepository, LearningPathService learningPathService, ParticipantScoreService participantScoreService,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
-        this.competencyRepository = competencyRepository;
+    public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, LearningPathService learningPathService,
+            ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
-        this.exerciseRepository = exerciseRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
-        this.userRepository = userRepository;
         this.learningPathService = learningPathService;
         this.participantScoreService = participantScoreService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.courseCompetencyRepository = courseCompetencyRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -97,9 +90,9 @@ public class CompetencyProgressService {
      * @param participant    The participant (user or team) for which to update the progress
      */
     @Async
-    public void updateProgressByLearningObjectAsync(LearningObject learningObject, @NotNull Participant participant) {
-        SecurityUtils.setAuthorizationObject(); // required for async
-        updateProgressByLearningObject(learningObject, participant.getParticipants());
+    public void updateProgressByLearningObjectForParticipantAsync(LearningObject learningObject, @NotNull Participant participant) {
+        SecurityUtils.setAuthorizationObject(); // Required for async
+        updateProgressByLearningObjectSync(learningObject, participant.getParticipants());
     }
 
     /**
@@ -109,14 +102,15 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
-        SecurityUtils.setAuthorizationObject(); // required for async
-        Course course;
-        switch (learningObject) {
-            case Exercise exercise -> course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            case LectureUnit lectureUnit -> course = lectureUnit.getLecture().getCourse();
-            default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
+        SecurityUtils.setAuthorizationObject(); // Required for async
+        Set<Long> competencyIds = courseCompetencyRepository.findAllIdsByLearningObject(learningObject);
+
+        for (long competencyId : competencyIds) {
+            Set<User> users = competencyProgressRepository.findAllByCompetencyId(competencyId).stream().map(CompetencyProgress::getUser).collect(Collectors.toSet());
+            log.debug("Updating competency progress for {} users.", users.size());
+
+            users.forEach(user -> updateCompetencyProgress(competencyId, user));
         }
-        updateProgressByLearningObject(learningObject, userRepository.getStudents(course));
     }
 
     /**
@@ -125,38 +119,86 @@ public class CompetencyProgressService {
      * @param competency The competency for which to update all existing student progress
      */
     @Async
-    public void updateProgressByCompetencyAsync(Competency competency) {
-        SecurityUtils.setAuthorizationObject(); // required for async
-        competencyProgressRepository.findAllByCompetencyId(competency.getId()).stream().map(CompetencyProgress::getUser)
-                .forEach(user -> updateCompetencyProgress(competency.getId(), user));
+    public void updateProgressByCompetencyAsync(CourseCompetency competency) {
+        SecurityUtils.setAuthorizationObject(); // Required for async
+        List<CompetencyProgress> existingProgress = competencyProgressRepository.findAllByCompetencyId(competency.getId());
+        log.debug("Updating competency progress for {} users.", existingProgress.size());
+        existingProgress.stream().map(CompetencyProgress::getUser).forEach(user -> updateCompetencyProgress(competency.getId(), user));
     }
 
     /**
-     * Update the progress for all competencies linked to the given learning object
+     * Asynchronously update the progress of all users in the course for a specific competency
+     *
+     * @param competency The competency for which to update all existing student progress
+     */
+    @Async
+    public void updateProgressByCompetencyAndUsersInCourseAsync(CourseCompetency competency) {
+        SecurityUtils.setAuthorizationObject(); // Required for async
+        Set<User> users = userRepository.getUsersInCourse(competency.getCourse());
+        log.debug("Updating competency progress for {} users.", users.size());
+        users.forEach(user -> updateCompetencyProgress(competency.getId(), user));
+    }
+
+    /**
+     * Asynchronously update the existing progress for all changed competencies linked to the given learning object
+     * If new competencies are added, the progress is updated for all users in the course, otherwise only the existing progresses are updated.
+     *
+     * @param originalLearningObject The original learning object before the update
+     * @param updatedLearningObject  The updated learning object after the update (empty if the learning object was deleted)
+     */
+    @Async
+    public void updateProgressForUpdatedLearningObjectAsync(LearningObject originalLearningObject, Optional<LearningObject> updatedLearningObject) {
+        SecurityUtils.setAuthorizationObject(); // Required for async
+
+        Set<Long> originalCompetencyIds = originalLearningObject.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
+        Set<CourseCompetency> updatedCompetencies = updatedLearningObject.map(LearningObject::getCompetencies).orElse(Set.of());
+        Set<Long> updatedCompetencyIds = updatedCompetencies.stream().map(CourseCompetency::getId).collect(Collectors.toSet());
+
+        Set<Long> removedCompetencyIds = originalCompetencyIds.stream().filter(id -> !updatedCompetencyIds.contains(id)).collect(Collectors.toSet());
+        Set<Long> addedCompetencyIds = updatedCompetencyIds.stream().filter(id -> !originalCompetencyIds.contains(id)).collect(Collectors.toSet());
+
+        updateProgressByCompetencyIds(removedCompetencyIds);
+        if (!addedCompetencyIds.isEmpty()) {
+            updateProgressByCompetencyIdsAndLearningObject(addedCompetencyIds, originalLearningObject);
+        }
+    }
+
+    private void updateProgressByCompetencyIds(Set<Long> competencyIds) {
+        for (long competencyId : competencyIds) {
+            List<CompetencyProgress> existingProgress = competencyProgressRepository.findAllByCompetencyId(competencyId);
+            log.debug("Updating competency progress for {} users.", existingProgress.size());
+            existingProgress.stream().map(CompetencyProgress::getUser).forEach(user -> updateCompetencyProgress(competencyId, user));
+        }
+    }
+
+    private void updateProgressByCompetencyIdsAndLearningObject(Set<Long> competencyIds, LearningObject learningObject) {
+        for (long competencyId : competencyIds) {
+            Set<User> existingCompetencyUsers = competencyProgressRepository.findAllByCompetencyId(competencyId).stream().map(CompetencyProgress::getUser)
+                    .collect(Collectors.toSet());
+            Set<User> existingLearningObjectUsers = switch (learningObject) {
+                case Exercise exercise -> participantScoreService.getAllParticipatedUsersInExercise(exercise);
+                case LectureUnit lectureUnit -> lectureUnitCompletionRepository.findCompletedUsersForLectureUnit(lectureUnit);
+                default -> throw new IllegalStateException("Unexpected value: " + learningObject);
+            };
+            existingCompetencyUsers.addAll(existingLearningObjectUsers);
+            log.debug("Updating competency progress for {} users.", existingCompetencyUsers.size());
+            existingCompetencyUsers.forEach(user -> updateCompetencyProgress(competencyId, user));
+        }
+    }
+
+    /**
+     * Update the progress for all competencies linked to the given learning object synchronously
      *
      * @param learningObject The learning object for which to fetch the competencies
-     * @param users          A list of users for which to update the progress
+     * @param users          The users for which to update the progress
      */
-    public void updateProgressByLearningObject(LearningObject learningObject, @NotNull Set<User> users) {
-        log.debug("Updating competency progress for {} users.", users.size());
-        try {
-            Set<Competency> competencies;
-            switch (learningObject) {
-                case Exercise exercise -> competencies = exerciseRepository.findWithCompetenciesById(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
-                case LectureUnit lectureUnit -> competencies = lectureUnitRepository.findWithCompetenciesById(lectureUnit.getId()).map(LectureUnit::getCompetencies).orElse(null);
-                default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
-            }
+    public void updateProgressByLearningObjectSync(LearningObject learningObject, Set<User> users) {
+        Set<Long> competencyIds = courseCompetencyRepository.findAllIdsByLearningObject(learningObject);
 
-            if (competencies == null) {
-                // Competencies couldn't be loaded, the exercise/lecture unit might have already been deleted
-                log.debug("Competencies could not be fetched, skipping.");
-                return;
-            }
+        for (long competencyId : competencyIds) {
+            log.debug("Updating competency progress synchronously for {} users.", users.size());
 
-            users.forEach(user -> competencies.forEach(competency -> updateCompetencyProgress(competency.getId(), user)));
-        }
-        catch (Exception e) {
-            log.error("Exception while updating progress for competency", e);
+            users.forEach(user -> updateCompetencyProgress(competencyId, user));
         }
     }
 
@@ -168,18 +210,18 @@ public class CompetencyProgressService {
      * @return The updated competency progress, which is also persisted to the database
      */
     public CompetencyProgress updateCompetencyProgress(Long competencyId, User user) {
-        Optional<Competency> optionalCompetency = competencyRepository.findByIdWithLectureUnits(competencyId);
+        Optional<CourseCompetency> optionalCompetency = courseCompetencyRepository.findByIdWithLectureUnits(competencyId);
 
         if (user == null || optionalCompetency.isEmpty()) {
             log.debug("User or competency no longer exist, skipping.");
             return null;
         }
 
-        Competency competency = optionalCompetency.get();
+        CourseCompetency competency = optionalCompetency.get();
         Set<LectureUnit> lectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
-        Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = competencyRepository.findAllExerciseInfoByCompetencyId(competencyId, user);
+        Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = courseCompetencyRepository.findAllExerciseInfoByCompetencyId(competencyId, user);
         int numberOfCompletedLectureUnits = lectureUnitCompletionRepository
-                .countByLectureUnitIds(competency.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toSet()));
+                .countByLectureUnitIdsAndUserId(competency.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toSet()), user.getId());
 
         var competencyProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId());
 
@@ -424,11 +466,11 @@ public class CompetencyProgressService {
      * Calculates a user's mastery progress scaled to the mastery threshold of the corresponding competency.
      *
      * @param competencyProgress The user's progress
-     * @return The mastery level in percent
+     * @return The progress to the mastery between 0 and 1
      */
     public static double getMasteryProgress(@NotNull CompetencyProgress competencyProgress) {
         final double mastery = getMastery(competencyProgress);
-        return mastery / competencyProgress.getCompetency().getMasteryThreshold();
+        return Math.clamp(mastery / competencyProgress.getCompetency().getMasteryThreshold(), 0, 1);
     }
 
     /**
@@ -448,7 +490,7 @@ public class CompetencyProgressService {
      * @param competency the competency to check
      * @return true if the competency can be mastered without completing any exercises, false otherwise
      */
-    public static boolean canBeMasteredWithoutExercises(@NotNull Competency competency) {
+    public static boolean canBeMasteredWithoutExercises(@NotNull CourseCompetency competency) {
         double numberOfLectureUnits = competency.getLectureUnits().size();
         double numberOfLearningObjects = numberOfLectureUnits + competency.getExercises().size();
         if (numberOfLearningObjects == 0) {
@@ -476,7 +518,7 @@ public class CompetencyProgressService {
      * @param course     The course for which to get the progress
      * @return The progress for the course
      */
-    public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NotNull Competency competency, @NotNull Course course) {
+    public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NotNull CourseCompetency competency, @NotNull Course course) {
         var numberOfStudents = competencyProgressRepository.countByCompetency(competency.getId());
         var numberOfMasteredStudents = competencyProgressRepository.countByCompetencyAndMastered(competency.getId(), competency.getMasteryThreshold());
         var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(participantScoreService.getAverageOfAverageScores(competency.getExercises()), course);

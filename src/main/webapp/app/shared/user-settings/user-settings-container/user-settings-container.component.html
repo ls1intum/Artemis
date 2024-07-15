@@ -32,6 +32,12 @@
                     <!--Science Settings-->
                     {{ 'artemisApp.userSettings.scienceSettings' | artemisTranslate }}
                 </a>
+                @if (localVCEnabled) {
+                    <a class="list-group-item btn btn-outline-primary" routerLink="sshSettings" routerLinkActive="active">
+                        <!--Account Information-->
+                        {{ 'artemisApp.userSettings.sshSettings' | artemisTranslate }}
+                    </a>
+                }
             </section>
         </div>
         <!-- the currently opened settings -->

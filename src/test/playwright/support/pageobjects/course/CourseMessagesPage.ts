@@ -135,7 +135,7 @@ export class CourseMessagesPage {
         await this.page.locator('.modal-content #submitButton').click();
         const response = await responsePromise;
         const channel: ChannelDTO = await response.json();
-        await this.page.waitForURL(`**/messages?conversationId=${channel.id}`);
+        await this.page.waitForURL(`**/communication?conversationId=${channel.id}`);
         expect(channel.isAnnouncementChannel).toBe(isAnnouncementChannel);
         expect(channel.isPublic).toBe(isPublic);
     }
@@ -333,7 +333,7 @@ export class CourseMessagesPage {
      * @param conversationID - The ID of the conversation.
      */
     async listMembersButton(courseID: number, conversationID: number) {
-        await this.page.goto(`/courses/${courseID}/messages?conversationId=${conversationID}`);
+        await this.page.goto(`/courses/${courseID}/communication?conversationId=${conversationID}`);
         await this.page.locator('.members').click();
     }
 

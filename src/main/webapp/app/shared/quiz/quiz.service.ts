@@ -4,7 +4,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisQuizService {

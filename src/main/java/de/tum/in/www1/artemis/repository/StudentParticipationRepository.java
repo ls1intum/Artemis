@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.IdToPresentationScoreSum;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
@@ -76,7 +77,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
                 AND (p.student.id = :studentId OR ts.id = :studentId)
-             """)
+            """)
     boolean existsByCourseIdAndStudentId(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
     @Query("""
@@ -1138,14 +1139,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return a set of id to presentation score sum mappings
      */
     @Query("""
-            SELECT COALESCE(p.student.id, ts.id) AS id,
-                COALESCE(SUM(p.presentationScore), 0) AS presentationScoreSum
+            SELECT new de.tum.in.www1.artemis.domain.participation.IdToPresentationScoreSum(
+                COALESCE(p.student.id, ts.id),
+                COALESCE(SUM(p.presentationScore), 0)
+            )
             FROM StudentParticipation p
                 LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
                 AND p.presentationScore IS NOT NULL
                 AND (p.student.id IN :studentIds OR ts.id IN :studentIds)
-            GROUP BY id
+            GROUP BY COALESCE(p.student.id, ts.id)
             """)
     Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
 
@@ -1158,16 +1161,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
 
     /**
-     * Helper interface to map the result of the {@link #sumPresentationScoreByStudentIdsAndCourseId(long, Set)} query to a map.
-     */
-    interface IdToPresentationScoreSum {
-
-        long getId();
-
-        double getPresentationScoreSum();
-    }
-
-    /**
      * Maps all given studentIds to their presentation score sum for the given course.
      *
      * @param courseId   the id of the course
@@ -1175,8 +1168,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return a map of studentId to presentation score sum
      */
     default Map<Long, Double> mapStudentIdToPresentationScoreSumByCourseIdAndStudentIds(long courseId, Set<Long> studentIds) {
-        return sumPresentationScoreByStudentIdsAndCourseId(courseId, studentIds).stream()
-                .collect(toMap(IdToPresentationScoreSum::getId, IdToPresentationScoreSum::getPresentationScoreSum));
+        if (studentIds == null || studentIds.isEmpty()) {
+            return Map.of();
+        }
+        var studentIdToPresentationScoreSum = sumPresentationScoreByStudentIdsAndCourseId(courseId, studentIds);
+        return studentIdToPresentationScoreSum.stream().collect(toMap(IdToPresentationScoreSum::participantId, IdToPresentationScoreSum::presentationScoreSum));
     }
 
     /**
