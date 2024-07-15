@@ -33,8 +33,8 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges {
         this.fitTextParent = this.fitTextElement.parentElement!;
         this.computed = window.getComputedStyle(this.fitTextElement);
         this.newlines = this.fitTextElement.childElementCount > 0 ? this.fitTextElement.childElementCount : 1;
-        this.lineHeight = this.computed['line-height'];
-        this.display = this.computed['display'];
+        this.lineHeight = this.computed.lineHeight;
+        this.display = this.computed.display;
     }
 
     @HostListener('window:resize')

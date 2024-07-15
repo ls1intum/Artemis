@@ -586,12 +586,12 @@ export class ProgrammingExerciseService {
         newerCommitHash: string,
         repositoryType?: string,
     ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        const params = {};
+        const params: { repositoryType?: RepositoryType, participationId?: number } = {};
         if (repositoryType !== undefined) {
-            params['repositoryType'] = repositoryType;
+            params.repositoryType = repositoryType;
         }
         if (participationId !== undefined && !isNaN(participationId)) {
-            params['participationId'] = participationId;
+            params.participationId = participationId;
         }
 
         return this.http

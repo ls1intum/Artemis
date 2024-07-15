@@ -12,7 +12,6 @@ import {
     faAngleUp,
     faChartBar,
     faClipboard,
-    faComment,
     faComments,
     faFilePdf,
     faFlag,
@@ -39,8 +38,8 @@ export class CourseManagementCardComponent implements OnChanges {
     // TODO: can we merge the 3 courses here?
     @Input() course: Course;
     @Input() courseStatistics: CourseManagementOverviewStatisticsDto;
-    @Input() courseWithExercises: Course;
-    @Input() courseWithUsers: Course;
+    @Input() courseWithExercises: Course | undefined;
+    @Input() courseWithUsers: Course | undefined;
     @Input() isGuidedTour: boolean;
 
     statisticsPerExercise = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();
@@ -71,7 +70,6 @@ export class CourseManagementCardComponent implements OnChanges {
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faFilePdf = faFilePdf;
-    faComment = faComment;
     faComments = faComments;
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
