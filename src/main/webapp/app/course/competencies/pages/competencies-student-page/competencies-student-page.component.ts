@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
-import { ActivatedRoute, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CompetencyApiService } from 'app/course/competencies/services/competency-api.service';
@@ -23,6 +23,7 @@ export class CompetenciesStudentPageComponent {
     private readonly courseCompetenciesKey = 'course-competencies';
 
     private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly alertService = inject(AlertService);
 
     private readonly competencyApiService = inject(CompetencyApiService);
@@ -46,6 +47,8 @@ export class CompetenciesStudentPageComponent {
     constructor() {
         // Fetch data when the course id is available
         effect(() => this.loadData(this.courseId()), { allowSignalWrites: true });
+        // Navigate to the first competency when the competencies are loaded
+        effect(() => this.navigateToFirstCompetency(this.competencies()));
     }
 
     private readonly competencySidebarCards = computed(() => {
@@ -87,6 +90,12 @@ export class CompetenciesStudentPageComponent {
             },
         };
     });
+
+    private navigateToFirstCompetency(competencies: Competency[]) {
+        if (competencies.length > 0) {
+            this.router.navigate([this.competencies().first()!.id], { relativeTo: this.activatedRoute });
+        }
+    }
 
     async loadData(courseId: number): Promise<void> {
         try {

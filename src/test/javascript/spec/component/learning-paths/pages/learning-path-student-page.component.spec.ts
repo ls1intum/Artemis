@@ -13,6 +13,7 @@ import { LearningPathApiService } from 'app/course/learning-paths/services/learn
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('LearningPathStudentPageComponent', () => {
     let component: LearningPathStudentPageComponent;
@@ -28,6 +29,7 @@ describe('LearningPathStudentPageComponent', () => {
             imports: [LearningPathStudentPageComponent],
             providers: [
                 provideHttpClient(),
+                provideHttpClientTesting(),
                 {
                     provide: ActivatedRoute,
                     useValue: {

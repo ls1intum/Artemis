@@ -1,20 +1,20 @@
-@for (unit of units(); track unit.id) {
-    <div class="col-12 col-lg-11">
+@for (unit of units(); track unit.id; let first = $first) {
+    <div [class.mt-3]="!first" class="col-12 col-lg-11">
         @switch (unit.type) {
             @case (LectureUnitType.EXERCISE) {
                 <jhi-exercise-unit [exerciseUnit]="unit" [course]="competency().course!" />
             }
             @case (LectureUnitType.ATTACHMENT) {
-                <jhi-attachment-unit [attachmentUnit]="unit" (onCompletion)="setLearningObjectCompletion($event)" />
+                <jhi-attachment-unit [lectureUnit]="unit" (onCompletion)="setLearningObjectCompletion($event)" />
             }
             @case (LectureUnitType.VIDEO) {
-                <jhi-video-unit [videoUnit]="unit" (onCompletion)="setLearningObjectCompletion($event)" />
+                <jhi-video-unit [lectureUnit]="unit" (onCompletion)="setLearningObjectCompletion($event)" />
             }
             @case (LectureUnitType.TEXT) {
-                <jhi-text-unit [textUnit]="unit" (onCompletion)="setLearningObjectCompletion($event)" />
+                <jhi-text-unit [lectureUnit]="unit" (onCompletion)="setLearningObjectCompletion($event)" />
             }
             @case (LectureUnitType.ONLINE) {
-                <jhi-online-unit [onlineUnit]="unit" (onCompletion)="setLearningObjectCompletion($event)" />
+                <jhi-online-unit [lectureUnit]="unit" (onCompletion)="setLearningObjectCompletion($event)" />
             }
         }
     </div>

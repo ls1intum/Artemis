@@ -8,11 +8,15 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { lastValueFrom } from 'rxjs';
+import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
+import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
+import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 
 @Component({
     selector: 'jhi-competency-detail-lecture-units',
     standalone: true,
-    imports: [ArtemisLectureUnitsModule],
+    imports: [ArtemisLectureUnitsModule, AttachmentUnitComponent, VideoUnitComponent, TextUnitComponent, OnlineUnitComponent],
     templateUrl: './competency-detail-lecture-units.component.html',
 })
 export class CompetencyDetailLectureUnitsComponent {
