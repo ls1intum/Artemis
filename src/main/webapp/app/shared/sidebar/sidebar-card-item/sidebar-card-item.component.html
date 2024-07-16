@@ -3,7 +3,7 @@
     <div class="mx-1 mb-1">
         @if (sidebarType === 'exam') {
             <div class="d-flex justify-content-between align-items-baseline">
-                <span id="test-sidebar-card-title" class="text-truncate me-2" [title]="sidebarItem.title">
+                <span id="test-sidebar-card-title" class="me-2 mb-2" [title]="sidebarItem.title">
                     @if (sidebarItem.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
                     }
@@ -29,7 +29,9 @@
             <div class="d-flex flex-column align-items-baseline">
                 <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.workingTime"></small>
                 <small class="me-2 text-truncate fw-semibold">
-                    @if (sidebarItem.workingTime) {
+                    @if (sidebarItem.studentExam) {
+                        <jhi-student-exam-working-time [studentExam]="sidebarItem.studentExam" />
+                    } @else if (sidebarItem.workingTime) {
                         {{ sidebarItem.workingTime | artemisDurationFromSeconds }}
                     }
                 </small>

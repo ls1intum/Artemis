@@ -4,7 +4,6 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -45,7 +44,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
         private accountService: AccountService,
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,
-        private httpClient: HttpClient,
         private participationWebsocketService: ParticipationWebsocketService,
     ) {}
 

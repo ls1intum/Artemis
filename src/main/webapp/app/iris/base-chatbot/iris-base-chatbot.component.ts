@@ -14,7 +14,7 @@ import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iri
 import { AccountService } from 'app/core/auth/account.service';
 import { animate, group, style, transition, trigger } from '@angular/animations';
 import { IrisChatService } from 'app/iris/iris-chat.service';
-import * as _ from 'lodash';
+import * as _ from 'lodash-es';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',

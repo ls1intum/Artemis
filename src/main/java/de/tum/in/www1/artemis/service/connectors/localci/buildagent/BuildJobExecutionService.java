@@ -344,12 +344,19 @@ public class BuildJobExecutionService {
                 else {
                     // ugly workaround because in swift result files \n\t breaks the parsing
                     var testResultFileString = xmlString.replace("\n\t", "");
-                    processTestResultFile(testResultFileString, failedTests, successfulTests);
+                    if (!testResultFileString.isBlank()) {
+                        processTestResultFile(testResultFileString, failedTests, successfulTests);
+                    }
+                    else {
+                        String msg = "The file " + fileName + " does not contain any testcases.";
+                        buildLogsMap.appendBuildLogEntry(buildJobId, msg);
+                        log.warn(msg);
+                    }
                 }
             }
-            catch (IllegalStateException e) {
-                // Exceptions due to one invalid sca file should not lead to the whole build to fail.
-                String msg = "Invalid report format in file " + fileName + ", ignoring.";
+            catch (Exception e) {
+                // Exceptions due to one invalid file should not lead to the whole build to fail.
+                String msg = "Error while parsing report file" + fileName + ", ignoring.";
                 buildLogsMap.appendBuildLogEntry(buildJobId, msg);
                 log.warn(msg, e);
             }

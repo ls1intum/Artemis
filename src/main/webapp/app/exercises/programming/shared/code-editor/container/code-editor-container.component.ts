@@ -14,19 +14,17 @@ import {
     FileChange,
     FileType,
     RenameFileChange,
-    ResizeType,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
-import { Annotation, CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -48,8 +46,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor?: CodeEditorAceComponent;
-    @ViewChild(CodeEditorMonacoComponent, { static: false }) monacoEditor?: CodeEditorMonacoComponent;
+    @ViewChild(CodeEditorMonacoComponent, { static: false }) monacoEditor: CodeEditorMonacoComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
 
     @Input()
@@ -74,11 +71,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     highlightDifferences: boolean;
     @Input()
     disableAutoSave = false;
-    @Input()
-    useMonacoEditor = false;
 
-    @Output()
-    onResizeEditorInstructions = new EventEmitter<void>();
     @Output()
     onCommitStateChange = new EventEmitter<CommitState>();
     @Output()
@@ -205,8 +198,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
-        this.monacoEditor?.onFileChange(fileChange);
-        this.aceEditor?.onFileChange(fileChange);
+        this.monacoEditor.onFileChange(fileChange);
 
         this.onFileChanged.emit();
     }
@@ -229,8 +221,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
-        this.aceEditor?.storeAnnotations(savedFiles);
-        this.monacoEditor?.storeAnnotations(savedFiles);
+        this.monacoEditor.storeAnnotations(savedFiles);
     }
 
     /**
@@ -277,21 +268,20 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     getText(): string {
-        return this.monacoEditor?.getText() ?? '';
+        return this.monacoEditor.getText() ?? '';
     }
 
     getNumberOfLines(): number {
-        if (this.aceEditor) {
-            return this.aceEditor.editorSession.getLength();
-        }
-        return this.monacoEditor?.getNumberOfLines() ?? 0;
+        return this.monacoEditor.getNumberOfLines() ?? 0;
     }
 
+    /**
+     * Highlights the line range in the Monaco editor.
+     * @param startLine The first line to highlight. Line numbers start at 1.
+     * @param endLine The last line to highlight.
+     */
     highlightLines(startLine: number, endLine: number): void {
-        // Workaround: increase line number by 1 for monaco
-        // Will be removed once ace is gone from every instance of this component
-        this.monacoEditor?.highlightLines(startLine + 1, endLine + 1);
-        this.aceEditor?.highlightLines(startLine, endLine, 'diff-newLine', 'gutter-diff-newLine');
+        this.monacoEditor.highlightLines(startLine, endLine);
     }
 
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes
@@ -304,15 +294,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
         this.grid.toggleCollapse(event, collapsableElement);
-    }
-
-    onGridResize(type: ResizeType) {
-        if (type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
-            this.onResizeEditorInstructions.emit();
-        }
-        if (this.aceEditor && (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM)) {
-            this.aceEditor.editor.getEditor().resize();
-        }
     }
 
     /**

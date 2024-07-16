@@ -15,6 +15,8 @@
                     <span class="badge badge-danger" jhiTranslate="artemisApp.userManagement.deactivated"></span>
                 }
             </dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.internal"></span></dt>
+            <dd>{{ (user.internal ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.firstName"></span></dt>
             <dd>{{ user.firstName }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.lastName"></span></dt>

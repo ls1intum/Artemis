@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
@@ -40,10 +39,8 @@ import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 
@@ -53,9 +50,6 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private PostRepository postRepository;
@@ -73,9 +67,6 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
@@ -83,9 +74,6 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private Course course;
 
@@ -245,7 +233,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(firstTextExerciseStatistics.getExerciseName()).isEqualTo(laterTextExercise.getTitle());
 
         // take the first entry as the results are getting sorted for release dates
-        var secondTextExerciseStatistics = result.averageScoresOfExercises().get(0);
+        var secondTextExerciseStatistics = result.averageScoresOfExercises().getFirst();
         assertThat(secondTextExerciseStatistics.getAverageScore()).isEqualTo(40.0);
         assertThat(secondTextExerciseStatistics.getExerciseId()).isEqualTo(earlierTextExerciseId);
         assertThat(secondTextExerciseStatistics.getExerciseName()).isEqualTo(earlierTextExercise.getTitle());

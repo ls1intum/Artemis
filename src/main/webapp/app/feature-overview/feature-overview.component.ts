@@ -131,9 +131,10 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.userInterface.shortDescription',
             'featureOverview.students.feature.userInterface.descriptionTextOne',
             faPuzzlePiece,
-            'featureOverview.students.feature.userInterface.descriptionTextTwo',
+            undefined,
             '/content/images/feature-overview/students/user_interface.png',
         );
+        featureUserInterface.centerAndExpandImage();
 
         const featureConduction = new Feature(
             'featureOverview.students.feature.conduction.title',

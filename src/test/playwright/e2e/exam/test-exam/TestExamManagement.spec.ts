@@ -104,7 +104,7 @@ test.describe('Test Exam management', () => {
             await page.goto(`/course-management/${course.id}/exams`);
             await examManagement.openExerciseGroups(exam.id!);
             await examExerciseGroups.shouldHaveTitle(exerciseGroup.id!, exerciseGroup.title!);
-            await examExerciseGroups.clickEditGroup(exerciseGroup.id!);
+            await examExerciseGroups.clickEditGroupForTestExam();
             const newGroupName = 'Group 3';
             await examExerciseGroupCreation.typeTitle(newGroupName);
             await examExerciseGroupCreation.update();
