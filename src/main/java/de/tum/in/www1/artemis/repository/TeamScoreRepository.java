@@ -63,6 +63,15 @@ public interface TeamScoreRepository extends ArtemisJpaRepository<TeamScore, Lon
             """)
     List<TeamScore> findAllByExercisesAndUser(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 
+    @Query("""
+            SELECT studs
+            FROM TeamScore s
+                LEFT JOIN s.team t
+                LEFT JOIN t.students studs
+            WHERE s.exercise = :exercise
+            """)
+    Set<User> findAllUsersWithScoresByExercise(@Param("exercise") Exercise exercise);
+
     @Transactional // ok because of delete
     @Modifying
     void deleteByExerciseAndTeam(Exercise exercise, Team team);

@@ -134,7 +134,7 @@ public class LearningPathRecommendationService {
     }
 
     /**
-     * Gets the next due learning object of a learning path
+     * Gets the first learning object of a learning path
      *
      * @param user                the user that should be analyzed
      * @param recommendationState the current state of the learning path recommendation
@@ -171,18 +171,6 @@ public class LearningPathRecommendationService {
             indexOfLastCompletedCompetency--;
         }
         return learningObject;
-    }
-
-    /**
-     * Gets the uncompleted learning objects of a learning path
-     *
-     * @param learningPath the learning path that should be analyzed
-     * @return the uncompleted learning objects of the learning path
-     */
-    public Stream<LearningObject> getUncompletedLearningObjects(LearningPath learningPath) {
-        var recommendationState = getRecommendedOrderOfNotMasteredCompetencies(learningPath);
-        return recommendationState.recommendedOrderOfCompetencies.stream().map(recommendationState.competencyIdMap::get)
-                .flatMap(competency -> getRecommendedOrderOfLearningObjects(learningPath.getUser(), competency, recommendationState).stream());
     }
 
     /**

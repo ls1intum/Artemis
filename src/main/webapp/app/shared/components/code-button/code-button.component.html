@@ -1,10 +1,10 @@
 <ng-container>
     <button
         jhi-exercise-action-button
-        [buttonIcon]="faDownload"
-        class="clone-repository"
+        [buttonIcon]="faCode"
+        class="code-button"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | artemisTranslate"
+        [buttonLabel]="'artemisApp.exerciseActions.code' | artemisTranslate"
         [buttonLoading]="loading"
         [smallButton]="smallButtons"
         [hideLabelMobile]="false"
@@ -44,16 +44,16 @@
                 class="clone-url"
                 [ngClass]="{
                     'url-box-remove-line-left': sshEnabled,
-                    'url-box-remove-line-right': !localVCEnabled && !(sshEnabled && ((useSsh && !localVCEnabled) || !useSsh)),
+                    'url-box-remove-line-right': !localVCEnabled || !!routerLinkForRepositoryView,
                 }"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
-            @if (!useSsh && !localVCEnabled) {
-                <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center">
+                @if (!localVCEnabled) {
                     <a
-                        style="flex: 1"
+                        [style.flex]="1"
                         class="btn btn-secondary btn-sm me-2 open-repository-button"
                         [href]="getHttpRepositoryUri() | safeUrl"
                         target="_blank"
@@ -61,8 +61,18 @@
                     >
                         <fa-icon [icon]="faExternalLink" />
                     </a>
-                </div>
-            }
+                } @else if (!!routerLinkForRepositoryView) {
+                    <a
+                        [style.flex]="1"
+                        class="btn btn-secondary btn-sm me-2 open-repository-button"
+                        [routerLink]="routerLinkForRepositoryView"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <fa-icon [icon]="faExternalLink" />
+                    </a>
+                }
+            </div>
         </div>
         @if (repositoryPassword) {
             <p>

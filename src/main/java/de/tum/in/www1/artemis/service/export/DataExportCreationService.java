@@ -64,12 +64,15 @@ public class DataExportCreationService {
 
     private final DataExportCommunicationDataService dataExportCommunicationDataService;
 
+    private final DataExportScienceEventService dataExportScienceEventService;
+
     private final ResourceLoaderService resourceLoaderService;
 
     public DataExportCreationService(@Value("${artemis.data-export-path:./data-exports}") Path dataExportsPath, ZipFileService zipFileService, FileService fileService,
             SingleUserNotificationService singleUserNotificationService, DataExportRepository dataExportRepository, MailService mailService, UserService userService,
             DataExportExerciseCreationService dataExportExerciseCreationService, DataExportExamCreationService dataExportExamCreationService,
-            DataExportCommunicationDataService dataExportCommunicationDataService, ResourceLoaderService resourceLoaderService) {
+            DataExportCommunicationDataService dataExportCommunicationDataService, DataExportScienceEventService dataExportScienceEventService,
+            ResourceLoaderService resourceLoaderService) {
         this.zipFileService = zipFileService;
         this.fileService = fileService;
         this.singleUserNotificationService = singleUserNotificationService;
@@ -79,6 +82,7 @@ public class DataExportCreationService {
         this.dataExportExerciseCreationService = dataExportExerciseCreationService;
         this.dataExportExamCreationService = dataExportExamCreationService;
         this.dataExportCommunicationDataService = dataExportCommunicationDataService;
+        this.dataExportScienceEventService = dataExportScienceEventService;
         this.dataExportsPath = dataExportsPath;
         this.resourceLoaderService = resourceLoaderService;
     }
@@ -97,6 +101,7 @@ public class DataExportCreationService {
         dataExportExerciseCreationService.createExercisesExport(workingDirectory, user);
         dataExportExamCreationService.createExportForExams(userId, workingDirectory);
         dataExportCommunicationDataService.createCommunicationDataExport(userId, workingDirectory);
+        dataExportScienceEventService.createScienceEventExport(user.getLogin(), workingDirectory);
         addGeneralUserInformation(user, workingDirectory);
         addReadmeFile(workingDirectory);
         var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
