@@ -316,7 +316,7 @@
                 "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben.",
                 "presented": "Präsentiert",
                 "presentation": "Präsentation",
-                "submissionStatus": "Einreichungsstatus"
+                "status": "Status"
             }
         }
     }
