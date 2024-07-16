@@ -8,9 +8,10 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
 import { combineLatest, forkJoin } from 'rxjs';
-import { CompetencyFormComponent, CompetencyFormData } from 'app/course/competencies/forms/competency/competency-form.component';
+import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { EditCourseCompetencyComponent } from 'app/course/competencies/edit/edit-course-competency.component';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
 @Component({
     selector: 'jhi-edit-competency',
@@ -20,7 +21,7 @@ import { EditCourseCompetencyComponent } from 'app/course/competencies/edit/edit
 })
 export class EditCompetencyComponent extends EditCourseCompetencyComponent implements OnInit {
     competency: Competency;
-    formData: CompetencyFormData;
+    formData: CourseCompetencyFormData;
 
     constructor(
         activatedRoute: ActivatedRoute,
@@ -75,7 +76,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
             });
     }
 
-    updateCompetency(formData: CompetencyFormData) {
+    updateCompetency(formData: CourseCompetencyFormData) {
         const { title, description, softDueDate, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
 
         this.competency.title = title;

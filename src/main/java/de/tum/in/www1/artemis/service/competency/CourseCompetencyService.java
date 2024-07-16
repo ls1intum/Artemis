@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
@@ -134,6 +135,22 @@ public class CourseCompetencyService {
         competencyPage = courseCompetencyRepository.findForImportAndUserHasAccessToCourse(title, description, courseTitle, semester, user.getGroups(),
                 authCheckService.isAdmin(user), pageable);
         return new SearchResultPageDTO<>(competencyPage.getContent(), competencyPage.getTotalPages());
+    }
+
+    /**
+     * Filters out all learning objects that the user should not see because they are not yet released
+     *
+     * @param competency  The competency to filter the learning objects for
+     * @param currentUser The user for whom to filter the learning objects
+     */
+    public void filterOutLearningObjectsThatUserShouldNotSee(CourseCompetency competency, User currentUser) {
+        competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))
+                .peek(lectureUnit -> lectureUnit.setCompleted(lectureUnit.isCompletedFor(currentUser))).collect(Collectors.toSet()));
+
+        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(competency.getExercises(), currentUser);
+        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
+                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), currentUser);
+        competency.setExercises(exercisesWithAllInformationNeeded);
     }
 
     /**

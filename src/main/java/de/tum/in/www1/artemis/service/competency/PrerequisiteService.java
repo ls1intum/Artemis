@@ -114,17 +114,6 @@ public class PrerequisiteService extends CourseCompetencyService {
     }
 
     /**
-     * Updates a prerequisite with the values of another one. Updates progress if necessary.
-     *
-     * @param prerequisiteToUpdate the prerequisite to update
-     * @param prerequisite         the prerequisite to update with
-     * @return the updated prerequisite
-     */
-    public Prerequisite updatePrerequisite(Prerequisite prerequisiteToUpdate, Prerequisite prerequisite) {
-        return updateCourseCompetency(prerequisiteToUpdate, prerequisite);
-    }
-
-    /**
      * Finds a prerequisite by its id and fetches its lecture units, exercises and progress for the provided user. It also fetches the lecture unit progress for the same user.
      * <p>
      * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.

@@ -7,8 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 
-export interface PrerequisiteFormData extends CourseCompetencyFormData {}
-
 @Component({
     selector: 'jhi-prerequisite-form',
     templateUrl: './prerequisite-form.component.html',
@@ -18,7 +16,7 @@ export interface PrerequisiteFormData extends CourseCompetencyFormData {}
 })
 export class PrerequisiteFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input()
-    formData: PrerequisiteFormData = {
+    formData: CourseCompetencyFormData = {
         id: undefined,
         title: undefined,
         description: undefined,
@@ -30,7 +28,7 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
     };
 
     @Output()
-    formSubmitted: EventEmitter<PrerequisiteFormData> = new EventEmitter<PrerequisiteFormData>();
+    formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
 
     constructor(fb: FormBuilder, lectureUnitService: LectureUnitService, competencyService: CompetencyService, translateService: TranslateService) {
         super(fb, lectureUnitService, competencyService, translateService);
@@ -47,12 +45,12 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
         this.initializeForm();
     }
 
-    private setFormValues(formData: PrerequisiteFormData) {
+    private setFormValues(formData: CourseCompetencyFormData) {
         this.form.patchValue(formData);
     }
 
     submitForm() {
-        const competencyFormData: PrerequisiteFormData = { ...this.form.value };
+        const competencyFormData: CourseCompetencyFormData = { ...this.form.value };
         competencyFormData.connectedLectureUnits = this.selectedLectureUnitsInTable;
         this.formSubmitted.emit(competencyFormData);
     }

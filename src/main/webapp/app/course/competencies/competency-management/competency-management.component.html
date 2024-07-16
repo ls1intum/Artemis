@@ -6,19 +6,19 @@
             @if (irisCompetencyGenerationEnabled) {
                 <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
                     <fa-icon [icon]="faRobot" />
-                    <span>{{ 'artemisApp.competency.manage.generateButton' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.competency.manage.generateButton"></span>
                 </a>
             }
             <button class="btn btn-primary" id="courseCompetencyImportAllButton" (click)="openImportAllModal('courseCompetency')">
                 <fa-icon [icon]="faFileImport" />
-                <span>{{ 'artemisApp.courseCompetency.manage.importAllButton' | artemisTranslate }}</span>
+                <span jhiTranslate="artemisApp.courseCompetency.manage.importAllButton"></span>
             </button>
         </div>
     </div>
     @if (isLoading) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
-                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                <span class="sr-only" jhiTranslate="loading"></span>
             </div>
         </div>
     }

@@ -114,17 +114,6 @@ public class CompetencyService extends CourseCompetencyService {
     }
 
     /**
-     * Updates a competency with the values of another one. Updates progress if necessary.
-     *
-     * @param competencyToUpdate the competency to update
-     * @param competency         the competency to update with
-     * @return the updated competency
-     */
-    public Competency updateCompetency(Competency competencyToUpdate, Competency competency) {
-        return updateCourseCompetency(competencyToUpdate, competency);
-    }
-
-    /**
      * Finds a competency by its id and fetches its lecture units, exercises and progress for the provided user. It also fetches the lecture unit progress for the same user.
      * <p>
      * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.

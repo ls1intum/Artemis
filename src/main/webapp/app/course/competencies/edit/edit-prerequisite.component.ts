@@ -8,9 +8,10 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { combineLatest, forkJoin } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { EditCourseCompetencyComponent } from 'app/course/competencies/edit/edit-course-competency.component';
-import { PrerequisiteFormComponent, PrerequisiteFormData } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
+import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
 @Component({
     selector: 'jhi-edit-prerequisite',
@@ -20,7 +21,7 @@ import { PrerequisiteService } from 'app/course/competencies/prerequisite.servic
 })
 export class EditPrerequisiteComponent extends EditCourseCompetencyComponent implements OnInit {
     prerequisite: Prerequisite;
-    formData: PrerequisiteFormData;
+    formData: CourseCompetencyFormData;
 
     constructor(
         activatedRoute: ActivatedRoute,
@@ -75,7 +76,7 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
             });
     }
 
-    updateCompetency(formData: PrerequisiteFormData) {
+    updateCompetency(formData: CourseCompetencyFormData) {
         const { title, description, softDueDate, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
 
         this.prerequisite.title = title;

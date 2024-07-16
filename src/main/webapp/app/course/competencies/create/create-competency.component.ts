@@ -7,10 +7,11 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
-import { CompetencyFormComponent, CompetencyFormData } from 'app/course/competencies/forms/competency/competency-form.component';
+import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CreateCourseCompetencyComponent } from 'app/course/competencies/create/create-course-competency.component';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
 @Component({
     selector: 'jhi-create-competency',
@@ -32,7 +33,7 @@ export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
         super(activatedRoute, router, alertService, lectureService);
     }
 
-    createCompetency(formData: CompetencyFormData) {
+    createCompetency(formData: CourseCompetencyFormData) {
         if (!formData?.title) {
             return;
         }

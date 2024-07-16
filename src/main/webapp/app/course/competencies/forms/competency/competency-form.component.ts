@@ -7,8 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 
-export interface CompetencyFormData extends CourseCompetencyFormData {}
-
 @Component({
     selector: 'jhi-competency-form',
     templateUrl: './competency-form.component.html',
@@ -18,7 +16,7 @@ export interface CompetencyFormData extends CourseCompetencyFormData {}
 })
 export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input()
-    formData: CompetencyFormData = {
+    formData: CourseCompetencyFormData = {
         id: undefined,
         title: undefined,
         description: undefined,

@@ -6,7 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
@@ -133,13 +131,7 @@ public class PrerequisiteResource {
         var prerequisite = prerequisiteService.findPrerequisiteWithExercisesAndLectureUnitsAndProgressForUser(prerequisiteId, currentUser.getId());
         checkCourseForPrerequisite(course, prerequisite);
 
-        prerequisite.setLectureUnits(prerequisite.getLectureUnits().stream().filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))
-                .peek(lectureUnit -> lectureUnit.setCompleted(lectureUnit.isCompletedFor(currentUser))).collect(Collectors.toSet()));
-
-        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(prerequisite.getExercises(), currentUser);
-        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
-                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), currentUser);
-        prerequisite.setExercises(exercisesWithAllInformationNeeded);
+        courseCompetencyService.filterOutLearningObjectsThatUserShouldNotSee(prerequisite, currentUser);
 
         return ResponseEntity.ok().body(prerequisite);
     }
@@ -329,7 +321,7 @@ public class PrerequisiteResource {
         var existingPrerequisite = prerequisiteRepository.findByIdWithLectureUnitsElseThrow(prerequisite.getId());
         checkCourseForPrerequisite(course, existingPrerequisite);
 
-        var persistedPrerequisite = prerequisiteService.updatePrerequisite(existingPrerequisite, prerequisite);
+        var persistedPrerequisite = prerequisiteService.updateCourseCompetency(existingPrerequisite, prerequisite);
         lectureUnitService.linkLectureUnitsToCompetency(persistedPrerequisite, prerequisite.getLectureUnits(), existingPrerequisite.getLectureUnits());
 
         return ResponseEntity.ok(persistedPrerequisite);

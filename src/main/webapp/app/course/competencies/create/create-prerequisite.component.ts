@@ -6,11 +6,12 @@ import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { PrerequisiteFormComponent, PrerequisiteFormData } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
+import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { CreateCourseCompetencyComponent } from 'app/course/competencies/create/create-course-competency.component';
 import { LectureService } from 'app/lecture/lecture.service';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
 @Component({
     selector: 'jhi-create-prerequisite',
@@ -31,7 +32,7 @@ export class CreatePrerequisiteComponent extends CreateCourseCompetencyComponent
         super(activatedRoute, router, alertService, lectureService);
     }
 
-    createPrerequisite(formData: PrerequisiteFormData) {
+    createPrerequisite(formData: CourseCompetencyFormData) {
         if (!formData?.title) {
             return;
         }

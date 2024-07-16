@@ -12,7 +12,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { CompetencyFormData } from 'app/course/competencies/forms/competency/competency-form.component';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-competencies',
@@ -32,7 +32,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
 
     currentlyProcessedCompetency: Competency;
     competencies: Competency[] = [];
-    competencyFormData: CompetencyFormData;
+    competencyFormData: CourseCompetencyFormData;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -111,7 +111,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
         onError(this.alertService, error);
     }
 
-    onCompetencyFormSubmitted(formData: CompetencyFormData) {
+    onCompetencyFormSubmitted(formData: CourseCompetencyFormData) {
         if (this.isEditingCompetency) {
             this.editCompetency(formData);
         } else {
@@ -119,7 +119,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
         }
     }
 
-    createCompetency(formData: CompetencyFormData) {
+    createCompetency(formData: CourseCompetencyFormData) {
         if (!formData?.title) {
             return;
         }
@@ -160,7 +160,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
             });
     }
 
-    editCompetency(formData: CompetencyFormData) {
+    editCompetency(formData: CourseCompetencyFormData) {
         const { title, description, taxonomy, connectedLectureUnits } = formData;
 
         this.currentlyProcessedCompetency.title = title;
