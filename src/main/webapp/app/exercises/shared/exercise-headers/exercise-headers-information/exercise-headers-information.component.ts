@@ -9,7 +9,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-// import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
@@ -19,6 +19,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';
+import { ComplaintService } from 'app/complaints/complaint.service';
 
 export interface InformationBox {
     title: string;
@@ -43,7 +44,7 @@ export interface InformationBox {
 })
 export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    // readonly AssessmentType = AssessmentType;
+    readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
     readonly getIcon = getIcon;
     readonly getIconTooltip = getIconTooltip;
@@ -61,11 +62,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     isBeforeStartDate: boolean;
     programmingExercise?: ProgrammingExercise;
     individualComplaintDueDate?: dayjs.Dayjs;
-    // public nextRelevantDate?: dayjs.Dayjs;
-    // public nextRelevantDateLabel?: string;
-    // public nextRelevantDateStatusBadge?: string;
     dueDateStatusBadge?: string;
-    canComplainLaterOn: boolean;
     achievedPoints?: number;
     numberOfSubmissions: number;
     informationBoxItems: InformationBox[] = [];
@@ -84,20 +81,6 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         }
 
         this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-        //     this.isBeforeStartDate = this.exercise.startDate ? this.exercise.startDate.isAfter(dayjs()) : !!this.exercise.releaseDate?.isAfter(dayjs());
-        //     if (this.course?.maxComplaintTimeDays) {
-        //         this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
-        //             this.exercise,
-        //             this.course.maxComplaintTimeDays,
-        //             this.studentParticipation?.results?.last(),
-        //             this.studentParticipation,
-        //         );
-        //     }
-        //     // There is a submission where the student did not have the chance to complain yet
-        //     this.canComplainLaterOn =
-        //         !!this.studentParticipation?.submissionCount &&
-        //         !this.individualComplaintDueDate &&
-        //         (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
 
         if (this.dueDate) {
             // If the due date is less than a day away, the color change to red
@@ -105,28 +88,62 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             // If the due date is less than a week away, text is displayed relativley e.g. 'in 2 days'
             this.shouldDisplayDueDateRelative = this.dueDate.isBetween(dayjs().add(1, 'week'), dayjs()) ? true : false;
         }
+        if (this.course?.maxComplaintTimeDays) {
+            this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
+                this.exercise,
+                this.course.maxComplaintTimeDays,
+                this.studentParticipation?.results?.last(),
+                this.studentParticipation,
+            );
+        }
         this.createInformationBoxItems();
     }
 
     createInformationBoxItems() {
-        console.log('Create Information Box Items');
-        const notReleased = this.exercise.releaseDate && dayjs(this.exercise.releaseDate).isAfter(dayjs());
-        if (this.exercise.maxPoints) this.informationBoxItems.push(this.getPointsItem(this.exercise.maxPoints, 'points'));
-        if (this.exercise.bonusPoints) this.informationBoxItems.push(this.getPointsItem(this.exercise.bonusPoints, 'bonus'));
+        this.addPointsItems();
+        this.addDueDateItems();
+        this.addStartDateItem();
+        this.addSubmissionStatusItem();
+        this.addSubmissionPolicyItem();
+        this.addDifficultyItem();
+        this.addCategoryItems();
+    }
 
-        if (this.exercise.dueDate) this.informationBoxItems.push(this.getDueDateItem());
-        if (this.exercise.startDate && dayjs().isBefore(this.exercise.startDate)) this.informationBoxItems.push(this.getStartDateItem());
-        // (exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs()))
+    addPointsItems() {
+        const { maxPoints, bonusPoints } = this.exercise;
+        if (maxPoints) {
+            this.informationBoxItems.push(this.getPointsItem(maxPoints, 'points'));
+        }
+        if (bonusPoints) {
+            this.informationBoxItems.push(this.getPointsItem(bonusPoints, 'bonus'));
+        }
+    }
 
-        // this.informationBoxItems.push(this.getNextRelevantDateItem());
-        // if (this.submissionPolicy?.active) this.informationBoxItems.push(this.getSubmissionPolicyItem());
-        this.informationBoxItems.push(this.getSubmissionStatusItem());
-        if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) this.informationBoxItems.push(this.getSubmissionPolicyItem());
-        this.informationBoxItems.push(this.getDifficultyItem());
-        if (notReleased || this.exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY || this.exercise.categories?.length)
-            this.informationBoxItems.push(this.getCategoryItems());
-
-        // if (this.exercise.assessmentType && this.exercise.type === ExerciseType.PROGRAMMING) this.informationBoxItems.push(this.getAssessmentTypeItem());
+    addDueDateItems() {
+        const now = dayjs();
+        if (this.dueDate) {
+            this.informationBoxItems.push(this.getDueDateItem());
+        }
+        // If the due date is in the past and the assessment due date is in the future, show the assessment due date
+        if (this.dueDate?.isBefore(now) && this.exercise.assessmentDueDate?.isAfter(now)) {
+            const assessmentDueItem = {
+                title: 'artemisApp.courseOverview.exerciseDetails.assessmentDue',
+                content: this.exercise.assessmentDueDate,
+                contentComponent: 'dateTime',
+                tooltip: 'artemisApp.courseOverview.exerciseDetails.assessmentDueTooltip',
+            };
+            this.informationBoxItems.push(assessmentDueItem);
+        }
+        // If the assessment due date is in the past and the complaint due date is in the future, show the complaint due date
+        if (this.exercise.assessmentDueDate?.isBefore(now) && this.individualComplaintDueDate?.isAfter(now)) {
+            const complaintDueItem = {
+                title: 'artemisApp.courseOverview.exerciseDetails.complaintDue',
+                content: this.individualComplaintDueDate,
+                contentComponent: 'dateTime',
+                tooltip: 'artemisApp.courseOverview.exerciseDetails.complaintDueTooltip',
+            };
+            this.informationBoxItems.push(complaintDueItem);
+        }
     }
 
     getDueDateItem(): InformationBox {
@@ -149,56 +166,57 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             tooltipParams: { date: this.dueDate?.format('lll') },
         };
     }
-    getStartDateItem(): InformationBox {
-        return {
-            title: 'artemisApp.courseOverview.exerciseDetails.startDate',
-            //  less than a week make time relative to now
-            content: this.exercise.startDate,
-            contentComponent: 'dateTime',
-            tooltip: this.shouldDisplayDueDateRelative ? 'artemisApp.exerciseActions.startExerciseBeforeStartDate' : undefined,
-        };
-    }
-    //  Status: Not released, no graded, graded, submitted, reviewed, assessed, complaint, complaint response, complaint applied, complaint resolved
-    // getStatusItem(): InformationBox {
 
-    // }
-
-    // getAssessmentTypeItem(): InformationBox {
-    //     return {
-    //         title: 'artemisApp.courseOverview.exerciseDetails.assessmentType',
-    //         content: this.capitalize(this.exercise?.assessmentType),
-    //         tooltip: 'artemisApp.AssessmentType.tooltip.' + this.exercise.assessmentType,
-    //     };
-    // }
-
-    capitalize(title?: string) {
-        if (!title) return '-';
-        return title.toString().charAt(0).toUpperCase() + title.slice(1).toLowerCase();
+    addStartDateItem() {
+        if (this.exercise.startDate && dayjs().isBefore(this.exercise.startDate)) {
+            const startDateItem = {
+                title: 'artemisApp.courseOverview.exerciseDetails.startDate',
+                //  less than a week make time relative to now
+                content: this.exercise.startDate,
+                contentComponent: 'dateTime',
+                tooltip: this.shouldDisplayDueDateRelative ? 'artemisApp.exerciseActions.startExerciseBeforeStartDate' : undefined,
+            };
+            this.informationBoxItems.push(startDateItem);
+        }
     }
 
-    getDifficultyItem(): InformationBox {
-        return {
+    addDifficultyItem() {
+        const difficultyItem = {
             title: 'artemisApp.courseOverview.exerciseDetails.difficulty',
             content: this.exercise.difficulty,
             contentComponent: 'difficultyLevel',
         };
+        this.informationBoxItems.push(difficultyItem);
     }
-    getSubmissionStatusItem(): InformationBox {
-        return {
-            title: 'artemisApp.courseOverview.exerciseDetails.submissionStatus',
+
+    addSubmissionStatusItem() {
+        const submissionStatusItem = {
+            title: 'artemisApp.courseOverview.exerciseDetails.status',
             content: this.studentParticipation,
             contentComponent: 'submissionStatus',
         };
+        this.informationBoxItems.push(submissionStatusItem);
     }
-    getCategoryItems(): InformationBox {
-        return {
-            title: 'artemisApp.courseOverview.exerciseDetails.categories',
-            content: this.exercise,
-            contentComponent: 'categories',
-        };
+    addCategoryItems() {
+        const notReleased = this.exercise.releaseDate && dayjs(this.exercise.releaseDate).isAfter(dayjs());
+
+        if (notReleased || this.exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY || this.exercise.categories?.length) {
+            const categoryItem = {
+                title: 'artemisApp.courseOverview.exerciseDetails.categories',
+                content: this.exercise,
+                contentComponent: 'categories',
+            };
+            this.informationBoxItems.push(categoryItem);
+        }
     }
 
-    getSubmissionPolicyItem(): InformationBox {
+    addSubmissionPolicyItem() {
+        if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) {
+            this.informationBoxItems.push(this.getSubmissionPolicyItem());
+        }
+    }
+
+    getSubmissionPolicyItem() {
         return {
             title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
             content: this.numberOfSubmissions + ' / ' + this.submissionPolicy?.submissionLimit,
@@ -225,21 +243,6 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             return submissionsLeft <= 0 ? 'danger' : 'warning';
         }
     }
-
-    // Can be visible in the tooltip above a status
-    // getNextRelevantDateItem(): InformationBox {
-    //     console.log('get Next Relevant Date Item')
-    //     console.log(this.nextRelevantDateLabel)
-    //     // {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
-    //     return {
-    //         title: this.nextRelevantDateLabel ? this.nextRelevantDateLabel : 'Next Relevant Date',
-    //         content: this.nextRelevantDate?.format('lll') ?? '-',
-    //         icon: faQuestionCircle,
-    //     };
-
-    // }
-
-    // DO one function with input
     getPointsItem(points: number | undefined, title: string): InformationBox {
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.' + title,
