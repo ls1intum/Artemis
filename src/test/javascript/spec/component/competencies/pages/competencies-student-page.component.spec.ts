@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { CompetenciesStudentPageComponent } from 'app/course/competencies/pages/competencies-student-page/competencies-student-page.component';
+import { CourseCompetenciesStudentPageComponent } from 'app/course/competencies/pages/course-competencies-student-page/course-competencies-student-page.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -17,8 +17,8 @@ import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.serv
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 
 describe('CompetenciesStudentPageComponent', () => {
-    let component: CompetenciesStudentPageComponent;
-    let fixture: ComponentFixture<CompetenciesStudentPageComponent>;
+    let component: CourseCompetenciesStudentPageComponent;
+    let fixture: ComponentFixture<CourseCompetenciesStudentPageComponent>;
     let competencyApiService: CompetencyApiService;
     let prerequisiteApiService: PrerequisiteApiService;
     let alertService: AlertService;
@@ -56,7 +56,7 @@ describe('CompetenciesStudentPageComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CompetenciesStudentPageComponent],
+            imports: [CourseCompetenciesStudentPageComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -91,7 +91,7 @@ describe('CompetenciesStudentPageComponent', () => {
         getCompetenciesSpy = jest.spyOn(competencyApiService, 'getCompetenciesByCourseId').mockResolvedValue(competencies);
         getPrerequisitesSpy = jest.spyOn(prerequisiteApiService, 'getPrerequisitesByCourseId').mockResolvedValue(prerequisites);
 
-        fixture = TestBed.createComponent(CompetenciesStudentPageComponent);
+        fixture = TestBed.createComponent(CourseCompetenciesStudentPageComponent);
         component = fixture.componentInstance;
     });
 

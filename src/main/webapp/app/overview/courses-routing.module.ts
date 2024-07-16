@@ -153,7 +153,9 @@ const routes: Routes = [
             {
                 path: 'competencies',
                 loadComponent: () =>
-                    import('../course/competencies/pages/competencies-student-page/competencies-student-page.component').then((c) => c.CompetenciesStudentPageComponent),
+                    import('app/course/competencies/pages/course-competencies-student-page/course-competencies-student-page.component').then(
+                        (c) => c.CourseCompetenciesStudentPageComponent,
+                    ),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.competencies',

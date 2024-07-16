@@ -30,20 +30,27 @@ export class SidebarCardMediumComponent {
         private location: Location,
     ) {}
 
-    emitStoreAndRefresh(itemId: number | string) {
+    async emitStoreAndRefresh(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
-        this.refreshChildComponent();
+        await this.refreshChildComponent();
     }
 
     emitPageChangeForExam() {
         this.pageChange.emit();
     }
 
-    refreshChildComponent(): void {
-        this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
-            this.itemSelected
-                ? this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route })
-                : this.router.navigate([this.location.path(), this.sidebarItem?.id], { replaceUrl: true });
-        });
+    async refreshChildComponent(): Promise<void> {
+        await this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild });
+        if (this.sidebarItem.routerLink) {
+            console.log('routerLink', this.sidebarItem.routerLink);
+            await this.router.navigate(['./', this.sidebarItem.routerLink], { relativeTo: this.route.firstChild, replaceUrl: true });
+        } else {
+            await this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
+        }
+        // this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
+        //     this.itemSelected
+        //         ? this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route })
+        //         : this.router.navigate([this.location.path(), this.sidebarItem?.id], { replaceUrl: true });
+        // });
     }
 }

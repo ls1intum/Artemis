@@ -14,12 +14,12 @@ import { onError } from 'app/shared/util/global.utils';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 
 @Component({
-    selector: 'jhi-competencies-student-page',
+    selector: 'jhi-course-competencies-student-page',
     standalone: true,
     imports: [ArtemisSidebarModule, ArtemisSharedCommonModule, RouterOutlet],
-    templateUrl: './competencies-student-page.component.html',
+    templateUrl: './course-competencies-student-page.component.html',
 })
-export class CompetenciesStudentPageComponent {
+export class CourseCompetenciesStudentPageComponent {
     private readonly courseCompetenciesKey = 'course-competencies';
 
     private readonly activatedRoute = inject(ActivatedRoute);
@@ -72,7 +72,6 @@ export class CompetenciesStudentPageComponent {
                     size: 'M',
                     icon: getIcon(prerequisite.taxonomy),
                     // TODO: Add routerLink here
-                    // routerLink:
                 },
         );
     });

@@ -64,7 +64,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
-import { CompetenciesStudentPageComponent } from 'app/course/competencies/pages/competencies-student-page/competencies-student-page.component';
+import { CourseCompetenciesStudentPageComponent } from 'app/course/competencies/pages/course-competencies-student-page/course-competencies-student-page.component';
 
 interface CourseActionItem {
     title: string;
@@ -144,7 +144,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         | CourseExamsComponent
         | CourseTutorialGroupsComponent
         | CourseConversationsComponent
-        | CompetenciesStudentPageComponent;
+        | CourseCompetenciesStudentPageComponent;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -593,7 +593,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             componentRef instanceof CourseTutorialGroupsComponent ||
             componentRef instanceof CourseExamsComponent ||
             componentRef instanceof CourseConversationsComponent ||
-            componentRef instanceof CompetenciesStudentPageComponent
+            componentRef instanceof CourseCompetenciesStudentPageComponent
         ) {
             this.activatedComponentReference = componentRef;
         }
