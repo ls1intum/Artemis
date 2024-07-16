@@ -35,17 +35,17 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "branch")
     private String branch;
 
-    @Column(name = "build_plan_configuration")
+    @Column(name = "build_plan_configuration", columnDefinition = "longtext")
     private String buildPlanConfiguration;
 
-    @Column(name = "build_script")
+    @Column(name = "build_script", columnDefinition = "longtext")
     private String buildScript;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
      * This is currently only supported for HASKELL and OCAML, thus the default value is false.
      */
-    @Column(name = "checkout_solution_repository")
+    @Column(name = "checkout_solution_repository", columnDefinition = "boolean default false")
     private Boolean checkoutSolutionRepository;
 
     @Column(name = "checkout_path")
