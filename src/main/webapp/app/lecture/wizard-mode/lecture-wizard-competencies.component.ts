@@ -2,7 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { Competency } from 'app/entities/competency.model';
-import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { faLink, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +12,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { CompetencyFormData } from 'app/course/competencies/forms/competency/competency-form.component';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-competencies',

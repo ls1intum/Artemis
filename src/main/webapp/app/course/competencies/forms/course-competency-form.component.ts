@@ -1,0 +1,163 @@
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { merge, of } from 'rxjs';
+import { catchError, delay, map, switchMap } from 'rxjs/operators';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { TranslateService } from '@ngx-translate/core';
+
+/**
+ * Async Validator to make sure that a competency title is unique within a course
+ */
+export const titleUniqueValidator = (courseCompetencyService: CourseCompetencyService, courseId: number, initialTitle?: string) => {
+    return (competencyTitleControl: FormControl<string | undefined>) => {
+        return of(competencyTitleControl.value).pipe(
+            delay(250),
+            switchMap((title) => {
+                if (initialTitle && title === initialTitle) {
+                    return of(null);
+                }
+                return courseCompetencyService.getCourseCompetencyTitles(courseId).pipe(
+                    map((res) => {
+                        const competencyTitles = res.body!;
+                        if (title && competencyTitles.includes(title)) {
+                            return {
+                                titleUnique: { valid: false },
+                            };
+                        } else {
+                            return null;
+                        }
+                    }),
+                    catchError(() => of(null)),
+                );
+            }),
+        );
+    };
+};
+
+export interface CourseCompetencyFormData {
+    id?: number;
+    title?: string;
+    description?: string;
+    softDueDate?: dayjs.Dayjs;
+    taxonomy?: CompetencyTaxonomy;
+    optional?: boolean;
+    masteryThreshold?: number;
+    connectedLectureUnits?: LectureUnit[];
+}
+
+@Component({ template: '' })
+export abstract class CourseCompetencyFormComponent {
+    abstract formData: CourseCompetencyFormData;
+
+    @Input()
+    isEditMode = false;
+    @Input()
+    isInConnectMode = false;
+    @Input()
+    isInSingleLectureMode = false;
+    @Input()
+    courseId: number;
+    @Input()
+    lecturesOfCourseWithLectureUnits: Lecture[] = [];
+    @Input()
+    averageStudentScore?: number;
+    @Input()
+    hasCancelButton: boolean;
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
+
+    @Output()
+    formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
+
+    form: FormGroup;
+    selectedLectureInDropdown: Lecture;
+    selectedLectureUnitsInTable: LectureUnit[] = [];
+    suggestedTaxonomies: string[] = [];
+
+    // Icons
+    protected readonly faTimes = faTimes;
+    protected readonly faQuestionCircle = faQuestionCircle;
+
+    // Constants
+    protected readonly competencyTaxonomy = CompetencyTaxonomy;
+
+    protected constructor(
+        protected fb: FormBuilder,
+        protected lectureUnitService: LectureUnitService,
+        protected courseCompetencyService: CourseCompetencyService,
+        protected translateService: TranslateService,
+    ) {}
+
+    get titleControl() {
+        return this.form.get('title');
+    }
+
+    get descriptionControl() {
+        return this.form.get('description');
+    }
+
+    protected initializeForm() {
+        if (this.form) {
+            return;
+        }
+        let initialTitle: string | undefined = undefined;
+        if (this.isEditMode && this.formData && this.formData.title) {
+            initialTitle = this.formData.title;
+        }
+        this.form = this.fb.nonNullable.group({
+            title: [
+                undefined as string | undefined,
+                [Validators.required, Validators.maxLength(255)],
+                [titleUniqueValidator(this.courseCompetencyService, this.courseId, initialTitle)],
+            ],
+            description: [undefined as string | undefined, [Validators.maxLength(10000)]],
+            softDueDate: [undefined],
+            taxonomy: [undefined as CompetencyTaxonomy | undefined],
+            masteryThreshold: [DEFAULT_MASTERY_THRESHOLD, [Validators.min(0), Validators.max(100)]],
+            optional: [false],
+        });
+        this.selectedLectureUnitsInTable = [];
+
+        merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.suggestTaxonomies());
+
+        if (this.isInSingleLectureMode) {
+            this.selectLectureInDropdown(this.lecturesOfCourseWithLectureUnits.first()!);
+        }
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
+    }
+
+    get isSubmitPossible() {
+        return !this.form.invalid;
+    }
+
+    selectLectureInDropdown(lecture: Lecture) {
+        this.selectedLectureInDropdown = lecture;
+    }
+
+    /**
+     * Suggest some taxonomies based on keywords used in the title or description.
+     * Triggered after the user changes the title or description input field.
+     */
+    suggestTaxonomies() {
+        this.suggestedTaxonomies = [];
+        const title = this.titleControl?.value?.toLowerCase() ?? '';
+        const description = this.descriptionControl?.value?.toLowerCase() ?? '';
+        for (const taxonomy in this.competencyTaxonomy) {
+            const keywords = this.translateService.instant('artemisApp.courseCompetency.keywords.' + taxonomy).split(', ');
+            const taxonomyName = this.translateService.instant('artemisApp.courseCompetency.taxonomies.' + taxonomy);
+            keywords.push(taxonomyName);
+            if (keywords.map((keyword: string) => keyword.toLowerCase()).some((keyword: string) => title.includes(keyword) || description.includes(keyword))) {
+                this.suggestedTaxonomies.push(taxonomyName);
+            }
+        }
+    }
+}

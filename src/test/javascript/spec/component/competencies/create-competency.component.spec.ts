@@ -3,7 +3,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CreateCompetencyComponent } from 'app/course/competencies/create-competency/create-competency.component';
+import { CreateCompetencyComponent } from 'app/course/competencies/create/create-competency.component';
 import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyService } from 'app/course/competencies/competency.service';

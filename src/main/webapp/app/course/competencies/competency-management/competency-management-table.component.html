@@ -71,7 +71,7 @@
                         <td class="col">
                             <div>
                                 <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" container="body" />
-                                {{ 'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate }}
+                                {{ 'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate }}
                             </div>
                         </td>
                         <td class="d-none col-lg d-lg-table-cell">
@@ -86,7 +86,7 @@
                             />
                         </td>
                         <td class="col">
-                            <span>{{ 'global.generic.' + (competency.optional ? 'yes' : 'no') | artemisTranslate }}</span>
+                            <span [jhiTranslate]="'global.generic.' + (competency.optional ? 'yes' : 'no')"></span>
                         </td>
                         <td class="col">
                             <div class="d-flex justify-content-end">

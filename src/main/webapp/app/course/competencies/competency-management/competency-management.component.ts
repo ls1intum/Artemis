@@ -8,14 +8,13 @@ import {
     CompetencyRelationDTO,
     CompetencyWithTailRelationDTO,
     CourseCompetency,
-    CourseCompetencyProgress,
     dtoToCompetencyRelation,
     getIcon,
 } from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { filter, map, switchMap } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, Subscription, forkJoin, of } from 'rxjs';
+import { Subject, Subscription, forkJoin } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -92,41 +91,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Delete a competency (and its relations)
-     *
-     * @param competencyId the id of the competency
-     */
-    deleteCompetency(competencyId: number) {
-        this.competencyService.delete(competencyId, this.courseId).subscribe({
-            next: () => {
-                this.competencies = this.competencies.filter((competency) => competency.id !== competencyId);
-                this.courseCompetencies = [...this.competencies, ...this.prerequisites];
-                this.relations = this.relations.filter((relation) => relation.tailCompetency?.id !== competencyId && relation.headCompetency?.id !== competencyId);
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
-     * Deletes a prerequisite from the course
-     *
-     * @param prerequisiteId the id of the prerequisite
-     */
-    deletePrerequisite(prerequisiteId: number) {
-        this.prerequisiteService.delete(prerequisiteId, this.courseId).subscribe({
-            next: () => {
-                this.alertService.success('artemisApp.prerequisite.manage.deleted');
-                this.prerequisites = this.prerequisites.filter((prerequisite) => prerequisite.id !== prerequisiteId);
-                this.courseCompetencies = [...this.competencies, ...this.prerequisites];
-                this.relations = this.relations.filter((relation) => relation.tailCompetency?.id !== prerequisiteId && relation.headCompetency?.id !== prerequisiteId);
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
-    }
-
-    /**
      * Sends a request to determine if Iris and Competency Generation is enabled
      *
      * @private
@@ -149,31 +113,15 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         const relationsObservable = this.courseCompetencyService.getCompetencyRelations(this.courseId);
         const prerequisitesObservable = this.prerequisiteService.getAllForCourse(this.courseId);
-        const competencyProgressObservable = this.courseCompetencyService.getAllForCourse(this.courseId).pipe(
-            switchMap((res) => {
-                if (!res.body || res.body.length === 0) {
-                    // return observable with empty array as an empty forkJoin never emits a value, causing infinite loading
-                    return of([]);
-                }
-                this.competencies = res.body;
+        const competencyObservable = this.competencyService.getAllForCourse(this.courseId);
 
-                const progressObservable = this.competencies.map((lg) => {
-                    return this.courseCompetencyService.getCourseProgress(lg.id!, this.courseId);
-                });
-
-                return forkJoin(progressObservable);
-            }),
-        );
-        forkJoin([relationsObservable, prerequisitesObservable, competencyProgressObservable]).subscribe({
-            next: ([competencyRelations, prerequisites, competencyProgressResponses]) => {
+        forkJoin([relationsObservable, prerequisitesObservable, competencyObservable]).subscribe({
+            next: ([competencyRelations, prerequisites, competencies]) => {
+                this.competencies = competencies.body ?? [];
                 this.prerequisites = prerequisites.body ?? [];
                 this.courseCompetencies = [...this.competencies, ...this.prerequisites];
                 this.relations = (competencyRelations.body ?? []).map((relationDTO) => dtoToCompetencyRelation(relationDTO));
 
-                for (const competencyProgressResponse of competencyProgressResponses) {
-                    const courseCompetencyProgress: CourseCompetencyProgress = competencyProgressResponse.body!;
-                    this.competencies.find((competency) => competency.id === courseCompetencyProgress.competencyId)!.courseProgress = courseCompetencyProgress;
-                }
                 this.isLoading = false;
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),

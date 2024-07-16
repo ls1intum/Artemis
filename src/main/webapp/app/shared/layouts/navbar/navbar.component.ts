@@ -311,6 +311,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         competency_management: 'artemisApp.competency.manage.title',
+        prerequisite_management: 'artemisApp.prerequisite.manage.title',
         learning_path_management: 'artemisApp.learningPath.manageLearningPaths.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
@@ -553,6 +554,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             // No breadcrumbs for those segments
             case 'competency-management':
+            case 'prerequisite-management':
             case 'unit-management':
             case 'exercise-groups':
             case 'student-exams':

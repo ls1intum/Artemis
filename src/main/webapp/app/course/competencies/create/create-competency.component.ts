@@ -1,63 +1,35 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { Competency } from 'app/entities/competency.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
-import { finalize, switchMap, take } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
-import { Lecture } from 'app/entities/lecture.model';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CompetencyFormComponent, CompetencyFormData } from 'app/course/competencies/forms/competency/competency-form.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { CreateCourseCompetencyComponent } from 'app/course/competencies/create/create-course-competency.component';
 
 @Component({
     selector: 'jhi-create-competency',
     templateUrl: './create-competency.component.html',
     styles: [],
+    standalone: true,
+    imports: [ArtemisSharedModule, CompetencyFormComponent, ArtemisSharedComponentModule],
 })
-export class CreateCompetencyComponent implements OnInit {
-    readonly documentationType: DocumentationType = 'Competencies';
+export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
     competencyToCreate: Competency = new Competency();
-    isLoading: boolean;
-    courseId: number;
-    lecturesWithLectureUnits: Lecture[] = [];
 
     constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
+        activatedRoute: ActivatedRoute,
+        router: Router,
+        alertService: AlertService,
+        lectureService: LectureService,
         private competencyService: CompetencyService,
-        private alertService: AlertService,
-        private lectureService: LectureService,
-    ) {}
-
-    ngOnInit(): void {
-        this.isLoading = true;
-        this.activatedRoute
-            .parent!.parent!.paramMap.pipe(
-                take(1),
-                switchMap((params) => {
-                    this.courseId = Number(params.get('courseId'));
-                    return this.lectureService.findAllByCourseId(this.courseId, true);
-                }),
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-            )
-            .subscribe({
-                next: (lectureResult) => {
-                    if (lectureResult.body) {
-                        this.lecturesWithLectureUnits = lectureResult.body;
-                        for (const lecture of this.lecturesWithLectureUnits) {
-                            // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                            if (!lecture.lectureUnits) {
-                                lecture.lectureUnits = [];
-                            }
-                        }
-                    }
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+    ) {
+        super(activatedRoute, router, alertService, lectureService);
     }
 
     createCompetency(formData: CompetencyFormData) {

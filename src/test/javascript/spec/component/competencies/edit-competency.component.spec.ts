@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
-import { EditCompetencyComponent } from 'app/course/competencies/edit-competency/edit-competency.component';
+import { EditCompetencyComponent } from 'app/course/competencies/edit/edit-competency.component';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Competency, CourseCompetencyProgress } from 'app/entities/competency.model';
