@@ -821,6 +821,14 @@ public class UserService {
         return notFoundUsers;
     }
 
+    /**
+     * Get the vcs access token associated with a user and a participation
+     *
+     * @param user            the user associated with the vcs access token
+     * @param participationId the participation's participationId associated with the vcs access token
+     *
+     * @return the users participation vcs access token, or throws an exception if it does not exist
+     */
     public String getVcsAccessTokenForUser(User user, Long participationId) {
         var vcsAccessToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId);
         if (vcsAccessToken.isEmpty()) {

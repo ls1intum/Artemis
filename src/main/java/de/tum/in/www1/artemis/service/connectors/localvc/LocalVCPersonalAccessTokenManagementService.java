@@ -23,6 +23,11 @@ public class LocalVCPersonalAccessTokenManagementService {
 
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
+    /**
+     * Generates a secure vcs access token
+     *
+     * @return the token
+     */
     public static String generateSecureVCSAccessToken() {
         log.debug("Generate secure vcs access token");
         SecureRandom secureRandom = new SecureRandom();
