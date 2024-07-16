@@ -11,6 +11,7 @@
         [defaultActions]="defaultActions"
         [enableFileUpload]="false"
         [colorAction]="undefined"
+        [enableResize]="false"
         [initialEditorHeight]="MarkdownEditorHeight.SMALL"
     >
         <!-- Preview todo showdefaultpreview-->
@@ -30,3 +31,7 @@
         </p>
     </div>
 }
+
+<div #sendButton>
+    <div [style.border]="'1px solid red'">DUMMY</div>
+</div>

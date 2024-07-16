@@ -2,7 +2,7 @@ import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-c
 import * as monaco from 'monaco-editor';
 
 // null is used by the monaco editor API
-type OverlayWidgetPosition = monaco.editor.IOverlayWidgetPosition | null;
+export type OverlayWidgetPosition = monaco.editor.IOverlayWidgetPosition | null;
 
 /**
  * Class representing an overlay widget floating above the editor content.
@@ -21,7 +21,7 @@ export class MonacoEditorOverlayWidget extends MonacoCodeEditorElement implement
         super(editor, id);
         this.domNode = domNode;
         // At the moment, the inline feedback nodes will only reach their maximum width with the following line. This workaround can be removed as soon as the Ace editor has been replaced.
-        this.domNode.style.width = '100%';
+        // this.domNode.style.width = '100%';
         this.position = position;
     }
 

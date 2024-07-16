@@ -9,6 +9,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
+import { MonacoEditorOverlayWidget, OverlayWidgetPosition } from 'app/shared/monaco-editor/model/monaco-editor-overlay-widget.model';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -302,6 +303,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const lineWidget = new MonacoEditorLineWidget(this._editor, id, domNode, lineNumber);
         lineWidget.addToEditor();
         this.lineWidgets.push(lineWidget);
+    }
+
+    addOverlayWidget(id: string, domNode: HTMLElement, position: OverlayWidgetPosition) {
+        // TODO: cleanup
+        const overlayWidget = new MonacoEditorOverlayWidget(this._editor, id, domNode, position);
+        this._editor.addOverlayWidget(overlayWidget);
     }
 
     /**
