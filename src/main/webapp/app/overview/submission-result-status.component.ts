@@ -31,6 +31,7 @@ export class SubmissionResultStatusComponent implements OnChanges {
     @Input() showUngradedResults = false;
     @Input() showIcon = true;
     @Input() isInSidebarCard = false;
+    @Input() showCompletion = true;
     @Input() short = true;
     @Input() triggerLastGraded = true;
 

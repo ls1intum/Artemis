@@ -3,33 +3,33 @@
         <!-- TODO ON MOBILE SCROLLABLE  -->
         @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
             <jhi-information-box [informationBoxData]="informationBoxItem">
-                @if (informationBoxItem.contentComponent === 'difficultyLevel') {
-                    <jhi-difficulty-level contentComponent [difficultyLevel]="informationBoxItem.content" />
+                @if (informationBoxItem.content.type === 'difficultyLevel') {
+                    <jhi-difficulty-level contentComponent [difficultyLevel]="informationBoxItem.content.value" />
                 }
-                @if (informationBoxItem.contentComponent === 'categories') {
+                @if (informationBoxItem.content.type === 'categories') {
                     <jhi-exercise-categories
                         contentComponent
-                        [exercise]="informationBoxItem.content"
+                        [exercise]="informationBoxItem.content.value"
                         [showTags]="{ difficulty: false, notReleased: true, includedInScore: true }"
                         [ngClass]="'badge-row'"
                         [isSmall]="true"
                     />
                 }
-                @if (informationBoxItem.contentComponent === 'timeAgo') {
-                    <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content | artemisTimeAgo }}</span>
+                @if (informationBoxItem.content.type === 'timeAgo') {
+                    <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content.value | artemisTimeAgo }}</span>
                 }
-                @if (informationBoxItem.contentComponent === 'dateTime') {
-                    <span contentComponent>{{ informationBoxItem.content | artemisDate }}</span>
+                @if (informationBoxItem.content.type === 'dateTime') {
+                    <span contentComponent>{{ informationBoxItem.content.value | artemisDate }}</span>
                 }
 
-                @if (informationBoxItem.contentComponent === 'submissionStatus') {
+                @if (informationBoxItem.content.type === 'submissionStatus') {
                     <jhi-submission-result-status
                         contentComponent
                         class="text-truncate result"
-                        [exercise]="exercise"
+                        [exercise]="informationBoxItem.content.value"
                         [studentParticipation]="studentParticipation"
                         [triggerLastGraded]="false"
-                        [isInSidebarCard]="true"
+                        [showCompletion]="false"
                         [showBadge]="false"
                     />
                 }
