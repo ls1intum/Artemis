@@ -229,7 +229,8 @@ public class UserResource {
     /**
      * GET users/vcsToken : get the vcsToken for of a user for a participation
      *
-     * @param participationId
+     * @param participationId the participation for which the access token should be fetched
+     *
      * @return the versionControlAccessToken belonging to the provided participation and user
      */
     @GetMapping("users/vcsToken")

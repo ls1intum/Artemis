@@ -244,7 +244,7 @@ public class ParticipationService {
         participation = studentParticipationRepository.saveAndFlush(participation);
 
         ParticipationVCSAccessToken participationVCSAccessToken = new ParticipationVCSAccessToken();
-        if (exercise instanceof ProgrammingExercise && participant instanceof User) {
+        if (exercise instanceof ProgrammingExercise && participant instanceof User && profileService.isLocalVcsActive()) {
             participationVCSAccessToken.setUser((User) participant);
             participationVCSAccessToken.setParticipation(participation);
             participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
@@ -828,6 +828,10 @@ public class ParticipationService {
             }
             // delete local repository cache
             gitService.deleteLocalRepository(repositoryUri);
+
+            if (profileService.isLocalVcsActive()) {
+                participationVCSAccessTokenRepository.deleteByParticipation_id(participationId);
+            }
         }
 
         // If local CI is active, remove all queued jobs for participation
