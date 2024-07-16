@@ -27,11 +27,8 @@ export class StatisticsGraphComponent implements OnChanges {
     LEFT = false;
     RIGHT = true;
     SpanType = SpanType;
-    Graphs = Graphs;
-
     // Histogram related properties
     chartName: string;
-    barChartLegend = false;
     chartTime: any;
     // Data
     barChartLabels: string[] = [];
@@ -192,7 +189,11 @@ export class StatisticsGraphComponent implements OnChanges {
     }
 
     public switchTimeSpan(index: boolean): void {
-        index ? (this.currentPeriod += 1) : (this.currentPeriod -= 1);
+        if (index) {
+            this.currentPeriod += 1;
+        } else {
+            this.currentPeriod -= 1;
+        }
         this.initializeChart();
     }
 
