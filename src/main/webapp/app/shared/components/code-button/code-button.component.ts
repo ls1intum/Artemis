@@ -42,6 +42,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     repositoryPassword?: string;
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
+    useParticipationVcsAccessToken?: boolean;
     localVCEnabled = false;
     gitlabVCEnabled = false;
 
@@ -93,6 +94,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         if (this.localVCEnabled && this.activeParticipation?.id) {
             this.accountService.getVcsAccessToken(this.activeParticipation.id).subscribe((fetchedVcsAccessToken) => {
                 this.user.vcsAccessToken = fetchedVcsAccessToken;
+                this.useParticipationVcsAccessToken = true;
             });
         }
 
@@ -144,7 +146,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
     private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
-        const includeToken = this.versionControlAccessTokenRequired && this.user.vcsAccessToken;
+        const includeToken = (this.versionControlAccessTokenRequired && this.user.vcsAccessToken) || this.useParticipationVcsAccessToken;
         const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
         const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
