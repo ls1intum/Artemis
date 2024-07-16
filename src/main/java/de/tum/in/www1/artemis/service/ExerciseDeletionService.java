@@ -199,6 +199,8 @@ public class ExerciseDeletionService {
             exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
             exerciseRepository.delete(exercise);
         }
+
+        competencies.forEach(competencyProgressService::updateProgressByCompetencyAsync);
     }
 
     /**
