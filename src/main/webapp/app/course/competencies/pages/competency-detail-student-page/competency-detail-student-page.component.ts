@@ -65,7 +65,7 @@ export class CompetencyDetailStudentPageComponent {
         effect(() => this.loadData(this.courseId(), this.competencyId()), { allowSignalWrites: true });
     }
 
-    private async loadData(courseId: number, competencyId: number): Promise<void> {
+    async loadData(courseId: number, competencyId: number): Promise<void> {
         try {
             this.isLoading.set(true);
             const competency = await this.competencyApiService.getCompetencyById(courseId, competencyId);

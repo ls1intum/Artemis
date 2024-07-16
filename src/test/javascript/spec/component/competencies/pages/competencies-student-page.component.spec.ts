@@ -22,12 +22,9 @@ describe('CompetenciesStudentPageComponent', () => {
     let competencyApiService: CompetencyApiService;
     let prerequisiteApiService: PrerequisiteApiService;
     let alertService: AlertService;
-    let courseOverviewService: CourseOverviewService;
 
     let getCompetenciesSpy: jest.SpyInstance;
     let getPrerequisitesSpy: jest.SpyInstance;
-
-    const courseCompetenciesKey = 'course-competencies';
 
     const courseId = 1;
     const competencies = <Competency[]>[
@@ -90,7 +87,6 @@ describe('CompetenciesStudentPageComponent', () => {
         competencyApiService = TestBed.inject(CompetencyApiService);
         prerequisiteApiService = TestBed.inject(PrerequisiteApiService);
         alertService = TestBed.inject(AlertService);
-        courseOverviewService = TestBed.inject(CourseOverviewService);
 
         getCompetenciesSpy = jest.spyOn(competencyApiService, 'getCompetenciesByCourseId').mockResolvedValue(competencies);
         getPrerequisitesSpy = jest.spyOn(prerequisiteApiService, 'getPrerequisitesByCourseId').mockResolvedValue(prerequisites);
@@ -152,17 +148,15 @@ describe('CompetenciesStudentPageComponent', () => {
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 
-    it('should toggle sidebar collapse state', async () => {
-        const setSidebarCollapseStateSpy = jest.spyOn(courseOverviewService, 'setSidebarCollapseState');
-
+    it('should toggle sidebar visibility based on isCollapsed property', () => {
         component.toggleSidebar();
         expect(component.isCollapsed()).toBeTrue();
-        expect(component.isCollapsed()).toBeTrue();
-        expect(setSidebarCollapseStateSpy).toHaveBeenCalledWith(courseCompetenciesKey, true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).not.toBeNull();
 
         component.toggleSidebar();
         expect(component.isCollapsed()).toBeFalse();
-        expect(component.isCollapsed()).toBeFalse();
-        expect(setSidebarCollapseStateSpy).toHaveBeenCalledWith(courseCompetenciesKey, true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).toBeNull();
     });
 });

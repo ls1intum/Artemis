@@ -71,6 +71,8 @@ export class CompetenciesStudentPageComponent {
                     title: prerequisite.title,
                     size: 'M',
                     icon: getIcon(prerequisite.taxonomy),
+                    // TODO: Add routerLink here
+                    // routerLink:
                 },
         );
     });
