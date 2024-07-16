@@ -831,11 +831,6 @@ public class UserService {
      */
     public String getVcsAccessTokenForUser(User user, Long participationId) {
         var vcsAccessToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId);
-        if (vcsAccessToken.isEmpty()) {
-            throw new NoSuchElementException();
-        }
-        else {
-            return vcsAccessToken.get().getVcsAccessToken();
-        }
+        return vcsAccessToken.orElseThrow(NoSuchElementException::new).getVcsAccessToken();
     }
 }
