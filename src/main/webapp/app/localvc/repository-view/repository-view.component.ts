@@ -15,6 +15,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ButtonSize } from 'app/shared/components/button.component';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-repository-view',
@@ -42,6 +43,8 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     repositoryType: ProgrammingExerciseInstructorRepositoryType | 'USER';
 
     result: Result;
+    resultHasInlineFeedback = false;
+    showInlineFeedback = false;
 
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub: Subscription;
@@ -167,6 +170,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                     // connect result and participation
                     participation.results[0].participation = participation;
                     this.result = participation.results[0];
+                    this.resultHasInlineFeedback = this.result.feedbacks?.some((feedback) => Feedback.getReferenceLine(feedback) !== undefined) ?? false;
                 }
                 return participation;
             }),
