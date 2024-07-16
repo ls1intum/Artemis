@@ -108,6 +108,8 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.editorContainer = new ElementRef(div);
         fixture.componentInstance.apollonDiagram = diagram;
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
+        // TODO: we should mock this differently without require
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(of(new Blob()));
         jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
@@ -150,6 +152,8 @@ describe('ApollonDiagramDetail Component', () => {
     it('downloadSelection', async () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
+        // TODO: we should mock this differently without require
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const module = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         jest.spyOn(module, 'convertRenderedSVGToPNG').mockReturnValue(new Blob([]));
         fixture.componentInstance.apollonDiagram = diagram;
