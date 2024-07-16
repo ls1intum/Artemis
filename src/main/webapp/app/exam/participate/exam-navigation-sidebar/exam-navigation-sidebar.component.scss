@@ -4,27 +4,27 @@ $sidebar-width-closed: 100px;
 $management-header-height: 230px;
 
 .scrollable-item-content {
-    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - $collapse-container-height);
+    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - var(--exam-height-offset));
     overflow-y: auto;
 
     &.content-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height) - $collapse-container-height);
+        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height) - var(--exam-height-offset));
     }
 
     &.sidebar-height-testRun {
-        height: calc(100vh - $collapse-container-height - 410px);
+        height: calc(100vh - var(--exam-height-offset) - 410px);
 
         @media (max-width: 1349px) {
-            height: calc(100vh - $collapse-container-height - 440px) !important;
+            height: calc(100vh - var(--exam-height-offset) - 440px) !important;
         }
 
         @media (max-width: 768px) {
-            height: calc(100vh - $collapse-container-height - 400px) !important;
+            height: calc(100vh - var(--exam-height-offset) - 400px) !important;
         }
     }
 
     @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - $collapse-container-height) !important;
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - var(--exam-height-offset)) !important;
     }
 }
 
