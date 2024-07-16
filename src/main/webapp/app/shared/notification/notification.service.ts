@@ -508,7 +508,9 @@ export class NotificationService {
         }
 
         const user = this.accountService.userIdentity;
-        user && postDTO.notification && this.changeTitleIfMentioned(user, postDTO, postDTO.notification);
+        if (user && postDTO.notification) {
+            this.changeTitleIfMentioned(user, postDTO, postDTO.notification);
+        }
 
         this._singlePostSubject$.next(postDTO);
         if (
