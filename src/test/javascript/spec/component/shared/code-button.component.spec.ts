@@ -63,7 +63,7 @@ describe('CodeButtonComponent', () => {
         sshKeysURL: 'sshKeysURL',
         testServer: false,
         versionControlUrl: 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git',
-        versionControlAccessToken: true,
+        useVersionControlAccessToken: true,
         git: {
             branch: 'clone-repo-button',
             commit: {
