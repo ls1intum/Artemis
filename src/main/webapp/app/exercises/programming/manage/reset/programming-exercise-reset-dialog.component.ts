@@ -6,6 +6,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { faBan, faCircleNotch, faSpinner, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-reset-dialog',
@@ -24,6 +25,7 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
 
     versionControlName?: string;
     continuousIntegrationName?: string;
+    localCIActive = false;
 
     // Icons
     faBan = faBan;
@@ -44,6 +46,7 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
             if (profileInfo) {
                 this.versionControlName = profileInfo.versionControlName;
                 this.continuousIntegrationName = profileInfo.continuousIntegrationName;
+                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
             }
         });
         this.resetInProgress = false;
