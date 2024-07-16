@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -377,5 +377,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     toggleChannelSearch() {
         this.channelSearchCollapsed = !this.channelSearchCollapsed;
+    }
+
+    @HostListener('window:keydown', ['$event'])
+    handleKeyboardEvent(event: KeyboardEvent) {
+        if (event.metaKey && event.key === 'k') {
+            event.preventDefault();
+            this.courseWideSearchTerm = '';
+            this.onSearch();
+        }
     }
 }
