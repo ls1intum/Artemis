@@ -46,7 +46,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
      * This is currently only supported for HASKELL and OCAML, thus the default value is false.
      */
     @Column(name = "checkout_solution_repository", columnDefinition = "boolean default false")
-    private Boolean checkoutSolutionRepository;
+    private boolean checkoutSolutionRepository;
 
     @Column(name = "checkout_path")
     private String checkoutPath;
