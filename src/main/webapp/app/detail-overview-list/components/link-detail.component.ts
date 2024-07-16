@@ -5,25 +5,7 @@ import { RouterModule } from '@angular/router';
 
 @Component({
     selector: 'jhi-link-detail',
-    template: `
-        <dd id="detail-value-{{ detail.title }}">
-            @if (detail.data.text) {
-                @if (detail.data.routerLink?.length) {
-                    <a [routerLink]="detail.data.routerLink" [queryParams]="detail.data.queryParams">
-                        {{ detail.data.text }}
-                    </a>
-                } @else if (detail.data.href) {
-                    <a href="{{ detail.data.href }}">
-                        {{ detail.data.text }}
-                    </a>
-                } @else {
-                    <span>{{ detail.data.text }}</span>
-                }
-            } @else {
-                <jhi-no-data />
-            }
-        </dd>
-    `,
+    templateUrl: 'link-detail.component.html',
     standalone: true,
     imports: [NoDataComponent, RouterModule],
 })

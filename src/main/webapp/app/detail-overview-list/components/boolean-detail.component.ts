@@ -5,11 +5,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 
 @Component({
     selector: 'jhi-boolean-detail',
-    template: `
-        <dd id="detail-value-{{ detail.title }}">
-            <jhi-checklist-check [checkAttribute]="detail.data.boolean" />
-        </dd>
-    `,
+    templateUrl: 'boolean-detail.component.html',
     standalone: true,
     imports: [NoDataComponent, ArtemisSharedComponentModule],
 })
