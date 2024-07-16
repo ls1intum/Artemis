@@ -92,6 +92,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "buildConfig" })
+    Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesAndBuildConfigById(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
 
@@ -252,7 +255,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
     Optional<ProgrammingExercise> findWithAllParticipationsById(long exerciseId);
 
     @Query("""
@@ -299,6 +302,22 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExercise p
+                LEFT JOIN FETCH p.testCases tc
+                LEFT JOIN FETCH p.staticCodeAnalysisCategories
+                LEFT JOIN FETCH p.exerciseHints
+                LEFT JOIN FETCH p.templateParticipation
+                LEFT JOIN FETCH p.solutionParticipation
+                LEFT JOIN FETCH p.auxiliaryRepositories
+                LEFT JOIN FETCH tc.solutionEntries
+                LEFT JOIN FETCH p.buildConfig
+            WHERE p.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(
+            @Param("exerciseId") long exerciseId);
 
     /**
      * Returns all programming exercises that have a due date after {@code now} and have tests marked with
@@ -524,6 +543,17 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
+     * Find a programming exercise with auxiliary repositories and build config by its id and throw an EntityNotFoundException if it cannot be found
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @NotNull
+    default ProgrammingExercise findWithAuxiliaryRepositoriesAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return findWithAuxiliaryRepositoriesAndBuildConfigById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
      * Find a programming exercise with the submission policy by its id and throw an EntityNotFoundException if it cannot be found
      *
      * @param programmingExerciseId of the programming exercise.
@@ -679,6 +709,14 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @NotNull
     default ProgrammingExercise findWithEagerStudentParticipationsByIdElseThrow(long programmingExerciseId) {
         return findWithEagerStudentParticipationsById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    @Nullable
+    default ProgrammingExercise getProgrammingExerciseWithBuildConfig(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
+            return findWithBuildConfigById(programmingExercise.getId()).orElse(null);
+        }
+        return programmingExercise;
     }
 
     /**

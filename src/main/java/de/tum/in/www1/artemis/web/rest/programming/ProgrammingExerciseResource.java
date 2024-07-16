@@ -292,7 +292,7 @@ public class ProgrammingExerciseResource {
 
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(updatedProgrammingExercise.getId());
+        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findWithAuxiliaryRepositoriesAndBuildConfigElseThrow(updatedProgrammingExercise.getId());
         ProgrammingExerciseBuildConfig buildConfigBeforeUpdate = programmingExerciseBeforeUpdate.getBuildConfig();
         if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");

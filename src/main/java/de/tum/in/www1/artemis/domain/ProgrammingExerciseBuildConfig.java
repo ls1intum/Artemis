@@ -7,11 +7,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -57,8 +59,9 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "docker_flags")
     private String dockerFlags;
 
-    @Column(name = "programming_exercise_id")
-    private Long programmingExerciseId;
+    @OneToOne(mappedBy = "buildConfig")
+    @JsonIgnoreProperties("buildConfig")
+    private ProgrammingExercise programmingExercise;
 
     @Column(name = "static_code_analysis_enabled")
     private Boolean staticCodeAnalysisEnabled;
@@ -165,14 +168,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.dockerFlags = dockerFlags;
     }
 
-    public Long getProgrammingExerciseId() {
-        return programmingExerciseId;
-    }
-
-    public void setProgrammingExerciseId(Long programmingExerciseId) {
-        this.programmingExerciseId = programmingExerciseId;
-    }
-
     /**
      * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
      * This method parses the JSON string and returns a {@link Windfile} object.
@@ -228,6 +223,14 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public void setTestwiseCoverageEnabled(Boolean testwiseCoverageEnabled) {
         this.testwiseCoverageEnabled = testwiseCoverageEnabled;
+    }
+
+    public ProgrammingExercise getProgrammingExercise() {
+        return programmingExercise;
+    }
+
+    public void setProgrammingExercise(ProgrammingExercise programmingExercise) {
+        this.programmingExercise = programmingExercise;
     }
 
     /**

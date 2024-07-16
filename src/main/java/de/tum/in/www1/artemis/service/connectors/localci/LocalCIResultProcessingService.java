@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -69,6 +70,8 @@ public class LocalCIResultProcessingService {
 
     private final BuildLogEntryService buildLogEntryService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private IQueue<ResultQueueItem> resultQueue;
 
     private IMap<String, BuildAgentInformation> buildAgentInformation;
@@ -79,7 +82,8 @@ public class LocalCIResultProcessingService {
 
     public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService) {
+            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
@@ -88,6 +92,7 @@ public class LocalCIResultProcessingService {
         this.buildJobRepository = buildJobRepository;
         this.programmingTriggerService = programmingTriggerService;
         this.buildLogEntryService = buildLogEntryService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -140,6 +145,12 @@ public class LocalCIResultProcessingService {
                     // In case the participation does not contain the exercise, we have to load it from the database
                     if (participation.getProgrammingExercise() == null) {
                         participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation));
+                    }
+                    // TODO: Add new method instead of this
+                    var debug = programmingExerciseBuildConfigRepository.findAll();
+                    var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseWithBuildConfig(participation.getProgrammingExercise());
+                    if (buildConfig != null) {
+                        participation.getProgrammingExercise().setBuildConfig(buildConfig);
                     }
                     result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
 

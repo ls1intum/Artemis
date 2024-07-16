@@ -271,10 +271,11 @@ public class ProgrammingExerciseService {
         programmingExercise.setTemplateParticipation(null);
 
         // We save once in order to generate an id for the programming exercise
-        var buildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(buildConfig);
+        var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
+        programmingExercise.setBuildConfig(savedBuildConfig);
         var savedProgrammingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
-
+        savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
+        programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
         // Step 1: Setting constant facts for a programming exercise
         savedProgrammingExercise.generateAndSetProjectKey();
         // saved

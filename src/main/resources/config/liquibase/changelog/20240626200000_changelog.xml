@@ -16,7 +16,7 @@
             <column name="checkout_path" type="VARCHAR(128)"/>
             <column name="timeout_seconds" type="INT"/>
             <column name="docker_flags" type="VARCHAR(255)"/>
-            <column name="programming_exercise_id" type="BIGINT"/>
+            <column name="common_key_id" type="BIGINT"/>
             <column name="static_code_analysis_enabled" type="BOOLEAN"/>
             <column name="max_static_code_analysis_penalty" type="INT"/>
             <column name="project_type" type="INT"/>
@@ -47,7 +47,7 @@
     <!-- Move data from programming_exercise to programming_exercise_build_config and remove the column from programming_exercise -->
     <changeSet id="20240626200000_2" author="bbesrour">
         <sql>
-            INSERT INTO programming_exercise_build_config (sequential_test_runs, branch, build_plan_configuration, build_script, checkout_solution_repository, programming_exercise_id, static_code_analysis_enabled, max_static_code_analysis_penalty, project_type, testwise_coverage_enabled)
+            INSERT INTO programming_exercise_build_config (sequential_test_runs, branch, build_plan_configuration, build_script, checkout_solution_repository, common_key_id, static_code_analysis_enabled, max_static_code_analysis_penalty, project_type, testwise_coverage_enabled)
             SELECT exercise.sequential_test_runs, programming_exercise_details.branch, programming_exercise_details.build_plan_configuration, programming_exercise_details.build_script, programming_exercise_details.checkout_solution_repository, exercise.id, programming_exercise_details.static_code_analysis_enabled, programming_exercise_details.max_static_code_analysis_penalty, programming_exercise_details.project_type, programming_exercise_details.testwise_coverage_enabled
             FROM exercise JOIN programming_exercise_details ON exercise.id = programming_exercise_details.id
             WHERE exercise.discriminator = 'P';
@@ -55,7 +55,7 @@
             UPDATE programming_exercise_details SET programming_exercise_build_config_id = (
                 SELECT id
                 FROM programming_exercise_build_config
-                WHERE programming_exercise_id = programming_exercise_details.id
+                WHERE common_key_id = programming_exercise_details.id
             );
 
             ALTER TABLE exercise DROP COLUMN sequential_test_runs;
