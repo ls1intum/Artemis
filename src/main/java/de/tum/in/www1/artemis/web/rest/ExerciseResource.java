@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
@@ -345,10 +344,6 @@ public class ExerciseResource {
             quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
         }
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            // TODO: instead fetch the policy without programming exercise, should be faster
-            SubmissionPolicy policy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(programmingExercise.getId()).getSubmissionPolicy();
-            programmingExercise.setSubmissionPolicy(policy);
-
             programmingExercise.setAllowedSelfLearningFeedbackAttempts(this.allowedSelfLearningFeedbackAttempts);
         }
 
