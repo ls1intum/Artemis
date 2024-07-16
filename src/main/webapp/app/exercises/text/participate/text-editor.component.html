@@ -32,10 +32,10 @@
                 }
                 <div class="grid-area-main">
                     <div>
-                        <span class="badge bg-primary mb-2" id="word-count" [ngClass]="{ 'no-submission': !submission.submitted }">
+                        <span class="badge bg-primary mb-2" id="word-count" [ngClass]="{ 'no-submission': submission && !submission.submitted }">
                             {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
                         </span>
-                        <span class="badge bg-primary mb-2" id="character-count" [ngClass]="{ 'no-submission': !submission.submitted }">
+                        <span class="badge bg-primary mb-2" id="character-count" [ngClass]="{ 'no-submission': submission && !submission.submitted }">
                             {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
                         </span>
                     </div>
@@ -50,7 +50,7 @@
                             [disabled]="!isActive || !submission || !isOwnerOfParticipation"
                             (keydown.tab)="onTextEditorTab(textEditor, $event)"
                             (input)="onTextEditorInput($event)"
-                            [ngClass]="{ 'no-submission': !submission.submitted }"
+                            [ngClass]="{ 'no-submission': submission && !submission.submitted }"
                         ></textarea>
                         @if (textExercise?.teamMode) {
                             <jhi-team-submission-sync
