@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
@@ -104,7 +105,7 @@ public class ExerciseResource {
     // default value is 3 if the placeholder cannot be resolved
     @Value("${artemis.athena.allowed-self-learning-feedback-attempts:3}")
     private Integer allowedSelfLearningFeedbackAttempts;
-  
+
     private final Optional<IrisSettingsService> irisSettingsService;
 
     private final PlagiarismCaseService plagiarismCaseService;
@@ -351,7 +352,7 @@ public class ExerciseResource {
             programmingExercise.setAllowedSelfLearningFeedbackAttempts(this.allowedSelfLearningFeedbackAttempts);
         }
 
-      // TODO: we should also check that the submissions do not contain sensitive data
+        // TODO: we should also check that the submissions do not contain sensitive data
 
         // remove sensitive information for students
         if (!isAtLeastTAForExercise) {
