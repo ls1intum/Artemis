@@ -243,6 +243,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY, templateBuildTestResults,
                 solutionBuildTestResults);
 
+        programmingExercise = programmingExerciseRepository.findWithBuildConfigById(programmingExercise.getId()).orElseThrow();
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
                 courseUtilService.addEmptyCourse());
 

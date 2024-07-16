@@ -83,7 +83,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories", "plagiarismDetectionConfig", "buildPlanConfiguration", "buildScript", "templateParticipation", "solutionParticipation" })
+            "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findForCreationById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
@@ -470,6 +470,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig" })
     Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "buildConfig" })
+    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     long countByShortNameAndCourse(String shortName, Course course);
 

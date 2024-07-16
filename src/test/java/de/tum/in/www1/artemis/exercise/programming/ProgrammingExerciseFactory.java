@@ -153,7 +153,7 @@ public class ProgrammingExerciseFactory {
      */
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
         ProgrammingExercise toBeImported = new ProgrammingExercise();
-        toBeImported.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        var buildConfig = new ProgrammingExerciseBuildConfig();
         toBeImported.setCourse(targetCourse);
         toBeImported.setTitle(title);
         toBeImported.setShortName(shortName);
@@ -166,7 +166,7 @@ public class ProgrammingExerciseFactory {
         toBeImported.setExerciseHints(null);
         toBeImported.setSolutionParticipation(null);
         toBeImported.setTemplateParticipation(null);
-        toBeImported.getBuildConfig().setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
+        buildConfig.setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
         toBeImported.setProblemStatement(template.getProblemStatement());
         toBeImported.setMaxPoints(template.getMaxPoints());
         toBeImported.setBonusPoints(template.getBonusPoints());
@@ -178,8 +178,8 @@ public class ProgrammingExerciseFactory {
         toBeImported.setPackageName(template.getPackageName());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
-        toBeImported.getBuildConfig().setStaticCodeAnalysisEnabled(template.getBuildConfig().isStaticCodeAnalysisEnabled());
-        toBeImported.getBuildConfig().setTestwiseCoverageEnabled(template.getBuildConfig().isTestwiseCoverageEnabled());
+        buildConfig.setStaticCodeAnalysisEnabled(template.getBuildConfig().isStaticCodeAnalysisEnabled());
+        buildConfig.setTestwiseCoverageEnabled(template.getBuildConfig().isTestwiseCoverageEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
@@ -187,17 +187,18 @@ public class ProgrammingExerciseFactory {
         toBeImported.setExampleSubmissions(null);
         toBeImported.setTestRepositoryUri(template.getTestRepositoryUri());
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
-        toBeImported.getBuildConfig().setProjectType(template.getBuildConfig().getProjectType());
+        buildConfig.setProjectType(template.getBuildConfig().getProjectType());
         toBeImported.setAssessmentDueDate(template.getAssessmentDueDate());
         toBeImported.setAttachments(null);
         toBeImported.setDueDate(template.getDueDate());
         toBeImported.setReleaseDate(template.getReleaseDate());
         toBeImported.setExampleSolutionPublicationDate(null);
-        toBeImported.getBuildConfig().setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
+        buildConfig.setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
         toBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(template.getBuildAndTestStudentSubmissionsAfterDueDate());
         toBeImported.generateAndSetProjectKey();
         toBeImported.setPlagiarismDetectionConfig(template.getPlagiarismDetectionConfig());
 
+        toBeImported.setBuildConfig(buildConfig);
         return toBeImported;
     }
 
