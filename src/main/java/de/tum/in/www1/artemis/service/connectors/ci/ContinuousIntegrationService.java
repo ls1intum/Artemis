@@ -220,7 +220,8 @@ public interface ContinuousIntegrationService {
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
                     case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY -> "assignment";
-                    default -> throw new IllegalArgumentException("Checkout path not defined for " + language);
+                    case JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
+                        throw new UnsupportedOperationException("Unsupported programming language: " + language);
                 };
             }
         },
@@ -231,7 +232,8 @@ public interface ContinuousIntegrationService {
                 return switch (language) {
                     case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY -> "";
                     case C, VHDL, ASSEMBLER, OCAML -> "tests";
-                    default -> throw new IllegalArgumentException("Checkout path not defined for " + language);
+                    case JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
+                        throw new UnsupportedOperationException("Unsupported programming language: " + language);
                 };
             }
         },
@@ -241,7 +243,9 @@ public interface ContinuousIntegrationService {
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
                     case HASKELL, OCAML -> "solution";
-                    default -> throw new IllegalArgumentException("The solution repository is not checked out during the template/submission build plan for " + language);
+                    case JAVA, PYTHON, KOTLIN, SWIFT, EMPTY, C, VHDL, ASSEMBLER, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO, MATLAB, BASH, RUBY, POWERSHELL,
+                            ADA, DART, PHP ->
+                        throw new IllegalArgumentException("The solution repository is not checked out during the template/submission build plan for " + language);
                 };
             }
         }
