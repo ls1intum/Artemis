@@ -57,8 +57,8 @@ export class CreatePrerequisiteComponent extends CreateCourseCompetencyComponent
             )
             .subscribe({
                 next: () => {
-                    // currently at /course-management/{courseId}/prerequisite-management/create, going to /course-management/{courseId}/competency-management/
-                    this.router.navigate(['../../competency-management/'], { relativeTo: this.activatedRoute });
+                    // currently at /course-management/{courseId}/prerequisite-management/create, going to /course-management/{courseId}/competency-management/, since prerequisite-management redirects to competency-management
+                    this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

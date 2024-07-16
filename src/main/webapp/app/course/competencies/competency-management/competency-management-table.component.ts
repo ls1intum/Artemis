@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CompetencyRelation, CompetencyRelationDTO, CompetencyWithTailRelationDTO, CourseCompetency, dtoToCompetencyRelation, getIcon } from 'app/entities/competency.model';
@@ -25,6 +25,8 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     @Input() relations: CompetencyRelation[];
     @Input() competencyType: 'competency' | 'prerequisite';
     @Input() standardizedCompetenciesEnabled: boolean;
+
+    @Output() competencyDeleted = new EventEmitter<number>();
 
     service: CompetencyService | PrerequisiteService;
     private dialogErrorSource = new Subject<string>();
@@ -95,13 +97,14 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
      * @private
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
-        this.courseCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
+        const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
 
         const importedRelations = res
             .map((dto) => dto.tailRelations)
             .flat()
             .filter((element): element is CompetencyRelationDTO => !!element)
             .map((dto) => dtoToCompetencyRelation(dto));
+        this.courseCompetencies = this.courseCompetencies.concat(importedCompetencies);
         this.relations = this.relations.concat(importedRelations);
     }
 
@@ -116,6 +119,7 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
                 this.courseCompetencies = this.courseCompetencies.filter((competency) => competency.id !== competencyId);
                 this.relations = this.relations.filter((relation) => relation.tailCompetency?.id !== competencyId && relation.headCompetency?.id !== competencyId);
                 this.dialogErrorSource.next('');
+                this.competencyDeleted.next(competencyId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

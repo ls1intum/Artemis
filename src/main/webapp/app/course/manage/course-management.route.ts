@@ -25,13 +25,14 @@ import { CourseManagementTabBarComponent } from 'app/course/manage/course-manage
 import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
-import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
+import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
-import { ImportPrerequisitesComponent } from 'app/course/competencies/import-competencies/import-prerequisites.component';
+import { ImportPrerequisitesComponent } from 'app/course/competencies/import/import-prerequisites.component';
 import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
 import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
+import { CourseImportStandardizedPrerequisitesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-prerequisites.component';
 
 export const courseManagementState: Routes = [
     {
@@ -266,7 +267,8 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'prerequisite-management',
-                        redirectTo: '../competency-management',
+                        redirectTo: 'competency-management',
+                        pathMatch: 'full',
                     },
                     {
                         path: 'prerequisite-management',
@@ -304,7 +306,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: 'import-standardized',
-                                component: CourseImportStandardizedCompetenciesComponent,
+                                component: CourseImportStandardizedPrerequisitesComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.prerequisite.import.title',

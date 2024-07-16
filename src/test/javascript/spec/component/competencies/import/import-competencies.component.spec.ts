@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
+import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from 'app/forms/forms.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -11,8 +11,8 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
-import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
-import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
+import { ImportCompetenciesTableComponent } from 'app/course/competencies/import/import-competencies-table.component';
+import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 
 describe('ImportCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<ImportCompetenciesComponent>;

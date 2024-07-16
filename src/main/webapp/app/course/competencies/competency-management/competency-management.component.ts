@@ -8,6 +8,7 @@ import {
     CompetencyRelationDTO,
     CompetencyWithTailRelationDTO,
     CourseCompetency,
+    CourseCompetencyType,
     dtoToCompetencyRelation,
     getIcon,
 } from 'app/entities/competency.model';
@@ -119,7 +120,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             next: ([competencyRelations, prerequisites, competencies]) => {
                 this.competencies = competencies.body ?? [];
                 this.prerequisites = prerequisites.body ?? [];
-                this.courseCompetencies = [...this.competencies, ...this.prerequisites];
+                this.courseCompetencies = this.competencies.concat(this.prerequisites);
                 this.relations = (competencyRelations.body ?? []).map((relationDTO) => dtoToCompetencyRelation(relationDTO));
 
                 this.isLoading = false;
@@ -174,8 +175,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      * @private
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
-        const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is Competency => !!element);
-        const importedPrerequisites = res.map((dto) => dto.competency).filter((element): element is Prerequisite => !!element);
+        const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is Competency => element?.type === CourseCompetencyType.COMPETENCY);
+        const importedPrerequisites = res.map((dto) => dto.competency).filter((element): element is Prerequisite => element?.type === CourseCompetencyType.PREREQUISITE);
         const importedRelations = res
             .map((dto) => dto.tailRelations)
             .flat()
@@ -184,7 +185,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
         this.competencies = this.competencies.concat(importedCompetencies);
         this.prerequisites = this.prerequisites.concat(importedPrerequisites);
-        this.courseCompetencies = [...this.competencies, ...this.prerequisites];
+        this.courseCompetencies = this.competencies.concat(this.prerequisites);
         this.relations = this.relations.concat(importedRelations);
     }
 
@@ -243,5 +244,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
+    }
+
+    recalculateCourseCompetencies(competencyId: number) {
+        this.courseCompetencies = this.courseCompetencies.filter((competency) => competency.id !== competencyId);
+        console.log('recalculating');
+        console.log(this.courseCompetencies);
     }
 }

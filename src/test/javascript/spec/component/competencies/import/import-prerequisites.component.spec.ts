@@ -2,14 +2,14 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { ImportPrerequisitesComponent } from 'app/course/competencies/import-competencies/import-prerequisites.component';
+import { ImportPrerequisitesComponent } from 'app/course/competencies/import/import-prerequisites.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from 'app/forms/forms.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
-import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
+import { ImportCompetenciesTableComponent } from 'app/course/competencies/import/import-competencies-table.component';
+import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 
 describe('ImportPrerequisitesComponent', () => {

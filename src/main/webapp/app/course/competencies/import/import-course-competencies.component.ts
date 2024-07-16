@@ -1,7 +1,6 @@
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { CourseCompetencyFilter, PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { CourseCompetency } from 'app/entities/competency.model';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -11,8 +10,6 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { forkJoin } from 'rxjs';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 /**
@@ -75,8 +72,6 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
 
     protected readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
     protected readonly router: Router = inject(Router);
-    protected readonly competencyService: CompetencyService = inject(CompetencyService);
-    protected readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
     protected readonly courseCompetencyService: CourseCompetencyService = inject(CourseCompetencyService);
     protected readonly alertService: AlertService = inject(AlertService);
     private readonly translateService: TranslateService = inject(TranslateService);
@@ -84,17 +79,12 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
 
     ngOnInit(): void {
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-        //load competencies and prerequisites of this course to disable their import buttons
-        const competencySubscription = this.competencyService.getAllForCourse(this.courseId);
-        const prerequisiteSubscription = this.prerequisiteService.getAllForCourse(this.courseId);
-        forkJoin([competencySubscription, prerequisiteSubscription]).subscribe({
-            next: ([competenciesResponse, prerequisitesResponse]) => {
-                const competencies = competenciesResponse.body ?? [];
-                const competencyIds = competencies.map((competency) => competency.id).filter((id): id is number => !!id);
-                // do not allow import of competencies that are already imported as prerequisites
-                const prerequisites = prerequisitesResponse.body ?? [];
-                const referencedIds = prerequisites.map((prerequisite) => prerequisite.linkedCourseCompetency?.id).filter((id): id is number => !!id);
-                this.disabledIds = [...competencyIds, ...referencedIds];
+        // load competencies and prerequisites of this course to disable their import buttons
+        const courseCompetencySubscription = this.courseCompetencyService.getAllForCourse(this.courseId);
+        courseCompetencySubscription.subscribe({
+            next: (courseCompetenciesResponse) => {
+                const courseCompetencies = courseCompetenciesResponse.body ?? [];
+                this.disabledIds = courseCompetencies.map((courseCompetency) => courseCompetency.id).filter((id): id is number => !!id);
                 this.performSearch();
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),

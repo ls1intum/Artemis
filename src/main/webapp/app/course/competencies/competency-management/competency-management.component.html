@@ -34,6 +34,7 @@
         [relations]="relations"
         [competencyType]="'competency'"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
+        (competencyDeleted)="recalculateCourseCompetencies($event)"
     />
     <jhi-competency-management-table
         [courseId]="courseId"
@@ -41,5 +42,6 @@
         [relations]="relations"
         [competencyType]="'prerequisite'"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
+        (competencyDeleted)="recalculateCourseCompetencies($event)"
     />
 </div>

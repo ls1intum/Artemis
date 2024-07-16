@@ -4,7 +4,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SortService } from 'app/shared/service/sort.service';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
-import { CompetencyService } from 'app/course/competencies/competency.service';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { CourseImportStandardizedCourseCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-course-competencies.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
@@ -14,8 +14,8 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
 
 @Component({
-    selector: 'jhi-course-import-standardized-competencies',
-    templateUrl: './course-import-standardized-competencies.component.html',
+    selector: 'jhi-course-import-standardized-prerequisites',
+    templateUrl: './course-import-standardized-prerequisites.component.html',
     standalone: true,
     imports: [
         ArtemisSharedCommonModule,
@@ -26,7 +26,7 @@ import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies
         KnowledgeAreaTreeComponent,
     ],
 })
-export class CourseImportStandardizedCompetenciesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
+export class CourseImportStandardizedPrerequisitesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
     constructor(
         router: Router,
         activatedRoute: ActivatedRoute,
@@ -34,12 +34,12 @@ export class CourseImportStandardizedCompetenciesComponent extends CourseImportS
         alertService: AlertService,
         translateService: TranslateService,
         sortService: SortService,
-        private competencyService: CompetencyService,
+        private prerequisiteService: PrerequisiteService,
     ) {
         super(router, activatedRoute, standardizedCompetencyService, alertService, translateService, sortService);
     }
 
     protected importCompetencies() {
-        super.importCompetencies(this.competencyService);
+        super.importCompetencies(this.prerequisiteService);
     }
 }
