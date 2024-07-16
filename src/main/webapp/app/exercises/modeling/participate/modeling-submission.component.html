@@ -24,7 +24,7 @@
     @if (modelingExercise) {
         <jhi-resizeable-container [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting" [expandProblemStatement]="expandProblemStatement">
             <!--region Left Panel-->
-            <div left-body class="submission-container d-flex flex-column w-100" [ngClass]="{ 'no-submission': !submission.submitted }">
+            <div left-body class="submission-container d-flex flex-column w-100" [ngClass]="{ 'no-submission': submission && !submission.submitted }">
                 <div class="d-flex flex-column flex-md-row">
                     @if (modelingExercise.teamMode && (isActive || isLate)) {
                         <div class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
