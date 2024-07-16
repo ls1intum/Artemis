@@ -85,6 +85,8 @@
             "deactivated": "Deaktiviert",
             "profiles": "Profile",
             "langKey": "Sprache",
+            "internal": "Intern",
+            "passwordTooltip": "Du kannst nur Passwörter für interne Nutzer:innen ändern.",
             "createdBy": "Erstellt von",
             "createdDate": "Erstellt am",
             "lastModifiedBy": "Bearbeitet von",

@@ -21,14 +21,12 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -50,13 +48,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIn
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -183,7 +175,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIn
 
         // No tasks available -> all tests in one "unassigned" group
         assertThat(response).hasSize(1);
-        var unassigned = response.get(0);
+        var unassigned = response.getFirst();
         assertThat(unassigned.getTaskName()).isEqualTo("Not assigned to task");
         assertThat(unassigned.getTestCases()).hasSize(3);
     }

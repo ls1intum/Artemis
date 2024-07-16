@@ -121,7 +121,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         assertThat(sessions).hasSize(2);
-        var firstAugustMondaySession = sessions.get(0);
+        var firstAugustMondaySession = sessions.getFirst();
         var secondAugustMondaySession = sessions.get(1);
         this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
         this.assertScheduledSessionIsActiveOnDate(secondAugustMondaySession, SECOND_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
@@ -359,7 +359,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         assertThat(sessions).hasSize(2);
-        var firstAugustMondaySession = sessions.get(0);
+        var firstAugustMondaySession = sessions.getFirst();
         assertThat(tutorialGroupSessionRepository.existsById(firstAugustMondaySession.getId())).isTrue();
 
         // when

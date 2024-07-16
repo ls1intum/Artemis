@@ -81,3 +81,52 @@ You can see the structure of the saml2 configuration in the following:
     # services such as GitLab and Jenkins. This allows the users to use password-based Git workflows.
     # Enabled the password reset function in Artemis.
     info.saml2.enable-password: true
+
+Example configuration
+^^^^^^^^^^^^^^^^^^^^^
+
+The SAML2 configuration of Artemis could look like this:
+
+.. code:: yaml
+
+    saml2:
+        username-pattern: '{uid}'
+        first-name-pattern: '{urn:oid:W.X.Y.Z}'
+        last-name-pattern: '{urn:oid:W.X.Y.Z}'
+        email-pattern: '{mail}'
+        registration-number-pattern: '{matriculationNumber}'
+        lang-key-pattern: 'de'
+        identity-providers:
+            - metadata: https://www.aai.dfn.de/fileadmin/metadata/dfn-aai-local-148-metadata.xml
+              registration-id: REGISTRATION_ID_HERE
+              entity-id: ENTITY_ID_HERE
+              cert-file: /opt/artemis/config/shibboleth-sp-cert.crt
+              key-file: /opt/artemis/config/shibboleth-sp-key.pem
+    info.saml2.button-label: 'Shibboleth Login'
+    info.saml2.enable-password: false
+    info.saml2.password-login-disabled: true
+    info.saml2.identity-provider-name: 'Shibboleth Account'
+
+The SAML2 configuration for Artemis at your IT department could look like this:
+
+.. code:: xml
+
+    <?xml version="1.0" encoding="UTF-8"?><md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="ENTITY_ID_HERE" xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">
+      <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+        <md:KeyDescriptor use="signing">
+          <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+            <ds:X509Data>
+              <ds:X509Certificate>CERT_HERE</ds:X509Certificate>
+            </ds:X509Data>
+          </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:KeyDescriptor use="encryption">
+          <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+            <ds:X509Data>
+              <ds:X509Certificate>CERT_HERE</ds:X509Certificate>
+            </ds:X509Data>
+          </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://ARTEMIS_URL_HERE/login/saml2/sso/REGISTRATION_ID_HERE" index="1"/>
+      </md:SPSSODescriptor>
+    </md:EntityDescriptor>

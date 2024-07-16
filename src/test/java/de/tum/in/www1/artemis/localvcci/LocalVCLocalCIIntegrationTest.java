@@ -49,7 +49,6 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -62,9 +61,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private BuildJobRepository buildJobRepository;

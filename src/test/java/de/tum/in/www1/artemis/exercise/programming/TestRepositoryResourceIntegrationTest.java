@@ -32,7 +32,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
@@ -40,7 +39,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
@@ -53,12 +51,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private final String testRepoBaseUrl = "/api/test-repository/";
 
@@ -325,7 +317,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJen
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
         var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.getFirst().getAuthorIdent().getName());
     }
 
     private List<FileSubmission> getFileSubmissions() {
@@ -367,7 +359,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJen
 
         var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.getFirst().getAuthorIdent().getName());
     }
 
     @Test
@@ -401,13 +393,13 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJen
             GitService.commit(testRepo.originGit).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
             // Checks if the current commit is not equal on the local and the remote repository
-            assertThat(testRepo.getAllLocalCommits().get(0)).isNotEqualTo(testRepo.getAllOriginCommits().get(0));
+            assertThat(testRepo.getAllLocalCommits().getFirst()).isNotEqualTo(testRepo.getAllOriginCommits().getFirst());
 
             // Execute the Rest call
             request.get(testRepoBaseUrl + programmingExercise.getId() + "/pull", HttpStatus.OK, Void.class);
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
-            assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
+            assertThat(testRepo.getAllLocalCommits().getFirst()).isEqualTo(testRepo.getAllOriginCommits().getFirst());
             assertThat(Path.of(testRepo.localRepoFile + "/" + fileName)).exists();
         }
     }
@@ -450,7 +442,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJen
             // Merge the two and a conflict will occur
             testRepo.localGit.fetch().setRemote("origin").call();
             List<Ref> refs = testRepo.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
-            var result = testRepo.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
+            var result = testRepo.localGit.merge().include(refs.getFirst().getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
             var status = testRepo.localGit.status().call();
             assertThat(status.getConflicting()).isNotEmpty();
             assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
@@ -461,7 +453,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJen
             // Check the git status after the reset
             status = testRepo.localGit.status().call();
             assertThat(status.getConflicting()).isEmpty();
-            assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
+            assertThat(testRepo.getAllLocalCommits().getFirst()).isEqualTo(testRepo.getAllOriginCommits().getFirst());
             var receivedStatusAfterReset = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
             assertThat(receivedStatusAfterReset.repositoryStatus()).hasToString("CLEAN");
         }

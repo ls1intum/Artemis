@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
@@ -63,9 +62,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @BeforeEach
     @Override

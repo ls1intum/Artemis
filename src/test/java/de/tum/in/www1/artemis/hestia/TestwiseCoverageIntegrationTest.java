@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
@@ -28,8 +27,6 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.hestia.CoverageFileReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.TestwiseCoverageReportEntryRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -54,16 +51,7 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationIndepende
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    private RequestUtilService request;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -105,7 +93,7 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(fullReport.getCoveredLineRatio()).isEqualTo(latestReport.getCoveredLineRatio());
         var fileReports = fullReport.getFileReports();
         assertThat(fileReports).hasSize(1);
-        var fileReport = fileReports.stream().toList().get(0);
+        var fileReport = fileReports.stream().toList().getFirst();
         assertThat(fileReport.getFilePath()).isEqualTo("src/de/tum/in/ase/BubbleSort.java");
         assertThat(fileReport.getCoveredLineCount()).isEqualTo(8);
         assertThat(fileReport.getLineCount()).isEqualTo(20);

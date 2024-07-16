@@ -28,7 +28,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -38,25 +37,16 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 @Isolated
 class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "ltiquizsubmissiontest";
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private QuizExerciseService quizExerciseService;
@@ -66,12 +56,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;

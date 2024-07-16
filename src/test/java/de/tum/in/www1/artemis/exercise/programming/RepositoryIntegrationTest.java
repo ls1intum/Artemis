@@ -53,7 +53,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileType;
@@ -73,7 +72,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
@@ -88,7 +86,6 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.TestConstants;
@@ -117,9 +114,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
     private StudentExamRepository studentExamRepository;
 
     @Autowired
-    private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
-    @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @Autowired
@@ -135,13 +129,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -151,9 +139,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -779,7 +764,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.getFirst().getAuthorIdent().getName());
     }
 
     @Test
@@ -807,7 +792,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.getFirst().getAuthorIdent().getName());
     }
 
     @Test
@@ -858,13 +843,13 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
             GitService.commit(studentRepository.originGit).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
             // Checks if the current commit is not equal on the local and the remote repository
-            assertThat(studentRepository.getAllLocalCommits().get(0)).isNotEqualTo(studentRepository.getAllOriginCommits().get(0));
+            assertThat(studentRepository.getAllLocalCommits().getFirst()).isNotEqualTo(studentRepository.getAllOriginCommits().getFirst());
 
             // Execute the Rest call
             request.get(studentRepoBaseUrl + participation.getId() + "/pull", HttpStatus.OK, Void.class);
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
-            assertThat(studentRepository.getAllLocalCommits().get(0)).isEqualTo(studentRepository.getAllOriginCommits().get(0));
+            assertThat(studentRepository.getAllLocalCommits().getFirst()).isEqualTo(studentRepository.getAllOriginCommits().getFirst());
             assertThat(studentRepository.localRepoFile.toPath().resolve(fileName)).exists();
         }
     }
@@ -906,7 +891,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
             // Merge the two and a conflict will occur
             studentRepository.localGit.fetch().setRemote("origin").call();
             List<Ref> refs = studentRepository.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
-            var result = studentRepository.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
+            var result = studentRepository.localGit.merge().include(refs.getFirst().getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
             var status = studentRepository.localGit.status().call();
             assertThat(status.getConflicting()).isNotEmpty();
             assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
@@ -917,7 +902,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
             // Check the git status after the reset
             status = studentRepository.localGit.status().call();
             assertThat(status.getConflicting()).isEmpty();
-            assertThat(studentRepository.getAllLocalCommits().get(0)).isEqualTo(studentRepository.getAllOriginCommits().get(0));
+            assertThat(studentRepository.getAllLocalCommits().getFirst()).isEqualTo(studentRepository.getAllOriginCommits().getFirst());
             var receivedStatusAfterReset = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
             assertThat(receivedStatusAfterReset.repositoryStatus()).hasToString("CLEAN");
         }
@@ -1183,8 +1168,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage()).startsWith("Cannot stash student repository for participation ");
-        assertThat(logsList.get(0).getArgumentArray()).containsExactly(participation.getId());
+        assertThat(logsList.getFirst().getMessage()).startsWith("Cannot stash student repository for participation ");
+        assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
     }
 
     @Test
@@ -1207,7 +1192,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getLevel()).isEqualTo(Level.ERROR);
+        assertThat(logsList.getFirst().getLevel()).isEqualTo(Level.ERROR);
     }
 
     @Test
@@ -1241,8 +1226,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage()).startsWith("Cannot unlock student repository for participation ");
-        assertThat(logsList.get(0).getArgumentArray()).containsExactly(participation.getId());
+        assertThat(logsList.getFirst().getMessage()).startsWith("Cannot unlock student repository for participation ");
+        assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
     }
 
     @Test
@@ -1265,8 +1250,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage()).startsWith("Cannot lock student repository for participation ");
-        assertThat(logsList.get(0).getArgumentArray()).containsExactly(participation.getId());
+        assertThat(logsList.getFirst().getMessage()).startsWith("Cannot lock student repository for participation ");
+        assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
     }
 
     @Test
