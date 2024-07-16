@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
-import { IrisEventSettings, IrisEventType } from 'app/entities/iris/settings/iris-event-settings.model';
+import { IrisEventSettings } from 'app/entities/iris/settings/iris-event-settings.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
@@ -15,13 +15,14 @@ export class IrisEventSettingsUpdateComponent {
     @Input({ required: true }) set eventSettings(value: IrisEventSettings) {
         this.settingsSignal.set(value);
     }
-    @Output() eventSettingsChange = new EventEmitter<IrisEventSettings>();
 
     @Input({ required: true }) set proactivityDisabled(value: boolean) {
         this.proactivityDisabledSignal.set(value);
     }
     @Input() settingsType!: IrisSettingsType;
     @Input() parentEventSettings?: IrisEventSettings;
+
+    @Output() eventSettingsChange = new EventEmitter<IrisEventSettings>();
 
     private settingsSignal = signal<IrisEventSettings>({} as IrisEventSettings);
     private proactivityDisabledSignal = signal(false);
@@ -40,15 +41,9 @@ export class IrisEventSettingsUpdateComponent {
     pipelineVariant = computed(() => this.settings().pipelineVariant);
     numberOfFailedAttempts = computed(() => this.settings().numberOfFailedAttempts);
     successThreshold = computed(() => this.settings().successThreshold);
-
     isAdmin = signal(false);
 
     // Constants
-    readonly COURSE = 'COURSE';
-    readonly EXERCISE = 'EXERCISE';
-    readonly jolType = IrisEventType.JOL;
-    readonly submissionSuccessfulType = IrisEventType.SUBMISSION_SUCCESSFUL;
-    readonly submissionFailedType = IrisEventType.SUBMISSION_FAILED;
     readonly WARNING = ButtonType.WARNING;
 
     constructor(private readonly accountService: AccountService) {

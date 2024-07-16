@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisEventType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -184,7 +185,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
+
+        irisSettingsService.isActivatedForElseThrow(IrisEventType.SUBMISSION_FAILED, exercise);
 
         var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
         if (participant instanceof User user) {

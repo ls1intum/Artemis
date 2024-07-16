@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisEventType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisCourseChatSessionRepository;
@@ -161,9 +162,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     public void onJudgementOfLearningSet(CompetencyJol competencyJol) {
         var course = competencyJol.getCompetency().getCourse();
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.CHAT, course)) {
-            return;
-        }
+
+        irisSettingsService.isActivatedForElseThrow(IrisEventType.SUBMISSION_SUCCESSFUL, course);
+
         var user = competencyJol.getUser();
         user.hasAcceptedIrisElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
@@ -186,9 +187,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             return;
         }
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.CHAT, course)) {
-            return;
-        }
+
+        irisSettingsService.isActivatedForElseThrow(IrisEventType.SUBMISSION_SUCCESSFUL, course);
+
         var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
         if (participant instanceof User user) {
             setStudentParticipationsToExercise(user.getId(), exercise);

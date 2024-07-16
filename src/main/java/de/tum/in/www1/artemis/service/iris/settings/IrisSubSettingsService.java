@@ -138,9 +138,7 @@ public class IrisSubSettingsService {
             currentSettings.setEnabled(newSettings.isEnabled());
         }
         IrisProactivitySubSettings finalCurrentSettings = currentSettings;
-        newSettings.getEventSettings().forEach(eventSettings -> {
-            eventSettings.setProactivitySubSettings(finalCurrentSettings);
-        });
+        newSettings.getEventSettings().forEach(eventSettings -> eventSettings.setProactivitySubSettings(finalCurrentSettings));
         finalCurrentSettings.setEventSettings(newSettings.getEventSettings());
         return finalCurrentSettings;
     }
@@ -324,9 +322,9 @@ public class IrisSubSettingsService {
      * If minimal is true, the returned object will only contain the enabled field.
      * The minimal version can safely be sent to students.
      *
-     * @param settingsList
-     * @param minimal
-     * @return
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined proactivity settings.
      */
     public IrisCombinedProactivitySubSettingsDTO combineProactivitySettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
@@ -433,14 +431,48 @@ public class IrisSubSettingsService {
     }
 
     /**
+     * Combines the event settings of multiple {@link IrisSettings} objects of a specific type.
+     * Simply takes the last event settings of the specified type.
+     *
+     * @param eventSettingsClass             Subclass of {@link IrisEventSettings} to combine.
+     * @param settingsList                   List of {@link IrisSettings} objects to combine.
+     * @param proactivitySubSettingsFunction Function to get the proactivity settings from the sub settings from an IrisSettings object.
+     * @param <S>                            Subclass of {@link IrisEventSettings} to combine.
+     * @return Combined event settings.
+     */
+    private <S extends IrisEventSettings> IrisCombinedEventSettingsDTO getCombinedEventSettingsOf(Class<S> eventSettingsClass, List<IrisSettings> settingsList,
+            Function<IrisSettings, IrisProactivitySubSettings> proactivitySubSettingsFunction) {
+        Supplier<Stream<Set<IrisEventSettings>>> streamSupplier = () -> settingsList.stream().filter(Objects::nonNull).map(proactivitySubSettingsFunction).filter(Objects::nonNull)
+                .map(IrisProactivitySubSettings::getEventSettings).filter(Objects::nonNull);
+
+        return getCombinedEventSettingsOf(eventSettingsClass, streamSupplier.get(), IrisCombinedEventSettingsDTO::of).stream().findFirst().orElse(null);
+
+    }
+
+    /**
+     * Combines the event settings of multiple {@link IrisEventSettings} objects of a specific type.
+     * If minimal is true, the returned object will only contain the enabled field.
+     * The minimal version can safely be sent to students.
+     *
+     * @param settingClass Subclass of {@link IrisEventSettings} to combine.
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined event settings of the specific type.
+     */
+    public <S extends IrisEventSettings> IrisCombinedEventSettingsDTO combineEventSettingsOf(Class<S> settingClass, ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
+        return minimal ? getCombinedEventSettingsOf(settingClass, actualSettingsList, IrisSettings::getIrisProactivitySettings) : null;
+    }
+
+    /**
      * Combines the event settings of multiple {@link IrisEventSettings} objects of a specific type.
      * Simply takes the last event settings of the specified type.
      *
-     * @param settingClass
-     * @param settingsStream
-     * @param eventSettingsFunction
+     * @param settingClass          Subclass of {@link IrisEventSettings} to combine.
+     * @param settingsStream        Stream of {@link IrisEventSettings} objects to combine.
+     * @param eventSettingsFunction Function to convert an event settings object to a combined event settings object.
+     * @param <S>                   Subclass of {@link IrisEventSettings} to combine.
      * @return Combined event settings.
-     * @param <S>
      */
     private <S extends IrisEventSettings> Set<IrisCombinedEventSettingsDTO> getCombinedEventSettingsOf(Class<S> settingClass, Stream<Set<IrisEventSettings>> settingsStream,
             Function<S, IrisCombinedEventSettingsDTO> eventSettingsFunction) {
