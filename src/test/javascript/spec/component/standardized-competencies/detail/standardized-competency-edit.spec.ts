@@ -110,7 +110,11 @@ describe('StandardizedCompetencyEditComponent', () => {
 
         compareFormValues(component['form'].getRawValue(), competency);
         expect(component.isEditing).toBeFalse();
-        shouldClose ? expect(closeSpy).toHaveBeenCalled() : expect(closeSpy).not.toHaveBeenCalled();
+        if (shouldClose) {
+            expect(closeSpy).toHaveBeenCalled();
+        } else {
+            expect(closeSpy).not.toHaveBeenCalled();
+        }
     });
 
     it('should delete', () => {
