@@ -8,4 +8,4 @@ export interface NgxChartsMultiSeriesDataEntry extends NgxChartsEntry {
     series: any[];
 }
 
-export interface NgxChartsEntry {}
+export type NgxChartsEntry = object;
