@@ -1,17 +1,15 @@
-<dd id="detail-value-{{ detail.title }}">
-    @if (detail.data.text) {
-        @if (detail.data.routerLink?.length) {
-            <a [routerLink]="detail.data.routerLink" [queryParams]="detail.data.queryParams">
-                {{ detail.data.text }}
-            </a>
-        } @else if (detail.data.href) {
-            <a href="{{ detail.data.href }}">
-                {{ detail.data.text }}
-            </a>
-        } @else {
-            <span>{{ detail.data.text }}</span>
-        }
+@if (detail.data.text) {
+    @if (detail.data.routerLink?.length) {
+        <a [routerLink]="detail.data.routerLink" [queryParams]="detail.data.queryParams">
+            {{ detail.data.text }}
+        </a>
+    } @else if (detail.data.href) {
+        <a href="{{ detail.data.href }}">
+            {{ detail.data.text }}
+        </a>
     } @else {
-        <jhi-no-data />
+        <span>{{ detail.data.text }}</span>
     }
-</dd>
+} @else {
+    <jhi-no-data />
+}

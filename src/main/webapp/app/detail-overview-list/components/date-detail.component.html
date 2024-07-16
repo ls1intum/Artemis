@@ -1,7 +1,5 @@
-<dd id="detail-value-{{ detail.title }}">
-    @if (detail.data.date) {
-        {{ detail.data.date | artemisDate }}
-    } @else {
-        <jhi-no-data />
-    }
-</dd>
+@if (detail.data.date) {
+    {{ detail.data.date | artemisDate }}
+} @else {
+    <jhi-no-data />
+}
