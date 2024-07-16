@@ -23,6 +23,8 @@ public class LocalVCPersonalAccessTokenManagementService {
 
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     /**
      * Generates a secure vcs access token
      *
@@ -30,11 +32,10 @@ public class LocalVCPersonalAccessTokenManagementService {
      */
     public static String generateSecureVCSAccessToken() {
         log.debug("Generate secure vcs access token");
-        SecureRandom secureRandom = new SecureRandom();
         StringBuilder randomString = new StringBuilder(RANDOM_STRING_LENGTH);
 
         for (int i = 0; i < RANDOM_STRING_LENGTH; i++) {
-            int randomIndex = secureRandom.nextInt(CHARACTERS.length());
+            int randomIndex = RANDOM.nextInt(CHARACTERS.length());
             randomString.append(CHARACTERS.charAt(randomIndex));
         }
         return TOKEN_PREFIX + randomString.toString();
