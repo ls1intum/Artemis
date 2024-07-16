@@ -139,7 +139,7 @@ export class AccountService implements IAccountService {
 
         if (this.versionControlAccessTokenRequired === undefined) {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken ?? false;
+                this.versionControlAccessTokenRequired = profileInfo.useVersionControlAccessToken ?? false;
             });
         }
 

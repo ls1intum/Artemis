@@ -29,6 +29,7 @@ export class ProfileService {
                 .pipe(
                     map((res: HttpResponse<ProfileInfo>) => {
                         const data = res.body!;
+                        console.log(data);
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
@@ -70,7 +71,7 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.versionControlName = data.versionControlName;
-                        profileInfo.versionControlAccessToken = data.versionControlAccessToken;
+                        profileInfo.useVersionControlAccessToken = data.useVersionControlAccessToken;
                         profileInfo.continuousIntegrationName = data.continuousIntegrationName;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];

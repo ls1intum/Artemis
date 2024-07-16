@@ -28,6 +28,9 @@ public class LocalVCInfoContributor implements InfoContributor {
     @Value("${server.url}")
     private String artemisServerUrl;
 
+    @Value("${artemis.version-control.use-version-control-access-token}")
+    private String userVcsAccessToken;
+
     @Value("${artemis.version-control.ssh-port:7921}")
     private int sshPort;
 
@@ -43,7 +46,7 @@ public class LocalVCInfoContributor implements InfoContributor {
         // TODO: only activate this when access tokens are available and make sure this does not lead to issues
         // TODO: If activated, reflect this in LocalVCInfoContributorTest
         // with the account.service.ts and its check if the access token is required
-        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, true);
+        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, userVcsAccessToken);
 
         // Store ssh url template
         try {
