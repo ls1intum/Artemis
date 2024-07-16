@@ -1,4 +1,4 @@
-import { CompetencyDetailStudentPageComponent } from 'app/course/competencies/pages/competency-detail-student-page/competency-detail-student-page.component';
+import { CourseCompetencyDetailStudentPageComponent } from 'app/course/competencies/pages/course-competency-detail-student-page/course-competency-detail-student-page.component';
 import { CompetencyApiService } from 'app/course/competencies/services/competency-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -18,8 +18,8 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 
 describe('CompetencyDetailStudentPageComponent', () => {
-    let component: CompetencyDetailStudentPageComponent;
-    let fixture: ComponentFixture<CompetencyDetailStudentPageComponent>;
+    let component: CourseCompetencyDetailStudentPageComponent;
+    let fixture: ComponentFixture<CourseCompetencyDetailStudentPageComponent>;
     let competencyApiService: CompetencyApiService;
     let alertService: AlertService;
     let courseStorageService: CourseStorageService;
@@ -130,7 +130,7 @@ describe('CompetencyDetailStudentPageComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CompetencyDetailStudentPageComponent],
+            imports: [CourseCompetencyDetailStudentPageComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -178,7 +178,7 @@ describe('CompetencyDetailStudentPageComponent', () => {
         jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         getJoLSpy = jest.spyOn(competencyApiService, 'getJoL').mockResolvedValue(competencyJoLResponse);
 
-        fixture = TestBed.createComponent(CompetencyDetailStudentPageComponent);
+        fixture = TestBed.createComponent(CourseCompetencyDetailStudentPageComponent);
         component = fixture.componentInstance;
     });
 
@@ -197,7 +197,7 @@ describe('CompetencyDetailStudentPageComponent', () => {
         fixture.detectChanges();
 
         expect(getCompetencySpy).toHaveBeenCalledWith(courseId, competencyId);
-        expect(component.competency()).toBe(competency);
+        expect(component.courseCompetency()).toBe(competency);
     });
 
     it('should set computed values correctly', async () => {
@@ -248,7 +248,7 @@ describe('CompetencyDetailStudentPageComponent', () => {
 
     it('should set lecture unit completion', async () => {
         const getCompetencyProgressSpy = jest.spyOn(competencyApiService, 'getCompetencyProgress').mockResolvedValue(<CompetencyProgress>{ progress: 50, confidence: 100 });
-        const updateSpy = jest.spyOn(component.competency, 'update');
+        const updateSpy = jest.spyOn(component.courseCompetency, 'update');
 
         await component.onLectureUnitCompletion();
 

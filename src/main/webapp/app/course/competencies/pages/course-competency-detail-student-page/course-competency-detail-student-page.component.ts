@@ -4,50 +4,51 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { CompetencyApiService } from 'app/course/competencies/services/competency-api.service';
-import { Competency, CompetencyJol, CompetencyProgress, ConfidenceReason, getMastery, getProgress } from 'app/entities/competency.model';
+import { CompetencyJol, CompetencyProgress, ConfidenceReason, CourseCompetency, getMastery, getProgress } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { CompetencyDetailHeaderComponent } from 'app/course/competencies/components/competency-detail-header/competency-detail-header.component';
-import { CompetencyDetailLectureUnitsComponent } from 'app/course/competencies/components/competency-detail-lecture-units/competency-detail-lecture-units.component';
+import { CourseCompetencyDetailHeaderComponent } from 'app/course/competencies/components/course-competency-detail-header/course-competency-detail-header.component';
+import { CourseCompetencyDetailLectureUnitsComponent } from 'app/course/competencies/components/course-competency-detail-lecture-units/course-competency-detail-lecture-units.component';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { FireworksModule } from 'app/shared/fireworks/fireworks.module';
+import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 
 @Component({
-    selector: 'jhi-competency-detail-student-page',
+    selector: 'jhi-course-competency-detail-student-page',
     standalone: true,
     imports: [
         ArtemisSharedCommonModule,
-        CompetencyDetailHeaderComponent,
-        CompetencyDetailLectureUnitsComponent,
+        CourseCompetencyDetailHeaderComponent,
+        CourseCompetencyDetailLectureUnitsComponent,
         ArtemisCompetenciesModule,
         ArtemisSharedComponentModule,
         ArtemisSidePanelModule,
         FireworksModule,
     ],
-    templateUrl: './competency-detail-student-page.component.html',
+    templateUrl: './course-competency-detail-student-page.component.html',
 })
-export class CompetencyDetailStudentPageComponent {
+export class CourseCompetencyDetailStudentPageComponent {
     protected readonly ConfidenceReason = ConfidenceReason;
 
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly courseStorageService = inject(CourseStorageService);
-    private readonly competencyApiService = inject(CompetencyApiService);
     private readonly alertService = inject(AlertService);
+
+    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
 
     readonly isLoading = signal<boolean>(false);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly course = computed(() => this.courseStorageService.getCourse(this.courseId()));
 
-    private readonly competencyId = toSignal(this.activatedRoute.params.pipe(map((params) => Number(params.competencyId))), { requireSync: true });
-    readonly competency = signal<Competency | undefined>(undefined);
+    private readonly courseCompetencyId = toSignal(this.activatedRoute.params.pipe(map((params) => Number(params.competencyId))), { requireSync: true });
+    readonly courseCompetency = signal<CourseCompetency | undefined>(undefined);
 
-    readonly userProgress = computed(() => this.competency()?.userProgress?.first() ?? <CompetencyProgress>{ progress: 0, confidence: 1 });
+    readonly userProgress = computed(() => this.courseCompetency()?.userProgress?.first() ?? <CompetencyProgress>{ progress: 0, confidence: 1 });
     readonly progress = computed(() => getProgress(this.userProgress()));
     readonly mastery = computed(() => getMastery(this.userProgress()));
     readonly isMastered = computed(() => this.mastery() >= 100);
@@ -61,18 +62,18 @@ export class CompetencyDetailStudentPageComponent {
     readonly judgementOfLearningEnabled = computed(() => (this.course()?.studentCourseAnalyticsDashboardEnabled ?? false) && this.dashboardFeatureActive());
 
     constructor() {
-        // Fetch data when the course and competency id are available
-        effect(() => this.loadData(this.courseId(), this.competencyId()), { allowSignalWrites: true });
+        // Fetch data when the course and course competency id are available
+        effect(() => this.loadData(this.courseId(), this.courseCompetencyId()), { allowSignalWrites: true });
     }
 
-    async loadData(courseId: number, competencyId: number): Promise<void> {
+    async loadData(courseId: number, courseCompetencyId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const competency = await this.competencyApiService.getCompetencyById(courseId, competencyId);
+            const courseCompetency = await this.courseCompetencyApiService.getCourseCompetencyById(courseId, courseCompetencyId);
             if (this.judgementOfLearningEnabled()) {
-                await this.loadPromptJolRating(competency, courseId, competencyId);
+                await this.loadPromptJolRating(courseCompetency, courseId, courseCompetencyId);
             }
-            this.competency.set(competency);
+            this.courseCompetency.set(courseCompetency);
         } catch (error) {
             onError(this.alertService, error);
         } finally {
@@ -80,13 +81,13 @@ export class CompetencyDetailStudentPageComponent {
         }
     }
 
-    private async loadPromptJolRating(competency: Competency, courseId: number, competencyId: number): Promise<void> {
+    private async loadPromptJolRating(courseCompetency: CourseCompetency, courseId: number, competencyId: number): Promise<void> {
         const [competencies, jolResponse] = await Promise.all([
-            this.competencyApiService.getCompetenciesByCourseId(courseId),
-            this.competencyApiService.getJoL(courseId, competencyId),
+            this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId),
+            this.courseCompetencyApiService.getJoL(courseId, competencyId),
         ]);
-        const competencyProgress = competency.userProgress?.first();
-        this.promptForJolRating.set(CompetencyJol.shouldPromptForJol(competency, competencyProgress, competencies));
+        const competencyProgress = courseCompetency.userProgress?.first();
+        this.promptForJolRating.set(CompetencyJol.shouldPromptForJol(courseCompetency, competencyProgress, competencies));
         if (jolResponse.current.competencyProgress === (competencyProgress?.progress ?? 0) || jolResponse.current.competencyConfidence === (competencyProgress?.confidence ?? 1)) {
             this.judgementOfLearning.set(jolResponse.current);
         }
@@ -94,9 +95,9 @@ export class CompetencyDetailStudentPageComponent {
 
     async onLectureUnitCompletion(): Promise<void> {
         try {
-            const competencyProgress = await this.competencyApiService.getCompetencyProgress(this.courseId(), this.competencyId(), true);
-            this.competency.update((competency) => ({
-                ...competency,
+            const competencyProgress = await this.courseCompetencyApiService.getCourseCompetencyProgressById(this.courseId(), this.courseCompetencyId(), true);
+            this.courseCompetency.update((courseCompetency) => ({
+                ...courseCompetency,
                 userProgress: [competencyProgress],
             }));
             if (this.isMastered()) {

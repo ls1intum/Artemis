@@ -151,7 +151,7 @@ const routes: Routes = [
                 },
             },
             {
-                path: 'competencies',
+                path: 'course-competencies',
                 loadComponent: () =>
                     import('app/course/competencies/pages/course-competencies-student-page/course-competencies-student-page.component').then(
                         (c) => c.CourseCompetenciesStudentPageComponent,
@@ -164,10 +164,10 @@ const routes: Routes = [
                 },
                 children: [
                     {
-                        path: ':competencyId',
+                        path: ':courseCompetencyId',
                         loadComponent: () =>
-                            import('../course/competencies/pages/competency-detail-student-page/competency-detail-student-page.component').then(
-                                (mod) => mod.CompetencyDetailStudentPageComponent,
+                            import('app/course/competencies/pages/course-competency-detail-student-page/course-competency-detail-student-page.component').then(
+                                (c) => c.CourseCompetencyDetailStudentPageComponent,
                             ),
                     },
                 ],

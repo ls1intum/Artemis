@@ -3,26 +3,26 @@
         <div class="row justify-content-between w-100 m-0 p-0">
             <div class="col-md-auto p-0 d-flex align-items-center">
                 <fa-icon
-                    [icon]="getIcon(competency().taxonomy)"
+                    [icon]="getIcon(courseCompetency().taxonomy)"
                     size="lg"
                     [fixedWidth]="true"
-                    [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency().taxonomy ?? 'none') | artemisTranslate"
+                    [ngbTooltip]="'artemisApp.competency.taxonomies.' + (courseCompetency().taxonomy ?? 'none') | artemisTranslate"
                     container="body"
                 />
-                <h4 class="my-0 ms-2">{{ competency().title }}</h4>
+                <h4 class="my-0 ms-2">{{ courseCompetency().title }}</h4>
                 @if (isMastered()) {
                     <span class="badge text-white text-bg-success ms-2" jhiTranslate="artemisApp.competency.mastered"></span>
                 }
-                @if (competency().optional) {
+                @if (courseCompetency().optional) {
                     <span class="badge text-white bg-warning ms-2" jhiTranslate="artemisApp.competency.optional"></span>
                 }
             </div>
             <div class="col-md-auto d-flex align-items-center">
-                @if (competency().softDueDate) {
+                @if (courseCompetency().softDueDate) {
                     <div class="d-flex align-items-center">
                         <span jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
                         <span class="badge ms-2" [ngClass]="softDueDatePassed() ? 'bg-danger' : 'bg-success'" id="date-badge">
-                            {{ competency().softDueDate | artemisTimeAgo }}
+                            {{ courseCompetency().softDueDate | artemisTimeAgo }}
                         </span>
                     </div>
                 }
@@ -36,9 +36,9 @@
             </div>
         </div>
     </div>
-    @if (competency().description) {
+    @if (courseCompetency().description) {
         <div class="p-3 pb-0">
-            <div class="markdown-preview" [innerHTML]="competency().description | htmlForMarkdown"></div>
+            <div class="markdown-preview" [innerHTML]="courseCompetency().description | htmlForMarkdown"></div>
             <hr />
         </div>
     }

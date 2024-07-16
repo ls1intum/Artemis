@@ -5,13 +5,11 @@ import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CompetencyApiService } from 'app/course/competencies/services/competency-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
-import { Competency, getIcon } from 'app/entities/competency.model';
-import { PrerequisiteApiService } from 'app/course/competencies/services/prerequisite-api.service';
+import { CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 
 @Component({
     selector: 'jhi-course-competencies-student-page',
@@ -26,9 +24,7 @@ export class CourseCompetenciesStudentPageComponent {
     private readonly router = inject(Router);
     private readonly alertService = inject(AlertService);
 
-    private readonly competencyApiService = inject(CompetencyApiService);
-    private readonly prerequisiteApiService = inject(PrerequisiteApiService);
-
+    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
     private readonly courseOverviewService = inject(CourseOverviewService);
 
     readonly collapseState = signal<CollapseState>({
@@ -41,39 +37,27 @@ export class CourseCompetenciesStudentPageComponent {
     readonly isCollapsed = signal<boolean>(this.courseOverviewService.getSidebarCollapseStateFromStorage(this.courseCompetenciesKey));
     readonly isLoading = signal<boolean>(false);
 
-    readonly competencies = signal<Competency[]>([]);
-    readonly prerequisites = signal<Prerequisite[]>([]);
+    private readonly courseCompetencies = signal<CourseCompetency[]>([]);
+    readonly competencies = computed(() => this.courseCompetencies().filter((courseCompetency) => courseCompetency.type === CourseCompetencyType.COMPETENCY));
+    readonly prerequisites = computed(() => this.courseCompetencies().filter((courseCompetency) => courseCompetency.type === CourseCompetencyType.PREREQUISITE));
 
     constructor() {
         // Fetch data when the course id is available
         effect(() => this.loadData(this.courseId()), { allowSignalWrites: true });
-        // Navigate to the first competency when the competencies are loaded
+        // Navigate to the first course competency when the competencies are loaded
         effect(() => this.navigateToFirstCompetency(this.competencies()));
     }
 
     private readonly competencySidebarCards = computed(() => {
-        return this.competencies().map(
-            (competency) =>
-                <SidebarCardElement>{
-                    id: competency.id,
-                    title: competency.title,
-                    size: 'M',
-                    icon: getIcon(competency.taxonomy),
-                },
-        );
+        return this.competencies().map((competency) => {
+            return this.mapCourseCompetencyToSidebarCardElement(competency);
+        });
     });
 
     private readonly prerequisitesSidebarCards = computed(() => {
-        return this.prerequisites().map(
-            (prerequisite) =>
-                <SidebarCardElement>{
-                    id: prerequisite.id,
-                    title: prerequisite.title,
-                    size: 'M',
-                    icon: getIcon(prerequisite.taxonomy),
-                    // TODO: Add routerLink here
-                },
-        );
+        return this.prerequisites().map((prerequisite) => {
+            return this.mapCourseCompetencyToSidebarCardElement(prerequisite);
+        });
     });
 
     readonly sidebarData = computed(() => {
@@ -92,7 +76,7 @@ export class CourseCompetenciesStudentPageComponent {
         };
     });
 
-    private navigateToFirstCompetency(competencies: Competency[]) {
+    private navigateToFirstCompetency(competencies: CourseCompetency[]) {
         if (competencies.length > 0) {
             this.router.navigate([this.competencies().first()!.id], { relativeTo: this.activatedRoute });
         }
@@ -101,7 +85,8 @@ export class CourseCompetenciesStudentPageComponent {
     async loadData(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            await Promise.all([this.loadCompetencies(courseId), this.loadPrerequisites(courseId)]);
+            const courseCompetencies = await this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId);
+            this.courseCompetencies.set(courseCompetencies);
         } catch (error) {
             onError(this.alertService, error);
         } finally {
@@ -109,14 +94,13 @@ export class CourseCompetenciesStudentPageComponent {
         }
     }
 
-    private async loadPrerequisites(courseId: number): Promise<void> {
-        const prerequisites = await this.prerequisiteApiService.getPrerequisitesByCourseId(courseId);
-        this.prerequisites.set(prerequisites);
-    }
-
-    private async loadCompetencies(courseId: number): Promise<void> {
-        const competencies = await this.competencyApiService.getCompetenciesByCourseId(courseId);
-        this.competencies.set(competencies);
+    private mapCourseCompetencyToSidebarCardElement(courseCompetency: CourseCompetency) {
+        return <SidebarCardElement>{
+            id: courseCompetency.id,
+            title: courseCompetency.title,
+            size: 'M',
+            icon: getIcon(courseCompetency.taxonomy),
+        };
     }
 
     toggleSidebar(): void {

@@ -2,7 +2,7 @@
     <div [class.mt-3]="!first" class="col-12 col-lg-11">
         @switch (unit.type) {
             @case (LectureUnitType.EXERCISE) {
-                <jhi-exercise-unit [exerciseUnit]="unit" [course]="competency().course!" />
+                <jhi-exercise-unit [exerciseUnit]="unit" [course]="courseCompetency().course!" />
             }
             @case (LectureUnitType.ATTACHMENT) {
                 <jhi-attachment-unit [lectureUnit]="unit" (onCompletion)="setLearningObjectCompletion($event)" />

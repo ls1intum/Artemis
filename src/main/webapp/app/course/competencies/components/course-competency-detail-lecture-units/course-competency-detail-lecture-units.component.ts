@@ -2,7 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { Competency } from 'app/entities/competency.model';
+import { CourseCompetency } from 'app/entities/competency.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -14,24 +14,24 @@ import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-u
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 
 @Component({
-    selector: 'jhi-competency-detail-lecture-units',
+    selector: 'jhi-course-competency-detail-lecture-units',
     standalone: true,
     imports: [ArtemisLectureUnitsModule, AttachmentUnitComponent, VideoUnitComponent, TextUnitComponent, OnlineUnitComponent],
-    templateUrl: './competency-detail-lecture-units.component.html',
+    templateUrl: './course-competency-detail-lecture-units.component.html',
 })
-export class CompetencyDetailLectureUnitsComponent {
+export class CourseCompetencyDetailLectureUnitsComponent {
     protected readonly LectureUnitType = LectureUnitType;
 
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly alertService = inject(AlertService);
 
-    readonly competency = input.required<Competency>();
+    readonly courseCompetency = input.required<CourseCompetency>();
 
     readonly onLectureUnitCompletion = output<void>();
 
     readonly units = computed(() => {
-        const lectureUnits = this.competency().lectureUnits ?? [];
-        const exercises = this.competency().exercises ?? [];
+        const lectureUnits = this.courseCompetency().lectureUnits ?? [];
+        const exercises = this.courseCompetency().exercises ?? [];
         const exerciseUnits = exercises.map(
             (exercise) =>
                 <ExerciseUnit>{

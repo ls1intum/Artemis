@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CompetencyDetailLectureUnitsComponent } from 'app/course/competencies/components/competency-detail-lecture-units/competency-detail-lecture-units.component';
+import { CourseCompetencyDetailLectureUnitsComponent } from 'app/course/competencies/components/course-competency-detail-lecture-units/course-competency-detail-lecture-units.component';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
@@ -17,8 +17,8 @@ import { of } from 'rxjs';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 
 describe('CompetencyDetailLectureUnitsComponent', () => {
-    let component: CompetencyDetailLectureUnitsComponent;
-    let fixture: ComponentFixture<CompetencyDetailLectureUnitsComponent>;
+    let component: CourseCompetencyDetailLectureUnitsComponent;
+    let fixture: ComponentFixture<CourseCompetencyDetailLectureUnitsComponent>;
     let lectureUnitService: LectureUnitService;
     let alertService: AlertService;
 
@@ -73,7 +73,7 @@ describe('CompetencyDetailLectureUnitsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CompetencyDetailLectureUnitsComponent],
+            imports: [CourseCompetencyDetailLectureUnitsComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -95,7 +95,7 @@ describe('CompetencyDetailLectureUnitsComponent', () => {
         lectureUnitService = TestBed.inject(LectureUnitService);
         alertService = TestBed.inject(AlertService);
 
-        fixture = TestBed.createComponent(CompetencyDetailLectureUnitsComponent);
+        fixture = TestBed.createComponent(CourseCompetencyDetailLectureUnitsComponent);
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('competency', competency);
@@ -107,7 +107,7 @@ describe('CompetencyDetailLectureUnitsComponent', () => {
 
     it('should initialize', () => {
         expect(component).toBeTruthy();
-        expect(component.competency()).toEqual(competency);
+        expect(component.courseCompetency()).toEqual(competency);
     });
 
     it('should set units correctly', () => {
