@@ -14,7 +14,7 @@ import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
@@ -27,6 +27,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
 
     readonly getCourseFromExercise = getCourseFromExercise;
 
