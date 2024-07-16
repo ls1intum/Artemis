@@ -37,7 +37,7 @@ export class CourseManagementCardComponent implements OnChanges {
     CachingStrategy = CachingStrategy;
     // TODO: can we merge the 3 courses here?
     @Input() course: Course;
-    @Input() courseStatistics: CourseManagementOverviewStatisticsDto;
+    @Input() courseStatistics?: CourseManagementOverviewStatisticsDto;
     @Input() courseWithExercises: Course | undefined;
     @Input() courseWithUsers: Course | undefined;
     @Input() isGuidedTour: boolean;
