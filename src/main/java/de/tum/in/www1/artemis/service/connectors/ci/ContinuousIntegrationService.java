@@ -220,6 +220,7 @@ public interface ContinuousIntegrationService {
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
                     case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY -> "assignment";
+                    default -> throw new IllegalArgumentException("Checkout path not defined for " + language);
                 };
             }
         },
@@ -230,6 +231,7 @@ public interface ContinuousIntegrationService {
                 return switch (language) {
                     case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY -> "";
                     case C, VHDL, ASSEMBLER, OCAML -> "tests";
+                    default -> throw new IllegalArgumentException("Checkout path not defined for " + language);
                 };
             }
         },
