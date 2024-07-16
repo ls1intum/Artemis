@@ -381,7 +381,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     @HostListener('window:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
-        if (event.metaKey && event.key === 'k') {
+        if (event.metaKey && event.key === 'k' && this.activeConversation != undefined) {
             event.preventDefault();
             this.courseWideSearchTerm = '';
             this.onSearch();
