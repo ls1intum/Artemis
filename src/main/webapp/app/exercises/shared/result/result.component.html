@@ -60,7 +60,7 @@
                             <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle" />
                         </span>
                     }
-                    @if (!isInSidebarCard) {
+                    @if (!isInSidebarCard && showCompletion) {
                         <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
                     }
                 </span>
@@ -98,19 +98,16 @@
         @case (ResultTemplateStatus.MISSING) {
             <span class="text-danger">
                 <fa-icon class="me-1" [icon]="faExclamationCircle" size="lg" />
-                <!-- TODO -->
-                @if (!isInSidebarCard) {
-                    @switch (missingResultInfo) {
-                        @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE) {
-                            <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde' | artemisTranslate">{{
-                                'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
-                            }}</span>
-                        }
-                        @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE) {
-                            <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde' | artemisTranslate">{{
-                                'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
-                            }}</span>
-                        }
+                @switch (missingResultInfo) {
+                    @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE) {
+                        <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde' | artemisTranslate">{{
+                            'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
+                        }}</span>
+                    }
+                    @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE) {
+                        <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde' | artemisTranslate">{{
+                            'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
+                        }}</span>
                     }
                 }
                 @if (result && exercise?.type !== ExerciseType.QUIZ) {

@@ -4,17 +4,12 @@
         class="mw-content text-nowrap rounded-3 py-1 px-2 border border-1 bg-module mb-3 small fw-semibold"
         ngbTooltip="{{ informationBoxData.tooltip | artemisTranslate: informationBoxData.tooltipParams }}"
     >
-        <div id="test-sidebar-card-title" class="text-body-tertiary" [jhiTranslate]="informationBoxData.title"></div>
-        <!-- @if (informationBoxData.icon) {
-                  <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
-              } -->
-        <!-- {{ informationBoxData.title | artemisTranslate }} -->
-        <!-- isContentComponent -->
-        @if (informationBoxData.contentComponent) {
+        <div id="test-title" class="text-body-tertiary" [jhiTranslate]="informationBoxData.title"></div>
+        @if (informationBoxData.isContentComponent) {
             <ng-content select="[contentComponent]" />
         } @else {
-            <div [ngClass]="'text-' + informationBoxData.contentColor">
-                {{ informationBoxData.content }}
+            <div id="test-text" [ngClass]="'text-' + informationBoxData.contentColor">
+                {{ informationBoxData.content.value }}
             </div>
         }
     </div>
