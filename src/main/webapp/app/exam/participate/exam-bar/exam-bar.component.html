@@ -4,19 +4,17 @@
             {{ examTitle }}
         </h3>
         @if (!examTimeLineView) {
-            <div class="align-self-center">
-                <div class="d-flex justify-content-between">
-                    <jhi-exam-timer [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()" />
-                    <jhi-exam-live-events-button />
-                    <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()">
-                        <div class="d-flex justify-content-between">
-                            <span>
-                                <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
-                                <span [ngClass]="{ 'd-none d-sm-inline': true }" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
-                            </span>
-                        </div>
-                    </button>
-                </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <jhi-exam-timer class="me-3" [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()" />
+                <jhi-exam-live-events-button />
+                <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()">
+                    <div class="d-flex justify-content-between">
+                        <span>
+                            <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
+                            <span class="d-none d-sm-inline" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
+                        </span>
+                    </div>
+                </button>
             </div>
         }
     </div>
