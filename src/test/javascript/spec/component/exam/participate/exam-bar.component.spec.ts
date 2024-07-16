@@ -17,6 +17,12 @@ describe('ExamBarComponent', () => {
     let comp: ExamBarComponent;
 
     beforeEach(() => {
+        global.ResizeObserver = jest.fn().mockImplementation(() => ({
+            observe: jest.fn(),
+            unobserve: jest.fn(),
+            disconnect: jest.fn(),
+        }));
+
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
             declarations: [ExamBarComponent, MockComponent(ExamNavigationSidebarComponent)],
