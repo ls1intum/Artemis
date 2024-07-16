@@ -10,9 +10,33 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum ProgrammingLanguage {
 
-    EMPTY(""), JAVA("java"), PYTHON("py"), C("c", "cpp"), HASKELL("hs"), KOTLIN("kt"), VHDL("vhd"), ASSEMBLER("asm"), SWIFT("swift"), OCAML("ml"), JAVASCRIPT("js"), C_SHARP("cs"),
-    C_PLUS_PLUS("c", "h", "cpp", "hpp"), SQL("sql"), R("R"), TYPESCRIPT("ts"), RUST("rs"), GO("go"), MATLAB("m"), BASH("sh"), RUBY("rb"), POWERSHELL("ps1"), ADA("adb", "ads"),
-    DART("dart"), PHP("php");
+    // @formatter:off
+    EMPTY(""),
+    JAVA("java"),
+    PYTHON("py"),
+    C("c", "cpp"),
+    HASKELL("hs"),
+    KOTLIN("kt"),
+    VHDL("vhd"),
+    ASSEMBLER("asm"),
+    SWIFT("swift"),
+    OCAML("ml"),
+    JAVASCRIPT("js"),
+    C_SHARP("cs"),
+    C_PLUS_PLUS("c", "h", "cpp", "hpp"),
+    SQL("sql"),
+    R("R"),
+    TYPESCRIPT("ts"),
+    RUST("rs"),
+    GO("go"),
+    MATLAB("m"),
+    BASH("sh"),
+    RUBY("rb"),
+    POWERSHELL("ps1"),
+    ADA("adb", "ads"),
+    DART("dart"),
+    PHP("php");
+    // @formatter:on
 
     private final Set<String> fileExtensions;
 
