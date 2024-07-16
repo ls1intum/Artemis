@@ -1,4 +1,4 @@
-<jhi-code-editor-grid [isTutorAssessment]="isTutorAssessment">
+<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment">
     <div editorNavbar class="d-flex flex-wrap align-items-center">
         <span>
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
@@ -65,7 +65,11 @@
     </ng-container>
     <ng-container editorSidebarRight>
         @if (showEditorInstructions) {
-            <jhi-code-editor-instructions (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)" [isAssessmentMode]="isTutorAssessment">
+            <jhi-code-editor-instructions
+                (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
+                (onError)="onError($event)"
+                [isAssessmentMode]="isTutorAssessment"
+            >
                 <ng-content select="[editorSidebar]" />
             </jhi-code-editor-instructions>
         }
