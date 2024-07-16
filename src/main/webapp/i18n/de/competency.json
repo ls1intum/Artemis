@@ -207,7 +207,6 @@
         },
         "prerequisite": {
             "title": "Voraussetzungen",
-            "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
             "manage": {
                 "createButton": "Voraussetzung erstellen",
                 "importButton": "Voraussetzungen importieren",
@@ -219,7 +218,7 @@
                 },
                 "importAllButton": "Alle Voraussetzungen eines Kurses importieren",
                 "importStandardizedButton": "Standardisierte Kompetenzen importieren",
-                "empty": "Es existieren keine Kompetenzen für diesen Kurs"
+                "empty": "Es existieren keine Voraussetzungen für diesen Kurs"
             },
             "import": {
                 "title": "Voraussetzungen importieren",
@@ -241,6 +240,12 @@
             },
             "edit": {
                 "title": "Bearbeite eine Voraussetzung"
+            },
+            "competencyCard": {
+                "delete": {
+                    "question": "Willst du wirklich die Voraussetzung <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der Voraussetzung ein."
+                }
             }
         },
         "learningPath": {

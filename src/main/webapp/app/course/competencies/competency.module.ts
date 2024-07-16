@@ -31,6 +31,7 @@ import { ImportPrerequisitesComponent } from 'app/course/competencies/import-com
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
+import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 
 @NgModule({
     imports: [
@@ -49,6 +50,7 @@ import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judg
         ArtemisCourseExerciseRowModule,
         RatingModule,
         JudgementOfLearningRatingComponent,
+        CompetencyManagementTableComponent,
     ],
     declarations: [
         CompetencyFormComponent,
