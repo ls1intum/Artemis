@@ -1,15 +1,13 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Competency, CompetencyJol, getMastery } from 'app/entities/competency.model';
+import { Competency, CompetencyJol, CourseCompetencyType, getMastery } from 'app/entities/competency.model';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
@@ -42,8 +40,6 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private courseStorageService: CourseStorageService,
-        private competencyService: CompetencyService,
-        private prerequisiteService: PrerequisiteService,
         private courseCompetencyService: CourseCompetencyService,
     ) {}
 
@@ -90,14 +86,14 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     loadData() {
         this.isLoading = true;
 
-        const getAllCompetenciesObservable = this.competencyService.getAllForCourse(this.courseId);
-        const prerequisitesObservable = this.prerequisiteService.getAllForCourse(this.courseId);
+        const courseCompetencyObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
         const competencyJolObservable = this.judgementOfLearningEnabled ? this.courseCompetencyService.getJoLAllForCourse(this.courseId) : of(undefined);
 
-        forkJoin([getAllCompetenciesObservable, prerequisitesObservable, competencyJolObservable]).subscribe({
-            next: ([competencies, prerequisites, judgementOfLearningMap]) => {
-                this.competencies = competencies.body!;
-                this.prerequisites = prerequisites.body!;
+        forkJoin([courseCompetencyObservable, competencyJolObservable]).subscribe({
+            next: ([courseCompetencies, judgementOfLearningMap]) => {
+                const courseCompetenciesResponse = courseCompetencies.body ?? [];
+                this.competencies = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY);
+                this.prerequisites = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE);
 
                 if (judgementOfLearningMap !== undefined) {
                     const competenciesMap: { [key: number]: Competency } = Object.fromEntries(this.competencies.map((competency) => [competency.id, competency]));

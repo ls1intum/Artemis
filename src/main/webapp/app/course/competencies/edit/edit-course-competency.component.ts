@@ -48,5 +48,6 @@ export abstract class EditCourseCompetencyComponent implements OnInit {
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
+        // this.isLoading = false; is done in subclasses
     }
 }

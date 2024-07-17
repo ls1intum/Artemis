@@ -84,10 +84,11 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
                 });
 
                 this.sources = sourcesResponse.body!;
-
-                this.isLoading = false;
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            complete: () => {
+                this.isLoading = false;
+            },
         });
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
     }
@@ -133,11 +134,13 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
             .subscribe({
                 next: (countImportedCompetencies) => {
                     this.isSubmitted = true;
-                    this.isLoading = false;
                     this.alertService.success('artemisApp.standardizedCompetency.courseImport.success', { count: countImportedCompetencies });
                     this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                complete: () => {
+                    this.isLoading = false;
+                },
             });
     }
 

@@ -6,6 +6,7 @@ import { PrerequisiteService } from 'app/course/competencies/prerequisite.servic
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { CourseCompetencyType } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-import-prerequisites',
@@ -14,7 +15,7 @@ import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.mo
     imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
 })
 export class ImportPrerequisitesComponent extends ImportCourseCompetenciesComponent {
-    entityType = 'prerequisite';
+    entityType = CourseCompetencyType.PREREQUISITE;
     allowRelationImport = false;
 
     protected readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);

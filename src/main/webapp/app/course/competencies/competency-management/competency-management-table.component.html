@@ -9,23 +9,23 @@
             <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
                 <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
                     <fa-icon [icon]="faFileImport" />
-                    <span>{{ 'artemisApp.' + competencyType + '.manage.importAllButton' | artemisTranslate }}</span>
+                    <span [jhiTranslate]="'artemisApp.' + competencyType + '.manage.importAllButton'"></span>
                 </button>
                 <a class="btn" [routerLink]="['/course-management', courseId, competencyType + '-management', 'import']" ngbDropdownItem>
                     <fa-icon [icon]="faFileImport" />
-                    <span>{{ 'artemisApp.' + competencyType + '.manage.importFromCoursesButton' | artemisTranslate }}</span>
+                    <span [jhiTranslate]="'artemisApp.' + competencyType + '.manage.importFromCoursesButton'"></span>
                 </a>
                 @if (standardizedCompetenciesEnabled) {
                     <a class="btn" [routerLink]="['/course-management', courseId, competencyType + '-management', 'import-standardized']" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
-                        <span>{{ 'artemisApp.' + competencyType + '.manage.importStandardizedButton' | artemisTranslate }}</span>
+                        <span [jhiTranslate]="'artemisApp.' + competencyType + '.manage.importStandardizedButton'"></span>
                     </a>
                 }
             </div>
         </div>
         <a class="btn btn-primary" [routerLink]="['/course-management', courseId, competencyType + '-management', 'create']">
             <fa-icon [icon]="faPlus" />
-            <span>{{ 'artemisApp.' + competencyType + '.manage.createButton' | artemisTranslate }}</span>
+            <span [jhiTranslate]="'artemisApp.' + competencyType + '.manage.createButton'"></span>
         </a>
     </div>
 </div>
@@ -92,7 +92,7 @@
                             <div class="d-flex justify-content-end">
                                 <a class="btn btn-sm btn-primary me-1" [routerLink]="['/course-management', courseId, competencyType + '-management', competency.id, 'edit']">
                                     <fa-icon [icon]="faPencilAlt" />
-                                    <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                 </a>
                                 <button
                                     jhiDeleteButton

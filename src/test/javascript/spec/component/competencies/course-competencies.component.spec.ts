@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
-import { Competency, CompetencyProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
@@ -15,7 +15,6 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
@@ -43,8 +42,6 @@ describe('CourseCompetencies', () => {
     let courseCompetenciesComponentFixture: ComponentFixture<CourseCompetenciesComponent>;
     let courseCompetenciesComponent: CourseCompetenciesComponent;
     let courseCompetencyService: CourseCompetencyService;
-    let competencyService: CompetencyService;
-    let prerequisiteService: PrerequisiteService;
     const mockCourseStorageService = {
         getCourse: () => {},
         setCourses: () => {},
@@ -78,8 +75,6 @@ describe('CourseCompetencies', () => {
                 courseCompetenciesComponentFixture = TestBed.createComponent(CourseCompetenciesComponent);
                 courseCompetenciesComponent = courseCompetenciesComponentFixture.componentInstance;
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
-                competencyService = TestBed.inject(CompetencyService);
-                prerequisiteService = TestBed.inject(PrerequisiteService);
                 const accountService = TestBed.inject(AccountService);
                 const user = new User();
                 user.login = 'testUser';
@@ -98,35 +93,28 @@ describe('CourseCompetencies', () => {
     });
 
     it('should load prerequisites and competencies (with associated progress) and display a card for each of them', () => {
-        const competency: Competency = {};
+        const competency: Competency = new Competency();
         const textUnit = new TextUnit();
         competency.id = 1;
         competency.description = 'test';
         competency.lectureUnits = [textUnit];
         competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
 
-        const competenciesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [competency, {}],
-            status: 200,
-        });
-
-        const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllForCourse').mockReturnValue(
+        const getAllCourseCompetenciesForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(
             of(
                 new HttpResponse({
-                    body: [{} as Prerequisite],
+                    body: [competency, { type: CourseCompetencyType.COMPETENCY }, { type: CourseCompetencyType.PREREQUISITE } as Prerequisite],
                     status: 200,
                 }),
             ),
         );
         jest.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
         const getJoLAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();
 
-        expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
-        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllCourseCompetenciesForCourseSpy).toHaveBeenCalledOnce();
         expect(getJoLAllForCourseSpy).toHaveBeenCalledOnce();
         expect(courseCompetenciesComponent.competencies).toHaveLength(2);
     });

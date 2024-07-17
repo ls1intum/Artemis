@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import {
     Competency,
@@ -27,7 +26,6 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 @Component({
@@ -58,11 +56,10 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     // other constants
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'Competencies';
+    readonly CourseCompetencyType = CourseCompetencyType;
 
     // Injected services
     private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
-    private readonly competencyService: CompetencyService = inject(CompetencyService);
-    private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
     private readonly courseCompetencyService: CourseCompetencyService = inject(CourseCompetencyService);
     private readonly alertService: AlertService = inject(AlertService);
     private readonly modalService: NgbModal = inject(NgbModal);
@@ -113,14 +110,14 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     loadData() {
         this.isLoading = true;
         const relationsObservable = this.courseCompetencyService.getCompetencyRelations(this.courseId);
-        const prerequisitesObservable = this.prerequisiteService.getAllForCourse(this.courseId);
-        const competencyObservable = this.competencyService.getAllForCourse(this.courseId);
+        const courseCompetenciesObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
 
-        forkJoin([relationsObservable, prerequisitesObservable, competencyObservable]).subscribe({
-            next: ([competencyRelations, prerequisites, competencies]) => {
-                this.competencies = competencies.body ?? [];
-                this.prerequisites = prerequisites.body ?? [];
-                this.courseCompetencies = this.competencies.concat(this.prerequisites);
+        forkJoin([relationsObservable, courseCompetenciesObservable]).subscribe({
+            next: ([competencyRelations, courseCompetencies]) => {
+                const courseCompetenciesResponse = courseCompetencies.body ?? [];
+                this.competencies = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY);
+                this.prerequisites = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE);
+                this.courseCompetencies = courseCompetenciesResponse;
                 this.relations = (competencyRelations.body ?? []).map((relationDTO) => dtoToCompetencyRelation(relationDTO));
 
                 this.isLoading = false;

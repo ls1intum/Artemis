@@ -5,7 +5,7 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
-import { CompetencyTaxonomy, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CourseCompetencyType, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -40,7 +40,7 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input()
     form: FormGroup;
     @Input()
-    competencyType: 'competency' | 'prerequisite';
+    competencyType: CourseCompetencyType;
 
     @Output()
     onLectureUnitSelectionChange = new EventEmitter<LectureUnit[]>();

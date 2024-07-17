@@ -6,6 +6,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { CourseCompetencyType } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-import-competencies',
@@ -14,7 +15,7 @@ import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.mo
     imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
 })
 export class ImportCompetenciesComponent extends ImportCourseCompetenciesComponent {
-    entityType = 'competency';
+    entityType = CourseCompetencyType.COMPETENCY;
     allowRelationImport = true;
 
     protected readonly competencyService: CompetencyService = inject(CompetencyService);

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { Competency, CompetencyRelation, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
@@ -28,7 +27,6 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyRelationGraphStubComponent } from './competency-relation-graph-stub.component';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
@@ -37,14 +35,11 @@ describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
     let component: CompetencyManagementComponent;
     let courseCompetencyService: CourseCompetencyService;
-    let competencyService: CompetencyService;
-    let prerequisiteService: PrerequisiteService;
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
 
     let getAllForCourseSpy: any;
-    let getAllPrerequisitesForCourseSpy: any;
     let getCompetencyRelationsSpy: any;
 
     beforeEach(() => {
@@ -84,11 +79,9 @@ describe('CompetencyManagementComponent', () => {
                 fixture = TestBed.createComponent(CompetencyManagementComponent);
                 component = fixture.componentInstance;
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
-                competencyService = TestBed.inject(CompetencyService);
-                prerequisiteService = TestBed.inject(PrerequisiteService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
 
-                const competency: Competency = {};
+                const competency: Competency = new Competency();
                 const textUnit = new TextUnit();
                 competency.id = 1;
                 competency.description = 'test';
@@ -99,18 +92,10 @@ describe('CompetencyManagementComponent', () => {
                 courseCompetencyProgress.numberOfMasteredStudents = 5;
                 courseCompetencyProgress.averageStudentScore = 90;
 
-                getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(
+                getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: [competency, { id: 5 } as Competency],
-                            status: 200,
-                        }),
-                    ),
-                );
-                getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllForCourse').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: [{ id: 3 } as Prerequisite],
+                            body: [competency, { id: 5, type: CourseCompetencyType.COMPETENCY } as Competency, { id: 3, type: CourseCompetencyType.PREREQUISITE } as Prerequisite],
                             status: 200,
                         }),
                     ),
@@ -154,33 +139,10 @@ describe('CompetencyManagementComponent', () => {
 
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getCompetencyRelationsSpy).toHaveBeenCalledOnce();
-        expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
 
         expect(component.competencies).toHaveLength(2);
         expect(component.prerequisites).toHaveLength(1);
     });
-
-    /*
-    it('should delete competency', () => {
-        const deleteSpy = jest.spyOn(competencyService, 'delete').mockReturnValue(of(new HttpResponse({ body: {}, status: 200 })));
-        fixture.detectChanges();
-
-        component.deleteCompetency(123);
-
-        expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith(123, 1);
-    });
-
-    it('should delete prerequisite', () => {
-        const deletePrerequisiteSpy = jest.spyOn(prerequisiteService, 'deletePrerequisite').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
-        fixture.detectChanges();
-
-        component.deletePrerequisite(123);
-
-        expect(deletePrerequisiteSpy).toHaveBeenCalledOnce();
-        expect(deletePrerequisiteSpy).toHaveBeenCalledWith(123, 1);
-    });
-     */
 
     it('should open import modal and update values', () => {
         const modalResult: ImportAllFromCourseResult = {

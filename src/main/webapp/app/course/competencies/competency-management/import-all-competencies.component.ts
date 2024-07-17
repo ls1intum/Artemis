@@ -7,6 +7,7 @@ import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dt
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { CourseCompetencyType } from 'app/entities/competency.model';
 
 const tableColumns: Column<Course>[] = [
     {
@@ -44,7 +45,7 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
     //import relations by default
     protected importRelations = true;
 
-    @Input() public competencyType: 'competency' | 'prerequisite' | 'courseCompetency' = 'competency';
+    @Input() public competencyType: CourseCompetencyType | 'courseCompetency' = CourseCompetencyType.COMPETENCY;
 
     constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: CourseForImportDTOPagingService) {
         super(router, sortService, activeModal, pagingService);

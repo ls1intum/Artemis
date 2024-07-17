@@ -32,7 +32,7 @@
         [courseId]="courseId"
         [courseCompetencies]="competencies"
         [relations]="relations"
-        [competencyType]="'competency'"
+        [competencyType]="CourseCompetencyType.COMPETENCY"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
         (competencyDeleted)="onRemoveCompetency($event)"
     />
@@ -40,7 +40,7 @@
         [courseId]="courseId"
         [courseCompetencies]="prerequisites"
         [relations]="relations"
-        [competencyType]="'prerequisite'"
+        [competencyType]="CourseCompetencyType.PREREQUISITE"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
         (competencyDeleted)="onRemoveCompetency($event)"
     />

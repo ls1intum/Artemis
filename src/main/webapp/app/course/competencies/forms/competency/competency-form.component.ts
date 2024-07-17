@@ -6,6 +6,7 @@ import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/cou
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
+import { CourseCompetencyType } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-competency-form',
@@ -29,6 +30,8 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
 
     @Output()
     formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
+
+    readonly CourseCompetencyType = CourseCompetencyType;
 
     constructor(fb: FormBuilder, lectureUnitService: LectureUnitService, competencyService: CompetencyService, translateService: TranslateService) {
         super(fb, lectureUnitService, competencyService, translateService);

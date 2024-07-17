@@ -1,7 +1,15 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { CompetencyRelation, CompetencyRelationDTO, CompetencyWithTailRelationDTO, CourseCompetency, dtoToCompetencyRelation, getIcon } from 'app/entities/competency.model';
+import {
+    CompetencyRelation,
+    CompetencyRelationDTO,
+    CompetencyWithTailRelationDTO,
+    CourseCompetency,
+    CourseCompetencyType,
+    dtoToCompetencyRelation,
+    getIcon,
+} from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
@@ -23,7 +31,7 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     @Input() courseId: number;
     @Input() courseCompetencies: CourseCompetency[];
     @Input() relations: CompetencyRelation[];
-    @Input() competencyType: 'competency' | 'prerequisite';
+    @Input() competencyType: CourseCompetencyType;
     @Input() standardizedCompetenciesEnabled: boolean;
 
     @Output() competencyDeleted = new EventEmitter<number>();
@@ -47,7 +55,7 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     readonly getIcon = getIcon;
 
     ngOnInit(): void {
-        if (this.competencyType === 'competency') {
+        if (this.competencyType === CourseCompetencyType.COMPETENCY) {
             this.service = this.competencyService;
             this.pluralCompetencyType = 'competencies';
         } else {
