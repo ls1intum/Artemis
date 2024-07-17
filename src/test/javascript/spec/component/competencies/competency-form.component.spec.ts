@@ -20,6 +20,7 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
+import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -29,7 +30,7 @@ describe('CompetencyFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule, MockModule(NgbTooltipModule), CommonCourseCompetencyFormComponent],
             declarations: [
                 CompetencyFormComponent,
                 MockComponent(MarkdownEditorComponent),

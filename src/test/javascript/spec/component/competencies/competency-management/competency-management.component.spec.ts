@@ -30,6 +30,7 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyRelationGraphStubComponent } from './competency-relation-graph-stub.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
+import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 
 describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
@@ -54,6 +55,7 @@ describe('CompetencyManagementComponent', () => {
                 CompetencyRelationGraphStubComponent,
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(ImportAllCompetenciesComponent),
+                MockComponent(CompetencyManagementTableComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),

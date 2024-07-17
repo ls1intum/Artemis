@@ -4,8 +4,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { CompetencyFormControlsWithViewed, GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { FormControl, FormGroup } from '@angular/forms';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,6 +21,11 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 
 describe('GenerateCompetenciesComponent', () => {
     let generateCompetenciesComponentFixture: ComponentFixture<GenerateCompetenciesComponent>;
@@ -29,16 +33,17 @@ describe('GenerateCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
             declarations: [
                 GenerateCompetenciesComponent,
                 CourseDescriptionFormStubComponent,
                 MockComponent(CompetencyRecommendationDetailComponent),
+                MockComponent(DocumentationButtonComponent),
+                MockComponent(CourseDescriptionFormComponent),
                 ButtonComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(FeatureToggleDirective),
                 MockDirective(TranslateDirective),
-                MockComponent(DocumentationButtonComponent),
             ],
             providers: [
                 {
@@ -47,6 +52,7 @@ describe('GenerateCompetenciesComponent', () => {
                 },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useClass: MockRouter },
+                MockProvider(CourseCompetencyService),
                 MockProvider(CompetencyService),
                 MockProvider(AlertService),
                 MockProvider(ArtemisTranslatePipe),
