@@ -31,7 +31,7 @@ command:
 
 .. code:: bash
 
-   npm run serve
+   npm run start --
 
 This compiles TypeScript code to JavaScript code, starts the live reloading feature
 (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code)
@@ -41,7 +41,7 @@ and will start the client application in your browser on
 with your TUM Online account.
 
 .. HINT::
-   In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or
+   In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run start --`` or
    any other scripts from ``package.json``, you can adjust a
    `memory limit parameter <https://nodejs.org/docs/latest-v16.x/api/cli.html#--max-old-space-sizesize-in-megabytes>`__
    (``node-options=--max-old-space-size=6144``) which is set by default in the project-wide `.npmrc` file.
