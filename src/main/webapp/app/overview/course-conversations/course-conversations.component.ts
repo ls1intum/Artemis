@@ -379,9 +379,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.channelSearchCollapsed = !this.channelSearchCollapsed;
     }
 
-    @HostListener('window:keydown', ['$event'])
+    @HostListener('document:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
-        if (event.metaKey && event.key === 'k' && this.activeConversation != undefined) {
+        if ((event.metaKey || event.ctrlKey) && event.key === 'k' && this.activeConversation != undefined) {
             event.preventDefault();
             this.courseWideSearchTerm = '';
             this.onSearch();
