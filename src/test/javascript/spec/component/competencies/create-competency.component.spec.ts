@@ -12,7 +12,6 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { Competency } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
-import { CompetencyFormStubComponent } from './competency-form-stub.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -31,7 +30,6 @@ describe('CreateCompetency', () => {
             imports: [ArtemisSharedModule, CompetencyFormComponent, ArtemisSharedComponentModule],
             declarations: [
                 CreateCompetencyComponent,
-                CompetencyFormStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(CompetencyFormComponent),
@@ -110,7 +108,7 @@ describe('CreateCompetency', () => {
         expect(createCompetencyComponent.lecturesWithLectureUnits).toEqual([expectedLecture]);
     });
 
-    it('should send POST request upon form submission and navigate', () => {
+    it('should send POST request upon form submission and navigate', async () => {
         const router: Router = TestBed.inject(Router);
         const competencyService = TestBed.inject(CompetencyService);
 
@@ -133,7 +131,7 @@ describe('CreateCompetency', () => {
 
         createCompetencyComponentFixture.detectChanges();
 
-        const competencyForm: CompetencyFormStubComponent = createCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormStubComponent)).componentInstance;
+        const competencyForm = createCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormComponent)).componentInstance;
         competencyForm.formSubmitted.emit(formData);
 
         return createCompetencyComponentFixture.whenStable().then(() => {
