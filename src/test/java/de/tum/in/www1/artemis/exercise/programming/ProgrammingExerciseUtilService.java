@@ -475,8 +475,7 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(savedBuildConfig);
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);

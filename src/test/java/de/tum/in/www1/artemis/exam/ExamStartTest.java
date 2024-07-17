@@ -270,6 +270,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private ProgrammingExercise createProgrammingExercise() {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exam.getExerciseGroups().get(0));
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepo.save(programmingExercise);
         programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         exam.getExerciseGroups().get(0).addExercise(programmingExercise);

@@ -25,6 +25,7 @@ import com.hazelcast.map.IMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -152,6 +153,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void testGetScriptForWithoutCache() {
         ReflectionTestUtils.setField(buildScriptProviderService, "scriptCache", new ConcurrentHashMap<>());
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);

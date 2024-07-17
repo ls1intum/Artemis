@@ -176,8 +176,10 @@ public class HestiaUtilTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(solutionRepoUri),
                 eq(false), any());
 
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
+        var buildConfig = programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
+        exercise.setBuildConfig(buildConfig);
         var savedExercise = exerciseRepository.save(exercise);
+        savedExercise.setBuildConfig(buildConfig);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         solutionParticipation.setRepositoryUri(solutionRepoUri.toString());

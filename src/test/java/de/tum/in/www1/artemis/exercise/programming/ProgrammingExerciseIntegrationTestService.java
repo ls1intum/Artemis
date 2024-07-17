@@ -1450,7 +1450,7 @@ class ProgrammingExerciseIntegrationTestService {
         String problemStatement = "[task][Taskname](test1)";
         programmingExercise.setProblemStatement(problemStatementWithId);
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         String sourceId = programmingExercise.getId().toString();
 

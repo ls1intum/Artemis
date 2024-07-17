@@ -220,6 +220,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testGetDefaultWindfileFor() {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(true);

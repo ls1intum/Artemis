@@ -113,6 +113,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -312,6 +313,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
@@ -1303,6 +1307,7 @@ public class ProgrammingExerciseTestService {
     void startProgrammingExercise(Boolean offlineIde) throws Exception {
         exercise.setAllowOnlineEditor(true);
         exercise.setAllowOfflineIde(offlineIde);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
 
         startProgrammingExercise_correctInitializationState(INDIVIDUAL);
@@ -1323,6 +1328,7 @@ public class ProgrammingExerciseTestService {
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
         final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exercise.setMode(exerciseMode);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
@@ -1651,6 +1657,7 @@ public class ProgrammingExerciseTestService {
 
     // Test
     void exportProgrammingExerciseInstructorMaterial_problemStatementShouldContainTestNames() throws Exception {
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
         var test = tests.getFirst();
@@ -1729,6 +1736,7 @@ public class ProgrammingExerciseTestService {
 
     private void generateProgrammingExerciseWithProblemStatementNullForExport() {
         exercise.setProblemStatement(null);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
@@ -1753,6 +1761,7 @@ public class ProgrammingExerciseTestService {
             FileUtils.copyToFile(new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream(),
                     FilePathService.getMarkdownFilePath().resolve(embeddedFileName2).toFile());
         }
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         if (shouldIncludeBuildPlan) {
             buildPlanRepository.setBuildPlanForExercise("my build plan", exercise);
@@ -1779,7 +1788,8 @@ public class ProgrammingExerciseTestService {
         course.setExercises(Set.of(exercise));
         courseRepository.save(course);
 
-        // Create a programming exercise with solution, template, and tests participations
+        // Create a programming exercise with solution, template, tests participation and build config
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
@@ -2192,6 +2202,7 @@ public class ProgrammingExerciseTestService {
 
     private void setupTeamExercise() {
         exercise.setMode(TEAM);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
@@ -2216,18 +2227,23 @@ public class ProgrammingExerciseTestService {
         // Otherwise participations with an unexpected buildPlanId are retrieved when calling cleanupBuildPlansOnContinuousIntegrationServer() below
         programmingExerciseParticipationTestRepository.updateBuildPlanIdOfAll(null);
 
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
+        examExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(examExercise.getBuildConfig()));
         examExercise = programmingExerciseRepository.save(examExercise);
 
         var exercise2 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
         exercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
+        exercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise2.getBuildConfig()));
         exercise2 = programmingExerciseRepository.save(exercise2);
 
         var exercise3 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
         exercise3.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(3));
+        exercise3.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise3.getBuildConfig()));
         exercise3 = programmingExerciseRepository.save(exercise3);
 
         var exercise4 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
+        exercise4.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise4.getBuildConfig()));
         exercise4 = programmingExerciseRepository.save(exercise4);
 
         // Note participationXa will always be cleaned up, while participationXb will NOT be cleaned up
@@ -2304,11 +2320,13 @@ public class ProgrammingExerciseTestService {
         var endDate = startDate.plusDays(5L);
         exercise.setReleaseDate(startDate);
         exercise.setDueDate(endDate);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         exercise.getCourseViaExerciseGroupOrCourseMember().setStartDate(startDate);
         exercise.getCourseViaExerciseGroupOrCourseMember().setEndDate(endDate);
         courseRepository.save(exercise.getCourseViaExerciseGroupOrCourseMember());
 
+        examExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(examExercise.getBuildConfig()));
         examExercise = programmingExerciseRepository.save(examExercise);
         examExercise.getExerciseGroup().getExam().setStartDate(startDate);
         examExercise.getExerciseGroup().getExam().setEndDate(endDate);
@@ -2348,6 +2366,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private void persistProgrammingExercise() {
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
@@ -2382,6 +2401,7 @@ public class ProgrammingExerciseTestService {
         Course course2 = courseUtilService.addEmptyCourse();
 
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false);
+        sourceExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "Imported", sourceExercise, course2);
 
         exerciseToBeImported.setExampleSolutionPublicationDate(sourceExercise.getDueDate().plusDays(1));
@@ -2453,6 +2473,7 @@ public class ProgrammingExerciseTestService {
 
         // Test example solution publication date not set.
         exercise.setExampleSolutionPublicationDate(null);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
 
         CourseForDashboardDTO courseForDashboardFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
@@ -2490,6 +2511,7 @@ public class ProgrammingExerciseTestService {
     void exportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         // Test example solution publication date not set.
         exercise.setExampleSolutionPublicationDate(null);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
 
         exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
@@ -2542,6 +2564,7 @@ public class ProgrammingExerciseTestService {
 
         // Test include tests
         exercise.setReleaseTestsWithExampleSolution(true);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
 
         zip = exportStudentRequestedRepository(HttpStatus.OK, true);
@@ -2556,15 +2579,17 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void buildLogStatistics_unauthorized() throws Exception {
-        exercise = programmingExerciseRepository
-                .save(ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
+        exercise = programmingExerciseRepository.save(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.FORBIDDEN, BuildLogStatisticsDTO.class);
     }
 
     // TEST
     void buildLogStatistics_noStatistics() throws Exception {
-        exercise = programmingExerciseRepository
-                .save(ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
+        exercise = programmingExerciseRepository.save(exercise);
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
         assertThat(statistics.buildCount()).isZero();
         assertThat(statistics.agentSetupDuration()).isNull();
@@ -2576,8 +2601,9 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void buildLogStatistics() throws Exception {
-        exercise = programmingExerciseRepository
-                .save(ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
+        exercise = programmingExerciseRepository.save(exercise);
         var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
         var submission1 = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
         var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
