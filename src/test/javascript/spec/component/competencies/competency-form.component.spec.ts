@@ -2,7 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyFormComponent, CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
@@ -19,6 +18,8 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import dayjs from 'dayjs/esm';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
+import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -109,7 +110,7 @@ describe('CompetencyFormComponent', () => {
         competencyFormComponent.isEditMode = true;
         const textUnit = new TextUnit();
         textUnit.id = 1;
-        const formData: CompetencyFormData = {
+        const formData: CourseCompetencyFormData = {
             id: 1,
             title: 'test',
             description: 'lorem ipsum',

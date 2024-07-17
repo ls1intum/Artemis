@@ -4,7 +4,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { CreatePrerequisiteComponent } from 'app/course/competencies/prerequisite-form/create-prerequisite.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,10 +11,11 @@ import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import dayjs from 'dayjs';
 import { Dayjs } from 'dayjs/esm';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { PrerequisiteFormComponent } from 'app/course/competencies/prerequisite-form/prerequisite-form.component';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PrerequisiteFormStubComponent } from './prerequisite-form-stub.component';
 import { By } from '@angular/platform-browser';
+import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
+import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 
 describe('CreatePrerequisiteComponent', () => {
     let componentFixture: ComponentFixture<CreatePrerequisiteComponent>;
@@ -74,7 +74,14 @@ describe('CreatePrerequisiteComponent', () => {
     });
 
     it('should navigate back after creating prerequisite', () => {
-        const createSpy = jest.spyOn(prerequisiteService, 'createPrerequisite').mockReturnValue(of(prerequisite));
+        const createSpy = jest.spyOn(prerequisiteService, 'create').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: prerequisite as Prerequisite,
+                    status: 200,
+                }),
+            ),
+        );
         const router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
 
@@ -100,7 +107,7 @@ describe('CreatePrerequisiteComponent', () => {
     it('should alert on error', () => {
         const alertService = TestBed.inject(AlertService);
         const errorSpy = jest.spyOn(alertService, 'error');
-        jest.spyOn(prerequisiteService, 'createPrerequisite').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        jest.spyOn(prerequisiteService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
 
         componentFixture.detectChanges();
         component.createPrerequisite(prerequisite);

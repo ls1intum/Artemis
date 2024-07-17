@@ -28,7 +28,7 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
     };
 
     @Output()
-    formSubmitted: EventEmitter<CompetencyFormData> = new EventEmitter<CompetencyFormData>();
+    formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
 
     constructor(fb: FormBuilder, lectureUnitService: LectureUnitService, competencyService: CompetencyService, translateService: TranslateService) {
         super(fb, lectureUnitService, competencyService, translateService);
@@ -45,12 +45,12 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
         this.initializeForm();
     }
 
-    private setFormValues(formData: CompetencyFormData) {
+    private setFormValues(formData: CourseCompetencyFormData) {
         this.form.patchValue(formData);
     }
 
     submitForm() {
-        const competencyFormData: CompetencyFormData = { ...this.form.value };
+        const competencyFormData: CourseCompetencyFormData = { ...this.form.value };
         competencyFormData.connectedLectureUnits = this.selectedLectureUnitsInTable;
         this.formSubmitted.emit(competencyFormData);
     }

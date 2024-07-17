@@ -11,6 +11,8 @@ import { of } from 'rxjs';
 import { ImportCompetenciesTableComponent } from 'app/course/competencies/import/import-competencies-table.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { HttpResponse } from '@angular/common/http';
+import { CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
 
 describe('ImportPrerequisitesComponent', () => {
     let componentFixture: ComponentFixture<ImportPrerequisitesComponent>;
@@ -63,11 +65,16 @@ describe('ImportPrerequisitesComponent', () => {
             ],
             numberOfPages: 0,
         };
-        const importBulkSpy = jest.spyOn(prerequisiteService, 'importPrerequisites').mockReturnValue(
-            of([
-                { id: 11, title: 'competency1' },
-                { id: 12, title: 'competency2' },
-            ]),
+        const importBulkSpy = jest.spyOn(prerequisiteService, 'importBulk').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [
+                        { competency: { id: 11, title: 'competency1' } } as CompetencyWithTailRelationDTO,
+                        { competency: { id: 12, title: 'competency2' } } as CompetencyWithTailRelationDTO,
+                    ],
+                    status: 200,
+                }),
+            ),
         );
         const router: Router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');

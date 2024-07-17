@@ -67,11 +67,13 @@ describe('ImportCourseCompetenciesComponent', () => {
     });
 
     it('should initialize values correctly', () => {
-        jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(
-            of([
-                { id: 3, linkedCourseCompetency: { id: 11 } },
-                { id: 4, linkedCourseCompetency: { id: 12 } },
-            ] as Prerequisite[]),
+        jest.spyOn(prerequisiteService, 'getAllForCourse').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [{ id: 3, linkedCourseCompetency: { id: 11 } } as Prerequisite, { id: 4, linkedCourseCompetency: { id: 12 } } as Prerequisite],
+                    status: 200,
+                }),
+            ),
         );
         getAllSpy.mockReturnValue(
             of({

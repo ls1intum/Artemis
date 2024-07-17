@@ -102,6 +102,23 @@ export abstract class CourseCompetencyFormComponent {
         return this.form.get('description');
     }
 
+    get softDueDateControl() {
+        return this.form.get('softDueDate');
+    }
+
+    get optionalControl() {
+        return this.form.get('optional');
+    }
+
+    /**
+     * Updates description form on markdown change
+     * @param content markdown content
+     */
+    updateDescriptionControl(content: string) {
+        this.descriptionControl?.setValue(content);
+        this.descriptionControl?.markAsDirty();
+    }
+
     protected initializeForm() {
         if (this.form) {
             return;
