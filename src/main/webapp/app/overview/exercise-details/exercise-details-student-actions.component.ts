@@ -109,7 +109,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
 
                 // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
-                if (profileInfo.activeProfiles?.includes(PROFILE_THEIA)) {
+                if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.programmingExercise) {
                     this.theiaEnabled = true;
 
                     // Set variables now, sanitize later on
@@ -117,6 +117,16 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
                     // Verify that Theia's portal URL is set
                     if (this.theiaPortalURL === '') {
+                        this.theiaEnabled = false;
+                    }
+
+                    // Verify that the exercise allows the online IDE
+                    if (!this.programmingExercise.allowOnlineIde) {
+                        this.theiaEnabled = false;
+                    }
+
+                    // Verify that the exercise has a theia blueprint configured
+                    if (!this.programmingExercise.theiaImage) {
                         this.theiaEnabled = false;
                     }
                 }
