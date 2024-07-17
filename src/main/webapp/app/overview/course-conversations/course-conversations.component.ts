@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -98,6 +98,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     @ViewChild(CourseWideSearchComponent)
     courseWideSearch: CourseWideSearchComponent;
+    @ViewChild('courseWideSearchInput')
+    searchElement: ElementRef;
 
     courseWideSearchConfig: CourseWideSearchConfig;
     courseWideSearchTerm = '';
@@ -380,11 +382,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     @HostListener('document:keydown', ['$event'])
-    handleKeyboardEvent(event: KeyboardEvent) {
+    handleSearchShortcut(event: KeyboardEvent) {
         if ((event.metaKey || event.ctrlKey) && event.key === 'k' && this.activeConversation != undefined) {
             event.preventDefault();
-            this.courseWideSearchTerm = '';
-            this.onSearch();
+            this.searchElement.nativeElement.focus();
         }
     }
 }
