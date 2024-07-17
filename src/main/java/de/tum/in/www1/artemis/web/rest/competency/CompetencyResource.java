@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAt
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.competency.CompetencyService;
 import de.tum.in.www1.artemis.service.competency.CourseCompetencyService;
@@ -72,8 +71,6 @@ public class CompetencyResource {
 
     private final CompetencyService competencyService;
 
-    private final ExerciseService exerciseService;
-
     private final LectureUnitService lectureUnitService;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
@@ -82,15 +79,13 @@ public class CompetencyResource {
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
-            ExerciseService exerciseService, LectureUnitService lectureUnitService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencyService courseCompetencyService) {
+            LectureUnitService lectureUnitService, CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.competencyRepository = competencyRepository;
         this.competencyService = competencyService;
-        this.exerciseService = exerciseService;
         this.lectureUnitService = lectureUnitService;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseCompetencyService = courseCompetencyService;
@@ -150,7 +145,7 @@ public class CompetencyResource {
         }
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
-        final var persistedCompetency = competencyService.createCompetency(competency, course);
+        final var persistedCompetency = competencyService.createCourseCompetency(competency, course);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
     }

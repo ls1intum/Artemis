@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
@@ -53,7 +54,9 @@ public class CompetencyUtilService {
         Competency competency = new Competency();
         competency.setTitle("Example Competency" + suffix);
         competency.setDescription("Magna pars studiorum, prodita quaerimus.");
+        competency.setTaxonomy(CompetencyTaxonomy.UNDERSTAND);
         competency.setCourse(course);
+
         return competencyRepo.save(competency);
     }
 

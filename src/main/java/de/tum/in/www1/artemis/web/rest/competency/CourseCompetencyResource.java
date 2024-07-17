@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAt
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
@@ -89,13 +88,11 @@ public class CourseCompetencyResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ExerciseService exerciseService;
-
     public CourseCompetencyResource(UserRepository userRepository, CourseCompetencyService courseCompetencyService, CourseCompetencyRepository courseCompetencyRepository,
             CourseRepository courseRepository, CompetencyProgressService competencyProgressService, CompetencyProgressRepository competencyProgressRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyRelationService competencyRelationService,
             Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CompetencyJolService competencyJolService,
-            AuthorizationCheckService authorizationCheckService, ExerciseService exerciseService) {
+            AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.courseCompetencyService = courseCompetencyService;
         this.courseCompetencyRepository = courseCompetencyRepository;
@@ -107,7 +104,6 @@ public class CourseCompetencyResource {
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
         this.competencyJolService = competencyJolService;
         this.authorizationCheckService = authorizationCheckService;
-        this.exerciseService = exerciseService;
     }
 
     /**
