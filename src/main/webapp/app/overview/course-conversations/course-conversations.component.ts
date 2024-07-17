@@ -383,7 +383,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     @HostListener('document:keydown', ['$event'])
     handleSearchShortcut(event: KeyboardEvent) {
-        if ((event.metaKey || event.ctrlKey) && event.key === 'k' && this.activeConversation != undefined) {
+        if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
             event.preventDefault();
             this.searchElement.nativeElement.focus();
         }
