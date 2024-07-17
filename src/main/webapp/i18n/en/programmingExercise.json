@@ -42,7 +42,7 @@
                 "deleteParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
                 "artefactsWarning": "Deleting student participations, submissions, and results without removing the associated repositories and build plans may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please carefully review if this is the desired action before proceeding.",
                 "recreateBuildPlans": "Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.",
-                "recreateCustomizedBuildPlans": "Recreate the build plans from the latest exercise template, overwriting any previous changes (e.g. docker image, build script).",
+                "recreateCustomizedBuildPlans": "Recreate the customized build plans from the latest exercise template, overwriting any previous changes.",
                 "question": "<strong>Warning:</strong> This action can <strong>NOT</strong> be undone!<br>To confirm your selection, please type in the name of the exercise: <strong>{{ title }}</strong>",
                 "successMessage": "Reset operation was successful.",
                 "errorMessage": "Reset operation failed."
