@@ -162,7 +162,7 @@
             "type": "Typ",
             "mcqType": "Multiple-Choice Fragen",
             "dndType": "Drag und Drop Fragen",
-            "personalRepositoryClone": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Repository klonen</i>!",
+            "personalRepositoryClone": "Dein persönliches Repository wurde eingerichtet. Klicke auf den <i>Code</i>-Button!",
             "personalRepositoryOnline": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Programmiereditor öffnen</i>!",
             "resumeProgrammingExercise": "Die Aufgabe wurde wieder aufgenommen. Du kannst nun weiterarbeiten!",
             "feedbackRequestSent": "Deine Feedbackanfrage wurde gesendet.",
