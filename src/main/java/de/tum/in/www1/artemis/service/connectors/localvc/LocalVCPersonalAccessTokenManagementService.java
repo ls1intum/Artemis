@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localvc;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
 import java.security.SecureRandom;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +20,9 @@ public class LocalVCPersonalAccessTokenManagementService {
 
     private static final int RANDOM_STRING_LENGTH = 44;
 
-    public static final int VCS_ACCESS_TOKEN_LENGTH = TOKEN_PREFIX.length() + RANDOM_STRING_LENGTH; // must be at most 50
+    public static final int VCS_ACCESS_TOKEN_LENGTH = TOKEN_PREFIX.length() + RANDOM_STRING_LENGTH; // can be at most 50; database stores token as varchar(50)
 
-    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final String[] CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split("");
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -32,12 +33,6 @@ public class LocalVCPersonalAccessTokenManagementService {
      */
     public static String generateSecureVCSAccessToken() {
         log.debug("Generate secure vcs access token");
-        StringBuilder randomString = new StringBuilder(RANDOM_STRING_LENGTH);
-
-        for (int i = 0; i < RANDOM_STRING_LENGTH; i++) {
-            int randomIndex = RANDOM.nextInt(CHARACTERS.length());
-            randomString.append(CHARACTERS.charAt(randomIndex));
-        }
-        return TOKEN_PREFIX + randomString.toString();
+        return TOKEN_PREFIX + RANDOM.ints(RANDOM_STRING_LENGTH, 0, CHARACTERS.length).mapToObj(it -> CHARACTERS[it]).collect(Collectors.joining(""));
     }
 }

@@ -16,7 +16,6 @@ import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
@@ -261,8 +260,8 @@ public class LocalVCServletService {
         if (password.startsWith("vcpat-") && password.length() == VCS_ACCESS_TOKEN_LENGTH) {
             try {
                 // check user VCS access token
-                if (user.getVcsAccessToken() != null && !StringUtils.isEmpty(user.getVcsAccessToken()) && Objects.equals(user.getVcsAccessToken(), password)
-                        && user.getVcsAccessTokenExpiryDate() != null && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
+                if (Objects.equals(user.getVcsAccessToken(), password) && user.getVcsAccessTokenExpiryDate() != null
+                        && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
                     return user;
                 }
 
@@ -270,7 +269,7 @@ public class LocalVCServletService {
                 var token = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.getId());
 
                 // check participation VCS access token
-                if (token.isPresent() && !StringUtils.isEmpty(token.get().getVcsAccessToken()) && Objects.equals(token.get().getVcsAccessToken(), password)) {
+                if (token.isPresent() && Objects.equals(token.get().getVcsAccessToken(), password)) {
                     user.setVcsAccessToken(token.get().getVcsAccessToken());
                     return user;
                 }

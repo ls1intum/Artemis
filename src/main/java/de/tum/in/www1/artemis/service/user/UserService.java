@@ -830,7 +830,7 @@ public class UserService {
      * @return the users participation vcs access token, or throws an exception if it does not exist
      */
     public String getVcsAccessTokenForUser(User user, Long participationId) {
-        var vcsAccessToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId);
-        return vcsAccessToken.orElseThrow(NoSuchElementException::new).getVcsAccessToken();
+        var optionalParticipationVCSAccessToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId);
+        return optionalParticipationVCSAccessToken.orElseThrow(NoSuchElementException::new).getVcsAccessToken();
     }
 }
