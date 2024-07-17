@@ -59,7 +59,7 @@
             <label for="taxonomy">
                 {{ 'artemisApp.courseCompetency.taxonomy' | artemisTranslate }}
                 @if (suggestedTaxonomies?.length) {
-                    <small jhiTranslate="artemisApp.courseCompetency.create.suggestedTaxonomy"></small>
+                    <small> ({{ 'artemisApp.courseCompetency.create.suggestedTaxonomy' | artemisTranslate }}: {{ suggestedTaxonomies.join(', ') }}) </small>
                 }
             </label>
             <jhi-taxonomy-select selectId="taxonomy" [form]="taxonomyControl" />

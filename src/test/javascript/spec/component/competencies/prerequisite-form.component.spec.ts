@@ -2,7 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -17,10 +16,12 @@ import { CompetencyFormComponent } from 'app/course/competencies/forms/competenc
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
+import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 
-describe('CompetencyFormComponent', () => {
-    let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
-    let competencyFormComponent: CompetencyFormComponent;
+describe('PrerequisiteFormComponent', () => {
+    let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
+    let prerequisiteFormComponent: PrerequisiteFormComponent;
 
     let translateService: TranslateService;
 
@@ -28,12 +29,12 @@ describe('CompetencyFormComponent', () => {
         TestBed.configureTestingModule({
             imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
             declarations: [],
-            providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(PrerequisiteService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
-                competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
-                competencyFormComponent = competencyFormComponentFixture.componentInstance;
+                prerequisiteFormComponentFixture = TestBed.createComponent(PrerequisiteFormComponent);
+                prerequisiteFormComponent = prerequisiteFormComponentFixture.componentInstance;
             });
         translateService = TestBed.inject(TranslateService);
     });
@@ -43,14 +44,14 @@ describe('CompetencyFormComponent', () => {
     });
 
     it('should initialize', () => {
-        competencyFormComponentFixture.detectChanges();
-        expect(competencyFormComponent).toBeDefined();
+        prerequisiteFormComponentFixture.detectChanges();
+        expect(prerequisiteFormComponent).toBeDefined();
     });
 
     it('should submit valid form', fakeAsync(() => {
         // stubbing competency service for asynchronous validator
-        const competencyService = TestBed.inject(CompetencyService);
-        const getAllTitlesSpy = jest.spyOn(competencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
+        const prerequisiteService = TestBed.inject(PrerequisiteService);
+        const getAllTitlesSpy = jest.spyOn(prerequisiteService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
         const competencyOfResponse: Competency = { id: 1, title: 'test' };
 
@@ -59,14 +60,14 @@ describe('CompetencyFormComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(response));
+        jest.spyOn(prerequisiteService, 'getAllForCourse').mockReturnValue(of(response));
 
-        competencyFormComponentFixture.detectChanges();
+        prerequisiteFormComponentFixture.detectChanges();
 
         const exampleTitle = 'uniqueName';
-        competencyFormComponent.titleControl!.setValue(exampleTitle);
+        prerequisiteFormComponent.titleControl!.setValue(exampleTitle);
         const exampleDescription = 'lorem ipsum';
-        competencyFormComponent.descriptionControl!.setValue(exampleDescription);
+        prerequisiteFormComponent.descriptionControl!.setValue(exampleDescription);
         const exampleLectureUnit = new TextUnit();
         exampleLectureUnit.id = 1;
 
@@ -74,30 +75,30 @@ describe('CompetencyFormComponent', () => {
         exampleLecture.id = 1;
         exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        competencyFormComponent.selectLectureInDropdown(exampleLecture);
-        competencyFormComponentFixture.detectChanges();
+        prerequisiteFormComponent.selectLectureInDropdown(exampleLecture);
+        prerequisiteFormComponentFixture.detectChanges();
         // selecting the lecture unit in the table
-        const lectureUnitRow = competencyFormComponentFixture.debugElement.nativeElement.querySelector('.lectureUnitRow');
+        const lectureUnitRow = prerequisiteFormComponentFixture.debugElement.nativeElement.querySelector('.lectureUnitRow');
         lectureUnitRow.click();
-        competencyFormComponentFixture.detectChanges();
+        prerequisiteFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        expect(competencyFormComponent.form.valid).toBeTrue();
+        expect(prerequisiteFormComponent.form.valid).toBeTrue();
         expect(getAllTitlesSpy).toHaveBeenCalledOnce();
-        const submitFormSpy = jest.spyOn(competencyFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(competencyFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = jest.spyOn(prerequisiteFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(prerequisiteFormComponent.formSubmitted, 'emit');
 
-        const submitButton = competencyFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        const submitButton = prerequisiteFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
-        competencyFormComponentFixture.detectChanges();
+        prerequisiteFormComponentFixture.detectChanges();
 
-        competencyFormComponentFixture.whenStable().then(() => {
+        prerequisiteFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledOnce();
         });
     }));
 
     it('should correctly set form values in edit mode', () => {
-        competencyFormComponent.isEditMode = true;
+        prerequisiteFormComponent.isEditMode = true;
         const textUnit = new TextUnit();
         textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
@@ -109,58 +110,58 @@ describe('CompetencyFormComponent', () => {
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
         };
-        competencyFormComponentFixture.detectChanges();
-        competencyFormComponent.formData = formData;
-        competencyFormComponent['onLectureUnitSelectionChange']([textUnit]);
-        competencyFormComponent.ngOnChanges();
+        prerequisiteFormComponentFixture.detectChanges();
+        prerequisiteFormComponent.formData = formData;
+        prerequisiteFormComponent['onLectureUnitSelectionChange']([textUnit]);
+        prerequisiteFormComponent.ngOnChanges();
 
-        expect(competencyFormComponent.titleControl?.value).toEqual(formData.title);
-        expect(competencyFormComponent.descriptionControl?.value).toEqual(formData.description);
-        expect(competencyFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
-        expect(competencyFormComponent.optionalControl?.value).toEqual(formData.optional);
-        expect(competencyFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
+        expect(prerequisiteFormComponent.titleControl?.value).toEqual(formData.title);
+        expect(prerequisiteFormComponent.descriptionControl?.value).toEqual(formData.description);
+        expect(prerequisiteFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
+        expect(prerequisiteFormComponent.optionalControl?.value).toEqual(formData.optional);
+        expect(prerequisiteFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 
     it('should suggest taxonomy when title changes', () => {
-        competencyFormComponentFixture.detectChanges();
+        prerequisiteFormComponentFixture.detectChanges();
 
-        const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
+        const commonCourseCompetencyFormComponent = prerequisiteFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
         const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
-        const titleInput = competencyFormComponentFixture.nativeElement.querySelector('#title');
+        const titleInput = prerequisiteFormComponentFixture.nativeElement.querySelector('#title');
         titleInput.value = 'Building a tool: create a plan and implement something!';
         titleInput.dispatchEvent(new Event('input'));
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.courseCompetency.taxonomies.REMEMBER', 'artemisApp.courseCompetency.taxonomies.UNDERSTAND']);
+        expect(prerequisiteFormComponent.suggestedTaxonomies).toEqual(['artemisApp.courseCompetency.taxonomies.REMEMBER', 'artemisApp.courseCompetency.taxonomies.UNDERSTAND']);
     });
 
     it('should suggest taxonomy when description changes', () => {
-        competencyFormComponentFixture.detectChanges();
+        prerequisiteFormComponentFixture.detectChanges();
 
-        const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
+        const commonCourseCompetencyFormComponent = prerequisiteFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
         const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
-        competencyFormComponent.updateDescriptionControl('Building a tool: create a plan and implement something!');
+        prerequisiteFormComponent.updateDescriptionControl('Building a tool: create a plan and implement something!');
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.courseCompetency.taxonomies.REMEMBER', 'artemisApp.courseCompetency.taxonomies.UNDERSTAND']);
+        expect(prerequisiteFormComponent.suggestedTaxonomies).toEqual(['artemisApp.courseCompetency.taxonomies.REMEMBER', 'artemisApp.courseCompetency.taxonomies.UNDERSTAND']);
     });
 
     it('validator should verify title is unique', fakeAsync(() => {
-        const competencyService = TestBed.inject(CompetencyService);
+        const prerequisiteService = TestBed.inject(PrerequisiteService);
         const existingTitles = ['nameExisting'];
-        jest.spyOn(competencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
-        competencyFormComponent.isEditMode = true;
-        competencyFormComponent.formData.title = 'initialName';
+        jest.spyOn(prerequisiteService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
+        prerequisiteFormComponent.isEditMode = true;
+        prerequisiteFormComponent.formData.title = 'initialName';
 
-        competencyFormComponentFixture.detectChanges();
+        prerequisiteFormComponentFixture.detectChanges();
 
-        const titleControl = competencyFormComponent.titleControl!;
+        const titleControl = prerequisiteFormComponent.titleControl!;
         tick(250);
         expect(titleControl.errors?.titleUnique).toBeUndefined();
 

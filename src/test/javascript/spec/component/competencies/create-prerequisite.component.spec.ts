@@ -3,34 +3,39 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CreateCompetencyComponent } from 'app/course/competencies/create/create-competency.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
-import { Competency } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
-describe('CreateCompetency', () => {
-    let createCompetencyComponentFixture: ComponentFixture<CreateCompetencyComponent>;
-    let createCompetencyComponent: CreateCompetencyComponent;
+describe('CreatePrerequisite', () => {
+    let createPrerequisiteComponentFixture: ComponentFixture<CreatePrerequisiteComponent>;
+    let createPrerequisiteComponent: CreatePrerequisiteComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CreateCompetencyComponent, ArtemisSharedModule, CompetencyFormComponent, ArtemisSharedComponentModule],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent), MockComponent(CompetencyFormComponent), MockDirective(TranslateDirective)],
+            imports: [CreatePrerequisiteComponent, ArtemisSharedModule, PrerequisiteFormComponent, ArtemisSharedComponentModule],
+            declarations: [
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(DocumentationButtonComponent),
+                MockComponent(PrerequisiteFormComponent),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
-                MockProvider(CompetencyService),
+                MockProvider(PrerequisiteService),
                 MockProvider(LectureService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
@@ -56,8 +61,8 @@ describe('CreateCompetency', () => {
         })
             .compileComponents()
             .then(() => {
-                createCompetencyComponentFixture = TestBed.createComponent(CreateCompetencyComponent);
-                createCompetencyComponent = createCompetencyComponentFixture.componentInstance;
+                createPrerequisiteComponentFixture = TestBed.createComponent(CreatePrerequisiteComponent);
+                createPrerequisiteComponent = createPrerequisiteComponentFixture.componentInstance;
             });
     });
 
@@ -66,8 +71,8 @@ describe('CreateCompetency', () => {
     });
 
     it('should initialize', () => {
-        createCompetencyComponentFixture.detectChanges();
-        expect(createCompetencyComponent).toBeDefined();
+        createPrerequisiteComponentFixture.detectChanges();
+        expect(createPrerequisiteComponent).toBeDefined();
     });
 
     it('should set lecture units', () => {
@@ -82,9 +87,9 @@ describe('CreateCompetency', () => {
         });
         jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
 
-        createCompetencyComponentFixture.detectChanges();
+        createPrerequisiteComponentFixture.detectChanges();
 
-        expect(createCompetencyComponent.lecturesWithLectureUnits).toEqual([lecture]);
+        expect(createPrerequisiteComponent.lecturesWithLectureUnits).toEqual([lecture]);
     });
 
     it('should set empty array of lecture units if lecture has none', () => {
@@ -97,14 +102,14 @@ describe('CreateCompetency', () => {
         });
         jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
 
-        createCompetencyComponentFixture.detectChanges();
+        createPrerequisiteComponentFixture.detectChanges();
 
-        expect(createCompetencyComponent.lecturesWithLectureUnits).toEqual([expectedLecture]);
+        expect(createPrerequisiteComponent.lecturesWithLectureUnits).toEqual([expectedLecture]);
     });
 
     it('should send POST request upon form submission and navigate', async () => {
         const router: Router = TestBed.inject(Router);
-        const competencyService = TestBed.inject(CompetencyService);
+        const prerequisiteService = TestBed.inject(PrerequisiteService);
 
         const textUnit: TextUnit = new TextUnit();
         textUnit.id = 1;
@@ -115,21 +120,21 @@ describe('CreateCompetency', () => {
             connectedLectureUnits: [textUnit],
         };
 
-        const response: HttpResponse<Competency> = new HttpResponse({
+        const response: HttpResponse<Prerequisite> = new HttpResponse({
             body: {},
             status: 201,
         });
 
-        const createSpy = jest.spyOn(competencyService, 'create').mockReturnValue(of(response));
+        const createSpy = jest.spyOn(prerequisiteService, 'create').mockReturnValue(of(response));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        createCompetencyComponentFixture.detectChanges();
+        createPrerequisiteComponentFixture.detectChanges();
 
-        const competencyForm = createCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormComponent)).componentInstance;
+        const competencyForm = createPrerequisiteComponentFixture.debugElement.query(By.directive(PrerequisiteFormComponent)).componentInstance;
         competencyForm.formSubmitted.emit(formData);
 
-        return createCompetencyComponentFixture.whenStable().then(() => {
-            const competency: Competency = new Competency();
+        return createPrerequisiteComponentFixture.whenStable().then(() => {
+            const competency: Prerequisite = new Prerequisite();
             competency.title = formData.title;
             competency.description = formData.description;
             competency.optional = formData.optional;
@@ -142,7 +147,7 @@ describe('CreateCompetency', () => {
     });
 
     it('should not create competency if title is missing', () => {
-        const competencyService = TestBed.inject(CompetencyService);
+        const prerequisiteService = TestBed.inject(PrerequisiteService);
 
         const formData: CourseCompetencyFormData = {
             title: undefined,
@@ -150,9 +155,9 @@ describe('CreateCompetency', () => {
             optional: true,
         };
 
-        const createSpy = jest.spyOn(competencyService, 'create');
+        const createSpy = jest.spyOn(prerequisiteService, 'create');
 
-        createCompetencyComponent.createCompetency(formData);
+        createPrerequisiteComponent.createPrerequisite(formData);
 
         expect(createSpy).not.toHaveBeenCalled();
     });

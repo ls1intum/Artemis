@@ -18,6 +18,7 @@ import { CompetencyCardStubComponent } from './competency-card-stub.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 class MockActivatedRoute {
     parent: any;
@@ -41,6 +42,7 @@ const mockActivatedRoute = new MockActivatedRoute({
 describe('CourseCompetencies', () => {
     let courseCompetenciesComponentFixture: ComponentFixture<CourseCompetenciesComponent>;
     let courseCompetenciesComponent: CourseCompetenciesComponent;
+    let courseCompetencyService: CourseCompetencyService;
     let competencyService: CompetencyService;
     let prerequisiteService: PrerequisiteService;
     const mockCourseStorageService = {
@@ -75,6 +77,7 @@ describe('CourseCompetencies', () => {
             .then(() => {
                 courseCompetenciesComponentFixture = TestBed.createComponent(CourseCompetenciesComponent);
                 courseCompetenciesComponent = courseCompetenciesComponentFixture.componentInstance;
+                courseCompetencyService = TestBed.inject(CourseCompetencyService);
                 competencyService = TestBed.inject(CompetencyService);
                 prerequisiteService = TestBed.inject(PrerequisiteService);
                 const accountService = TestBed.inject(AccountService);
@@ -117,7 +120,7 @@ describe('CourseCompetencies', () => {
         );
         jest.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
         const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
-        const getJoLAllForCourseSpy = jest.spyOn(competencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
+        const getJoLAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();

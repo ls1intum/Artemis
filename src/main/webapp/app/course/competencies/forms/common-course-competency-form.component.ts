@@ -5,7 +5,7 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
-import { CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -58,6 +58,7 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
     // Constants
     protected readonly DEFAULT_MASTERY_THRESHOLD = DEFAULT_MASTERY_THRESHOLD;
+    protected readonly competencyTaxonomy = CompetencyTaxonomy;
 
     constructor(
         private translateService: TranslateService,
@@ -98,11 +99,11 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     }
 
     ngOnInit(): void {
-        merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.onTitleOrDescriptionChange.next());
+        merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.suggestTaxonomies());
     }
 
     ngOnChanges(): void {
-        merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.onTitleOrDescriptionChange.next());
+        merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.suggestTaxonomies());
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
@@ -146,5 +147,23 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
             lectureTitle: lecture.title,
             noOfConnectedUnits: noOfSelectedUnitsInLecture,
         });
+    }
+
+    /**
+     * Suggest some taxonomies based on keywords used in the title or description.
+     * Triggered after the user changes the title or description input field.
+     */
+    suggestTaxonomies() {
+        this.suggestedTaxonomies = [];
+        const title = this.titleControl?.value?.toLowerCase() ?? '';
+        const description = this.descriptionControl?.value?.toLowerCase() ?? '';
+        for (const taxonomy in this.competencyTaxonomy) {
+            const keywords = this.translateService.instant('artemisApp.courseCompetency.keywords.' + taxonomy).split(', ');
+            const taxonomyName = this.translateService.instant('artemisApp.courseCompetency.taxonomies.' + taxonomy);
+            keywords.push(taxonomyName);
+            if (keywords.map((keyword: string) => keyword.toLowerCase()).some((keyword: string) => title.includes(keyword) || description.includes(keyword))) {
+                this.suggestedTaxonomies.push(taxonomyName);
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { merge, of } from 'rxjs';
+import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -69,9 +69,9 @@ export abstract class CourseCompetencyFormComponent {
     averageStudentScore?: number;
     @Input()
     hasCancelButton: boolean;
+
     @Output()
     onCancel: EventEmitter<any> = new EventEmitter<any>();
-
     @Output()
     formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
 
@@ -141,8 +141,6 @@ export abstract class CourseCompetencyFormComponent {
         });
         this.selectedLectureUnitsInTable = [];
 
-        merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.suggestTaxonomies());
-
         if (this.isInSingleLectureMode) {
             this.selectLectureInDropdown(this.lecturesOfCourseWithLectureUnits.first()!);
         }
@@ -158,24 +156,6 @@ export abstract class CourseCompetencyFormComponent {
 
     selectLectureInDropdown(lecture: Lecture) {
         this.selectedLectureInDropdown = lecture;
-    }
-
-    /**
-     * Suggest some taxonomies based on keywords used in the title or description.
-     * Triggered after the user changes the title or description input field.
-     */
-    suggestTaxonomies() {
-        this.suggestedTaxonomies = [];
-        const title = this.titleControl?.value?.toLowerCase() ?? '';
-        const description = this.descriptionControl?.value?.toLowerCase() ?? '';
-        for (const taxonomy in this.competencyTaxonomy) {
-            const keywords = this.translateService.instant('artemisApp.courseCompetency.keywords.' + taxonomy).split(', ');
-            const taxonomyName = this.translateService.instant('artemisApp.courseCompetency.taxonomies.' + taxonomy);
-            keywords.push(taxonomyName);
-            if (keywords.map((keyword: string) => keyword.toLowerCase()).some((keyword: string) => title.includes(keyword) || description.includes(keyword))) {
-                this.suggestedTaxonomies.push(taxonomyName);
-            }
-        }
     }
 
     protected onLectureUnitSelectionChange(lectureUnits: LectureUnit[]) {

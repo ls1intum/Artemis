@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
-@Component({ selector: 'jhi-competency-form', standalone: true, template: '' })
-export class CompetencyFormStubComponent {
+@Component({ selector: 'jhi-prerequisite-form', standalone: true, template: '' })
+export class PrerequisiteFormStubComponent {
     @Input()
     formData: CourseCompetencyFormData;
     @Input()
