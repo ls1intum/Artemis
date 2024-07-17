@@ -71,7 +71,7 @@ export class LectureUpdateWizardComponent implements OnInit {
      * Progress to the next step of the wizard mode
      */
     next() {
-        if (this.currentStep === 2 || this.currentStep === 4) {
+        if (this.currentStep === this.LECTURE_UPDATE_WIZARD_PERIOD_STEP || this.currentStep === this.LECTURE_UPDATE_WIZARD_UNIT_STEP) {
             this.saveLectureFunction();
             return;
         }
@@ -84,20 +84,6 @@ export class LectureUpdateWizardComponent implements OnInit {
      */
     onLectureCreationSucceeded() {
         this.currentStep++;
-    }
-
-    /**
-     * Checks if the given step has already been completed
-     */
-    isCompleted(step: number) {
-        return this.currentStep > step;
-    }
-
-    /**
-     * Checks if the given step is the current one
-     */
-    isCurrent(step: number) {
-        return this.currentStep === step;
     }
 
     getNextIcon() {

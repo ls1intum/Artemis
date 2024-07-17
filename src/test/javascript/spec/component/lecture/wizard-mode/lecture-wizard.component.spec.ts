@@ -148,46 +148,6 @@ describe('LectureWizardComponent', () => {
         });
     }));
 
-    it('should return is completed for smaller step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCompleted(1);
-            expect(result).toBeTrue();
-        });
-    }));
-
-    it('should not return is completed for bigger step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCompleted(3);
-            expect(result).toBeFalse();
-        });
-    }));
-
-    it('should return is current for same step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCurrent(2);
-            expect(result).toBeTrue();
-        });
-    }));
-
-    it('should not return is current for different step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCurrent(1);
-            expect(result).toBeFalse();
-        });
-    }));
-
     it('should return correct icon for last step', fakeAsync(() => {
         wizardComponentFixture.detectChanges();
 
