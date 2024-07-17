@@ -125,7 +125,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         if (this.useSsh && this.sshEnabled && this.sshTemplateUrl) {
             return this.getSshCloneUrl(this.getRepositoryUri()) || this.getRepositoryUri();
         }
-        console.log(this.versionControlAccessTokenRequired);
         if (this.isTeamParticipation) {
             return this.addCredentialsToHttpUrl(this.repositoryUriForTeam(this.getRepositoryUri()), insertPlaceholder);
         }
@@ -144,7 +143,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      */
     private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
         const includeToken = this.versionControlAccessTokenRequired && this.user.vcsAccessToken;
-        console.log(includeToken);
         const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
         const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
