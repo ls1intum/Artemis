@@ -5,7 +5,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Competency, CourseCompetencyType } from 'app/entities/competency.model';
+import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -24,7 +24,7 @@ describe('CompetencyDetailLectureUnitsComponent', () => {
 
     const competencyId = 1;
 
-    const competency = <Competency>{
+    const courseCompetency = <CourseCompetency>{
         type: CourseCompetencyType.COMPETENCY,
         id: competencyId,
         title: 'Competency 1',
@@ -98,7 +98,7 @@ describe('CompetencyDetailLectureUnitsComponent', () => {
         fixture = TestBed.createComponent(CourseCompetencyDetailLectureUnitsComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('competency', competency);
+        fixture.componentRef.setInput('courseCompetency', courseCompetency);
     });
 
     afterEach(() => {
@@ -107,19 +107,22 @@ describe('CompetencyDetailLectureUnitsComponent', () => {
 
     it('should initialize', () => {
         expect(component).toBeTruthy();
-        expect(component.courseCompetency()).toEqual(competency);
+        expect(component.courseCompetency()).toEqual(courseCompetency);
     });
 
     it('should set units correctly', () => {
         fixture.detectChanges();
-        expect(component.units()).toEqual([...competency.lectureUnits!, ...competency.exercises!.map((exercise) => <ExerciseUnit>{ id: exercise.id, exercise: exercise })]);
+        expect(component.units()).toEqual([
+            ...courseCompetency.lectureUnits!,
+            ...courseCompetency.exercises!.map((exercise) => <ExerciseUnit>{ id: exercise.id, exercise: exercise }),
+        ]);
     });
 
     it('should set progress correctly', async () => {
         const setCompletionSpy = jest.spyOn(lectureUnitService, 'setCompletion').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         const onLectureUnitCompletionSpy = jest.spyOn(component.onLectureUnitCompletion, 'emit');
 
-        const lectureUnit = competency.lectureUnits![0];
+        const lectureUnit = courseCompetency.lectureUnits![0];
         const lectureUnitCompletionEvent = <LectureUnitCompletionEvent>{ lectureUnit, completed: true };
 
         await component.setLearningObjectCompletion(lectureUnitCompletionEvent);
@@ -131,7 +134,7 @@ describe('CompetencyDetailLectureUnitsComponent', () => {
     it('should show alert on error', async () => {
         const alertErrorSpy = jest.spyOn(alertService, 'addAlert');
 
-        const lectureUnit = competency.lectureUnits![0];
+        const lectureUnit = courseCompetency.lectureUnits![0];
         const lectureUnitCompletionEvent = <LectureUnitCompletionEvent>{ lectureUnit, completed: true };
 
         await component.setLearningObjectCompletion(lectureUnitCompletionEvent);

@@ -8,23 +8,21 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { CompetencyApiService } from 'app/course/competencies/services/competency-api.service';
-import { PrerequisiteApiService } from 'app/course/competencies/services/prerequisite-api.service';
-import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { Competency, CompetencyTaxonomy, CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
+import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
+import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 
 describe('CompetenciesStudentPageComponent', () => {
     let component: CourseCompetenciesStudentPageComponent;
     let fixture: ComponentFixture<CourseCompetenciesStudentPageComponent>;
-    let competencyApiService: CompetencyApiService;
-    let prerequisiteApiService: PrerequisiteApiService;
+    let courseCompetencyApiService: CourseCompetencyApiService;
     let alertService: AlertService;
 
-    let getCompetenciesSpy: jest.SpyInstance;
-    let getPrerequisitesSpy: jest.SpyInstance;
+    let getCourseCompetenciesSpy: jest.SpyInstance;
 
     const courseId = 1;
     const competencies = <Competency[]>[
@@ -33,12 +31,14 @@ describe('CompetenciesStudentPageComponent', () => {
             title: 'Competency 1',
             description: 'Competency 1 description',
             taxonomy: CompetencyTaxonomy.ANALYZE,
+            type: CourseCompetencyType.COMPETENCY,
         },
         {
             id: 2,
             title: 'Competency 2',
             description: 'Competency 2 description',
             taxonomy: CompetencyTaxonomy.APPLY,
+            type: CourseCompetencyType.COMPETENCY,
         },
     ];
     const prerequisites = <Prerequisite[]>[
@@ -46,13 +46,16 @@ describe('CompetenciesStudentPageComponent', () => {
             id: 10,
             title: 'Prerequisite 1',
             description: 'Prerequisite 1 description',
+            type: CourseCompetencyType.PREREQUISITE,
         },
         {
             id: 11,
             title: 'Prerequisite 2',
             description: 'Prerequisite 2 description',
+            type: CourseCompetencyType.PREREQUISITE,
         },
     ];
+    const courseCompetencies = <CourseCompetency[]>[...competencies, ...prerequisites];
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -84,12 +87,10 @@ describe('CompetenciesStudentPageComponent', () => {
             ],
         }).compileComponents();
 
-        competencyApiService = TestBed.inject(CompetencyApiService);
-        prerequisiteApiService = TestBed.inject(PrerequisiteApiService);
+        courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
         alertService = TestBed.inject(AlertService);
 
-        getCompetenciesSpy = jest.spyOn(competencyApiService, 'getCompetenciesByCourseId').mockResolvedValue(competencies);
-        getPrerequisitesSpy = jest.spyOn(prerequisiteApiService, 'getPrerequisitesByCourseId').mockResolvedValue(prerequisites);
+        getCourseCompetenciesSpy = jest.spyOn(courseCompetencyApiService, 'getCourseCompetenciesByCourseId').mockResolvedValue(courseCompetencies);
 
         fixture = TestBed.createComponent(CourseCompetenciesStudentPageComponent);
         component = fixture.componentInstance;
@@ -106,7 +107,8 @@ describe('CompetenciesStudentPageComponent', () => {
     it('should set isLoading correctly', async () => {
         const loadingSpy = jest.spyOn(component.isLoading, 'set');
 
-        await component.loadData(courseId);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(loadingSpy).toHaveBeenNthCalledWith(1, true);
         expect(loadingSpy).toHaveBeenNthCalledWith(2, false);
@@ -116,36 +118,41 @@ describe('CompetenciesStudentPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(getCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(courseId);
-        expect(component.competencies()).toEqual(competencies);
+        expect(getCourseCompetenciesSpy).toHaveBeenCalledWith(courseId);
     });
 
-    it('should load course prerequisites', async () => {
+    it('should show error when course competencies could not be loaded', async () => {
+        getCourseCompetenciesSpy.mockRejectedValue(new Error());
+        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
+
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(getPrerequisitesSpy).toHaveBeenCalledExactlyOnceWith(courseId);
-        expect(component.prerequisites()).toEqual(prerequisites);
-    });
-
-    it('should show error when competencies could not be loaded', async () => {
-        getCompetenciesSpy.mockRejectedValue(new Error());
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
-
-        await component.loadData(courseId);
-
-        expect(getCompetenciesSpy).toHaveBeenCalledOnce();
+        expect(getCourseCompetenciesSpy).toHaveBeenCalledOnce();
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 
-    it('should show error when prerequisites could not be loaded', async () => {
-        getPrerequisitesSpy.mockRejectedValue(new Error());
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
+    it('should set sideBarData correctly', async () => {
+        const competenciesSidebarCards = competencies.map((competency) => getSidebarCardElement(competency));
+        const prerequisitesSidebarCards = prerequisites.map((prerequisite) => getSidebarCardElement(prerequisite));
+        const sidebarData = <SidebarData>{
+            storageId: 'course-competency',
+            groupByCategory: true,
+            ungroupedData: [...competenciesSidebarCards, ...prerequisitesSidebarCards],
+            groupedData: {
+                competencies: {
+                    entityData: competenciesSidebarCards,
+                },
+                prerequisites: {
+                    entityData: prerequisitesSidebarCards,
+                },
+            },
+        };
 
-        await component.loadData(courseId);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        expect(getPrerequisitesSpy).toHaveBeenCalledOnce();
-        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+        expect(component.sidebarData()).toEqual(sidebarData);
     });
 
     it('should toggle sidebar visibility based on isCollapsed property', () => {
@@ -160,3 +167,12 @@ describe('CompetenciesStudentPageComponent', () => {
         expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).toBeNull();
     });
 });
+
+function getSidebarCardElement(courseCompetency: CourseCompetency) {
+    return <SidebarCardElement>{
+        id: courseCompetency.id,
+        title: courseCompetency.title,
+        size: 'M',
+        icon: getIcon(courseCompetency.taxonomy),
+    };
+}

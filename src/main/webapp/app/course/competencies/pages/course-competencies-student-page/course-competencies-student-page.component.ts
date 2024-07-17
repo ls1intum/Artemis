@@ -38,8 +38,12 @@ export class CourseCompetenciesStudentPageComponent {
     readonly isLoading = signal<boolean>(false);
 
     private readonly courseCompetencies = signal<CourseCompetency[]>([]);
-    readonly competencies = computed(() => this.courseCompetencies().filter((courseCompetency) => courseCompetency.type === CourseCompetencyType.COMPETENCY));
-    readonly prerequisites = computed(() => this.courseCompetencies().filter((courseCompetency) => courseCompetency.type === CourseCompetencyType.PREREQUISITE));
+    private readonly competencies = computed(() => {
+        return this.courseCompetencies().filter((courseCompetency) => courseCompetency.type === CourseCompetencyType.COMPETENCY);
+    });
+    private readonly prerequisites = computed(() => {
+        return this.courseCompetencies().filter((courseCompetency) => courseCompetency.type === CourseCompetencyType.PREREQUISITE);
+    });
 
     constructor() {
         // Fetch data when the course id is available

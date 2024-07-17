@@ -7,27 +7,27 @@ import { CompetencyJoLResponse, CompetencyProgress, CourseCompetency } from 'app
     providedIn: 'root',
 })
 export class CourseCompetencyApiService extends BaseApiHttpService {
-    private readonly resourceUrl = 'course-competencies/{courseId}';
+    private readonly resourceUrl = '{courseId}/course-competencies';
 
-    private getPath(courseId: number): string {
+    private getBasePath(courseId: number): string {
         return this.resourceUrl.replace('{courseId}', courseId.toString());
     }
 
     async getCourseCompetenciesByCourseId(courseId: number): Promise<CourseCompetency[]> {
-        return this.get<CourseCompetency[]>(this.getPath(courseId));
+        return this.get<CourseCompetency[]>(this.getBasePath(courseId));
     }
 
     async getCourseCompetencyById(courseId: number, courseCompetencyId: number): Promise<CourseCompetency> {
-        return this.get<CourseCompetency>(`${this.getPath(courseId)}/${courseCompetencyId}`);
+        return this.get<CourseCompetency>(`${this.getBasePath(courseId)}/${courseCompetencyId}`);
     }
 
     async getCourseCompetencyProgressById(courseId: number, courseCompetencyId: number, refresh = false): Promise<CompetencyProgress> {
         let params = new HttpParams();
         params = params.set('refresh', refresh.toString());
-        return this.get<CompetencyProgress>(`${this.getPath(courseId)}/${courseCompetencyId}/student-progress`, { params: params });
+        return this.get<CompetencyProgress>(`${this.getBasePath(courseId)}/${courseCompetencyId}/student-progress`, { params: params });
     }
 
     async getJoL(courseId: number, courseCompetencyId: number): Promise<CompetencyJoLResponse> {
-        return this.get<CompetencyJoLResponse>(`${this.getPath(courseId)}/${courseCompetencyId}/jol`);
+        return this.get<CompetencyJoLResponse>(`${this.getBasePath(courseId)}/${courseCompetencyId}/jol`);
     }
 }
