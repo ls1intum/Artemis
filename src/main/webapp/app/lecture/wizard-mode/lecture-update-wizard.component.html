@@ -1,14 +1,14 @@
 <div>
-    @if (currentStep >= 1) {
+    @if (currentStep >= LECTURE_UPDATE_WIZARD_TITLE_STEP) {
         <jhi-lecture-update-wizard-title class="form-step" [currentStep]="currentStep" [lecture]="lecture" />
     }
-    @if (currentStep >= 2) {
+    @if (currentStep >= LECTURE_UPDATE_WIZARD_PERIOD_STEP) {
         <jhi-lecture-update-wizard-period class="form-step" [currentStep]="currentStep" [lecture]="lecture" [validateDatesFunction]="validateDatesFunction" />
     }
-    @if (currentStep >= 3) {
+    @if (currentStep >= LECTURE_UPDATE_WIZARD_ATTACHMENTS_STEP) {
         <jhi-lecture-update-wizard-attachments class="form-step" [currentStep]="currentStep" [lecture]="lecture" />
     }
-    @if (currentStep >= 4) {
+    @if (currentStep >= LECTURE_UPDATE_WIZARD_UNIT_STEP) {
         <jhi-lecture-update-wizard-units class="form-step" [currentStep]="currentStep" [lecture]="lecture" />
     }
     <!-- Bottom Navigation Bar -->
@@ -21,32 +21,32 @@
         <div class="flex-grow-1 d-flex justify-content-center">
             <div class="flex-grow-1 d-flex justify-content-space-between ms-5 me-5 code-hint-generation-wrapper">
                 <jhi-lecture-update-wizard-step
-                    [currentlySelected]="isCurrent(1)"
-                    [isPerformed]="isCompleted(1)"
+                    [currentlySelected]="isCurrent(LECTURE_UPDATE_WIZARD_TITLE_STEP)"
+                    [isPerformed]="isCompleted(LECTURE_UPDATE_WIZARD_TITLE_STEP)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.titleStepTitle'"
                 />
                 <div class="connector" [ngClass]="isCompleted(1) ? 'check' : 'unset'"></div>
                 <jhi-lecture-update-wizard-step
-                    [currentlySelected]="isCurrent(2)"
-                    [isPerformed]="isCompleted(2)"
+                    [currentlySelected]="isCurrent(LECTURE_UPDATE_WIZARD_PERIOD_STEP)"
+                    [isPerformed]="isCompleted(LECTURE_UPDATE_WIZARD_PERIOD_STEP)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.periodStepTitle'"
                 />
                 <div class="connector" [ngClass]="isCompleted(2) ? 'check' : 'unset'"></div>
                 <jhi-lecture-update-wizard-step
-                    [currentlySelected]="isCurrent(3)"
-                    [isPerformed]="isCompleted(3)"
+                    [currentlySelected]="isCurrent(LECTURE_UPDATE_WIZARD_ATTACHMENTS_STEP)"
+                    [isPerformed]="isCompleted(LECTURE_UPDATE_WIZARD_ATTACHMENTS_STEP)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle'"
                 />
                 <div class="connector" [ngClass]="isCompleted(3) ? 'check' : 'unset'"></div>
                 <jhi-lecture-update-wizard-step
-                    [currentlySelected]="isCurrent(4)"
-                    [isPerformed]="isCompleted(4)"
+                    [currentlySelected]="isCurrent(LECTURE_UPDATE_WIZARD_UNIT_STEP)"
+                    [isPerformed]="isCompleted(LECTURE_UPDATE_WIZARD_UNIT_STEP)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.unitsStepTitle'"
                 />
             </div>
         </div>
         <div class="ms-3">
-            <button type="button" id="next" [disabled]="(currentStep === 2 && !lecture.title) || isSaving" class="btn btn-primary" (click)="next()">
+            <button type="button" id="next" [disabled]="(currentStep === LECTURE_UPDATE_WIZARD_PERIOD_STEP && !lecture.title) || isSaving" class="btn btn-primary" (click)="next()">
                 <fa-icon [icon]="getNextIcon()" />&nbsp;<span [jhiTranslate]="getNextText()">Next</span>
             </button>
         </div>

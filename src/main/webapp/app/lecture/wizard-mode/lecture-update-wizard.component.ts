@@ -23,6 +23,7 @@ export class LectureUpdateWizardComponent implements OnInit {
 
     readonly LECTURE_UPDATE_WIZARD_TITLE_STEP = 1;
     readonly LECTURE_UPDATE_WIZARD_PERIOD_STEP = 2;
+    readonly LECTURE_UPDATE_WIZARD_ATTACHMENT_STEP = 3;
     readonly LECTURE_UPDATE_WIZARD_UNIT_STEP = 4;
 
     currentStep: number;
