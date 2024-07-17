@@ -65,7 +65,7 @@ describe('CodeButtonComponent', () => {
         versionControlUrl: 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git',
         versionControlAccessToken: true,
         git: {
-            branch: 'clone-repo-button',
+            branch: 'code-button',
             commit: {
                 id: {
                     abbrev: '95ef2a',
