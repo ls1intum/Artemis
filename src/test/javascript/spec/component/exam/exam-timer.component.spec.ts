@@ -49,7 +49,7 @@ describe('ExamTimerComponent', () => {
         expect(component.updateDisplayTime(duration)).toBe('0min 45s');
     });
 
-    it('should display exact time', () => {
+    it('should round down to next minute when over 10 minutes', () => {
         let duration = dayjs.duration(629, 'seconds');
         expect(component.updateDisplayTime(duration)).toBe('10min');
         duration = dayjs.duration(811, 'seconds');

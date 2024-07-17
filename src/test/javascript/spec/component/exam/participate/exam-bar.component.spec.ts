@@ -11,18 +11,13 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
+import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 
 describe('ExamBarComponent', () => {
     let fixture: ComponentFixture<ExamBarComponent>;
     let comp: ExamBarComponent;
 
     beforeEach(() => {
-        global.ResizeObserver = jest.fn().mockImplementation(() => ({
-            observe: jest.fn(),
-            unobserve: jest.fn(),
-            disconnect: jest.fn(),
-        }));
-
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
             declarations: [ExamBarComponent, MockComponent(ExamNavigationSidebarComponent)],
@@ -32,6 +27,10 @@ describe('ExamBarComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
+        // Required because exam bar uses the ResizeObserver for height calculations
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
 
         fixture = TestBed.createComponent(ExamBarComponent);
         comp = fixture.componentInstance;
