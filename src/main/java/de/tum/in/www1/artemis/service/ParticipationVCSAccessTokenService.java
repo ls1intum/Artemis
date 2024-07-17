@@ -2,15 +2,19 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService;
@@ -39,6 +43,30 @@ public class ParticipationVCSAccessTokenService {
         participationVCSAccessToken.setParticipation(participation);
         participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
         participationVCSAccessTokenRepository.save(participationVCSAccessToken);
+    }
+
+    /**
+     * Creates vcs tokens for StudentParticipations which do not yet have one
+     *
+     * @param participations The participations, for which tokens should be generated, if they do not already have one
+     */
+    public void createMissingParticipationVCSAccessTokens(List<ProgrammingExerciseStudentParticipation> participations) {
+        var existingTokens = participationVCSAccessTokenRepository.findAllByParticipationIds(participations.stream().map(DomainObject::getId).toList());
+        log.debug("Create missing VcsAccessTokens for participationIds: {}", participations);
+        List<ParticipationVCSAccessToken> vcsAccessTokens = participations.stream()
+                .filter(participation -> !existingTokens.stream().map(ParticipationVCSAccessToken::getParticipation).toList().contains(participation)
+                        && participation.getParticipant() instanceof User)
+                .map(participation -> {
+                    var participationVCSAccessToken = new ParticipationVCSAccessToken();
+                    participationVCSAccessToken.setUser((User) participation.getParticipant());
+                    participationVCSAccessToken.setParticipation(participation);
+                    participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
+                    return participationVCSAccessToken;
+                }).collect(Collectors.toList());
+        log.debug("Generated {} missing VcsAccessTokens", vcsAccessTokens);
+
+        participationVCSAccessTokenRepository.saveAll(vcsAccessTokens);
+        log.debug("Saved missing VcsAccessTokens");
     }
 
     /**
