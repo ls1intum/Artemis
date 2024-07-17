@@ -66,9 +66,18 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     ) {}
 
     ngOnInit() {
-        this.accountService.identity().then((user) => {
-            this.user = user!;
-        });
+        this.accountService
+            .identity()
+            .then((user) => {
+                this.user = user!;
+            })
+            .then(() => {
+                if (this.localVCEnabled && this.activeParticipation?.id && this.user) {
+                    this.accountService.getVcsAccessToken(this.activeParticipation.id).subscribe((fetchedVcsAccessToken) => {
+                        this.user.vcsAccessToken = fetchedVcsAccessToken;
+                    });
+                }
+            });
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -88,12 +97,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.setupSshKeysUrl = profileInfo.sshKeysURL;
             }
         });
-
-        if (this.localVCEnabled && this.activeParticipation?.id) {
-            this.accountService.getVcsAccessToken(this.activeParticipation.id).subscribe((fetchedVcsAccessToken) => {
-                this.user.vcsAccessToken = fetchedVcsAccessToken;
-            });
-        }
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
