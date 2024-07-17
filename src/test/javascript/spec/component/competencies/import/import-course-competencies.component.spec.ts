@@ -7,13 +7,13 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
-import { Competency } from 'app/entities/competency.model';
+import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
 import { PageableSearch } from 'app/shared/table/pageable-table';
 import { Component } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 @Component({ template: '' })
 class DummyImportComponent extends ImportCourseCompetenciesComponent {
@@ -25,10 +25,9 @@ class DummyImportComponent extends ImportCourseCompetenciesComponent {
 describe('ImportCourseCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<DummyImportComponent>;
     let component: DummyImportComponent;
-    let competencyService: CompetencyService;
-    let prerequisiteService: PrerequisiteService;
-    let getAllSpy: any;
-    let getForImportSpy: any;
+    let courseCompetencyService: CourseCompetencyService;
+    let getCourseCompetenciesSpy: jest.SpyInstance;
+    let getForImportSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -50,10 +49,11 @@ describe('ImportCourseCompetenciesComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(DummyImportComponent);
                 component = componentFixture.componentInstance;
-                competencyService = TestBed.inject(CompetencyService);
-                prerequisiteService = TestBed.inject(PrerequisiteService);
-                getAllSpy = jest.spyOn(competencyService, 'getAllForCourse');
-                getForImportSpy = jest.spyOn(competencyService, 'getForImport');
+
+                courseCompetencyService = TestBed.inject(CourseCompetencyService);
+
+                getForImportSpy = jest.spyOn(courseCompetencyService, 'getForImport');
+                getCourseCompetenciesSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse');
             });
     });
 
@@ -66,19 +66,19 @@ describe('ImportCourseCompetenciesComponent', () => {
         expect(component).toBeDefined();
     });
 
-    it('should initialize values correctly', () => {
-        jest.spyOn(prerequisiteService, 'getAllForCourse').mockReturnValue(
+    it('should initialize values correctly', async () => {
+        getCourseCompetenciesSpy.mockReturnValue(
             of(
                 new HttpResponse({
-                    body: [{ id: 3, linkedCourseCompetency: { id: 11 } } as Prerequisite, { id: 4, linkedCourseCompetency: { id: 12 } } as Prerequisite],
+                    body: <CourseCompetency[]>[
+                        { id: 1, type: CourseCompetencyType.COMPETENCY },
+                        { id: 2, type: CourseCompetencyType.COMPETENCY },
+                        { id: 3, type: CourseCompetencyType.PREREQUISITE, linkedCourseCompetency: { id: 11 } },
+                        { id: 4, type: CourseCompetencyType.PREREQUISITE, linkedCourseCompetency: { id: 12 } },
+                    ],
                     status: 200,
                 }),
             ),
-        );
-        getAllSpy.mockReturnValue(
-            of({
-                body: [{ id: 1 }, { id: 2 }],
-            } as HttpResponse<Competency[]>),
         );
         getForImportSpy.mockReturnValue(
             of({
