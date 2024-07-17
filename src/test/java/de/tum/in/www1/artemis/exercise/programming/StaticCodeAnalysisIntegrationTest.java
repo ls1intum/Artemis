@@ -80,6 +80,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         course = courseRepository.findWithEagerExercisesById(programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember().getId());
         var tempProgrammingEx = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember());
+        tempProgrammingEx.setBuildConfig(programmingExerciseBuildConfigRepository.save(tempProgrammingEx.getBuildConfig()));
         programmingExercise = programmingExerciseRepository.save(tempProgrammingEx);
     }
 
@@ -112,6 +113,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     void testCreateDefaultCategories(ProgrammingLanguage programmingLanguage) {
         var testExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember(), programmingLanguage);
+        testExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(testExercise.getBuildConfig()));
         testExercise = programmingExerciseRepository.save(testExercise);
         staticCodeAnalysisService.createDefaultCategories(testExercise);
         // Swift has only one default category at the time of creation of this test

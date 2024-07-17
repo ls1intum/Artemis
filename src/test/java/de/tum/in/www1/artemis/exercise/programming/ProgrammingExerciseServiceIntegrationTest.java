@@ -207,6 +207,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         final var now = ZonedDateTime.now();
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
         exercise.setTitle("LoremIpsum");
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         var exerciseId = exercise.getId();
 

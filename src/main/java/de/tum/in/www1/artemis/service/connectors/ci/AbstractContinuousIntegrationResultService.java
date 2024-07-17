@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
@@ -28,13 +29,16 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     protected final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
+    protected final ProgrammingExerciseRepository programmingExerciseRepository;
+
     protected AbstractContinuousIntegrationResultService(ProgrammingExerciseTestCaseRepository testCaseRepository,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
-            ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
+            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.testCaseRepository = testCaseRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.testwiseCoverageService = testwiseCoverageService;
         this.feedbackCreationService = feedbackCreationService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @Override
@@ -102,6 +106,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     }
 
     private void addTestwiseCoverageReportToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
+        programmingExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise);
         if (Boolean.TRUE.equals(programmingExercise.getBuildConfig().isTestwiseCoverageEnabled())) {
             var report = buildResult.getTestwiseCoverageReports();
             if (report != null) {

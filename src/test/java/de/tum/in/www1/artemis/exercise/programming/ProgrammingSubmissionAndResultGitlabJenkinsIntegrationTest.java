@@ -388,7 +388,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, JAVA);
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
-        programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         exercise = programmingExerciseRepository.save(exercise);
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);

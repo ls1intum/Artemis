@@ -24,6 +24,7 @@ import com.hazelcast.map.IMap;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -31,6 +32,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
@@ -71,6 +74,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final GitService gitService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private IQueue<BuildJobQueueItem> queue;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
@@ -79,7 +86,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService) {
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -89,6 +97,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.gitService = gitService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @PostConstruct
@@ -201,7 +211,15 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String[] auxiliaryRepositoryUris = auxiliaryRepositories.stream().map(AuxiliaryRepository::getRepositoryUri).toArray(String[]::new);
         String[] auxiliaryRepositoryCheckoutDirectories1 = auxiliaryRepositories.stream().map(AuxiliaryRepository::getCheckoutDirectory).toArray(String[]::new);
 
-        if (programmingExercise.getBuildConfig().getCheckoutSolutionRepository()) {
+        ProgrammingExerciseBuildConfig buildConfig;
+        if (Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
+            buildConfig = programmingExercise.getBuildConfig();
+        }
+        else {
+            buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        }
+
+        if (buildConfig.getCheckoutSolutionRepository()) {
             ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
             if (programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
                 var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(participation.getProgrammingExercise().getId());
@@ -247,6 +265,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        programmingExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise);
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
@@ -268,7 +287,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         List<String> resultPaths = getTestResultPaths(windfile);
 
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
-        String buildScript = localCIBuildConfigurationService.createBuildScript(participation);
+        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);

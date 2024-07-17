@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
@@ -30,11 +29,10 @@ public class LocalCIBuildConfigurationService {
      * Creates a build script for a given programming exercise.
      * The build script is used to build the programming exercise in a Docker container.
      *
-     * @param participation the participation for which to create the build script
+     * @param programmingExercise the programming exercise for which the build script should be created
      * @return the build script
      */
-    public String createBuildScript(ProgrammingExerciseParticipation participation) {
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+    public String createBuildScript(ProgrammingExercise programmingExercise) {
 
         StringBuilder buildScript = new StringBuilder();
         buildScript.append("#!/bin/bash\n");

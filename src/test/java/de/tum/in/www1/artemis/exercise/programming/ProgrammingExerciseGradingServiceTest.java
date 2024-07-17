@@ -227,6 +227,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             // Adjust settings so that exam and course exercises can use the same tests
             programmingExercise.setMaxPoints(42.0);
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
+            programmingExercise.setBuildConfig(super.programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
             programmingExercise = super.programmingExerciseRepository.save(programmingExercise);
             programmingExercise = super.programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
             programmingExercise = super.programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -1189,7 +1190,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // Remove max penalty from exercise
         programmingExerciseSCAEnabled.setMaxStaticCodeAnalysisPenalty(null);
-        programmingExerciseBuildConfigRepository.save(programmingExerciseSCAEnabled.getBuildConfig());
         programmingExerciseRepository.save(programmingExerciseSCAEnabled);
 
         // Remove category penalty limits

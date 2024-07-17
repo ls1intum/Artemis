@@ -82,6 +82,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "buildConfig" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndBuildConfigById(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
             "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findForCreationById(long exerciseId);
@@ -752,6 +755,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         ProgrammingExercise programmingExercise = getProgrammingExerciseFromParticipation(participation);
         if (programmingExercise == null) {
             throw new EntityNotFoundException("No programming exercise found for the participation with id " + participation.getId());
+        }
+        return programmingExercise;
+    }
+
+    /**
+     * Fetch the programming exercise with the build config, or throw an EntityNotFoundException if it cannot be found.
+     *
+     * @param programmingExercise The programming exercise to fetch the build config for.
+     * @return The programming exercise with the build config.
+     */
+    default ProgrammingExercise getProgrammingExerciseWithBuildConfigElseThrow(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
+            return findWithBuildConfigById(programmingExercise.getId()).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExercise.getId()));
         }
         return programmingExercise;
     }

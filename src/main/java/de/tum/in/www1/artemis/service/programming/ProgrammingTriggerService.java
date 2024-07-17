@@ -104,7 +104,7 @@ public class ProgrammingTriggerService {
      */
     public void setTestCasesChangedAndTriggerTestCaseUpdate(long programmingExerciseId) throws EntityNotFoundException {
         setTestCasesChanged(programmingExerciseId, true);
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId).orElseThrow();
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(programmingExerciseId).orElseThrow();
 
         try {
             ContinuousIntegrationTriggerService ciTriggerService = continuousIntegrationTriggerService.orElseThrow();
