@@ -165,8 +165,8 @@ describe('ProgrammingExamSummaryComponent', () => {
         expect(component.feedbackComponentParameters.result).toEqual(result);
         expect(component.feedbackComponentParameters.exerciseType).toEqual(programmingExercise.type);
 
-        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
-        expect(modelingSubmissionComponent).toBeTruthy();
+        const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
+        expect(feedbackComponent).toBeTruthy();
     });
 
     it('should not show results if not yet published', () => {
@@ -174,12 +174,12 @@ describe('ProgrammingExamSummaryComponent', () => {
 
         fixture.detectChanges();
 
-        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
-        expect(modelingSubmissionComponent).not.toBeTruthy();
+        const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
+        expect(feedbackComponent).not.toBeTruthy();
     });
 
-    it('should display clone button', () => {
-        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(CodeButtonComponent))?.componentInstance;
-        expect(modelingSubmissionComponent).toBeTruthy();
+    it('should display code button', () => {
+        const codeButtonComponent = fixture.debugElement.query(By.directive(CodeButtonComponent))?.componentInstance;
+        expect(codeButtonComponent).toBeTruthy();
     });
 });
