@@ -18,6 +18,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
 class MockActivatedRoute {
     parent: any;
@@ -107,7 +108,14 @@ describe('CourseCompetencies', () => {
             status: 200,
         });
 
-        const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(of([{}]));
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllForCourse').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [{} as Prerequisite],
+                    status: 200,
+                }),
+            ),
+        );
         jest.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
         const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
         const getJoLAllForCourseSpy = jest.spyOn(competencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
