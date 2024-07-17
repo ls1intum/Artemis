@@ -586,7 +586,7 @@ export class ProgrammingExerciseService {
         newerCommitHash: string,
         repositoryType?: string,
     ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        const params: { repositoryType?: RepositoryType, participationId?: number } = {};
+        const params: { repositoryType?: string; participationId?: number } = {};
         if (repositoryType !== undefined) {
             params.repositoryType = repositoryType;
         }
