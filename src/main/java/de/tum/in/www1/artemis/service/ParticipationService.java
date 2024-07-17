@@ -829,9 +829,7 @@ public class ParticipationService {
             // delete local repository cache
             gitService.deleteLocalRepository(repositoryUri);
 
-            if (profileService.isLocalVcsActive()) {
-                participationVCSAccessTokenRepository.deleteByParticipation_id(participationId);
-            }
+            participationVCSAccessTokenRepository.deleteByParticipation_id(participationId);
         }
 
         // If local CI is active, remove all queued jobs for participation
