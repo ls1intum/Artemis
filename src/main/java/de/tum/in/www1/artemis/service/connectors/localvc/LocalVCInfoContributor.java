@@ -45,7 +45,7 @@ public class LocalVCInfoContributor implements InfoContributor {
         // Show the access token in case it is available in the clone URL
         // with the account.service.ts and its check if the access token is required
         // TODO: Find a better way to test this in LocalVCInfoContributorTest
-        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, true);
+        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, useVcsAccessToken);
 
         // Store ssh url template
         try {
