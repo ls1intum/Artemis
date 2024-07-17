@@ -9,7 +9,7 @@
                     <span jhiTranslate="artemisApp.competency.manage.generateButton"></span>
                 </a>
             }
-            <button class="btn btn-primary" id="courseCompetencyImportAllButton" (click)="openImportAllModal('courseCompetency')">
+            <button class="btn btn-primary" id="courseCompetencyImportAllButton" (click)="openImportAllModal()">
                 <fa-icon [icon]="faFileImport" />
                 <span jhiTranslate="artemisApp.courseCompetency.manage.importAllButton"></span>
             </button>
@@ -34,7 +34,7 @@
         [relations]="relations"
         [competencyType]="'competency'"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
-        (competencyDeleted)="recalculateCourseCompetencies($event)"
+        (competencyDeleted)="onRemoveCompetency($event)"
     />
     <jhi-competency-management-table
         [courseId]="courseId"
@@ -42,6 +42,6 @@
         [relations]="relations"
         [competencyType]="'prerequisite'"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
-        (competencyDeleted)="recalculateCourseCompetencies($event)"
+        (competencyDeleted)="onRemoveCompetency($event)"
     />
 </div>

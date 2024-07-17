@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
@@ -50,11 +49,9 @@ public class PrerequisiteService extends CourseCompetencyService {
      *
      * @param course        the course to import into
      * @param prerequisites the prerequisites to import
-     * @param relations     the relations to import
      * @return The set of imported prerequisites, each also containing the relations it is the tail prerequisite for.
      */
-    public Set<CompetencyWithTailRelationDTO> importPrerequisitesAndRelations(Course course, Collection<? extends CourseCompetency> prerequisites,
-            Set<CompetencyRelation> relations) {
+    public Set<CompetencyWithTailRelationDTO> importPrerequisitesAndRelations(Course course, Collection<? extends CourseCompetency> prerequisites) {
         var idToImportedPrerequisite = new HashMap<Long, CompetencyWithTailRelationDTO>();
 
         for (var prerequisite : prerequisites) {
@@ -65,7 +62,7 @@ public class PrerequisiteService extends CourseCompetencyService {
             idToImportedPrerequisite.put(prerequisite.getId(), new CompetencyWithTailRelationDTO(importedPrerequisite, new ArrayList<>()));
         }
 
-        return importCourseCompetenciesAndRelations(course, idToImportedPrerequisite, relations);
+        return importCourseCompetenciesAndRelations(course, idToImportedPrerequisite);
     }
 
     /**

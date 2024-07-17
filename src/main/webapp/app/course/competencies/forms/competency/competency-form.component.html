@@ -11,6 +11,7 @@
                     [averageStudentScore]="averageStudentScore"
                     [form]="form"
                     [competencyType]="'competency'"
+                    (onLectureUnitSelectionChange)="onLectureUnitSelectionChange($event)"
                 />
                 <div>
                     <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">

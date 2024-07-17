@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
@@ -29,7 +30,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
-import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
@@ -70,8 +70,6 @@ public class PrerequisiteResource {
 
     private final PrerequisiteRepository prerequisiteRepository;
 
-    private final CompetencyRelationRepository competencyRelationRepository;
-
     private final PrerequisiteService prerequisiteService;
 
     private final LectureUnitService lectureUnitService;
@@ -81,10 +79,9 @@ public class PrerequisiteResource {
     private final CourseCompetencyService courseCompetencyService;
 
     public PrerequisiteResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            PrerequisiteRepository prerequisiteRepository, CompetencyRelationRepository competencyRelationRepository, PrerequisiteService prerequisiteService,
-            LectureUnitService lectureUnitService, CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService) {
+            PrerequisiteRepository prerequisiteRepository, PrerequisiteService prerequisiteService, LectureUnitService lectureUnitService,
+            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
-        this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.prerequisiteRepository = prerequisiteRepository;
@@ -232,8 +229,7 @@ public class PrerequisiteResource {
 
         Set<CompetencyWithTailRelationDTO> importedPrerequisites;
         if (importRelations) {
-            var relations = competencyRelationRepository.findAllByHeadCompetencyIdInAndTailCompetencyIdIn(prerequisiteIds, prerequisiteIds);
-            importedPrerequisites = prerequisiteService.importPrerequisitesAndRelations(course, prerequisitesToImport, relations);
+            importedPrerequisites = prerequisiteService.importPrerequisitesAndRelations(course, prerequisitesToImport);
         }
         else {
             importedPrerequisites = prerequisiteService.importPrerequisites(course, prerequisitesToImport);
@@ -265,11 +261,11 @@ public class PrerequisiteResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
         var prerequisites = prerequisiteRepository.findAllForCourse(sourceCourse.getId());
+        var prerequisiteIds = prerequisites.stream().map(Prerequisite::getId).collect(Collectors.toSet());
         Set<CompetencyWithTailRelationDTO> importedPrerequisites;
 
         if (importRelations) {
-            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(sourceCourse.getId());
-            importedPrerequisites = prerequisiteService.importPrerequisitesAndRelations(targetCourse, prerequisites, relations);
+            importedPrerequisites = prerequisiteService.importPrerequisitesAndRelations(targetCourse, prerequisites);
         }
         else {
             importedPrerequisites = prerequisiteService.importPrerequisites(targetCourse, prerequisites);

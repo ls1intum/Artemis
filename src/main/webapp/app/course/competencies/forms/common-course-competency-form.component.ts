@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -40,6 +40,9 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
     form: FormGroup;
     @Input()
     competencyType: 'competency' | 'prerequisite';
+
+    @Output()
+    onLectureUnitSelectionChange = new EventEmitter<LectureUnit[]>();
 
     protected readonly competencyValidators = CourseCompetencyValidators;
 
@@ -93,6 +96,7 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
         this.form.patchValue(formData);
         if (formData.connectedLectureUnits) {
             this.selectedLectureUnitsInTable = formData.connectedLectureUnits;
+            this.onLectureUnitSelectionChange.next(this.selectedLectureUnitsInTable);
         }
     }
 
@@ -110,6 +114,7 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
         } else {
             this.selectedLectureUnitsInTable.push(lectureUnit);
         }
+        this.onLectureUnitSelectionChange.next(this.selectedLectureUnitsInTable);
     }
 
     isLectureUnitAlreadySelectedInTable(lectureUnit: LectureUnit) {

@@ -256,8 +256,7 @@ public class CourseCompetencyResource {
         Set<CompetencyWithTailRelationDTO> importedCompetencies;
 
         if (importRelations) {
-            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(sourceCourse.getId());
-            importedCompetencies = courseCompetencyService.importCourseCompetenciesAndRelations(targetCourse, competencies, relations);
+            importedCompetencies = courseCompetencyService.importCourseCompetenciesAndRelations(targetCourse, competencies);
         }
         else {
             importedCompetencies = courseCompetencyService.importCourseCompetencies(targetCourse, competencies);

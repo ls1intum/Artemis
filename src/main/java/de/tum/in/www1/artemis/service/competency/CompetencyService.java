@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
@@ -50,11 +49,9 @@ public class CompetencyService extends CourseCompetencyService {
      *
      * @param course       the course to import into
      * @param competencies the competencies to import
-     * @param relations    the relations to import
      * @return The set of imported competencies, each also containing the relations it is the tail competency for.
      */
-    public Set<CompetencyWithTailRelationDTO> importCompetenciesAndRelations(Course course, Collection<? extends CourseCompetency> competencies,
-            Set<CompetencyRelation> relations) {
+    public Set<CompetencyWithTailRelationDTO> importCompetenciesAndRelations(Course course, Collection<? extends CourseCompetency> competencies) {
         var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
 
         for (var competency : competencies) {
@@ -65,7 +62,7 @@ public class CompetencyService extends CourseCompetencyService {
             idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
         }
 
-        return importCourseCompetenciesAndRelations(course, idToImportedCompetency, relations);
+        return importCourseCompetenciesAndRelations(course, idToImportedCompetency);
     }
 
     /**

@@ -34,6 +34,8 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
     }
 
     ngOnInit(): void {
+        super.ngOnInit();
+
         this.isLoading = true;
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
             .pipe(

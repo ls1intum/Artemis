@@ -132,24 +132,15 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     /**
      * Opens a modal for selecting a course to import all competencies from.
      */
-    openImportAllModal(competencyType: 'competency' | 'prerequisite' | 'courseCompetency') {
+    openImportAllModal() {
         const modalRef = this.modalService.open(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
         //unary operator is necessary as otherwise courseId is seen as a string and will not match.
         modalRef.componentInstance.disabledIds = [+this.courseId];
-        modalRef.componentInstance.competencyType = competencyType;
+        modalRef.componentInstance.competencyType = 'courseCompetency';
         modalRef.result.then((result: ImportAllFromCourseResult) => {
             const courseTitle = result.courseForImportDTO.title ?? '';
 
-            let service: CourseCompetencyService;
-            if (competencyType === 'competency') {
-                service = this.competencyService;
-            } else if (competencyType === 'prerequisite') {
-                service = this.prerequisiteService;
-            } else {
-                service = this.courseCompetencyService;
-            }
-
-            service
+            this.courseCompetencyService
                 .importAll(this.courseId, result.courseForImportDTO.id!, result.importRelations)
                 .pipe(
                     filter((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.ok),
@@ -158,10 +149,10 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: (res: Array<CompetencyWithTailRelationDTO>) => {
                         if (res.length > 0) {
-                            this.alertService.success(`artemisApp.${competencyType}.importAll.success`, { noOfCompetencies: res.length, courseTitle: courseTitle });
+                            this.alertService.success(`artemisApp.courseCompetency.importAll.success`, { noOfCompetencies: res.length, courseTitle: courseTitle });
                             this.updateDataAfterImportAll(res);
                         } else {
-                            this.alertService.warning(`artemisApp.${competencyType}.importAll.warning`, { courseTitle: courseTitle });
+                            this.alertService.warning(`artemisApp.courseCompetency.importAll.warning`, { courseTitle: courseTitle });
                         }
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -246,9 +237,9 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    recalculateCourseCompetencies(competencyId: number) {
-        this.courseCompetencies = this.courseCompetencies.filter((competency) => competency.id !== competencyId);
-        console.log('recalculating');
-        console.log(this.courseCompetencies);
+    onRemoveCompetency(competencyId: number) {
+        this.competencies = this.competencies.filter((competency) => competency.id !== competencyId);
+        this.prerequisites = this.prerequisites.filter((prerequisite) => prerequisite.id !== competencyId);
+        this.courseCompetencies = this.competencies.concat(this.prerequisites);
     }
 }

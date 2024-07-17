@@ -177,4 +177,8 @@ export abstract class CourseCompetencyFormComponent {
             }
         }
     }
+
+    protected onLectureUnitSelectionChange(lectureUnits: LectureUnit[]) {
+        this.selectedLectureUnitsInTable = lectureUnits;
+    }
 }

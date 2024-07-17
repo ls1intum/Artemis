@@ -34,7 +34,8 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
     }
 
     ngOnInit(): void {
-        this.isLoading = true;
+        super.ngOnInit();
+
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
             .pipe(
                 take(1),

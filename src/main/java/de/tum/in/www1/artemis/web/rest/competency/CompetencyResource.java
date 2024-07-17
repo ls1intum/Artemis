@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
-import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -67,8 +66,6 @@ public class CompetencyResource {
 
     private final CompetencyRepository competencyRepository;
 
-    private final CompetencyRelationRepository competencyRelationRepository;
-
     private final CompetencyService competencyService;
 
     private final LectureUnitService lectureUnitService;
@@ -78,10 +75,9 @@ public class CompetencyResource {
     private final CourseCompetencyService courseCompetencyService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
-            LectureUnitService lectureUnitService, CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService) {
+            CompetencyRepository competencyRepository, CompetencyService competencyService, LectureUnitService lectureUnitService,
+            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
-        this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.competencyRepository = competencyRepository;
@@ -229,8 +225,7 @@ public class CompetencyResource {
 
         Set<CompetencyWithTailRelationDTO> importedCompetencies;
         if (importRelations) {
-            var relations = competencyRelationRepository.findAllByHeadCompetencyIdInAndTailCompetencyIdIn(competencyIds, competencyIds);
-            importedCompetencies = competencyService.importCompetenciesAndRelations(course, competenciesToImport, relations);
+            importedCompetencies = competencyService.importCompetenciesAndRelations(course, competenciesToImport);
         }
         else {
             importedCompetencies = competencyService.importCompetencies(course, competenciesToImport);
@@ -265,8 +260,7 @@ public class CompetencyResource {
         Set<CompetencyWithTailRelationDTO> importedCompetencies;
 
         if (importRelations) {
-            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(sourceCourse.getId());
-            importedCompetencies = competencyService.importCompetenciesAndRelations(targetCourse, competencies, relations);
+            importedCompetencies = competencyService.importCompetenciesAndRelations(targetCourse, competencies);
         }
         else {
             importedCompetencies = competencyService.importCompetencies(targetCourse, competencies);
