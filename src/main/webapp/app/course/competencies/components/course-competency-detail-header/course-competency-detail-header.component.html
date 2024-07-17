@@ -9,12 +9,12 @@
                     [ngbTooltip]="'artemisApp.competency.taxonomies.' + (courseCompetency().taxonomy ?? 'none') | artemisTranslate"
                     container="body"
                 />
-                <h4 class="my-0 ms-2">{{ courseCompetency().title }}</h4>
+                <h4 id="course-competency-title" class="my-0 ms-2">{{ courseCompetency().title }}</h4>
                 @if (isMastered()) {
-                    <span class="badge text-white text-bg-success ms-2" jhiTranslate="artemisApp.competency.mastered"></span>
+                    <span id="course-competency-mastered-batch" class="badge text-white text-bg-success ms-2" jhiTranslate="artemisApp.competency.mastered"></span>
                 }
                 @if (courseCompetency().optional) {
-                    <span class="badge text-white bg-warning ms-2" jhiTranslate="artemisApp.competency.optional"></span>
+                    <span id="course-competency-optional-batch" class="badge text-white bg-warning ms-2" jhiTranslate="artemisApp.competency.optional"></span>
                 }
             </div>
             <div class="col-md-auto d-flex align-items-center">
@@ -28,7 +28,7 @@
                 }
                 <!--            TODO: Add authorization-->
                 <!--                        @if (competency().course?.isAtLeastInstructor) {-->
-                <button (click)="navigateToEditPage()" class="ms-4 btn btn-sm btn-warning">
+                <button id="'edit-course-competency-button" (click)="navigateToEditPage()" class="ms-4 btn btn-sm btn-warning">
                     <fa-icon [icon]="faPencilAlt" />
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                 </button>

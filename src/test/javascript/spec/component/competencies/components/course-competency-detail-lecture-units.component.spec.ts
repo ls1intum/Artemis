@@ -16,7 +16,7 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { of } from 'rxjs';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 
-describe('CompetencyDetailLectureUnitsComponent', () => {
+describe('CourseCompetencyDetailLectureUnitsComponent', () => {
     let component: CourseCompetencyDetailLectureUnitsComponent;
     let fixture: ComponentFixture<CourseCompetencyDetailLectureUnitsComponent>;
     let lectureUnitService: LectureUnitService;

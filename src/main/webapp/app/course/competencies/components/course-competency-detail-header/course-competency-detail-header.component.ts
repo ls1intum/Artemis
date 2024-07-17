@@ -26,7 +26,6 @@ export class CourseCompetencyDetailHeaderComponent {
     softDueDatePassed = computed(() => dayjs().isAfter(this.courseCompetency().softDueDate));
 
     navigateToEditPage() {
-        // TODO: Change navigation to either prerequisite or competency
         this.router.navigate(['/course-management', this.courseId(), 'competency-management', this.courseCompetency()!.id, 'edit']);
     }
 }
