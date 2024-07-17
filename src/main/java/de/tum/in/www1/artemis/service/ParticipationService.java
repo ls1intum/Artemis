@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
-import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -40,7 +39,6 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -53,7 +51,6 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -104,7 +101,7 @@ public class ParticipationService {
 
     private final ProfileService profileService;
 
-    private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+    private final ParticipationVCSAccessTokenService participationVCSAccessTokenService;
 
     private final CompetencyProgressService competencyProgressService;
 
@@ -115,7 +112,7 @@ public class ParticipationService {
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
             Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, CompetencyProgressService competencyProgressService) {
+            ParticipationVCSAccessTokenService participationVCSAccessTokenService, CompetencyProgressService competencyProgressService) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -135,7 +132,7 @@ public class ParticipationService {
         this.teamScoreRepository = teamScoreRepository;
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.profileService = profileService;
-        this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
+        this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.competencyProgressService = competencyProgressService;
     }
 
@@ -243,12 +240,8 @@ public class ParticipationService {
         }
         participation = studentParticipationRepository.saveAndFlush(participation);
 
-        ParticipationVCSAccessToken participationVCSAccessToken = new ParticipationVCSAccessToken();
         if (exercise instanceof ProgrammingExercise && participant instanceof User user && profileService.isLocalVcsActive()) {
-            participationVCSAccessToken.setUser(user);
-            participationVCSAccessToken.setParticipation(participation);
-            participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
-            participationVCSAccessTokenRepository.save(participationVCSAccessToken);
+            participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
         }
 
         return participation;
@@ -829,7 +822,7 @@ public class ParticipationService {
             // delete local repository cache
             gitService.deleteLocalRepository(repositoryUri);
 
-            participationVCSAccessTokenRepository.deleteByParticipation_id(participationId);
+            participationVCSAccessTokenService.deleteByParticipationId(participationId);
         }
 
         // If local CI is active, remove all queued jobs for participation

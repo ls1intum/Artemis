@@ -47,12 +47,12 @@ import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
-import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ParticipationVCSAccessTokenService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
@@ -111,13 +111,13 @@ public class UserService {
 
     private final ScienceEventRepository scienceEventRepository;
 
-    private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+    private final ParticipationVCSAccessTokenService participationVCSAccessTokenService;
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository) {
+            ParticipationVCSAccessTokenService participationVCSAccessTokenService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -131,7 +131,7 @@ public class UserService {
         this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
         this.scienceEventRepository = scienceEventRepository;
-        this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
+        this.participationVCSAccessTokenService = participationVCSAccessTokenService;
     }
 
     /**
@@ -830,7 +830,7 @@ public class UserService {
      * @return the users participation vcs access token, or throws an exception if it does not exist
      */
     public String getVcsAccessTokenForUser(User user, Long participationId) {
-        var optionalParticipationVCSAccessToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId);
+        var optionalParticipationVCSAccessToken = participationVCSAccessTokenService.findByUserIdAndParticipationId(user.getId(), participationId);
         return optionalParticipationVCSAccessToken.orElseThrow(NoSuchElementException::new).getVcsAccessToken();
     }
 }
