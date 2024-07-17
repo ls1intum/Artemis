@@ -110,8 +110,8 @@ export class CompetencyAccordionComponent implements OnChanges {
         this.nextExercises = activeCompetencyExercises
             .filter((exercise) => exercise.id && exerciseIdToMaxScore[exercise.id] <= completionThreshold)
             .sort((a, b) => {
-                const scoreA = a.id ? exerciseIdToMaxScore[a.id] ?? 0 : 0;
-                const scoreB = b.id ? exerciseIdToMaxScore[b.id] ?? 0 : 0;
+                const scoreA = a.id ? (exerciseIdToMaxScore[a.id] ?? 0) : 0;
+                const scoreB = b.id ? (exerciseIdToMaxScore[b.id] ?? 0) : 0;
 
                 if (scoreA !== scoreB) {
                     return scoreA - scoreB;

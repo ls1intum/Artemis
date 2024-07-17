@@ -63,6 +63,8 @@ describe('QuizExercise Generator', () => {
     });
 
     it('generateDragAndDropExercise for Class Diagram', async () => {
+        // TODO: we should mock this differently without require
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         configureServices();
         jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
