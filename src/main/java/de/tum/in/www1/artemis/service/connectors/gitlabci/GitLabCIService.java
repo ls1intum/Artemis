@@ -16,6 +16,7 @@ import org.gitlab4j.api.models.PipelineFilter;
 import org.gitlab4j.api.models.PipelineStatus;
 import org.gitlab4j.api.models.Project;
 import org.gitlab4j.api.models.Variable;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +35,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
@@ -85,6 +87,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
@@ -104,12 +108,13 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private String gitlabToken;
 
     public GitLabCIService(GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.gitlab = gitlab;
         this.uriService = uriService;
         this.buildPlanRepository = buildPlanRepository;
         this.buildPlanService = buildPlanService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @Override
@@ -141,6 +146,9 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
         try {
             // TODO: Reduce the number of API calls
+            if (exercise.getBuildConfig() == null || !Hibernate.isInitialized(exercise.getBuildConfig())) {
+                exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(exercise);
+            }
             ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             updateVariable(repositoryPath, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
                     programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())));

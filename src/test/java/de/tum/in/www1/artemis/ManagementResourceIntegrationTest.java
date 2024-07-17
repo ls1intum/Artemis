@@ -125,6 +125,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.FORBIDDEN);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
+        programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.FORBIDDEN);
 
