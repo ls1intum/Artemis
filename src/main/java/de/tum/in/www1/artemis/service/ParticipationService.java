@@ -244,8 +244,8 @@ public class ParticipationService {
         participation = studentParticipationRepository.saveAndFlush(participation);
 
         ParticipationVCSAccessToken participationVCSAccessToken = new ParticipationVCSAccessToken();
-        if (exercise instanceof ProgrammingExercise && participant instanceof User && profileService.isLocalVcsActive()) {
-            participationVCSAccessToken.setUser((User) participant);
+        if (exercise instanceof ProgrammingExercise && participant instanceof User user && profileService.isLocalVcsActive()) {
+            participationVCSAccessToken.setUser(user);
             participationVCSAccessToken.setParticipation(participation);
             participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
             participationVCSAccessTokenRepository.save(participationVCSAccessToken);
