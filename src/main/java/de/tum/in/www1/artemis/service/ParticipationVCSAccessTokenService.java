@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +61,7 @@ public class ParticipationVCSAccessTokenService {
                     participationVCSAccessToken.setParticipation(participation);
                     participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
                     return participationVCSAccessToken;
-                }).collect(Collectors.toList());
+                }).toList();
         log.debug("Generated {} missing VcsAccessTokens", vcsAccessTokens);
 
         participationVCSAccessTokenRepository.saveAll(vcsAccessTokens);
