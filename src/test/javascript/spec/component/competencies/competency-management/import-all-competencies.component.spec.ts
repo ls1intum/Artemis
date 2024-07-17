@@ -2,15 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { ImportAllCompetenciesComponent } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { Course } from 'app/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from 'app/forms/forms.module';
 
 describe('ImportAllCompetenciesComponent', () => {
@@ -19,16 +18,8 @@ describe('ImportAllCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination), ArtemisSharedCommonModule, ArtemisSharedComponentModule],
-            declarations: [
-                ImportAllCompetenciesComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockRouter,
-                MockComponent(ButtonComponent),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-                MockProvider(NgbActiveModal),
-            ],
+            imports: [ImportAllCompetenciesComponent, ArtemisTestModule, FormsModule, MockComponent(NgbPagination), ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+            declarations: [MockRouter, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
         })
             .compileComponents()
             .then(() => {
