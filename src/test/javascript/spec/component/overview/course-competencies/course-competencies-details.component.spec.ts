@@ -5,7 +5,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
@@ -33,12 +32,13 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
     let component: CourseCompetenciesDetailsComponent;
 
-    let competencyService: CompetencyService;
+    let courseCompetencyService: CourseCompetencyService;
 
     const parentParams = { courseId: 1 };
     const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
@@ -82,7 +82,7 @@ describe('CourseCompetenciesDetails', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseCompetenciesDetailsComponent);
                 component = fixture.componentInstance;
-                competencyService = TestBed.inject(CompetencyService);
+                courseCompetencyService = TestBed.inject(CourseCompetencyService);
                 const featureToggleService = TestBed.inject(FeatureToggleService);
                 jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
             });
@@ -103,7 +103,7 @@ describe('CourseCompetenciesDetails', () => {
             lectureUnits: [new TextUnit()],
             exercises: [{ id: 5 } as TextExercise],
         } as Competency;
-        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
 
@@ -122,7 +122,7 @@ describe('CourseCompetenciesDetails', () => {
             exercises: [{ id: 5 } as ModelingExercise],
         } as Competency;
 
-        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
 
@@ -143,7 +143,7 @@ describe('CourseCompetenciesDetails', () => {
                 } as CompetencyProgress,
             ],
         } as Competency;
-        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
         expect(findByIdSpy).toHaveBeenCalledOnce();
@@ -159,13 +159,11 @@ describe('CourseCompetenciesDetails', () => {
     }));
 
     it('should detect if due date is passed', () => {
-        const competencyFuture = { softDueDate: dayjs().add(1, 'days') } as Competency;
-        component.competency = competencyFuture;
+        component.competency = { softDueDate: dayjs().add(1, 'days') } as Competency;
         fixture.detectChanges();
         expect(component.softDueDatePassed).toBeFalse();
 
-        const competencyPast = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
-        component.competency = competencyPast;
+        component.competency = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
         fixture.detectChanges();
         expect(component.softDueDatePassed).toBeTrue();
     });

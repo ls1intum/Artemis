@@ -364,20 +364,20 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void forCompetencyWithNoTitleForCreate(CourseCompetency competency) throws Exception {
-        CourseCompetency result = createCall(course.getId(), competency, HttpStatus.BAD_REQUEST);
+        createCall(course.getId(), competency, HttpStatus.BAD_REQUEST);
     }
 
     // Test
     void forCompetencyWithEmptyTitleForCreate(CourseCompetency competency) throws Exception {
         competency.setTitle(" "); // empty title
-        CourseCompetency result = createCall(course.getId(), competency, HttpStatus.BAD_REQUEST);
+        createCall(course.getId(), competency, HttpStatus.BAD_REQUEST);
     }
 
     // Test
     void forCompetencyWithIdForCreate(CourseCompetency competency) throws Exception {
         competency.setTitle("Hello");
         competency.setId(5L); // id is set
-        CourseCompetency result = createCall(course.getId(), competency, HttpStatus.BAD_REQUEST);
+        createCall(course.getId(), competency, HttpStatus.BAD_REQUEST);
     }
 
     // Test

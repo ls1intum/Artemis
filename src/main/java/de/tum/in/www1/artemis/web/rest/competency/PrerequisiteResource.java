@@ -6,7 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
@@ -261,7 +260,6 @@ public class PrerequisiteResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
         var prerequisites = prerequisiteRepository.findAllForCourse(sourceCourse.getId());
-        var prerequisiteIds = prerequisites.stream().map(Prerequisite::getId).collect(Collectors.toSet());
         Set<CompetencyWithTailRelationDTO> importedPrerequisites;
 
         if (importRelations) {
