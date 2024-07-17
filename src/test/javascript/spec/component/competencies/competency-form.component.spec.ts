@@ -109,6 +109,7 @@ describe('CompetencyFormComponent', () => {
         };
         competencyFormComponentFixture.detectChanges();
         competencyFormComponent.formData = formData;
+        competencyFormComponent['onLectureUnitSelectionChange']([textUnit]);
         competencyFormComponent.ngOnChanges();
 
         expect(competencyFormComponent.titleControl?.value).toEqual(formData.title);

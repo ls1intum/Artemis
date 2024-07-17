@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -15,6 +15,7 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from 'app/forms/forms.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { merge } from 'rxjs';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
@@ -23,7 +24,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     standalone: true,
     imports: [ArtemisSharedModule, FormDateTimePickerModule, ArtemisMarkdownModule, NgbDropdownModule, FormsModule, ArtemisCompetenciesModule, ArtemisSharedComponentModule],
 })
-export class CommonCourseCompetencyFormComponent implements OnChanges {
+export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input()
     formData: CourseCompetencyFormData;
     @Input()
@@ -43,6 +44,8 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
 
     @Output()
     onLectureUnitSelectionChange = new EventEmitter<LectureUnit[]>();
+    @Output()
+    onTitleOrDescriptionChange = new EventEmitter<void>();
 
     protected readonly competencyValidators = CourseCompetencyValidators;
 
@@ -69,6 +72,14 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
         return this.form.get('description');
     }
 
+    get softDueDateControl() {
+        return this.form.get('softDueDate');
+    }
+
+    get optionalControl() {
+        return this.form.get('optional');
+    }
+
     get masteryThresholdControl() {
         return this.form.get('masteryThreshold');
     }
@@ -86,7 +97,12 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
         this.descriptionControl?.markAsDirty();
     }
 
+    ngOnInit(): void {
+        merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.onTitleOrDescriptionChange.next());
+    }
+
     ngOnChanges(): void {
+        merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.onTitleOrDescriptionChange.next());
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }

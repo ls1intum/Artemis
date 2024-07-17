@@ -93,8 +93,8 @@ describe('GenerateCompetenciesComponent', () => {
             body: [{}, {}],
             status: 200,
         });
-        const competencyService = TestBed.inject(CompetencyService);
-        const getSpy = jest.spyOn(competencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
+        const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+        const getSpy = jest.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
 
         //expect no recommendations to exist at the start
         expect(generateCompetenciesComponentFixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(0);
@@ -191,8 +191,8 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should display alerts after generating', () => {
         const alertService = TestBed.inject(AlertService);
-        const competencyService = TestBed.inject(CompetencyService);
-        const generateCompetenciesMock = jest.spyOn(competencyService, 'generateCompetenciesFromCourseDescription');
+        const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+        const generateCompetenciesMock = jest.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription');
 
         generateCompetenciesMock.mockReturnValue(of({ body: [{ id: 1 }] } as HttpResponse<Competency[]>));
         const successMock = jest.spyOn(alertService, 'success');

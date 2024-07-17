@@ -12,6 +12,7 @@
                     [form]="form"
                     [competencyType]="'prerequisite'"
                     (onLectureUnitSelectionChange)="onLectureUnitSelectionChange($event)"
+                    (onTitleOrDescriptionChange)="suggestTaxonomies()"
                 />
                 <div>
                     <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">

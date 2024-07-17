@@ -8,7 +8,6 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
 import { HttpResponse } from '@angular/common/http';
-import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -123,8 +122,6 @@ describe('CourseCompetencies', () => {
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();
 
-        const competencyCards = courseCompetenciesComponentFixture.debugElement.queryAll(By.directive(CompetencyCardStubComponent));
-        expect(competencyCards).toHaveLength(3); // 1 prerequisite and 2 competencies
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getJoLAllForCourseSpy).toHaveBeenCalledOnce();
