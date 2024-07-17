@@ -318,7 +318,6 @@ export class ExerciseAPIRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
         let newModelingExercise;
-        // eslint-disable-next-line no-prototype-builtins
         if (body.hasOwnProperty('course')) {
             newModelingExercise = Object.assign({}, templateCopy, dates, body);
         } else {
@@ -415,7 +414,6 @@ export class ExerciseAPIRequests {
         const dates = {
             releaseDate: dayjsToString(releaseDate),
         };
-        // eslint-disable-next-line no-prototype-builtins
         if (body.hasOwnProperty('course')) {
             newQuizExercise = Object.assign({}, quizExercise, dates, body);
         } else {

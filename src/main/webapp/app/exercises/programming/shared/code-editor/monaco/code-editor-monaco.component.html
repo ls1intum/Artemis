@@ -1,5 +1,5 @@
 <div class="card">
-    <jhi-code-editor-header [showTabSizeSelector]="false" [filename]="selectedFile!" [isLoading]="isLoading" />
+    <jhi-code-editor-header [showTabSizeSelector]="false" [filename]="selectedFile!" [isLoading]="loadingCount > 0" />
     <div class="card-body card-body-monaco">
         @if (selectedFile) {
             @for (feedback of filterFeedbackForSelectedFile(feedbacks); track feedback.id) {
@@ -45,14 +45,14 @@
         }
         <jhi-monaco-editor
             (textChanged)="onFileTextChanged($event)"
-            [hidden]="!selectedFile || isLoading || binaryFileSelected"
+            [hidden]="!selectedFile || loadingCount > 0 || binaryFileSelected"
             [readOnly]="editorLocked"
             [textChangedEmitDelay]="200"
             #editor
             [id]="'monaco-editor-' + sessionId"
         />
 
-        @if (!selectedFile && !isLoading) {
+        @if (!selectedFile && !loadingCount) {
             <p id="no-file-selected" class="text-center lead text-body-secondary pt-5" jhiTranslate="artemisApp.editor.selectFile"></p>
         } @else if (binaryFileSelected) {
             <p id="binary-file-selected" class="text-center lead pt-5" jhiTranslate="artemisApp.editor.binaryFileSelected"></p>
