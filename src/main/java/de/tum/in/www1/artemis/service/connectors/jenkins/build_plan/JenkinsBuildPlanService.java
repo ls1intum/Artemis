@@ -179,7 +179,7 @@ public class JenkinsBuildPlanService {
         return switch (programmingLanguage) {
             case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY -> jenkinsBuildPlanCreator;
             case VHDL, ASSEMBLER, OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
-                throw new UnsupportedOperationException(programmingLanguage + " templates are not available for Jenkins");
+                throw new UnsupportedOperationException(programmingLanguage + " templates are not available for Jenkins.");
         };
     }
 

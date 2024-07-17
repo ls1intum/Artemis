@@ -36,6 +36,19 @@ public enum ProgrammingLanguage {
     ADA("adb", "ads"),
     DART("dart"),
     PHP("php");
+
+    private static final Set<ProgrammingLanguage> ENABLED_LANGUAGES = Set.of(
+        EMPTY,
+        JAVA,
+        PYTHON,
+        C,
+        HASKELL,
+        KOTLIN,
+        VHDL,
+        ASSEMBLER,
+        SWIFT,
+        OCAML
+    );
     // @formatter:on
 
     private final Set<String> fileExtensions;
@@ -46,6 +59,10 @@ public enum ProgrammingLanguage {
 
     public Set<String> getFileExtensions() {
         return fileExtensions;
+    }
+
+    public static Set<ProgrammingLanguage> getEnabledLanguages() {
+        return ENABLED_LANGUAGES;
     }
 
     /**
