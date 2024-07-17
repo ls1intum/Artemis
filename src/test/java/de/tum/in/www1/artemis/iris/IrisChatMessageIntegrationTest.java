@@ -81,7 +81,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
-        exercise.getBuildConfig().setProjectType(ProjectType.PLAIN_GRADLE);
+        exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
         programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         programmingExerciseRepository.save(exercise);

@@ -510,8 +510,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 assertThat(exercise.getExerciseGroup().getExercises()).isEmpty();
                 assertThat(exercise.getExerciseGroup().getExam()).isNull();
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(((ProgrammingExercise) exercise).getBuildConfig().getBuildScript()).isNull();
-                    assertThat(((ProgrammingExercise) exercise).getBuildConfig().getBuildPlanConfiguration()).isNull();
+                    assertThat(((ProgrammingExercise) exercise).getBuildConfig()).isNull();
                 }
             }
             assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isTrue();

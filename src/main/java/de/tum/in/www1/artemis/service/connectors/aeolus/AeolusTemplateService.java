@@ -172,7 +172,7 @@ public class AeolusTemplateService {
     public Windfile getDefaultWindfileFor(ProgrammingExercise exercise) {
         try {
             ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-            return getWindfileFor(exercise.getProgrammingLanguage(), Optional.ofNullable(buildConfig.getProjectType()), buildConfig.isStaticCodeAnalysisEnabled(),
+            return getWindfileFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
                     buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {

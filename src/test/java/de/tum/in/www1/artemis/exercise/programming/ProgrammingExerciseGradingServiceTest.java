@@ -226,8 +226,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(group);
             // Adjust settings so that exam and course exercises can use the same tests
             programmingExercise.setMaxPoints(42.0);
-            programmingExercise.getBuildConfig().setMaxStaticCodeAnalysisPenalty(40);
-            super.programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+            programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
             programmingExercise = super.programmingExerciseRepository.save(programmingExercise);
             programmingExercise = super.programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
             programmingExercise = super.programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -924,6 +923,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         var feedback3 = new Feedback().result(result).testCase(tests.get("test3")).positive(test3Passes).type(FeedbackType.AUTOMATIC);
         result.addFeedback(feedback3);
         result.rated(true).successful(test1Passes && test2Passes && test3Passes).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise = programmingExerciseRepository.findWithBuildConfigById(programmingExercise.getId()).orElseThrow();
         gradingService.calculateScoreForResult(result, programmingExercise, true);
         return resultRepository.save(result);
     }
@@ -1113,8 +1113,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
 
         // Also remove max penalty from exercise
-        programmingExerciseSCAEnabled.getBuildConfig().setMaxStaticCodeAnalysisPenalty(null);
-        programmingExerciseBuildConfigRepository.save(programmingExerciseSCAEnabled.getBuildConfig());
+        programmingExerciseSCAEnabled.setMaxStaticCodeAnalysisPenalty(null);
         programmingExerciseRepository.save(programmingExerciseSCAEnabled);
 
         // create results for tests without any limits
@@ -1189,7 +1188,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
 
         // Remove max penalty from exercise
-        programmingExerciseSCAEnabled.getBuildConfig().setMaxStaticCodeAnalysisPenalty(null);
+        programmingExerciseSCAEnabled.setMaxStaticCodeAnalysisPenalty(null);
         programmingExerciseBuildConfigRepository.save(programmingExerciseSCAEnabled.getBuildConfig());
         programmingExerciseRepository.save(programmingExerciseSCAEnabled);
 
@@ -1238,8 +1237,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCalculateScoreWithStaticCodeAnalysisPenalties_cappedByExerciseMaxPenalty() {
-        programmingExerciseSCAEnabled.getBuildConfig().setMaxStaticCodeAnalysisPenalty(20);
-        programmingExerciseBuildConfigRepository.save(programmingExerciseSCAEnabled.getBuildConfig());
+        programmingExerciseSCAEnabled.setMaxStaticCodeAnalysisPenalty(20);
         programmingExerciseSCAEnabled = exerciseRepository.save(programmingExerciseSCAEnabled);
 
         activateAllTestCases(false);

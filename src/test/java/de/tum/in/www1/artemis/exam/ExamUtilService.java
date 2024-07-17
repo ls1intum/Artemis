@@ -58,6 +58,7 @@ import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -93,6 +94,9 @@ public class ExamUtilService {
 
     @Autowired
     private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ExamUserRepository examUserRepository;
@@ -812,6 +816,7 @@ public class ExamUtilService {
             var exerciseGroup6 = exam.getExerciseGroups().get(6);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup6, "Programming");
+            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepo.save(programmingExercise1);
             programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
@@ -859,6 +864,7 @@ public class ExamUtilService {
             var exerciseGroup2 = exam.getExerciseGroups().get(2);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup2);
+            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepo.save(programmingExercise1);
             programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);

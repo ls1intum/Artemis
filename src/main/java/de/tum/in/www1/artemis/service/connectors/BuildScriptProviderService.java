@@ -126,7 +126,7 @@ public class BuildScriptProviderService {
     public String getScriptFor(ProgrammingExercise exercise) {
         try {
             ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-            return getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(buildConfig.getProjectType()), buildConfig.isStaticCodeAnalysisEnabled(),
+            return getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
                     buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {

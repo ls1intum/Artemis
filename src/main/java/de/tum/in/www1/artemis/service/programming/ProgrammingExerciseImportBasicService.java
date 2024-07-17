@@ -162,10 +162,10 @@ public class ProgrammingExerciseImportBasicService {
         programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);
 
         // Copy or create SCA categories
-        if (Boolean.TRUE.equals(importedExercise.getBuildConfig().isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(originalBuildConfig.isStaticCodeAnalysisEnabled()))) {
+        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled()))) {
             importStaticCodeAnalysisCategories(originalProgrammingExercise, importedExercise);
         }
-        else if (Boolean.TRUE.equals(importedExercise.getBuildConfig().isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(originalBuildConfig.isStaticCodeAnalysisEnabled())) {
+        else if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
             staticCodeAnalysisService.createDefaultCategories(importedExercise);
         }
 

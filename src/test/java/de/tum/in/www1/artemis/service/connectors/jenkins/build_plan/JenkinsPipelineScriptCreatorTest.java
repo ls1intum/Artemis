@@ -45,8 +45,8 @@ class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsG
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        programmingExercise.getBuildConfig().setProjectType(ProjectType.MAVEN_MAVEN);
-        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
         programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.setReleaseDate(null);
@@ -81,7 +81,7 @@ class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsG
         assertThat(oldBuildPlan.getBuildPlan()).contains("isStaticCodeAnalysisEnabled = true");
 
         // change exercise attributes
-        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
         jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
 
         BuildPlan newBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElseThrow();

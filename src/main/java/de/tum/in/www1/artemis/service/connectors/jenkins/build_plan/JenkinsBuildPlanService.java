@@ -133,11 +133,10 @@ public class JenkinsBuildPlanService {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
 
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        final ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-        final var configBuilder = builderFor(programmingLanguage, buildConfig.getProjectType());
+        final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getBuildConfig().getCheckoutSolutionRepository();
-        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(buildConfig.getProjectType()), internalRepositoryUris, checkoutSolution,
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUris, checkoutSolution,
                 buildPlanUrl);
 
         final String jobFolder = exercise.getProjectKey();

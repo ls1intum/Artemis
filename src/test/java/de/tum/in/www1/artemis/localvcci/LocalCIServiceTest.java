@@ -137,8 +137,8 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         exercise.getBuildConfig().setBuildScript(script);
         exercise.getBuildConfig().setBuildPlanConfiguration(null);
         continuousIntegrationService.recreateBuildPlansForExercise(exercise);
-        script = buildScriptProviderService.getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getBuildConfig().getProjectType()),
-                exercise.getBuildConfig().isStaticCodeAnalysisEnabled(), exercise.getBuildConfig().hasSequentialTestRuns(), exercise.getBuildConfig().isTestwiseCoverageEnabled());
+        script = buildScriptProviderService.getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
+                exercise.getBuildConfig().hasSequentialTestRuns(), exercise.getBuildConfig().isTestwiseCoverageEnabled());
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         String actualBuildConfig = exercise.getBuildConfig().getBuildPlanConfiguration();
         String expectedBuildConfig = new ObjectMapper().writeValueAsString(windfile);
@@ -153,8 +153,8 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         ReflectionTestUtils.setField(buildScriptProviderService, "scriptCache", new ConcurrentHashMap<>());
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
-        programmingExercise.getBuildConfig().setProjectType(null);
-        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setProjectType(null);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
         programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         String script = buildScriptProviderService.getScriptFor(programmingExercise);

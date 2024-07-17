@@ -120,20 +120,20 @@ public class ProgrammingExerciseFactory {
         if (programmingExercise.getBuildConfig() == null) {
             programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         }
-        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.getBuildConfig().setBuildScript("Some script");
         programmingExercise.getBuildConfig().setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[]}");
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN_MAVEN);
+            programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN);
+            programmingExercise.setProjectType(ProjectType.PLAIN);
         }
         else {
-            programmingExercise.getBuildConfig().setProjectType(null);
+            programmingExercise.setProjectType(null);
         }
         programmingExercise.setPackageName(programmingLanguage == ProgrammingLanguage.SWIFT ? "swiftTest" : "de.test");
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
@@ -178,7 +178,7 @@ public class ProgrammingExerciseFactory {
         toBeImported.setPackageName(template.getPackageName());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
-        buildConfig.setStaticCodeAnalysisEnabled(template.getBuildConfig().isStaticCodeAnalysisEnabled());
+        toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
         buildConfig.setTestwiseCoverageEnabled(template.getBuildConfig().isTestwiseCoverageEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setPosts(null);
@@ -187,7 +187,7 @@ public class ProgrammingExerciseFactory {
         toBeImported.setExampleSubmissions(null);
         toBeImported.setTestRepositoryUri(template.getTestRepositoryUri());
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
-        buildConfig.setProjectType(template.getBuildConfig().getProjectType());
+        toBeImported.setProjectType(template.getProjectType());
         toBeImported.setAssessmentDueDate(template.getAssessmentDueDate());
         toBeImported.setAttachments(null);
         toBeImported.setDueDate(template.getDueDate());
@@ -416,21 +416,21 @@ public class ProgrammingExerciseFactory {
             programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         }
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN_MAVEN);
+            programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN);
+            programmingExercise.setProjectType(ProjectType.PLAIN);
         }
         else if (programmingLanguage == ProgrammingLanguage.C) {
-            programmingExercise.getBuildConfig().setProjectType(ProjectType.GCC);
+            programmingExercise.setProjectType(ProjectType.GCC);
         }
         else {
-            programmingExercise.getBuildConfig().setProjectType(null);
+            programmingExercise.setProjectType(null);
         }
         programmingExercise.setAllowOnlineEditor(true);
-        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
+        programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
         if (enableStaticCodeAnalysis) {
-            programmingExercise.getBuildConfig().setMaxStaticCodeAnalysisPenalty(40);
+            programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
         }
         programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
         // Note: no separators are allowed for Swift package names

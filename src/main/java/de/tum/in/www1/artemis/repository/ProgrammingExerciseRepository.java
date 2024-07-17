@@ -711,14 +711,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         return findWithEagerStudentParticipationsById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
-    @Nullable
-    default ProgrammingExercise getProgrammingExerciseWithBuildConfig(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
-            return findWithBuildConfigById(programmingExercise.getId()).orElse(null);
-        }
-        return programmingExercise;
-    }
-
     /**
      * Retrieves the associated ProgrammingExercise for a given ProgrammingExerciseParticipation.
      * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked

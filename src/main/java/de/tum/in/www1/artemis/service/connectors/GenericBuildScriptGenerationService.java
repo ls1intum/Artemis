@@ -33,8 +33,8 @@ public class GenericBuildScriptGenerationService extends BuildScriptGenerationSe
     public String getScript(ProgrammingExercise programmingExercise) {
         try {
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-            return buildScriptProviderService.getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(buildConfig.getProjectType()),
-                    buildConfig.isStaticCodeAnalysisEnabled(), programmingExercise.getBuildConfig().hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
+            return buildScriptProviderService.getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()),
+                    programmingExercise.isStaticCodeAnalysisEnabled(), buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
             log.error("Failed to generate build script for programming exercise " + programmingExercise.getId(), e);

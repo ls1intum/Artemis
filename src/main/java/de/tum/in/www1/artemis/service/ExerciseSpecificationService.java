@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.Course_;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Exercise_;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig_;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise_;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -113,7 +112,7 @@ public class ExerciseSpecificationService {
      */
     public Specification<ProgrammingExercise> createSCAFilter(ProgrammingLanguage programmingLanguage) {
         return (root, query, criteriaBuilder) -> {
-            Predicate scaActive = criteriaBuilder.isTrue(root.get(ProgrammingExerciseBuildConfig_.STATIC_CODE_ANALYSIS_ENABLED));
+            Predicate scaActive = criteriaBuilder.isTrue(root.get(ProgrammingExercise_.STATIC_CODE_ANALYSIS_ENABLED));
             Predicate sameLanguage = criteriaBuilder.equal(root.get(ProgrammingExercise_.PROGRAMMING_LANGUAGE), programmingLanguage);
             return criteriaBuilder.and(scaActive, sameLanguage);
         };

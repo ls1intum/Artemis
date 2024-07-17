@@ -396,15 +396,14 @@ public class ProgrammingExerciseService {
     private void validateProjectType(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
         // Check if project type is selected
         if (!programmingLanguageFeature.projectTypes().isEmpty()) {
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-            if (buildConfig.getProjectType() == null) {
+            if (programmingExercise.getProjectType() == null) {
                 throw new BadRequestAlertException("The project type is not set", "Exercise", "projectTypeNotSet");
             }
-            if (!programmingLanguageFeature.projectTypes().contains(buildConfig.getProjectType())) {
+            if (!programmingLanguageFeature.projectTypes().contains(programmingExercise.getProjectType())) {
                 throw new BadRequestAlertException("The project type is not supported for this programming language", "Exercise", "projectTypeNotSupported");
             }
         }
-        else if (programmingExercise.getBuildConfig().getProjectType() != null) {
+        else if (programmingExercise.getProjectType() != null) {
             throw new BadRequestAlertException("The project type is set but not supported", "Exercise", "projectTypeSet");
         }
     }
@@ -438,7 +437,7 @@ public class ProgrammingExerciseService {
     public void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        programmingExercise.getBuildConfig().validateStaticCodeAnalysisSettings(programmingLanguageFeature);
+        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
     /**

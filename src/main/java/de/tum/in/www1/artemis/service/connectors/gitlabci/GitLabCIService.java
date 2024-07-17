@@ -143,7 +143,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             // TODO: Reduce the number of API calls
             ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             updateVariable(repositoryPath, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
-                    programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(buildConfig.getProjectType())));
+                    programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())));
             updateVariable(repositoryPath, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log");
             updateVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
             // TODO: Implement the custom feedback feature

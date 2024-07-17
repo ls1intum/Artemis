@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exception.JenkinsException;
@@ -54,13 +53,12 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
     @Override
     protected String generateDefaultBuildPlan(final ProgrammingExercise exercise) {
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        final ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-        final Optional<ProjectType> projectType = Optional.ofNullable(buildConfig.getProjectType());
+        final Optional<ProjectType> projectType = Optional.ofNullable(exercise.getProjectType());
 
         final String pipelineScript = loadPipelineScript(exercise, projectType);
 
-        final boolean isStaticCodeAnalysisEnabled = buildConfig.isStaticCodeAnalysisEnabled();
-        final boolean isTestwiseCoverageAnalysisEnabled = buildConfig.isTestwiseCoverageEnabled();
+        final boolean isStaticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
+        final boolean isTestwiseCoverageAnalysisEnabled = exercise.getBuildConfig().isTestwiseCoverageEnabled();
         final var replacements = getReplacements(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isTestwiseCoverageAnalysisEnabled);
 
         return replaceVariablesInBuildPlanTemplate(replacements, pipelineScript);

@@ -185,7 +185,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
-        exercise.getBuildConfig().setProjectType(ProjectType.GRADLE_GRADLE);
+        exercise.setProjectType(ProjectType.GRADLE_GRADLE);
         programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         programmingExerciseRepository.save(exercise);
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
@@ -387,7 +387,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = TEST_PREFIX + "student1";
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, JAVA);
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise.getBuildConfig().setProjectType(ProjectType.GRADLE_GRADLE);
+        exercise.setProjectType(ProjectType.GRADLE_GRADLE);
         programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         exercise = programmingExerciseRepository.save(exercise);
 

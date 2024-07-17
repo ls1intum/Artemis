@@ -158,7 +158,7 @@ public class ProgrammingExerciseExportImportResource {
     private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        programmingExercise.getBuildConfig().validateStaticCodeAnalysisSettings(programmingLanguageFeature);
+        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
     /**
@@ -218,8 +218,7 @@ public class ProgrammingExerciseExportImportResource {
         originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
 
         // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded
-        if (newExercise.getBuildConfig().isStaticCodeAnalysisEnabled() != originalProgrammingExercise.getBuildConfig().isStaticCodeAnalysisEnabled()
-                && !(recreateBuildPlans && updateTemplate)) {
+        if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !(recreateBuildPlans && updateTemplate)) {
             throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans and update of template files is activated", ENTITY_NAME,
                     "staticCodeAnalysisCannotChange");
         }

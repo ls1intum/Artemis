@@ -108,8 +108,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
             if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
-                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.getFirst(),
-                        Boolean.TRUE.equals(exercise.getBuildConfig().isStaticCodeAnalysisEnabled()));
+                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.getFirst(), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
                 writeProjectObjectModel(updatedRepoModel, repositoryPoms.getFirst());
             }
 
@@ -123,7 +122,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                 programmingExerciseRepositoryService.replacePlaceholders(exercise, repository);
 
                 // Add the latest static code analysis tool configurations or remove configurations
-                if (Boolean.TRUE.equals(exercise.getBuildConfig().isStaticCodeAnalysisEnabled())) {
+                if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
                     Resource[] staticCodeAnalysisResources = getTemplateResources(exercise, "test/" + SCA_CONFIG_FOLDER + "/**/*.*");
                     fileService.copyResources(staticCodeAnalysisResources, Path.of("java", "test"), repository.getLocalPath().toAbsolutePath(), true);
                 }
@@ -148,9 +147,8 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         Resource[] templatePoms = resourceLoaderService.getFileResources(programmingLanguageTemplate, filePattern);
 
         // Get project type specific template resources
-        if (exercise.getBuildConfig().getProjectType() != null) {
-            final Path projectTypeTemplate = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(),
-                    exercise.getBuildConfig().getProjectType());
+        if (exercise.getProjectType() != null) {
+            final Path projectTypeTemplate = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
 
             final Resource[] projectTypePoms = resourceLoaderService.getFileResources(projectTypeTemplate, filePattern);
 

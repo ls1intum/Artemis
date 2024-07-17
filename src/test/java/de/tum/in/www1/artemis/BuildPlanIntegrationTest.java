@@ -57,8 +57,8 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         var buildConfig = new ProgrammingExerciseBuildConfig();
-        buildConfig.setProjectType(ProjectType.MAVEN_MAVEN);
-        buildConfig.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
         buildConfig.setSequentialTestRuns(false);
         buildConfig.setTestwiseCoverageEnabled(false);
         var savedBuildConfig = programmingExerciseBuildConfigRepository.save(buildConfig);

@@ -201,8 +201,8 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(getSerializedWindfile());
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN_GRADLE);
-        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(true);
         programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
@@ -221,7 +221,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testGetDefaultWindfileFor() {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
-        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(true);
         programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
