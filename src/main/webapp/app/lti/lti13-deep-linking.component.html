@@ -75,7 +75,7 @@
     </div>
     <div class="modal-footer">
         <div>
-            @if (selectedExercises != undefined && selectedExercises.size > 0) {
+            @if (selectedExercises?.size) {
                 <button type="submit" (click)="sendDeepLinkRequest()" class="btn btn-success">
                     <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
                 </button>

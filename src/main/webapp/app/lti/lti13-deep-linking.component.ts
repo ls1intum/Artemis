@@ -130,7 +130,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * If an exercise is selected, it sends a POST request to initiate deep linking.
      */
     sendDeepLinkRequest() {
-        if (this.selectedExercises && this.selectedExercises.size > 0) {
+        if (this.selectedExercises?.size) {
             const ltiIdToken = this.sessionStorageService.retrieve('ltiIdToken') ?? '';
             const clientRegistrationId = this.sessionStorageService.retrieve('clientRegistrationId') ?? '';
             const exerciseIds = Array.from(this.selectedExercises).join(',');

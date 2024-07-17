@@ -84,7 +84,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         component.selectedExercises = new Set();
         component.sendDeepLinkRequest();
-        expect(alertServiceMock.error).toHaveBeenCalledTimes(2);
+        expect(alertServiceMock.error).toHaveBeenNthCalledWith(2, 'artemisApp.lti13.deepLinking.selectToLink');
     });
 
     it('should navigate on init when user is authenticated', fakeAsync(() => {
