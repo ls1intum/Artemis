@@ -32,10 +32,10 @@
                 }
                 <div class="grid-area-main">
                     <div>
-                        <span class="badge bg-primary mb-2" id="word-count" [hidden]="submission && !submission.submitted">
+                        <span class="badge bg-primary mb-2" id="word-count" [hidden]="submission && !submission.submitted && isExamSummary">
                             {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
                         </span>
-                        <span class="badge bg-primary mb-2" id="character-count" [hidden]="submission && !submission.submitted">
+                        <span class="badge bg-primary mb-2" id="character-count" [hidden]="submission && !submission.submitted && isExamSummary">
                             {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
                         </span>
                     </div>
@@ -50,7 +50,7 @@
                             [disabled]="!isActive || !submission || !isOwnerOfParticipation"
                             (keydown.tab)="onTextEditorTab(textEditor, $event)"
                             (input)="onTextEditorInput($event)"
-                            [hidden]="submission && !submission.submitted"
+                            [hidden]="submission && !submission.submitted && isExamSummary"
                         ></textarea>
                         @if (textExercise?.teamMode) {
                             <jhi-team-submission-sync
