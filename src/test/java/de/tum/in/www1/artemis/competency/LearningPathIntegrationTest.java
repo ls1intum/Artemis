@@ -194,7 +194,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private Competency importCompetencyRESTCall() throws Exception {
         final var course2 = courseUtilService.createCourse();
         final var competencyToImport = competencyUtilService.createCompetency(course2);
-        return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/import", competencyToImport, Competency.class, HttpStatus.CREATED);
+        return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/import", competencyToImport.getId(), Competency.class, HttpStatus.CREATED);
     }
 
     private List<CompetencyWithTailRelationDTO> importCompetenciesRESTCall(int numberOfCompetencies) throws Exception {
