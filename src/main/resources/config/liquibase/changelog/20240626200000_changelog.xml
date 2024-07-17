@@ -67,6 +67,7 @@
             ALTER TABLE programming_exercise_details DROP COLUMN max_static_code_analysis_penalty;
             ALTER TABLE programming_exercise_details DROP COLUMN project_type;
             ALTER TABLE programming_exercise_details DROP COLUMN testwise_coverage_enabled;
+--            ALTER TABLE programming_exercise_build_config DROP COLUMN common_key_id;
         </sql>
     </changeSet>
 </databaseChangeLog>
