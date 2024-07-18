@@ -36,7 +36,6 @@ const programmingParticipation = { id: 4, student: user, submissions: [programmi
 
 const programmingExercise = {
     id: 4,
-    title: 'Programming Exercise',
     type: ExerciseType.PROGRAMMING,
     studentParticipations: [programmingParticipation],
     exerciseGroup,
@@ -83,11 +82,11 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         }
     });
 
-    it('should show exercise title', () => {
+    it('should show exercise group title', () => {
         fixture.detectChanges();
 
         const exerciseTitleElement: HTMLElement = fixture.nativeElement.querySelector('#exercise-group-title-' + programmingExercise.id);
         expect(exerciseTitleElement.textContent).toContain('#' + (component.index + 1));
-        expect(exerciseTitleElement.textContent).toContain(programmingExercise.title);
+        expect(exerciseTitleElement.textContent).toContain(programmingExercise.exerciseGroup?.title);
     });
 });
