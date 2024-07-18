@@ -195,7 +195,7 @@ The recommended way is to run the server and the client separately. This provide
 module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
-* **Artemis (Client):** Will execute ``npm install`` and ``npm run start --``. The client will be available at
+* **Artemis (Client):** Will execute ``npm install`` and ``npm run start``. The client will be available at
   `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see
   `Client Setup <#client-setup>`__).
 
