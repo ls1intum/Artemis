@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import type { CommitInfo } from 'app/entities/programming-submission.model';
-import type { User } from 'app/core/user/user.model';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { faAngleDown, faAngleLeft } from '@fortawesome/free-solid-svg-icons';
 
@@ -14,7 +13,6 @@ export class CommitsInfoRowComponent {
     @Input() previousSubmissionHash?: string;
     @Input() exerciseProjectKey?: string;
     @Input() isRepositoryView = false;
-    @Input() user?: User;
     @Input() rowNumber: number;
     @Input() isExpanded: boolean;
     @Input() pushNumber: number;

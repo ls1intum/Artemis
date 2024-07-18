@@ -6,7 +6,6 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
-import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-commits-info',
@@ -24,8 +23,6 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     private commitHashURLTemplate: string;
     private commitsInfoSubscription: Subscription;
     private profileInfoSubscription: Subscription;
-    private userInfoSubscription: Subscription;
-    protected user?: User;
     protected isGroupsExpanded = true;
     protected groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
 
@@ -54,20 +51,11 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
 
         this.setCommitDetails();
         this.groupCommits();
-
-        if (this.participationId) {
-            this.userInfoSubscription = this.programmingExerciseParticipationService.getUserForParticipation(this.participationId).subscribe((user) => {
-                if (user) {
-                    this.user = user;
-                }
-            });
-        }
     }
 
     ngOnDestroy(): void {
         this.commitsInfoSubscription?.unsubscribe();
         this.profileInfoSubscription?.unsubscribe();
-        this.userInfoSubscription?.unsubscribe();
     }
 
     private setCommitDetails() {

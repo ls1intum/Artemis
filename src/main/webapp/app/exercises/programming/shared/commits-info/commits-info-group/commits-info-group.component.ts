@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import type { CommitInfo } from 'app/entities/programming-submission.model';
-import type { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-commits-info-group',
@@ -12,7 +11,6 @@ export class CommitsInfoGroupComponent {
     @Input() previousSubmissionHash?: string;
     @Input() exerciseProjectKey?: string;
     @Input() isRepositoryView = false;
-    @Input() user?: User;
     @Input() groupIndex: number;
     @Input() groupCount: number;
     @Input() pushNumber: number;
