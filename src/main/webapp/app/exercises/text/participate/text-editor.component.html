@@ -32,11 +32,21 @@
                 }
                 <div class="grid-area-main">
                     <div>
-                        <span class="badge bg-primary mb-2" id="word-count" [hidden]="submission && !submission.submitted && isExamSummary">
-                            {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
+                        <span
+                            class="badge bg-primary mb-2"
+                            id="word-count"
+                            [hidden]="submission && !submission.submitted && isExamSummary"
+                            jhiTranslate="artemisApp.textExercise.wordCount"
+                            [translateValues]="{ count: wordCount }"
+                        >
                         </span>
-                        <span class="badge bg-primary mb-2" id="character-count" [hidden]="submission && !submission.submitted && isExamSummary">
-                            {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
+                        <span
+                            class="badge bg-primary mb-2"
+                            id="character-count"
+                            [hidden]="submission && !submission.submitted && isExamSummary"
+                            jhiTranslate="artemisApp.textExercise.characterCount"
+                            [translateValues]="{ count: characterCount }"
+                        >
                         </span>
                     </div>
                     @if (!result) {

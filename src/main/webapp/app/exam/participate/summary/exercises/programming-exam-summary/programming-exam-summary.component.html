@@ -4,7 +4,7 @@
             <div class="col-md-4">
                 <div class="mb-4">
                     @if (submission) {
-                        <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
+                        <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
                     }
                     <jhi-code-button
                         [smallButtons]="true"
@@ -14,7 +14,7 @@
                     <br />
                     <span>
                         @if (submission) {
-                            {{ 'artemisApp.exam.examSummary.submissionLinkedToCommit' | artemisTranslate }}
+                            <span jhiTranslate="artemisApp.exam.examSummary.submissionLinkedToCommit"></span>
                         }
                         @if (commitUrl) {
                             <a [href]="commitUrl" target="_blank" rel="noopener noreferrer">
@@ -27,7 +27,7 @@
                 </div>
                 @if (isAfterResultsArePublished) {
                     @if (submission) {
-                        <h5>{{ 'artemisApp.exam.examSummary.assessment' | artemisTranslate }}</h5>
+                        <h5 jhiTranslate="artemisApp.exam.examSummary.assessment"></h5>
                     }
                     @if (feedbackComponentParameters && feedbackComponentParameters.result) {
                         <jhi-result-detail
@@ -45,7 +45,7 @@
                 }
             </div>
             <div class="col-md-8">
-                <h5>{{ 'artemisApp.exam.examSummary.problemStatement' | artemisTranslate }}</h5>
+                <h5 jhiTranslate="artemisApp.exam.examSummary.problemStatement"></h5>
                 @if (exercise.problemStatement) {
                     <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="participation" />
                 }
