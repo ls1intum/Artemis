@@ -47,7 +47,9 @@ export class ExamEditWorkingTimeDialogComponent {
         this.examManagementService.updateWorkingTime(this.exam.course!.id!, this.exam.id!, this.workingTimeSeconds).subscribe({
             next: (res: HttpResponse<Exam>) => {
                 this.isLoading = false;
-                res.body && this.examChange.emit(res.body);
+                if (res.body) {
+                    this.examChange.emit(res.body);
+                }
                 this.clear();
             },
             error: () => {

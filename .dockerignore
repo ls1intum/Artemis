@@ -18,7 +18,6 @@ www/
 # do not exclude .git as it's necessary to insert the commit id into the build
 !.git
 # do not exclude .eslint files as they are required in the build process
-!.eslintignore
 !.eslintrc
 # do not exclude .npmrc as it's required in the build process for setting the correct node options
 !.npmrc
