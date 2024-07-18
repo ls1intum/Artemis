@@ -75,6 +75,7 @@ import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -88,7 +89,6 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -138,8 +138,6 @@ public class ProgrammingExerciseService {
 
     private final UserRepository userRepository;
 
-    private final GroupNotificationService groupNotificationService;
-
     private final GroupNotificationScheduleService groupNotificationScheduleService;
 
     private final InstanceMessageSendService instanceMessageSendService;
@@ -186,11 +184,13 @@ public class ProgrammingExerciseService {
 
     private final ExerciseService exerciseService;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, GroupNotificationService groupNotificationService,
+            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
@@ -200,7 +200,7 @@ public class ProgrammingExerciseService {
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyProgressService competencyProgressService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -212,7 +212,6 @@ public class ProgrammingExerciseService {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.userRepository = userRepository;
-        this.groupNotificationService = groupNotificationService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -234,6 +233,7 @@ public class ProgrammingExerciseService {
         this.profileService = profileService;
         this.exerciseService = exerciseService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -338,6 +338,8 @@ public class ProgrammingExerciseService {
         scheduleOperations(savedProgrammingExercise.getId());
         // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
+        // Step 12d: Update student competency progress
+        competencyProgressService.updateProgressByLearningObjectAsync(savedProgrammingExercise);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -580,6 +582,8 @@ public class ProgrammingExerciseService {
         }
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
+
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
 
         return savedProgrammingExercise;
     }

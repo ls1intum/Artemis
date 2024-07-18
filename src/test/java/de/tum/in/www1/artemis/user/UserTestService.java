@@ -660,7 +660,7 @@ public class UserTestService {
         params.add("courseIds", "");
         List<User> users = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(1);
-        assertThat(users.get(0).getEmail()).isEqualTo(student.getEmail());
+        assertThat(users.getFirst().getEmail()).isEqualTo(student.getEmail());
     }
 
     // Test

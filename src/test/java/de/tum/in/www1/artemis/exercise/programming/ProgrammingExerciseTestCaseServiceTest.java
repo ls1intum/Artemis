@@ -95,7 +95,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
-        new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50.0);
+        new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).getFirst().weight(50.0);
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 

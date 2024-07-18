@@ -236,9 +236,9 @@ public class HestiaUtilTestService {
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.localRepoFile.toURI());
         doReturn(gitService.linkRepositoryForExistingGit(participationRepo.originRepoFile.toPath(), null, "main", true)).when(gitService).getBareRepository(any());
-        var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.get(0).getId().getName(), SubmissionType.MANUAL);
+        var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.getFirst().getId().getName(), SubmissionType.MANUAL);
         participation = programmingExerciseStudentParticipationRepository
-                .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).get(0);
+                .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).getFirst();
         return (ProgrammingSubmission) participationUtilService.addSubmission(participation, submission);
     }
 

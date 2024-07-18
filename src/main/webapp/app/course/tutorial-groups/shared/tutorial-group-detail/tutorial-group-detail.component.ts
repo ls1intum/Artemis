@@ -46,7 +46,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {
-            // eslint-disable-next-line no-prototype-builtins
             if (changes.hasOwnProperty(propName) && propName === 'tutorialGroup') {
                 const change = changes[propName];
 

@@ -102,10 +102,10 @@ public class ProgrammingExerciseResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
-    private final ChannelRepository channelRepository;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    private final ChannelRepository channelRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -291,7 +291,9 @@ public class ProgrammingExerciseResource {
 
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findWithAuxiliaryRepositoriesAndBuildConfigElseThrow(updatedProgrammingExercise.getId());
+        //TODO: Check Develop and fix merge
+        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesAndCompetenciesElseThrow(updatedProgrammingExercise.getId());
+        //var programmingExerciseBeforeUpdate = programmingExerciseRepository.findWithAuxiliaryRepositoriesAndBuildConfigElseThrow(updatedProgrammingExercise.getId());
         if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
@@ -329,7 +331,11 @@ public class ProgrammingExerciseResource {
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }
 
+        // Update the auxiliary repositories in the DB and ProgrammingExercise instance
         auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        // Update the auxiliary repositories in the VCS. This needs to be decoupled to break circular dependencies.
+        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             // make sure the default value is set properly
@@ -344,6 +350,7 @@ public class ProgrammingExerciseResource {
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
         return ResponseEntity.ok(savedProgrammingExercise);
     }
 
@@ -518,7 +525,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "true") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);

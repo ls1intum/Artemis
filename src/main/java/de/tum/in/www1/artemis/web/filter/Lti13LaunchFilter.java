@@ -86,7 +86,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             writeResponse(targetLink, ltiIdToken, authToken.getAuthorizedClientRegistrationId(), response);
         }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
-            log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
+            log.error("Error during LTI 1.3 launch request: {}", ex.getMessage(), ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
         }
     }
@@ -106,7 +106,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             }
         }
         catch (OAuth2AuthenticationException | IllegalStateException ex) {
-            throw new IllegalStateException("Failed to attempt LTI 1.3 login authentication: " + ex.getMessage());
+            throw new IllegalStateException("Failed to attempt LTI 1.3 login authentication: " + ex.getMessage(), ex);
         }
 
         return ltiAuthToken;

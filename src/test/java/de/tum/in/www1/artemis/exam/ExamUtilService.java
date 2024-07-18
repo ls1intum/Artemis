@@ -247,9 +247,9 @@ public class ExamUtilService {
         exam = examRepository.save(exam);
 
         // add exercises
-        var exercise1a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
-        var exercise1b = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
-        var exercise1c = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var exercise1a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
+        var exercise1b = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
+        var exercise1c = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
         exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
 
         return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
@@ -285,9 +285,9 @@ public class ExamUtilService {
         // TODO: also add other exercise types
 
         // add exercises
-        var exercise1a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
-        var exercise1b = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
-        var exercise1c = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var exercise1a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
+        var exercise1b = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
+        var exercise1c = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
         exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
 
         var exercise2a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
@@ -586,7 +586,7 @@ public class ExamUtilService {
         exam.setExamMaxPoints(5 * 5);
         exam = examRepository.save(exam);
 
-        ExerciseGroup modellingGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup modellingGroup = exam.getExerciseGroups().getFirst();
         Exercise modelling = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, modellingGroup);
         modellingGroup.addExercise(modelling);
         exerciseRepo.save(modelling);
@@ -761,7 +761,7 @@ public class ExamUtilService {
         exam.setExamMaxPoints(24);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
-        var exerciseGroup0 = exam.getExerciseGroups().get(0);
+        var exerciseGroup0 = exam.getExerciseGroups().getFirst();
         var exerciseGroup1 = exam.getExerciseGroups().get(1);
         var exerciseGroup2 = exam.getExerciseGroups().get(2);
         var exerciseGroup3 = exam.getExerciseGroups().get(3);
@@ -842,7 +842,7 @@ public class ExamUtilService {
         initialExam.setNumberOfExercisesInExam(2);
         var exam = examRepository.save(initialExam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
-        var exerciseGroup0 = exam.getExerciseGroups().get(0);
+        var exerciseGroup0 = exam.getExerciseGroups().getFirst();
         var exerciseGroup1 = exam.getExerciseGroups().get(1);
 
         TextExercise textExercise1 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup0);
@@ -991,7 +991,7 @@ public class ExamUtilService {
     public StudentExam addExercisesWithParticipationsAndSubmissionsToStudentExam(Exam exam, StudentExam studentExam, String validModel, URI localRepoPath) {
         var exerciseGroups = exam.getExerciseGroups();
         // text exercise
-        var exercise = exerciseGroups.get(0).getExercises().iterator().next();
+        var exercise = exerciseGroups.getFirst().getExercises().iterator().next();
         var user = studentExam.getUser();
         var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, user);
         Submission submission = ParticipationFactory.generateTextSubmission("Test Submission", Language.ENGLISH, true);

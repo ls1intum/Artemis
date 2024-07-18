@@ -3,7 +3,7 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode, resetQuizForImport } from 'app/entities/quiz/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,7 +13,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { Exercise, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -214,9 +214,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
 
         if (this.isImport || this.isExamMode) {
-            this.quizExercise.quizBatches = [];
-            this.quizExercise.isEditable = true;
-            resetDates(this.quizExercise);
+            resetQuizForImport(this.quizExercise);
         }
 
         if (this.isExamMode) {
@@ -558,7 +556,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return [];
         }
         // Release Date valid but lies in the past
-        // eslint-disable-next-line no-constant-condition
         if (false /*this.quizExercise.isPlannedToStart*/) {
             // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
             if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {

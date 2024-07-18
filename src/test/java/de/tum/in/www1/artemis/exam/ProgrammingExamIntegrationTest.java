@@ -28,7 +28,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -46,15 +45,11 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepositor
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 
 class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "programmingexamtest";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private ExamRepository examRepository;
@@ -73,12 +68,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -240,7 +229,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     void lockAllRepositories() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
-        ExerciseGroup exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
 
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
@@ -278,7 +267,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     void unlockAllRepositories() throws Exception {
         assertThat(studentExamRepository.findStudentExam(new ProgrammingExercise(), null)).isEmpty();
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
-        ExerciseGroup exerciseGroup1 = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup1 = exam.getExerciseGroups().getFirst();
 
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
@@ -348,7 +337,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
         programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
-        exerciseRepo.save(programming);
+        exerciseRepository.save(programming);
 
         doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
@@ -363,7 +352,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_programmingExerciseSameShortNameOrTitle(String shortName1, String shortName2, String title1, String title2) throws Exception {
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
         ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
 
