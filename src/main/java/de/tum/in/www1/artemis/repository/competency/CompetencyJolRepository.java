@@ -82,4 +82,11 @@ public interface CompetencyJolRepository extends ArtemisJpaRepository<Competency
             """)
     Set<CompetencyJolDTO> findLatestJolValuesForUserByCourseIdExcludeJolIds(@Param("userId") long userId, @Param("courseId") long courseId,
             @Param("jolIdsToExclude") Set<Long> jolIdsToExclude);
+
+    @Query("""
+            SELECT jol.user.id
+            FROM CompetencyJol jol
+            WHERE jol = :jol
+            """)
+    long findUserIdForJol(@Param("jol") CompetencyJol jol);
 }

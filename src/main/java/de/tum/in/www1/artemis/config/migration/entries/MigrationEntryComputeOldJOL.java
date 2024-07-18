@@ -42,17 +42,19 @@ public class MigrationEntryComputeOldJOL extends MigrationEntry {
     public void execute() {
         List<CompetencyJol> jols = competencyJolRepository.findAll();
         for (CompetencyJol jol : jols) {
+            long userId = competencyJolRepository.findUserIdForJol(jol);
+
             CourseCompetency competency = jol.getCompetency();
             Set<Exercise> exercises = exerciseRepository.findAllByCompetencyId(competency.getId());
             Set<Result> lastResults = exercises.stream().map(exercise -> {
-                Set<Result> results = resultRepository.findAllByExerciseUserAndModificationDate(exercise.getId(), jol.getUser().getId(), jol.getJudgementTime().toInstant());
+                Set<Result> results = resultRepository.findAllByExerciseUserAndModificationDate(exercise.getId(), userId, jol.getJudgementTime().toInstant());
 
                 return results.stream().max(Comparator.comparing(Result::getLastModifiedDate)).orElse(null);
             }).collect(Collectors.toSet());
 
             Set<LectureUnit> lectureUnits = lectureUnitRepository.findAllByCompetencyId(competency.getId());
             Set<Long> lectureUnitIds = lectureUnits.stream().map(LectureUnit::getId).collect(Collectors.toSet());
-            int numberOfCompletedLectureUnits = lectureUnitCompletionRepository.countByLectureUnitIdsAndUserId(lectureUnitIds, jol.getUser().getId());
+            int numberOfCompletedLectureUnits = lectureUnitCompletionRepository.countByLectureUnitIdsAndUserId(lectureUnitIds, userId);
 
             double progress = 100.0 * (numberOfCompletedLectureUnits + lastResults.size()) / (exercises.size() + lectureUnits.size());
             double confidence = lastResults.stream().mapToDouble(Result::getScore).summaryStatistics().getAverage();

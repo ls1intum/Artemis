@@ -54,10 +54,12 @@ public class MigrationEntryComputeNewJOL extends MigrationEntry {
     public void execute() {
         List<CompetencyJol> jols = competencyJolRepository.findAll();
         for (CompetencyJol jol : jols) {
+            long userId = competencyJolRepository.findUserIdForJol(jol);
+
             CourseCompetency competency = jol.getCompetency();
             Set<Exercise> exercises = exerciseRepository.findAllByCompetencyId(competency.getId());
             Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = exercises.stream().map(exercise -> {
-                Set<Result> results = resultRepository.findAllByExerciseUserAndModificationDate(exercise.getId(), jol.getUser().getId(), jol.getJudgementTime().toInstant());
+                Set<Result> results = resultRepository.findAllByExerciseUserAndModificationDate(exercise.getId(), userId, jol.getJudgementTime().toInstant());
 
                 Result lastResult = results.stream().max(Comparator.comparing(Result::getLastModifiedDate)).orElse(null);
 
@@ -70,7 +72,7 @@ public class MigrationEntryComputeNewJOL extends MigrationEntry {
 
             Set<LectureUnit> lectureUnits = lectureUnitRepository.findAllByCompetencyId(competency.getId());
             Set<Long> lectureUnitIds = lectureUnits.stream().map(LectureUnit::getId).collect(Collectors.toSet());
-            int numberOfCompletedLectureUnits = lectureUnitCompletionRepository.countByLectureUnitIdsAndUserId(lectureUnitIds, jol.getUser().getId());
+            int numberOfCompletedLectureUnits = lectureUnitCompletionRepository.countByLectureUnitIdsAndUserId(lectureUnitIds, userId);
 
             CompetencyProgress competencyProgress = new CompetencyProgress();
             competencyProgressService.calculateProgress(lectureUnits, exerciseInfos, numberOfCompletedLectureUnits, competencyProgress);
