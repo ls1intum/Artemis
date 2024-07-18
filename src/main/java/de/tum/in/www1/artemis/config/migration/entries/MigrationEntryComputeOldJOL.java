@@ -70,6 +70,6 @@ public class MigrationEntryComputeOldJOL extends MigrationEntry {
 
     @Override
     public String date() {
-        return "computeNewJOL";
+        return "20240718214500";
     }
 }
