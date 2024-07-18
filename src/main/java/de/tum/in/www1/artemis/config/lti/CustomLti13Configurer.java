@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.config.lti;
 
 import java.time.Duration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -10,6 +12,7 @@ import org.springframework.security.oauth2.client.web.HttpSessionOAuth2Authoriza
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
+import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.web.filter.Lti13LaunchFilter;
@@ -24,6 +27,8 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationReque
  */
 @Profile("lti")
 public class CustomLti13Configurer extends Lti13Configurer {
+
+    private static final Logger log = LoggerFactory.getLogger(CustomLti13Configurer.class);
 
     /** Path for login. **/
     private static final String LOGIN_PATH = "/auth-login";
@@ -86,7 +91,8 @@ public class CustomLti13Configurer extends Lti13Configurer {
     @Override
     protected OptimisticAuthorizationRequestRepository configureRequestRepository() {
         HttpSessionOAuth2AuthorizationRequestRepository sessionRepository = new HttpSessionOAuth2AuthorizationRequestRepository();
-        StateAuthorizationRequestRepository stateRepository = new StateAuthorizationRequestRepository(Duration.ofMinutes(1));
+        log.info("Configuring state-based optimistic authorization request repository, limitIpAddresses: {}", limitIpAddresses);
+        StateAuthorizationRequestRepository stateRepository = new StateAuthorizationRequestRepository(Duration.ofSeconds(Lti13TokenRetriever.JWT_LIFETIME_SECONDS));
         stateRepository.setLimitIpAddress(limitIpAddresses);
         return new StateBasedOptimisticAuthorizationRequestRepository(sessionRepository, stateRepository);
     }
