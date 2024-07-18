@@ -42,9 +42,8 @@
                     }
                 </span>
             </div>
-            <div submissionPolicy>
+            <div submissionPolicy class="ps-2 pt-1 justify-self-center">
                 @if (exercise.submissionPolicy && exercise.submissionPolicy.active && numberOfSubmissionsForSubmissionPolicy !== undefined) {
-                    <br />
                     <span
                         jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionsAllowed"
                         [translateValues]="{ submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }"
