@@ -45,6 +45,9 @@ public class ParticipationVcsAccessTokenService {
      * @param participation the participation which belongs to the token
      */
     public void createParticipationVCSAccessToken(User user, StudentParticipation participation) {
+        if (user == null || participation == null) {
+
+        }
         ParticipationVCSAccessToken participationVCSAccessToken = new ParticipationVCSAccessToken();
         participationVCSAccessToken.setUser(user);
         participationVCSAccessToken.setParticipation(participation);
@@ -58,24 +61,29 @@ public class ParticipationVcsAccessTokenService {
      * @param participations The participations, for which tokens should be generated, if they do not already have one
      */
     public void createMissingParticipationVCSAccessTokens(List<ProgrammingExerciseStudentParticipation> participations) {
-        var existingTokens = participationVcsAccessTokenRepository.findAllByParticipationIds(participations.stream().map(DomainObject::getId).toList());
-        var participationsWithTokens = existingTokens.stream().map(ParticipationVCSAccessToken::getParticipation).toList();
-        log.debug("Create missing VcsAccessTokens for participationIds: {}", participations);
-        List<ParticipationVCSAccessToken> vcsAccessTokens = new ArrayList<>();
+        try {
+            var existingTokens = participationVcsAccessTokenRepository.findAllByParticipationIds(participations.stream().map(DomainObject::getId).toList());
+            var participationsWithTokens = existingTokens.stream().map(ParticipationVCSAccessToken::getParticipation).toList();
+            log.info("Create missing VcsAccessTokens for participationIds: {}", participations);
+            List<ParticipationVCSAccessToken> vcsAccessTokens = new ArrayList<>();
 
-        for (ProgrammingExerciseStudentParticipation participation : participations) {
-            if (!participationsWithTokens.contains(participation) && participation.getParticipant() instanceof User) {
-                var participationVCSAccessToken = new ParticipationVCSAccessToken();
-                participationVCSAccessToken.setUser((User) participation.getParticipant());
-                participationVCSAccessToken.setParticipation(participation);
-                participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
-                vcsAccessTokens.add(participationVCSAccessToken);
+            for (ProgrammingExerciseStudentParticipation participation : participations) {
+                if (!participationsWithTokens.contains(participation) && participation.getParticipant() instanceof User) {
+                    var participationVCSAccessToken = new ParticipationVCSAccessToken();
+                    participationVCSAccessToken.setUser((User) participation.getParticipant());
+                    participationVCSAccessToken.setParticipation(participation);
+                    participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
+                    vcsAccessTokens.add(participationVCSAccessToken);
+                }
             }
-        }
 
-        log.debug("Generated {} missing VcsAccessTokens", vcsAccessTokens);
-        participationVcsAccessTokenRepository.saveAll(vcsAccessTokens);
-        log.debug("Saved missing VcsAccessTokens");
+            log.info("Successfully generated {} missing VcsAccessTokens", vcsAccessTokens);
+            participationVcsAccessTokenRepository.saveAll(vcsAccessTokens);
+            log.info("Successfully aved missing VcsAccessTokens");
+        }
+        catch (Exception e) {
+            log.error("Error creating missing VCS access tokens: {}", e.getMessage());
+        }
     }
 
     /**
