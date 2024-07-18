@@ -187,7 +187,9 @@ public class LtiService {
         // log.info("User is not activated. Adding JWT cookie for activation.");
         log.info("Add JWT cookie so the user will be logged in");
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
-        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        if (responseCookie != null) {
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        }
 
         uriComponentsBuilder.queryParam("initialize", "");
         // }
