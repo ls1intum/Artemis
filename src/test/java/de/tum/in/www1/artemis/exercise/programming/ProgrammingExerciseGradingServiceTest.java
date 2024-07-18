@@ -924,7 +924,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         var feedback3 = new Feedback().result(result).testCase(tests.get("test3")).positive(test3Passes).type(FeedbackType.AUTOMATIC);
         result.addFeedback(feedback3);
         result.rated(true).successful(test1Passes && test2Passes && test3Passes).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
-        programmingExercise = programmingExerciseRepository.findWithBuildConfigById(programmingExercise.getId()).orElseThrow();
         gradingService.calculateScoreForResult(result, programmingExercise, true);
         return resultRepository.save(result);
     }
