@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,19 +52,21 @@ public class ParticipationVCSAccessTokenService {
      */
     public void createMissingParticipationVCSAccessTokens(List<ProgrammingExerciseStudentParticipation> participations) {
         var existingTokens = participationVCSAccessTokenRepository.findAllByParticipationIds(participations.stream().map(DomainObject::getId).toList());
+        var participationsWithTokens = existingTokens.stream().map(ParticipationVCSAccessToken::getParticipation).toList();
         log.debug("Create missing VcsAccessTokens for participationIds: {}", participations);
-        List<ParticipationVCSAccessToken> vcsAccessTokens = participations.stream()
-                .filter(participation -> !existingTokens.stream().map(ParticipationVCSAccessToken::getParticipation).toList().contains(participation)
-                        && participation.getParticipant() instanceof User)
-                .map(participation -> {
-                    var participationVCSAccessToken = new ParticipationVCSAccessToken();
-                    participationVCSAccessToken.setUser((User) participation.getParticipant());
-                    participationVCSAccessToken.setParticipation(participation);
-                    participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
-                    return participationVCSAccessToken;
-                }).toList();
-        log.debug("Generated {} missing VcsAccessTokens", vcsAccessTokens);
+        List<ParticipationVCSAccessToken> vcsAccessTokens = new ArrayList<>();
 
+        for (ProgrammingExerciseStudentParticipation participation : participations) {
+            if (!participationsWithTokens.contains(participation) && participation.getParticipant() instanceof User) {
+                var participationVCSAccessToken = new ParticipationVCSAccessToken();
+                participationVCSAccessToken.setUser((User) participation.getParticipant());
+                participationVCSAccessToken.setParticipation(participation);
+                participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
+                vcsAccessTokens.add(participationVCSAccessToken);
+            }
+        }
+
+        log.debug("Generated {} missing VcsAccessTokens", vcsAccessTokens);
         participationVCSAccessTokenRepository.saveAll(vcsAccessTokens);
         log.debug("Saved missing VcsAccessTokens");
     }

@@ -28,7 +28,7 @@ public class LocalVCInfoContributor implements InfoContributor {
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    @Value("${artemis.version-control.use-version-control-access-token:true}")
+    @Value("${artemis.version-control.use-version-control-access-token:false}")
     private boolean useVcsAccessToken;
 
     @Value("${artemis.version-control.ssh-port:7921}")
