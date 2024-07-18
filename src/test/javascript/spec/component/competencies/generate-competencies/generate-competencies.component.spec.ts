@@ -78,8 +78,8 @@ describe('GenerateCompetenciesComponent', () => {
         generateCompetenciesComponentFixture.detectChanges();
         const getCompetencyRecommendationsSpy = jest.spyOn(generateCompetenciesComponent, 'getCompetencyRecommendations').mockReturnValue();
 
-        const courseDescriptionComponent: CourseDescriptionFormStubComponent = generateCompetenciesComponentFixture.debugElement.query(
-            By.directive(CourseDescriptionFormStubComponent),
+        const courseDescriptionComponent: CourseDescriptionFormComponent = generateCompetenciesComponentFixture.debugElement.query(
+            By.directive(CourseDescriptionFormComponent),
         ).componentInstance;
         courseDescriptionComponent.formSubmitted.emit('');
 
