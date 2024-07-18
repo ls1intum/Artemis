@@ -50,7 +50,7 @@ public class Lti13TokenRetriever {
 
     private static final Logger log = LoggerFactory.getLogger(Lti13TokenRetriever.class);
 
-    private static final int JWT_LIFETIME = 60;
+    private static final int JWT_LIFETIME_SECONDS = 180;
 
     public Lti13TokenRetriever(OAuth2JWKSService keyPairService, RestTemplate restTemplate) {
         this.oAuth2JWKSService = keyPairService;
@@ -122,7 +122,8 @@ public class Lti13TokenRetriever {
                 claimSetBuilder.claim(entry.getKey(), entry.getValue());
             }
 
-            JWTClaimsSet claimsSet = claimSetBuilder.issueTime(Date.from(Instant.now())).expirationTime(Date.from(Instant.now().plusSeconds(JWT_LIFETIME))).build();
+            var now = Instant.now();
+            JWTClaimsSet claimsSet = claimSetBuilder.issueTime(Date.from(now)).expirationTime(Date.from(now.plusSeconds(JWT_LIFETIME_SECONDS))).build();
 
             JWSHeader jwt = new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).keyID(jwk.getKeyID()).build();
             SignedJWT signedJWT = new SignedJWT(jwt, claimsSet);
@@ -148,9 +149,10 @@ public class Lti13TokenRetriever {
             KeyPair keyPair = jwk.toRSAKey().toKeyPair();
             RSASSASigner signer = new RSASSASigner(keyPair.getPrivate());
 
+            var now = Instant.now();
             JWTClaimsSet claimsSet = new JWTClaimsSet.Builder().issuer(clientRegistration.getClientId()).subject(clientRegistration.getClientId())
-                    .audience(clientRegistration.getProviderDetails().getTokenUri()).issueTime(Date.from(Instant.now())).jwtID(UUID.randomUUID().toString())
-                    .expirationTime(Date.from(Instant.now().plusSeconds(JWT_LIFETIME))).build();
+                    .audience(clientRegistration.getProviderDetails().getTokenUri()).issueTime(Date.from(now)).jwtID(UUID.randomUUID().toString())
+                    .expirationTime(Date.from(now.plusSeconds(JWT_LIFETIME_SECONDS))).build();
 
             JWSHeader jwt = new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).keyID(jwk.getKeyID()).build();
             SignedJWT signedJWT = new SignedJWT(jwt, claimsSet);

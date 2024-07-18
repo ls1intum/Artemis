@@ -58,13 +58,18 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+        log.info("LTI 1.3 Launch request received: {}", request);
 
         try {
+            log.info("LTI Calling finishOidcFlow");
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
+            log.info("LTI receiving token");
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
             String targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
+            log.info("LTI target link: {}", targetLink);
 
             try {
+                log.info("LTI message type: {}", ltiIdToken.getClaim(Claims.MESSAGE_TYPE).toString());
                 // here we need to check if this is a deep-linking request or a launch request
                 if (CustomLti13Configurer.LTI13_DEEPLINK_MESSAGE_REQUEST.equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
                     // Manually setting the deep linking path is required due to Moodle and edX's inconsistent deep linking implementation.
@@ -80,6 +85,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             catch (LtiEmailAlreadyInUseException ex) {
                 // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
                 // We need targetLink to redirect user on the client-side after successful authentication
+                log.error("LTI 1.3 launch failed due to email already in use: {}", ex.getMessage(), ex);
                 handleLtiEmailAlreadyInUseException(response, ltiIdToken);
             }
 
@@ -96,7 +102,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
-    private OidcAuthenticationToken finishOidcFlow(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    private OidcAuthenticationToken finishOidcFlow(HttpServletRequest request, HttpServletResponse response) {
         OidcAuthenticationToken ltiAuthToken;
         try {
             // call spring-security-lti13 authentication filter to finish the OpenID Connect Third Party Initiated Login
