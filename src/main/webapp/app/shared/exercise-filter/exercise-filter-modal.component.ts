@@ -45,13 +45,8 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     @ViewChild('categoriesFilterSelection', { static: false }) instance: NgbTypeahead;
 
-    get selectedCategoryOptions(): ExerciseCategoryFilterOption[] {
-        return this.categoryFilter?.options.filter((categoryFilter) => categoryFilter.searched) ?? [];
-    }
-
-    get selectableCategoryOptions(): ExerciseCategoryFilterOption[] {
-        return this.categoryFilter?.options.filter((categoryFilter) => !categoryFilter.searched) ?? [];
-    }
+    selectedCategoryOptions: ExerciseCategoryFilterOption[] = [];
+    selectableCategoryOptions: ExerciseCategoryFilterOption[] = [];
 
     noFiltersAvailable: boolean = false;
 
@@ -88,6 +83,8 @@ export class ExerciseFilterModalComponent implements OnInit {
             this.achievedScore?.isDisplayed ||
             this.achievablePoints?.isDisplayed
         );
+
+        this.updateCategoryOptionsStates();
     }
 
     closeModal(): void {
@@ -123,15 +120,15 @@ export class ExerciseFilterModalComponent implements OnInit {
         event.preventDefault(); // otherwise clearing the input field will not work https://stackoverflow.com/questions/39783936/how-to-clear-the-typeahead-input-after-a-result-is-selected
         const filterOption: ExerciseCategoryFilterOption = event.item;
         filterOption.searched = true;
+        this.updateCategoryOptionsStates();
         this.model = undefined; // Clear the input field after selection
     }
 
-    removeItem(item: ExerciseCategoryFilterOption) {
-        item.searched = false;
-    }
-
-    getRemoveItemFunction(item: ExerciseCategoryFilterOption): () => void {
-        return () => this.removeItem(item);
+    removeItem(item: ExerciseCategoryFilterOption): () => void {
+        return () => {
+            item.searched = false;
+            this.updateCategoryOptionsStates();
+        };
     }
 
     applyFilter(): void {
@@ -204,5 +201,18 @@ export class ExerciseFilterModalComponent implements OnInit {
         if (filter.selectedMax) {
             filter.selectedMax = filter.generalMax;
         }
+    }
+
+    private updateCategoryOptionsStates() {
+        this.selectedCategoryOptions = this.getUpdatedSelectedCategoryOptions();
+        this.selectableCategoryOptions = this.getSelectableCategoryOptions();
+    }
+
+    private getUpdatedSelectedCategoryOptions(): ExerciseCategoryFilterOption[] {
+        return this.categoryFilter?.options.filter((categoryFilter) => categoryFilter.searched) ?? [];
+    }
+
+    private getSelectableCategoryOptions(): ExerciseCategoryFilterOption[] {
+        return this.categoryFilter?.options.filter((categoryFilter) => !categoryFilter.searched) ?? [];
     }
 }

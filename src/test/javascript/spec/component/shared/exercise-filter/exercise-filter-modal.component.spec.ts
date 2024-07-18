@@ -207,7 +207,7 @@ describe('ExerciseFilterModalComponent', () => {
         component.achievedScore!.filter.selectedMin = 10;
         const resetFilterSpy = jest.spyOn(component, 'resetFilter');
 
-        const resetButton = fixture.debugElement.query(By.css('span[jhiTranslate="artemisApp.courseOverview.exerciseFilter.resetFilter"]'));
+        const resetButton = fixture.debugElement.query(By.css('span[jhiTranslate="artemisApp.courseOverview.exerciseFilter.clearFilter"]'));
         expect(resetButton).not.toBeNull();
         resetButton.nativeElement.click();
 

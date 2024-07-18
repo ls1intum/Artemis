@@ -44,7 +44,7 @@
                                 <jhi-custom-exercise-category-badge
                                     [category]="categoryFilterOption.category"
                                     [displayRemoveButton]="true"
-                                    [onClick]="getRemoveItemFunction(categoryFilterOption)"
+                                    [onClick]="removeItem(categoryFilterOption)"
                                     [fontSize]="'0.85rem'"
                                 />
                             </div>
@@ -92,39 +92,38 @@
             </div>
         }
 
-        @if (achievedScore?.isDisplayed) {
+        @if (achievedScore && achievedScore.isDisplayed) {
             <div class="form-group">
                 <label class="form-control-label h6" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
                 <jhi-range-slider
                     id="achieved-score-range-slider"
-                    [generalMinValue]="achievedScore!.filter.generalMin"
-                    [generalMaxValue]="achievedScore!.filter.generalMax"
-                    [(selectedMinValue)]="achievedScore!.filter.selectedMin"
-                    [(selectedMaxValue)]="achievedScore!.filter.selectedMax"
-                    [step]="achievedScore!.filter.step"
+                    [generalMinValue]="achievedScore.filter.generalMin"
+                    [generalMaxValue]="achievedScore.filter.generalMax"
+                    [(selectedMinValue)]="achievedScore.filter.selectedMin"
+                    [(selectedMaxValue)]="achievedScore.filter.selectedMax"
+                    [step]="achievedScore.filter.step"
                     [label]="'%'"
                 />
             </div>
         }
 
-        @if (achievablePoints?.isDisplayed) {
+        @if (achievablePoints && achievablePoints.isDisplayed) {
             <div class="form-group">
                 <label class="form-control-label h6" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>
                 <jhi-range-slider
                     id="achieved-points-range-slider"
-                    [generalMinValue]="achievablePoints!.filter.generalMin"
-                    [generalMaxValue]="achievablePoints!.filter.generalMax"
-                    [(selectedMinValue)]="achievablePoints!.filter.selectedMin"
-                    [(selectedMaxValue)]="achievablePoints!.filter.selectedMax"
-                    [step]="achievablePoints!.filter.step"
+                    [generalMinValue]="achievablePoints.filter.generalMin"
+                    [generalMaxValue]="achievablePoints.filter.generalMax"
+                    [(selectedMinValue)]="achievablePoints.filter.selectedMin"
+                    [(selectedMaxValue)]="achievablePoints.filter.selectedMax"
+                    [step]="achievablePoints.filter.step"
                 />
             </div>
         }
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="resetFilter()">
-            <fa-icon [icon]="faBackward" />&nbsp;
-            <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.resetFilter"></span>
+            <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.clearFilter"></span>
         </button>
 
         <div class="ms-auto">

@@ -34,7 +34,7 @@
             "studentView": "Student view",
             "general": {
                 "noDataFound": "No data found.",
-                "noExercisesFoundWithAppliedFilter": "No exercises match the selected filters."
+                "noExercisesFoundWithAppliedFilter": "No exercise matches the applied filter."
             },
             "sidebar": {
                 "past": "Past",
@@ -97,7 +97,7 @@
                 "achievedScore": "Achieved Score",
                 "achievablePoints": "Achievable Points",
                 "applyFilter": "Apply filter",
-                "resetFilter": "Reset filter",
+                "clearFilter": "Clear filter",
                 "noFilterAvailable": "There are no distinguishing filter options for the existing exercises",
                 "noMoreOptions": "No more options"
             },
