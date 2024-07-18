@@ -151,7 +151,7 @@ public class CourseCompetencyResource {
 
         courseCompetencyService.filterOutLearningObjectsThatUserShouldNotSee(competency, currentUser);
 
-        return ResponseEntity.ok().body(competency);
+        return ResponseEntity.ok(competency);
     }
 
     /**
@@ -195,7 +195,7 @@ public class CourseCompetencyResource {
             studentProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId()).orElse(null);
         }
 
-        return ResponseEntity.ok().body(studentProgress);
+        return ResponseEntity.ok(studentProgress);
     }
 
     /**
@@ -214,7 +214,7 @@ public class CourseCompetencyResource {
 
         var progress = competencyProgressService.getCompetencyCourseProgress(competency, course);
 
-        return ResponseEntity.ok().body(progress);
+        return ResponseEntity.ok(progress);
     }
 
     /**
@@ -281,7 +281,7 @@ public class CourseCompetencyResource {
         var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
         var relationDTOs = relations.stream().map(CompetencyRelationDTO::of).collect(Collectors.toSet());
 
-        return ResponseEntity.ok().body(relationDTOs);
+        return ResponseEntity.ok(relationDTOs);
     }
 
     /**
@@ -306,7 +306,7 @@ public class CourseCompetencyResource {
 
         var createdRelation = competencyRelationService.createCompetencyRelation(tailCompetency, headCompetency, relation.relationType(), course);
 
-        return ResponseEntity.ok().body(CompetencyRelationDTO.of(createdRelation));
+        return ResponseEntity.ok(CompetencyRelationDTO.of(createdRelation));
     }
 
     /**
@@ -350,7 +350,7 @@ public class CourseCompetencyResource {
         irisService.addUserTextMessageToSession(session, courseDescription);
         var competencies = irisService.executeRequest(session);
 
-        return ResponseEntity.ok().body(competencies);
+        return ResponseEntity.ok(competencies);
     }
 
     /**

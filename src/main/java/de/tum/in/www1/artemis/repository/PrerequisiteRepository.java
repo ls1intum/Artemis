@@ -32,7 +32,7 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
                 LEFT JOIN FETCH c.exercises
             WHERE c.id = :competencyId
             """)
-    Optional<Prerequisite> findWithLectureUnitsAndExercisesById(@Param("competencyId") long competencyId);
+    Optional<Prerequisite> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT c
@@ -42,8 +42,8 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
             """)
     Optional<Prerequisite> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
-    default Prerequisite findWithLectureUnitsAndExercisesByIdElseThrow(long competencyId) {
-        return getValueElseThrow(findWithLectureUnitsAndExercisesById(competencyId), competencyId);
+    default Prerequisite findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {
+        return getValueElseThrow(findByIdWithLectureUnitsAndExercises(competencyId), competencyId);
     }
 
     default Prerequisite findByIdWithLectureUnitsElseThrow(long competencyId) {

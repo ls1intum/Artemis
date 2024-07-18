@@ -99,7 +99,7 @@ public class CourseCompetencyService {
      * @return The found competency
      */
     public CourseCompetency findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
-        CourseCompetency competency = courseCompetencyRepository.findWithLectureUnitsAndExercisesByIdElseThrow(competencyId);
+        CourseCompetency competency = courseCompetencyRepository.findByIdWithLectureUnitsAndExercisesElseThrow(competencyId);
         return findProgressAndLectureUnitCompletionsForUser(competency, userId);
     }
 
@@ -194,19 +194,17 @@ public class CourseCompetencyService {
         var originalCompetencyIds = idToImportedCompetency.keySet();
         var relations = competencyRelationRepository.findAllByHeadCompetencyIdInAndTailCompetencyIdIn(originalCompetencyIds, originalCompetencyIds);
 
-        if (!relations.isEmpty()) {
-            for (var relation : relations) {
-                var tailCompetencyDTO = idToImportedCompetency.get(relation.getTailCompetency().getId());
-                var headCompetencyDTO = idToImportedCompetency.get(relation.getHeadCompetency().getId());
+        for (var relation : relations) {
+            var tailCompetencyDTO = idToImportedCompetency.get(relation.getTailCompetency().getId());
+            var headCompetencyDTO = idToImportedCompetency.get(relation.getHeadCompetency().getId());
 
-                CompetencyRelation relationToImport = new CompetencyRelation();
-                relationToImport.setType(relation.getType());
-                relationToImport.setTailCompetency(tailCompetencyDTO.competency());
-                relationToImport.setHeadCompetency(headCompetencyDTO.competency());
+            CompetencyRelation relationToImport = new CompetencyRelation();
+            relationToImport.setType(relation.getType());
+            relationToImport.setTailCompetency(tailCompetencyDTO.competency());
+            relationToImport.setHeadCompetency(headCompetencyDTO.competency());
 
-                relationToImport = competencyRelationRepository.save(relationToImport);
-                tailCompetencyDTO.tailRelations().add(CompetencyRelationDTO.of(relationToImport));
-            }
+            relationToImport = competencyRelationRepository.save(relationToImport);
+            tailCompetencyDTO.tailRelations().add(CompetencyRelationDTO.of(relationToImport));
         }
         return new HashSet<>(idToImportedCompetency.values());
     }
@@ -296,9 +294,11 @@ public class CourseCompetencyService {
 
     /**
      * Creates a new competency and links it to a course and lecture units.
+     * If learning paths are enabled, the competency is also linked to the learning paths of the course.
      *
      * @param competencyToCreate the competency to create
      * @param course             the course to link the competency to
+     * @param <C>                the type of the CourseCompetency
      * @return the persisted competency
      */
     public <C extends CourseCompetency> C createCourseCompetency(C competencyToCreate, Course course) {
@@ -321,6 +321,7 @@ public class CourseCompetencyService {
      * @param competencies       the competencies to create
      * @param course             the course to link the competencies to
      * @param competencyFunction the function that creates new course competencies
+     * @param <C>                the type of the CourseCompetency
      * @return the persisted competencies
      */
     public <C extends CourseCompetency> List<C> createCourseCompetencies(List<C> competencies, Course course, Function<CourseCompetency, C> competencyFunction) {
@@ -348,6 +349,7 @@ public class CourseCompetencyService {
      *
      * @param competencyToUpdate the competency to update
      * @param competency         the competency to update with
+     * @param <C>                the type of the CourseCompetency
      * @return the updated competency
      */
     public <C extends CourseCompetency> C updateCourseCompetency(C competencyToUpdate, C competency) {
@@ -372,6 +374,7 @@ public class CourseCompetencyService {
      *
      * @param competency The competency to find the lecture unit completions
      * @param userId     The id of the user for which to fetch the progress
+     * @param <C>        the type of the CourseCompetency
      * @return The found competency
      */
     public <C extends CourseCompetency> C findProgressAndLectureUnitCompletionsForUser(C competency, Long userId) {
@@ -396,6 +399,7 @@ public class CourseCompetencyService {
      *
      * @param competencies The competencies to find the progress
      * @param userId       The id of the user for which to fetch the progress
+     * @param <C>          the type of the CourseCompetency
      * @return The found competency
      */
     public <C extends CourseCompetency> List<C> findProgressForCompetenciesAndUser(List<C> competencies, Long userId) {

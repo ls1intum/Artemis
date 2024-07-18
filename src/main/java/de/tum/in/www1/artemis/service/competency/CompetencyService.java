@@ -120,7 +120,7 @@ public class CompetencyService extends CourseCompetencyService {
      * @return The found competency
      */
     public Competency findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
-        Competency competency = competencyRepository.findWithLectureUnitsAndExercisesByIdElseThrow(competencyId);
+        Competency competency = competencyRepository.findByIdWithLectureUnitsAndExercisesElseThrow(competencyId);
         return findProgressAndLectureUnitCompletionsForUser(competency, userId);
     }
 

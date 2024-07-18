@@ -126,13 +126,15 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     String getCompetencyTitle(@Param("competencyId") long competencyId);
 
     /**
-     * Query which fetches all course competencies for which the user is editor or instructor in the course and matching the search criteria.
+     * Query which fetches all course competencies for which the user has access to and match the search criteria.
+     * The user has access to all competencies where they are an editor or instructor of the course or to all of they are an admin.
      *
      * @param partialTitle       course competency title search term
      * @param partialDescription course competency description search term
      * @param partialCourseTitle course title search term
      * @param semester           semester search term
      * @param groups             user groups
+     * @param isAdmin            if the user is an admin
      * @param pageable           Pageable
      * @return Page with search results
      */
@@ -164,7 +166,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 LEFT JOIN FETCH c.exercises
             WHERE c.id = :competencyId
             """)
-    Optional<CourseCompetency> findWithLectureUnitsAndExercisesById(@Param("competencyId") long competencyId);
+    Optional<CourseCompetency> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
 
     default CourseCompetency findByIdWithLectureUnitsElseThrow(long competencyId) {
         return getValueElseThrow(findByIdWithLectureUnits(competencyId), competencyId);
@@ -196,8 +198,8 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
         return getValueElseThrow(findByIdWithExercises(competencyId), competencyId);
     }
 
-    default CourseCompetency findWithLectureUnitsAndExercisesByIdElseThrow(long competencyId) {
-        return getValueElseThrow(findWithLectureUnitsAndExercisesById(competencyId), competencyId);
+    default CourseCompetency findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {
+        return getValueElseThrow(findByIdWithLectureUnitsAndExercises(competencyId), competencyId);
     }
 
     List<CourseCompetency> findByCourseIdOrderById(long courseId);

@@ -49,7 +49,7 @@ public class PrerequisiteService extends CourseCompetencyService {
      *
      * @param course        the course to import into
      * @param prerequisites the prerequisites to import
-     * @return The set of imported prerequisites, each also containing the relations it is the tail prerequisite for.
+     * @return The set of imported prerequisites, each also containing the relations for which it is the tail prerequisite for.
      */
     public Set<CompetencyWithTailRelationDTO> importPrerequisitesAndRelations(Course course, Collection<? extends CourseCompetency> prerequisites) {
         var idToImportedPrerequisite = new HashMap<Long, CompetencyWithTailRelationDTO>();
@@ -120,7 +120,7 @@ public class PrerequisiteService extends CourseCompetencyService {
      * @return The found prerequisite
      */
     public Prerequisite findPrerequisiteWithExercisesAndLectureUnitsAndProgressForUser(Long prerequisiteId, Long userId) {
-        Prerequisite prerequisite = prerequisiteRepository.findWithLectureUnitsAndExercisesByIdElseThrow(prerequisiteId);
+        Prerequisite prerequisite = prerequisiteRepository.findByIdWithLectureUnitsAndExercisesElseThrow(prerequisiteId);
         return findProgressAndLectureUnitCompletionsForUser(prerequisite, userId);
     }
 

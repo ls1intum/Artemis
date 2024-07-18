@@ -45,10 +45,10 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
                 LEFT JOIN FETCH c.exercises
             WHERE c.id = :competencyId
             """)
-    Optional<Competency> findWithLectureUnitsAndExercisesById(@Param("competencyId") long competencyId);
+    Optional<Competency> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
 
-    default Competency findWithLectureUnitsAndExercisesByIdElseThrow(long competencyId) {
-        return getValueElseThrow(findWithLectureUnitsAndExercisesById(competencyId), competencyId);
+    default Competency findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {
+        return getValueElseThrow(findByIdWithLectureUnitsAndExercises(competencyId), competencyId);
     }
 
     default Competency findByIdWithLectureUnitsElseThrow(long competencyId) {
