@@ -603,4 +603,12 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 AND s.submitted = TRUE
             """)
     boolean existsByExerciseIdAndParticipantIdAndSubmitted(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
+
+    @Query("""
+            SELECT COUNT(DISTINCT s)
+            FROM Submission s
+                LEFT JOIN s.results r
+            WHERE r.id IN :resultIds
+            """)
+    int countByResultIds(@Param("resultIds") Set<Long> resultIds);
 }

@@ -266,7 +266,7 @@ public class CompetencyProgressService {
      * @param numberOfCompletedLectureUnits The number of lecture units completed by the user
      * @param competencyProgress            The progress entity to update
      */
-    private void calculateProgress(Set<LectureUnit> lectureUnits, Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, int numberOfCompletedLectureUnits,
+    public void calculateProgress(Set<LectureUnit> lectureUnits, Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, int numberOfCompletedLectureUnits,
             CompetencyProgress competencyProgress) {
         double numberOfLearningObjects = lectureUnits.size() + exerciseInfos.size();
         if (numberOfLearningObjects == 0) {
@@ -295,7 +295,7 @@ public class CompetencyProgressService {
      * @param exerciseInfos      The information about the exercises linked to the competency
      * @param competencyProgress The progress entity to update
      */
-    private void calculateConfidence(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, CompetencyProgress competencyProgress) {
+    public void calculateConfidence(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, CompetencyProgress competencyProgress) {
         Set<CompetencyExerciseMasteryCalculationDTO> participantScoreInfos = exerciseInfos.stream()
                 .filter(info -> info.lastScore() != null && info.lastPoints() != null && info.lastModifiedDate() != null).collect(Collectors.toSet());
 

@@ -775,4 +775,17 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         }
         return results;
     }
+
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN r.submission s
+                LEFT JOIN s.participation p
+                LEFT JOIN p.exercise e
+                LEFT JOIN TREAT (p AS StudentParticipation).student st
+            WHERE e.id = :exerciseId
+                AND st.id = :userId
+                AND r.lastModifiedDate < :modificationDate
+            """)
+    Set<Result> findAllByExerciseUserAndModificationDate(@Param("exerciseId") long exerciseId, @Param("userId") long userId, @Param("modificationDate") Instant modificationDate);
 }

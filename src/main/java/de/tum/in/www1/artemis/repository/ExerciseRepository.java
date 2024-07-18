@@ -625,4 +625,12 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 AND e.exerciseGroup IS NOT NULL
             """)
     boolean isExamExercise(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN e.competencies c
+            WHERE c.id = :competencyId
+            """)
+    Set<Exercise> findAllByCompetencyId(@Param("competencyId") long competencyId);
 }

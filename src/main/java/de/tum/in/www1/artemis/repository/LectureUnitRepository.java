@@ -74,4 +74,11 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
         return findWithCompetenciesAndSlidesById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
     }
 
+    @Query("""
+            SELECT lu
+            FROM LectureUnit lu
+                LEFT JOIN FETCH lu.competencies c
+            WHERE c.id = :competencyId
+            """)
+    Set<LectureUnit> findAllByCompetencyId(@Param("competencyId") long competencyId);
 }
