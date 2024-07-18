@@ -668,7 +668,7 @@ public class LocalVCLocalCITestService {
      * @return the participationVcsAccessToken of the user for the given participationId
      */
     public ParticipationVCSAccessToken getParticipationVcsAccessToken(Long userId, Long programmingParticipationId) {
-        return participationVCSAccessTokenService.findByUserIdAndParticipationId(userId, programmingParticipationId).orElseThrow();
+        return participationVCSAccessTokenService.findByUserIdAndParticipationIdOrElseThrow(userId, programmingParticipationId);
     }
 
     /**

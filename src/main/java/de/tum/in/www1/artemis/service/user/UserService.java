@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -830,7 +829,6 @@ public class UserService {
      * @return the users participation vcs access token, or throws an exception if it does not exist
      */
     public String getVcsAccessTokenForUser(User user, Long participationId) {
-        var optionalParticipationVCSAccessToken = participationVCSAccessTokenService.findByUserIdAndParticipationId(user.getId(), participationId);
-        return optionalParticipationVCSAccessToken.orElseThrow(NoSuchElementException::new).getVcsAccessToken();
+        return participationVCSAccessTokenService.findByUserIdAndParticipationIdOrElseThrow(user.getId(), participationId).getVcsAccessToken();
     }
 }

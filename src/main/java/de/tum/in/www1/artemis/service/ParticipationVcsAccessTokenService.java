@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,9 +65,9 @@ public class ParticipationVcsAccessTokenService {
             List<ParticipationVCSAccessToken> vcsAccessTokens = new ArrayList<>();
 
             for (ProgrammingExerciseStudentParticipation participation : participations) {
-                if (!participationsWithTokens.contains(participation) && participation.getParticipant() instanceof User) {
+                if (!participationsWithTokens.contains(participation) && participation.getParticipant() instanceof User user) {
                     var participationVCSAccessToken = new ParticipationVCSAccessToken();
-                    participationVCSAccessToken.setUser((User) participation.getParticipant());
+                    participationVCSAccessToken.setUser(user);
                     participationVCSAccessToken.setParticipation(participation);
                     participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
                     vcsAccessTokens.add(participationVCSAccessToken);
@@ -90,8 +90,8 @@ public class ParticipationVcsAccessTokenService {
      * @param participationId the participation's id which the token belongs to
      * @return an Optional participationVCSAccessToken,
      */
-    public Optional<ParticipationVCSAccessToken> findByUserIdAndParticipationId(Long userId, Long participationId) {
-        return participationVcsAccessTokenRepository.findByUserIdAndParticipationId(userId, participationId);
+    public ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(Long userId, Long participationId) {
+        return participationVcsAccessTokenRepository.findByUserIdAndParticipationId(userId, participationId).orElseThrow(NoSuchElementException::new);
     }
 
     /**
