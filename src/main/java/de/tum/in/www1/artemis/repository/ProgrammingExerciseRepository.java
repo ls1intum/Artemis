@@ -102,6 +102,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencies" })
+    Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesAndCompetenciesById(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "buildConfig" })
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesAndBuildConfigById(long exerciseId);
 
@@ -552,6 +555,17 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @NotNull
     default ProgrammingExercise findByIdWithAuxiliaryRepositoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         return findWithAuxiliaryRepositoriesById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise with auxiliary repositories and competencies by its id and throw an {@link EntityNotFoundException} if it cannot be found
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithAuxiliaryRepositoriesAndCompetenciesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithAuxiliaryRepositoriesAndCompetenciesById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
