@@ -7,3 +7,8 @@
     margin-left: 0 !important;
     padding-left: 0 !important;
 }
+
+.form-control:disabled,
+.form-control[disabled] {
+    pointer-events: none;
+}

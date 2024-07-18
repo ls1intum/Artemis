@@ -131,7 +131,7 @@ describe('SidebarComponent', () => {
     });
 
     describe('openFilterExercisesLink', () => {
-        const FILTER_LINK_SELECTOR = '.link-primary a';
+        const FILTER_LINK_SELECTOR = '.text-primary a';
 
         it('should display the filter link when sidebarType is exercise', () => {
             component.sidebarData.sidebarType = 'exercise';

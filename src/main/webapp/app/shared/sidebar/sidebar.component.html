@@ -4,8 +4,8 @@
             @if (searchFieldEnabled) {
                 <div class="mt-2 mb-2">
                     <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
-                    @if (sidebarData.sidebarType === 'exercise') {
-                        <div class="ms-2 mt-1 link-primary">
+                    @if (showFilter) {
+                        <div class="ms-2 mt-1 text-primary">
                             <a (click)="openFilterExercisesDialog()">
                                 @if (isFilterActive) {
                                     <fa-icon [icon]="faFilterCurrentlyApplied" />
@@ -23,7 +23,7 @@
                     [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
                     [jhiTranslate]="
                         (sidebarDataBeforeFiltering?.ungroupedData?.length ?? 0) > 0 && sidebarData.ungroupedData?.length === 0
-                            ? 'artemisApp.courseOverview.general.noExercisesFoundWithAppliedFilter'
+                            ? 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter'
                             : 'artemisApp.courseOverview.general.noDataFound'
                     "
                     class="mt-2 text-center scrollable-item-content"

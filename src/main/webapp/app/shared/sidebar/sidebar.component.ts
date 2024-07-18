@@ -32,6 +32,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
+    @Input() showFilter: boolean = false;
 
     searchValue = '';
     isCollapsed: boolean = false;
@@ -42,7 +43,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     profileSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;
     sidebarAccordionEventSubscription?: Subscription;
-    filterSubscription?: Subscription;
 
     routeParams: Params;
     isProduction = true;
@@ -116,7 +116,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.profileSubscription?.unsubscribe();
         this.sidebarEventSubscription?.unsubscribe();
         this.sidebarEventService.emitResetValue();
-        this.filterSubscription?.unsubscribe();
     }
 
     getSize() {
@@ -145,8 +144,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.modalRef.componentInstance.sidebarData = cloneDeep(this.sidebarDataBeforeFiltering);
         this.modalRef.componentInstance.exerciseFilters = cloneDeep(this.exerciseFilters);
 
-        this.filterSubscription?.unsubscribe();
-        this.filterSubscription = this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
+        this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
             this.sidebarData = exerciseFilterResults.filteredSidebarData!;
             this.exerciseFilters = exerciseFilterResults.appliedExerciseFilters;
             this.isFilterActive = exerciseFilterResults.isFilterActive;
