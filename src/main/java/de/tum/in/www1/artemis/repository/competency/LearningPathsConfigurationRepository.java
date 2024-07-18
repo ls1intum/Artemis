@@ -8,6 +8,9 @@ import org.springframework.data.repository.query.Param;
 import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
+/**
+ * Spring Data JPA repository for the LearningPathsConfiguration entity.
+ */
 public interface LearningPathsConfigurationRepository extends ArtemisJpaRepository<LearningPathsConfiguration, Long> {
 
     @Query("""

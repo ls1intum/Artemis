@@ -14,6 +14,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 
+/**
+ * A LearningPathsConfiguration. Stores all settings that the instructor can set for a course.
+ */
 @Entity
 @Table(name = "learning_paths_configuration")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -24,9 +27,6 @@ public class LearningPathsConfiguration extends DomainObject {
     @JsonIgnoreProperties(value = "learningPathsConfiguration", allowSetters = true)
     private Course course;
 
-    /**
-     * Note: String to prevent Hibernate from converting it to UTC
-     */
     @Column(name = "include_all_graded_exercises")
     private boolean includeAllGradedExercises;
 
