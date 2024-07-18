@@ -58,7 +58,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        log.info("LTI 1.3 Launch request received: {}", request);
+        log.info("LTI 1.3 Launch request received for url {}", this.requestMatcher.getPattern());
 
         try {
             log.info("LTI Calling finishOidcFlow");
