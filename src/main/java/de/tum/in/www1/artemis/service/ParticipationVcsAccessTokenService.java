@@ -103,6 +103,12 @@ public class ParticipationVcsAccessTokenService {
         participationVcsAccessTokenRepository.deleteByParticipation_id(participationId);
     }
 
+    public void deleteAllByParticipations(List<ProgrammingExerciseStudentParticipation> participations) {
+        for (ProgrammingExerciseStudentParticipation participation : participations) {
+            participationVcsAccessTokenRepository.deleteByParticipation_id(participation.getId());
+        }
+    }
+
     /**
      * Create missing participationVcsAccessTokens at application start
      */
@@ -112,4 +118,5 @@ public class ParticipationVcsAccessTokenService {
         List<ProgrammingExerciseStudentParticipation> programmingExerciseStudentParticipations = programmingExerciseStudentParticipationRepository.findAll();
         createMissingParticipationVCSAccessTokens(programmingExerciseStudentParticipations);
     }
+
 }

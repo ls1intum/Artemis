@@ -186,7 +186,7 @@ public class UserResource {
      *
      * @param sshPublicKey the ssh public key to set
      *
-     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 500 (Bad Request)
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
     @PutMapping("users/sshpublickey")
     @EnforceAtLeastStudent

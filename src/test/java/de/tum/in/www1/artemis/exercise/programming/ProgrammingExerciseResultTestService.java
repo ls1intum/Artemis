@@ -56,6 +56,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -125,6 +126,9 @@ public class ProgrammingExerciseResultTestService {
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
+
     private Course course;
 
     private ProgrammingExercise programmingExercise;
@@ -164,7 +168,9 @@ public class ProgrammingExerciseResultTestService {
     // Test
     public void shouldUpdateFeedbackInSemiAutomaticResult(AbstractBuildResultNotificationDTO buildResultNotification, String loginName) throws Exception {
         // Make sure we only have one participation
-        participationRepository.deleteAll(participationRepository.findByExerciseId(programmingExercise.getId()));
+        var participations = participationRepository.findByExerciseId(programmingExercise.getId());
+        participationVcsAccessTokenService.deleteAllByParticipations(participations);
+        participationRepository.deleteAll(participations);
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, loginName);
 
         // Add a student submission with two manual results and a semi automatic result
