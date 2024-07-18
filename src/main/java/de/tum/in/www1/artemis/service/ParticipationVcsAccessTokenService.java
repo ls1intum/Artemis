@@ -45,9 +45,6 @@ public class ParticipationVcsAccessTokenService {
      * @param participation the participation which belongs to the token
      */
     public void createParticipationVCSAccessToken(User user, StudentParticipation participation) {
-        if (user == null || participation == null) {
-
-        }
         ParticipationVCSAccessToken participationVCSAccessToken = new ParticipationVCSAccessToken();
         participationVCSAccessToken.setUser(user);
         participationVCSAccessToken.setParticipation(participation);
@@ -79,7 +76,7 @@ public class ParticipationVcsAccessTokenService {
 
             log.info("Successfully generated {} missing VcsAccessTokens", vcsAccessTokens);
             participationVcsAccessTokenRepository.saveAll(vcsAccessTokens);
-            log.info("Successfully aved missing VcsAccessTokens");
+            log.info("Successfully saved missing VcsAccessTokens");
         }
         catch (Exception e) {
             log.error("Error creating missing VCS access tokens: {}", e.getMessage());
