@@ -101,7 +101,7 @@ public class ParticipationService {
 
     private final ProfileService profileService;
 
-    private final ParticipationVCSAccessTokenService participationVCSAccessTokenService;
+    private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     private final CompetencyProgressService competencyProgressService;
 
@@ -112,7 +112,7 @@ public class ParticipationService {
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
             Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService,
-            ParticipationVCSAccessTokenService participationVCSAccessTokenService, CompetencyProgressService competencyProgressService) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, CompetencyProgressService competencyProgressService) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;

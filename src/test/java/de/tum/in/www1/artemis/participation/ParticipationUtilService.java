@@ -66,7 +66,7 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ParticipationVCSAccessTokenService;
+import de.tum.in.www1.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -88,7 +88,7 @@ public class ParticipationUtilService {
     private StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
-    private ParticipationVCSAccessTokenService participationVCSAccessTokenService;
+    private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
     private ExerciseRepository exerciseRepo;

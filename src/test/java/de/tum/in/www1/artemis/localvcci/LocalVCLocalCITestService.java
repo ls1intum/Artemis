@@ -64,7 +64,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.ParticipationVCSAccessTokenService;
+import de.tum.in.www1.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -82,7 +82,7 @@ public class LocalVCLocalCITestService {
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
-    private ParticipationVCSAccessTokenService participationVCSAccessTokenService;
+    private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
@@ -678,6 +678,13 @@ public class LocalVCLocalCITestService {
      */
     public void deleteParticipationVcsAccessToken(Long participationId) {
         participationVCSAccessTokenService.deleteByParticipationId(participationId);
+    }
+
+    /**
+     * Deletes the participationVcsAccessToken for a participation
+     */
+    public void createMissingParticipationVcsAccessTokens() {
+        participationVCSAccessTokenService.createMissingParticipationVcsAccessToken();
     }
 
     /**

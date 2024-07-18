@@ -52,7 +52,7 @@ import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ParticipationVCSAccessTokenService;
+import de.tum.in.www1.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
@@ -111,13 +111,13 @@ public class UserService {
 
     private final ScienceEventRepository scienceEventRepository;
 
-    private final ParticipationVCSAccessTokenService participationVCSAccessTokenService;
+    private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository,
-            ParticipationVCSAccessTokenService participationVCSAccessTokenService) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
