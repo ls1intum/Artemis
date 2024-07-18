@@ -355,9 +355,19 @@ export class AccountService implements IAccountService {
      *
      * @param participationId The participation for which the VCS access token is requested
      */
-    getVcsAccessToken(participationId: number): Observable<string> {
+    getVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
+        return this.http.get<string>('api/users/vcsToken', { observe: 'response', params, responseType: 'text' as 'json' });
+    }
 
-        return this.http.get<string>('api/users/vcsToken', { responseType: 'text' as 'json', params });
+    /**
+     * Sends a request to the server, to create a VCS access token for a specific participation.
+     * Users can use this access token to clone the repository belonging to a participation.
+     *
+     * @param participationId The participation for which the VCS access token should get created
+     */
+    putVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
+        const params = new HttpParams().set('participationId', participationId);
+        return this.http.put<string>('api/users/vcsToken', null, { observe: 'response', params, responseType: 'text' as 'json' });
     }
 }

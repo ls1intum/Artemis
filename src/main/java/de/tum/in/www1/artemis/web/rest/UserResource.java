@@ -239,6 +239,30 @@ public class UserResource {
         User user = userRepository.getUser();
 
         log.debug("REST request to get VCS access token of user {} for participation {}", user.getLogin(), participationId);
-        return ResponseEntity.ok(userService.getVcsAccessTokenForUser(user, participationId));
+        var optionalToken = userService.getVcsAccessTokenForUser(user, participationId);
+        if (optionalToken.isPresent()) {
+            return ResponseEntity.ok(optionalToken.get().getVcsAccessToken());
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * PUT users/vcsToken : get the vcsToken for of a user for a participation
+     *
+     * @param participationId the participation for which the access token should be fetched
+     *
+     * @return the versionControlAccessToken belonging to the provided participation and user
+     */
+    @PutMapping("users/vcsToken")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> createVcsAccessToken(@RequestParam("participationId") Long participationId) {
+        User user = userRepository.getUser();
+
+        log.debug("REST request to create a new VCS access token for user {} for participation {}", user.getLogin(), participationId);
+        var optionalToken = userService.createNewVcsAccessTokenForUser(user, participationId);
+        if (optionalToken.isPresent()) {
+            return ResponseEntity.ok(optionalToken.get().getVcsAccessToken());
+        }
+        return ResponseEntity.badRequest().build();
     }
 }

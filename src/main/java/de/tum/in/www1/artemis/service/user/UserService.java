@@ -41,6 +41,7 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
@@ -828,7 +829,19 @@ public class UserService {
      *
      * @return the users participation vcs access token, or throws an exception if it does not exist
      */
-    public String getVcsAccessTokenForUser(User user, Long participationId) {
-        return participationVCSAccessTokenService.findByUserIdAndParticipationIdOrElseThrow(user.getId(), participationId).getVcsAccessToken();
+    public Optional<ParticipationVCSAccessToken> getVcsAccessTokenForUser(User user, Long participationId) {
+        return participationVCSAccessTokenService.findByUserIdAndParticipationId(user.getId(), participationId);
+    }
+
+    /**
+     * Create a vcs access token associated with a user and a participation, and return it
+     *
+     * @param user            the user associated with the vcs access token
+     * @param participationId the participation's participationId associated with the vcs access token
+     *
+     * @return the users newly created participation vcs access token, or throws an exception if it already existed
+     */
+    public Optional<ParticipationVCSAccessToken> createNewVcsAccessTokenForUser(User user, Long participationId) {
+        return participationVCSAccessTokenService.createNewVcsAccessTokenForUserAndParticipation(user, participationId);
     }
 }

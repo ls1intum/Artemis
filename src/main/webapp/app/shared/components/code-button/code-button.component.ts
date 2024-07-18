@@ -4,6 +4,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -71,13 +72,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             .then((user) => {
                 this.user = user!;
             })
-            .then(() => {
-                if (this.localVCEnabled && this.activeParticipation?.id && this.user) {
-                    this.accountService.getVcsAccessToken(this.activeParticipation.id).subscribe((fetchedVcsAccessToken) => {
-                        this.user.vcsAccessToken = fetchedVcsAccessToken;
-                    });
-                }
-            });
+            .then(() => this.loadVcsAccessToken());
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -133,6 +128,33 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         }
 
         return this.addCredentialsToHttpUrl(this.getRepositoryUri(), insertPlaceholder);
+    }
+
+    loadVcsAccessToken() {
+        if (this.localVCEnabled && this.activeParticipation?.id && this.user) {
+            this.accountService.getVcsAccessToken(this.activeParticipation.id).subscribe({
+                next: (res: HttpResponse<string>) => {
+                    if (res.body) {
+                        this.user.vcsAccessToken = res.body;
+                    }
+                },
+                error: (error: HttpErrorResponse) => {
+                    if (error.status == 404) {
+                        this.createNewVcsAccessToken();
+                    }
+                },
+            });
+        }
+    }
+
+    createNewVcsAccessToken() {
+        this.accountService.putVcsAccessToken(this.activeParticipation!.id!).subscribe({
+            next: (res: HttpResponse<string>) => {
+                if (res.body) {
+                    this.user.vcsAccessToken = res.body;
+                }
+            },
+        });
     }
 
     /**
