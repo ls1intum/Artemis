@@ -57,12 +57,14 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.ParticipationVCSAccessTokenService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -78,6 +80,9 @@ public class LocalVCLocalCITestService {
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
+    private ParticipationVCSAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
@@ -529,8 +534,21 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug   the repository slug of the repository.
      */
     public void testPushSuccessful(Git repositoryHandle, String username, String projectKey, String repositorySlug) {
+        testPushSuccessful(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
+    }
+
+    /**
+     * Perform a push operation and fail if there was an exception.
+     *
+     * @param repositoryHandle the Git object for the repository.
+     * @param username         the username of the user that tries to push to the repository.
+     * @param password         the password or token of the user
+     * @param projectKey       the project key of the repository.
+     * @param repositorySlug   the repository slug of the repository.
+     */
+    public void testPushSuccessful(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) {
         try {
-            performPush(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
+            performPush(repositoryHandle, username, password, projectKey, repositorySlug);
         }
         catch (GitAPIException e) {
             fail("Pushing was not successful: " + e.getMessage());
@@ -639,5 +657,35 @@ public class LocalVCLocalCITestService {
         assertThat(solutionRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
+    }
+
+    /**
+     * Gets the participationVcsAccessToken belonging to a user and a participation
+     *
+     * @param userId                     The user's id
+     * @param programmingParticipationId The participation's id
+     *
+     * @return the participationVcsAccessToken of the user for the given participationId
+     */
+    public ParticipationVCSAccessToken getParticipationVcsAccessToken(Long userId, Long programmingParticipationId) {
+        return participationVCSAccessTokenService.findByUserIdAndParticipationId(userId, programmingParticipationId).orElseThrow();
+    }
+
+    /**
+     * Deletes the participationVcsAccessToken for a participation
+     *
+     * @param participationId The participationVcsAccessToken's participationId
+     */
+    public void deleteParticipationVcsAccessToken(Long participationId) {
+        participationVCSAccessTokenService.deleteByParticipationId(participationId);
+    }
+
+    /**
+     * Deletes a programmingParticipation
+     *
+     * @param programmingParticipation The participation to delete
+     */
+    public void deleteParticipation(ProgrammingExerciseStudentParticipation programmingParticipation) {
+        programmingExerciseStudentParticipationRepository.delete(programmingParticipation);
     }
 }
