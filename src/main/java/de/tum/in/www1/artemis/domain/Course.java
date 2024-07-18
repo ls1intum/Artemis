@@ -36,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -224,6 +225,11 @@ public class Course extends DomainObject {
 
     @Column(name = "learning_paths_enabled", nullable = false)
     private boolean learningPathsEnabled = false;
+
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "learning_paths_configuration_id")
+    @JsonIgnoreProperties("course")
+    private LearningPathsConfiguration learningPathsConfiguration;
 
     @Column(name = "student_course_analytics_dashboard_enabled", nullable = false)
     private boolean studentCourseAnalyticsDashboardEnabled = false;
@@ -765,6 +771,14 @@ public class Course extends DomainObject {
 
     public void setLearningPathsEnabled(boolean learningPathsEnabled) {
         this.learningPathsEnabled = learningPathsEnabled;
+    }
+
+    public LearningPathsConfiguration getLearningPathsConfiguration() {
+        return learningPathsConfiguration;
+    }
+
+    public void setLearningPathsConfiguration(LearningPathsConfiguration learningPathsConfiguration) {
+        this.learningPathsConfiguration = learningPathsConfiguration;
     }
 
     public boolean getStudentCourseAnalyticsDashboardEnabled() {

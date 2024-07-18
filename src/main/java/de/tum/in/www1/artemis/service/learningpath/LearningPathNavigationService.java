@@ -13,6 +13,8 @@ import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
+import de.tum.in.www1.artemis.repository.competency.LearningPathsConfigurationRepository;
 import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathRecommendationService.RecommendationState;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
@@ -31,9 +33,13 @@ public class LearningPathNavigationService {
 
     private final LearningObjectService learningObjectService;
 
-    public LearningPathNavigationService(LearningPathRecommendationService learningPathRecommendationService, LearningObjectService learningObjectService) {
+    private final LearningPathsConfigurationRepository learningPathsConfigurationRepository;
+
+    public LearningPathNavigationService(LearningPathRecommendationService learningPathRecommendationService, LearningObjectService learningObjectService,
+            LearningPathsConfigurationRepository learningPathsConfigurationRepository) {
         this.learningPathRecommendationService = learningPathRecommendationService;
         this.learningObjectService = learningObjectService;
+        this.learningPathsConfigurationRepository = learningPathsConfigurationRepository;
     }
 
     /**
@@ -44,14 +50,16 @@ public class LearningPathNavigationService {
      * @return the navigation
      */
     public LearningPathNavigationDTO getNavigation(LearningPath learningPath) {
+        var learningPathsConfiguration = learningPathsConfigurationRepository.findByLearningPathIdElseThrow(learningPath.getId());
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfNotMasteredCompetencies(learningPath);
-        var currentLearningObject = learningPathRecommendationService.getFirstLearningObject(learningPath.getUser(), recommendationState);
+        var currentLearningObject = learningPathRecommendationService.getFirstLearningObject(learningPath.getUser(), recommendationState, learningPathsConfiguration);
         CourseCompetency competencyOfCurrentLearningObject;
         var recommendationStateWithAllCompetencies = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
 
         // If all competencies are mastered, get the last completed learning object
         if (currentLearningObject == null) {
-            currentLearningObject = learningPathRecommendationService.getLastLearningObject(learningPath.getUser(), recommendationStateWithAllCompetencies);
+            currentLearningObject = learningPathRecommendationService.getLastLearningObject(learningPath.getUser(), recommendationStateWithAllCompetencies,
+                    learningPathsConfiguration);
 
             // If we still didn't find any learning object, there exists no learning object in the learning path and we can return an empty navigation
             if (currentLearningObject == null) {
@@ -65,7 +73,8 @@ public class LearningPathNavigationService {
             competencyOfCurrentLearningObject = findCorrespondingCompetencyForLearningObject(recommendationState, currentLearningObject, true);
         }
 
-        return getNavigationRelativeToLearningObject(recommendationStateWithAllCompetencies, currentLearningObject, competencyOfCurrentLearningObject.getId(), learningPath);
+        return getNavigationRelativeToLearningObject(recommendationStateWithAllCompetencies, currentLearningObject, competencyOfCurrentLearningObject.getId(), learningPath,
+                learningPathsConfiguration);
     }
 
     /**
@@ -103,30 +112,33 @@ public class LearningPathNavigationService {
      */
     public LearningPathNavigationDTO getNavigationRelativeToLearningObject(LearningPath learningPath, long learningObjectId, LearningObjectType learningObjectType,
             long competencyId) {
+        var learningPathsConfiguration = learningPathsConfigurationRepository.findByLearningPathIdElseThrow(learningPath.getId());
+
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
         var currentLearningObject = learningObjectService.getLearningObjectByIdAndType(learningObjectId, learningObjectType);
 
-        return getNavigationRelativeToLearningObject(recommendationState, currentLearningObject, competencyId, learningPath);
+        return getNavigationRelativeToLearningObject(recommendationState, currentLearningObject, competencyId, learningPath, learningPathsConfiguration);
     }
 
     private LearningPathNavigationDTO getNavigationRelativeToLearningObject(RecommendationState recommendationState, LearningObject currentLearningObject, long competencyId,
-            LearningPath learningPath) {
+            LearningPath learningPath, LearningPathsConfiguration learningPathsConfiguration) {
         var currentCompetency = recommendationState.competencyIdMap().get(competencyId);
 
-        var learningObjectsInCurrentCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(currentCompetency, learningPath.getUser());
+        var learningObjectsInCurrentCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(currentCompetency, learningPath.getUser(),
+                learningPathsConfiguration);
         int indexOfCurrentLearningObject = learningObjectsInCurrentCompetency.indexOf(currentLearningObject);
 
         var predecessorLearningObjectDTO = getPredecessorOfLearningObject(recommendationState, currentCompetency, learningObjectsInCurrentCompetency, indexOfCurrentLearningObject,
-                learningPath.getUser());
+                learningPath.getUser(), learningPathsConfiguration);
         var currentLearningObjectDTO = createLearningPathNavigationObjectDTO(currentLearningObject, learningPath.getUser(), currentCompetency);
         var successorLearningObjectDTO = getSuccessorOfLearningObject(recommendationState, currentCompetency, learningObjectsInCurrentCompetency, indexOfCurrentLearningObject,
-                learningPath.getUser());
+                learningPath.getUser(), learningPathsConfiguration);
 
         return new LearningPathNavigationDTO(predecessorLearningObjectDTO, currentLearningObjectDTO, successorLearningObjectDTO, learningPath.getProgress());
     }
 
     private LearningPathNavigationObjectDTO getPredecessorOfLearningObject(RecommendationState recommendationState, CourseCompetency currentCompetency,
-            List<LearningObject> learningObjectsInCurrentCompetency, int indexOfCurrentLearningObject, User user) {
+            List<LearningObject> learningObjectsInCurrentCompetency, int indexOfCurrentLearningObject, User user, LearningPathsConfiguration learningPathsConfiguration) {
         LearningObject predecessorLearningObject = null;
         CourseCompetency competencyOfPredecessor = null;
         if (indexOfCurrentLearningObject <= 0) {
@@ -134,7 +146,8 @@ public class LearningPathNavigationService {
             while (indexOfCompetencyToSearch >= 0 && predecessorLearningObject == null) {
                 long competencyIdToSearchNext = recommendationState.recommendedOrderOfCompetencies().get(indexOfCompetencyToSearch);
                 var competencyToSearch = recommendationState.competencyIdMap().get(competencyIdToSearchNext);
-                var learningObjectsInPreviousCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyToSearch, user);
+                var learningObjectsInPreviousCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyToSearch, user,
+                        learningPathsConfiguration);
                 if (!learningObjectsInPreviousCompetency.isEmpty()) {
                     predecessorLearningObject = learningObjectsInPreviousCompetency.getLast();
                     competencyOfPredecessor = competencyToSearch;
@@ -150,7 +163,7 @@ public class LearningPathNavigationService {
     }
 
     private LearningPathNavigationObjectDTO getSuccessorOfLearningObject(RecommendationState recommendationState, CourseCompetency currentCompetency,
-            List<LearningObject> learningObjectsInCurrentCompetency, int indexOfCurrentLearningObject, User user) {
+            List<LearningObject> learningObjectsInCurrentCompetency, int indexOfCurrentLearningObject, User user, LearningPathsConfiguration learningPathsConfiguration) {
         LearningObject successorLearningObject = null;
         CourseCompetency competencyOfSuccessor = null;
         if (indexOfCurrentLearningObject >= learningObjectsInCurrentCompetency.size() - 1) {
@@ -158,7 +171,8 @@ public class LearningPathNavigationService {
             while (indexOfCompetencyToSearch < recommendationState.recommendedOrderOfCompetencies().size() && successorLearningObject == null) {
                 long competencyIdToSearchNext = recommendationState.recommendedOrderOfCompetencies().get(indexOfCompetencyToSearch);
                 var nextCompetencyToSearch = recommendationState.competencyIdMap().get(competencyIdToSearchNext);
-                var learningObjectsInNextCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(nextCompetencyToSearch, user);
+                var learningObjectsInNextCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(nextCompetencyToSearch, user,
+                        learningPathsConfiguration);
                 if (!learningObjectsInNextCompetency.isEmpty()) {
                     successorLearningObject = learningObjectsInNextCompetency.getFirst();
                     competencyOfSuccessor = nextCompetencyToSearch;
@@ -176,14 +190,15 @@ public class LearningPathNavigationService {
     /**
      * Get the navigation overview for the given learning path.
      *
-     * @param learningPath the learning path
+     * @param learningPath               the learning path
+     * @param learningPathsConfiguration the settings for the learning paths
      * @return the navigation overview
      */
-    public LearningPathNavigationOverviewDTO getNavigationOverview(LearningPath learningPath) {
+    public LearningPathNavigationOverviewDTO getNavigationOverview(LearningPath learningPath, LearningPathsConfiguration learningPathsConfiguration) {
         var learningPathUser = learningPath.getUser();
         RecommendationState recommendationState = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
         var learningObjects = recommendationState.recommendedOrderOfCompetencies().stream().map(competencyId -> recommendationState.competencyIdMap().get(competencyId))
-                .flatMap(competency -> learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competency, learningPathUser).stream()
+                .flatMap(competency -> learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competency, learningPathUser, learningPathsConfiguration).stream()
                         .map(learningObject -> createLearningPathNavigationObjectDTO(learningObject, learningPathUser, competency)))
                 .toList();
         return new LearningPathNavigationOverviewDTO(learningObjects);

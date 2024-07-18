@@ -29,13 +29,16 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
+import de.tum.in.www1.artemis.repository.competency.LearningPathsConfigurationRepository;
 import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
@@ -56,6 +59,8 @@ public class LearningPathRecommendationService {
     private final CompetencyProgressRepository competencyProgressRepository;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
+
+    private final LearningPathsConfigurationRepository learningPathsConfigurationRepository;
 
     /**
      * Base utility that is used to calculate a competencies' utility with respect to the earliest due date of the competency.
@@ -97,12 +102,14 @@ public class LearningPathRecommendationService {
             { 0.50, 0.40, 0.10 }, { 0.39, 0.45, 0.16 }, { 0.28, 0.48, 0.24 }, { 0.20, 0.47, 0.33 }, { 0.13, 0.43, 0.44 }, { 0.08, 0.37, 0.55 }, { 0.04, 0.29, 0.67 }, };
 
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
-            ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository) {
+            ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
+            LearningPathsConfigurationRepository learningPathsConfigurationRepository) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningObjectService = learningObjectService;
         this.participantScoreService = participantScoreService;
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.learningPathsConfigurationRepository = learningPathsConfigurationRepository;
     }
 
     /**
@@ -136,14 +143,15 @@ public class LearningPathRecommendationService {
     /**
      * Gets the first learning object of a learning path
      *
-     * @param user                the user that should be analyzed
-     * @param recommendationState the current state of the learning path recommendation
+     * @param user                       the user that should be analyzed
+     * @param recommendationState        the current state of the learning path recommendation
+     * @param learningPathsConfiguration the settings for the learning paths
      * @return the next due learning object of learning path
      */
-    public LearningObject getFirstLearningObject(User user, RecommendationState recommendationState) {
+    public LearningObject getFirstLearningObject(User user, RecommendationState recommendationState, LearningPathsConfiguration learningPathsConfiguration) {
         for (long competencyId : recommendationState.recommendedOrderOfCompetencies) {
             var competency = recommendationState.competencyIdMap.get(competencyId);
-            var recommendedOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, recommendationState);
+            var recommendedOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, recommendationState, learningPathsConfiguration);
             if (!recommendedOrderOfLearningObjects.isEmpty()) {
                 return recommendedOrderOfLearningObjects.getFirst();
             }
@@ -154,17 +162,18 @@ public class LearningPathRecommendationService {
     /**
      * Gets the last learning object of a learning path
      *
-     * @param user                the user that should be analyzed
-     * @param recommendationState the current state of the learning path recommendation
+     * @param user                       the user that should be analyzed
+     * @param recommendationState        the current state of the learning path recommendation
+     * @param learningPathsConfiguration the settings for the learning paths
      * @return the last learning object of the learning path
      */
-    public LearningObject getLastLearningObject(User user, RecommendationState recommendationState) {
+    public LearningObject getLastLearningObject(User user, RecommendationState recommendationState, LearningPathsConfiguration learningPathsConfiguration) {
         LearningObject learningObject = null;
         int indexOfLastCompletedCompetency = recommendationState.recommendedOrderOfCompetencies().size() - 1;
         while (learningObject == null && indexOfLastCompletedCompetency >= 0) {
             var lastCompletedCompetencyId = recommendationState.recommendedOrderOfCompetencies().get(indexOfLastCompletedCompetency);
             var lastCompletedCompetency = recommendationState.competencyIdMap().get(lastCompletedCompetencyId);
-            var recommendedLearningObjectsInLastCompetency = getOrderOfLearningObjectsForCompetency(lastCompletedCompetency, user);
+            var recommendedLearningObjectsInLastCompetency = getOrderOfLearningObjectsForCompetency(lastCompletedCompetency, user, learningPathsConfiguration);
             if (!recommendedLearningObjectsInLastCompetency.isEmpty()) {
                 learningObject = recommendedLearningObjectsInLastCompetency.getLast();
             }
@@ -454,25 +463,29 @@ public class LearningPathRecommendationService {
     /**
      * Analyzes the current progress within the learning path and generates a recommended ordering of uncompleted learning objects in a competency.
      *
-     * @param user       the user that should be analyzed
-     * @param competency the competency
-     * @param state      the current state of the recommendation
+     * @param user                       the user that should be analyzed
+     * @param competency                 the competency
+     * @param state                      the current state of the recommendation
+     * @param learningPathsConfiguration the settings for the learning paths
      * @return the recommended ordering of learning objects
      */
-    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, RecommendationState state) {
+    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, RecommendationState state,
+            LearningPathsConfiguration learningPathsConfiguration) {
         final var combinedPriorConfidence = computeCombinedPriorConfidence(competency, state);
-        return getRecommendedOrderOfLearningObjects(user, competency, combinedPriorConfidence);
+        return getRecommendedOrderOfLearningObjects(user, competency, combinedPriorConfidence, learningPathsConfiguration);
     }
 
     /**
      * Analyzes the current progress within the learning path and generates a recommended ordering of uncompleted learning objects in a competency.
      *
-     * @param user                    the user that should be analyzed
-     * @param competency              the competency
-     * @param combinedPriorConfidence the combined confidence of the user for the prior competencies
+     * @param user                       the user that should be analyzed
+     * @param competency                 the competency
+     * @param combinedPriorConfidence    the combined confidence of the user for the prior competencies
+     * @param learningPathsConfiguration the settings for the learning paths
      * @return the recommended ordering of learning objects
      */
-    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, double combinedPriorConfidence) {
+    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, double combinedPriorConfidence,
+            LearningPathsConfiguration learningPathsConfiguration) {
         var pendingLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !lectureUnit.isCompletedFor(user)).toList();
         List<LearningObject> recommendedOrder = new ArrayList<>(pendingLectureUnits);
 
@@ -496,7 +509,7 @@ public class LearningPathRecommendationService {
         }
         final var recommendedExerciseDistribution = getRecommendedExercisePointDistribution(numberOfRequiredExercisePointsToMaster, weightedConfidence);
 
-        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, difficultyLevelMap);
+        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, difficultyLevelMap, learningPathsConfiguration);
         return recommendedOrder;
     }
 
@@ -518,32 +531,37 @@ public class LearningPathRecommendationService {
      * @param recommendedOrder                     the list storing the recommended order of learning objects
      * @param recommendedExercisePointDistribution an array containing the number of exercise points that should be scheduled per difficulty (easy to hard)
      * @param difficultyMap                        a map from difficulty level to a set of corresponding exercises
+     * @param learningPathsConfiguration           the settings for the learning paths
      */
     private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, double[] recommendedExercisePointDistribution,
-            Map<DifficultyLevel, Set<Exercise>> difficultyMap) {
+            Map<DifficultyLevel, Set<Exercise>> difficultyMap, LearningPathsConfiguration learningPathsConfiguration) {
         final var easyExercises = new HashSet<Exercise>();
         final var mediumExercises = new HashSet<Exercise>();
         final var hardExercises = new HashSet<Exercise>();
 
         // choose as many exercises from the correct difficulty level as possible
-        final var missingEasy = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, recommendedExercisePointDistribution[0], easyExercises);
-        final var missingHard = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, recommendedExercisePointDistribution[2], hardExercises);
+        final var missingEasy = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, recommendedExercisePointDistribution[0], easyExercises,
+                learningPathsConfiguration);
+        final var missingHard = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, recommendedExercisePointDistribution[2], hardExercises,
+                learningPathsConfiguration);
 
         // if there are not sufficiently many exercises per difficulty level, prefer medium difficulty
         // case 1: no medium exercises available/medium exercises missing: continue to fill with easy/hard exercises
         // case 2: medium exercises available: no medium exercises missing -> missing exercises must be easy/hard -> in both scenarios medium is the closest difficulty level
         double mediumExercisePoints = recommendedExercisePointDistribution[1] + missingEasy + missingHard;
-        double numberOfMissingExercisePoints = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.MEDIUM, mediumExercisePoints, mediumExercises);
+        double numberOfMissingExercisePoints = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.MEDIUM, mediumExercisePoints, mediumExercises,
+                learningPathsConfiguration);
 
         // if there are still not sufficiently many medium exercises, choose easy difficulty
         // prefer easy to hard exercises to avoid student overload
         if (numberOfMissingExercisePoints > 0 && !difficultyMap.get(DifficultyLevel.EASY).isEmpty()) {
-            numberOfMissingExercisePoints = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, numberOfMissingExercisePoints, easyExercises);
+            numberOfMissingExercisePoints = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, numberOfMissingExercisePoints, easyExercises,
+                    learningPathsConfiguration);
         }
 
         // fill remaining slots with hard difficulty
         if (numberOfMissingExercisePoints > 0 && !difficultyMap.get(DifficultyLevel.HARD).isEmpty()) {
-            selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, numberOfMissingExercisePoints, hardExercises);
+            selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, numberOfMissingExercisePoints, hardExercises, learningPathsConfiguration);
         }
 
         recommendedOrder.addAll(easyExercises);
@@ -556,17 +574,31 @@ public class LearningPathRecommendationService {
      * <p>
      * If there are not sufficiently exercises available, the method returns the number of exercises that could not be selected with the particular difficulty.
      *
-     * @param difficultyMap  a map from difficulty level to a set of corresponding exercises
-     * @param difficulty     the difficulty level that should be chosen
-     * @param exercisePoints the amount of exercise points that should be selected
-     * @param exercises      the set to store the selected exercises
+     * @param difficultyMap              a map from difficulty level to a set of corresponding exercises
+     * @param difficulty                 the difficulty level that should be chosen
+     * @param exercisePoints             the amount of exercise points that should be selected
+     * @param exercises                  the set to store the selected exercises
+     * @param learningPathsConfiguration the settings for the learning paths
      * @return amount of points that are missing, if negative the amount of points that are selected too much
      */
     private static double selectExercisesWithDifficulty(Map<DifficultyLevel, Set<Exercise>> difficultyMap, DifficultyLevel difficulty, double exercisePoints,
-            Set<Exercise> exercises) {
+            Set<Exercise> exercises, LearningPathsConfiguration learningPathsConfiguration) {
         var remainingExercisePoints = new AtomicDouble(exercisePoints);
-        var selectedExercises = difficultyMap.get(difficulty).stream().takeWhile(exercise -> remainingExercisePoints.getAndAdd(-exercise.getMaxPoints()) >= 0)
-                .collect(Collectors.toSet());
+        Set<Exercise> selectedExercises;
+
+        if (learningPathsConfiguration.getIncludeAllGradedExercises()) {
+            selectedExercises = difficultyMap.get(difficulty).stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY)
+                    .collect(Collectors.toCollection(HashSet::new));
+            remainingExercisePoints.addAndGet(-selectedExercises.stream().mapToDouble(Exercise::getMaxPoints).sum());
+
+            selectedExercises.addAll(difficultyMap.get(difficulty).stream().filter(exercise -> exercise.getIncludedInOverallScore() != IncludedInOverallScore.INCLUDED_COMPLETELY)
+                    .takeWhile(exercise -> remainingExercisePoints.getAndAdd(-exercise.getMaxPoints()) >= 0).collect(Collectors.toSet()));
+        }
+        else {
+            selectedExercises = difficultyMap.get(difficulty).stream().takeWhile(exercise -> remainingExercisePoints.getAndAdd(-exercise.getMaxPoints()) >= 0)
+                    .collect(Collectors.toSet());
+        }
+
         exercises.addAll(selectedExercises);
         difficultyMap.get(difficulty).removeAll(selectedExercises);
         return remainingExercisePoints.get();
@@ -682,34 +714,37 @@ public class LearningPathRecommendationService {
      * Gets the recommended order of learning objects for a competency. The finished lecture units and exercises are at the beginning of the list.
      * After that all pending lecture units and exercises needed to master the competency are added.
      *
-     * @param competencyId the id of the competency
-     * @param user         the user for which the recommendation should be generated
+     * @param competencyId   the id of the competency
+     * @param user           the user for which the recommendation should be generated
+     * @param learningPathId the id of the learning path
      * @return the recommended order of learning objects
      */
-    public List<LearningObject> getOrderOfLearningObjectsForCompetency(long competencyId, User user) {
+    public List<LearningObject> getOrderOfLearningObjectsForCompetency(long competencyId, User user, long learningPathId) {
+        var learningPathsConfiguration = learningPathsConfigurationRepository.findByLearningPathIdElseThrow(learningPathId);
         CourseCompetency competency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
-        return getOrderOfLearningObjectsForCompetency(competency, user);
+        return getOrderOfLearningObjectsForCompetency(competency, user, learningPathsConfiguration);
     }
 
     /**
      * Gets the recommended order of learning objects for a competency. The finished lecture units and exercises are at the beginning of the list.
      * After that all pending lecture units and exercises needed to master the competency are added.
      *
-     * @param competency the competency for which the recommendation should be generated
-     * @param user       the user for which the recommendation should be generated
+     * @param competency                 the competency for which the recommendation should be generated
+     * @param user                       the user for which the recommendation should be generated
+     * @param learningPathsConfiguration the settings for the learning paths
      * @return the recommended order of learning objects
      */
-    public List<LearningObject> getOrderOfLearningObjectsForCompetency(CourseCompetency competency, User user) {
+    public List<LearningObject> getOrderOfLearningObjectsForCompetency(CourseCompetency competency, User user, LearningPathsConfiguration learningPathsConfiguration) {
         Optional<CompetencyProgress> optionalCompetencyProgress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), user.getId());
         competency.setUserProgress(optionalCompetencyProgress.map(Set::of).orElse(Set.of()));
         learningObjectService.setLectureUnitCompletions(competency.getLectureUnits(), user);
 
         Set<CompetencyProgress> priorCompetencyProgresses = competencyProgressRepository.findAllPriorByCompetencyId(competency, user);
-        double combinedPriorConfidence = priorCompetencyProgresses.stream().mapToDouble(CompetencyProgress::getConfidence).average().orElse(0);
+        double combinedPriorConfidence = priorCompetencyProgresses.stream().mapToDouble(CompetencyProgress::getConfidence).average().orElse(1);
         double weightedConfidence = computeWeightedConfidence(combinedPriorConfidence, optionalCompetencyProgress);
         Stream<LectureUnit> completedLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.isCompletedFor(user));
         Stream<Exercise> completedExercises = competency.getExercises().stream().filter(exercise -> learningObjectService.isCompletedByUser(exercise, user));
-        Stream<LearningObject> pendingLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, weightedConfidence).stream();
+        Stream<LearningObject> pendingLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, weightedConfidence, learningPathsConfiguration).stream();
 
         return Stream.concat(completedLectureUnits, Stream.concat(completedExercises, pendingLearningObjects)).toList();
     }

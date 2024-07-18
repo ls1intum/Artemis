@@ -13,6 +13,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/entities/competency/learning-path.model';
 import { Prerequisite } from 'app/entities/prerequisite.model';
+import { LearningPathsConfiguration } from 'app/entities/competency/learning-paths-configuration.model';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
@@ -101,6 +102,7 @@ export class Course implements BaseEntity {
     public prerequisites?: Prerequisite[];
     public learningPathsEnabled?: boolean;
     public learningPaths?: LearningPath[];
+    public learningPathsConfiguration?: LearningPathsConfiguration;
     public exams?: Exam[];
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];

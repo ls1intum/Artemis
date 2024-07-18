@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240717223000" author="stoehrj">
+        <createTable tableName="learning_paths_configuration">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="include_all_graded_exercises" type="boolean" defaultValueBoolean="false" >
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addColumn tableName="course">
+            <column name="learning_paths_configuration_id" type="bigint"/>
+        </addColumn>
+        <createIndex indexName="fk_course_learning_paths_configuration_id" tableName="course">
+            <column name="learning_paths_configuration_id"/>
+        </createIndex>
+        <addForeignKeyConstraint baseColumnNames="learning_paths_configuration_id" baseTableName="course" constraintName="fk_course_learning_paths_configuration_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="learning_paths_configuration" validate="true"/>
+
+        <!-- Create a new entry in learning_paths_configuration for each course where learning_paths_enabled is TRUE -->
+        <sql>
+            INSERT INTO learning_paths_configuration (include_all_graded_exercises)
+            SELECT FALSE
+            FROM course
+            WHERE learning_paths_enabled = TRUE
+        </sql>
+    </changeSet>
+</databaseChangeLog>

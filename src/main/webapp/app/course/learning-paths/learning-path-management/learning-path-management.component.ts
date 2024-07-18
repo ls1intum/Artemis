@@ -10,10 +10,11 @@ import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared
 import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
-import { faSort, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { HealthStatus, LearningPathHealthDTO, getWarningAction, getWarningBody, getWarningHint, getWarningTitle } from 'app/entities/competency/learning-path-health.model';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningPathProgressModalComponent } from 'app/course/learning-paths/progress-modal/learning-path-progress-modal.component';
+import { LearningPathsConfiguration } from 'app/entities/competency/learning-paths-configuration.model';
 
 export enum TableColumn {
     ID = 'ID',
@@ -25,12 +26,14 @@ export enum TableColumn {
 @Component({
     selector: 'jhi-learning-path-management',
     templateUrl: './learning-path-management.component.html',
+    styleUrl: 'learning-path-management.component.scss',
 })
 export class LearningPathManagementComponent implements OnInit {
     isLoading = false;
 
     courseId: number;
     health: LearningPathHealthDTO;
+    learningPathsConfiguration: LearningPathsConfiguration;
 
     searchLoading = false;
     readonly column = TableColumn;
@@ -48,8 +51,8 @@ export class LearningPathManagementComponent implements OnInit {
     private sort = new Subject<void>();
 
     // icons
-    faSort = faSort;
-    faTriangleExclamation = faTriangleExclamation;
+    readonly faSort = faSort;
+    protected readonly HealthStatus = HealthStatus;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -138,6 +141,7 @@ export class LearningPathManagementComponent implements OnInit {
                     if (!this.health.status?.includes(HealthStatus.DISABLED)) {
                         this.performSearch(this.sort, 0);
                         this.performSearch(this.search, 300);
+                        this.loadLearningPathsConfiguration();
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -188,6 +192,12 @@ export class LearningPathManagementComponent implements OnInit {
             });
     }
 
+    loadLearningPathsConfiguration() {
+        this.learningPathService.getLearningPathsConfiguration(this.courseId).subscribe((res) => {
+            this.learningPathsConfiguration = res.body!;
+        });
+    }
+
     sortRows() {
         this.sortService.sortByProperty(this.content.resultsOnPage, this.sortedColumn, this.listSorting);
     }
@@ -218,9 +228,7 @@ export class LearningPathManagementComponent implements OnInit {
         modalRef.componentInstance.learningPath = learningPath;
     }
 
-    protected readonly HealthStatus = HealthStatus;
-    protected readonly getWarningTitle = getWarningTitle;
-    protected readonly getWarningBody = getWarningBody;
-    protected readonly getWarningAction = getWarningAction;
-    protected readonly getWarningHint = getWarningHint;
+    updateLearningPathsConfiguration() {
+        this.learningPathService.updateLearningPathsConfiguration(this.courseId, this.learningPathsConfiguration).subscribe();
+    }
 }

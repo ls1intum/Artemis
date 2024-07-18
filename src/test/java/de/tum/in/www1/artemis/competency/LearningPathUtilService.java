@@ -9,10 +9,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
 import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningPathRepository;
+import de.tum.in.www1.artemis.repository.competency.LearningPathsConfigurationRepository;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 
 /**
@@ -31,10 +32,10 @@ public class LearningPathUtilService {
     private LearningPathRepository learningPathRepository;
 
     @Autowired
-    private CompetencyRepository competencyRepository;
+    private CourseCompetencyRepository courseCompetencyRepository;
 
     @Autowired
-    private CourseCompetencyRepository courseCompetencyRepository;
+    private LearningPathsConfigurationRepository learningPathsConfigurationRepository;
 
     /**
      * Enable and generate learning paths for course.
@@ -45,8 +46,13 @@ public class LearningPathUtilService {
     public Course enableAndGenerateLearningPathsForCourse(Course course) {
         var eagerlyLoadedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
         learningPathService.generateLearningPaths(eagerlyLoadedCourse);
+        LearningPathsConfiguration learningPathsConfiguration = new LearningPathsConfiguration();
         eagerlyLoadedCourse.setLearningPathsEnabled(true);
-        return courseRepository.save(eagerlyLoadedCourse);
+        eagerlyLoadedCourse.setLearningPathsConfiguration(learningPathsConfiguration);
+        learningPathsConfigurationRepository.save(learningPathsConfiguration);
+        eagerlyLoadedCourse = courseRepository.save(eagerlyLoadedCourse);
+        eagerlyLoadedCourse.setLearningPathsConfiguration(learningPathsConfiguration);
+        return eagerlyLoadedCourse;
     }
 
     /**
@@ -93,14 +99,5 @@ public class LearningPathUtilService {
      */
     public void deleteLearningPaths(User user) {
         learningPathRepository.deleteAll(user.getLearningPaths());
-    }
-
-    /**
-     * Deletes all learning paths of all given user.
-     *
-     * @param users the users for which all learning paths should be deleted
-     */
-    public void deleteLearningPaths(Iterable<User> users) {
-        users.forEach(this::deleteLearningPaths);
     }
 }

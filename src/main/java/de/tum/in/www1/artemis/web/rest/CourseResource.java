@@ -64,6 +64,7 @@ import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -74,6 +75,7 @@ import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.competency.LearningPathsConfigurationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -184,6 +186,8 @@ public class CourseResource {
 
     private final TeamRepository teamRepository;
 
+    private final LearningPathsConfigurationRepository learningPathsConfigurationRepository;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
@@ -191,7 +195,7 @@ public class CourseResource {
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
             ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
-            TeamRepository teamRepository) {
+            TeamRepository teamRepository, LearningPathsConfigurationRepository learningPathsConfigurationRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -215,6 +219,7 @@ public class CourseResource {
         this.examRepository = examRepository;
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
+        this.learningPathsConfigurationRepository = learningPathsConfigurationRepository;
     }
 
     /**
@@ -290,6 +295,12 @@ public class CourseResource {
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
+        courseUpdate.setLearningPathsConfiguration(existingCourse.getLearningPathsConfiguration());
+
+        if (courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsConfiguration() == null) {
+            courseUpdate.setLearningPathsConfiguration(new LearningPathsConfiguration());
+            learningPathsConfigurationRepository.save(courseUpdate.getLearningPathsConfiguration());
+        }
 
         if (courseUpdate.getTitle().length() > MAX_TITLE_LENGTH) {
             throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");

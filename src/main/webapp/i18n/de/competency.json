@@ -273,6 +273,11 @@
                     "name": "Name",
                     "login": "Login",
                     "progress": "Fortschritt"
+                },
+                "configuration": {
+                    "title": "Lernpfadeinstellungen",
+                    "includeAllGradedExercises": "Alle bewerteten Aufgaben einbeziehen",
+                    "includeAllGradedExercisesExplanation": "Die Lernpfade werden alle Aufgaben enthalten, die in die Kursbewertung einfließen. Dadurch können Studierende keine wichtigen Aufgaben im Lernpfad übersehen."
                 }
             },
             "sideBar": {

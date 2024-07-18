@@ -17,6 +17,7 @@ import { LearningPathService } from 'app/course/learning-paths/learning-path.ser
 import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LearningPathsConfiguration } from 'app/entities/competency/learning-paths-configuration.model';
 
 describe('LearningPathManagementComponent', () => {
     let fixture: ComponentFixture<LearningPathManagementComponent>;
@@ -34,6 +35,7 @@ describe('LearningPathManagementComponent', () => {
     let enableLearningPathsStub: jest.SpyInstance;
     let generateMissingLearningPathsForCourseStub: jest.SpyInstance;
     let getHealthStatusForCourseStub: jest.SpyInstance;
+    let getLearningPathsConfigurationStub: jest.SpyInstance;
     let health: LearningPathHealthDTO;
     let courseId: number;
     beforeEach(() => {
@@ -73,6 +75,7 @@ describe('LearningPathManagementComponent', () => {
                 enableLearningPathsStub = jest.spyOn(learningPathService, 'enableLearningPaths');
                 generateMissingLearningPathsForCourseStub = jest.spyOn(learningPathService, 'generateMissingLearningPathsForCourse');
                 getHealthStatusForCourseStub = jest.spyOn(learningPathService, 'getHealthStatusForCourse');
+                getLearningPathsConfigurationStub = jest.spyOn(learningPathService, 'getLearningPathsConfiguration');
             });
     });
 
@@ -131,14 +134,18 @@ describe('LearningPathManagementComponent', () => {
     it('should enable learning paths and load data', fakeAsync(() => {
         const healthDisabled = new LearningPathHealthDTO([HealthStatus.DISABLED]);
         getHealthStatusForCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: healthDisabled }))).mockReturnValueOnce(of(new HttpResponse({ body: health })));
+        getLearningPathsConfigurationStub.mockReturnValueOnce(of(new HttpResponse({ body: { includeAllGradedExercises: true } as LearningPathsConfiguration })));
         fixture.detectChanges();
         comp.ngOnInit();
         expect(comp.health).toEqual(healthDisabled);
+        expect(getLearningPathsConfigurationStub).not.toHaveBeenCalled();
         comp.enableLearningPaths();
         expect(enableLearningPathsStub).toHaveBeenCalledOnce();
         expect(enableLearningPathsStub).toHaveBeenCalledWith(courseId);
         expect(getHealthStatusForCourseStub).toHaveBeenCalledTimes(3);
         expect(comp.health).toEqual(health);
+        expect(getLearningPathsConfigurationStub).toHaveBeenCalledOnce();
+        expect(comp.learningPathsConfiguration).toEqual({ includeAllGradedExercises: true });
     }));
 
     it('should alert error if enable learning paths fails', fakeAsync(() => {

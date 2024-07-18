@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,9 +28,11 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.competency.LearningPathsConfigurationRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
@@ -83,10 +86,12 @@ public class LearningPathResource {
 
     private final LearningPathNavigationService learningPathNavigationService;
 
+    private final LearningPathsConfigurationRepository learningPathsConfigurationRepository;
+
     public LearningPathResource(CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             LearningPathService learningPathService, LearningPathRepository learningPathRepository, UserRepository userRepository,
             CompetencyProgressService competencyProgressService, LearningPathRecommendationService learningPathRecommendationService, LearningObjectService learningObjectService,
-            LearningPathNavigationService learningPathNavigationService) {
+            LearningPathNavigationService learningPathNavigationService, LearningPathsConfigurationRepository learningPathsConfigurationRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -97,6 +102,7 @@ public class LearningPathResource {
         this.learningPathRecommendationService = learningPathRecommendationService;
         this.learningObjectService = learningObjectService;
         this.learningPathNavigationService = learningPathNavigationService;
+        this.learningPathsConfigurationRepository = learningPathsConfigurationRepository;
     }
 
     /**
@@ -110,7 +116,7 @@ public class LearningPathResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
-        Course course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
+        Course course = courseRepository.findWithEagerCompetenciesAndPrerequisitesAndLearningPathsConfigurationByIdElseThrow(courseId);
         if (course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are already enabled for this course.");
         }
@@ -399,9 +405,54 @@ public class LearningPathResource {
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
 
-        List<LearningPathNavigationObjectDTO> learningObjects = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyId, user).stream()
-                .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, learningObjectService.isCompletedByUser(learningObject, user), competencyId)).toList();
+        List<LearningPathNavigationObjectDTO> learningObjects = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyId, user, learningPathId)
+                .stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, learningObjectService.isCompletedByUser(learningObject, user), competencyId))
+                .toList();
         return ResponseEntity.ok(learningObjects);
+    }
+
+    /**
+     * GET courses/:courseId/learning-paths/configuration : Gets the learning paths configuration for the course
+     *
+     * @param courseId the id of the course for which to get the learning paths configuration
+     * @return the ResponseEntity with status 200 (OK) and with the configuration in the body
+     */
+    @GetMapping("courses/{courseId}/learning-paths/configuration")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<LearningPathsConfiguration> getLearningPathsConfiguration(@PathVariable long courseId) {
+        log.debug("REST request to get learning paths configuration for course with id: {}", courseId);
+        Course course = courseRepository.findWithEagerLearningPathsConfigurationByIdElseThrow(courseId);
+        if (!course.getLearningPathsEnabled()) {
+            throw new BadRequestException("Learning paths are not enabled for this course.");
+        }
+
+        return ResponseEntity.ok(course.getLearningPathsConfiguration());
+    }
+
+    /**
+     * PUT courses/:courseId/learning-paths/configuration : Updates the learning paths configuration for the course
+     *
+     * @param courseId                   the id of the course for which to update the learning paths configuration
+     * @param learningPathsConfiguration the updated configuration
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("courses/{courseId}/learning-paths/configuration")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> updateLearningPathsConfiguration(@PathVariable long courseId, @RequestBody LearningPathsConfiguration learningPathsConfiguration) {
+        log.debug("REST request to update learning paths configuration for course with id: {}", courseId);
+        Course course = courseRepository.findWithEagerLearningPathsConfigurationByIdElseThrow(courseId);
+        if (!course.getLearningPathsEnabled()) {
+            throw new BadRequestException("Learning paths are not enabled for this course.");
+        }
+        if (!course.getLearningPathsConfiguration().getId().equals(learningPathsConfiguration.getId())) {
+            throw new BadRequestException("The configuration id does not match the course configuration id.");
+        }
+        learningPathsConfiguration.setCourse(course);
+        learningPathsConfigurationRepository.save(learningPathsConfiguration);
+
+        return ResponseEntity.ok().build();
     }
 
     /**

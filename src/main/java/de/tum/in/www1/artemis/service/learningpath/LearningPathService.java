@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
@@ -37,6 +38,7 @@ import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.competency.LearningPathsConfigurationRepository;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyGraphEdgeDTO;
@@ -87,10 +89,13 @@ public class LearningPathService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final LearningPathsConfigurationRepository learningPathsConfigurationRepository;
+
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
             CompetencyRelationRepository competencyRelationRepository, LearningPathNgxService learningPathNgxService,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository, StudentParticipationRepository studentParticipationRepository) {
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, StudentParticipationRepository studentParticipationRepository,
+            LearningPathsConfigurationRepository learningPathsConfigurationRepository) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
@@ -101,6 +106,7 @@ public class LearningPathService {
         this.learningPathNgxService = learningPathNgxService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.learningPathsConfigurationRepository = learningPathsConfigurationRepository;
     }
 
     /**
@@ -110,6 +116,12 @@ public class LearningPathService {
      */
     public void enableLearningPathsForCourse(@NotNull Course course) {
         course.setLearningPathsEnabled(true);
+
+        if (course.getLearningPathsConfiguration() == null) {
+            course.setLearningPathsConfiguration(new LearningPathsConfiguration());
+            learningPathsConfigurationRepository.save(course.getLearningPathsConfiguration());
+        }
+
         generateLearningPaths(course);
         courseRepository.save(course);
         log.debug("Enabled learning paths for course (id={})", course.getId());
@@ -348,7 +360,8 @@ public class LearningPathService {
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");
         }
-        return learningPathNavigationService.getNavigationOverview(learningPath);
+        var learningPathsConfiguration = learningPathsConfigurationRepository.findByLearningPathIdElseThrow(learningPath.getId());
+        return learningPathNavigationService.getNavigationOverview(learningPath, learningPathsConfiguration);
     }
 
     /**
@@ -363,7 +376,7 @@ public class LearningPathService {
     public LearningPath findWithCompetenciesAndLearningObjectsAndCompletedUsersById(long learningPathId) {
         LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
         // Remove exercise units, since they are already retrieved as exercises
-        learningPath.getCompetencies().stream().forEach(competency -> competency
+        learningPath.getCompetencies().forEach(competency -> competency
                 .setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet())));
         if (learningPath.getUser() == null) {
             learningPath.getCompetencies().forEach(competency -> {

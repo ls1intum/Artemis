@@ -10,6 +10,7 @@ import {
 } from 'app/entities/competency/learning-path.model';
 import { map, tap } from 'rxjs/operators';
 import { LearningPathStorageService } from 'app/course/learning-paths/participate/learning-path-storage.service';
+import { LearningPathsConfiguration } from 'app/entities/competency/learning-paths-configuration.model';
 
 @Injectable({ providedIn: 'root' })
 export class LearningPathService {
@@ -75,5 +76,13 @@ export class LearningPathService {
 
     getCompetencyProgressForLearningPath(learningPathId: number) {
         return this.httpClient.get<CompetencyProgressForLearningPathDTO[]>(`${this.resourceURL}/learning-path/${learningPathId}/competency-progress`, { observe: 'response' });
+    }
+
+    getLearningPathsConfiguration(courseId: number) {
+        return this.httpClient.get<LearningPathsConfiguration>(`${this.resourceURL}/courses/${courseId}/learning-paths/configuration`, { observe: 'response' });
+    }
+
+    updateLearningPathsConfiguration(courseId: number, learningPathConfiguration: LearningPathsConfiguration) {
+        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/learning-paths/configuration`, learningPathConfiguration, { observe: 'response' });
     }
 }

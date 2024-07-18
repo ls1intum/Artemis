@@ -273,6 +273,11 @@
                     "name": "Name",
                     "login": "Login",
                     "progress": "Progress"
+                },
+                "configuration": {
+                    "title": "Learning Path Configuration",
+                    "includeAllGradedExercises": "Include all graded exercises",
+                    "includeAllGradedExercisesExplanation": "The learning paths will include all exercises that are included in the course score. This way students cannot miss important exercises in the learning path."
                 }
             },
             "sideBar": {

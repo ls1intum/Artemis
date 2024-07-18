@@ -4,6 +4,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { LearningPathStorageService } from 'app/course/learning-paths/participate/learning-path-storage.service';
+import { LearningPathsConfiguration } from 'app/entities/competency/learning-paths-configuration.model';
 
 describe('LearningPathService', () => {
     let learningPathService: LearningPathService;
@@ -81,5 +82,16 @@ describe('LearningPathService', () => {
     it('should send a request to the server to get learning path navigation overview', () => {
         learningPathService.getLearningPathNavigationOverview(1).subscribe();
         expect(getStub).toHaveBeenCalledExactlyOnceWith('api/learning-path/1/navigation-overview', { observe: 'response' });
+    });
+
+    it('should send a request to the server to get learning paths configuration', () => {
+        learningPathService.getLearningPathsConfiguration(1).subscribe();
+        expect(getStub).toHaveBeenCalledExactlyOnceWith('api/courses/1/learning-paths/configuration', { observe: 'response' });
+    });
+
+    it('should send a request to the server to update learning paths configuration', () => {
+        const learningPathsConfiguration = new LearningPathsConfiguration();
+        learningPathService.updateLearningPathsConfiguration(1, learningPathsConfiguration).subscribe();
+        expect(putStub).toHaveBeenCalledExactlyOnceWith('api/courses/1/learning-paths/configuration', learningPathsConfiguration, { observe: 'response' });
     });
 });

@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
@@ -262,7 +263,7 @@ public class LearningPathNgxService {
         currentCluster.add(NgxLearningPathDTO.Node.of(startNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId()));
         currentCluster.add(NgxLearningPathDTO.Node.of(endNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId()));
 
-        final var recommendedLearningObjects = learningPathRecommendationService.getRecommendedOrderOfLearningObjects(user, competency, state);
+        final var recommendedLearningObjects = learningPathRecommendationService.getRecommendedOrderOfLearningObjects(user, competency, state, new LearningPathsConfiguration());
         for (int i = 0; i < recommendedLearningObjects.size(); i++) {
 
             // add node for learning object

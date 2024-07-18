@@ -129,6 +129,12 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesAndPrerequisitesById(long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "learningPathsConfiguration" })
+    Optional<Course> findWithEagerLearningPathsConfigurationById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites", "learningPathsConfiguration" })
+    Optional<Course> findWithEagerCompetenciesAndPrerequisitesAndLearningPathsConfigurationById(long courseId);
+
     @Query("""
             SELECT c
             FROM Course c
@@ -157,7 +163,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration",
+            "learningPathsConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
@@ -484,6 +491,16 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesById(courseId), courseId);
+    }
+
+    @NotNull
+    default Course findWithEagerLearningPathsConfigurationByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerLearningPathsConfigurationById(courseId), courseId);
+    }
+
+    @NotNull
+    default Course findWithEagerCompetenciesAndPrerequisitesAndLearningPathsConfigurationByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesAndLearningPathsConfigurationById(courseId), courseId);
     }
 
     @NotNull

@@ -31,10 +31,12 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.competency.LearningPathsConfigurationRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.FilePathService;
@@ -73,8 +75,11 @@ public class AdminCourseResource {
 
     private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
 
+    private final LearningPathsConfigurationRepository learningPathsConfigurationRepository;
+
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService) {
+            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService,
+            LearningPathsConfigurationRepository learningPathsConfigurationRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -82,6 +87,7 @@ public class AdminCourseResource {
         this.fileService = fileService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.channelService = channelService;
+        this.learningPathsConfigurationRepository = learningPathsConfigurationRepository;
     }
 
     /**
@@ -144,6 +150,11 @@ public class AdminCourseResource {
         }
 
         courseService.setDefaultGroupsIfNotSet(course);
+
+        if (course.getLearningPathsEnabled()) {
+            course.setLearningPathsConfiguration(new LearningPathsConfiguration());
+            learningPathsConfigurationRepository.save(course.getLearningPathsConfiguration());
+        }
 
         Course createdCourse = courseRepository.save(course);
 
