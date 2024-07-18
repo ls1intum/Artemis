@@ -91,18 +91,16 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(IngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
-        if (removeJobIfTerminated(statusUpdate.stages(), job.jobId())) {
-            for (Long id : statusUpdate.ids()) {
-                if (attachmentUnitRepository.findById(id).isPresent()) {
-                    AttachmentUnit unit = attachmentUnitRepository.findById(id).get();
-                    if (statusUpdate.stages().getLast().state() == PyrisStageState.DONE) {
-                        unit.setPyrisIngestionState(IngestionState.DONE);
-                        attachmentUnitRepository.save(unit);
-                    }
-                    else if (statusUpdate.stages().getLast().state() == PyrisStageState.ERROR) {
-                        unit.setPyrisIngestionState(IngestionState.ERROR);
-                        attachmentUnitRepository.save(unit);
-                    }
+        if (removeJobIfTerminated(statusUpdate.stages(), job.jobId()) && statusUpdate.id().isPresent()) {
+            if (attachmentUnitRepository.findById(statusUpdate.id().get()).isPresent()) {
+                AttachmentUnit unit = attachmentUnitRepository.findById(statusUpdate.id().get()).get();
+                if (statusUpdate.stages().getLast().state() == PyrisStageState.DONE) {
+                    unit.setPyrisIngestionState(IngestionState.DONE);
+                    attachmentUnitRepository.save(unit);
+                }
+                else if (statusUpdate.stages().getLast().state() == PyrisStageState.ERROR || statusUpdate.stages().getLast().state() == PyrisStageState.SKIPPED) {
+                    unit.setPyrisIngestionState(IngestionState.ERROR);
+                    attachmentUnitRepository.save(unit);
                 }
             }
         }

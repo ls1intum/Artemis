@@ -79,7 +79,7 @@
                                     error: getIcon(lectureUnit) === resendToIris,
                                     'btn-success': getIcon(lectureUnit) === done,
                                 }"
-                                (click)="onIngestButtonClicked(lectureUnit)"
+                                (click)="onIngestButtonClicked(lectureUnit.id!)"
                                 [ngbTooltip]="'entity.action.sendToIris' | artemisTranslate"
                             >
                                 <fa-icon [icon]="getIcon(lectureUnit)" />

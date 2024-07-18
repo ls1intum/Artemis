@@ -167,4 +167,14 @@ export class LectureUnitService {
     getLectureUnitById(lectureUnitId: number): Observable<LectureUnit> {
         return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
     }
+    /**
+     * Triggers the ingestion of one lecture unit
+     */
+    ingestLectureUnitInPyris(lectureUnitId: number, lectureId: number): Observable<HttpResponse<boolean>> {
+        const params = new HttpParams();
+        return this.httpClient.post<boolean>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`, null, {
+            params: params,
+            observe: 'response',
+        });
+    }
 }

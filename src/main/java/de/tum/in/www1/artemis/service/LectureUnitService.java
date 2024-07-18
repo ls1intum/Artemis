@@ -248,9 +248,9 @@ public class LectureUnitService {
      * @param lectureUnit lectureUnit to be ingested
      * @return returns the job token if the operation is successful else it returns null
      */
-    public boolean ingestLectureUnitInPyris(AttachmentUnit lectureUnit) {
-        if (pyrisWebhookService.isPresent()) {
-            return pyrisWebhookService.get().addLectureUnitsToPyrisDB(List.of(lectureUnit)) != null;
+    public boolean ingestLectureUnitInPyris(LectureUnit lectureUnit) {
+        if (lectureUnit instanceof AttachmentUnit) {
+            return pyrisWebhookService.filter(webhookService -> webhookService.addLectureUnitsToPyrisDB(List.of((AttachmentUnit) lectureUnit)) != null).isPresent();
         }
         return false;
     }

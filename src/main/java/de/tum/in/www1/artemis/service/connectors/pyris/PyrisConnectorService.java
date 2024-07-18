@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +18,13 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.IngestionState;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
@@ -39,12 +45,16 @@ public class PyrisConnectorService {
 
     private final ObjectMapper objectMapper;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
     @Value("${artemis.iris.url}")
     private String pyrisUrl;
 
-    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+            LectureUnitRepository lectureUnitRepository) {
         this.restTemplate = restTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -93,8 +103,40 @@ public class PyrisConnectorService {
      * @param variant      The variant of the feature to execute
      * @param executionDTO The DTO sent as a body for the execution
      */
-    public void executeLectureWebhook(String variant, PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
+    public void executeLectureAddtionWebhook(String variant, PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/lectures/" + variant;
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+        }
+        catch (HttpStatusCodeException e) {
+            setIngestionStateToError(executionDTO, e);
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            setIngestionStateToError(executionDTO, e);
+            throw new PyrisConnectorException("Could not fetch response from Pyris");
+        }
+    }
+
+    private void setIngestionStateToError(PyrisWebhookLectureIngestionExecutionDTO executionDTO, RuntimeException e) {
+        log.error("Failed to send lectures to Pyris", e);
+        Optional<LectureUnit> optionalUnit = lectureUnitRepository.findById(executionDTO.pyrisLectureUnit().lectureUnitId());
+        optionalUnit.ifPresent(unit -> {
+            if (unit instanceof AttachmentUnit) {
+                AttachmentUnit attachmentUnit = (AttachmentUnit) unit;
+                attachmentUnit.setPyrisIngestionState(IngestionState.ERROR);
+                lectureUnitRepository.save(attachmentUnit);
+            }
+        });
+    }
+
+    /**
+     * Executes a webhook and send lectures to the webhook with the given variant
+     *
+     * @param executionDTO The DTO sent as a body for the execution
+     */
+    public void executeLectureDeletionWebhook(PyrisWebhookLectureDeletionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/lectures/delete";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }

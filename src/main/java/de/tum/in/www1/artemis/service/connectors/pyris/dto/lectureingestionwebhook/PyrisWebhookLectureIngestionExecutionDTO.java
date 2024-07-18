@@ -8,6 +8,5 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutio
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisWebhookLectureIngestionExecutionDTO(List<PyrisLectureUnitWebhookDTO> pyrisLectureUnitWebhookDTOS, PyrisPipelineExecutionSettingsDTO settings,
-        List<PyrisStageDTO> initialStages) {
+public record PyrisWebhookLectureIngestionExecutionDTO(PyrisLectureUnitWebhookDTO pyrisLectureUnit, PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages) {
 }

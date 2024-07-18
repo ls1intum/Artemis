@@ -220,8 +220,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     onEditButtonClicked(lectureUnit: LectureUnit) {
         this.onEditLectureUnitClicked.emit(lectureUnit);
     }
-    onIngestButtonClicked(lectureUnit: LectureUnit) {
-        this.lectureUnitService.ingestLectureUnitInPyris(lectureUnit.id!).subscribe({
+    onIngestButtonClicked(lectureUnitId: number) {
+        this.lectureUnitService.ingestLectureUnitInPyris(lectureUnitId, this.lecture.id!).subscribe({
             error: (error) => console.error('Failed to send Ingestion request', error),
         });
     }
