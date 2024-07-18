@@ -74,7 +74,7 @@ test.describe('Exam participation', () => {
             await examStartEnd.pressShowSummary();
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.title!);
+                await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.exerciseGroup!.title!);
                 if (exercise.type === ExerciseType.TEXT) {
                     await examParticipation.verifyTextExerciseOnFinalPage(exercise.id!, exercise.additionalData!.textFixture!);
                 }

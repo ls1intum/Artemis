@@ -115,7 +115,7 @@ test.describe('Exam test run', () => {
             await examParticipation.handInEarly();
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.title!);
+                await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.exerciseGroup!.title!);
             }
             await examParticipation.checkExamTitle(examTitle);
             await examTestRun.openTestRunPage(course, exam);

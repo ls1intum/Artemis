@@ -6,7 +6,7 @@
                 <fa-icon [icon]="exerciseInfo!.icon" />
             }
             &nbsp;
-            {{ exercise.title }}
+            {{ exercise.exerciseGroup?.title }}
         </h5>
         <div class="ms-3" id="exercise-result-score">
             @if (resultsPublished && exerciseInfo?.achievedPoints !== undefined) {
