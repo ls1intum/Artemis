@@ -62,7 +62,7 @@ describe('PostHeaderComponent', () => {
 
     it('should set date information correctly for post of today', () => {
         fixture.detectChanges();
-        expect(getElement(debugElement, '.today-flag')).toBeDefined();
+        expect(getElement(debugElement, '#today-flag')).toBeDefined();
     });
 
     it('should display resolved icon on resolved post header', () => {

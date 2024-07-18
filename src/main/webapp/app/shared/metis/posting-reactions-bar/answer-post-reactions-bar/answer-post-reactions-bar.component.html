@@ -14,15 +14,16 @@
         </div>
     }
     <div class="col-auto px-0" [hidden]="isReadOnlyMode">
-        <fa-icon
-            [icon]="farSmile"
-            class="reaction-button me-0 text-secondary clickable"
-            [class.open-selector]="showReactionSelector"
-            (click)="showReactionSelector = !showReactionSelector"
-            cdkOverlayOrigin
-            #trigger="cdkOverlayOrigin"
-            [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
-        />
+        <button class="reaction-button me-0 text-secondary clickable">
+            <fa-icon
+                [icon]="farSmile"
+                [class.open-selector]="showReactionSelector"
+                (click)="showReactionSelector = !showReactionSelector"
+                cdkOverlayOrigin
+                #trigger="cdkOverlayOrigin"
+                [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
+            />
+        </button>
     </div>
     @if (!isReadOnlyMode) {
         <ng-template
