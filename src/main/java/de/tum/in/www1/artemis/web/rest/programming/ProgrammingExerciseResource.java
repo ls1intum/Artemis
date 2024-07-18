@@ -291,9 +291,9 @@ public class ProgrammingExerciseResource {
 
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        //TODO: Check Develop and fix merge
-        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesAndCompetenciesElseThrow(updatedProgrammingExercise.getId());
-        //var programmingExerciseBeforeUpdate = programmingExerciseRepository.findWithAuxiliaryRepositoriesAndBuildConfigElseThrow(updatedProgrammingExercise.getId());
+        // TODO: Check Develop and fix merge
+        var programmingExerciseBeforeUpdate = programmingExerciseRepository
+                .findByIdWithAuxiliaryRepositoriesCompetenciesAndBuildConfigElseThrow(updatedProgrammingExercise.getId());
         if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
