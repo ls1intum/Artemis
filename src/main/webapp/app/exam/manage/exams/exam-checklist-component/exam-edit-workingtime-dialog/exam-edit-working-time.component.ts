@@ -19,7 +19,7 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     faHourglassHalf = faHourglassHalf;
     workingTimeChangeAllowed = false;
 
-    private modalRef: NgbModalRef | null;
+    private modalRef: NgbModalRef | undefined;
     private timeoutRef: any;
     private subscription: Subscription;
 
@@ -33,8 +33,12 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.timeoutRef && clearTimeout(this.timeoutRef);
-        this.subscription && this.subscription.unsubscribe();
+        if (this.timeoutRef) {
+            clearTimeout(this.timeoutRef);
+        }
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
     }
 
     private checkWorkingTimeChangeAllowed() {
@@ -59,6 +63,6 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
         this.modalRef.componentInstance.exam = this.exam;
         this.subscription = this.modalRef.componentInstance.examChange.subscribe((exam: Exam) => this.examChange.emit(exam));
 
-        from(this.modalRef.result).subscribe(() => (this.modalRef = null));
+        from(this.modalRef.result).subscribe(() => (this.modalRef = undefined));
     }
 }
