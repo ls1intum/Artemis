@@ -120,14 +120,15 @@ public class PyrisConnectorService {
 
     private void setIngestionStateToError(PyrisWebhookLectureIngestionExecutionDTO executionDTO, RuntimeException e) {
         log.error("Failed to send lectures to Pyris", e);
-        Optional<LectureUnit> optionalUnit = lectureUnitRepository.findById(executionDTO.pyrisLectureUnit().lectureUnitId());
-        optionalUnit.ifPresent(unit -> {
-            if (unit instanceof AttachmentUnit) {
-                AttachmentUnit attachmentUnit = (AttachmentUnit) unit;
-                attachmentUnit.setPyrisIngestionState(IngestionState.ERROR);
-                lectureUnitRepository.save(attachmentUnit);
-            }
-        });
+        if (executionDTO != null) {
+            Optional<LectureUnit> optionalUnit = lectureUnitRepository.findById(executionDTO.pyrisLectureUnit().lectureUnitId());
+            optionalUnit.ifPresent(unit -> {
+                if (unit instanceof AttachmentUnit attachmentUnit) {
+                    attachmentUnit.setPyrisIngestionState(IngestionState.ERROR);
+                    lectureUnitRepository.save(attachmentUnit);
+                }
+            });
+        }
     }
 
     /**
@@ -143,7 +144,6 @@ public class PyrisConnectorService {
         catch (HttpStatusCodeException e) {
             log.error("Failed to send lectures to Pyris", e);
             throw toIrisException(e);
-            // TODO : add error ingestion UI.
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send lectures to Pyris", e);

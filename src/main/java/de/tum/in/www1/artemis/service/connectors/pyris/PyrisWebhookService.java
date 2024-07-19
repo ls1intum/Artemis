@@ -99,15 +99,15 @@ public class PyrisWebhookService {
      *
      * @param courseId           Id of the course where the attachment is added
      * @param newAttachmentUnits the new attachment Units to be sent to pyris for ingestion
-     * @return true if the units were sent to pyris
      */
-    public boolean autoUpdateAttachmentUnitsInPyris(Long courseId, List<AttachmentUnit> newAttachmentUnits) {
+    public void autoUpdateAttachmentUnitsInPyris(Long courseId, List<AttachmentUnit> newAttachmentUnits) {
         IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).isPresent() ? irisSettingsRepository.findCourseSettings(courseId).get() : null;
         if (courseSettings != null && courseSettings.getIrisLectureIngestionSettings() != null && courseSettings.getIrisLectureIngestionSettings().isEnabled()
                 && courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload()) {
-            return addLectureUnitsToPyrisDB(newAttachmentUnits) != null;
+            for (AttachmentUnit attachmentUnit : newAttachmentUnits) {
+                addLectureUnitToPyrisDB(attachmentUnit);
+            }
         }
-        return false;
     }
 
     /**
@@ -136,29 +136,23 @@ public class PyrisWebhookService {
     /**
      * adds the lectures to the vector database on pyris
      *
-     * @param attachmentUnits The attachmentUnit that got Updated / erased
-     * @return jobToken if the job was created
+     * @param attachmentUnit The attachmentUnit that got Updated / erased
      */
-    public String addLectureUnitsToPyrisDB(List<AttachmentUnit> attachmentUnits) {
-        if (!lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
-            return null;
+    public String addLectureUnitToPyrisDB(AttachmentUnit attachmentUnit) {
+        if (lectureIngestionEnabled(attachmentUnit.getLecture().getCourse())) {
+            try {
+                if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentUnit.getAttachment().getLink().endsWith(".pdf")) {
+                    return executeLectureAdditionWebhook(processAttachmentForUpdate(attachmentUnit));
+                }
+            }
+            catch (Exception e) {
+                log.error(e.getMessage());
+                if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentUnit.getAttachment().getLink().endsWith(".pdf")) {
+                    attachmentUnit.setPyrisIngestionState(IngestionState.ERROR);
+                    lectureUnitRepository.save(attachmentUnit);
+                }
+            }
         }
-        try {
-            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
-                    .forEach(unit -> {
-                        executeLectureAdditionWebhook(processAttachmentForUpdate(unit));
-                    });
-
-        }
-        catch (Exception e) {
-            log.error(e.getMessage());
-            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
-                    .forEach(unit -> {
-                        unit.setPyrisIngestionState(IngestionState.ERROR);
-                        lectureUnitRepository.save(unit);
-                    });
-        }
-        ;
         return null;
     }
 

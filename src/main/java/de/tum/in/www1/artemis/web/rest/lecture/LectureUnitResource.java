@@ -212,13 +212,13 @@ public class LectureUnitResource {
      * POST /courses/{courseId}/ingest
      * This endpooint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
-     * @param lectureId     the ID of the Lecture in which the lecture unit is
      * @param lectureUnitId The Id of the Lecture Unit that is <going to be ingested
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest")
-    public ResponseEntity<Boolean> ingestLectureUnit(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
+    public ResponseEntity<Boolean> ingestLectureUnit(@PathVariable Long lectureUnitId) {
         LectureUnit lectureUnit = this.lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnitId);
-        return ResponseEntity.ok().body(lectureUnitService.ingestLectureUnitInPyris(lectureUnit));
+        lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
+        return ResponseEntity.ok().body(true);
     }
 }

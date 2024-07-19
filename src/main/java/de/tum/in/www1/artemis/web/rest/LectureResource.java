@@ -277,13 +277,15 @@ public class LectureResource {
             if (lectureToIngest.isPresent()) {
                 Set<Lecture> lecturesToIngest = new HashSet<>();
                 lecturesToIngest.add(lectureToIngest.get());
-                return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(lecturesToIngest));
+                lectureService.ingestLecturesInPyris(lecturesToIngest);
+                return ResponseEntity.ok().body(true);
             }
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "Could not send lecture to Iris, no lecture found with the provided id.", "idExists")).body(null);
 
         }
-        return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(course.getLectures()));
+        lectureService.ingestLecturesInPyris(course.getLectures());
+        return ResponseEntity.ok().body(true);
     }
 
     /**
