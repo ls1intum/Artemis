@@ -97,6 +97,7 @@ describe('PrerequisiteFormComponent', () => {
         prerequisiteFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledOnce();
+            discardPeriodicTasks();
         });
     }));
 

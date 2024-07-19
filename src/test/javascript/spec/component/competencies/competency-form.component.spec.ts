@@ -95,6 +95,7 @@ describe('CompetencyFormComponent', () => {
         competencyFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledOnce();
+            discardPeriodicTasks();
         });
     }));
 

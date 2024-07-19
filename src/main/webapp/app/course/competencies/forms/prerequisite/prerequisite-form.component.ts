@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 import { CourseCompetencyType } from 'app/entities/competency.model';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 
 @Component({
     selector: 'jhi-prerequisite-form',
@@ -33,8 +33,8 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
 
     readonly CourseCompetencyType = CourseCompetencyType;
 
-    constructor(fb: FormBuilder, lectureUnitService: LectureUnitService, competencyService: CompetencyService, translateService: TranslateService) {
-        super(fb, lectureUnitService, competencyService, translateService);
+    constructor(fb: FormBuilder, lectureUnitService: LectureUnitService, prerequisiteService: PrerequisiteService, translateService: TranslateService) {
+        super(fb, lectureUnitService, prerequisiteService, translateService);
     }
 
     ngOnChanges(): void {

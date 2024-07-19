@@ -1,6 +1,6 @@
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { CourseCompetencyFilter, PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { CourseCompetency } from 'app/entities/competency.model';
+import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -84,7 +84,16 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
         courseCompetencySubscription.subscribe({
             next: (courseCompetenciesResponse) => {
                 const courseCompetencies = courseCompetenciesResponse.body ?? [];
-                this.disabledIds = courseCompetencies.map((courseCompetency) => courseCompetency.id).filter((id): id is number => !!id);
+                this.disabledIds = courseCompetencies
+                    .flatMap((courseCompetency) => {
+                        switch (courseCompetency.type) {
+                            case CourseCompetencyType.COMPETENCY:
+                                return [courseCompetency.id];
+                            case CourseCompetencyType.PREREQUISITE:
+                                return [courseCompetency.id, courseCompetency.linkedCourseCompetency?.id];
+                        }
+                    })
+                    .filter((id): id is number => !!id);
                 this.performSearch();
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
