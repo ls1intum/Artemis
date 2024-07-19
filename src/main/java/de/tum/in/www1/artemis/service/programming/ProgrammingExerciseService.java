@@ -575,7 +575,7 @@ public class ProgrammingExerciseService {
 
     /**
      * This method updates the build plan for the given programming exercise.
-     * If neither LocalCI nor Aeolus are active, it deletes the old build plan and creates a new one if the build plan configuration has changed.
+     * If LocalCI is not active, it deletes the old build plan and creates a new one if the build plan configuration has changed.
      *
      * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
      * @param updatedProgrammingExercise      the changed programming exercise with its new values
