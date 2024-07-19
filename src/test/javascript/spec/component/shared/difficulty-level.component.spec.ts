@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
 import { ArtemisTestModule } from '../../test.module';
 
@@ -8,33 +7,70 @@ describe('DifficultyLevelComponent', () => {
     let component: DifficultyLevelComponent;
     let fixture: ComponentFixture<DifficultyLevelComponent>;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            declarations: [DifficultyLevelComponent],
-            imports: [NgbTooltipModule, ArtemisTestModule],
-        }).compileComponents();
-    });
-
     beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [DifficultyLevelComponent, NgbTooltipModule, ArtemisTestModule],
+        }).compileComponents();
         fixture = TestBed.createComponent(DifficultyLevelComponent);
         component = fixture.componentInstance;
-        component.coloredDifficultyLevel = {
-            label: 'Easy',
-            color: ['success', 'body', 'body'],
-        };
-        fixture.detectChanges();
     });
 
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
+    it('should set coloredDifficultyLevel correctly for EASY', () => {
+        component.difficultyLevel = 'EASY';
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.easy');
+        expect(component.coloredDifficultyLevel.color).toEqual(['success', 'body', 'body']);
+    });
+
+    it('should set coloredDifficultyLevel correctly for MEDIUM', () => {
+        component.difficultyLevel = 'MEDIUM';
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.medium');
+        expect(component.coloredDifficultyLevel.color).toEqual(['warning', 'warning', 'body']);
+    });
+
+    it('should set coloredDifficultyLevel correctly for HARD', () => {
+        component.difficultyLevel = 'HARD';
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.hard');
+        expect(component.coloredDifficultyLevel.color).toEqual(['danger', 'danger', 'danger']);
+    });
+
+    it('should set coloredDifficultyLevel correctly for no level', () => {
+        component.difficultyLevel = 'UNKNOWN';
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.noLevel');
+        expect(component.coloredDifficultyLevel.color).toEqual(['body', 'body', 'body']);
+    });
     it('should display the correct tooltip label', () => {
-        const tooltipElement: HTMLElement = fixture.nativeElement.querySelector('[ngbTooltip]');
-        expect(tooltipElement.getAttribute('ngbTooltip')).toBe('Easy');
+        component.difficultyLevel = 'EASY';
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        const tooltipElement: HTMLElement = fixture.nativeElement.querySelector('#difficulty-level');
+        tooltipElement.dispatchEvent(new Event('mouseenter'));
+        fixture.detectChanges();
+
+        const tooltipContent = document.querySelector('.tooltip-inner');
+        expect(tooltipContent?.textContent).toBe('artemisApp.exercise.easy');
     });
 
     it('should apply the correct classes for difficulty colors', () => {
+        component.difficultyLevel = 'EASY';
+        component.ngOnInit();
+        fixture.detectChanges();
         const skillBars: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.skill-bar');
         expect(skillBars).toHaveLength(3);
         expect(skillBars[0].classList).toContain('bg-success');
