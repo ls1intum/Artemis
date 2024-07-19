@@ -105,7 +105,7 @@
                 "localIDE": {
                     "title": "Use Your IDE",
                     "shortDescription": "Clone the assignment and work on programming exercises on your IDE.",
-                    "descriptionTextOne": "IDEs increase programmer productivity by combining common activities of writing software: editing source code, building executables, and debugging. Additionally, users can configure them at will to fit their own personal preferences. For online exams on Artemis, you have the ability to clone your programming assignment and work on it using your IDE. Use the clone button, get the assignment link and clone it using GIT commands. Once you are done, you can simply push your changes and continue to work on other tasks. Every push triggers a continuous integration system which automatically assesses your submission and provides feedback."
+                    "descriptionTextOne": "IDEs increase programmer productivity by combining common activities of writing software: editing source code, building executables, and debugging. Additionally, users can configure them at will to fit their own personal preferences. For online exams on Artemis, you have the ability to clone your programming assignment and work on it using your IDE. Use the Code button, get the assignment link and clone it using GIT commands. Once you are done, you can simply push your changes and continue to work on other tasks. Every push triggers a continuous integration system which automatically assesses your submission and provides feedback."
                 },
                 "codeEditor": {
                     "title": "Integrated Code Editor",
