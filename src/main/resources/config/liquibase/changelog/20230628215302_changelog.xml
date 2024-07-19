@@ -16,8 +16,5 @@
             <column name="result_id" type="BIGINT"/>
         </createTable>
 
-        <addForeignKeyConstraint baseColumnNames="creator_id" baseTableName="assessment_note" constraintName="FK_creator_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-
-        <addForeignKeyConstraint baseColumnNames="result_id" baseTableName="assessment_note" constraintName="FK_result_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="result" validate="true"/>
     </changeSet>
 </databaseChangeLog>

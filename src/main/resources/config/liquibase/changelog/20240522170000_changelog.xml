@@ -35,15 +35,6 @@
             <column name="competency_progress" type="double" defaultValue="0"/>
             <column name="competency_confidence" type="double" defaultValue="0"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="competency_id"
-                                 baseTableName="competency_jol"
-                                 constraintName="FK_competency_jol_competency"
-                                 referencedColumnNames="id"
-                                 referencedTableName="competency"/>
-        <addForeignKeyConstraint baseColumnNames="user_id"
-                                    baseTableName="competency_jol"
-                                    constraintName="FK_competency_jol_user"
-                                    referencedColumnNames="id"
-                                    referencedTableName="jhi_user"/>
+
     </changeSet>
 </databaseChangeLog>

@@ -3,11 +3,6 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20240404040404" author="morrien">
-        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_CODE_EDITOR_SETTINGS"/>
-        <dropAllForeignKeyConstraints baseTableName="iris_exercise_plan_message_content"/>
-        <dropAllForeignKeyConstraints baseTableName="iris_code_editor_sub_settings"/>
-        <dropAllForeignKeyConstraints baseTableName="iris_exercise_plan_step"/>
-
         <dropTable tableName="iris_exercise_plan_message_content"/>
         <dropTable tableName="iris_code_editor_sub_settings"/>
         <dropTable tableName="iris_exercise_plan_step"/>

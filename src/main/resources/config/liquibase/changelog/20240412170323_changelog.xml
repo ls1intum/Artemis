@@ -12,13 +12,6 @@
                 <constraints nullable="true" />
             </column>
         </addColumn>
-        <addForeignKeyConstraint baseTableName="build_job" baseColumnNames="result_id" constraintName="fk_build_job_result" referencedTableName="result"
-                                 referencedColumnNames="id" onDelete="SET NULL"/>
-        <createIndex tableName="build_job" indexName="idx_build_job_build_job_id" unique="true">
-            <column name="build_job_id"/>
-        </createIndex>
-        <createIndex tableName="build_job" indexName="idx_build_job_result_id" unique="false">
-            <column name="result_id"/>
-        </createIndex>
+
     </changeSet>
 </databaseChangeLog>

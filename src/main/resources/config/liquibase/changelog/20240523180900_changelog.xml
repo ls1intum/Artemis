@@ -9,13 +9,10 @@
         <addColumn tableName="competency">
             <column name="linked_course_competency_id" type="bigint"/>
         </addColumn>
-        <addForeignKeyConstraint baseColumnNames="linked_course_competency_id" baseTableName="competency" constraintName="fk_competency_linked_competency" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
 
         <sql>UPDATE competency SET discriminator = 'C'</sql>
-        <addNotNullConstraint tableName="competency" columnName="discriminator" columnDataType="varchar(1)"/>
 
         <sql>UPDATE competency SET mastery_threshold = 100 WHERE mastery_threshold IS NULL</sql>
-        <addNotNullConstraint tableName="competency" columnName="mastery_threshold" columnDataType="int"/>
     </changeSet>
 
     <!--

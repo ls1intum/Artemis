@@ -26,11 +26,5 @@
             </column>
         </addColumn>
         <!-- Add foreign key constraint for iris_lecture_ingestion_settings_id -->
-        <addForeignKeyConstraint
-                baseColumnNames="iris_lecture_ingestion_settings_id"
-                baseTableName="iris_settings"
-                constraintName="FK_IRIS_SETTINGS_ON_IRIS_LECTURE_INGESTION_SETTINGS"
-                referencedColumnNames="id"
-                referencedTableName="iris_sub_settings"/>
     </changeSet>
 </databaseChangeLog>

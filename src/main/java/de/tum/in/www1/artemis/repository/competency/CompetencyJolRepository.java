@@ -2,15 +2,20 @@ package de.tum.in.www1.artemis.repository.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 
@@ -84,9 +89,20 @@ public interface CompetencyJolRepository extends ArtemisJpaRepository<Competency
             @Param("jolIdsToExclude") Set<Long> jolIdsToExclude);
 
     @Query("""
-            SELECT jol.user.id
+            SELECT new de.tum.in.www1.artemis.repository.competency.JolDTO(jol.user.id, jol.competency, jol.judgementTime)
             FROM CompetencyJol jol
-            WHERE jol = :jol
             """)
-    long findUserIdForJol(@Param("jol") CompetencyJol jol);
+    List<JolDTO> findAllUserIds();
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE CompetencyJol jol
+            SET jol.competencyProgress = :progress,
+                jol.competencyConfidence = :confidence
+            WHERE jol.user.id = :userId
+                AND jol.competency = :competency
+                AND jol.judgementTime = :time
+            """)
+    void updateJOL(long userId, CourseCompetency competency, ZonedDateTime time, Double progress, Double confidence);
 }

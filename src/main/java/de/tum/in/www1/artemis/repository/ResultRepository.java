@@ -777,7 +777,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     @Query("""
-            SELECT r
+            SELECT new de.tum.in.www1.artemis.repository.REsultDTO(r.score, r.lastModifiedDate, r.id)
             FROM Result r
                 LEFT JOIN r.submission s
                 LEFT JOIN s.participation p
@@ -787,5 +787,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND st.id = :userId
                 AND r.lastModifiedDate < :modificationDate
             """)
-    Set<Result> findAllByExerciseUserAndModificationDate(@Param("exerciseId") long exerciseId, @Param("userId") long userId, @Param("modificationDate") Instant modificationDate);
+    Set<REsultDTO> findAllByExerciseUserAndModificationDate(@Param("exerciseId") long exerciseId, @Param("userId") long userId,
+            @Param("modificationDate") Instant modificationDate);
 }
