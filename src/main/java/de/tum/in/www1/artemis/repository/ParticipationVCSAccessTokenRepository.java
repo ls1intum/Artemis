@@ -45,4 +45,9 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
             WHERE p.user.id = :userId AND p.participation.id = :participationId
             """)
     Optional<ParticipationVCSAccessToken> findByUserIdAndParticipationId(@Param("userId") long userId, @Param("participationId") long participationId);
+
+    default ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(Long userId, Long participationId) {
+        return getValueElseThrow(findByUserIdAndParticipationId(userId, participationId));
+    }
+
 }

@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -94,7 +93,7 @@ public class ParticipationVcsAccessTokenService {
      * @return an Optional participationVCSAccessToken,
      */
     public ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(Long userId, Long participationId) {
-        return participationVcsAccessTokenRepository.findByUserIdAndParticipationId(userId, participationId).orElseThrow(NoSuchElementException::new);
+        return participationVcsAccessTokenRepository.findByUserIdAndParticipationIdOrElseThrow(userId, participationId);
     }
 
     /**
@@ -119,7 +118,7 @@ public class ParticipationVcsAccessTokenService {
         if (participationVcsAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId).isPresent()) {
             return Optional.empty();
         }
-        var participation = programmingExerciseStudentParticipationRepository.findById(participationId).orElseThrow(NoSuchElementException::new);
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         return Optional.of(createParticipationVCSAccessToken(user, participation));
     }
 
@@ -132,6 +131,11 @@ public class ParticipationVcsAccessTokenService {
         participationVcsAccessTokenRepository.deleteByParticipation_id(participationId);
     }
 
+    /**
+     * Deletes all tokens for a given list of participations
+     *
+     * @param participations the participations for which the tokens should get deleted
+     */
     public void deleteAllByParticipations(List<ProgrammingExerciseStudentParticipation> participations) {
         for (ProgrammingExerciseStudentParticipation participation : participations) {
             participationVcsAccessTokenRepository.deleteByParticipation_id(participation.getId());
