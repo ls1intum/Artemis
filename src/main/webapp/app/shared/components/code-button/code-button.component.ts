@@ -42,7 +42,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     sshTemplateUrl?: string;
     repositoryPassword?: string;
     versionControlUrl: string;
-    versionControlAccessTokenRequired?: boolean;
+    useVersionControlAccessToken?: boolean;
     localVCEnabled = false;
     gitlabVCEnabled = false;
 
@@ -83,7 +83,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
-            this.versionControlAccessTokenRequired = profileInfo.useVersionControlAccessToken ?? false;
+            this.useVersionControlAccessToken = profileInfo.useVersionControlAccessToken ?? false;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
             if (this.localVCEnabled) {
@@ -134,7 +134,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      * Loads the vcsAccessToken for a participation from the server. If none exists, sens a request to create one
      */
     loadVcsAccessToken() {
-        if (this.localVCEnabled && this.activeParticipation?.id && this.user) {
+        if (this.useVersionControlAccessToken && this.localVCEnabled && this.activeParticipation?.id && this.user) {
             this.accountService.getVcsAccessToken(this.activeParticipation.id).subscribe({
                 next: (res: HttpResponse<string>) => {
                     if (res.body) {
@@ -174,7 +174,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
     private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
-        const includeToken = this.versionControlAccessTokenRequired && this.user.vcsAccessToken;
+        const includeToken = this.useVersionControlAccessToken && this.user.vcsAccessToken;
         const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
         const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
