@@ -43,7 +43,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
 
     @Input() maxContentLength: number;
-    @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.SMALL;
+    @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
     @Input() isInputLengthDisplayed = true;
     @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];

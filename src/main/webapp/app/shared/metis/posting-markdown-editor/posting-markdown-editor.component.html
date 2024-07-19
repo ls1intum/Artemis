@@ -3,7 +3,6 @@
         class="markdown-editor background-editor-color w-100"
         [markdown]="content"
         (markdownChange)="updateField($event)"
-        [resizableMinHeight]="editorHeight"
         (onEditSelect)="previewMode = false"
         (onPreviewSelect)="previewMode = true"
         [metaActions]="[]"
@@ -12,7 +11,8 @@
         [enableFileUpload]="false"
         [colorAction]="undefined"
         [enableResize]="false"
-        [initialEditorHeight]="MarkdownEditorHeight.INLINE"
+        [initialEditorHeight]="editorHeight"
+        [resizableMinHeight]="editorHeight"
         (keydown)="onKeyDown($event)"
     >
         <!-- Preview todo showdefaultpreview-->
