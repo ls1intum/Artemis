@@ -180,7 +180,7 @@
                 }
                 @if (exercise.type === PROGRAMMING) {
                     <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
-                    @if (!exerciseInfos[exercise.id!]?.submission!) {
+                    @if (!exerciseInfos[exercise.id!]?.submission) {
                         <div class="mb-3" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
                     }
                     @if (exerciseInfos[exercise.id!]?.participation) {
