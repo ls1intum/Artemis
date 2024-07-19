@@ -137,6 +137,7 @@ public class PyrisWebhookService {
      * adds the lectures to the vector database on pyris
      *
      * @param attachmentUnit The attachmentUnit that got Updated / erased
+     * @return jobToken if the job was created
      */
     public String addLectureUnitToPyrisDB(AttachmentUnit attachmentUnit) {
         if (lectureIngestionEnabled(attachmentUnit.getLecture().getCourse())) {

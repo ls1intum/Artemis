@@ -25,10 +25,10 @@ export class Lecture implements BaseEntity {
     ingested?: IngestionState;
 
     constructor() {
-        this.ingested = this.checkIngestionState();
+        this.ingested = this.checkIngestionState ? this.checkIngestionState() : undefined;
     }
 
-    private checkIngestionState(): IngestionState {
+    private checkIngestionState?(): IngestionState {
         if (!this.lectureUnits) {
             return IngestionState.NOT_STARTED;
         }
@@ -38,21 +38,15 @@ export class Lecture implements BaseEntity {
         const allNotStarted = attachmentUnits.every((unit) => unit.pyrisIngestionState === IngestionState.NOT_STARTED);
         const allFailed = attachmentUnits.every((unit) => unit.pyrisIngestionState === IngestionState.ERROR);
 
-        if (allDone) {
-            return IngestionState.DONE;
-        }
-        if (allFailed) {
-            return IngestionState.ERROR;
-        }
-
-        if (allNotStarted) {
-            return IngestionState.NOT_STARTED;
-        }
+        if (allDone) return IngestionState.DONE;
+        if (allFailed) return IngestionState.ERROR;
+        if (allNotStarted) return IngestionState.NOT_STARTED;
 
         return IngestionState.PARTIALLY_INGESTED;
     }
-
-    public updateIngestionState(): void {
-        this.ingested = this.checkIngestionState();
+    public updateIngestionState?(): void {
+        if (this.checkIngestionState) {
+            this.ingested = this.checkIngestionState();
+        }
     }
 }
