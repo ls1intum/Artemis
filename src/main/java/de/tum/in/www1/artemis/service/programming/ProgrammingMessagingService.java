@@ -207,8 +207,13 @@ public class ProgrammingMessagingService {
                     if (result.getScore() < 80.0) {
                         // Check the recent submission and only answer when the last 3 subsequent submissions failed. Failure criteria: Score < 80.0
                         log.info("Checking if the last 3 submissions failed for user " + studentParticipation.getParticipant().getName());
+                        // Check if the student has already successfully submitted before
+                        // If not check if the last 3 submissions failed
                         var recentSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
-                        if (recentSubmissions.size() >= 3) {
+                        // Check if the user has already successfully submitted before
+                        var successfulSubmission = recentSubmissions.stream()
+                                .anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= 80.0);
+                        if (!successfulSubmission && recentSubmissions.size() >= 3) {
                             var lastThreeSubmissions = recentSubmissions.subList(recentSubmissions.size() - 3, recentSubmissions.size());
                             var allFailed = lastThreeSubmissions.stream()
                                     .allMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() < 80.0);
@@ -217,20 +222,30 @@ public class ProgrammingMessagingService {
                                 eventService.trigger(new SubmissionFailedEvent(result));
                             }
                         }
+                        else {
+                            log.info("Submission was not successful for user " + studentParticipation.getParticipant().getName());
+                            if (successfulSubmission) {
+                                log.info("User " + studentParticipation.getParticipant().getName()
+                                        + " has already successfully submitted before, so we do not inform Iris about the submission failure");
+                            }
+                        }
                     }
                     else {
                         log.info("Submission was successful for user " + studentParticipation.getParticipant().getName());
                         // The submission was successful, so we inform Iris about the successful submission,
                         // but before we do that, we check if this is the first successful time out of all submissions out of all submissions for this exercise
-                        eventService.trigger(new SubmissionSuccessfulEvent(result));
                         var allSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
                         var latestSubmission = allSubmissions.getLast();
                         var allSuccessful = allSubmissions.stream().filter(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= 80.0)
                                 .count();
                         if (allSuccessful == 1 && latestSubmission.getLatestResult().getScore() >= 80.0) {
                             log.info("First successful submission for user " + studentParticipation.getParticipant().getName());
+                            eventService.trigger(new SubmissionSuccessfulEvent(result));
                         }
-                        // else: do nothing, as this is not the first successful submission
+                        else {
+                            log.info("User " + studentParticipation.getParticipant().getName()
+                                    + " has already successfully submitted before, so we do not inform Iris about the successful submission");
+                        }
                     }
 
                 }
