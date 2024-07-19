@@ -383,6 +383,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 showWords: false,
             },
         });
-        this.setWordWrap(false);
+        this.setWordWrap(true);
     }
 }
