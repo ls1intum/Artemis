@@ -2,7 +2,7 @@
     <div class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
         <div class="d-flex align-items-center my-2 justify-content-between">
             <div class="d-flex">
-                <h5 class="my-2">{{ exercise.title }}</h5>
+                <h5 class="my-2"><fa-icon class="me-2" [icon]="exerciseIcon"></fa-icon>{{ exercise.title }}</h5>
             </div>
             <div class="d-flex gap-2">
                 @if (exercise.isAtLeastTutor) {
@@ -160,8 +160,6 @@
                         </dl>
                     }
                 }
-
-                <!-- TODO: Check if at least one information is available  -->
                 <jhi-exercise-info [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" />
                 @if (
                     exercise &&

@@ -11,7 +11,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -108,7 +108,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     isTestServer = false;
     isGeneratingFeedback: boolean = false;
     instructorActionItems: InstructorActionItem[] = [];
-    iconTooltip: string;
     exerciseIcon: IconProp;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
@@ -220,7 +219,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
 
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
         if (this.exercise?.type) {
-            this.iconTooltip = getIconTooltip(this.exercise?.type);
             this.exerciseIcon = getIcon(this.exercise?.type);
         }
         this.createInstructorActions();
@@ -451,55 +449,50 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.instructorActionItems = this.createTutorActions();
         }
         if (this.exercise?.isAtLeastEditor) {
-            const editorItems = this.createEditorActions();
-            editorItems.forEach((editorItem) => this.instructorActionItems.push(editorItem));
+            this.instructorActionItems.push(...this.createEditorActions());
         }
         if (this.exercise?.isAtLeastInstructor && this.QUIZ_ENDED_STATUS.includes(this.quizExerciseStatus)) {
-            const reEvaluateItem: InstructorActionItem = this.getReEvaluateItem();
-            this.instructorActionItems.push(reEvaluateItem);
+            this.instructorActionItems.push(this.getReEvaluateItem());
         }
     }
     createTutorActions(): InstructorActionItem[] {
-        const instructorActionItems = this.getDefaultItems();
+        const tutorActionItems = [...this.getDefaultItems()];
         if (this.exercise?.type === ExerciseType.QUIZ) {
-            const quizItems: InstructorActionItem[] = this.getQuizItems();
-            quizItems.forEach((quizItem) => instructorActionItems.push(quizItem));
+            tutorActionItems.push(...this.getQuizItems());
         } else {
-            const participationsItem: InstructorActionItem = this.getParticipationItem();
-            instructorActionItems.push(participationsItem);
+            tutorActionItems.push(this.getParticipationItem());
         }
-        return instructorActionItems;
+        return tutorActionItems;
     }
 
     getDefaultItems(): InstructorActionItem[] {
-        const exercisesItem: InstructorActionItem = {
-            routerLink: `${this.baseResource}`,
-            icon: faEye,
-            translation: 'entity.action.view',
-        };
-
-        const statisticsItem: InstructorActionItem = {
-            routerLink: `${this.baseResource}scores`,
-            icon: faTable,
-            translation: 'entity.action.scores',
-        };
-
-        return [exercisesItem, statisticsItem];
+        return [
+            {
+                routerLink: `${this.baseResource}`,
+                icon: faEye,
+                translation: 'entity.action.view',
+            },
+            {
+                routerLink: `${this.baseResource}scores`,
+                icon: faTable,
+                translation: 'entity.action.scores',
+            },
+        ];
     }
 
     getQuizItems(): InstructorActionItem[] {
-        const previewItem: InstructorActionItem = {
-            routerLink: `${this.baseResource}preview`,
-            icon: faEye,
-            translation: 'artemisApp.quizExercise.preview',
-        };
-        const solutionItem: InstructorActionItem = {
-            routerLink: `${this.baseResource}solution`,
-            icon: faEye,
-            translation: 'artemisApp.quizExercise.solution',
-        };
-
-        return [previewItem, solutionItem];
+        return [
+            {
+                routerLink: `${this.baseResource}preview`,
+                icon: faEye,
+                translation: 'artemisApp.quizExercise.preview',
+            },
+            {
+                routerLink: `${this.baseResource}solution`,
+                icon: faEye,
+                translation: 'artemisApp.quizExercise.solution',
+            },
+        ];
     }
 
     getParticipationItem(): InstructorActionItem {
@@ -513,20 +506,16 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     createEditorActions(): InstructorActionItem[] {
         const editorItems: InstructorActionItem[] = [];
         if (this.exercise?.type === ExerciseType.QUIZ) {
-            const statisticItem: InstructorActionItem = this.getStatisticItem('quiz-point-statistic');
-            editorItems.push(statisticItem);
+            editorItems.push(this.getStatisticItem('quiz-point-statistic'));
         }
         if (this.exercise?.type === ExerciseType.MODELING) {
-            const statisticItem: InstructorActionItem = this.getStatisticItem('exercise-statistics');
-            editorItems.push(statisticItem);
+            editorItems.push(this.getStatisticItem('exercise-statistics'));
         }
         if (this.exercise?.type === ExerciseType.PROGRAMMING) {
-            const gradingItem: InstructorActionItem = this.getGradingItem();
-            editorItems.push(gradingItem);
+            editorItems.push(this.getGradingItem());
         }
         if (this.QUIZ_EDITABLE_STATUS.includes(this.quizExerciseStatus)) {
-            const quizEditItem: InstructorActionItem = this.getQuizEditItem();
-            editorItems.push(quizEditItem);
+            editorItems.push(this.getQuizEditItem());
         }
         return editorItems;
     }
