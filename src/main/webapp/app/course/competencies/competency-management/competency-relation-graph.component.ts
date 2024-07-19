@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Output, computed, input } from '@angular/core';
 import { faArrowsToEye } from '@fortawesome/free-solid-svg-icons';
 import { Edge, NgxGraphZoomOptions, Node } from '@swimlane/ngx-graph';
-import { Competency, CompetencyRelation, CompetencyRelationError, CompetencyRelationType } from 'app/entities/competency.model';
+import { CompetencyRelation, CompetencyRelationError, CompetencyRelationType, CourseCompetency } from 'app/entities/competency.model';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -10,7 +10,7 @@ import { Subject } from 'rxjs';
     styleUrls: ['./competency-relation-graph.component.scss'],
 })
 export class CompetencyRelationGraphComponent {
-    competencies = input<Competency[]>([]);
+    competencies = input<CourseCompetency[]>([]);
     relations = input<CompetencyRelation[]>([]);
 
     @Output() onRemoveRelation = new EventEmitter<number>();

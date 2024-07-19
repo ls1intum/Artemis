@@ -131,8 +131,14 @@ export class LectureManagementPage {
         return this.page.locator(selector).first();
     }
 
+    private getLectureDateInfo(fieldName: string) {
+        const selector = `//dt[span[contains(text(), "${fieldName}")]]/following-sibling::jhi-date-detail`;
+        return this.page.locator(selector).first();
+    }
+
     getLectureTitle() {
-        return this.getLectureInfo('Title');
+        const selector = `//dt[span[contains(text(), "Title")]]/following-sibling::jhi-text-detail/dd`;
+        return this.page.locator(selector).first();
     }
 
     getLectureDescription() {
@@ -140,15 +146,15 @@ export class LectureManagementPage {
     }
 
     getLectureVisibleDate() {
-        return this.getLectureInfo('Visible from');
+        return this.getLectureDateInfo('Visible from');
     }
 
     getLectureStartDate() {
-        return this.getLectureInfo('Start Date');
+        return this.getLectureDateInfo('Start Date');
     }
 
     getLectureEndDate() {
-        return this.getLectureInfo('End Date');
+        return this.getLectureDateInfo('End Date');
     }
 
     getLectureCourse() {

@@ -68,7 +68,7 @@
         <!-- QUIZ EXERCISE ACTIONS END -->
         <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
-            <div class="d-flex flex-wrap mb-1 gap-1">
+            <div class="d-flex flex-wrap gap-1">
                 @if (isTeamAvailable) {
                     <button
                         class="view-team"
@@ -106,10 +106,10 @@
                         (practiceModeStarted)="receiveNewParticipation($event)"
                     />
                 }
-                <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
-        code editor button. We should think about refactoring the clone repo button into an own component -->
+                <!-- TODO: The exam mode reuses the whole component at the moment. We need the code button but not the open
+        code editor button. We should think about defining a component that contains only the code button. -->
                 @if (shouldDisplayIDEButtons()) {
-                    <ng-container *jhiExtensionPoint="overrideCloneOnlineEditorButton; context: { exercise: exercise }">
+                    <ng-container *jhiExtensionPoint="overrideCodeAndOnlineEditorButton; context: { exercise: exercise }">
                         @if (!examMode && programmingExercise?.allowOnlineEditor) {
                             <jhi-open-code-editor-button
                                 [loading]="!!exercise.loading"
@@ -120,23 +120,18 @@
                             />
                         }
                         @if (programmingExercise?.allowOfflineIde) {
-                            <jhi-clone-repo-button
+                            <jhi-code-button
                                 [loading]="!!exercise.loading"
                                 [smallButtons]="smallButtons"
                                 [participations]="exercise.studentParticipations!"
                                 [exercise]="exercise"
+                                [routerLinkForRepositoryView]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
                             />
                         }
-                        @if (localVCEnabled) {
-                            <a
-                                class="btn btn-primary"
-                                [class.btn-sm]="smallButtons"
-                                [routerLink]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <fa-icon [icon]="faCodeBranch" [fixedWidth]="true" />
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
+                        @if (theiaEnabled) {
+                            <a class="btn btn-primary" [class.btn-sm]="smallButtons" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer">
+                                <fa-icon [icon]="faDesktop" [fixedWidth]="true" />
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
                             </a>
                         }
                         @if (exercise.allowFeedbackRequests) {

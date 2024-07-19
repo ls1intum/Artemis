@@ -52,6 +52,7 @@ describe('NavbarComponent', () => {
     let entityTitleServiceStub: jest.SpyInstance;
     let exerciseService: ExerciseService;
     let entityTitleService: EntityTitleService;
+    let examParticipationService: ExamParticipationService;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -76,7 +77,7 @@ describe('NavbarComponent', () => {
 
     const profileInfo = {
         git: {
-            branch: 'clone-repo-button',
+            branch: 'code-button',
             commit: {
                 id: {
                     abbrev: '95ef2a',
@@ -130,7 +131,7 @@ describe('NavbarComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(NavbarComponent);
                 component = fixture.componentInstance;
-
+                examParticipationService = TestBed.inject(ExamParticipationService);
                 entityTitleService = fixture.debugElement.injector.get(EntityTitleService);
                 entityTitleServiceStub = jest
                     .spyOn(entityTitleService, 'getTitle')
@@ -256,6 +257,20 @@ describe('NavbarComponent', () => {
         expect(component.breadcrumbs[0]).toEqual({ label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
     });
 
+    it('should hide breadcrumb when exam is started', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        component.isExamActive = true;
+        const testUrl = '/courses/1/exams/2';
+        router.setUrl(testUrl);
+
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.breadcrumb')).toBeNull();
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.breadcrumb')).not.toBeNull();
+    });
+
     it('should have correct git info', fakeAsync(() => {
         const profileService: ProfileService = TestBed.inject(ProfileService);
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo as any));
@@ -263,7 +278,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.gitCommitId).toBe('95ef2a');
-        expect(component.gitBranchName).toBe('clone-repo-button');
+        expect(component.gitBranchName).toBe('code-button');
         expect(component.gitTimestamp).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
         expect(component.gitUsername).toBe('Max Musterman');
     }));

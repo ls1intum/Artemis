@@ -155,7 +155,7 @@ In order to load the relationships of an entity on demand, we then use one of 3 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 
-2. **JOIN FETCH**: The ``JOIN FETCH`` keyword is used i a custom query to specify a graph of relationships to fetch. It should be used when a query is custom and has a custom ``@Query`` annotation. You can see the example below. Also, explicitly or implicitly limiting queries in Hibernate can lead to in-memory paging. For more details, see the 'In-memory paging' section.
+2. **JOIN FETCH**: The ``JOIN FETCH`` keyword is used in a custom query to specify a graph of relationships to fetch. It should be used when a query is custom and has a custom ``@Query`` annotation. You can see the example below. Also, explicitly or implicitly limiting queries in Hibernate can lead to in-memory paging. For more details, see the 'In-memory paging' section.
 
  .. code-block:: java
 

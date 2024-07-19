@@ -104,11 +104,10 @@ export class CourseOverviewPage {
     }
 
     /**
-     * Opens an exam given its ID.
-     * @param examId The ID of the exam to open.
+     * Opens an exam given its title.
      */
-    async openExam(examId: number): Promise<void> {
-        await this.page.locator(`#exam-${examId} .clickable`).click();
+    async openExam(examTitle: string): Promise<void> {
+        await this.page.locator('span').filter({ hasText: examTitle }).click();
     }
 
     /**

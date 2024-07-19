@@ -46,7 +46,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {
-            // eslint-disable-next-line no-prototype-builtins
             if (changes.hasOwnProperty(propName) && propName === 'tutorialGroup') {
                 const change = changes[propName];
 
@@ -126,7 +125,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
                 title: 'artemisApp.entities.tutorialGroup.channel',
                 data: {
                     text: tutorialGroup.channel.name,
-                    routerLink: tutorialGroup.channel.isMember ? ['/courses', this.course.id!, 'messages'] : undefined,
+                    routerLink: tutorialGroup.channel.isMember ? ['/courses', this.course.id!, 'communication'] : undefined,
                     queryParams: { conversationId: tutorialGroup.channel.id },
                 },
             });

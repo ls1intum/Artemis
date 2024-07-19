@@ -37,21 +37,17 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -59,9 +55,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "textsubmissionintegration";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private TextSubmissionRepository submissionRepository;
@@ -76,9 +69,6 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private TeamRepository teamRepository;
 
     @Autowired
@@ -88,13 +78,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private PostRepository postRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -218,8 +202,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
                 TextSubmission.class);
 
         assertThat(textSubmissions).as("one text submission was found").hasSize(1);
-        assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as(TEST_PREFIX + "student of participation is hidden").isEmpty();
+        assertThat(textSubmissions.getFirst().getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        assertThat(((StudentParticipation) textSubmissions.getFirst().getParticipation()).getStudent()).as(TEST_PREFIX + "student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -230,8 +214,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
 
         assertThat(textSubmissions).as("one text submission was found").hasSize(1);
-        assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as(TEST_PREFIX + "student of participation is hidden").isNotEmpty();
+        assertThat(textSubmissions.getFirst().getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        assertThat(((StudentParticipation) textSubmissions.getFirst().getParticipation()).getStudent()).as(TEST_PREFIX + "student of participation is hidden").isNotEmpty();
     }
 
     @Test
@@ -371,7 +355,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitExercise_beforeDueDate_isTeamMode() throws Exception {
         releasedTextExercise.setMode(ExerciseMode.TEAM);
-        exerciseRepo.save(releasedTextExercise);
+        exerciseRepository.save(releasedTextExercise);
         Team team = new Team();
         team.setName("Team");
         team.setShortName("team");
@@ -411,7 +395,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(submission.getId());
         assertThat(newVersion.orElseThrow().getId()).as("submission version was not created").isEqualTo(version.get().getId());
 
-        exerciseRepo.save(releasedTextExercise.participations(Set.of()));
+        exerciseRepository.save(releasedTextExercise.participations(Set.of()));
     }
 
     @Test

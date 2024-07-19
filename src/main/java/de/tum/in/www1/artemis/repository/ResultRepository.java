@@ -579,6 +579,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return a number of assessments for the course
      */
     default DueDateStat countNumberOfAssessments(Set<Long> exerciseIds) {
+        // avoid invoking the query for empty sets, because this can lead to performance issues
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return new DueDateStat(0, 0);
+        }
         var ratedCounts = countAssessmentsByExerciseIdsAndRated(exerciseIds);
         long inTime = 0;
         long late = 0;

@@ -37,6 +37,15 @@ class MockTutorialGroupsImportButtonComponent {
     @Output() importFinished: EventEmitter<void> = new EventEmitter();
 }
 
+@Component({
+    selector: 'jhi-tutorial-groups-export-button',
+    template: '',
+})
+class MockTutorialGroupsExportButtonComponent {
+    @Input() courseId: number;
+    @Output() exportFinished: EventEmitter<void> = new EventEmitter();
+}
+
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
@@ -66,6 +75,7 @@ describe('TutorialGroupsManagementComponent', () => {
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockTutorialGroupsImportButtonComponent,
+                MockTutorialGroupsExportButtonComponent,
             ],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
@@ -132,6 +142,18 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(getAllOfCourseSpy).not.toHaveBeenCalled();
         const mockTutorialGroupImportButtonComponent = fixture.debugElement.query(By.directive(MockTutorialGroupsImportButtonComponent)).componentInstance;
         mockTutorialGroupImportButtonComponent.importFinished.emit();
+        expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
+        expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
+        expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
+    });
+    it('should complete export when export button is clicked', () => {
+        getAllOfCourseSpy.mockClear();
+        getOneOfCourseSpy.mockClear();
+        expect(getOneOfCourseSpy).not.toHaveBeenCalled();
+        expect(getAllOfCourseSpy).not.toHaveBeenCalled();
+        const mockTutorialGroupExportButtonComponent = fixture.debugElement.query(By.directive(MockTutorialGroupsExportButtonComponent)).componentInstance;
+        mockTutorialGroupExportButtonComponent.exportFinished.emit();
         expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();

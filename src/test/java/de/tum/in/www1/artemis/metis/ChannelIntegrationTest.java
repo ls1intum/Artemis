@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
@@ -63,9 +62,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @BeforeEach
     @Override
@@ -140,7 +136,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "DISABLED" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createChannel_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         createTest_messagingDeactivated(courseInformationSharingConfiguration);
@@ -562,15 +558,15 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "DISABLED" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void registerDeregisterUsersToChannel_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
+    void registerDeregisterUsersToChannel_communicationFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
             throws Exception {
-        registerUsersToChannel_messagingDeactivated(courseInformationSharingConfiguration);
+        registerUsersToChannel_communicationDeactivated(courseInformationSharingConfiguration);
 
     }
 
-    void registerUsersToChannel_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+    void registerUsersToChannel_communicationDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         var channel = createChannel(true, TEST_PREFIX);
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
         // given

@@ -26,9 +26,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.MockDelegate;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.TextBlockService;
@@ -36,6 +39,7 @@ import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
@@ -157,6 +161,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @SpyBean
     protected TextBlockService textBlockService;
 
+    @SpyBean
+    protected CompetencyProgressService competencyProgressService;
+
     @Autowired
     protected RequestUtilService request;
 
@@ -170,10 +177,19 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected CourseUtilService courseUtilService;
 
     @Autowired
+    protected ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    protected UserRepository userRepository;
+
+    @Autowired
     protected ExerciseRepository exerciseRepository;
 
     @Autowired
     protected ResultRepository resultRepository;
+
+    @Autowired
+    protected CourseRepository courseRepository;
 
     @BeforeEach
     void mockMailService() {
@@ -193,7 +209,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected void resetSpyBeans() {
         Mockito.reset(gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
                 websocketMessagingService, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
-                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService);
+                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService, competencyProgressService);
     }
 
     @Override

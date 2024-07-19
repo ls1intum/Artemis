@@ -182,7 +182,7 @@ public class AuthorizationTestService {
     private Annotation getSingleAuthAnnotation(Method method) {
         List<Annotation> annotations = getAuthAnnotations(method);
         if (annotations.size() == 1) {
-            return annotations.get(0);
+            return annotations.getFirst();
         }
         return null;
     }

@@ -24,7 +24,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -34,12 +33,9 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -55,19 +51,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private ConversationMessageRepository conversationMessageRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
     private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     private List<Post> existingPostsWithAnswers;
 
@@ -558,6 +542,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static List<Arguments> courseConfigurationProvider() {
         return List.of(Arguments.of(CourseInformationSharingConfiguration.DISABLED, false), Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, true),
-                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, true), Arguments.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, true));
+                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, true));
     }
 }

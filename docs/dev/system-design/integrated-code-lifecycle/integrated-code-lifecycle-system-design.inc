@@ -80,7 +80,7 @@ The CI Management has access to the database and the file system.
 
 The CI Management subsystem implements the ``ContinuousIntegrationTriggerService`` interface, the ``LocalCITriggerService`` which provides the ``triggerBuild`` method. This method gets called whenever a repository needs to be tested, i.e. after creating a programming exercise or when a student submits code.
 When the ``triggerBuild`` method is called, all necessary information necessary to execute the build job is prepared and used to create a ``LocalCIBuildJobQueueItem`` object. The object contains, among other things, repository URIs, the build configuration, a user-defined build script (prepared by the ``LocalCIScriptService``) and a priority value.
-This object is then added to the job queue where it will then be retrieved by a build agent to execute the build job. The following diagram shows the structure of the ``LocalCIBuildJobQueueItem``:
+The priority value is determined based on whether the programming exercise is part of an exam or not. The exercise due date is also taken into account. This object is then added to the job queue where it will then be retrieved by a build agent to execute the build job. The following diagram shows the structure of the ``LocalCIBuildJobQueueItem``:
 
 .. figure:: /dev/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Build_Job_Item.svg
    :align: center
@@ -226,4 +226,4 @@ Should a build agent currently process the specified job, it executes ``cancelBu
 This step involves canceling the future and recording the job ID in ``Set<String> cancelledBuildJobs``.
 The cancellation triggers an Exception which is caught and managed in ``processBuild(...)`` within the ``SharedQueueProcessingService``.
 The build status is set to ``CANCELLED``, the job is removed from ``processingJobs``, and the process reinitialized with ``checkAvailabilityAndProcessNextBuild()``.
-Modifications to ``processingJobs`` trigger WebSocket updates, consequently removing the canceled job from the client's build queue display.
+Modifications to ``processingJobs`` trigger WebSocket updates, consequently removing the canceled job from the client's build overview display.

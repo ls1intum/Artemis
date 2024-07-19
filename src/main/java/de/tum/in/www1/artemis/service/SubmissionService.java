@@ -776,7 +776,11 @@ public class SubmissionService {
             var complaintMap = complaints.stream().collect(Collectors.toMap(complaint -> complaint.getResult().getId(), value -> value));
             // get the ids of all results which have a complaint, and with those fetch all their submissions
             List<Long> submissionIds = complaints.stream().map(complaint -> complaint.getResult().getSubmission().getId()).toList();
-            List<Submission> submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
+            List<Submission> submissions = List.of();
+            if (!submissionIds.isEmpty()) {
+                // avoid the database query if the list is empty to prevent performance issues
+                submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
+            }
 
             // add each submission with its complaint to the DTO
             submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
