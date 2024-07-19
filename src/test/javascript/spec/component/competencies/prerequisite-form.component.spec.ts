@@ -94,11 +94,10 @@ describe('PrerequisiteFormComponent', () => {
         submitButton.click();
         prerequisiteFormComponentFixture.detectChanges();
 
-        prerequisiteFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalledOnce();
-            expect(submitFormEventSpy).toHaveBeenCalledOnce();
-            discardPeriodicTasks();
-        });
+        flush();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormEventSpy).toHaveBeenCalledOnce();
+        discardPeriodicTasks();
     }));
 
     it('should correctly set form values in edit mode', () => {

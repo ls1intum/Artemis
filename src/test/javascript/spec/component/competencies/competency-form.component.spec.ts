@@ -92,11 +92,10 @@ describe('CompetencyFormComponent', () => {
         submitButton.click();
         competencyFormComponentFixture.detectChanges();
 
-        competencyFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalledOnce();
-            expect(submitFormEventSpy).toHaveBeenCalledOnce();
-            discardPeriodicTasks();
-        });
+        flush();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormEventSpy).toHaveBeenCalledOnce();
+        discardPeriodicTasks();
     }));
 
     it('should correctly set form values in edit mode', () => {
