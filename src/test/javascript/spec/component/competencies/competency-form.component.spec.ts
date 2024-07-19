@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyService } from 'app/course/competencies/competency.service';
@@ -63,6 +63,8 @@ describe('CompetencyFormComponent', () => {
 
         competencyFormComponentFixture.detectChanges();
 
+        const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
+
         const exampleTitle = 'uniqueName';
         competencyFormComponent.titleControl!.setValue(exampleTitle);
         const exampleDescription = 'lorem ipsum';
@@ -74,7 +76,7 @@ describe('CompetencyFormComponent', () => {
         exampleLecture.id = 1;
         exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        competencyFormComponent.selectLectureInDropdown(exampleLecture);
+        commonCourseCompetencyFormComponent.selectLectureInDropdown(exampleLecture);
         competencyFormComponentFixture.detectChanges();
         // selecting the lecture unit in the table
         const lectureUnitRow = competencyFormComponentFixture.debugElement.nativeElement.querySelector('.lectureUnitRow');
@@ -134,7 +136,10 @@ describe('CompetencyFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.courseCompetency.taxonomies.REMEMBER', 'artemisApp.courseCompetency.taxonomies.UNDERSTAND']);
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies).toEqual([
+            'artemisApp.courseCompetency.taxonomies.REMEMBER',
+            'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
+        ]);
     });
 
     it('should suggest taxonomy when description changes', () => {
@@ -148,7 +153,10 @@ describe('CompetencyFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.courseCompetency.taxonomies.REMEMBER', 'artemisApp.courseCompetency.taxonomies.UNDERSTAND']);
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies).toEqual([
+            'artemisApp.courseCompetency.taxonomies.REMEMBER',
+            'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
+        ]);
     });
 
     it('validator should verify title is unique', fakeAsync(() => {
@@ -176,6 +184,7 @@ describe('CompetencyFormComponent', () => {
         tick(250);
         expect(titleControl.errors?.titleUnique).toBeDefined();
         flush();
+        discardPeriodicTasks();
     }));
 
     function createTranslateSpy() {

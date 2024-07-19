@@ -76,9 +76,7 @@ export abstract class CourseCompetencyFormComponent {
     formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
 
     form: FormGroup;
-    selectedLectureInDropdown: Lecture;
     selectedLectureUnitsInTable: LectureUnit[] = [];
-    suggestedTaxonomies: string[] = [];
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -140,10 +138,6 @@ export abstract class CourseCompetencyFormComponent {
             optional: [false],
         });
         this.selectedLectureUnitsInTable = [];
-
-        if (this.isInSingleLectureMode) {
-            this.selectLectureInDropdown(this.lecturesOfCourseWithLectureUnits.first()!);
-        }
     }
 
     cancelForm() {
@@ -152,10 +146,6 @@ export abstract class CourseCompetencyFormComponent {
 
     get isSubmitPossible() {
         return !this.form.invalid;
-    }
-
-    selectLectureInDropdown(lecture: Lecture) {
-        this.selectedLectureInDropdown = lecture;
     }
 
     protected onLectureUnitSelectionChange(lectureUnits: LectureUnit[]) {

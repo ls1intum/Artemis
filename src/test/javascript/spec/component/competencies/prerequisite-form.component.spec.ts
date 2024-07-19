@@ -1,8 +1,8 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -18,6 +18,7 @@ import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
 describe('PrerequisiteFormComponent', () => {
     let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
@@ -49,13 +50,13 @@ describe('PrerequisiteFormComponent', () => {
     });
 
     it('should submit valid form', fakeAsync(() => {
-        // stubbing competency service for asynchronous validator
+        // stubbing prerequisite service for asynchronous validator
         const prerequisiteService = TestBed.inject(PrerequisiteService);
         const getAllTitlesSpy = jest.spyOn(prerequisiteService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
-        const competencyOfResponse: Competency = { id: 1, title: 'test' };
+        const competencyOfResponse: Prerequisite = { id: 1, title: 'test' };
 
-        const response: HttpResponse<Competency[]> = new HttpResponse({
+        const response: HttpResponse<Prerequisite[]> = new HttpResponse({
             body: [competencyOfResponse],
             status: 200,
         });
@@ -63,6 +64,8 @@ describe('PrerequisiteFormComponent', () => {
         jest.spyOn(prerequisiteService, 'getAllForCourse').mockReturnValue(of(response));
 
         prerequisiteFormComponentFixture.detectChanges();
+
+        const commonCourseCompetencyFormComponent = prerequisiteFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
 
         const exampleTitle = 'uniqueName';
         prerequisiteFormComponent.titleControl!.setValue(exampleTitle);
@@ -75,7 +78,7 @@ describe('PrerequisiteFormComponent', () => {
         exampleLecture.id = 1;
         exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        prerequisiteFormComponent.selectLectureInDropdown(exampleLecture);
+        commonCourseCompetencyFormComponent.selectLectureInDropdown(exampleLecture);
         prerequisiteFormComponentFixture.detectChanges();
         // selecting the lecture unit in the table
         const lectureUnitRow = prerequisiteFormComponentFixture.debugElement.nativeElement.querySelector('.lectureUnitRow');
@@ -135,7 +138,10 @@ describe('PrerequisiteFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(prerequisiteFormComponent.suggestedTaxonomies).toEqual(['artemisApp.courseCompetency.taxonomies.REMEMBER', 'artemisApp.courseCompetency.taxonomies.UNDERSTAND']);
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies).toEqual([
+            'artemisApp.courseCompetency.taxonomies.REMEMBER',
+            'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
+        ]);
     });
 
     it('should suggest taxonomy when description changes', () => {
@@ -149,7 +155,10 @@ describe('PrerequisiteFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(prerequisiteFormComponent.suggestedTaxonomies).toEqual(['artemisApp.courseCompetency.taxonomies.REMEMBER', 'artemisApp.courseCompetency.taxonomies.UNDERSTAND']);
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies).toEqual([
+            'artemisApp.courseCompetency.taxonomies.REMEMBER',
+            'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
+        ]);
     });
 
     it('validator should verify title is unique', fakeAsync(() => {
@@ -177,6 +186,7 @@ describe('PrerequisiteFormComponent', () => {
         tick(250);
         expect(titleControl.errors?.titleUnique).toBeDefined();
         flush();
+        discardPeriodicTasks();
     }));
 
     function createTranslateSpy() {
