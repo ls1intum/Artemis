@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService;
 
 @Profile(PROFILE_CORE)
@@ -30,13 +29,10 @@ public class ParticipationVcsAccessTokenService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final UserRepository userRepository;
-
     public ParticipationVcsAccessTokenService(ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, UserRepository userRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.participationVcsAccessTokenRepository = participationVCSAccessTokenRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -98,17 +94,6 @@ public class ParticipationVcsAccessTokenService {
     /**
      * Retrieves the participationVCSAccessToken for a User,Participation pair if it exists
      *
-     * @param userId          the user's id which is owner of the token
-     * @param participationId the participation's id which the token belongs to
-     * @return an Optional participationVCSAccessToken,
-     */
-    public ParticipationVCSAccessToken findByUserIdAndParticipationIdElseThrow(Long userId, Long participationId) {
-        return participationVcsAccessTokenRepository.findByUserIdAndParticipationIdOrElseThrow(userId, participationId);
-    }
-
-    /**
-     * Retrieves the participationVCSAccessToken for a User,Participation pair if it exists
-     *
      * @param user            the user's id which is owner of the token
      * @param participationId the participation's id which the token belongs to
      * @return an Optional participationVCSAccessToken,
@@ -117,6 +102,15 @@ public class ParticipationVcsAccessTokenService {
         participationVcsAccessTokenRepository.findByUserIdAndParticipationIdAndThrowIfExists(user.getId(), participationId);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         return createParticipationVCSAccessToken(user, participation);
+    }
+
+    /**
+     * Create missing participationVcsAccessTokens
+     */
+    public void createMissingParticipationVcsAccessToken() {
+        log.info("Creating missing participation VCS access tokens");
+        List<ProgrammingExerciseStudentParticipation> programmingExerciseStudentParticipations = programmingExerciseStudentParticipationRepository.findAll();
+        createMissingParticipationVCSAccessTokens(programmingExerciseStudentParticipations);
     }
 
     /**
@@ -137,14 +131,5 @@ public class ParticipationVcsAccessTokenService {
         for (ProgrammingExerciseStudentParticipation participation : participations) {
             participationVcsAccessTokenRepository.deleteByParticipation_id(participation.getId());
         }
-    }
-
-    /**
-     * Create missing participationVcsAccessTokens
-     */
-    public void createMissingParticipationVcsAccessToken() {
-        log.info("Creating missing participation VCS access tokens");
-        List<ProgrammingExerciseStudentParticipation> programmingExerciseStudentParticipations = programmingExerciseStudentParticipationRepository.findAll();
-        createMissingParticipationVCSAccessTokens(programmingExerciseStudentParticipations);
     }
 }
