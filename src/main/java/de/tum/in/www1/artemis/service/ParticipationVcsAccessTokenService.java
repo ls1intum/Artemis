@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,8 +102,8 @@ public class ParticipationVcsAccessTokenService {
      * @param participationId the participation's id which the token belongs to
      * @return an Optional participationVCSAccessToken,
      */
-    public Optional<ParticipationVCSAccessToken> findByUserIdAndParticipationId(Long userId, Long participationId) {
-        return participationVcsAccessTokenRepository.findByUserIdAndParticipationId(userId, participationId);
+    public ParticipationVCSAccessToken findByUserIdAndParticipationIdElseThrow(Long userId, Long participationId) {
+        return participationVcsAccessTokenRepository.findByUserIdAndParticipationIdOrElseThrow(userId, participationId);
     }
 
     /**
@@ -114,12 +113,10 @@ public class ParticipationVcsAccessTokenService {
      * @param participationId the participation's id which the token belongs to
      * @return an Optional participationVCSAccessToken,
      */
-    public Optional<ParticipationVCSAccessToken> createNewVcsAccessTokenForUserAndParticipation(User user, Long participationId) {
-        if (participationVcsAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId).isPresent()) {
-            return Optional.empty();
-        }
+    public ParticipationVCSAccessToken createNewVcsAccessTokenForUserAndParticipation(User user, Long participationId) {
+        participationVcsAccessTokenRepository.findByUserIdAndParticipationIdAndThrowIfExists(user.getId(), participationId);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        return Optional.of(createParticipationVCSAccessToken(user, participation));
+        return createParticipationVCSAccessToken(user, participation);
     }
 
     /**

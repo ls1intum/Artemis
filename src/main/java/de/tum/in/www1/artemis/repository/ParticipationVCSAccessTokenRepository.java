@@ -50,4 +50,9 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
         return getValueElseThrow(findByUserIdAndParticipationId(userId, participationId));
     }
 
+    default void findByUserIdAndParticipationIdAndThrowIfExists(Long userId, Long participationId) {
+        findByUserIdAndParticipationId(userId, participationId).ifPresent(token -> {
+            throw new IllegalStateException();
+        });
+    }
 }

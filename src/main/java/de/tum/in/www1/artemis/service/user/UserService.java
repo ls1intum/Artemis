@@ -829,8 +829,8 @@ public class UserService {
      *
      * @return the users participation vcs access token, or throws an exception if it does not exist
      */
-    public Optional<ParticipationVCSAccessToken> getVcsAccessTokenForUser(User user, Long participationId) {
-        return participationVCSAccessTokenService.findByUserIdAndParticipationId(user.getId(), participationId);
+    public ParticipationVCSAccessToken getVcsAccessTokenForUserElseThrow(User user, Long participationId) {
+        return participationVCSAccessTokenService.findByUserIdAndParticipationIdElseThrow(user.getId(), participationId);
     }
 
     /**
@@ -841,7 +841,7 @@ public class UserService {
      *
      * @return the users newly created participation vcs access token, or throws an exception if it already existed
      */
-    public Optional<ParticipationVCSAccessToken> createNewVcsAccessTokenForUser(User user, Long participationId) {
+    public ParticipationVCSAccessToken createNewVcsAccessTokenForUser(User user, Long participationId) {
         return participationVCSAccessTokenService.createNewVcsAccessTokenForUserAndParticipation(user, participationId);
     }
 }
