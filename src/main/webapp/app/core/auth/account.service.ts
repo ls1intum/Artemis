@@ -366,7 +366,7 @@ export class AccountService implements IAccountService {
      *
      * @param participationId The participation for which the VCS access token should get created
      */
-    putVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
+    createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
         return this.http.put<string>('api/users/vcsToken', null, { observe: 'response', params, responseType: 'text' as 'json' });
     }

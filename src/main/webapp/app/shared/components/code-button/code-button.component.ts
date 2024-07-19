@@ -83,7 +83,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
-            this.versionControlAccessTokenRequired = profileInfo.useVersionControlAccessToken;
+            this.versionControlAccessTokenRequired = profileInfo.useVersionControlAccessToken ?? false;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
             if (this.localVCEnabled) {
@@ -130,6 +130,9 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         return this.addCredentialsToHttpUrl(this.getRepositoryUri(), insertPlaceholder);
     }
 
+    /**
+     * Loads the vcsAccessToken for a participation from the server. If none exists, sens a request to create one
+     */
     loadVcsAccessToken() {
         if (this.localVCEnabled && this.activeParticipation?.id && this.user) {
             this.accountService.getVcsAccessToken(this.activeParticipation.id).subscribe({
@@ -147,13 +150,17 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Sends the request to create a new
+     */
     createNewVcsAccessToken() {
-        this.accountService.putVcsAccessToken(this.activeParticipation!.id!).subscribe({
+        this.accountService.createVcsAccessToken(this.activeParticipation!.id!).subscribe({
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     this.user.vcsAccessToken = res.body;
                 }
             },
+            error: () => {},
         });
     }
 
