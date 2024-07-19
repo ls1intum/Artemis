@@ -1,6 +1,5 @@
 @if (exercise) {
     <div class="d-flex flex-row flex-wrap column-gap-3 overflow-auto">
-        <!-- TODO ON MOBILE SCROLLABLE  -->
         @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
             <jhi-information-box [informationBoxData]="informationBoxItem">
                 @if (informationBoxItem.content.type === 'difficultyLevel') {

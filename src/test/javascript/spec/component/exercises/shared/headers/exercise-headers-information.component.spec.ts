@@ -15,7 +15,6 @@ import { ArtemisDatePipe } from '../../../../../../../main/webapp/app/shared/pip
 describe('ExerciseHeadersInformationComponent', () => {
     let component: ExerciseHeadersInformationComponent;
     let fixture: ComponentFixture<ExerciseHeadersInformationComponent>;
-    // let exerciseService: MockExerciseService;
     let exerciseService: ExerciseService;
     let getExerciseDetailsMock: jest.SpyInstance;
 
