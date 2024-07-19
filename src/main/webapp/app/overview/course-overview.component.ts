@@ -31,7 +31,6 @@ import {
     faFlag,
     faGraduationCap,
     faListAlt,
-    faListCheck,
     faNetworkWired,
     faPersonChalkboard,
     faQuestion,
