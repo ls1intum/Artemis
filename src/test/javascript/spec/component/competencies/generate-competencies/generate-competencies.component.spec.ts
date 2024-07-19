@@ -33,9 +33,8 @@ describe('GenerateCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
+            imports: [ArtemisTestModule, GenerateCompetenciesComponent, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
             declarations: [
-                GenerateCompetenciesComponent,
                 CourseDescriptionFormStubComponent,
                 MockComponent(CompetencyRecommendationDetailComponent),
                 MockComponent(DocumentationButtonComponent),
@@ -50,7 +49,6 @@ describe('GenerateCompetenciesComponent', () => {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ courseId: 1 }),
                 },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(CourseCompetencyService),
                 MockProvider(CompetencyService),
@@ -58,6 +56,7 @@ describe('GenerateCompetenciesComponent', () => {
                 MockProvider(ArtemisTranslatePipe),
             ],
         })
+            .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })
             .compileComponents()
             .then(() => {
                 generateCompetenciesComponentFixture = TestBed.createComponent(GenerateCompetenciesComponent);
