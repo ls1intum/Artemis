@@ -33,7 +33,6 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     ngOnChanges(changes: SimpleChanges | void) {
         if (this.formGroup && changes) {
             for (const propName in changes) {
-                // eslint-disable-next-line no-prototype-builtins
                 if (changes.hasOwnProperty(propName) && propName === 'posting') {
                     if (changes['posting'].previousValue?.post?.id === changes['posting'].currentValue?.post?.id) {
                         this.posting.content = this.formGroup.get('content')?.value;

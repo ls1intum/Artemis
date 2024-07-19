@@ -15,6 +15,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
 import { AccordionAddOptionsComponent } from 'app/shared/sidebar/accordion-add-options/accordion-add-options.component';
+import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 
 @NgModule({
     imports: [
@@ -26,6 +27,7 @@ import { AccordionAddOptionsComponent } from 'app/shared/sidebar/accordion-add-o
         ArtemisSharedCommonModule,
         SubmissionResultStatusModule,
         SidebarCardDirective,
+        ArtemisExamSharedModule,
     ],
     declarations: [
         SidebarAccordionComponent,

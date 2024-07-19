@@ -367,7 +367,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.templateParticipation,
                         exerciseId: exercise.id,
                         type: 'TEMPLATE',
-                        showOpenLink: !this.localVCEnabled,
                     },
                 },
                 {
@@ -377,7 +376,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.solutionParticipation,
                         exerciseId: exercise.id,
                         type: 'SOLUTION',
-                        showOpenLink: !this.localVCEnabled,
                     },
                 },
                 {
@@ -387,7 +385,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: { repositoryUri: exercise.testRepositoryUri },
                         exerciseId: exercise.id,
                         type: 'TESTS',
-                        showOpenLink: !this.localVCEnabled,
                     },
                 },
                 this.supportsAuxiliaryRepositories &&
@@ -397,7 +394,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         data: {
                             auxiliaryRepositories: exercise.auxiliaryRepositories,
                             exerciseId: exercise.id,
-                            showOpenLink: !this.localVCEnabled,
                         },
                     },
                 exercise.isAtLeastEditor &&

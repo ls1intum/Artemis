@@ -231,7 +231,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // monaco editor
-        expect(container.monacoEditor.isLoading).toBeFalse();
+        expect(container.monacoEditor.loadingCount).toBe(0);
         expect(container.monacoEditor.commitState).toBe(CommitState.CLEAN);
 
         // actions
@@ -306,7 +306,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // monaco editor
-        expect(container.monacoEditor.isLoading).toBeFalse();
+        expect(container.monacoEditor.loadingCount).toBe(0);
         expect(container.monacoEditor.annotationsArray?.map((a) => omit(a, 'hash'))).toEqual(extractedBuildLogErrors);
         expect(container.monacoEditor.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
 
@@ -345,7 +345,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
         expect(container.selectedFile).toBe(selectedFile);
         expect(container.monacoEditor.selectedFile).toBe(selectedFile);
-        expect(container.monacoEditor.isLoading).toBeFalse();
+        expect(container.monacoEditor.loadingCount).toBe(0);
         expect(container.monacoEditor.fileSession).toContainKey(selectedFile);
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
