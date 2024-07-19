@@ -75,6 +75,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     enableResize = true;
 
+    @Input()
+    linkEditorHeightToContentHeight = false;
+
     /**
      * The initial height the editor should have. If set to 'external', the editor will try to grow to the available space.
      */
@@ -235,6 +238,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         event.source.reset();
         // The editor's bottom edge becomes the top edge of the handle.
         this.targetWrapperHeight = event.pointerPosition.y - this.wrapper.nativeElement.getBoundingClientRect().top - this.getElementClientHeight(this.resizePlaceholder) / 2;
+    }
+
+    /**
+     * Adjusts the height of the element when the content height changes.
+     * @param newContentHeight
+     */
+    onContentHeightChanged(newContentHeight: number): void {
+        if (this.linkEditorHeightToContentHeight) {
+            const totalHeight = newContentHeight + this.getElementClientHeight(this.fileUploadFooter) + this.getElementClientHeight(this.actionPalette);
+            // Clamp the height so it is between the minimum and maximum height.
+            this.targetWrapperHeight = Math.max(this.resizableMinHeight, Math.min(this.resizableMaxHeight, totalHeight));
+        }
     }
 
     /**

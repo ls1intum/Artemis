@@ -116,7 +116,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
             if (event.contentHeightChanged) {
-                this.contentHeightChanged.emit(event.contentHeight);
+                this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight));
             }
         });
 
@@ -377,7 +377,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    setSimpleTextFieldMode() {
+    setSimpleTextFieldMode(): void {
         this._editor.updateOptions({
             lineNumbers: 'off',
             glyphMargin: false,
@@ -387,8 +387,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             renderLineHighlight: 'none',
             fontFamily: 'Helvetica',
             scrollbar: {
-                vertical: 'auto',
+                vertical: 'hidden',
+                horizontal: 'hidden',
             },
+            overviewRulerLanes: 0,
+            hideCursorInOverviewRuler: true,
             padding: {
                 top: 5,
             },
