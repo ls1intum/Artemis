@@ -51,6 +51,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     content?: string;
     previewMode = false;
 
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+
     constructor(
         private cdref: ChangeDetectorRef,
         private metisService: MetisService,
@@ -155,6 +157,4 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             event.preventDefault();
         }
     }
-
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
