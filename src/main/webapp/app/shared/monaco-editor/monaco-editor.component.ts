@@ -97,6 +97,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Output()
     textChanged = new EventEmitter<string>();
 
+    @Output()
+    contentHeightChanged = new EventEmitter<number>();
+
+    private contentHeightListener?: monaco.IDisposable;
+    private textChangedListener?: monaco.IDisposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
@@ -105,9 +110,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
         resizeObserver.observe(this.monacoEditorContainerElement);
 
-        this._editor.onDidChangeModelContent(() => {
+        this.textChangedListener = this._editor.onDidChangeModelContent(() => {
             this.emitTextChangeEvent();
         }, this);
+
+        this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
+            if (event.contentHeightChanged) {
+                this.contentHeightChanged.emit(event.contentHeight);
+            }
+        });
 
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
@@ -116,6 +127,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.reset();
         this._editor.dispose();
         this.themeSubscription?.unsubscribe();
+        this.textChangedListener?.dispose();
+        this.contentHeightListener?.dispose();
     }
 
     private emitTextChangeEvent() {
