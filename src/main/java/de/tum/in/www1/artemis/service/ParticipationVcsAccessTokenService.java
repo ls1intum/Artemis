@@ -40,6 +40,7 @@ public class ParticipationVcsAccessTokenService {
      *
      * @param user          the user which is owner of the token
      * @param participation the participation which belongs to the token
+     * @return the newly created ParticipationVCSAccessToken
      */
     public ParticipationVCSAccessToken createParticipationVCSAccessToken(User user, StudentParticipation participation) {
         ParticipationVCSAccessToken participationVCSAccessToken = new ParticipationVCSAccessToken();
