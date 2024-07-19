@@ -610,7 +610,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR course.instructorGroupName = userGroup
                )
             """)
-    List<User> findUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
+    List<User> findUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "groups")
     List<User> findDistinctUsersWithGroupsByIdIn(List<Long> ids);
@@ -643,7 +643,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a list of distinct users with their groups, or an empty list if no users are found
      */
     default List<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnList(Pageable pageable, String loginOrName, long courseId) {
-        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
+        List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
 
         if (userIds.isEmpty()) {
             return Collections.emptyList();
@@ -662,7 +662,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a {@code Page} containing a list of distinct users with their groups, or an empty page if no users are found
      */
     default Page<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
-        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
+        List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
 
         if (userIds.isEmpty()) {
             return new PageImpl<>(Collections.emptyList(), pageable, 0);
