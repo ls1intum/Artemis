@@ -594,6 +594,13 @@ public class ProgrammingExerciseService {
                 continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
                 resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
             }
+            // For Aeolus, we have to regenerate the build script based on the new Windfile of the exercise.
+            // We skip this for pure LocalCI to prevent the build script from being overwritten by the default one.
+            if (profileService.isAeolusActive() && buildScriptGenerationService.isPresent()) {
+                String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
+                updatedProgrammingExercise.setBuildScript(script);
+                programmingExerciseRepository.save(updatedProgrammingExercise);
+            }
         }
         else {
             // if the user does not change the build plan configuration, we have to set the old one again
