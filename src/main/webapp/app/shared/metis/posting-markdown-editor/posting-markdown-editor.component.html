@@ -13,6 +13,7 @@
         [colorAction]="undefined"
         [enableResize]="false"
         [initialEditorHeight]="MarkdownEditorHeight.SMALL"
+        (keydown)="onKeyDown($event)"
     >
         <!-- Preview todo showdefaultpreview-->
         <ng-container id="previewMonaco">
@@ -25,13 +26,9 @@
     </jhi-markdown-editor-monaco>
 </div>
 @if (isInputLengthDisplayed || (content?.length ?? 0) > maxContentLength) {
-    <div class="col text-end">
+    <div class="col mt-1 text-end">
         <p class="small my-0 ms-2" [ngStyle]="{ color: content?.length! > maxContentLength || content?.length! === 0 ? 'red' : 'inherit' }">
             {{ content?.length ?? 0 }} / {{ maxContentLength }}
         </p>
     </div>
 }
-
-<div #sendButton>
-    <div [style.border]="'1px solid red'">DUMMY</div>
-</div>

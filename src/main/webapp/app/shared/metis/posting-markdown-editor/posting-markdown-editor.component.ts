@@ -1,17 +1,4 @@
-import {
-    AfterContentChecked,
-    AfterViewInit,
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnInit,
-    Output,
-    ViewChild,
-    ViewEncapsulation,
-    forwardRef,
-} from '@angular/core';
+import { AfterContentChecked, AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation, forwardRef } from '@angular/core';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
@@ -54,7 +41,6 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
     @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
-    @ViewChild('sendButton', { static: true }) sendButton: ElementRef<HTMLDivElement>;
 
     @Input() maxContentLength: number;
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.SMALL;
@@ -107,7 +93,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     ngAfterViewInit(): void {
         this.markdownEditor.setTextFieldMode();
-        this.markdownEditor.monacoEditor.addOverlayWidget('markdown-send-btn', this.sendButton.nativeElement, { preference: 1 });
+        // this.markdownEditor.monacoEditor.addOverlayWidget('markdown-send-btn', this.sendButton.nativeElement, { preference: 1 });
     }
 
     /**
@@ -161,6 +147,13 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         this.content = newValue;
         this.onChange(this.content);
         this.valueChanged();
+    }
+
+    onKeyDown(event: KeyboardEvent) {
+        // Prevent a newline from being added when pressing enter
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+        }
     }
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
