@@ -219,4 +219,27 @@ describe('CompetencyManagementComponent', () => {
         expect(component.relations).toHaveLength(1);
         expect(component.relations.at(0)?.id).toBe(2);
     });
+
+    it('should remove competency and its relation', () => {
+        component.competencies = [
+            { id: 1, type: CourseCompetencyType.COMPETENCY },
+            { id: 2, type: CourseCompetencyType.COMPETENCY },
+        ];
+        component.prerequisites = [{ id: 3, type: CourseCompetencyType.PREREQUISITE }];
+        component.courseCompetencies = component.competencies.concat(component.prerequisites);
+        component.relations = [
+            { id: 1, tailCompetency: component.competencies.first(), headCompetency: component.competencies.last() },
+            { id: 2, tailCompetency: component.competencies.last(), headCompetency: component.prerequisites.first() },
+            { id: 3, tailCompetency: component.prerequisites.first(), headCompetency: component.competencies.first() },
+        ];
+
+        component.onRemoveCompetency(2);
+
+        expect(component.relations).toHaveLength(1);
+        expect(component.relations.first()?.id).toBe(3);
+        expect(component.competencies).toHaveLength(1);
+        expect(component.competencies.first()?.id).toBe(1);
+        expect(component.prerequisites).toHaveLength(1);
+        expect(component.prerequisites.first()?.id).toBe(3);
+    });
 });

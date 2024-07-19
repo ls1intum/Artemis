@@ -112,8 +112,8 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
             .flat()
             .filter((element): element is CompetencyRelationDTO => !!element)
             .map((dto) => dtoToCompetencyRelation(dto));
-        this.courseCompetencies = this.courseCompetencies.concat(importedCompetencies);
-        this.relations = this.relations.concat(importedRelations);
+        this.courseCompetencies.push(...importedCompetencies);
+        this.relations.push(...importedRelations);
     }
 
     /**
@@ -124,8 +124,6 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     deleteCompetency(competencyId: number) {
         this.service.delete(competencyId, this.courseId).subscribe({
             next: () => {
-                this.courseCompetencies = this.courseCompetencies.filter((competency) => competency.id !== competencyId);
-                this.relations = this.relations.filter((relation) => relation.tailCompetency?.id !== competencyId && relation.headCompetency?.id !== competencyId);
                 this.dialogErrorSource.next('');
                 this.competencyDeleted.next(competencyId);
             },

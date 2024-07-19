@@ -22,6 +22,9 @@ public class Prerequisite extends CourseCompetency {
         if (courseCompetency instanceof Competency) {
             setLinkedCourseCompetency(courseCompetency);
         }
+        else {
+            setLinkedCourseCompetency(courseCompetency.getLinkedCourseCompetency());
+        }
     }
 
     public Prerequisite() {

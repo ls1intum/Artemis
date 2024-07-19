@@ -237,6 +237,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     onRemoveCompetency(competencyId: number) {
         this.competencies = this.competencies.filter((competency) => competency.id !== competencyId);
         this.prerequisites = this.prerequisites.filter((prerequisite) => prerequisite.id !== competencyId);
+        this.relations = this.relations.filter((relation) => relation.tailCompetency?.id !== competencyId && relation.headCompetency?.id !== competencyId);
         this.courseCompetencies = this.competencies.concat(this.prerequisites);
     }
 }
