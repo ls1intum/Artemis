@@ -18,7 +18,7 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
     faBullhorn = faBullhorn;
     announcementCreationAllowed = false;
 
-    private modalRef: NgbModalRef | null;
+    private modalRef: NgbModalRef | undefined;
     private timeoutRef: any;
     private subscription: Subscription;
 
@@ -32,8 +32,12 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
     }
 
     ngOnDestroy() {
-        this.timeoutRef && clearTimeout(this.timeoutRef);
-        this.subscription && this.subscription.unsubscribe();
+        if (this.timeoutRef) {
+            clearTimeout(this.timeoutRef);
+        }
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
     }
 
     private checkAnnouncementCreationAllowed() {
@@ -61,6 +65,6 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
         this.modalRef.componentInstance.examId = this.exam.id;
         this.modalRef.componentInstance.courseId = this.exam.course!.id!;
 
-        from(this.modalRef.result).subscribe(() => (this.modalRef = null));
+        from(this.modalRef.result).subscribe(() => (this.modalRef = undefined));
     }
 }

@@ -15,15 +15,6 @@
 <!-- ngIf online-code-editor -->
 @if (exercise.allowOnlineEditor) {
     <div>
-        <div class="d-flex mb-3">
-            <div class="d-flex flex-wrap flex-column justify-content-center">
-                <h4 class="mb-0 me-1">Online Code Editor</h4>
-            </div>
-            <!-- ngIf offline-ide clone button -->
-            @if (exercise.allowOfflineIde) {
-                <jhi-exercise-details-student-actions [examMode]="true" [exercise]="exercise" [courseId]="courseId" />
-            }
-        </div>
         <jhi-code-editor-container
             [editable]="!repositoryIsLocked"
             [participation]="studentParticipation"
@@ -33,8 +24,15 @@
             (onCommitStateChange)="onCommitStateChange($event)"
             (onFileChanged)="onFileChanged()"
         >
-            <div submissionPolicy class="mt-3">
+            <div submissionPolicy class="ps-2">
                 <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" />
+            </div>
+            <div editorTitleActions>
+                @if (exercise.allowOfflineIde) {
+                    <div [style.align-self]="'flex-start'">
+                        <jhi-exercise-details-student-actions [examMode]="true" [exercise]="exercise" [courseId]="courseId" />
+                    </div>
+                }
             </div>
             <div editorToolbar class="d-inline-flex align-items-center">
                 @if (repositoryIsLocked) {
@@ -63,27 +61,29 @@
         </jhi-code-editor-container>
     </div>
 }
-<!-- ngIf Offline IDE clone button start -->
+<!-- ngIf Offline IDE code button start -->
 @if (!exercise.allowOnlineEditor && exercise.allowOfflineIde) {
     <div>
-        <div class="d-flex gap-3 my-3 ms-1 align-items-center">
-            <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true" />
-            @if (studentParticipation) {
-                <jhi-updating-result
-                    [exercise]="exercise"
-                    [showUngradedResults]="true"
-                    [showBadge]="true"
-                    [participation]="studentParticipation"
-                    [personalParticipation]="true"
-                    class="me-1"
-                />
-            }
-        </div>
-        <div class="d-flex gap-3 my-3 ms-1 align-items-center">
-            <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1" />
-            @if (repositoryIsLocked) {
-                <jhi-code-editor-repository-is-locked class="me-1" />
-            }
+        <div class="d-flex my-3 ms-1 align-items-center justify-content-between">
+            <div class="d-flex gap-3 align-items-center">
+                <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true" />
+                <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1" />
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+                @if (repositoryIsLocked) {
+                    <jhi-code-editor-repository-is-locked class="me-1" />
+                }
+                @if (studentParticipation) {
+                    <jhi-updating-result
+                        [exercise]="exercise"
+                        [showUngradedResults]="true"
+                        [showBadge]="true"
+                        [participation]="studentParticipation"
+                        [personalParticipation]="true"
+                        class="me-1"
+                    />
+                }
+            </div>
         </div>
         @if (exercise) {
             <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="studentParticipation" [personalParticipation]="true" />

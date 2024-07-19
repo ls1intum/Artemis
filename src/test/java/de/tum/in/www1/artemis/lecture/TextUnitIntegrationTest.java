@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -30,9 +37,14 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private LectureUtilService lectureUtilService;
 
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
     private Lecture lecture;
 
     private TextUnit textUnit;
+
+    private Competency competency;
 
     @BeforeEach
     void initTestCase() {
@@ -47,6 +59,8 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "editor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+
+        competency = competencyUtilService.createCompetency(lecture.getCourse());
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -70,9 +84,11 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void createTextUnit_asEditor_shouldCreateTextUnitUnit() throws Exception {
+        textUnit.setCompetencies(Set.of(competency));
         var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
         assertThat(persistedTextUnit.getId()).isNotNull();
         assertThat(persistedTextUnit.getName()).isEqualTo("LoremIpsum");
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(persistedTextUnit));
     }
 
     @Test
@@ -89,11 +105,13 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void updateTextUnit_asEditor_shouldUpdateTextUnit() throws Exception {
+        textUnit.setCompetencies(Set.of(competency));
         persistTextUnitWithLecture();
         TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
         textUnitFromRequest.setContent("Changed");
         TextUnit updatedTextUnit = request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.OK);
         assertThat(updatedTextUnit.getContent()).isEqualTo("Changed");
+        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.of(textUnit)));
     }
 
     @Test
@@ -137,10 +155,12 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteTextUnit_correctId_shouldDeleteTextUnit() throws Exception {
+        textUnit.setCompetencies(Set.of(competency));
         persistTextUnitWithLecture();
         assertThat(this.textUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
+        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.empty()));
     }
 
     private void persistTextUnitWithLecture() {

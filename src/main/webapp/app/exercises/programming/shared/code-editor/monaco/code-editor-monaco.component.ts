@@ -4,7 +4,7 @@ import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
@@ -83,7 +83,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
     onHighlightLines = new EventEmitter<MonacoEditorLineHighlight[]>();
 
     editorLocked = false;
-    isLoading = false;
+    /**
+     * The number of currently loading files. If this number is greater than 0, the editor is in a loading state and hides its content.
+     */
+    loadingCount = 0;
 
     fileSession: FileSession = {};
     newFeedbackLines: number[] = [];
@@ -91,6 +94,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
+    static readonly FILE_TIMEOUT = 10000;
 
     // Expose to template
     protected readonly Feedback = Feedback;
@@ -139,12 +143,14 @@ export class CodeEditorMonacoComponent implements OnChanges {
             // There is nothing to be done, as the editor will be hidden when there is no file.
             return;
         }
+        this.loadingCount++;
         if (!this.fileSession[fileName] || this.fileSession[fileName].loadingError) {
-            this.isLoading = true;
             let fileContent = '';
             let loadingError = false;
             try {
-                fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName)).then((fileObj) => fileObj.fileContent);
+                fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
+                    (fileObj) => fileObj.fileContent,
+                );
             } catch (error) {
                 loadingError = true;
                 if (error.message === ConnectionError.message) {
@@ -154,16 +160,17 @@ export class CodeEditorMonacoComponent implements OnChanges {
                 }
             }
             this.fileSession[fileName] = { code: fileContent, loadingError, cursor: { column: 0, row: 0 } };
-            this.isLoading = false;
         }
 
         const code = this.fileSession[fileName].code;
         this.binaryFileSelected = this.fileTypeService.isBinaryContent(code);
 
-        if (!this.binaryFileSelected) {
+        // Since fetching the file may take some time, we need to check if the file is still selected.
+        if (!this.binaryFileSelected && this.selectedFile === fileName) {
             this.editor.changeModel(fileName, code);
             this.editor.setPosition(this.fileSession[fileName].cursor);
         }
+        this.loadingCount--;
     }
 
     onFileTextChanged(text: string): void {
