@@ -379,6 +379,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             padding: {
                 top: 5,
             },
+            suggest: {
+                showWords: false,
+            },
         });
         this.setWordWrap(false);
     }

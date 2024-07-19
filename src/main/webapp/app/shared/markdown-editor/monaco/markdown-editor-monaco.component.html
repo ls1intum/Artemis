@@ -2,7 +2,7 @@
     <div
         #wrapper
         class="markdown-editor-wrapper"
-        [style.overflow]="inPreviewMode ? 'auto' : 'hidden'"
+        [style.overflow]="inPreviewMode ? 'auto' : initialEditorHeight === 'external' ? 'hidden' : 'visible'"
         [style.height.px]="inPreviewMode ? undefined : targetWrapperHeight"
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
     >
