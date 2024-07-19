@@ -64,7 +64,7 @@
                 <div
                     id="scrollableDiv"
                     #container
-                    [ngClass]="{ 'posting-infinite-scroll-container': posts.length !== 0 }"
+                    [ngClass]="{ 'posting-infinite-scroll-container': posts.length !== 0, 'content-height-dev': contentHeightDev }"
                     infinite-scroll
                     [scrollWindow]="false"
                     (scrolledUp)="fetchNextPage()"

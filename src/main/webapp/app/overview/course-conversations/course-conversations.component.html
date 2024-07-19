@@ -42,15 +42,24 @@
                     <jhi-course-conversations-code-of-conduct [course]="course!" />
                 </div>
             }
-            <div class="col flex-grow-1 module-bg rounded-3 scrollable-content" style="min-width: 200px">
+            <div class="col flex-grow-1 module-bg rounded-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }" style="min-width: 200px">
                 @if (activeConversation) {
                     <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" />
-                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [searchbarCollapsed]="channelSearchCollapsed" />
+                    <jhi-conversation-messages
+                        [contentHeightDev]="!isProduction || isTestServer"
+                        (openThread)="postInThread = $event"
+                        [course]="course"
+                        [searchbarCollapsed]="channelSearchCollapsed"
+                    />
                 } @else {
                     <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
                 }
             </div>
-            <div class="col d-flex flex-grow-1 justify-end px-0 scrollable-content" style="max-width: min-content">
+            <div
+                class="col d-flex flex-grow-1 justify-end px-0 scrollable-content"
+                [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
+                style="max-width: min-content"
+            >
                 @if (!!postInThread) {
                     <jhi-conversation-thread-sidebar
                         [activeConversation]="activeConversation ?? postInThread.conversation!"

@@ -1,15 +1,13 @@
 <div class="mt-2 ms-2">
-    <div class="conversation-header">
-        <div class="d-flex justify-content-between">
-            <div>
-                <h4 class="conversation-name d-inline-block rounded p-1 info">
-                    @if (!courseWideSearchConfig.searchTerm) {
-                        All Messages
-                    } @else {
-                        Search Results for "{{ courseWideSearchConfig.searchTerm }}"
-                    }
-                </h4>
-            </div>
+    <div class="d-flex justify-content-between">
+        <div>
+            <h4 class="d-inline-block rounded p-1 info">
+                @if (!courseWideSearchConfig.searchTerm) {
+                    All Messages
+                } @else {
+                    Search Results for "{{ courseWideSearchConfig.searchTerm }}"
+                }
+            </h4>
         </div>
     </div>
     @if (formGroup) {

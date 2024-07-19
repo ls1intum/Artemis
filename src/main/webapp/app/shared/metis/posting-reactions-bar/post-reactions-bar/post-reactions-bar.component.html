@@ -1,33 +1,34 @@
-<div class="d-flex gap-2 fs-x-small">
+<div class="d-flex gap-2 fs-xx-small">
     @if (!isCommunicationPage) {
-        <!-- start discussion -->
-        @if (sortedAnswerPosts.length === 0) {
+        @if (sortedAnswerPosts.length) {
+            <!-- collapse answers -->
+            @if (showAnswers) {
+                <div>
+                    <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
+                        <jhi-emoji [emoji]="closeCrossId" />
+                        <span class="emoji-count">{{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
+                    </button>
+                </div>
+            } @else {
+                <!-- expand answers -->
+                <div>
+                    <button class="reaction-button clickable expand-answers-btn" (click)="showAnswersChange.emit(true)">
+                        <jhi-emoji [emoji]="speechBalloonId" />
+                        <span class="emoji-count">{{
+                            sortedAnswerPosts.length === 1
+                                ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
+                                : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
+                        }}</span>
+                    </button>
+                </div>
+            }
+
+        } @else {
+            <!-- start discussion -->
             <div class="">
                 <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()" [disabled]="readOnlyMode">
                     <jhi-emoji [emoji]="speechBalloonId" />
                     <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
-                </button>
-            </div>
-        }
-        <!-- expand answers -->
-        @if (!showAnswers && sortedAnswerPosts.length > 0) {
-            <div class="">
-                <button class="reaction-button clickable expand-answers-btn" (click)="showAnswersChange.emit(true)">
-                    <jhi-emoji [emoji]="speechBalloonId" />
-                    <span class="emoji-count">{{
-                        sortedAnswerPosts.length === 1
-                            ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
-                            : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
-                    }}</span>
-                </button>
-            </div>
-        }
-        <!-- collapse answers -->
-        @if (showAnswers && sortedAnswerPosts.length > 0) {
-            <div class="">
-                <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
-                    <jhi-emoji [emoji]="closeCrossId" />
-                    <span class="emoji-count">{{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
                 </button>
             </div>
         }
@@ -43,7 +44,7 @@
                 </div>
             }
             <!-- expand answers -->
-            @if (!showAnswers && sortedAnswerPosts.length > 0) {
+            @if (!showAnswers && sortedAnswerPosts.length) {
                 <div class="">
                     <button class="reaction-button clickable expand-answers-btn" (click)="openThread.emit()">
                         <fa-icon [icon]="faArrowRight" />
@@ -58,7 +59,7 @@
         }
     }
     @for (reactionMetaData of reactionMetaDataMap | keyvalue; track reactionMetaData) {
-        <div class="">
+        <div>
             <button
                 [disabled]="readOnlyMode"
                 class="reaction-button clickable"
@@ -72,8 +73,8 @@
             </button>
         </div>
     }
-    <div class="" [hidden]="readOnlyMode">
-        <button class="reaction-button clickable px-2 py-1" (click)="showReactionSelector = !showReactionSelector">
+    <div [hidden]="readOnlyMode">
+        <button class="reaction-button clickable px-2 fs-small" (click)="showReactionSelector = !showReactionSelector">
             <fa-icon
                 [icon]="farSmile"
                 class="reaction-button react text-secondary clickable"
@@ -101,8 +102,8 @@
             />
         }
     </ng-template>
-    <div class="">
-        @if (displayPriority === DisplayPriority.PINNED || canPin) {
+    @if (displayPriority === DisplayPriority.PINNED || canPin) {
+        <div>
             <button
                 class="reaction-button pin"
                 [class.reaction-button--not-hoverable]="!canPin"
@@ -112,9 +113,12 @@
             >
                 <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'" />
             </button>
-        }
+        </div>
+    }
+
+    <div>
         @if (getShowNewMessageIcon()) {
-            <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+            <div class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</div>
         }
     </div>
 </div>
