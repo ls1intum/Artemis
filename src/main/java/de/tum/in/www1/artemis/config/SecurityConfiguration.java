@@ -33,6 +33,8 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
+import com.hazelcast.core.HazelcastInstance;
+
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.DomainUserDetailsService;
 import de.tum.in.www1.artemis.security.Role;
@@ -56,14 +58,18 @@ public class SecurityConfiguration {
 
     private final ProfileService profileService;
 
+    private final HazelcastInstance hazelcastInstance;
+
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
-    public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService) {
+    public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
+            HazelcastInstance hazelcastInstance) {
         this.tokenProvider = tokenProvider;
         this.passwordService = passwordService;
         this.corsFilter = corsFilter;
         this.profileService = profileService;
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     /**
@@ -224,7 +230,7 @@ public class SecurityConfiguration {
 
         // Conditionally adds configuration for LTI if it is active.
         if (profileService.isLtiActive()) {
-            http.with(new CustomLti13Configurer(), configurer -> configurer.configure(http));
+            http.with(new CustomLti13Configurer(hazelcastInstance), configurer -> configurer.configure(http));
         }
 
         // Builds and returns the SecurityFilterChain.
