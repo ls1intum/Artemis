@@ -133,4 +133,13 @@ public class ParticipationVcsAccessTokenService {
             participationVcsAccessTokenRepository.deleteByParticipation_id(participation.getId());
         }
     }
+
+    /**
+     * Deletes all participationVcsAccessTokens of a user
+     *
+     * @param userId The user's id
+     */
+    public void deleteAllByUserId(long userId) {
+        participationVcsAccessTokenRepository.deleteAllByUserId(userId);
+    }
 }

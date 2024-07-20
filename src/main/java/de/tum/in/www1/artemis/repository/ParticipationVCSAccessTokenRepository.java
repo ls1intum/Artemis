@@ -28,6 +28,15 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
     @Modifying
     void deleteByParticipation_id(long participationId);
 
+    /**
+     * Delete all tokens of a user
+     *
+     * @param userId The id of the user
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteAllByUserId(long userId);
+
     @Query("""
             SELECT p
             FROM ParticipationVCSAccessToken p

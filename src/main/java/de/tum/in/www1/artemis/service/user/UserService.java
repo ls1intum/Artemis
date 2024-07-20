@@ -315,6 +315,7 @@ public class UserService {
             }
             catch (VersionControlException e) {
                 log.error("An error occurred while registering GitLab user {}:", savedNonActivatedUser.getLogin(), e);
+                participationVCSAccessTokenService.deleteAllByUserId(savedNonActivatedUser.getId());
                 userRepository.delete(savedNonActivatedUser);
                 clearUserCaches(savedNonActivatedUser);
                 userRepository.flush();
@@ -462,6 +463,7 @@ public class UserService {
      */
     public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
+            participationVCSAccessTokenService.deleteAllByUserId(user.getId());
             user.setDeleted(true);
             anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
