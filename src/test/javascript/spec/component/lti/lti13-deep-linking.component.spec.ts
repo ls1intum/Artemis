@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { of, throwError } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -27,6 +27,7 @@ describe('Lti13DeepLinkingComponent', () => {
     const courseManagementServiceMock = { findWithExercises: jest.fn() };
     const accountServiceMock = { identity: jest.fn(), getAuthenticationState: jest.fn() };
     const sortServiceMock = { sortByProperty: jest.fn() };
+    const alertServiceMock = { error: jest.fn(), addAlert: jest.fn() };
 
     const exercise1 = { id: 1, shortName: 'git', type: ExerciseType.PROGRAMMING } as Exercise;
     const exercise2 = { id: 2, shortName: 'test', type: ExerciseType.PROGRAMMING } as Exercise;
@@ -46,7 +47,7 @@ describe('Lti13DeepLinkingComponent', () => {
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: SortService, useValue: sortServiceMock },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(AlertService),
+                { provide: AlertService, useValue: alertServiceMock },
             ],
         }).compileComponents();
         jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -75,6 +76,16 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.course).toEqual(course);
         expect(component.exercises).toContainAllValues(course.exercises!);
     }));
+
+    it('should alert user when no exercise is selected', () => {
+        component.selectedExercises = undefined;
+        component.sendDeepLinkRequest();
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.lti13.deepLinking.selectToLink');
+
+        component.selectedExercises = new Set();
+        component.sendDeepLinkRequest();
+        expect(alertServiceMock.error).toHaveBeenNthCalledWith(2, 'artemisApp.lti13.deepLinking.selectToLink');
+    });
 
     it('should navigate on init when user is authenticated', fakeAsync(() => {
         const redirectSpy = jest.spyOn(component, 'redirectUserToLoginThenTargetLink');
