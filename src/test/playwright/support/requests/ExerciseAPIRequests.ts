@@ -322,7 +322,6 @@ export class ExerciseAPIRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
         let newModelingExercise;
-        // eslint-disable-next-line no-prototype-builtins
         if (body.hasOwnProperty('course')) {
             newModelingExercise = Object.assign({}, templateCopy, dates, body);
         } else {
@@ -426,7 +425,6 @@ export class ExerciseAPIRequests {
             quizBatches.push({ startTime: dayjsToString(startOfWorkingTime) });
         }
 
-        // eslint-disable-next-line no-prototype-builtins
         const newQuizExercise = body.hasOwnProperty('course') ? { ...quizExercise, quizBatches, ...dates, ...body } : { ...quizExercise, ...body };
         const multipartData = {
             exercise: {

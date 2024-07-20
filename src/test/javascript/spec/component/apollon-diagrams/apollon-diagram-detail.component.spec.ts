@@ -7,8 +7,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ApollonDiagramDetailComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-detail.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,6 +19,7 @@ import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -44,9 +44,10 @@ describe('ApollonDiagramDetail Component', () => {
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(testClassDiagram);
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
             declarations: [ApollonDiagramDetailComponent],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 AlertService,
                 JhiLanguageHelper,
                 ApollonDiagramService,
@@ -107,6 +108,8 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.editorContainer = new ElementRef(div);
         fixture.componentInstance.apollonDiagram = diagram;
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
+        // TODO: we should mock this differently without require
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(of(new Blob()));
         jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
@@ -149,6 +152,8 @@ describe('ApollonDiagramDetail Component', () => {
     it('downloadSelection', async () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
+        // TODO: we should mock this differently without require
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const module = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         jest.spyOn(module, 'convertRenderedSVGToPNG').mockReturnValue(new Blob([]));
         fixture.componentInstance.apollonDiagram = diagram;
