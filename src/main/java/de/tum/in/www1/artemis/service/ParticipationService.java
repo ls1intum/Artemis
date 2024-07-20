@@ -337,6 +337,9 @@ public class ParticipationService {
             participation.setParticipant(participant);
             participation.setPracticeMode(true);
             participation = studentParticipationRepository.saveAndFlush(participation);
+            if (participant instanceof User user) {
+                participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
+            }
         }
         else {
             // make sure participation and exercise are connected

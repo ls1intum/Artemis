@@ -93,13 +93,13 @@ public class ParticipationVcsAccessTokenService {
     }
 
     /**
-     * Retrieves the participationVCSAccessToken for a User,Participation pair if it exists
+     * Checks if the participationVCSAccessToken for a User,Participation pair exists, and creates a new one if not
      *
      * @param user            the user's id which is owner of the token
      * @param participationId the participation's id which the token belongs to
      * @return an Optional participationVCSAccessToken,
      */
-    public ParticipationVCSAccessToken createNewVcsAccessTokenForUserAndParticipation(User user, Long participationId) {
+    public ParticipationVCSAccessToken createVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
         participationVcsAccessTokenRepository.findByUserIdAndParticipationIdAndThrowIfExists(user.getId(), participationId);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         return createParticipationVCSAccessToken(user, participation);

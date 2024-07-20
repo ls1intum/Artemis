@@ -227,7 +227,7 @@ public class LocalVCServletService {
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
-        User user = authenticateUser(authorizationHeader, exercise);
+        User user = authenticateUser(authorizationHeader, exercise, localVCRepositoryUri);
 
         // Check that offline IDE usage is allowed.
         if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
@@ -241,7 +241,7 @@ public class LocalVCServletService {
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
-    private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise) throws LocalVCAuthException {
+    private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri) throws LocalVCAuthException {
 
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
@@ -264,14 +264,15 @@ public class LocalVCServletService {
                         && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
                     return user;
                 }
-
-                var studentParticipation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, user.getLogin());
-                var token = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.getId());
-
-                // check participation VCS access token
-                if (token.isPresent() && Objects.equals(token.get().getVcsAccessToken(), password)) {
-                    user.setVcsAccessToken(token.get().getVcsAccessToken());
-                    return user;
+                // check participation vcs access token
+                var participations = programmingExerciseParticipationService.findStudentParticipationsByExerciseAndStudentId(exercise, user.getLogin());
+                var studentParticipation = participations.stream().filter(participation -> participation.getRepositoryUri().equals(localVCRepositoryUri.toString())).findAny();
+                if (studentParticipation.isPresent()) {
+                    var token = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.get().getId());
+                    if (token.isPresent() && Objects.equals(token.get().getVcsAccessToken(), password)) {
+                        user.setVcsAccessToken(token.get().getVcsAccessToken());
+                        return user;
+                    }
                 }
             }
             catch (EntityNotFoundException e) {

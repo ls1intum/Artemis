@@ -209,6 +209,19 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     * Tries to retrieve all student participation for the given exercise id and username.
+     *
+     * @param exercise the exercise for which to find a participation
+     * @param username of the user to which the participation belongs.
+     * @return the participations for the given exercise and user.
+     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
+     */
+    @NotNull
+    public List<ProgrammingExerciseStudentParticipation> findStudentParticipationsByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
+        return studentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), username);
+    }
+
+    /**
      * Try to find a programming exercise participation for the given id.
      * It contains the last submission which might be illegal!
      *

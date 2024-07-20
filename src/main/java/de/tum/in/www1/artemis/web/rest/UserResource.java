@@ -239,7 +239,7 @@ public class UserResource {
         User user = userRepository.getUser();
 
         log.debug("REST request to get VCS access token of user {} for participation {}", user.getLogin(), participationId);
-        return ResponseEntity.ok(userService.getVcsAccessTokenForUserElseThrow(user, participationId).getVcsAccessToken());
+        return ResponseEntity.ok(userService.getParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(user, participationId).getVcsAccessToken());
     }
 
     /**
@@ -255,6 +255,6 @@ public class UserResource {
         User user = userRepository.getUser();
 
         log.debug("REST request to create a new VCS access token for user {} for participation {}", user.getLogin(), participationId);
-        return ResponseEntity.ok(userService.createNewVcsAccessTokenForUser(user, participationId).getVcsAccessToken());
+        return ResponseEntity.ok(userService.createParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(user, participationId).getVcsAccessToken());
     }
 }
