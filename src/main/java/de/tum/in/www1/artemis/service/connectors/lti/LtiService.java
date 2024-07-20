@@ -90,6 +90,7 @@ public class LtiService {
         }
 
         if (SecurityUtils.isAuthenticated()) {
+            log.info("User is already signed in. Checking if email matches the one provided in the launch.");
             User user = userRepository.getUser();
             if (email.equalsIgnoreCase(user.getEmail())) { // 1. Case: User is already signed in and email matches the one provided in the launch
                 log.info("User is already signed in and email matches the one provided in the launch. No further action required.");
