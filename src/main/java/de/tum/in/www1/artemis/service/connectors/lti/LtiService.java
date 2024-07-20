@@ -181,24 +181,24 @@ public class LtiService {
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         // TODO SK: why do we logout the user here if it was already activated? this does not make sense to me, so I deactivated it for now
 
-        // User user = userRepository.getUser();
+        User user = userRepository.getUser();
 
-        // if (!user.getActivated()) {
-        // log.info("User is not activated. Adding JWT cookie for activation.");
-        log.info("Add JWT cookie so the user will be logged in");
-        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
-        if (responseCookie != null) {
-            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        if (!user.getActivated()) {
+            log.info("User is not activated. Adding JWT cookie for activation.");
+            log.info("Add JWT cookie so the user will be logged in");
+            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
+            if (responseCookie != null) {
+                response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+            }
+
+            uriComponentsBuilder.queryParam("initialize", "");
         }
+        else {
+            log.info("User is activated. Adding JWT cookie for logout.");
 
-        uriComponentsBuilder.queryParam("initialize", "");
-        // }
-        // else {
-        // log.info("User is activated. Adding JWT cookie for logout.");
-
-        // prepareLogoutCookie(response);
-        // uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
-        // }
+            prepareLogoutCookie(response);
+            uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
+        }
     }
 
     /**
