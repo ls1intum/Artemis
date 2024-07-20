@@ -18,7 +18,7 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
         private readonly metisService: MetisService,
         private readonly channelService: ChannelService,
     ) {
-        super(MonacoChannelReferenceAction.ID, 'artemisApp.metis.channelReferenceCommand', faHashtag);
+        super(MonacoChannelReferenceAction.ID, 'artemisApp.metis.editor.channel', faHashtag);
     }
 
     register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {

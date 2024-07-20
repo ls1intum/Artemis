@@ -44,7 +44,9 @@
             "editor": {
                 "reference": "Reference",
                 "exercise": "Exercise",
-                "lecture": "Lecture"
+                "lecture": "Lecture",
+                "channel": "Channel",
+                "user": "User"
             },
             "channel": {
                 "noChannel": "There is no channel available.",

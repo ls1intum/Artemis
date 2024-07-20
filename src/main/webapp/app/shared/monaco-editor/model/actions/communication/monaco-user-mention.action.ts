@@ -17,7 +17,7 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
         private readonly courseManagementService: CourseManagementService,
         private readonly metisService: MetisService,
     ) {
-        super(MonacoUserMentionAction.ID, 'artemisApp.metis.userMentionCommand', faAt);
+        super(MonacoUserMentionAction.ID, 'artemisApp.metis.editor.user', faAt);
     }
     // TODO: refactor to use same method as MonacoChannelReferenceAction
     register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
