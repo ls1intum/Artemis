@@ -489,7 +489,9 @@ dependencies {
             strictly "1.14.18"
         }
     }
-    testImplementation "com.h2database:h2:2.3.230"
+    // cannot update due to "Syntax error in SQL statement "WITH ids_to_delete"
+//    testImplementation "com.h2database:h2:2.3.230"
+    testImplementation "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20240303"
