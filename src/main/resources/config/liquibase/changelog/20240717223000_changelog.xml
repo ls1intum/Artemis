@@ -18,13 +18,5 @@
             <column name="learning_paths_configuration_id"/>
         </createIndex>
         <addForeignKeyConstraint baseColumnNames="learning_paths_configuration_id" baseTableName="course" constraintName="fk_course_learning_paths_configuration_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="learning_paths_configuration" validate="true"/>
-
-        <!-- Create a new entry in learning_paths_configuration for each course where learning_paths_enabled is TRUE -->
-        <sql>
-            INSERT INTO learning_paths_configuration (include_all_graded_exercises)
-            SELECT FALSE
-            FROM course
-            WHERE learning_paths_enabled = TRUE
-        </sql>
     </changeSet>
 </databaseChangeLog>
