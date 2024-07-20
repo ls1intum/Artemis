@@ -1,0 +1,11 @@
+@for (link of links; track $index) {
+    <button class="markdown-link" (click)="navigateToLink(link)">
+        <div class="link-icon">
+            <fa-icon [icon]="faFile" size="lg" />
+        </div>
+        <div class="link-content">
+            <p class="link-title">{{ link.title }}</p>
+            <span class="link-instruction">{{ instruction }}</span>
+        </div>
+    </button>
+}

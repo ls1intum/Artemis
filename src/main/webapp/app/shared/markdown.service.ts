@@ -59,4 +59,39 @@ export class ArtemisMarkdownService {
         convertedString = convertedString.slice(0, paragraphPosition) + convertedString.slice(paragraphPosition).replace('<p>', '<p class="inline-paragraph">');
         return this.sanitizer.bypassSecurityTrustHtml(convertedString);
     }
+
+    /**
+     * Extracts anchor tags from the given HTML and returns them as an array of objects.
+     *
+     * @param safeHtml the HTML to extract anchor tags from
+     * @returns an array of objects with the href and title of the anchor tags
+     */
+    private extractAnchorTagsFromHTML(safeHtml: string): { href: string; title: string }[] {
+        const div = document.createElement('div');
+        div.innerHTML = this.sanitizer.sanitize(0, safeHtml) || '';
+
+        const links: { href: string; title: string }[] = [];
+        const anchorElements = div.getElementsByTagName('a');
+
+        for (let i = 0; i < anchorElements.length; i++) {
+            const anchor = anchorElements[i];
+            links.push({
+                href: anchor.getAttribute('href') || '',
+                title: anchor.textContent || '',
+            });
+        }
+
+        return links;
+    }
+
+    /**
+     * Extracts anchor tags from the given markdown and returns them as an array of objects.
+     *
+     * @param markdown the markdown to extract anchor tags from
+     * @returns an array of objects with the href and title of the anchor tags
+     */
+    extractAnchorTagsFromMarkdown(markdown: string): { href: string; title: string }[] {
+        const html = htmlForMarkdown(markdown);
+        return this.extractAnchorTagsFromHTML(html);
+    }
 }

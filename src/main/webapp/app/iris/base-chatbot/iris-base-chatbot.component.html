@@ -87,6 +87,7 @@
                                     @if (content.type === IrisMessageContentType.TEXT) {
                                         <div class="bubble-left">
                                             <span [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown"></span>
+                                            <jhi-iris-chat-link [markdown]="(content | as: IrisTextMessageContent).textContent!"></jhi-iris-chat-link>
                                         </div>
 
                                         <div class="rate-message-buttons toolbox">

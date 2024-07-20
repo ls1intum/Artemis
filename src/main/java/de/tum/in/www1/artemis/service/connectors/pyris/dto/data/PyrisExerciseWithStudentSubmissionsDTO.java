@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisExerciseWithStudentSubmissionsDTO(long id, String title, ExerciseType type, ExerciseMode mode, double maxPoints, double bonusPoints,
+public record PyrisExerciseWithStudentSubmissionsDTO(long id, String url, String title, ExerciseType type, ExerciseMode mode, double maxPoints, double bonusPoints,
         DifficultyLevel difficultyLevel, Instant releaseDate, Instant dueDate, IncludedInOverallScore inclusionMode, boolean presentationScoreEnabled,
         Set<PyrisStudentSubmissionDTO> submissions) {
 
@@ -33,8 +33,19 @@ public record PyrisExerciseWithStudentSubmissionsDTO(long id, String title, Exer
                         Optional.ofNullable(submission.getLatestResult()).map(Result::getScore).orElse(0D)))
                 .collect(Collectors.toSet());
 
-        return new PyrisExerciseWithStudentSubmissionsDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType(), exercise.getMode(), exercise.getMaxPoints(),
-                exercise.getBonusPoints(), exercise.getDifficulty(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()), exercise.getIncludedInOverallScore(),
-                Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()), submissionDTOSet);
+        return new PyrisExerciseWithStudentSubmissionsDTO(exercise.getId(), generateRelativeExerciseUrl(exercise), exercise.getTitle(), exercise.getExerciseType(),
+                exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getDifficulty(), toInstant(exercise.getReleaseDate()),
+                toInstant(exercise.getDueDate()), exercise.getIncludedInOverallScore(), Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()), submissionDTOSet);
+    }
+
+    /**
+     * Generate the URL for an exercise.
+     * The generated URL is relative to the Artemis client URL.
+     *
+     * @param exercise
+     * @return The relative URL for the exercise, e.g. "/courses/1/exercises/2"
+     */
+    private static String generateRelativeExerciseUrl(Exercise exercise) {
+        return "/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/exercises/" + exercise.getId();
     }
 }

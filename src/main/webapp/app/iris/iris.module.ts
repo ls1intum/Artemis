@@ -24,6 +24,7 @@ import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbo
 import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
 import { IrisEventSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-event-settings-update/iris-event-settings-update.component';
+import { IrisChatLinkComponent } from 'app/iris/base-chatbot/iris-chat-link/iris-chat-link.component';
 
 @NgModule({
     declarations: [
@@ -54,6 +55,7 @@ import { IrisEventSettingsUpdateComponent } from 'app/iris/settings/iris-setting
         RouterModule,
         FeatureToggleModule,
         IrisEventSettingsUpdateComponent,
+        IrisChatLinkComponent,
     ],
     exports: [IrisExerciseChatbotButtonComponent, IrisEnabledComponent, IrisLogoButtonComponent, IrisBaseChatbotComponent, CourseChatbotComponent],
 })
