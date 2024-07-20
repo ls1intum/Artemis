@@ -562,5 +562,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     boolean hasLearningPathsEnabled(@Param("courseId") long courseId);
 
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE c.learningPathsEnabled IS TRUE
+            """)
     List<Course> findAllWithLearningPathsEnabled();
 }

@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGrap
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathsConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -424,5 +425,11 @@ public class LearningPathService {
         });
 
         return learningPath;
+    }
+
+    public void changeLearningPathsConfiguration(Course course, LearningPathsConfigurationDTO learningPathsConfigurationDTO) {
+        var learningPathsConfiguration = course.getLearningPathsConfiguration();
+        learningPathsConfiguration.setIncludeAllGradedExercises(learningPathsConfigurationDTO.includeAllGradedExercises());
+        learningPathsConfigurationRepository.save(learningPathsConfiguration);
     }
 }
