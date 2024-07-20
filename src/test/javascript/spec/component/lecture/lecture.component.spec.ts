@@ -134,7 +134,7 @@ describe('Lecture', () => {
                     },
                 },
                 MockProvider(LectureService, {
-                    findAllByCourseId: () => {
+                    findAllByCourseIdWithSlides: () => {
                         return of(
                             new HttpResponse({
                                 body: [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture],
@@ -172,7 +172,7 @@ describe('Lecture', () => {
     });
 
     it('should fetch lectures when initialized', () => {
-        const findAllSpy = jest.spyOn(lectureService, 'findAllByCourseId');
+        const findAllSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
 
         lectureComponentFixture.detectChanges();
 
