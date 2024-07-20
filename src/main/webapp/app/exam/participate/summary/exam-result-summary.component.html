@@ -159,7 +159,7 @@
                                     }
                                 }
                                 @if (
-                                    exerciseInfos[exercise.id!]!.submission! &&
+                                    exerciseInfos[exercise.id!]?.submission &&
                                     exercise.type !== QUIZ &&
                                     isAfterStudentReviewStart &&
                                     exerciseInfos[exercise.id!]?.submission?.submitted
