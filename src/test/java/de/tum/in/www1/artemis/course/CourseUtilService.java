@@ -691,6 +691,7 @@ public class CourseUtilService {
         modelingExercise = exerciseRepo.save(modelingExercise);
         textExercise = exerciseRepo.save(textExercise);
         fileUploadExercise = exerciseRepo.save(fileUploadExercise);
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepo.save(programmingExercise);
         quizExercise = exerciseRepo.save(quizExercise);
 
