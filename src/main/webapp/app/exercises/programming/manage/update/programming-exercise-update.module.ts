@@ -32,6 +32,7 @@ import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programmi
 import { FormsModule } from 'app/forms/forms.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 
 @NgModule({
     imports: [
@@ -57,6 +58,7 @@ import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/e
         FormsModule,
         ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
+        MonacoEditorModule,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,
