@@ -33,7 +33,7 @@ export class LearningPathManagementComponent implements OnInit {
 
     courseId: number;
     health: LearningPathHealthDTO;
-    learningPathsConfiguration: LearningPathsConfiguration;
+    learningPathsConfiguration?: LearningPathsConfiguration;
 
     searchLoading = false;
     readonly column = TableColumn;
@@ -51,7 +51,7 @@ export class LearningPathManagementComponent implements OnInit {
     private sort = new Subject<void>();
 
     // icons
-    readonly faSort = faSort;
+    protected readonly faSort = faSort;
     protected readonly HealthStatus = HealthStatus;
 
     constructor(
@@ -141,7 +141,10 @@ export class LearningPathManagementComponent implements OnInit {
                     if (!this.health.status?.includes(HealthStatus.DISABLED)) {
                         this.performSearch(this.sort, 0);
                         this.performSearch(this.search, 300);
-                        this.loadLearningPathsConfiguration();
+
+                        if (!this.learningPathsConfiguration) {
+                            this.loadLearningPathsConfiguration();
+                        }
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -151,7 +154,8 @@ export class LearningPathManagementComponent implements OnInit {
     enableLearningPaths() {
         this.isLoading = true;
         this.learningPathService.enableLearningPaths(this.courseId).subscribe({
-            next: () => {
+            next: (configuration) => {
+                this.learningPathsConfiguration = configuration.body!;
                 this.loadData();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -229,6 +233,8 @@ export class LearningPathManagementComponent implements OnInit {
     }
 
     updateLearningPathsConfiguration() {
-        this.learningPathService.updateLearningPathsConfiguration(this.courseId, this.learningPathsConfiguration).subscribe();
+        if (this.learningPathsConfiguration) {
+            this.learningPathService.updateLearningPathsConfiguration(this.courseId, this.learningPathsConfiguration).subscribe();
+        }
     }
 }

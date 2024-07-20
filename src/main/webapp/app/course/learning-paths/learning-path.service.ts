@@ -10,7 +10,7 @@ import {
 } from 'app/entities/competency/learning-path.model';
 import { map, tap } from 'rxjs/operators';
 import { LearningPathStorageService } from 'app/course/learning-paths/participate/learning-path-storage.service';
-import { LearningPathsConfiguration } from 'app/entities/competency/learning-paths-configuration.model';
+import { LearningPathsConfiguration, LearningPathsConfigurationDTO } from 'app/entities/competency/learning-paths-configuration.model';
 
 @Injectable({ providedIn: 'root' })
 export class LearningPathService {
@@ -21,15 +21,15 @@ export class LearningPathService {
         private learningPathStorageService: LearningPathStorageService,
     ) {}
 
-    enableLearningPaths(courseId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/learning-paths/enable`, null, { observe: 'response' });
+    enableLearningPaths(courseId: number): Observable<HttpResponse<LearningPathsConfigurationDTO>> {
+        return this.httpClient.put<LearningPathsConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/learning-paths/enable`, null, { observe: 'response' });
     }
 
     generateMissingLearningPathsForCourse(courseId: number): Observable<HttpResponse<void>> {
         return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/learning-paths/generate-missing`, null, { observe: 'response' });
     }
 
-    getHealthStatusForCourse(courseId: number) {
+    getHealthStatusForCourse(courseId: number): Observable<HttpResponse<LearningPathHealthDTO>> {
         return this.httpClient.get<LearningPathHealthDTO>(`${this.resourceURL}/courses/${courseId}/learning-path-health`, { observe: 'response' });
     }
 
@@ -66,23 +66,23 @@ export class LearningPathService {
         return ngxLearningPathResponse;
     }
 
-    getLearningPathId(courseId: number) {
+    getLearningPathId(courseId: number): Observable<HttpResponse<number>> {
         return this.httpClient.get<number>(`${this.resourceURL}/courses/${courseId}/learning-path-id`, { observe: 'response' });
     }
 
-    generateLearningPath(courseId: number) {
+    generateLearningPath(courseId: number): Observable<HttpResponse<number>> {
         return this.httpClient.post<number>(`${this.resourceURL}/courses/${courseId}/learning-path`, null, { observe: 'response' });
     }
 
-    getCompetencyProgressForLearningPath(learningPathId: number) {
+    getCompetencyProgressForLearningPath(learningPathId: number): Observable<HttpResponse<CompetencyProgressForLearningPathDTO[]>> {
         return this.httpClient.get<CompetencyProgressForLearningPathDTO[]>(`${this.resourceURL}/learning-path/${learningPathId}/competency-progress`, { observe: 'response' });
     }
 
-    getLearningPathsConfiguration(courseId: number) {
-        return this.httpClient.get<LearningPathsConfiguration>(`${this.resourceURL}/courses/${courseId}/learning-paths/configuration`, { observe: 'response' });
+    getLearningPathsConfiguration(courseId: number): Observable<HttpResponse<LearningPathsConfigurationDTO>> {
+        return this.httpClient.get<LearningPathsConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/learning-paths/configuration`, { observe: 'response' });
     }
 
-    updateLearningPathsConfiguration(courseId: number, learningPathConfiguration: LearningPathsConfiguration) {
+    updateLearningPathsConfiguration(courseId: number, learningPathConfiguration: LearningPathsConfiguration): Observable<HttpResponse<void>> {
         return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/learning-paths/configuration`, learningPathConfiguration, { observe: 'response' });
     }
 }

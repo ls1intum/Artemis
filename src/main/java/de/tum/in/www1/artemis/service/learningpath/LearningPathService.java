@@ -114,7 +114,7 @@ public class LearningPathService {
      *
      * @param course course the learning paths are created for
      */
-    public void enableLearningPathsForCourse(@NotNull Course course) {
+    public LearningPathsConfiguration enableLearningPathsForCourse(@NotNull Course course) {
         course.setLearningPathsEnabled(true);
 
         if (course.getLearningPathsConfiguration() == null) {
@@ -125,6 +125,8 @@ public class LearningPathService {
         generateLearningPaths(course);
         courseRepository.save(course);
         log.debug("Enabled learning paths for course (id={})", course.getId());
+
+        return course.getLearningPathsConfiguration();
     }
 
     /**

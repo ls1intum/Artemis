@@ -55,6 +55,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathsConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -114,16 +115,16 @@ public class LearningPathResource {
     @PutMapping("courses/{courseId}/learning-paths/enable")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
+    public ResponseEntity<LearningPathsConfigurationDTO> enableLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerCompetenciesAndPrerequisitesAndLearningPathsConfigurationByIdElseThrow(courseId);
         if (course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are already enabled for this course.");
         }
 
-        learningPathService.enableLearningPathsForCourse(course);
+        var learningPathsConfiguration = learningPathService.enableLearningPathsForCourse(course);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(LearningPathsConfigurationDTO.of(learningPathsConfiguration));
     }
 
     /**
@@ -420,14 +421,14 @@ public class LearningPathResource {
     @GetMapping("courses/{courseId}/learning-paths/configuration")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<LearningPathsConfiguration> getLearningPathsConfiguration(@PathVariable long courseId) {
+    public ResponseEntity<LearningPathsConfigurationDTO> getLearningPathsConfiguration(@PathVariable long courseId) {
         log.debug("REST request to get learning paths configuration for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerLearningPathsConfigurationByIdElseThrow(courseId);
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }
 
-        return ResponseEntity.ok(course.getLearningPathsConfiguration());
+        return ResponseEntity.ok(LearningPathsConfigurationDTO.of(course.getLearningPathsConfiguration()));
     }
 
     /**

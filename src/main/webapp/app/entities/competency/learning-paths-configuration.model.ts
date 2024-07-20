@@ -4,3 +4,7 @@ export class LearningPathsConfiguration implements BaseEntity {
     public id?: number;
     public includeAllGradedExercises?: boolean;
 }
+
+export class LearningPathsConfigurationDTO {
+    public includeAllGradedExercises?: boolean;
+}
