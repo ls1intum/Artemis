@@ -66,6 +66,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathsConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -893,8 +894,8 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathsConfiguration() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        var result = request.get("/api/courses/" + course.getId() + "/learning-paths/configuration", HttpStatus.OK, LearningPathsConfiguration.class);
-        assertThat(course.getLearningPathsConfiguration()).isEqualTo(result);
+        var result = request.get("/api/courses/" + course.getId() + "/learning-paths/configuration", HttpStatus.OK, LearningPathsConfigurationDTO.class);
+        assertThat(course.getLearningPathsConfiguration().getIncludeAllGradedExercises()).isEqualTo(result.includeAllGradedExercises());
     }
 
     @Test
