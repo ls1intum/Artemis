@@ -82,7 +82,7 @@ public class LtiService {
      * @throws InternalAuthenticationServiceException if no email is provided, or if no user can be authenticated, this exception will be thrown
      */
     public void authenticateLtiUser(String email, String username, String firstName, String lastName, boolean requireExistingUser) throws InternalAuthenticationServiceException {
-        log.info("Authenticating LTI user with email: {}, username: {}, firstName: {}, lastName: {}, requireExistingUser: {}", email, username, firstName, lastName,
+        log.debug("Authenticating LTI user with email: {}, username: {}, firstName: {}, lastName: {}, requireExistingUser: {}", email, username, firstName, lastName,
                 requireExistingUser);
         if (!StringUtils.hasLength(email)) {
             log.warn("No email address sent by launch request. Please make sure the user has an accessible email address.");
@@ -92,29 +92,29 @@ public class LtiService {
         if (SecurityUtils.isAuthenticated()) {
             User user = userRepository.getUser();
             if (email.equalsIgnoreCase(user.getEmail())) { // 1. Case: User is already signed in and email matches the one provided in the launch
-                log.info("User is already signed in and email matches the one provided in the launch. No further action required.");
+                log.debug("User is already signed in and email matches the one provided in the launch. No further action required.");
                 return;
             }
             else {
-                log.info("User is already signed in but email does not match the one provided in the launch. Signing out user.");
+                log.debug("User is already signed in but email does not match the one provided in the launch. Signing out user.");
                 SecurityContextHolder.getContext().setAuthentication(null); // User is signed in but email does not match, meaning launch is for a different user
             }
         }
 
         // 2. Case: Lookup user with the LTI email address and make sure it's not in use
         if (artemisAuthenticationProvider.getUsernameForEmail(email).isPresent() || userRepository.findOneByEmailIgnoreCase(email).isPresent()) {
-            log.info("User with email {} already exists. Email is already in use.", email);
+            log.debug("User with email {} already exists. Email is already in use.", email);
             throw new LtiEmailAlreadyInUseException();
         }
 
         // 3. Case: Create new user if an existing user is not required
         if (!requireExistingUser) {
-            log.info("Creating new user from launch request: {}, username: {}, firstName: {}, lastName: {}", email, username, firstName, lastName);
+            log.debug("Creating new user from launch request: {}, username: {}, firstName: {}, lastName: {}", email, username, firstName, lastName);
             SecurityContextHolder.getContext().setAuthentication(createNewUserFromLaunchRequest(email, username, firstName, lastName));
             return;
         }
 
-        log.error("Could not find existing user or create new LTI user. Will throw an exception at the end of authenticateLtiUser().");
+        log.debug("Could not find existing user or create new LTI user.");
         throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user."); // If user couldn't be authenticated, throw an error
     }
 

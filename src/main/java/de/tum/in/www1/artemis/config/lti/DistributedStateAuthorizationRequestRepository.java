@@ -17,6 +17,7 @@ import com.hazelcast.core.HazelcastInstance;
 /**
  * This is a copy of {@link uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository}
  * but using Hazelcast to share the state between instances.
+ * This is required to support LTI with multiple Artemis nodes.
  */
 class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
