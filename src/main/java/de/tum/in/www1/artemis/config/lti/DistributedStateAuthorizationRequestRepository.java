@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.config.lti;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,6 +25,8 @@ import com.hazelcast.core.HazelcastInstance;
 class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedStateAuthorizationRequestRepository.class);
+
+    private final Executor delayedExecutor = CompletableFuture.delayedExecutor(2L, TimeUnit.MINUTES);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -84,6 +89,8 @@ class DistributedStateAuthorizationRequestRepository implements AuthorizationReq
             String state = authorizationRequest.getState();
             Assert.hasText(state, "authorizationRequest.state cannot be empty");
             this.store.put(state, authorizationRequest);
+            // Remove request after timeout
+            delayedExecutor.execute(() -> this.store.remove(state));
         }
     }
 
