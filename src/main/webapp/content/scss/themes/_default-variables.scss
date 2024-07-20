@@ -356,6 +356,7 @@ $code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
 $code-editor-grid-grip-lines-color: $gray-500;
 
 // Monaco editor
+$monaco-suggest-widget-background: $white;
 $monaco-editor-build-annotation-error-background: scale-color($danger, $alpha: -80%);
 $monaco-editor-build-annotation-error-glyph: $danger;
 $monaco-editor-build-annotation-warning-background: scale-color($warning, $alpha: -80%);
