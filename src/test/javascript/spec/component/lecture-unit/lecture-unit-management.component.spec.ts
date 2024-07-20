@@ -32,6 +32,12 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisLectureIngestionSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {
@@ -49,11 +55,14 @@ describe('LectureUnitManagementComponent', () => {
 
     let lectureService: LectureService;
     let lectureUnitService: LectureUnitService;
+    let profileService: ProfileService;
+    let irisSettingsService: IrisSettingsService;
     let findLectureSpy: jest.SpyInstance;
     let findLectureWithDetailsSpy: jest.SpyInstance;
     let deleteLectureUnitSpy: jest.SpyInstance;
     let updateOrderSpy: jest.SpyInstance;
-
+    let getProfileInfo: jest.SpyInstance;
+    let getCombinedCourseSettings: jest.SpyInstance;
     let attachmentUnit: AttachmentUnit;
     let exerciseUnit: ExerciseUnit;
     let textUnit: TextUnit;
@@ -82,6 +91,8 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(LectureUnitService),
                 MockProvider(LectureService),
                 MockProvider(AlertService),
+                MockProvider(ProfileService),
+                MockProvider(IrisSettingsService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -105,11 +116,14 @@ describe('LectureUnitManagementComponent', () => {
                 lectureUnitManagementComponent = lectureUnitManagementComponentFixture.componentInstance;
                 lectureService = TestBed.inject(LectureService);
                 lectureUnitService = TestBed.inject(LectureUnitService);
-
+                profileService = TestBed.inject(ProfileService);
+                irisSettingsService = TestBed.inject(IrisSettingsService);
                 findLectureSpy = jest.spyOn(lectureService, 'find');
                 findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
                 deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
                 updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
+                getProfileInfo = jest.spyOn(profileService, 'getProfileInfo');
+                getCombinedCourseSettings = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
 
                 textUnit = new TextUnit();
                 textUnit.id = 0;
@@ -129,6 +143,11 @@ describe('LectureUnitManagementComponent', () => {
                 findLectureWithDetailsSpy.mockReturnValue(returnValue);
                 updateOrderSpy.mockReturnValue(returnValue);
                 deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: videoUnit, status: 200 })));
+                const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
+                getProfileInfo.mockReturnValue(of(profileInfo));
+                const irisCourseSettings = new IrisCourseSettings();
+                irisCourseSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
+                getCombinedCourseSettings.mockReturnValue(of(irisCourseSettings));
 
                 lectureUnitManagementComponentFixture.detectChanges();
             });
@@ -144,13 +163,11 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should emit edit button event', () => {
-        const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'onEditButtonClicked');
         lectureUnitManagementComponent.emitEditEvents = true;
+        const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'onEditButtonClicked');
         lectureUnitManagementComponentFixture.detectChanges();
         const buttons = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css(`.edit`));
-        for (const button of buttons) {
-            button.nativeElement.click();
-        }
+        buttons.forEach((button) => button.nativeElement.click());
         lectureUnitManagementComponentFixture.detectChanges();
         expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length);
     });

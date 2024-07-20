@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
-import { debounceTime, filter, finalize, map, switchMap } from 'rxjs/operators';
+import { debounceTime, filter, finalize, map } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -32,6 +32,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     @Output()
     onEditLectureUnitClicked: EventEmitter<LectureUnit> = new EventEmitter<LectureUnit>();
+
     lectureUnits: LectureUnit[] = [];
     lecture: Lecture;
     isLoading = false;
@@ -42,6 +43,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     readonly ActionType = ActionType;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
     private profileInfoSubscription: Subscription;
     irisEnabled = false;
     lectureIngestionEnabled = false;
@@ -85,17 +87,14 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         });
 
         this.updateOrderSubject = new Subject();
-        this.activatedRoute
-            .parent!.params.pipe(
-                map((params) => +params['lectureId']),
-                switchMap((lectureId) => {
-                    this.lectureId = lectureId;
-                    return this.loadData();
-                }),
-            )
-            .subscribe(() => {
-                this.initializeProfileInfo();
-            });
+        this.activatedRoute.parent!.params.subscribe((params) => {
+            this.lectureId ??= +params['lectureId'];
+            if (this.lectureId) {
+                // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
+                this.loadData();
+            }
+            this.initializeProfileInfo();
+        });
 
         // debounceTime limits the amount of put requests sent for updating the lecture unit order
         this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1000)).subscribe(() => {
@@ -107,17 +106,25 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
-        return this.lectureService.findWithDetails(this.lectureId!).pipe(
-            map((response: HttpResponse<Lecture>) => response.body!),
-            finalize(() => {
-                this.isLoading = false;
-            }),
-            switchMap((lecture) => {
-                this.lecture = lecture;
-                this.lectureUnits = lecture?.lectureUnits || [];
-                return [];
-            }),
-        );
+        this.lectureService
+            .findWithDetails(this.lectureId!)
+            .pipe(
+                map((response: HttpResponse<Lecture>) => response.body!),
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe({
+                next: (lecture) => {
+                    this.lecture = lecture;
+                    if (lecture?.lectureUnits) {
+                        this.lectureUnits = lecture?.lectureUnits;
+                    } else {
+                        this.lectureUnits = [];
+                    }
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     updateOrder() {
@@ -220,40 +227,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     onEditButtonClicked(lectureUnit: LectureUnit) {
         this.onEditLectureUnitClicked.emit(lectureUnit);
     }
-    onIngestButtonClicked(lectureUnitId: number) {
-        this.lectureUnitService.ingestLectureUnitInPyris(lectureUnitId, this.lecture.id!).subscribe({
-            error: (error) => console.error('Failed to send Ingestion request', error),
-        });
-    }
-    getIcon(attachmentUnit: AttachmentUnit): IconDefinition {
-        console.log(`pyrisIngestionState: ${attachmentUnit.pyrisIngestionState}`);
-        console.log(`Type of pyrisIngestionState: ${typeof attachmentUnit.pyrisIngestionState}`);
-
-        // @ts-ignore
-        if (Object.values(IngestionState).includes(attachmentUnit.pyrisIngestionState)) {
-            console.log('Valid ingestion state');
-        } else {
-            console.log('Invalid ingestion state');
-        }
-
-        switch (attachmentUnit.pyrisIngestionState) {
-            case IngestionState.NOT_STARTED:
-                console.log('NOT_STARTED');
-                return this.sendToIris;
-            case IngestionState.IN_PROGRESS:
-                console.log('IN_PROGRESS');
-                return this.loading;
-            case IngestionState.DONE:
-                console.log('DONE');
-                return this.done;
-            case IngestionState.ERROR:
-                console.log('ERROR');
-                return this.resendToIris;
-            default:
-                console.log('DEFAULT');
-                return this.sendToIris;
-        }
-    }
 
     getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
@@ -272,6 +245,26 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return (<AttachmentUnit>lectureUnit)?.attachment?.version || undefined;
             default:
                 return undefined;
+        }
+    }
+    onIngestButtonClicked(lectureUnitId: number) {
+        this.lectureUnitService.ingestLectureUnitInPyris(lectureUnitId, this.lecture.id!).subscribe({
+            error: (error) => console.error('Failed to send Ingestion request', error),
+        });
+    }
+
+    getIcon(attachmentUnit: AttachmentUnit): IconDefinition {
+        switch (attachmentUnit.pyrisIngestionState) {
+            case IngestionState.NOT_STARTED:
+                return this.sendToIris;
+            case IngestionState.IN_PROGRESS:
+                return this.loading;
+            case IngestionState.DONE:
+                return this.done;
+            case IngestionState.ERROR:
+                return this.resendToIris;
+            default:
+                return this.sendToIris;
         }
     }
 }
