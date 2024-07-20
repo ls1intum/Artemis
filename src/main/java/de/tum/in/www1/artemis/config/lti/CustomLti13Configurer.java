@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.config.lti;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -25,8 +23,6 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorization
  */
 @Profile("lti")
 public class CustomLti13Configurer extends Lti13Configurer {
-
-    private static final Logger log = LoggerFactory.getLogger(CustomLti13Configurer.class);
 
     /** Path for login. **/
     private static final String LOGIN_PATH = "/auth-login";

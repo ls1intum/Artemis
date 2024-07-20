@@ -57,9 +57,7 @@ public class OAuth2JWKSService {
      * @return the JWK found for the client registrationId
      */
     public JWK getJWK(String clientRegistrationId) {
-        var result = this.jwkSet.getKeyByKeyId(this.clientRegistrationIdToKeyId.get(clientRegistrationId));
-        log.info("Looking for JWK for clientRegistrationId {} with result {}", clientRegistrationId, result);
-        return result;
+        return this.jwkSet.getKeyByKeyId(this.clientRegistrationIdToKeyId.get(clientRegistrationId));
     }
 
     /**
@@ -68,7 +66,6 @@ public class OAuth2JWKSService {
      * @param clientRegistrationId the client registrationId
      */
     public void updateKey(String clientRegistrationId) {
-        log.info("Updating JWK for clientRegistrationId {}", clientRegistrationId);
         ClientRegistration clientRegistration = onlineCourseConfigurationService.findByRegistrationId(clientRegistrationId);
         JWK jwkToRemove = getJWK(clientRegistrationId);
 
@@ -100,7 +97,6 @@ public class OAuth2JWKSService {
         if (clientRegistration == null) {
             return;
         }
-        log.info("Generating JWK for clientRegistrationId {}", clientRegistration.getRegistrationId());
 
         KeyPair clientKeyPair;
         try {

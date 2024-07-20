@@ -58,26 +58,20 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        log.info("LTI 1.3 Launch request received for url {}", this.requestMatcher.getPattern());
+        log.debug("LTI 1.3 Launch request received for url {}", this.requestMatcher.getPattern());
 
         try {
-            log.info("LTI Calling finishOidcFlow");
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
-            log.info("LTI receiving token");
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
             String targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
-            log.info("LTI target link: {}", targetLink);
 
             try {
-                log.info("LTI message type: {}", ltiIdToken.getClaim(Claims.MESSAGE_TYPE).toString());
                 // here we need to check if this is a deep-linking request or a launch request
                 if (CustomLti13Configurer.LTI13_DEEPLINK_MESSAGE_REQUEST.equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
                     // Manually setting the deep linking path is required due to Moodle and edX's inconsistent deep linking implementation.
                     // Unlike standard GET request-based methods, these platforms do not guarantee a uniform approach, necessitating
                     // manual configuration to ensure reliable navigation and resource access compatibility.
                     targetLink = CustomLti13Configurer.LTI13_DEEPLINK_SELECT_COURSE_PATH;
-                    log.info("Start deep linking, targetLink: {}, ltiIdToken: {}, client registration id: {}", targetLink, ltiIdToken,
-                            authToken.getAuthorizedClientRegistrationId());
                     lti13Service.startDeepLinking(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
                 }
                 else {
@@ -100,13 +94,11 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
     }
 
     private void handleLtiEmailAlreadyInUseException(HttpServletResponse response, OidcIdToken ltiIdToken) {
-        log.info("handleLtiEmailAlreadyInUseException invoked");
         this.lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
     private OidcAuthenticationToken finishOidcFlow(HttpServletRequest request, HttpServletResponse response) {
-        log.info("finishOidcFlow invoked");
         OidcAuthenticationToken ltiAuthToken;
         try {
             // call spring-security-lti13 authentication filter to finish the OpenID Connect Third Party Initiated Login
@@ -123,12 +115,11 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
     }
 
     private void writeResponse(String targetLinkUri, OidcIdToken ltiIdToken, String clientRegistrationId, HttpServletResponse response) throws IOException {
-        log.info("writeResponse invoked with targetLinkUri: {}, ltiIdToken: {}, clientRegistrationId: {}", targetLinkUri, ltiIdToken, clientRegistrationId);
         PrintWriter writer = response.getWriter();
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
         if (SecurityUtils.isAuthenticated()) {
-            log.info("User is authenticated, building LTI response");
+            log.debug("User is authenticated, building LTI response");
             lti13Service.buildLtiResponse(uriBuilder, response);
         }
         LtiAuthenticationResponse jsonResponse = new LtiAuthenticationResponse(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);

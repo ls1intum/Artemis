@@ -85,7 +85,7 @@ public class LtiResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds") Set<Long> exerciseIds,
             @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
-        log.info("LTI 1.3 Deep Linking request received for course {} with exercises {} for registrationId {]", courseId, exerciseIds, clientRegistrationId);
+        log.info("LTI 1.3 Deep Linking request received for course {} with exercises {} for registrationId {}", courseId, exerciseIds, clientRegistrationId);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -100,7 +100,6 @@ public class LtiResource {
 
         ObjectNode json = new ObjectMapper().createObjectNode();
         json.put("targetLinkUri", targetLink);
-        log.info("LTI 1.3 Deep Linking response: {}", targetLink);
         return ResponseEntity.ok(json.toString());
     }
 
@@ -113,6 +112,7 @@ public class LtiResource {
     @GetMapping("lti-platforms")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms(@ApiParam Pageable pageable) {
+        log.info("REST request to get all configured LTI platforms");
         Page<LtiPlatformConfiguration> platformsPage = ltiPlatformConfigurationRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), platformsPage);
         return new ResponseEntity<>(platformsPage.getContent(), headers, HttpStatus.OK);

@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.config.lti;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 
@@ -16,8 +14,6 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorization
  * managing authorization requests.
  */
 public class StateBasedOptimisticAuthorizationRequestRepository extends OptimisticAuthorizationRequestRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(StateBasedOptimisticAuthorizationRequestRepository.class);
 
     private final AuthorizationRequestRepository<OAuth2AuthorizationRequest> stateBased;
 
@@ -39,31 +35,6 @@ public class StateBasedOptimisticAuthorizationRequestRepository extends Optimist
         // Overriding only the saveAuthorizationRequest to enforce state-based handling.
         // This method is critical for initially capturing and storing the OAuth2 authorization request,
         // ensuring it uses state-based logic rather than session-based.
-        log.info("Saving authorization request with state-based repository. authorizationRequest: {}, request: {}, response: {}", authorizationRequest, request, response);
         stateBased.saveAuthorizationRequest(authorizationRequest, request, response);
-    }
-
-    @Override
-    public boolean hasWorkingSession(HttpServletRequest request) {
-        log.info("Checking if session is working with state-based repository. request: {}", request);
-        return super.hasWorkingSession(request);
-    }
-
-    @Override
-    public void setWorkingSession(HttpServletRequest request, HttpServletResponse response) {
-        log.info("Setting working session with state-based repository. request: {}, response: {}", request, response);
-        super.setWorkingSession(request, response);
-    }
-
-    @Override
-    public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
-        log.info("Loading authorization request with state-based repository. request: {}", request);
-        return super.loadAuthorizationRequest(request);
-    }
-
-    @Override
-    public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request) {
-        log.info("Removing authorization request with state-based repository. request: {}", request);
-        return super.removeAuthorizationRequest(request);
     }
 }
