@@ -12,15 +12,15 @@ import de.tum.in.www1.artemis.domain.competency.LearningPathsConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.competency.LearningPathsConfigurationRepository;
 
-public class MigrationEntry20240717_223000 extends MigrationEntry {
+public class MigrationEntry20240720_163000 extends MigrationEntry {
 
-    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20240717_223000.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20240720_163000.class);
 
     private final CourseRepository courseRepository;
 
     private final LearningPathsConfigurationRepository learningPathsConfigurationRepository;
 
-    public MigrationEntry20240717_223000(CourseRepository courseRepository, LearningPathsConfigurationRepository learningPathsConfigurationRepository) {
+    public MigrationEntry20240720_163000(CourseRepository courseRepository, LearningPathsConfigurationRepository learningPathsConfigurationRepository) {
         this.courseRepository = courseRepository;
         this.learningPathsConfigurationRepository = learningPathsConfigurationRepository;
     }
@@ -49,6 +49,6 @@ public class MigrationEntry20240717_223000 extends MigrationEntry {
 
     @Override
     public String date() {
-        return "20240717_223000";
+        return "20240720_163000";
     }
 }

@@ -13,7 +13,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.entries.MigrationEntry20240614_140000;
-import de.tum.in.www1.artemis.config.migration.entries.MigrationEntry20240717_223000;
+import de.tum.in.www1.artemis.config.migration.entries.MigrationEntry20240720_163000;
 
 /**
  * This component allows registering certain entries containing functionality that gets executed on application startup. The entries must extend {@link MigrationEntry}.
@@ -30,7 +30,7 @@ public class MigrationRegistry {
     public MigrationRegistry(MigrationService migrationService) {
         this.migrationService = migrationService;
         this.migrationEntryMap.put(1, MigrationEntry20240614_140000.class);
-        this.migrationEntryMap.put(2, MigrationEntry20240717_223000.class);
+        this.migrationEntryMap.put(2, MigrationEntry20240720_163000.class);
         // Here we define the order of the ChangeEntries
     }
 
