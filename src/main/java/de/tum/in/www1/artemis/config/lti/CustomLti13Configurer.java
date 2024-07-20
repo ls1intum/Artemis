@@ -94,6 +94,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
         HttpSessionOAuth2AuthorizationRequestRepository sessionRepository = new HttpSessionOAuth2AuthorizationRequestRepository();
         DistributedStateAuthorizationRequestRepository stateRepository = new DistributedStateAuthorizationRequestRepository(hazelcastInstance);
         stateRepository.setLimitIpAddress(limitIpAddresses);
+        stateRepository.init();
         return new StateBasedOptimisticAuthorizationRequestRepository(sessionRepository, stateRepository);
     }
 }
