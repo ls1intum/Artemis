@@ -399,6 +399,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 showWords: false,
             },
             wrappingStrategy: 'advanced',
+            // Fixes a lot of issues with the editor suggest widget, but sticks to the page when scrolling.
+            fixedOverflowWidgets: true,
         });
         this.setWordWrap(true);
     }

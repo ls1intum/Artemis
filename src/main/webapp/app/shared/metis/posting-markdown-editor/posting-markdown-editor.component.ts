@@ -27,6 +27,7 @@ import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-
 import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-channel-reference.action';
+import { MonacoUserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-user-mention.action';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -92,6 +93,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new MonacoCodeBlockAction(),
             /* TODO: Exercise/Lecture reference & messaging */
             new MonacoChannelReferenceAction(this.metisService, this.channelService),
+            new MonacoUserMentionAction(this.courseManagementService, this.metisService),
         ];
     }
 
