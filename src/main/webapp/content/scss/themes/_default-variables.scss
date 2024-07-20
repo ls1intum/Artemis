@@ -89,6 +89,9 @@ $popover-bg: $white;
 $list-group-bg: $white;
 $modal-content-bg: $white;
 
+// Exam
+$exam-height-offset: 38px;
+
 // === END BOOTSTRAP ===
 
 // Navigation Tab Bar
@@ -204,7 +207,7 @@ $metis-light-blue: #e3ecf3;
 $metis-green: #33cd32;
 $metis-course-discussion-select-bg: white;
 
-$metis-pinned-post-highlight-color: lighten($metis-blue, 45%);
+$metis-pinned-post-highlight-color: lighten($metis-blue, 46%);
 
 $metis-answer-post-background-color: rgba(0, 0, 0, 0.02);
 

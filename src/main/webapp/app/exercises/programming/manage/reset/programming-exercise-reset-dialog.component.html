@@ -90,7 +90,13 @@
                         <div class="checkbox">
                             <label class="control-label">
                                 <input class="form-check-input" type="checkbox" name="recreateBuildPlans" [(ngModel)]="this.programmingExerciseResetOptions.recreateBuildPlans" />
-                                <span jhiTranslate="artemisApp.programmingExercise.reset.recreateBuildPlans"></span>
+                                <span
+                                    [jhiTranslate]="
+                                        hasCustomizedBuildPlans
+                                            ? 'artemisApp.programmingExercise.reset.recreateCustomizedBuildPlans'
+                                            : 'artemisApp.programmingExercise.reset.recreateBuildPlans'
+                                    "
+                                ></span>
                             </label>
                         </div>
                     </li>

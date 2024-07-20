@@ -77,7 +77,7 @@ describe('NavbarComponent', () => {
 
     const profileInfo = {
         git: {
-            branch: 'clone-repo-button',
+            branch: 'code-button',
             commit: {
                 id: {
                     abbrev: '95ef2a',
@@ -278,7 +278,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.gitCommitId).toBe('95ef2a');
-        expect(component.gitBranchName).toBe('clone-repo-button');
+        expect(component.gitBranchName).toBe('code-button');
         expect(component.gitTimestamp).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
         expect(component.gitUsername).toBe('Max Musterman');
     }));
