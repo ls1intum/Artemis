@@ -44,6 +44,18 @@ public class StateBasedOptimisticAuthorizationRequestRepository extends Optimist
     }
 
     @Override
+    public boolean hasWorkingSession(HttpServletRequest request) {
+        log.info("Checking if session is working with state-based repository. request: {}", request);
+        return super.hasWorkingSession(request);
+    }
+
+    @Override
+    public void setWorkingSession(HttpServletRequest request, HttpServletResponse response) {
+        log.info("Setting working session with state-based repository. request: {}, response: {}", request, response);
+        super.setWorkingSession(request, response);
+    }
+
+    @Override
     public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
         log.info("Loading authorization request with state-based repository. request: {}", request);
         return super.loadAuthorizationRequest(request);
