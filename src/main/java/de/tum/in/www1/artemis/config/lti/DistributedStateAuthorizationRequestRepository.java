@@ -60,7 +60,7 @@ class DistributedStateAuthorizationRequestRepository implements AuthorizationReq
         String initialIp = oAuth2AuthorizationRequest.getAttribute("remote_ip");
         if (initialIp != null) {
             String requestIp = request.getRemoteAddr();
-            if (!initialIp.equals(request.getRemoteAddr())) {
+            if (!initialIp.equals(requestIp)) {
                 log.info("IP mismatch detected. Initial IP: {}, Request IP: {}.", initialIp, requestIp);
                 if (this.limitIpAddress) {
                     return null;
