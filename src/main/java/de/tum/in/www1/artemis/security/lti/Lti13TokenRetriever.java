@@ -50,7 +50,7 @@ public class Lti13TokenRetriever {
 
     private static final Logger log = LoggerFactory.getLogger(Lti13TokenRetriever.class);
 
-    public static final int JWT_LIFETIME_SECONDS = 180;
+    public static final int JWT_LIFETIME_SECONDS = 60;
 
     public Lti13TokenRetriever(OAuth2JWKSService keyPairService, RestTemplate restTemplate) {
         this.oAuth2JWKSService = keyPairService;

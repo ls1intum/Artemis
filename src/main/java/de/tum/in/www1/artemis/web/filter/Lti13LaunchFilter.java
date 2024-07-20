@@ -58,7 +58,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        log.debug("LTI 1.3 Launch request received for url {}", this.requestMatcher.getPattern());
+        log.info("LTI 1.3 Launch request received for url {}", this.requestMatcher.getPattern());
 
         try {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
@@ -119,7 +119,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
         if (SecurityUtils.isAuthenticated()) {
-            log.debug("User is authenticated, building LTI response");
+            log.info("User is authenticated, building LTI response");
             lti13Service.buildLtiResponse(uriBuilder, response);
         }
         LtiAuthenticationResponse jsonResponse = new LtiAuthenticationResponse(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);

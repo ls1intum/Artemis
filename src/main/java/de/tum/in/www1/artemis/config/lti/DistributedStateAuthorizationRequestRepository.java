@@ -47,6 +47,7 @@ class DistributedStateAuthorizationRequestRepository implements AuthorizationReq
 
     @Override
     public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
+        log.info("Loading authorization request from distributed store");
         Objects.requireNonNull(request, "request cannot be null");
         String stateParameter = request.getParameter("state");
         if (stateParameter == null) {
@@ -73,6 +74,7 @@ class DistributedStateAuthorizationRequestRepository implements AuthorizationReq
 
     @Override
     public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest, HttpServletRequest request, HttpServletResponse response) {
+        log.info("Saving authorization request to distributed store");
         Objects.requireNonNull(request, "request cannot be null");
         Objects.requireNonNull(response, "response cannot be null");
         if (authorizationRequest == null) {
@@ -87,6 +89,7 @@ class DistributedStateAuthorizationRequestRepository implements AuthorizationReq
 
     @Override
     public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request, HttpServletResponse response) {
+        log.info("Removing authorization request from distributed store");
         OAuth2AuthorizationRequest authorizationRequest = this.loadAuthorizationRequest(request);
         if (authorizationRequest != null) {
             String stateParameter = request.getParameter("state");
