@@ -44,6 +44,7 @@ export class CourseCompetencyDetailStudentPageComponent {
 
     readonly courseId = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly course = computed(() => this.courseStorageService.getCourse(this.courseId()));
+    readonly isAtLeastInstructor = computed(() => this.course()?.isAtLeastInstructor ?? false);
 
     private readonly courseCompetencyId = toSignal(this.activatedRoute.params.pipe(map((params) => Number(params.competencyId))), { requireSync: true });
     readonly courseCompetency = signal<CourseCompetency | undefined>(undefined);

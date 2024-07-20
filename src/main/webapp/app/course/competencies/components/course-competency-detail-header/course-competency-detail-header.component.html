@@ -26,13 +26,12 @@
                         </span>
                     </div>
                 }
-                <!--            TODO: Add authorization-->
-                <!--                        @if (competency().course?.isAtLeastInstructor) {-->
-                <button id="'edit-course-competency-button" (click)="navigateToEditPage()" class="ms-4 btn btn-sm btn-warning">
-                    <fa-icon [icon]="faPencilAlt" />
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                </button>
-                <!--                        }-->
+                @if (isAtLeastInstructor()) {
+                    <button id="'edit-course-competency-button" (click)="navigateToEditPage()" class="ms-4 btn btn-sm btn-warning">
+                        <fa-icon [icon]="faPencilAlt" />
+                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                    </button>
+                }
             </div>
         </div>
     </div>

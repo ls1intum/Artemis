@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * This service is used to store {@link Course} objects for the currently logged-in user.
@@ -12,11 +13,14 @@ import { SubjectObservablePair } from 'app/utils/rxjs.utils';
  */
 @Injectable({ providedIn: 'root' })
 export class CourseStorageService {
+    private readonly accountService = inject(AccountService);
+
     private storedCourses: Course[] = [];
 
     private readonly courseUpdateSubscriptions: Map<number, SubjectObservablePair<Course>> = new Map();
 
     setCourses(courses?: Course[]) {
+        courses?.forEach((course) => this.accountService.setAccessRightsForCourse(course));
         this.storedCourses = courses ?? [];
     }
 

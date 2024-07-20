@@ -1,7 +1,7 @@
 <jhi-fireworks [active]="showFireworks()" />
 <div class="col h-100">
     @if (courseCompetency(); as competency) {
-        <jhi-course-competency-detail-header [courseCompetency]="competency" [isMastered]="isMastered()" [courseId]="courseId()" />
+        <jhi-course-competency-detail-header [isAtLeastInstructor]="isAtLeastInstructor()" [courseCompetency]="competency" [isMastered]="isMastered()" [courseId]="courseId()" />
         <div class="row w-100 m-0 p-3">
             <jhi-course-competency-detail-lecture-units class="col-lg-9 col-md-8" [courseCompetency]="competency" (onLectureUnitCompletion)="onLectureUnitCompletion()" />
             <div class="col-lg-3 col-md-4">

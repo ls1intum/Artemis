@@ -20,6 +20,7 @@ export class CourseCompetencyDetailHeaderComponent {
 
     readonly courseId = input.required<number>();
     readonly courseCompetency = input.required<CourseCompetency>();
+    readonly isAtLeastInstructor = input.required<boolean>();
 
     readonly isMastered = input.required<boolean>();
 
