@@ -155,7 +155,7 @@ public class ProgrammingLanguageConfiguration {
      * @param buildImages The build images as defined in the configuration.
      */
     private void checkImageForAllProgrammingLanguagesDefined(final Map<ProgrammingLanguage, Map<ProjectType, String>> buildImages) {
-        for (ProgrammingLanguage language : ProgrammingLanguage.values()) {
+        for (ProgrammingLanguage language : ProgrammingLanguage.getEnabledLanguages()) {
             if (!buildImages.containsKey(language)) {
                 throw new IllegalArgumentException("For each programming language a CI build image must be defined. Missing: " + language);
             }

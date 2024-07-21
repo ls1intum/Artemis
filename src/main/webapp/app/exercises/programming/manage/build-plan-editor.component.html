@@ -41,18 +41,17 @@
 </div>
 <div class="card build-plan-editor">
     <jhi-code-editor-header [filename]="'artemisApp.programmingExercise.buildplan' | artemisTranslate" [isLoading]="isLoading" (tabSizeChanged)="updateTabSize($event)" />
-    <div class="card-body build-plan-editor__content">
-        <jhi-ace-editor
-            #editor
-            id="build-plan-editor"
-            [mode]="'ace/mode/text'"
-            [readOnly]="isLoading"
-            [hidden]="false"
-            [autoUpdateContent]="true"
-            [durationBeforeCallback]="200"
-            [tabSize]="tabSize"
-            (textChanged)="onTextChanged($event)"
-            class="build-plan-editor__content__editor"
-        />
+    <div class="d-flex card-body build-plan-editor__content">
+        <div class="build-plan-editor__content__editor">
+            <jhi-monaco-editor
+                #editor
+                id="build-plan-editor"
+                [stickyScroll]="false"
+                [readOnly]="isLoading"
+                [shrinkToFit]="false"
+                [textChangedEmitDelay]="200"
+                (textChanged)="onTextChanged($event)"
+            />
+        </div>
     </div>
 </div>

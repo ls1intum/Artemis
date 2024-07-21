@@ -959,4 +959,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             exercise.problemStatement = event.problemStatement;
         }
     }
+
+    /**
+     * Updates the current exam height offset property to recalculate the height of exam sidebar and sidebar content
+     * @param newHeight New exam bar height calculated based on the window resizements
+     */
+    updateHeight(newHeight: number) {
+        document.documentElement.style.setProperty('--exam-height-offset', `${newHeight}px`);
+    }
 }
