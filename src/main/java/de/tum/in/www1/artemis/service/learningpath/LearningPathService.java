@@ -114,6 +114,7 @@ public class LearningPathService {
      * Enable learning paths for the course and generate learning paths for all students enrolled in the course
      *
      * @param course course the learning paths are created for
+     * @return the learning paths configuration of the course
      */
     public LearningPathsConfiguration enableLearningPathsForCourse(@NotNull Course course) {
         course.setLearningPathsEnabled(true);
