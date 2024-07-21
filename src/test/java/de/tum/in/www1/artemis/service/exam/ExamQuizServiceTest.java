@@ -17,11 +17,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -171,7 +169,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
-        assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
+        Thread.sleep(1000);
+        assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
+        // assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             userUtilService.changeUser(TEST_PREFIX + "student" + (i + 1));
@@ -217,17 +217,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
 
-        // add participations with no submissions
-        for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
-            final var user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
-            var participation = new StudentParticipation();
-            participation.setExercise(quizExercise);
-            participation.setParticipant(user);
-            participation.setInitializationDate(ZonedDateTime.now());
-            participation.setInitializationState(InitializationState.INITIALIZED);
-            studentParticipationRepository.save(participation);
-        }
-
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
         for (StudentExam studentExam : studentExamRepository.findByExamId(exam.getId())) {
@@ -267,7 +256,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
-        assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
+        Thread.sleep(1000);
+        assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
+        // assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             final var user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
@@ -319,7 +310,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
-        assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
+        Thread.sleep(1000);
+        assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
+        // assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             userUtilService.changeUser(TEST_PREFIX + "student" + (i + 1));
