@@ -16,7 +16,7 @@ export class IrisChatLinkComponent implements OnInit {
     @Input({ required: true }) markdown: string;
     links: { href: string; title: string }[] = [];
     faFile = faFile;
-    instruction: string = 'Click to go to exercise'; // TODO: i18n
+    instruction: string = 'Click to go to lecture unit'; // TODO: i18n
     constructor(
         private markdownService: ArtemisMarkdownService,
         private router: Router,

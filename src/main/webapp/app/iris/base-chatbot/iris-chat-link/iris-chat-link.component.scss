@@ -1,7 +1,10 @@
 .markdown-link {
     &:hover {
-        .link-icon {
-            background-color: var(--secondary);
+        .link-content {
+            background-color: var(--sidebar-card-selected-bg) !important;
+            transition:
+                color 0.2s,
+                background-color 0.2s;
         }
     }
     &:first-child {
@@ -12,9 +15,11 @@
     }
     padding: 0;
     display: flex;
-    width: 75%;
+    width: 300px;
     margin-bottom: 10px;
-    border: 1px solid var(--border-color);
+    margin-left: 10px;
+    margin-right: 10px;
+    border: 1px solid rgba(40, 167, 69, 1) !important;
     border-radius: var(--bs-border-radius-lg);
     background-color: var(--iris-client-chat-input);
     color: var(--bs-body-color);
@@ -23,20 +28,20 @@
 .link-icon {
     fa-icon {
         padding: 10px;
+        color: white !important;
     }
-    border-top-left-radius: var(--bs-border-radius-lg);
-    border-bottom-left-radius: var(--bs-border-radius-lg);
+    background-color: rgba(40, 167, 69, 1) !important;
     flex-grow: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid rgba(40, 167, 69, 1) !important;
     border-left: 5px solid rgba(40, 167, 69, 1) !important;
 }
 .link-content {
     border-top-right-radius: var(--bs-border-radius-lg);
     border-bottom-right-radius: var(--bs-border-radius-lg);
-    padding: 10px 0px;
+    padding: 10px 0;
     .link-title {
         margin-left: 10px;
         font-size: 16px;
@@ -52,5 +57,25 @@
     justify-content: center;
     align-items: flex-start;
     gap: 3px;
-    flex-grow: 5;
+    flex-grow: 6;
+}
+
+.separator {
+    position: relative;
+    height: 2px;
+    background-color: var(--secondary);
+    margin: 20px 10px;
+    overflow: visible;
+    font-size: 70%;
+}
+.separator::before {
+    content: 'Resources';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--secondary);
+    border-radius: var(--bs-border-radius-lg);
+    padding: 0 10px;
+    color: var(--iris-client-chat-input);
 }

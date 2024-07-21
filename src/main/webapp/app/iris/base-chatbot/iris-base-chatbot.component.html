@@ -86,7 +86,7 @@
                                 <div style="width: fit-content; position: relative">
                                     @if (content.type === IrisMessageContentType.TEXT) {
                                         <div class="bubble-left">
-                                            <span [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown"></span>
+                                            <p [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown"></p>
                                             <jhi-iris-chat-link [markdown]="(content | as: IrisTextMessageContent).textContent!"></jhi-iris-chat-link>
                                         </div>
 

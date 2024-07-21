@@ -168,6 +168,9 @@
     --t: 10px; /* the size of the tail */
 
     max-width: 100%;
+    min-width: fit-content;
+    display: flex;
+    flex-direction: column;
     margin-bottom: 10px;
     color: var(--bs-body-color);
     padding: 10px;
