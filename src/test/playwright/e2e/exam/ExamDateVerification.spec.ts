@@ -83,13 +83,13 @@ test.describe('Exam date verification', () => {
 
             await page.hover('.fa-hourglass-half');
             await expect(page.getByText('Exercise not started')).toBeVisible();
-            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             const submission = await Fixtures.get('loremIpsum-short.txt');
             await textExerciseEditor.typeSubmission(exercise.id!, submission!);
 
             await page.hover('.fa-save-warning');
             await expect(page.getByText('Exercise not saved')).toBeVisible();
-            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
 
             await page.hover('.fa-save-success');
             await expect(page.getByText('Exercise saved')).toBeVisible();
@@ -116,10 +116,10 @@ test.describe('Exam date verification', () => {
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
 
-            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             const submissionText = await Fixtures.get('loremIpsum-short.txt');
             await textExerciseEditor.typeSubmission(exercise.id!, submissionText!);
-            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             if (examEnd.isAfter(dayjs())) {
                 await page.waitForTimeout(examEnd.diff(dayjs()));
             }
