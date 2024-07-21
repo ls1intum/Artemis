@@ -732,49 +732,51 @@ public class StudentExamService {
         var examId = exam.getId();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        int finishedExamsCounterInitialValue = 0;
-        int failedExamsCounterInitialValue = 0;
-        int participationsCount = 0;
-        int overall = 0;
+        int finishedExamsCountInitialValue = 0;
+        int failedExamsCountInitialValue = 0;
+        int participationsCountInitialValue = 0;
+        int studentExamsCountInitialValue = 0;
         var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
         if (cache != null) {
             var oldValue = cache.get(examId);
             if (oldValue != null) {
                 var oldStatus = (ExamExerciseStartPreparationStatus) oldValue.get();
                 if (oldStatus != null) {
-                    finishedExamsCounterInitialValue = oldStatus.finished();
-                    failedExamsCounterInitialValue = oldStatus.failed();
-                    participationsCount = oldStatus.participationCount();
-                    overall = oldStatus.overall();
+                    finishedExamsCountInitialValue = oldStatus.finished();
+                    failedExamsCountInitialValue = oldStatus.failed();
+                    participationsCountInitialValue = oldStatus.participationCount();
+                    studentExamsCountInitialValue = oldStatus.overall();
                 }
             }
             cache.evict(examId);
         }
 
-        var finishedExamsCounter = new AtomicInteger(finishedExamsCounterInitialValue);
-        var failedExamsCounter = new AtomicInteger(failedExamsCounterInitialValue);
+        var finishedExamsCounter = new AtomicInteger(finishedExamsCountInitialValue);
+        var failedExamsCounter = new AtomicInteger(failedExamsCountInitialValue);
+        int participationsCount = participationsCountInitialValue;
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
-        int generatedStudentExamsCount = generatedStudentExams.size() + overall;
-        sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), generatedStudentExamsCount, participationsCount, startedAt, lock);
+
+        int studentExamsCount = generatedStudentExams.size() + studentExamsCountInitialValue;
+        sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamsCount, participationsCountInitialValue, startedAt, lock);
 
         var threadPool = Executors.newFixedThreadPool(10);
         var futures = generatedStudentExams.stream()
                 .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
-                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), generatedStudentExamsCount,
-                                generatedParticipations.size(), startedAt, lock))
+                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamsCount,
+                                generatedParticipations.size() + participationsCount, startedAt, lock))
                         .exceptionally(throwable -> {
                             log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
-                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), generatedStudentExamsCount,
-                                    generatedParticipations.size(), startedAt, lock);
+                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamsCount,
+                                    generatedParticipations.size() + participationsCount, startedAt, lock);
                             return null;
                         }))
                 .toArray(CompletableFuture[]::new);
 
         CompletableFuture.allOf(futures).thenApply((empty) -> {
             threadPool.shutdown();
-            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), generatedStudentExamsCount, generatedParticipations.size(),
-                    startedAt, lock);
+            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamsCount,
+                    generatedParticipations.size() + participationsCount, startedAt, lock);
             return generatedParticipations.size();
         }).thenAccept(numberOfGeneratedParticipations -> {
             log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
@@ -888,6 +890,10 @@ public class StudentExamService {
 
         // StudentExams are saved in the called method
         var generatedStudentExams = studentExamRepository.createRandomStudentExams(exam, users, examQuizQuestionsGenerator);
+        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+        if (cache != null) {
+            cache.evict(exam.getId());
+        }
         startExercises(exam, generatedStudentExams);
         return generatedStudentExams;
     }
