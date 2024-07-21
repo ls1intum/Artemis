@@ -6,9 +6,9 @@
                 <div class="row">
                     <div class="pdf-container" #pdfContainer>
                         @if (isEnlargedView) {
-                            <div class="enlarged-container">
+                            <div class="enlarged-container" (click)="closeIfOutside($event)">
                                 <canvas #enlargedCanvas></canvas>
-                                <button class="btn-close" (click)="closeEnlargedView()"></button>
+                                <button class="btn-close" (click)="closeEnlargedView(); $event.stopPropagation()"></button>
                             </div>
                         }
                     </div>

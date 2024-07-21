@@ -125,4 +125,13 @@ export class PdfPreviewComponent implements OnInit {
     toggleBodyScroll(disable: boolean): void {
         this.pdfContainer.nativeElement.style.overflow = disable ? 'hidden' : 'auto';
     }
+
+    closeIfOutside(event: MouseEvent): void {
+        const target = event.target as HTMLElement;
+        const enlargedCanvas = this.enlargedCanvas.nativeElement;
+
+        if (target.classList.contains('enlarged-container') && target !== enlargedCanvas) {
+            this.closeEnlargedView();
+        }
+    }
 }
