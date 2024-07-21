@@ -34,6 +34,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showBadge = false;
     @Input() showIcon = true;
     @Input() isInSidebarCard = false;
+    @Output() showResult = new EventEmitter<void>();
     /**
      * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)
      */
@@ -65,6 +66,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             // Currently submissions are only used for programming exercises to visualize the build process.
             if (this.exercise?.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewSubmissions();
+            }
+
+            if (this.result) {
+                this.showResult.emit();
             }
         }
     }
@@ -101,6 +106,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 tap((result) => {
                     this.result = result;
                     this.onParticipationChange.emit();
+                    if (result) {
+                        this.showResult.emit();
+                    }
                 }),
             )
             .subscribe();
