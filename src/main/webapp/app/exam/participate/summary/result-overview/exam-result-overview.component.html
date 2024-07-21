@@ -44,17 +44,17 @@
                                     <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
                                 </td>
                                 @if (showIncludedInScoreColumn) {
-                                    <td class="text-center">{{ exerciseService.isIncludedInScore(exercise) }}</td>
+                                    <td>{{ exerciseService.isIncludedInScore(exercise) }}</td>
                                 }
-                                <td class="text-center">
+                                <td>
                                     {{ studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0 }}
                                 </td>
-                                <td class="text-center">
+                                <td>
                                     @if (exercise.maxPoints !== undefined) {
                                         <span>{{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints }}</span>
                                     }
                                 </td>
-                                <td class="text-center">
+                                <td>
                                     @if (exerciseInfos[exercise.id!] !== undefined && exerciseInfos[exercise.id!].achievedPercentage !== undefined) {
                                         <span [class]="exerciseInfos[exercise.id!].colorClass"> {{ exerciseInfos[exercise.id!].achievedPercentage }} % </span>
                                     } @else {
@@ -77,15 +77,15 @@
                         <tr>
                             <th scope="row" colspan="2" jhiTranslate="artemisApp.exam.examSummary.points.total"></th>
                             @if (showIncludedInScoreColumn) {
-                                <td class="text-center">-</td>
+                                <td>-</td>
                             }
-                            <th class="text-center">
+                            <th>
                                 {{ overallAchievedPoints }}
                             </th>
-                            <th class="text-center">
+                            <th>
                                 {{ maxPoints }}
                             </th>
-                            <th class="text-center">
+                            <th>
                                 @if (studentExamWithGrade.studentResult.overallScoreAchieved !== undefined) {
                                     <span [class]="hasPassed ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings }} % </span>
                                 } @else {
