@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
@@ -52,6 +53,14 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 @Service
 @Profile(PROFILE_LOCALCI)
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
+
+    public static final int PRIORITY_LOWEST = 4;
+
+    public static final int PRIORITY_LOW = 3;
+
+    public static final int PRIORITY_BASE = 2;
+
+    public static final int PRIORITY_HIGH = 1;
 
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
@@ -110,7 +119,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
-        triggerBuild(participation, null, null);
+        triggerBuild(participation, null, null, true);
     }
 
     /**
@@ -123,6 +132,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false);
+    }
+
+    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll)
+            throws LocalCIException {
 
         // Commit hash related to the repository that will be tested
         String assignmentCommitHash;
@@ -150,7 +164,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
-        int priority = determinePriority(programmingExercise, participation);
+        int priority = determinePriority(programmingExercise, participation, triggerAll);
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
@@ -281,10 +295,37 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
     }
 
-    private int determinePriority(ProgrammingExercise programmingExercise, ProgrammingExerciseParticipation participation) {
-        if (programmingExercise.isExamExercise() && programmingExercise.getExerciseGroup().getExam().isTestExam()) {
-            return 2;
+    /**
+     * Determines the priority of the build job.
+     * Lower values indicate higher priority.
+     */
+    private int determinePriority(ProgrammingExercise programmingExercise, ProgrammingExerciseParticipation participation, boolean triggerAll) {
+        // Use the lowest priority if the build is part of a trigger all action
+        if (triggerAll) {
+            return PRIORITY_LOWEST;
         }
-        return exerciseDateService.isAfterDueDate(participation) ? 3 : programmingExercise.isExamExercise() ? 1 : 2;
+
+        // Check for test exams and exam test runs
+        if (programmingExercise.isExamExercise()) {
+            if (programmingExercise.getExam().isTestExam()) {
+                return PRIORITY_BASE;
+            }
+            if (participation instanceof StudentParticipation sp && sp.isTestRun()) {
+                return PRIORITY_BASE;
+            }
+        }
+
+        // Submissions after the due date (e.g. practice mode or finished exams) have lowest priority
+        if (exerciseDateService.isAfterDueDate(participation)) {
+            return PRIORITY_LOW;
+        }
+
+        // If the exercise is now an exam exercise, then the exam is currently ongoing
+        // Here quick feedback is important, so we give it a higher priority
+        if (programmingExercise.isExamExercise()) {
+            return PRIORITY_HIGH;
+        }
+
+        return PRIORITY_BASE;
     }
 }
