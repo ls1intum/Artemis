@@ -109,7 +109,7 @@ test.describe('Exam test run', () => {
 
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+                await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
                 await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             }
             await examParticipation.handInEarly();
