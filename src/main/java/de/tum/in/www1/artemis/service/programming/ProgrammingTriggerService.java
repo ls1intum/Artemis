@@ -245,7 +245,7 @@ public class ProgrammingTriggerService {
                     participationService.resumeProgrammingExercise(participation);
                     // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
                 }
-                continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
+                continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, true);
                 // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
                 programmingMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
             }

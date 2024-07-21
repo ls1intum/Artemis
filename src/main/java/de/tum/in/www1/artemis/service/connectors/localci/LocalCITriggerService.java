@@ -118,8 +118,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
-        triggerBuild(participation, null, null, true);
+    public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws LocalCIException {
+        triggerBuild(participation, null, null, triggerAll);
     }
 
     /**
