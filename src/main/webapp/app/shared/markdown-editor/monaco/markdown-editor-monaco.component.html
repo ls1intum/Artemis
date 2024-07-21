@@ -105,6 +105,51 @@
                                 </div>
                             </div>
                         }
+                        @if (displayedActions.lecture) {
+                            <div>
+                                <button mat-button [matMenuTriggerFor]="subMenuLecture" type="button" class="btn btn-sm m-0 ml-1 py-0 default-font-size">
+                                    <span [jhiTranslate]="displayedActions.lecture.translationKey"></span>
+                                    <fa-icon [icon]="faAngleDown" class="ms-1" />
+                                </button>
+                                <mat-menu #subMenuLecture="matMenu" type="button">
+                                    @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
+                                        <button mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
+                                            {{ lecture.title }}
+                                        </button>
+                                        <mat-menu #lectureMenuUnits="matMenu" type="button">
+                                            <button mat-menu-item (click)="displayedActions.lecture.executeInCurrentEditor({})" type="button" class="border-bottom">
+                                                {{ lecture.title }}
+                                            </button>
+                                            @for (unit of lecture.lectureUnits; track unit.id) {
+                                                @if (unit.type === LectureUnitType.ATTACHMENT) {
+                                                    <button mat-menu-item (click)="displayedActions.lecture.executeInCurrentEditor({})" type="button">
+                                                        <span>{{ unit.name }}</span>
+                                                    </button>
+                                                    <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
+                                                        <button mat-menu-item (click)="displayedActions.lecture.executeInCurrentEditor({})" type="button" class="border-bottom">
+                                                            {{ unit.name }}
+                                                        </button>
+                                                        @if (!unit['slides'] || unit['slides'].length === 0) {
+                                                            <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
+                                                        }
+                                                        @for (slide of unit['slides']; track slide.id) {
+                                                            <button mat-menu-item (click)="displayedActions.lecture.executeInCurrentEditor({})" type="button">
+                                                                <span>Slide {{ slide.slideNumber }}</span>
+                                                            </button>
+                                                        }
+                                                    </mat-menu>
+                                                }
+                                            }
+                                            @for (attachment of lecture.attachments; track attachment.id) {
+                                                <button mat-menu-item type="button" (click)="displayedActions.lecture.executeInCurrentEditor({})">
+                                                    <span>{{ attachment.name }}</span>
+                                                </button>
+                                            }
+                                        </mat-menu>
+                                    }
+                                </mat-menu>
+                            </div>
+                        }
                         <!-- Meta -->
                         @for (action of displayedActions.meta; track action.id) {
                             <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
@@ -137,7 +182,7 @@
         @if (action.icon) {
             <fa-icon [icon]="action.icon" />
         } @else {
-            <span [jhiTranslate]="action.translationKey"></span>
+            <span class="default-font-size" [jhiTranslate]="action.translationKey"></span>
         }
     </button>
 </ng-template>
