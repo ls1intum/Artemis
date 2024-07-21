@@ -251,7 +251,7 @@ describe('BuildQueueComponent', () => {
     const request = {
         page: 1,
         pageSize: 50,
-        sortedColumn: 'build_completion_date',
+        sortedColumn: 'buildCompletionDate',
         sortingOrder: SortingOrder.DESCENDING,
         searchTerm: '',
     };
@@ -574,7 +574,7 @@ describe('BuildQueueComponent', () => {
         for (const finishedBuildJob of component.finishedBuildJobs) {
             const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
             if (buildDuration && buildCompletionDate && buildStartDate) {
-                expect(buildDuration).toEqual(buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000);
+                expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
             }
         }
     });
