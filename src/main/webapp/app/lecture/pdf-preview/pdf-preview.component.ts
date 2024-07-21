@@ -11,10 +11,12 @@ import { Attachment } from 'app/entities/attachment.model';
     styleUrls: ['./pdf-preview.component.scss'],
 })
 export class PdfPreviewComponent implements OnInit {
-    attachment: Attachment;
     @ViewChild('pdfContainer', { static: true }) pdfContainer: ElementRef;
     @ViewChild('enlargedCanvas') enlargedCanvas: ElementRef;
+    attachment: Attachment;
     isEnlargedView: boolean = false;
+    currentPage: number = 1;
+    totalPages: number = 0;
 
     constructor(
         private route: ActivatedRoute,
@@ -33,12 +35,14 @@ export class PdfPreviewComponent implements OnInit {
                 console.error('Invalid attachment or attachment ID.');
             }
         });
+        document.addEventListener('keydown', this.handleKeyboardEvents);
     }
 
     private async loadPdf(fileUrl: string) {
         try {
             const loadingTask = PDFJS.getDocument(fileUrl);
             const pdf = await loadingTask.promise;
+            this.totalPages = pdf.numPages;
 
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
@@ -81,7 +85,7 @@ export class PdfPreviewComponent implements OnInit {
 
         container.addEventListener('mouseenter', () => (overlay.style.opacity = '1'));
         container.addEventListener('mouseleave', () => (overlay.style.opacity = '0'));
-        overlay.addEventListener('click', () => this.displayEnlargedCanvas(canvas));
+        overlay.addEventListener('click', () => this.displayEnlargedCanvas(canvas, pageIndex));
 
         return container;
     }
@@ -94,10 +98,13 @@ export class PdfPreviewComponent implements OnInit {
         return overlay;
     }
 
-    private displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
+    private displayEnlargedCanvas(originalCanvas: HTMLCanvasElement, pageIndex: number) {
         this.isEnlargedView = true;
-        this.toggleBodyScroll(true);
+        this.currentPage = pageIndex;
+        this.updateEnlargedCanvas(originalCanvas);
+    }
 
+    private updateEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         setTimeout(() => {
             if (this.isEnlargedView) {
                 const enlargedCanvas = this.enlargedCanvas.nativeElement;
@@ -117,6 +124,16 @@ export class PdfPreviewComponent implements OnInit {
         }, 50);
     }
 
+    handleKeyboardEvents = (event: KeyboardEvent) => {
+        if (this.isEnlargedView) {
+            if (event.key === 'ArrowRight' && this.currentPage < this.totalPages) {
+                this.navigatePages('next');
+            } else if (event.key === 'ArrowLeft' && this.currentPage > 1) {
+                this.navigatePages('prev');
+            }
+        }
+    };
+
     closeEnlargedView() {
         this.isEnlargedView = false;
         this.toggleBodyScroll(false);
@@ -132,6 +149,16 @@ export class PdfPreviewComponent implements OnInit {
 
         if (target.classList.contains('enlarged-container') && target !== enlargedCanvas) {
             this.closeEnlargedView();
+        }
+    }
+
+    navigatePages(direction: string) {
+        const nextPageIndex = direction === 'next' ? this.currentPage + 1 : this.currentPage - 1;
+
+        if (nextPageIndex > 0 && nextPageIndex <= this.totalPages) {
+            this.currentPage = nextPageIndex;
+            const canvas = this.pdfContainer.nativeElement.querySelectorAll('.pdf-page-container canvas')[this.currentPage - 1];
+            this.updateEnlargedCanvas(canvas);
         }
     }
 }

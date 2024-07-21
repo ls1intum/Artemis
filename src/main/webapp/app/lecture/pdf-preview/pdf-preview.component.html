@@ -1,21 +1,21 @@
 <div class="row justify-content-center">
     <div class="col-12">
         <div>
-            <div>
-                <h4>Attachment {{ attachment.id }}: {{ attachment.name }}</h4>
-                <div class="row">
-                    <div class="pdf-container" #pdfContainer>
-                        @if (isEnlargedView) {
-                            <div class="enlarged-container" (click)="closeIfOutside($event)">
-                                <canvas #enlargedCanvas></canvas>
-                                <button class="btn-close" (click)="closeEnlargedView(); $event.stopPropagation()"></button>
-                                <div>
-                                    <button class="nav-button left">←</button>
-                                    <button class="nav-button right">→</button>
-                                </div>
-                            </div>
-                        }
-                    </div>
+            <h4>Attachment {{ attachment.id }}: {{ attachment.name }}</h4>
+            <div class="row">
+                <div class="pdf-container" #pdfContainer>
+                    @if (isEnlargedView) {
+                        <div class="enlarged-container" (click)="closeIfOutside($event)">
+                            <canvas #enlargedCanvas></canvas>
+                            <button class="btn-close" (click)="closeEnlargedView(); $event.stopPropagation()"></button>
+                            @if (currentPage !== 1) {
+                                <button class="nav-button left" (click)="navigatePages('prev'); $event.stopPropagation()">←</button>
+                            }
+                            @if (currentPage !== totalPages) {
+                                <button class="nav-button right" (click)="navigatePages('next'); $event.stopPropagation()">→</button>
+                            }
+                        </div>
+                    }
                 </div>
             </div>
         </div>
