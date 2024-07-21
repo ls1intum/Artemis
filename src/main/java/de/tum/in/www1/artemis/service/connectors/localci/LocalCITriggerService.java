@@ -62,6 +62,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     public static final int PRIORITY_HIGH = 1;
 
+    public static final int PRIORITY_PENALTY = 5;
+
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
     private final HazelcastInstance hazelcastInstance;
@@ -165,6 +167,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
         int priority = determinePriority(programmingExercise, participation, triggerAll);
+        priority = addPenaltyIfTestCourse(programmingExercise, priority);
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
@@ -327,5 +330,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
 
         return PRIORITY_BASE;
+    }
+
+    private int addPenaltyIfTestCourse(ProgrammingExercise programmingExercise, int priority) {
+        if (programmingExercise.getCourseViaExerciseGroupOrCourseMember().isTestCourse()) {
+            return priority + PRIORITY_PENALTY;
+        }
+        return priority;
     }
 }
