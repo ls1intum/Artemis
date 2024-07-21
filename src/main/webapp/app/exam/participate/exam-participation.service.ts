@@ -364,7 +364,7 @@ export class ExamParticipationService {
 
     mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
         return {
-            title: exercise.title ?? '',
+            title: exercise.exerciseGroup?.title ?? '',
             id: exercise.id ?? '',
             icon: getIcon(exercise.type),
             rightIcon: faLightbulb,
