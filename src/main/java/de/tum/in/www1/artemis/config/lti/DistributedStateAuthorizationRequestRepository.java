@@ -18,14 +18,18 @@ import org.springframework.util.Assert;
 import com.hazelcast.core.HazelcastInstance;
 
 /**
- * This is a copy of {@link uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository}
- * but using Hazelcast to share the state between instances.
- * This is required to support LTI with multiple Artemis nodes.
+ * A specialized {@link AuthorizationRequestRepository} that uses Hazelcast to store OAuth2 authorization requests.
+ * This allows for sharing state across multiple nodes.
+ *
+ * This is based on a copy of {@link uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository}.
  */
 class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedStateAuthorizationRequestRepository.class);
 
+    /**
+     * Executor for delayed tasks, here used to remove authorization requests after a timeout.
+     */
     private final Executor delayedExecutor = CompletableFuture.delayedExecutor(2L, TimeUnit.MINUTES);
 
     private final HazelcastInstance hazelcastInstance;

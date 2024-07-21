@@ -31,7 +31,8 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenti
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
 
 /**
- * Processes an LTI 1.3 Authorization Request response.
+ * Filter for processing an LTI 1.3 Authorization Request response.
+ * It listens for LTI login attempts {@see CustomLti13Configurer#LTI13_LOGIN_PATH} and processes them.
  * Step 3. of OpenID Connect Third Party Initiated Login is handled solely by spring-security-lti13
  * OAuth2LoginAuthenticationFilter.
  */
@@ -61,6 +62,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         log.info("LTI 1.3 Launch request received for url {}", this.requestMatcher.getPattern());
 
         try {
+            // Login using the distributed authorization request repository
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
             String targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();

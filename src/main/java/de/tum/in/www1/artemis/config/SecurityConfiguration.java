@@ -230,6 +230,7 @@ public class SecurityConfiguration {
 
         // Conditionally adds configuration for LTI if it is active.
         if (profileService.isLtiActive()) {
+            // Activates the LTI endpoints and filters.
             http.with(new CustomLti13Configurer(hazelcastInstance), configurer -> configurer.configure(http));
         }
 

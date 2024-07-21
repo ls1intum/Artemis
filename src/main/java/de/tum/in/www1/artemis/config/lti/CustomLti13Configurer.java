@@ -85,6 +85,13 @@ public class CustomLti13Configurer extends Lti13Configurer {
         return http.getSharedObject(ApplicationContext.class).getBean(OnlineCourseConfigurationService.class);
     }
 
+    /**
+     * Configures and returns an {@link StateBasedOptimisticAuthorizationRequestRepository} for handling OAuth2 authorization requests.
+     * This method sets up a multinode-distributed state repository for managing authorization requests using Hazelcast.
+     * This is necessary to support LTI on multinode systems where the different requests might get processed by different nodes.
+     *
+     * @return An instance of {@link StateBasedOptimisticAuthorizationRequestRepository} that combines session-based and distributed state management.
+     */
     @Override
     protected OptimisticAuthorizationRequestRepository configureRequestRepository() {
         HttpSessionOAuth2AuthorizationRequestRepository sessionRepository = new HttpSessionOAuth2AuthorizationRequestRepository();
