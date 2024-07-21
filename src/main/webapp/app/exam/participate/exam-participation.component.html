@@ -22,6 +22,7 @@
                     [endDate]="individualStudentEndDate"
                     [exerciseIndex]="exerciseIndex"
                     [exercises]="studentExam.exercises!"
+                    [isEndView]="false"
                     (examAboutToEnd)="examEnded()"
                     (onExamHandInEarly)="toggleHandInEarly()"
                     (heightChange)="updateHeight($event)"
@@ -139,18 +140,34 @@
             </div>
         }
         @if (!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())) {
-            <div class="p-3">
-                <jhi-exam-participation-cover
-                    [startView]="false"
-                    [exam]="exam"
-                    [studentExam]="studentExam"
-                    [handInEarly]="handInEarly"
-                    [handInPossible]="handInPossible"
-                    [submitInProgress]="submitInProgress"
-                    [attendanceChecked]="attendanceChecked"
-                    (onExamEnded)="onExamEndConfirmed()"
-                    (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
+            <div class="exam-background-wrapper" [ngClass]="{ 'py-2': testRunId }">
+                <jhi-exam-bar
+                    [examTitle]="exam.title!"
+                    [endDate]="individualStudentEndDate"
+                    [exerciseIndex]="exerciseIndex"
+                    [exercises]="studentExam.exercises!"
+                    [isEndView]="true"
+                    (examAboutToEnd)="examEnded()"
+                    (onExamHandInEarly)="toggleHandInEarly()"
+                    (heightChange)="updateHeight($event)"
                 />
+
+                <div
+                    class="module-bg rounded-3 px-3 pt-3 end-view content-exam-height"
+                    [ngClass]="{ 'content-exam-height-dev content-exam-height-testRun-dev': !isProduction || isTestServer, 'content-exam-height-testRun': testRunId }"
+                >
+                    <jhi-exam-participation-cover
+                        [startView]="false"
+                        [exam]="exam"
+                        [studentExam]="studentExam"
+                        [handInEarly]="handInEarly"
+                        [handInPossible]="handInPossible"
+                        [submitInProgress]="submitInProgress"
+                        [attendanceChecked]="attendanceChecked"
+                        (onExamEnded)="onExamEndConfirmed()"
+                        (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
+                    />
+                </div>
             </div>
         }
         @if (this.studentExam?.submitted && !showExamSummary && !loadingExam) {

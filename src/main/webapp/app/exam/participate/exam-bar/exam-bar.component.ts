@@ -25,6 +25,7 @@ export class ExamBarComponent implements AfterViewInit {
     @Input() endDate: dayjs.Dayjs;
     @Input() exerciseIndex = 0;
     @Input() exercises: Exercise[] = [];
+    @Input() isEndView: boolean;
 
     readonly faDoorClosed = faDoorClosed;
     criticalTime = dayjs.duration(5, 'minutes');

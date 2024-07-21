@@ -12,7 +12,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCircleExclamation, faDoorClosed, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -62,6 +62,8 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     // Icons
     faSpinner = faSpinner;
     faArrowLeft = faArrowLeft;
+    faCircleExclamation = faCircleExclamation;
+    faDoorClosed = faDoorClosed;
 
     constructor(
         private courseService: CourseManagementService,

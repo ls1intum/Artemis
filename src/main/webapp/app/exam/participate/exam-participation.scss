@@ -49,6 +49,11 @@ $management-header-height: 230px;
     background-color: var(--bs-body-bg);
 }
 
+.end-view {
+    margin-left: 400px;
+    margin-right: 400px;
+}
+
 .content-exam-height {
     height: calc(100vh - var(--sidebar-footer-height-prod) - var(--exam-height-offset));
     overflow-y: auto;
