@@ -25,6 +25,7 @@ import com.hazelcast.map.IMap;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -327,6 +328,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // Here quick feedback is important, so we give it a higher priority
         if (programmingExercise.isExamExercise()) {
             return PRIORITY_HIGH;
+        }
+
+        // Reduce priority of optional exercises
+        if (programmingExercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
+            return PRIORITY_LOW;
         }
 
         return PRIORITY_BASE;
