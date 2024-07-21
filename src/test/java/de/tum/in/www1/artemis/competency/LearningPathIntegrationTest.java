@@ -678,7 +678,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         lectureUnitService.setLectureUnitCompletion(thirdTextUnit, student, true);
         result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
-        verifyNavigationResult(result, secondTextUnit, thirdTextUnit, null);
+        verifyNavigationResult(result, thirdTextUnit, null, null);
     }
 
     private LearningPathNavigationObjectDTO.LearningObjectType getLearningObjectType(LearningObject learningObject) {
