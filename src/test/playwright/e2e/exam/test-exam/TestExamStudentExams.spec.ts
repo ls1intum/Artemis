@@ -120,7 +120,7 @@ test.describe('Test Exam - student exams', () => {
             await examParticipation.startExam();
             await examNavigation.openOverview();
 
-            await examNavigation.openOrSaveExerciseByTitle(examExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(examExercise.exerciseGroup!.title!);
             await examParticipation.makeSubmission(examExercise.id!, examExercise.type!, examExercise.additionalData);
         }
 

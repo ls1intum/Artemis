@@ -11,8 +11,7 @@ export interface Link {
 }
 
 // Regular expression pattern to match URLs
-// eslint-disable-next-line no-useless-escape
-export const urlRegex = /https?:\/\/[^\s/$.?#>][^\s>]*?(?=\s|[\]\)]|$)/g;
+export const urlRegex = /https?:\/\/[^\s\/$.?#>][^\s>]*?(?=\s|[\])]|$)/g;
 
 @Injectable()
 export class LinkifyService {
