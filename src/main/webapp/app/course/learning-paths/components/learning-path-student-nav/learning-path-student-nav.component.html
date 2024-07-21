@@ -15,9 +15,13 @@
         <div ngbDropdown class="col-4 dropdown" (openChange)="setIsDropdownOpen($event)" #navOverview="ngbDropdown">
             @if (!isLoading()) {
                 <div type="button" class="row justify-content-center align-items-center h-100" id="navigation-overview" ngbDropdownToggle>
+                   @if(currentLearningObject()) {
                     <span class="col-md-auto fw-bold">
-                        {{ currentLearningObject()?.name }}
+                            {{ currentLearningObject()?.name }}
                     </span>
+                   } @else {
+                       <span class="col-md-auto fw-bold" jhiTranslate="artemisApp.learningPath.navigation.recapLabel"></span>
+                   }
                     <fa-icon [icon]="faChevronDown" class="col-md-auto ps-0" />
                 </div>
             }
