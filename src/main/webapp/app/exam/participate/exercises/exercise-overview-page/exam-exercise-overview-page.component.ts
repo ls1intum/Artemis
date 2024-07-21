@@ -46,7 +46,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     updateShowResultWidth() {
-        this.showResultWidth = 55;
+        this.showResultWidth = 35;
     }
 
     openExercise(exercise: Exercise) {
