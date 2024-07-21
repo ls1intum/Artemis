@@ -216,9 +216,9 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest")
-    public ResponseEntity<Boolean> ingestLectureUnit(@PathVariable Long lectureUnitId) {
+    public ResponseEntity<Void> ingestLectureUnit(@PathVariable Long lectureUnitId) {
         LectureUnit lectureUnit = this.lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnitId);
         lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
-        return ResponseEntity.ok().body(true);
+        return ResponseEntity.ok().build();
     }
 }

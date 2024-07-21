@@ -28,6 +28,8 @@ import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.mod
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -299,5 +301,45 @@ describe('Lecture', () => {
         lectureComponent.ngOnInit();
         expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(lectureComponent.courseId);
         expect(lectureComponent.lectureIngestionEnabled).toBeTrue();
+    });
+    it('should correctly update ingestion state based on lecture units', () => {
+        const mockLectureUnits: LectureUnit[] = [
+            { id: 1, type: 'attachment', pyrisIngestionState: IngestionState.DONE } as AttachmentUnit,
+            { id: 2, type: 'attachment', pyrisIngestionState: IngestionState.NOT_STARTED } as AttachmentUnit,
+            { id: 3, type: 'attachment', pyrisIngestionState: IngestionState.ERROR } as AttachmentUnit,
+        ];
+
+        const lecture = new Lecture();
+        lecture.id = 1;
+        lecture.title = 'Sample Lecture';
+        lecture.lectureUnits = mockLectureUnits;
+        lecture.course = { id: 1, title: 'Sample Course' };
+        expect(lecture.ingested).toBe(IngestionState.NOT_STARTED);
+
+        if (lecture.updateIngestionState) {
+            lecture.updateIngestionState();
+            expect(lecture.ingested).toBe(IngestionState.PARTIALLY_INGESTED);
+
+            lecture.lectureUnits = [
+                { id: 1, type: 'attachment', pyrisIngestionState: IngestionState.DONE } as AttachmentUnit,
+                { id: 2, type: 'attachment', pyrisIngestionState: IngestionState.DONE } as AttachmentUnit,
+            ];
+            lecture.updateIngestionState();
+            expect(lecture.ingested).toBe(IngestionState.DONE);
+
+            lecture.lectureUnits = [
+                { id: 1, type: 'attachment', pyrisIngestionState: IngestionState.NOT_STARTED } as AttachmentUnit,
+                { id: 2, type: 'attachment', pyrisIngestionState: IngestionState.NOT_STARTED } as AttachmentUnit,
+            ];
+            lecture.updateIngestionState();
+            expect(lecture.ingested).toBe(IngestionState.NOT_STARTED);
+
+            lecture.lectureUnits = [
+                { id: 1, type: 'attachment', pyrisIngestionState: IngestionState.ERROR } as AttachmentUnit,
+                { id: 2, type: 'attachment', pyrisIngestionState: IngestionState.ERROR } as AttachmentUnit,
+            ];
+            lecture.updateIngestionState();
+            expect(lecture.ingested).toBe(IngestionState.ERROR);
+        }
     });
 });

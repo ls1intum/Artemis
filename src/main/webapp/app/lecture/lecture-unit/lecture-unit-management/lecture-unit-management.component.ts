@@ -144,11 +144,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
             if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {
-                console.log('if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {\n');
                 this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((settings) => {
                     this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
-                    console.log('updated this.lectureIngestionEnabled');
-                    console.log(this.lectureIngestionEnabled);
                 });
             }
         });
