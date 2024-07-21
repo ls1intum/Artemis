@@ -27,6 +27,7 @@ import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions
 import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
 import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { ReferenceType } from 'app/shared/metis/metis.util';
 
 interface MarkdownActionsByGroup {
     standard: MonacoEditorAction[];
@@ -409,4 +410,5 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     protected readonly LectureUnitType = LectureUnitType;
+    protected readonly ReferenceType = ReferenceType;
 }

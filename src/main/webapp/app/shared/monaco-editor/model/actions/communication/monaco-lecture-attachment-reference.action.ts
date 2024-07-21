@@ -5,9 +5,10 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/lecture.service';
 import { ReferenceType } from 'app/shared/metis/metis.util';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { Attachment } from 'app/entities/attachment.model';
+import { Slide } from 'app/entities/lecture-unit/slide.model';
 
 export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
     static readonly ID = 'monaco-lecture-attachment-reference.action';
@@ -31,39 +32,31 @@ export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
         super.register(editor, translateService);
     }
 
-    run(editor: monaco.editor.ICodeEditor, args?: { lectureId: number; type?: ReferenceType; attachmentId?: number; attachmentUnitId?: number; slideId?: number }): void {
-        const lecture = args?.lectureId ? this.metisService.getCourse().lectures?.find((value) => value.id === args.lectureId) : undefined;
-        if (lecture) {
-            return;
+    run(editor: monaco.editor.ICodeEditor, args?: { reference: ReferenceType; lecture: Lecture; attachmentUnit?: AttachmentUnit; slide?: Slide; attachment?: Attachment }): void {
+        switch (args?.reference) {
+            case ReferenceType.LECTURE:
+                this.insertLectureOrAttachmentReference(editor, args.lecture, args.lecture.id!, ReferenceType.LECTURE);
+                break;
+            case ReferenceType.ATTACHMENT:
+                this.insertLectureOrAttachmentReference(editor, args.lecture, args.attachment!.id!, ReferenceType.ATTACHMENT);
+                break;
+            case ReferenceType.SLIDE:
+            case ReferenceType.ATTACHMENT_UNITS:
+                this.insertAttachmentUnitReference(editor, args.lecture, args.attachmentUnit!, args.slide);
+                break;
+            default:
+                throw new Error('Unsupported reference type.');
         }
-        // Safe because lecture would be undefined if args were undefined
-        const lectureId = args!.lectureId;
-        firstValueFrom(this.lectureService.findWithDetailsWithSlides(lectureId)).then((response) => {
-            const lectureWithDetails = response.body!;
-            if (args?.attachmentUnitId) {
-                const selectedAttachmentUnit: AttachmentUnit = <AttachmentUnit>(
-                    lectureWithDetails.lectureUnits?.filter((f) => f.type === LectureUnitType.ATTACHMENT).find((value) => value.id === args.attachmentUnitId)
-                );
-                if (selectedAttachmentUnit) {
-                    this.insertAttachmentUnitReference(editor, lectureWithDetails, selectedAttachmentUnit, args.slideId);
-                }
-            } else if (args?.attachmentId && args?.type) {
-                this.insertLectureOrAttachmentReference(editor, lectureWithDetails, args.attachmentId, args.type);
-            }
-        });
     }
 
-    insertAttachmentUnitReference(editor: monaco.editor.ICodeEditor, lectureWithDetails: Lecture, attachmentUnit: AttachmentUnit, slideId?: number): void {
-        if (slideId) {
-            const slide = attachmentUnit.slides?.find((value) => value.id === slideId);
-            if (slide) {
-                const shortLink = slide.slideImagePath!.split('attachments/')[1];
-                // Use a regular expression and the replace() method to remove the file name and last slash
-                const shortLinkWithoutFileName: string = shortLink.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
-                const referenceLink = `[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`;
-                this.replaceTextAtCurrentSelection(editor, referenceLink);
-                editor.focus();
-            }
+    insertAttachmentUnitReference(editor: monaco.editor.ICodeEditor, lectureWithDetails: Lecture, attachmentUnit: AttachmentUnit, slide?: Slide): void {
+        if (slide) {
+            const shortLink = slide.slideImagePath!.split('attachments/')[1];
+            // Use a regular expression and the replace() method to remove the file name and last slash
+            const shortLinkWithoutFileName: string = shortLink.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
+            const referenceLink = `[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`;
+            this.replaceTextAtCurrentSelection(editor, referenceLink);
+            editor.focus();
         } else {
             const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
             const referenceLink = `[lecture-unit]${attachmentUnit.name}(${shortLink})[/lecture-unit]`;
