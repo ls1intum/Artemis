@@ -32,11 +32,21 @@
                 }
                 <div class="grid-area-main">
                     <div>
-                        <span class="badge bg-primary mb-2" id="word-count">
-                            {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
+                        <span
+                            class="badge bg-primary mb-2"
+                            id="word-count"
+                            [hidden]="submission && !submission.submitted && isExamSummary"
+                            jhiTranslate="artemisApp.textExercise.wordCount"
+                            [translateValues]="{ count: wordCount }"
+                        >
                         </span>
-                        <span class="badge bg-primary mb-2" id="character-count">
-                            {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
+                        <span
+                            class="badge bg-primary mb-2"
+                            id="character-count"
+                            [hidden]="submission && !submission.submitted && isExamSummary"
+                            jhiTranslate="artemisApp.textExercise.characterCount"
+                            [translateValues]="{ count: characterCount }"
+                        >
                         </span>
                     </div>
                     @if (!result) {
@@ -50,6 +60,7 @@
                             [disabled]="!isActive || !submission || !isOwnerOfParticipation"
                             (keydown.tab)="onTextEditorTab(textEditor, $event)"
                             (input)="onTextEditorInput($event)"
+                            [hidden]="submission && !submission.submitted && isExamSummary"
                         ></textarea>
                         @if (textExercise?.teamMode) {
                             <jhi-team-submission-sync
