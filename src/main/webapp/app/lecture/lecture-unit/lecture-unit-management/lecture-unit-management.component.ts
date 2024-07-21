@@ -93,7 +93,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
                 this.loadData();
             }
-            this.initializeProfileInfo();
         });
 
         // debounceTime limits the amount of put requests sent for updating the lecture unit order
@@ -119,6 +118,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     this.lecture = lecture;
                     if (lecture?.lectureUnits) {
                         this.lectureUnits = lecture?.lectureUnits;
+                        this.initializeProfileInfo();
                     } else {
                         this.lectureUnits = [];
                     }
@@ -144,8 +144,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
             if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {
+                console.log('if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {\n');
                 this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((settings) => {
                     this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+                    console.log('updated this.lectureIngestionEnabled');
+                    console.log(this.lectureIngestionEnabled);
                 });
             }
         });
