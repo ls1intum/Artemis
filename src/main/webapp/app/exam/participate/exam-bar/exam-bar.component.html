@@ -5,7 +5,13 @@
         </h3>
         @if (!examTimeLineView) {
             <div class="d-flex justify-content-between align-items-center">
-                <jhi-exam-timer class="me-3" [criticalTime]="criticalTime" [endDate]="endDate" [isEndView]="isEndView" (timerAboutToEnd)="triggerExamAboutToEnd()" />
+                <jhi-exam-timer
+                    class="me-3"
+                    [criticalTime]="criticalTime"
+                    [endDate]="isEndView ? graceEndDate : endDate"
+                    [isEndView]="isEndView"
+                    (timerAboutToEnd)="triggerExamAboutToEnd()"
+                />
                 <jhi-exam-live-events-button />
                 @if (!isEndView) {
                     <button id="hand-in-early" class="btn btn-danger ms-2" aria-label="Hand In Early" (click)="handInEarly()">

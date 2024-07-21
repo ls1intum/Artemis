@@ -18,10 +18,10 @@
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed) {
             <div class="exam-background-wrapper" [ngClass]="{ 'py-2': testRunId }">
                 <jhi-exam-bar
-                    [examTitle]="exam.title!"
+                    [exam]="exam"
+                    [studentExam]="studentExam"
                     [endDate]="individualStudentEndDate"
                     [exerciseIndex]="exerciseIndex"
-                    [exercises]="studentExam.exercises!"
                     [isEndView]="false"
                     (examAboutToEnd)="examEnded()"
                     (onExamHandInEarly)="toggleHandInEarly()"
@@ -143,11 +143,14 @@
             @if (!studentFailedToSubmit) {
                 <div class="exam-background-wrapper" [ngClass]="{ 'py-2': testRunId }">
                     <jhi-exam-bar
-                        [examTitle]="exam.title!"
                         [endDate]="individualStudentEndDate"
                         [exerciseIndex]="exerciseIndex"
-                        [exercises]="studentExam.exercises!"
                         [isEndView]="true"
+                        [exam]="exam"
+                        [studentExam]="studentExam"
+                        [testRunStartTime]="testStartTime"
+                        [testRun]="testRunId ? true : false"
+                        [testExam]="testExam"
                         (examAboutToEnd)="examEnded()"
                         (onExamHandInEarly)="toggleHandInEarly()"
                         (heightChange)="updateHeight($event)"
