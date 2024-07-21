@@ -325,7 +325,7 @@
             "handInEarly": "Vorzeitig Abgeben",
             "continueAfterHandInEarly": "Zurück",
             "attendanceCheck": "Anwesenheitskontrolle",
-            "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
+            "continueAfterHandInEarlyDescription": "Um mit der Klausur fortzufahren, klicke auf den Button Zurück.",
             "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
             "attendanceNotVerifiedWarningFirstSentence": "Deine Anwesenheit wurde noch nicht kontrolliert.",

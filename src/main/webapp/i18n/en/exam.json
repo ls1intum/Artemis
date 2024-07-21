@@ -326,7 +326,7 @@
             "handInEarly": "Hand in Early",
             "continueAfterHandInEarly": "Back",
             "attendanceCheck": "Attendance check",
-            "continueAfterHandInEarlyDescription": "You don't want to hand in yet?",
+            "continueAfterHandInEarlyDescription": "To continue working on the exam, click on the Back button.",
             "handInEarlyNotice": "You are about to hand in your submission before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",

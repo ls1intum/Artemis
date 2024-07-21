@@ -245,24 +245,4 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     get inserted(): boolean {
         return this.enteredName.trim() !== '';
     }
-
-    /**
-     * Returns whether the student failed to submit on time. In this case the end page is adapted.
-     */
-    get studentFailedToSubmit(): boolean {
-        if (this.testRun) {
-            return false;
-        }
-        let individualStudentEndDate;
-        if (this.exam.testExam) {
-            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
-                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
-            } else {
-                return false;
-            }
-        } else {
-            individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
-        }
-        return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
-    }
 }

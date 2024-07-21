@@ -51,7 +51,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 @Component({
     selector: 'jhi-exam-participation',
     templateUrl: './exam-participation.component.html',
-    styleUrls: ['./exam-participation.scss'],
+    styleUrls: ['./exam-participation.scss', './exam-bar/exam-bar.component.scss'],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChildren(ExamSubmissionComponent)
@@ -495,6 +495,26 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Reset the visited pages array so ngOnInit will be called for only the active page
             this.resetPageComponentVisited(this.exerciseIndex);
         }
+    }
+
+    /**
+     * Returns whether the student failed to submit on time. In this case the end page is adapted.
+     */
+    get studentFailedToSubmit(): boolean {
+        if (this.testRunId) {
+            return false;
+        }
+        let individualStudentEndDate;
+        if (this.exam.testExam) {
+            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
+                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
+            } else {
+                return false;
+            }
+        } else {
+            individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
+        }
+        return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 
     /**
