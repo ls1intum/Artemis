@@ -123,7 +123,7 @@ class ProgrammingLanguageConfigurationTest {
     private Map<String, Map<String, String>> getDefaultImages() {
         final Map<String, Map<String, String>> images = new HashMap<>();
 
-        for (ProgrammingLanguage language : ProgrammingLanguage.values()) {
+        for (ProgrammingLanguage language : ProgrammingLanguage.getEnabledLanguages()) {
             final Map<String, String> languageImages = new HashMap<>();
             languageImages.put("default", language.name());
             images.put(language.toString().toLowerCase(), languageImages);
