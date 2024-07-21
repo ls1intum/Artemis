@@ -391,7 +391,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @return exam, to which the exercise belongs
      */
     @JsonIgnore
-    public Exam getExamViaExerciseGroupOrCourseMember() {
+    public Exam getExam() {
         if (isExamExercise()) {
             return this.getExerciseGroup().getExam();
         }
@@ -953,8 +953,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     @JsonIgnore
     public boolean isExampleSolutionPublished() {
-        ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
-                : this.getExampleSolutionPublicationDate();
+        ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExam().getExampleSolutionPublicationDate() : this.getExampleSolutionPublicationDate();
         return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
     }
 
