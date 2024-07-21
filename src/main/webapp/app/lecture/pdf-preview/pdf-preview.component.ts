@@ -102,6 +102,7 @@ export class PdfPreviewComponent implements OnInit {
         this.isEnlargedView = true;
         this.currentPage = pageIndex;
         this.updateEnlargedCanvas(originalCanvas);
+        this.toggleBodyScroll(true);
     }
 
     private updateEnlargedCanvas(originalCanvas: HTMLCanvasElement) {

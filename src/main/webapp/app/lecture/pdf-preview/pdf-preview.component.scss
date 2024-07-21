@@ -38,6 +38,7 @@
         top: 10px;
         right: 10px;
         cursor: pointer;
+        color: white;
     }
 }
 
@@ -67,6 +68,20 @@
 
 .nav-button.right {
     right: calc(5% + 10px);
+
+    @media (max-width: 1200px) {
+        right: 10px;
+    }
+}
+
+.page-number-display {
+    position: absolute;
+    bottom: 10px;
+    right: calc(5% + 10px);
+    font-size: 18px;
+    color: white;
+    z-index: 2;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 
     @media (max-width: 1200px) {
         right: 10px;
