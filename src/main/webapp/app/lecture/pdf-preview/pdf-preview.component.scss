@@ -40,3 +40,35 @@
         cursor: pointer;
     }
 }
+
+.nav-button {
+    position: absolute;
+    transform: translateY(-50%);
+    cursor: pointer;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    z-index: 10;
+}
+
+.nav-button.left {
+    left: calc(5% + 10px);
+
+    @media (max-width: 1200px) {
+        left: 10px;
+    }
+}
+
+.nav-button.right {
+    right: calc(5% + 10px);
+
+    @media (max-width: 1200px) {
+        right: 10px;
+    }
+}

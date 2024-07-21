@@ -9,6 +9,10 @@
                             <div class="enlarged-container" (click)="closeIfOutside($event)">
                                 <canvas #enlargedCanvas></canvas>
                                 <button class="btn-close" (click)="closeEnlargedView(); $event.stopPropagation()"></button>
+                                <div>
+                                    <button class="nav-button left">←</button>
+                                    <button class="nav-button right">→</button>
+                                </div>
                             </div>
                         }
                     </div>
