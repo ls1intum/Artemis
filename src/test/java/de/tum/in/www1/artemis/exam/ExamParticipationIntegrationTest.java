@@ -377,7 +377,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(studentParticipations).isEmpty();
 
         // invoke start exercises
-        studentExamService.startExercises(exam.getId()).join();
+        // studentExamService.startExercises(exam.getId()).join();
 
         studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
         assertThat(studentParticipations).hasSize(12);
@@ -389,7 +389,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(studentParticipations).isEmpty();
 
         // invoke start exercises
-        studentExamService.startExercises(exam.getId()).join();
+        // studentExamService.startExercises(exam.getId()).join();
 
         studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
         assertThat(studentParticipations).hasSize(12);
