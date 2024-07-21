@@ -61,7 +61,7 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
                             kind: monaco.languages.CompletionItemKind.User,
                             insertText: `[user]${ch.name}(${ch.login!})[/user]`,
                             range,
-                            detail: 'User',
+                            detail: this.label,
                         })),
                     };
                 });

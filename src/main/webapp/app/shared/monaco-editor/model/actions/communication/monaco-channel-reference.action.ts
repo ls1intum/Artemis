@@ -62,7 +62,7 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
                             kind: monaco.languages.CompletionItemKind.Constant,
                             insertText: `[channel]${ch.name}(${ch.id})[/channel]`,
                             range,
-                            detail: 'Channel',
+                            detail: this.label,
                         })),
                     };
                 });
