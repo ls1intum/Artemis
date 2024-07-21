@@ -70,11 +70,13 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -126,13 +128,17 @@ public class StudentExamService {
 
     private final ExamQuizQuestionsGenerator examQuizQuestionsGenerator;
 
+    private final ExamService examService;
+
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService, ExamService examService, InstanceMessageSendService instanceMessageSendService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -152,6 +158,8 @@ public class StudentExamService {
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
         this.examQuizQuestionsGenerator = quizPoolService;
+        this.examService = examService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -708,42 +716,75 @@ public class StudentExamService {
     /**
      * Starts all the exercises of all the student exams of an exam
      *
-     * @param examId exam to which the student exams belong
+     * @param exam                  exam to which the generated student exams belong
+     * @param generatedStudentExams list of student exams generated for this exam
      * @return a future that will yield the number of generated participations
      */
-    public CompletableFuture<Integer> startExercises(Long examId) {
-        var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-        var studentExams = exam.getStudentExams();
+    public void startExercises(Exam exam, List<StudentExam> generatedStudentExams) {
+
+        long start = System.nanoTime();
+        if (exam.isTestExam()) {
+            throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
+        }
+
+        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
+
+        var examId = exam.getId();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
+        int finishedExamsCounterInitialValue = 0;
+        int failedExamsCounterInitialValue = 0;
+        int participationsCount = 0;
+        int overall = 0;
         var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
         if (cache != null) {
+            var oldValue = cache.get(examId);
+            if (oldValue != null) {
+                var oldStatus = (ExamExerciseStartPreparationStatus) oldValue.get();
+                if (oldStatus != null) {
+                    finishedExamsCounterInitialValue = oldStatus.finished();
+                    failedExamsCounterInitialValue = oldStatus.failed();
+                    participationsCount = oldStatus.participationCount();
+                    overall = oldStatus.overall();
+                }
+            }
             cache.evict(examId);
         }
 
-        var finishedExamsCounter = new AtomicInteger(0);
-        var failedExamsCounter = new AtomicInteger(0);
+        var finishedExamsCounter = new AtomicInteger(finishedExamsCounterInitialValue);
+        var failedExamsCounter = new AtomicInteger(failedExamsCounterInitialValue);
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
-        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt, lock);
+        int generatedStudentExamsCount = generatedStudentExams.size() + overall;
+        sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), generatedStudentExamsCount, participationsCount, startedAt, lock);
 
         var threadPool = Executors.newFixedThreadPool(10);
-        var futures = studentExams.stream()
+        var futures = generatedStudentExams.stream()
                 .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
-                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
+                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), generatedStudentExamsCount,
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
                             log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
-                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
+                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), generatedStudentExamsCount,
                                     generatedParticipations.size(), startedAt, lock);
                             return null;
                         }))
                 .toArray(CompletableFuture[]::new);
-        return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
+
+        CompletableFuture.allOf(futures).thenApply((empty) -> {
             threadPool.shutdown();
-            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(), startedAt,
-                    lock);
+            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), generatedStudentExamsCount, generatedParticipations.size(),
+                    startedAt, lock);
             return generatedParticipations.size();
+        }).thenAccept(numberOfGeneratedParticipations -> {
+            log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
+            if (ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(exam))) {
+                // This is a special case if "prepare exercise start" was pressexd shortly before the exam start
+                // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
+                // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
+                // Since this gets never executed here, we need to manually schedule the locking.
+                instanceMessageSendService.sendRescheduleAllStudentExams(examId);
+            }
         });
     }
 
@@ -846,7 +887,9 @@ public class StudentExamService {
         Set<User> users = exam.getRegisteredUsers();
 
         // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(exam, users, examQuizQuestionsGenerator);
+        var generatedStudentExams = studentExamRepository.createRandomStudentExams(exam, users, examQuizQuestionsGenerator);
+        startExercises(exam, generatedStudentExams);
+        return generatedStudentExams;
     }
 
     /**
@@ -869,6 +912,8 @@ public class StudentExamService {
         missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(exam, missingUsers, examQuizQuestionsGenerator);
+        var generatedStudentExams = studentExamRepository.createRandomStudentExams(exam, missingUsers, examQuizQuestionsGenerator);
+        startExercises(exam, generatedStudentExams);
+        return generatedStudentExams;
     }
 }
