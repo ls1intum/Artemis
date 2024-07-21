@@ -19,7 +19,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
     readonly ExerciseButtonStatus = ExerciseButtonStatus;
-    showResultWidth = 5;
+    showResultWidth = 10;
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
 
@@ -46,7 +46,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     updateShowResultWidth() {
-        this.showResultWidth = 45;
+        this.showResultWidth = 55;
     }
 
     openExercise(exercise: Exercise) {
