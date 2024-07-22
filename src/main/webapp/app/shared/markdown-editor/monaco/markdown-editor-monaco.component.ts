@@ -75,9 +75,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     _markdown?: string;
 
     @Input()
-    changeEmitDelay?: number;
-
-    @Input()
     enableFileUpload = true;
 
     @Input()

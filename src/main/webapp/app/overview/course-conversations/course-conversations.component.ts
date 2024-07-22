@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,8 +10,7 @@ import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { PageType, SortDirection } from 'app/shared/metis/metis.util';
-import { faBan, faComment, faComments, faFile, faGraduationCap, faHeart, faList, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { faFilter, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faComment, faComments, faFile, faFilter, faGraduationCap, faHeart, faList, faMessage, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
@@ -70,8 +69,9 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     styleUrls: ['../course-overview.scss', './course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService],
+    changeDetection: ChangeDetectionStrategy.Default,
 })
-export class CourseConversationsComponent implements OnInit, OnDestroy {
+export class CourseConversationsComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngUnsubscribe = new Subject<void>();
     course?: Course;
     isLoading = false;
@@ -117,6 +117,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private metisService: MetisService,
         private courseOverviewService: CourseOverviewService,
         private modalService: NgbModal,
+        private readonly cdRef: ChangeDetectorRef,
     ) {}
 
     getAsChannel = getAsChannelDTO;
@@ -157,6 +158,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.isServiceSetUp = true;
             }
         });
+        this.cdRef.detectChanges();
+    }
+
+    ngAfterViewInit() {
+        this.cdRef.detectChanges();
     }
 
     subscribeToQueryParameter() {
@@ -282,6 +288,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         } else {
             this.openChannelOverviewDialog(chatType);
         }
+        this.cdRef.detectChanges();
     }
 
     openCreateGroupChatDialog() {
