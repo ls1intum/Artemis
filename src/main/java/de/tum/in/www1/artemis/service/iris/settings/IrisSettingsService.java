@@ -445,6 +445,7 @@ public class IrisSettingsService {
      *
      * @param type   The Iris event to check
      * @param course The course to check
+     * @return Whether the Iris event is active for the course
      */
     public boolean isActivatedFor(IrisEventType type, Course course) {
         var settings = getCombinedIrisEventSettingsFor(course, type, true);
@@ -456,6 +457,7 @@ public class IrisSettingsService {
      *
      * @param type     The Iris event to check
      * @param exercise The exercise to check
+     * @return Whether the Iris event is active for the exercise
      */
     public boolean isActivatedFor(IrisEventType type, Exercise exercise) {
         var settings = getCombinedIrisEventSettingsFor(exercise.getCourseViaExerciseGroupOrCourseMember(), type, true);

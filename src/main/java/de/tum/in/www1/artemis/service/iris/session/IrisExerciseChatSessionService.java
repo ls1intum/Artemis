@@ -203,10 +203,12 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         // If not check, if the last 3 submissions failed
         var recentSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
         // Check if the user has already successfully submitted before
-        var successfulSubmission = recentSubmissions.stream().anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= SUCCESS_THRESHOLD);
+        var successfulSubmission = recentSubmissions.stream()
+                .anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= SUCCESS_THRESHOLD);
         if (!successfulSubmission && recentSubmissions.size() >= 3) {
             var lastThreeSubmissions = recentSubmissions.subList(recentSubmissions.size() - 3, recentSubmissions.size());
-            var allFailed = lastThreeSubmissions.stream().allMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() < SUCCESS_THRESHOLD);
+            var allFailed = lastThreeSubmissions.stream()
+                    .allMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() < SUCCESS_THRESHOLD);
             if (allFailed) {
                 log.info("All last 3 submissions failed for user {}", studentParticipation.getParticipant().getName());
                 var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();

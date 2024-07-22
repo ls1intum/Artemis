@@ -123,6 +123,18 @@ public class IrisSubSettingsService {
         return currentSettings;
     }
 
+    /**
+     * Updates a Proactivity sub settings object.
+     * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
+     * Special notes:
+     * - If the user is not an admin the enabled field will not be updated.
+     *
+     * @param currentSettings Current Proactivity sub settings.
+     * @param newSettings     Updated Proactivity sub settings.
+     * @param parentSettings  Parent Proactivity sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
+     * @return Updated Proactivity sub settings.
+     */
     public IrisProactivitySubSettings update(IrisProactivitySubSettings currentSettings, IrisProactivitySubSettings newSettings,
             IrisCombinedProactivitySubSettingsDTO parentSettings, IrisSettingsType settingsType) {
         if (newSettings == null) {
@@ -457,6 +469,7 @@ public class IrisSubSettingsService {
      * @param settingClass Subclass of {@link IrisEventSettings} to combine.
      * @param settingsList List of {@link IrisSettings} objects to combine.
      * @param minimal      Whether to return a minimal version of the combined settings.
+     * @param <S>          Subclass of {@link IrisEventSettings} to combine.
      * @return Combined event settings of the specific type.
      */
     public <S extends IrisEventSettings> IrisCombinedEventSettingsDTO combineEventSettingsOf(Class<S> settingClass, ArrayList<IrisSettings> settingsList, boolean minimal) {

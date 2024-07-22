@@ -6,13 +6,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
@@ -41,6 +43,7 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * Service to handle the course chat subsystem of Iris.
@@ -74,9 +77,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     private final double SUCCESS_THRESHOLD = 80.0; // TODO: Retrieve configuration from Iris settings
 
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
-                                        AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-                                        IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper,
-                                        StudentParticipationRepository studentParticipationRepository, SubmissionRepository submissionRepository) {
+            AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
+            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper,
+            StudentParticipationRepository studentParticipationRepository, SubmissionRepository submissionRepository) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -156,7 +159,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.stages());
-        } else {
+        }
+        else {
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions());
         }
         updateLatestSuggestions(session, statusUpdate.suggestions());
@@ -185,7 +189,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * Subsequent successful submissions are ignored.
      *
      * @param result The submission event to trigger the course chat for
-     * @throws ConflictException If the exercise is an exam exercise
+     * @throws ConflictException             If the exercise is an exam exercise
      * @throws AccessForbiddenAlertException If the course chat is not enabled for the course
      */
     public void onSubmissionSuccess(Result result) {
@@ -207,7 +211,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         // but before we do that, we check if this is the first successful time out of all submissions out of all submissions for this exercise
         var allSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
         var latestSubmission = allSubmissions.getLast();
-        var allSuccessful = allSubmissions.stream().filter(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= SUCCESS_THRESHOLD).count();
+        var allSuccessful = allSubmissions.stream().filter(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= SUCCESS_THRESHOLD)
+                .count();
         if (allSuccessful == 1 && Objects.requireNonNull(latestSubmission.getLatestResult()).getScore() >= SUCCESS_THRESHOLD) {
             log.info("First successful submission for user {}", studentParticipation.getParticipant().getName());
             var participant = studentParticipation.getParticipant();
@@ -215,7 +220,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
                 setStudentParticipationsToExercise(user.getId(), exercise);
                 var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
                 CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
-            } else {
+            }
+            else {
                 var team = (Team) participant;
                 var teamMembers = team.getStudents();
                 for (var user : teamMembers) {
@@ -224,16 +230,17 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
                     CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
                 }
             }
-        } else {
+        }
+        else {
             log.info("User {} has already successfully submitted before, so we do not inform Iris about the successful submission",
-                studentParticipation.getParticipant().getName());
+                    studentParticipation.getParticipant().getName());
         }
     }
 
     private void setStudentParticipationsToExercise(Long studentId, ProgrammingExercise exercise) {
         // TODO: Write a repository function to pull student participations for a specific exercise instead of a list of exercises
         var studentParticipation = new HashSet<>(
-            studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId, List.of(exercise)));
+                studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId, List.of(exercise)));
         exercise.setStudentParticipations(studentParticipation);
     }
 

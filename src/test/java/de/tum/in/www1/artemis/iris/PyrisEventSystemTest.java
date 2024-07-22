@@ -1,17 +1,27 @@
 package de.tum.in.www1.artemis.iris;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.security.test.context.support.WithMockUser;
+
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -47,13 +57,6 @@ import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
 
@@ -213,7 +216,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("submission_failed"), eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())),
-            eq(exercise), eq(irisSession));
+                eq(exercise), eq(irisSession));
     }
 
     @Test
@@ -237,12 +240,13 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldThrowUnsupportedEventException() {
-        assertThrows(UnsupportedOperationException.class, () -> pyrisEventService.trigger(new PyrisEvent<IrisCourseChatSessionService, Object>() {
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> pyrisEventService.trigger(new PyrisEvent<IrisExerciseChatSessionService, Object>() {
+
             @Override
-            public void handleEvent(IrisCourseChatSessionService service) {
+            public void handleEvent(IrisExerciseChatSessionService service) {
                 // Do nothing
             }
-        }));
+        })).withMessageStartingWith("Unsupported event");
 
     }
 
@@ -251,27 +255,31 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     void testShouldFireSubmissionSuccessfulEventWithEventDisabled() {
         deactivateEventSettingsFor(IrisSubmissionSuccessfulEventSettings.class, course);
         var result = createSubmission(studentParticipation, true);
-        assertThrows(AccessForbiddenAlertException.class, () -> pyrisEventService.trigger(new SubmissionSuccessfulEvent(result)));
+        assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new SubmissionSuccessfulEvent(result)))
+                .withMessageContaining("The Iris SUBMISSION_SUCCESSFUL event is disabled for this course");
+
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testShouldNotFireSubmissionFailedEventWhenEventSettingDisabled() {
+    void testShouldNotFireSubmissionFailedEventWhenEventSettingDisabled() throws AccessForbiddenAlertException {
         deactivateEventSettingsFor(IrisSubmissionFailedEventSettings.class, course);
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // Create three failing submissions for the student.
         createSubmission(studentParticipation, false);
         createSubmission(studentParticipation, false);
         var result = createSubmission(studentParticipation, false);
-        assertThrows(AccessForbiddenAlertException.class, () -> irisExerciseChatSessionService.onSubmissionFailure(result));
+        assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new SubmissionFailedEvent(result)))
+                .withMessageContaining("The Iris SUBMISSION_FAILED event is disabled for this exercise");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testShouldNotFireJolEventWhenEventSettingDisabled() {
+    void testShouldNotFireJolEventWhenEventSettingDisabled() throws AccessForbiddenAlertException {
         deactivateEventSettingsFor(IrisJolEventSettings.class, course);
         var jol = competencyUtilService.createJol(competency, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), (short) 3, ZonedDateTime.now(), 0.0D, 0.0D);
-        assertThrows(AccessForbiddenAlertException.class, () -> pyrisEventService.trigger(new CompetencyJolSetEvent(jol)));
+        assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new CompetencyJolSetEvent(jol)))
+                .withMessageContaining("The Iris JOL event is disabled for this course");
     }
 
     @Test

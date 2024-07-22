@@ -112,7 +112,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         });
     }
 
-
     /**
      * Deactivates the given event settings for the given type of event on the course.
      *
