@@ -72,6 +72,7 @@
                             <div class="d-flex gap-1">
                                 @if (lecture.course?.id && showCompetencies) {
                                     <jhi-competencies-popover
+                                        [style.flex-grow]="1"
                                         [courseId]="lecture.course!.id!"
                                         [competencies]="lectureUnit.competencies || []"
                                         [navigateTo]="'competencyManagement'"
