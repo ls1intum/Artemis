@@ -72,7 +72,7 @@
                     <!-- list of all top level posts -->
                     <!-- answers are opened in the thread sidebar -->
                     @for (post of posts; track postsTrackByFn($index, post)) {
-                        <div class="">
+                        <div>
                             <jhi-posting-thread
                                 #postingThread
                                 [lastReadDate]="_activeConversation?.lastReadDate"

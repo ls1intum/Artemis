@@ -36,8 +36,11 @@
                 <div class="btn-toolbar" role="toolbar">
                     <div class="btn-group me-1" role="group">
                         @if (activeConversationAsChannel?.subTypeReferenceId) {
-                            <a class="btn btn-sm btn-outline-secondary sub-type-reference" [routerLink]="channelSubTypeReferenceRouterLink">
-                                {{ channelSubTypeReferenceTranslationKey | artemisTranslate }}
+                            <a
+                                jhiTranslate="channelSubTypeReferenceTranslationKey"
+                                class="btn btn-sm btn-outline-secondary sub-type-reference"
+                                [routerLink]="channelSubTypeReferenceRouterLink"
+                            >
                             </a>
                         }
                         <button type="button" class="btn btn-sm btn-outline-secondary members" (click)="openConversationDetailDialog($event, MEMBERS)">
@@ -55,7 +58,7 @@
         @if (activeConversationAsChannel) {
             @if (activeConversationAsChannel.topic && activeConversationAsChannel.topic.length > 0) {
                 <div class="text-body-secondary d-flex justify-content-between px-2">
-                    <span class="d-inline-block mw-100">{{ activeConversationAsChannel.topic }}</span>
+                    <span id="conversation-topic" class="d-inline-block mw-100">{{ activeConversationAsChannel.topic }}</span>
                 </div>
             }
         }

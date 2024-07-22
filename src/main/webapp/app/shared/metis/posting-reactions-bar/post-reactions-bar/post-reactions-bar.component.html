@@ -6,7 +6,7 @@
                 <div>
                     <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
                         <jhi-emoji [emoji]="closeCrossId" />
-                        <span class="emoji-count">{{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.metis.collapseAnswers" class="emoji-count"></span>
                     </button>
                 </div>
             } @else {
@@ -22,13 +22,12 @@
                     </button>
                 </div>
             }
-
         } @else {
             <!-- start discussion -->
-            <div class="">
+            <div>
                 <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()" [disabled]="readOnlyMode">
                     <jhi-emoji [emoji]="speechBalloonId" />
-                    <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.metis.reply" class="emoji-count"></span>
                 </button>
             </div>
         }
@@ -36,16 +35,16 @@
         @if (!isThreadSidebar) {
             <!-- start discussion -->
             @if (sortedAnswerPosts.length === 0) {
-                <div class="">
+                <div>
                     <button class="reaction-button clickable reply-btn" (click)="openThread.emit()">
                         <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
-                        <span class="emoji-count px-2">{{ 'artemisApp.conversationsLayout.threadSideBar.reply' | artemisTranslate }} </span>
+                        <span jhiTranslate="artemisApp.conversationsLayout.threadSideBar.reply" class="emoji-count px-2"></span>
                     </button>
                 </div>
             }
             <!-- expand answers -->
             @if (!showAnswers && sortedAnswerPosts.length) {
-                <div class="">
+                <div>
                     <button class="reaction-button clickable expand-answers-btn" (click)="openThread.emit()">
                         <fa-icon [icon]="faArrowRight" />
                         <span class="emoji-count px-2">{{
@@ -118,7 +117,7 @@
 
     <div>
         @if (getShowNewMessageIcon()) {
-            <div class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</div>
+            <div jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></div>
         }
     </div>
 </div>

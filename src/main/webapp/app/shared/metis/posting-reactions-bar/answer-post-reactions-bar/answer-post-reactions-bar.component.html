@@ -50,7 +50,7 @@
         <div>
             <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()">
                 <jhi-emoji [emoji]="speechBalloonId" />
-                <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
+                <span jhiTranslate="artemisApp.metis.reply" class="emoji-count"></span>
             </button>
         </div>
     }

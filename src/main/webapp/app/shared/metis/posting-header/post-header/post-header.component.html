@@ -1,16 +1,20 @@
 <div class="d-flex justify-content-between">
     <div id="header-author-date" class="d-flex align-items-center gap-2 flex-wrap">
         @if (posting.author) {
-            <span ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}" class="badge fs-xx-small rounded-3" [ngClass]="'badge-' + userAuthority" id="role-badge">{{
-                userRoleBadge | artemisTranslate
-            }}</span>
+            <span
+                jhiTranslate="userRoleBadge"
+                ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}"
+                class="badge fs-xx-small rounded-3"
+                [ngClass]="'badge-' + userAuthority"
+                id="role-badge"
+            ></span>
             <span class="fs-small fw-semibold">
                 {{ posting.author?.name }}
             </span>
         }
         <span>-</span>
         @if (postingIsOfToday) {
-            <span id="today-flag" class="fs-x-small">{{ todayFlag | artemisTranslate }}</span>
+            <span jhiTranslate="todayFlag" id="today-flag" class="fs-x-small"></span>
         }
         <span class="fs-x-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
             {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
@@ -24,7 +28,7 @@
             />
         }
         @if (!!isCommunicationPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
-            <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+            <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>
         }
     </div>
     <div class="gap-1 d-flex">
