@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
 import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
@@ -40,28 +40,33 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         elementRef: ElementRef,
         private readonly renderer: Renderer2,
         private readonly translateService: TranslateService,
+        changeDetectorRef: ChangeDetectorRef,
+        zone: NgZone,
     ) {
+        changeDetectorRef.detach();
         /*
          * The constructor injects the editor along with its container into the empty template of this component.
          * This makes the editor available immediately (not just after ngOnInit), preventing errors when the methods
          * of this component are called.
          */
-        this.monacoEditorContainerElement = renderer.createElement('div');
-        renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
-        renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
-        this._editor = monaco.editor.create(this.monacoEditorContainerElement, {
-            value: '',
-            glyphMargin: true,
-            minimap: { enabled: false },
-            readOnly: this._readOnly,
-            lineNumbersMinChars: 4,
-            scrollBeyondLastLine: false,
-            scrollbar: {
-                alwaysConsumeMouseWheel: false, // Prevents the editor from consuming the mouse wheel event, allowing the parent element to scroll.
-            },
+        zone.runOutsideAngular(() => {
+            this.monacoEditorContainerElement = renderer.createElement('div');
+            renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
+            renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
+            this._editor = monaco.editor.create(this.monacoEditorContainerElement, {
+                value: '',
+                glyphMargin: true,
+                minimap: { enabled: false },
+                readOnly: this._readOnly,
+                lineNumbersMinChars: 4,
+                scrollBeyondLastLine: false,
+                scrollbar: {
+                    alwaysConsumeMouseWheel: false, // Prevents the editor from consuming the mouse wheel event, allowing the parent element to scroll.
+                },
+            });
+            this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
+            renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
         });
-        this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
-        renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
     }
 
     @Input()
