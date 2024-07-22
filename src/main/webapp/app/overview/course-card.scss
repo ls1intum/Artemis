@@ -1,6 +1,7 @@
 .card {
     min-height: 320px;
     transition: transform 0.2s linear;
+    border-radius: 20px;
 
     &:hover {
         transform: scale(1.012);
@@ -10,7 +11,9 @@
     .card-header {
         position: relative;
         padding: 0;
-        height: 80px;
+        height: 120px;
+        border-top-right-radius: 20px;
+        border-top-left-radius: 20px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -68,6 +71,10 @@
             padding-bottom: 1px;
             max-height: 80px;
         }
+    }
+
+    .card-body2 {
+        padding: 20px;
     }
 
     .card-body {

@@ -1,6 +1,6 @@
 <div class="card" [class.guided-tour]="hasGuidedTour">
     <div id="course-{{ course.id }}-header" class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="{ '--background-color-for-hover': courseColor }">
-        <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
+        <!-- <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a> -->
         <div class="container">
             <div class="row d-flex">
                 <div class="col-2 header-col image-col">
@@ -38,9 +38,92 @@
             </div>
         </div>
     </div>
-    <div class="card-body">
-        <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
+    <div class="card-body2">
+        <h4 class="fw-bold my-3">{{ course.title }}</h4>
+        @if (nextRelevantExercise) {
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="fw-bold text-secondary">Next Unit</div>
+                    <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]"></a>
+                    <div class="fw-bold">
+                        <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
+                    </div>
+                </div>
+                <fa-icon class="next-exercise-icon align-self-center" [style.marginRight.px]="27" [icon]="nextExerciseIcon" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
+            </div>
+        } @else {
+            <div class="fw-bold text-secondary">Next Unit</div>
+            <div class="fw-bold">
+                <span jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></span>
+            </div>
+        }
+        <hr />
         @if (exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0)) {
+            <div class="d-flex justify-content-between">
+                <div class="align-self-center">
+                    <div class="fw-bold text-secondary">Score</div>
+                    <div class="fw-bold">
+                        <div>{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points ({{ totalRelativeScore }}%)</div>
+                    </div>
+                </div>
+                <div class="align-self-start chart-container">
+                    <ngx-charts-pie-chart
+                        id="score-chart"
+                        class="chart-level"
+                        [view]="[70, 70]"
+                        [results]="ngxDoughnutData"
+                        [scheme]="ngxColor"
+                        [doughnut]="true"
+                        [animations]="false"
+                        (select)="onSelect()"
+                        (click)="onSelect()"
+                    >
+                        <ng-template #tooltipTemplate let-model="model">
+                            <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
+                            <span>: {{ model.value }}</span>
+                        </ng-template>
+                    </ngx-charts-pie-chart>
+                </div>
+            </div>
+        } @else {
+            <div class="fw-bold text-secondary">Score</div>
+            <div class="fw-bold">
+                <span jhiTranslate="artemisApp.studentDashboard.noStatistics"></span>
+            </div>
+        }
+        <hr />
+        <div class="d-flex justify-content-end">
+            <a class="btn btn-primary" [routerLink]="['/courses', course.id!]">View Course</a>
+        </div>
+
+        <!-- @if (nextRelevantExercise) {
+        <div class="card-footer text-body-secondary">
+            <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]"></a>
+            <div class="container">
+                <div class="row">
+                    <div class="col-3 next-exercise-col">
+                        <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></h6>
+                    </div>
+                    <div class="col-6 next-exercise-col">
+                        <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right auto" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
+                        <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
+                    </div>
+                    <div class="col-3 next-exercise-col text-nowrap">
+                        @if (nextExerciseDueDate) {
+                            <div>
+                                <h6>{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}:</h6>
+                                <h6>{{ nextExerciseDueDate | artemisTimeAgo }}</h6>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    } -->
+
+        <!-- <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a> -->
+
+        <!-- @if (exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0)) {
             <div class="chart-container">
                 <div class="chart-text">
                     <h3 class="text-center">{{ totalRelativeScore }}%</h3>
@@ -65,9 +148,9 @@
             </div>
         } @else {
             <h6 class="no-statistics" jhiTranslate="artemisApp.studentDashboard.noStatistics"></h6>
-        }
+        } -->
     </div>
-    @if (nextRelevantExercise) {
+    <!-- @if (nextRelevantExercise) {
         <div class="card-footer text-body-secondary">
             <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]"></a>
             <div class="container">
@@ -90,13 +173,13 @@
                 </div>
             </div>
         </div>
-    }
-    @if (!nextRelevantExercise) {
+    } -->
+    <!-- @if (!nextRelevantExercise) {
         <div class="card-footer text-body-secondary">
             <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
             <div class="col no-exercise">
                 <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></h6>
             </div>
         </div>
-    }
+    } -->
 </div>
