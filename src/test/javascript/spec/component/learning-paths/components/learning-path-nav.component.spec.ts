@@ -104,7 +104,7 @@ describe('LearningPathStudentNavComponent', () => {
     });
 
     it('should set current to previous unit on complete button', async () => {
-        const navigationDto = {
+        const previousNavigationDto = {
             predecessorLearningObject: {
                 id: 1,
                 name: 'Exercise',
@@ -119,20 +119,33 @@ describe('LearningPathStudentNavComponent', () => {
             },
             progress: 95,
         };
-        getLearningPathNavigationSpy.mockResolvedValue(navigationDto);
+        const currentNavigationDto = {
+            predecessorLearningObject: {
+                id: 2,
+                name: 'Lecture',
+                type: LearningObjectType.LECTURE,
+                completed: false,
+            },
+            progress: 95,
+        };
+        getLearningPathNavigationSpy.mockResolvedValue(previousNavigationDto);
 
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
 
+        getLearningPathNavigationSpy.mockResolvedValue(currentNavigationDto);
+
         const completeButton = fixture.debugElement.query(By.css('#complete-button'));
         completeButton.nativeElement.click();
 
         fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
-        expect(component.predecessorLearningObject()).toBe(navigationDto.currentLearningObject);
+        expect(component.predecessorLearningObject()).toBe(currentNavigationDto.predecessorLearningObject);
         expect(component.currentLearningObject()).toBeUndefined();
-        expect(component.learningPathProgress()).toBe(100);
+        expect(component.learningPathProgress()).toEqual(currentNavigationDto.progress);
     });
 
     it('should show navigation with previous and complete button', async () => {
