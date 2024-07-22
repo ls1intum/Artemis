@@ -53,12 +53,12 @@ export interface DateDetail extends DetailBase {
     data: { date?: dayjs.Dayjs };
 }
 
-interface LinkDetail extends DetailBase {
+export interface LinkDetail extends DetailBase {
     type: DetailType.Link;
     data: { text?: string | number; href?: string | false; routerLink?: (string | number | undefined)[]; queryParams?: Record<string, string | number | undefined> };
 }
 
-interface BooleanDetail extends DetailBase {
+export interface BooleanDetail extends DetailBase {
     type: DetailType.Boolean;
     data: { boolean?: boolean };
 }
