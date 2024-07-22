@@ -106,7 +106,7 @@ public abstract class IrisEventSettings extends DomainObject {
         return deferredUntil;
     }
 
-    public void setDeferredUntil(@Nullable ZonedDateTime deferredUntil) {
+    public void setDeferredUntil(ZonedDateTime deferredUntil) {
         this.deferredUntil = deferredUntil;
     }
 

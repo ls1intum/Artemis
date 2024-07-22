@@ -1,33 +1,31 @@
 package de.tum.in.www1.artemis.iris;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.security.test.context.support.WithMockUser;
-
+import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisJolEventSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisSubmissionFailedEventSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisSubmissionSuccessfulEventSettings;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -36,17 +34,28 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisStatusUpdateService;
+import de.tum.in.www1.artemis.service.connectors.pyris.event.CompetencyJolSetEvent;
+import de.tum.in.www1.artemis.service.connectors.pyris.event.PyrisEvent;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.PyrisEventService;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.SubmissionFailedEvent;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.SubmissionSuccessfulEvent;
 import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-public class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
+class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "pyriseventsystemtest";
 
@@ -74,6 +83,9 @@ public class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     @SpyBean
     private IrisCourseChatSessionService irisCourseChatSessionService;
 
+    @SpyBean
+    private CompetencyJolService competencyJolService;
+
     @Autowired
     private PyrisEventService pyrisEventService;
 
@@ -83,6 +95,9 @@ public class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     @Autowired
     private UserUtilService userUtilService;
 
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
     private ProgrammingExercise exercise;
 
     private Course course;
@@ -91,11 +106,14 @@ public class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
 
     private AtomicBoolean pipelineDone;
 
+    private Competency competency;
+
     @BeforeEach
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        competency = competencyUtilService.createCompetency(course);
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
@@ -195,53 +213,102 @@ public class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("submission_failed"), eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())),
-                eq(exercise), eq(irisSession));
+            eq(exercise), eq(irisSession));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldFireJolEvent() {
-        // TODO: Event service should successfully fire JOL event after JOL value is set
-        // Steps to test:
-        // Student sets JOL value
-        // The event service should fire the JOL event
-        // Check if the appropriate function is called in the irisCourseChatSessionService
+        var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), false);
+        var jolValue = 3;
+        irisRequestMockProvider.mockJolEventRunResponse((dto) -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            pipelineDone.set(true);
+        });
+        competencyJolService.setJudgementOfLearning(competency.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), (short) jolValue);
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
+        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("jol"), eq(irisSession), any(CompetencyJol.class));
+
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testShouldHandleUnsupportedEventException() {
-        // TODO: Event service should throw UnsupportedOperationException if the event is not supported
+    void testShouldThrowUnsupportedEventException() {
+        assertThrows(UnsupportedOperationException.class, () -> pyrisEventService.trigger(new PyrisEvent<IrisCourseChatSessionService, Object>() {
+            @Override
+            public void handleEvent(IrisCourseChatSessionService service) {
+                // Do nothing
+            }
+        }));
+
     }
 
-    @Test
+    @Test()
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldFireSubmissionSuccessfulEventWithEventDisabled() {
-        // TODO: Event service should not fire submission successful event if the event is disabled
+        deactivateEventSettingsFor(IrisSubmissionSuccessfulEventSettings.class, course);
+        var result = createSubmission(studentParticipation, true);
+        assertThrows(AccessForbiddenAlertException.class, () -> pyrisEventService.trigger(new SubmissionSuccessfulEvent(result)));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireSubmissionFailedEventWhenEventSettingDisabled() {
-        // TODO: Event service should not fire submission failed event if the event is disabled
+        deactivateEventSettingsFor(IrisSubmissionFailedEventSettings.class, course);
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        // Create three failing submissions for the student.
+        createSubmission(studentParticipation, false);
+        createSubmission(studentParticipation, false);
+        var result = createSubmission(studentParticipation, false);
+        assertThrows(AccessForbiddenAlertException.class, () -> irisExerciseChatSessionService.onSubmissionFailure(result));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireJolEventWhenEventSettingDisabled() {
-        // TODO: Event service should not fire JOL event if the event is disabled
+        deactivateEventSettingsFor(IrisJolEventSettings.class, course);
+        var jol = competencyUtilService.createJol(competency, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), (short) 3, ZonedDateTime.now(), 0.0D, 0.0D);
+        assertThrows(AccessForbiddenAlertException.class, () -> pyrisEventService.trigger(new CompetencyJolSetEvent(jol)));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldFireSubmissionSuccessfulEventOnlyOnceWithMultipleSuccessfulSubmissions() {
-        // TODO: Event service should fire submission successful event only once even after multiple successful submissions
+        var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), false);
+        irisRequestMockProvider.mockSubmissionSuccessfulEventRunResponse((dto) -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            pipelineDone.set(true);
+        });
+        createSubmission(studentParticipation, false);
+        var result = createSubmission(studentParticipation, true);
+
+        pyrisEventService.trigger(new SubmissionSuccessfulEvent(result));
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+        pipelineDone.set(false);
+
+        result = createSubmission(studentParticipation, true);
+        pyrisEventService.trigger(new SubmissionSuccessfulEvent(result));
+
+        verify(irisCourseChatSessionService, times(2)).onSubmissionSuccess(any(Result.class));
+        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("submission_successful"), eq(irisSession), eq(exercise));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireSubmissionFailedEventWithLessThanThreeFailedSubmissions() {
-        // TODO: Event service should not fire submission failed event if the number of failed submissions is less than three
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        // Create two failing submissions for the student.
+        createSubmission(studentParticipation, false);
+        var result = createSubmission(studentParticipation, false);
+
+        pyrisEventService.trigger(new SubmissionFailedEvent(result));
+
+        verify(irisExerciseChatSessionService, times(1)).onSubmissionFailure(any(Result.class));
+        verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any());
     }
 
 }

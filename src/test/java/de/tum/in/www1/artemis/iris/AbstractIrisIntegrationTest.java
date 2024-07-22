@@ -109,8 +109,32 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
                 submissionFailedEventSettings.setSuccessThreshold(80.0);
                 submissionFailedEventSettings.setNumberOfFailedAttempts(3);
             }
-
         });
+    }
+
+
+    /**
+     * Deactivates the given event settings for the given type of event on the course.
+     *
+     * @param eventSettingsClass the type of event settings
+     * @param course             the course for which the settings should be deactivated
+     */
+    public <S extends IrisEventSettings> void deactivateEventSettingsFor(Class<S> eventSettingsClass, Course course) {
+        var courseSettings = irisSettingsService.getRawIrisSettingsFor(course);
+        var eventSettings = courseSettings.getIrisProactivitySettings().getEventSettings();
+
+        deactivateEventSettingsFor(eventSettingsClass, eventSettings);
+        irisSettingsRepository.save(courseSettings);
+    }
+
+    /**
+     * Deactivates the given event settings for the given type of event.
+     *
+     * @param eventSettingsClass the type of event settings
+     * @param settings           the settings to be deactivated
+     */
+    private <S extends IrisEventSettings> void deactivateEventSettingsFor(Class<S> eventSettingsClass, Set<IrisEventSettings> settings) {
+        settings.stream().filter(e -> e != null && e.getClass() == eventSettingsClass).forEach(e -> e.setActive(false));
     }
 
     protected void activateIrisFor(Course course) {
