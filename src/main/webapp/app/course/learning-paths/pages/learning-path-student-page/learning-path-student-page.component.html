@@ -12,7 +12,7 @@
                 <jhi-learning-path-lecture-unit [lectureUnitId]="currentLearningObject()!.id" />
             } @else if (currentLearningObject()?.type === LearningObjectType.EXERCISE) {
                 <jhi-learning-path-exercise [courseId]="courseId()" [exerciseId]="currentLearningObject()!.id" />
-            } @else if(!isLearningPathNavigationLoading()) {
+            } @else if (!isLearningPathNavigationLoading()) {
                 <div class="row align-items-center justify-content-center h-100">
                     <div class="learning-path-no-content-container">
                         <h3 class="mb-3" jhiTranslate="artemisApp.learningPath.completion.title"></h3>
