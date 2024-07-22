@@ -89,7 +89,7 @@ describe('LearningPathStudentNavComponent', () => {
         expect(progressBar.nativeElement.style.width).toBe('50%');
     });
 
-    it('should navigation with back and previous button', async () => {
+    it('should navigate with next and previous button', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -103,7 +103,39 @@ describe('LearningPathStudentNavComponent', () => {
         expect(nextButton).toBeTruthy();
     });
 
-    it('should show navigation with only previous button', async () => {
+    it('should set current to previous unit on complete button', async () => {
+        const navigationDto = {
+            predecessorLearningObject: {
+                id: 1,
+                name: 'Exercise',
+                type: LearningObjectType.EXERCISE,
+                completed: true,
+            },
+            currentLearningObject: {
+                id: 2,
+                name: 'Lecture',
+                type: LearningObjectType.LECTURE,
+                completed: false,
+            },
+            progress: 95,
+        };
+        getLearningPathNavigationSpy.mockResolvedValue(navigationDto);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const completeButton = fixture.debugElement.query(By.css('#complete-button'));
+        completeButton.nativeElement.click();
+
+        fixture.detectChanges();
+
+        expect(component.predecessorLearningObject()).toBe(navigationDto.currentLearningObject);
+        expect(component.currentLearningObject()).toBeUndefined();
+        expect(component.learningPathProgress()).toBe(100);
+    });
+
+    it('should show navigation with previous and complete button', async () => {
         const navigationDto = {
             predecessorLearningObject: {
                 id: 1,
@@ -134,6 +166,9 @@ describe('LearningPathStudentNavComponent', () => {
 
         const nextButton = fixture.debugElement.query(By.css('#next-button'));
         expect(nextButton).toBeFalsy();
+
+        const completeButton = fixture.debugElement.query(By.css('#complete-button'));
+        expect(completeButton).toBeTruthy();
     });
 
     it('should show navigation with only next button', async () => {

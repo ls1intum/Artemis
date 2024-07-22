@@ -40,6 +40,13 @@
                             <span jhiTranslate="artemisApp.learningPath.navigation.nextButton"></span>
                         </button>
                     </div>
+                } @else if(currentLearningObject() && !successorLearningObject()) {
+                    <div class="col-md-auto">
+                        <button id="complete-button" (click)="completeLearningPath()" type="button" class="btn btn-primary">
+                            <fa-icon [icon]="faFlag" />
+                            <span jhiTranslate="artemisApp.learningPath.navigation.completeButton"></span>
+                        </button>
+                    </div>
                 }
             </div>
         </div>

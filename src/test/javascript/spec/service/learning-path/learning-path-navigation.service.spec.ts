@@ -63,7 +63,7 @@ describe('LearningPathNavigationService', () => {
 
         expect(learningPathNavigationService.learningPathNavigation()).toEqual(learningPathNavigationDto);
         expect(learningPathNavigationService.currentLearningObject()).toEqual(learningPathNavigationDto.currentLearningObject);
-        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toEqual(learningPathNavigationDto.currentLearningObject.completed);
+        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toEqual(learningPathNavigationDto.currentLearningObject!.completed);
         expect(loadLearningPathNavigationSpy).toHaveBeenCalledWith(learningPathId);
     });
 
@@ -71,17 +71,50 @@ describe('LearningPathNavigationService', () => {
         const selectedLearningObject = learningPathNavigationDto.currentLearningObject;
         const loadRelativeLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getRelativeLearningPathNavigation').mockResolvedValue(learningPathNavigationDto);
 
-        await learningPathNavigationService.loadRelativeLearningPathNavigation(learningPathId, selectedLearningObject);
+        await learningPathNavigationService.loadRelativeLearningPathNavigation(learningPathId, selectedLearningObject!);
 
         expect(learningPathNavigationService.learningPathNavigation()).toEqual(learningPathNavigationDto);
         expect(learningPathNavigationService.currentLearningObject()).toEqual(learningPathNavigationDto.currentLearningObject);
-        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toEqual(learningPathNavigationDto.currentLearningObject.completed);
+        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toEqual(learningPathNavigationDto.currentLearningObject!.completed);
         expect(loadRelativeLearningPathNavigationSpy).toHaveBeenCalledWith(
             learningPathId,
-            selectedLearningObject.id,
-            selectedLearningObject.type,
-            selectedLearningObject.competencyId,
+            selectedLearningObject!.id,
+            selectedLearningObject!.type,
+            selectedLearningObject!.competencyId,
         );
+    });
+
+    it('should complete learning path', async () => {
+        const learningPathNavigationDto = {
+            predecessorLearningObject: {
+                id: 1,
+                name: 'Lecture 1',
+                completed: true,
+                type: LearningObjectType.LECTURE,
+            },
+            currentLearningObject: {
+                id: 2,
+                name: 'Exercise 1',
+                completed: false,
+                type: LearningObjectType.EXERCISE,
+            },
+            progress: 80,
+        } as LearningPathNavigationDTO;
+
+        jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(learningPathNavigationDto);
+        const completeLearningPathSpy = jest.spyOn(learningPathNavigationService, 'completeLearningPath');
+
+        await learningPathNavigationService.loadLearningPathNavigation(learningPathId);
+
+        learningPathNavigationService.completeLearningPath();
+
+        expect(learningPathNavigationService.learningPathNavigation()).toEqual({
+            predecessorLearningObject: learningPathNavigationDto.currentLearningObject,
+            currentLearningObject: undefined,
+            successorLearningObject: undefined,
+            progress: 100,
+        });
+        expect(completeLearningPathSpy).toHaveBeenCalled();
     });
 
     it('should call alert service on learning path loading fail', async () => {

@@ -4,6 +4,7 @@
             "navigation": {
                 "nextButton": "Weiter",
                 "previousButton": "Zurück",
+                "completeButton": "Abschließen",
                 "overview": {
                     "title": "Lernpfad Kompetenzen",
                     "showCompetenciesGraphButton": "Kompetenzgraph",

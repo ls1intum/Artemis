@@ -4,6 +4,7 @@
             "navigation": {
                 "nextButton": "Next",
                 "previousButton": "Previous",
+                "completeButton": "Complete",
                 "overview": {
                     "title": "Learning path competencies",
                     "showCompetenciesGraphButton": "Competency graph",
