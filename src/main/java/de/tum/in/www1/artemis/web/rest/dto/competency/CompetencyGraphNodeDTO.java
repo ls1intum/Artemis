@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyGraphNodeDTO(String id, String label, ZonedDateTime softDueDate, Double progress, Double confidence, Double masteryProgress) {
+public record CompetencyGraphNodeDTO(String id, String label, ZonedDateTime softDueDate, double progress, double confidence, double masteryProgress) {
 
     public static CompetencyGraphNodeDTO of(@NotNull CourseCompetency competency, @NotNull Optional<CompetencyProgress> competencyProgress) {
         return new CompetencyGraphNodeDTO(competency.getId().toString(), competency.getTitle(), competency.getSoftDueDate(),

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.competency;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -51,9 +53,11 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.LearningPathResource;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyGraphNodeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyInstructorGraphNodeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyNameDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyInstructorGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
@@ -118,6 +122,8 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
 
+    private static final String SECOND_STUDENT_OF_COURSE = TEST_PREFIX + "student2";
+
     private static final String TUTOR_OF_COURSE = TEST_PREFIX + "tutor1";
 
     private static final String EDITOR_OF_COURSE = TEST_PREFIX + "editor1";
@@ -177,6 +183,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.FORBIDDEN, LearningPath.class, pageableSearchUtilService.searchMapping(search));
         request.get("/api/courses/" + course.getId() + "/learning-path-health", HttpStatus.FORBIDDEN, LearningPathHealthDTO.class);
+        request.get("/api/courses/" + course.getId() + "/learning-path/competency-instructor-graph", HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
     }
 
     private void enableLearningPathsRESTCall(Course course) throws Exception {
@@ -439,7 +446,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
     void testGetLearningPathOfOtherUser() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var otherStudent = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        final var otherStudent = userRepository.findOneByLogin(SECOND_STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), otherStudent.getId());
         request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
     }
@@ -448,7 +455,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
     void testGetLearningPathCompetencyGraphOfOtherUser() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var otherStudent = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        final var otherStudent = userRepository.findOneByLogin(SECOND_STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), otherStudent.getId());
         request.get("/api/learning-path/" + learningPath.getId() + "/competency-graph", HttpStatus.FORBIDDEN, LearningPathCompetencyGraphDTO.class);
     }
@@ -480,6 +487,43 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 && relation.getTailCompetency().getId() == Long.parseLong(relationDTO.target()) && relation.getHeadCompetency().getId() == Long.parseLong(relationDTO.source())));
     }
 
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGetLearningPathCompetencyInstructorGraph() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final User[] students = IntStream.range(1, NUMBER_OF_STUDENTS + 1).mapToObj(i -> userRepository.findOneByLogin(TEST_PREFIX + "student" + i).orElseThrow())
+                .toArray(User[]::new);
+
+        // student 1 and 2 completed both text units
+        TextUnit otherTextUnit = createAndLinkTextUnit(students[0], competencies[0], true);
+        lectureUnitService.setLectureUnitCompletion(textUnit, students[1], true);
+        lectureUnitService.setLectureUnitCompletion(otherTextUnit, students[1], true);
+
+        // student 3 completed only one text unit
+        lectureUnitService.setLectureUnitCompletion(otherTextUnit, students[2], true);
+
+        Arrays.stream(students)
+                .forEach(student -> Arrays.stream(competencies).forEach(competency -> competencyProgressService.updateCompetencyProgress(competency.getId(), student)));
+
+        LearningPathCompetencyInstructorGraphDTO response = request.get("/api/courses/" + course.getId() + "/learning-path/competency-instructor-graph", HttpStatus.OK,
+                LearningPathCompetencyInstructorGraphDTO.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.nodes().stream().map(CompetencyInstructorGraphNodeDTO::id))
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(competencies).map(Competency::getId).map(Object::toString).toList());
+        CompetencyInstructorGraphNodeDTO nodeForCompetency1 = response.nodes().stream().filter(node -> Objects.equals(node.id(), competencies[0].getId().toString())).findAny()
+                .get();
+        assertThat(nodeForCompetency1.percentOfMasteredStudents()).isCloseTo(2.0 / 5, within(0.001));
+        // masteryThreshold is 60% for competency[0]
+        assertThat(nodeForCompetency1.averageMasteryProgress()).isCloseTo((2 * 1 + 1 * 5.0 / 6) / 3, within(0.001));
+        assertThat(nodeForCompetency1.meanMasteryProgress()).isCloseTo(1, within(0.001));
+
+        Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
+        assertThat(response.edges()).hasSameSizeAs(relations);
+        assertThat(response.edges()).allMatch(relationDTO -> relations.stream().anyMatch(relation -> relation.getId() == Long.parseLong(relationDTO.id())
+                && relation.getTailCompetency().getId() == Long.parseLong(relationDTO.target()) && relation.getHeadCompetency().getId() == Long.parseLong(relationDTO.source())));
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
@@ -494,7 +538,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    @WithMockUser(username = SECOND_STUDENT_OF_COURSE, roles = "USER")
     void testGetLearningPathNgxForOtherStudent(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
@@ -621,7 +665,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    @WithMockUser(username = SECOND_STUDENT_OF_COURSE, roles = "USER")
     void testGetCompetencyProgressForLearningPathByOtherStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();

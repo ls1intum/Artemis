@@ -46,6 +46,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyNameDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressForLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyInstructorGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
@@ -204,6 +205,21 @@ public class LearningPathResource {
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
 
         return ResponseEntity.ok(learningPathService.generateLearningPathCompetencyGraph(learningPath, user));
+    }
+
+    /**
+     * GET courses/{courseId}/learning-path/competency-instructor-graph : Gets the competency instructor graph
+     *
+     * @param courseId the id of the course for which the graph should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the graph
+     */
+    @GetMapping("courses/{courseId}/learning-path/competency-instructor-graph")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<LearningPathCompetencyInstructorGraphDTO> getLearningPathCompetencyInstructorGraph(@PathVariable long courseId) {
+        log.debug("REST request to get competency instructor graph for learning path with id: {}", courseId);
+
+        return ResponseEntity.ok(learningPathService.generateLearningPathCompetencyInstructorGraph(courseId));
     }
 
     /**
