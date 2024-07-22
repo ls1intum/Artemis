@@ -30,6 +30,7 @@ import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
 import { ImportPrerequisitesComponent } from 'app/course/competencies/import-competencies/import-prerequisites.component';
+import { LearningPathInstructorPageComponent } from 'app/course/learning-paths/pages/learning-path-instructor-page/learning-path-instructor-page.component';
 
 export const courseManagementState: Routes = [
     {
@@ -293,7 +294,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'learning-path-management',
-                        component: LearningPathManagementComponent,
+                        component: LearningPathInstructorPageComponent,
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.learningPath.manageLearningPaths.title',
