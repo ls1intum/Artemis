@@ -231,9 +231,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Transient
     private Long numberOfRatingsTransient;
 
-    @Transient
-    private Long allowedSelfLearningFeedbackAttempts;
-
     /**
      * Used for receiving the value from client.
      */
@@ -1041,13 +1038,5 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public void disconnectRelatedEntities() {
         Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, posts, plagiarismCases).filter(Objects::nonNull)
                 .forEach(Collection::clear);
-    }
-
-    public void setAllowedSelfLearningFeedbackAttempts(long allowedSelfLearningFeedbackAttempts) {
-        this.allowedSelfLearningFeedbackAttempts = allowedSelfLearningFeedbackAttempts;
-    }
-
-    public long getAllowedSelfLearningFeedbackAttempts() {
-        return this.allowedSelfLearningFeedbackAttempts;
     }
 }

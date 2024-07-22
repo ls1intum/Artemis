@@ -60,6 +60,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     theiaEnabled: boolean = false;
     theiaPortalURL: string;
 
+    allowedSelfLearningFeedbackAttempts: number;
+
     // Icons
     faFolderOpen = faFolderOpen;
     faUsers = faUsers;
@@ -119,6 +121,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                     if (this.theiaPortalURL === '') {
                         this.theiaEnabled = false;
                     }
+                }
+
+                if (profileInfo.activeProfiles?.includes(PROFILE_ATHENA)) {
+                    this.allowedSelfLearningFeedbackAttempts = profileInfo.allowedSelfLearningFeedbackAttempts;
                 }
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
@@ -349,8 +355,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
             const countOfSuccessfulRequests = athenaResults.filter((result) => result.successful === true).length;
 
-            const allowedSelfLearningFeedbackAttempts = (this.exercise as ProgrammingExercise).allowedSelfLearningFeedbackAttempts;
-            if (allowedSelfLearningFeedbackAttempts !== undefined && countOfSuccessfulRequests >= allowedSelfLearningFeedbackAttempts) {
+            if (this.allowedSelfLearningFeedbackAttempts !== undefined && countOfSuccessfulRequests >= this.allowedSelfLearningFeedbackAttempts) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
                 window.alert(rateLimitExceededWarning);
                 return false;

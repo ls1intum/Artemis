@@ -29,6 +29,8 @@ export class ProfileService {
                 .pipe(
                     map((res: HttpResponse<ProfileInfo>) => {
                         const data = res.body!;
+                        console.log('Data: ');
+                        console.log(data);
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
@@ -83,6 +85,7 @@ export class ProfileService {
                         profileInfo.git = data.git;
 
                         profileInfo.theiaPortalURL = data.theiaPortalURL ?? '';
+                        profileInfo.allowedSelfLearningFeedbackAttempts = data.allowedSelfLearningFeedbackAttempts ?? 0;
 
                         return profileInfo;
                     }),

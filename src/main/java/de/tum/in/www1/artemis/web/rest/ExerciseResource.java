@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -100,10 +99,6 @@ public class ExerciseResource {
     private final ParticipationRepository participationRepository;
 
     private final ExamAccessService examAccessService;
-
-    // default value is 3 if the placeholder cannot be resolved
-    @Value("${artemis.athena.allowed-self-learning-feedback-attempts:3}")
-    private Integer allowedSelfLearningFeedbackAttempts;
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
@@ -342,9 +337,6 @@ public class ExerciseResource {
         if (exercise instanceof QuizExercise quizExercise) {
             quizExercise.setQuizBatches(null);
             quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
-        }
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            programmingExercise.setAllowedSelfLearningFeedbackAttempts(this.allowedSelfLearningFeedbackAttempts);
         }
 
         // TODO: we should also check that the submissions do not contain sensitive data

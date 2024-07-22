@@ -319,6 +319,16 @@ public final class Constants {
     public static final String THEIA_PORTAL_URL = "theiaPortalURL";
 
     /**
+     * The name of the Spring profile used for Athena.
+     */
+    public static final String PROFILE_ATHENA = "athena";
+
+    /**
+     * The InfoContributor's detail key for the upper bound of allowed submissions.
+     */
+    public static final String ALLOWED_NUMBER_OF_NON_GRADED_FEEDBACK_REQUESTS = "allowedSelfLearningFeedbackAttempts";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;

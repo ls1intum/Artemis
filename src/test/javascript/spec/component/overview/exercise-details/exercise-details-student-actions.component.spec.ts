@@ -33,7 +33,7 @@ import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-c
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { PROFILE_THEIA } from 'app/app.constants';
+import { PROFILE_ATHENA, PROFILE_THEIA } from 'app/app.constants';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -573,6 +573,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     });
 
     it('assureConditionsSatisfied should alert and return false if the maximum number of successful Athena results is reached', () => {
+        getProfileInfoSub.mockReturnValue(
+            of({
+                activeProfiles: [PROFILE_ATHENA],
+                allowedSelfLearningFeedbackAttempts: 3,
+            } as ProfileInfo),
+        );
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+
         jest.spyOn(window, 'alert').mockImplementation(() => {});
         const numResults = 20;
         const results: Array<{ assessmentType: AssessmentType; successful: boolean }> = [];
@@ -582,7 +590,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         }
 
         comp.exercise = {
-            allowedSelfLearningFeedbackAttempts: 20,
             type: ExerciseType.PROGRAMMING,
             dueDate: dayjs().add(5, 'minutes'),
             studentParticipations: [
@@ -599,6 +606,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 },
             ] as StudentParticipation[],
         } as ProgrammingExercise;
+
+        fixture.detectChanges();
 
         const result = comp.assureConditionsSatisfied();
 

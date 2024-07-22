@@ -261,6 +261,7 @@ describe('Profile Service', () => {
             },
         },
         theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        allowedSelfLearningFeedbackAttempts: 3,
     };
 
     beforeEach(() => {
