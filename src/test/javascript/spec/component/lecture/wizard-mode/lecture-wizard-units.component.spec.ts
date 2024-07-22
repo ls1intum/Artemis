@@ -163,7 +163,7 @@ describe('LectureWizardUnitComponent', () => {
             name: 'Test',
             releaseDate: dayjs().year(2010).month(3).date(5),
             description: 'Lorem Ipsum',
-            source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
+            source: 'https://youtu.be/dQw4w9WgXcQ',
             competencies: [
                 {
                     id: 1,
@@ -641,6 +641,62 @@ describe('LectureWizardUnitComponent', () => {
         formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
         const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const alertStub = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+
+        wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
+            expect(alertStub).toHaveBeenCalledOnce();
+        });
+    }));
+
+    it('should show alert upon unsuccessful attachment form submission with error information', fakeAsync(() => {
+        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+
+        const attachmentUnitFormData: AttachmentUnitFormData = {
+            formProperties: {
+                name: 'test',
+                description: 'lorem ipsum',
+                releaseDate: dayjs().year(2010).month(3).date(5),
+                version: 2,
+                updateNotificationText: 'lorem ipsum',
+            },
+            fileProperties: {
+                file: fakeFile,
+                fileName: 'lorem ipsum',
+            },
+        };
+
+        const examplePath = '/path/to/file';
+
+        const attachment = new Attachment();
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
+        attachment.name = attachmentUnitFormData.formProperties.name;
+        attachment.link = examplePath;
+
+        const attachmentUnit = new AttachmentUnit();
+        attachmentUnit.description = attachmentUnitFormData.formProperties.description;
+        attachmentUnit.attachment = attachment;
+
+        const formData = new FormData();
+        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('attachment', objectToJsonBlob(attachment));
+        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
+
+        const createAttachmentUnitStub = jest
+            .spyOn(attachmentUnitService, 'create')
+            .mockReturnValue(throwError(() => ({ status: 404, error: { params: 'file', title: 'Test Title' } })));
         const alertStub = jest.spyOn(alertService, 'error');
 
         wizardUnitComponentFixture.detectChanges();
