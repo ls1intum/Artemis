@@ -362,9 +362,12 @@ public class LearningPathService {
      */
     public LearningPath findWithCompetenciesAndLearningObjectsAndCompletedUsersById(long learningPathId) {
         LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
+
+        learningPath.getCompetencies()
+                .forEach(competency -> competency.setExercises(competency.getExercises().stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet())));
         // Remove exercise units, since they are already retrieved as exercises
-        learningPath.getCompetencies().stream().forEach(competency -> competency
-                .setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet())));
+        learningPath.getCompetencies().forEach(competency -> competency.setLectureUnits(competency.getLectureUnits().stream()
+                .filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit) && lectureUnit.isVisibleToStudents()).collect(Collectors.toSet())));
         if (learningPath.getUser() == null) {
             learningPath.getCompetencies().forEach(competency -> {
                 competency.setUserProgress(Collections.emptySet());
