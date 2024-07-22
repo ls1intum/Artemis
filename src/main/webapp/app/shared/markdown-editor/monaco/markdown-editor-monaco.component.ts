@@ -174,7 +174,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     constructor(
         private alertService: AlertService,
         private fileUploaderService: FileUploaderService,
-        private readonly changeDetectorRef: ChangeDetectorRef,
+        protected readonly changeDetectorRef: ChangeDetectorRef,
     ) {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
         this.changeDetectorRef.detach();
