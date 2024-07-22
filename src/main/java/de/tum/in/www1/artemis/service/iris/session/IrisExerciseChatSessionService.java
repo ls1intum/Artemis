@@ -4,6 +4,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisExerciseChatSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -46,6 +49,8 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @Service
 @Profile("iris")
 public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
+
+    private static final Logger log = LoggerFactory.getLogger(IrisExerciseChatSessionService.class);
 
     private final IrisMessageService irisMessageService;
 
@@ -69,11 +74,13 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository) {
+            ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, SubmissionRepository submissionRepository) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -86,6 +93,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         this.pyrisPipelineService = pyrisPipelineService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -178,7 +186,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     public void onSubmissionFailure(Result result) {
         var participation = result.getParticipation();
-        if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
             return;
         }
         var exercise = (ProgrammingExercise) participation.getExercise();
@@ -188,13 +196,33 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
         irisSettingsService.isActivatedForElseThrow(IrisEventType.SUBMISSION_FAILED, exercise);
 
-        var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
-        if (participant instanceof User user) {
-            var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
-            CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_failed"));
+        log.info("Checking if the last 3 submissions failed for user {}", studentParticipation.getParticipant().getName());
+        // Check if the student has already successfully submitted before
+        // If not check, if the last 3 submissions failed
+        var recentSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
+        // Check if the user has already successfully submitted before
+        var successfulSubmission = recentSubmissions.stream().anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= 80.0);
+        if (!successfulSubmission && recentSubmissions.size() >= 3) {
+            var lastThreeSubmissions = recentSubmissions.subList(recentSubmissions.size() - 3, recentSubmissions.size());
+            var allFailed = lastThreeSubmissions.stream().allMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() < 80.0);
+            if (allFailed) {
+                log.info("All last 3 submissions failed for user {}", studentParticipation.getParticipant().getName());
+                var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
+                if (participant instanceof User user) {
+                    var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
+                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_failed"));
+                }
+                else {
+                    throw new ConflictException("Submission failure event is not supported for team participations", "Iris", "irisTeamParticipation");
+                }
+            }
         }
         else {
-            throw new ConflictException("Submission failure event is not supported for team participations", "Iris", "irisTeamParticipation");
+            log.info("Submission was not successful for user {}", studentParticipation.getParticipant().getName());
+            if (successfulSubmission) {
+                log.info("User {} has already successfully submitted before, so we do not inform Iris about the submission failure",
+                        studentParticipation.getParticipant().getName());
+            }
         }
     }
 

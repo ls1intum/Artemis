@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.domain.iris.settings.event.IrisEventType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisCourseChatSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -47,6 +50,8 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Profile("iris")
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
 
+    private static final Logger log = LoggerFactory.getLogger(IrisCourseChatSessionService.class);
+
     private final IrisMessageService irisMessageService;
 
     private final IrisSettingsService irisSettingsService;
@@ -65,10 +70,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final PyrisPipelineService pyrisPipelineService;
 
+    private final SubmissionRepository submissionRepository;
+
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
             IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, SubmissionRepository submissionRepository) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -79,6 +86,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -180,6 +188,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     public void onSubmissionSuccess(Result result) {
 
         var participation = result.getParticipation();
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+            return;
+        }
         var exercise = (ProgrammingExercise) participation.getExercise();
 
         if (exercise.isExamExercise()) {
@@ -190,20 +201,33 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
         irisSettingsService.isActivatedForElseThrow(IrisEventType.SUBMISSION_SUCCESSFUL, course);
 
-        var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
-        if (participant instanceof User user) {
-            setStudentParticipationsToExercise(user.getId(), exercise);
-            var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
-            CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
-        }
-        else {
-            var team = (Team) participant;
-            var teamMembers = team.getStudents();
-            for (var user : teamMembers) {
+        log.info("Submission was successful for user {}", studentParticipation.getParticipant().getName());
+        // The submission was successful, so we inform Iris about the successful submission,
+        // but before we do that, we check if this is the first successful time out of all submissions out of all submissions for this exercise
+        var allSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
+        var latestSubmission = allSubmissions.getLast();
+        var allSuccessful = allSubmissions.stream().filter(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= 80.0).count();
+        if (allSuccessful == 1 && Objects.requireNonNull(latestSubmission.getLatestResult()).getScore() >= 80.0) {
+            log.info("First successful submission for user {}", studentParticipation.getParticipant().getName());
+            var participant = studentParticipation.getParticipant();
+            if (participant instanceof User user) {
                 setStudentParticipationsToExercise(user.getId(), exercise);
                 var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
                 CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
             }
+            else {
+                var team = (Team) participant;
+                var teamMembers = team.getStudents();
+                for (var user : teamMembers) {
+                    setStudentParticipationsToExercise(user.getId(), exercise);
+                    var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
+                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
+                }
+            }
+        }
+        else {
+            log.info("User {} has already successfully submitted before, so we do not inform Iris about the successful submission",
+                    studentParticipation.getParticipant().getName());
         }
     }
 

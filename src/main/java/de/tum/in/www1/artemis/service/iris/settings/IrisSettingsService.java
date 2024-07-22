@@ -201,10 +201,13 @@ public class IrisSettingsService {
 
         var submissionFailedEventSettings = new IrisSubmissionFailedEventSettings();
         submissionFailedEventSettings.setActive(false);
+        submissionFailedEventSettings.setNumberOfFailedAttempts(3);
+        submissionFailedEventSettings.setSuccessThreshold(80.0);
         eventSettings.add(submissionFailedEventSettings);
 
         var submissionSuccessfulEventSettings = new IrisSubmissionSuccessfulEventSettings();
         submissionSuccessfulEventSettings.setActive(false);
+        submissionSuccessfulEventSettings.setSuccessThreshold(80.0);
         eventSettings.add(submissionSuccessfulEventSettings);
 
         eventSettings.forEach(event -> event.setProactivitySubSettings(settings));

@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
@@ -53,20 +52,29 @@ public class ProgrammingMessagingService {
 
     private final TeamRepository teamRepository;
 
-    private final SubmissionRepository submissionRepository;
-
     private final Optional<PyrisEventService> pyrisEventService;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
-            SubmissionRepository submissionRepository, Optional<PyrisEventService> pyrisEventService) {
+            Optional<PyrisEventService> pyrisEventService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
         this.teamRepository = teamRepository;
-        this.submissionRepository = submissionRepository;
         this.pyrisEventService = pyrisEventService;
+    }
+
+    private static String getExerciseTopicForTAAndAbove(long exerciseId) {
+        return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
+    }
+
+    public static String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
+    }
+
+    private static String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
     }
 
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
@@ -156,18 +164,6 @@ public class ProgrammingMessagingService {
         groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, notificationText);
     }
 
-    private static String getExerciseTopicForTAAndAbove(long exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
-    }
-
-    public static String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
-    }
-
-    private static String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
-    }
-
     /**
      * Notify user about new result.
      *
@@ -181,9 +177,7 @@ public class ProgrammingMessagingService {
 
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations
-            if (ltiNewResultService.isPresent()) {
-                ltiNewResultService.get().onNewResult(studentParticipation);
-            }
+            ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(studentParticipation));
             // Inform Iris about the submission status
             notifyIrisAboutSubmissionStatus(result, studentParticipation);
         }
@@ -195,8 +189,8 @@ public class ProgrammingMessagingService {
      * If the submission failed, Iris will be informed about the submission failure.
      * Iris will only be informed about the submission status if the participant is a user.
      *
-     * @param result
-     * @param studentParticipation
+     * @param result               the result for which Iris should be informed about the submission status
+     * @param studentParticipation the student participation for which Iris should be informed about the submission status
      */
     private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
         log.debug("Checking if Iris should be informed about the submission status for user " + studentParticipation.getParticipant().getName());
@@ -205,49 +199,11 @@ public class ProgrammingMessagingService {
                 // Inform Iris so it can send a message to the user
                 try {
                     if (result.getScore() < 80.0) {
-                        // Check the recent submission and only answer when the last 3 subsequent submissions failed. Failure criteria: Score < 80.0
-                        log.info("Checking if the last 3 submissions failed for user " + studentParticipation.getParticipant().getName());
-                        // Check if the student has already successfully submitted before
-                        // If not check if the last 3 submissions failed
-                        var recentSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
-                        // Check if the user has already successfully submitted before
-                        var successfulSubmission = recentSubmissions.stream()
-                                .anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= 80.0);
-                        if (!successfulSubmission && recentSubmissions.size() >= 3) {
-                            var lastThreeSubmissions = recentSubmissions.subList(recentSubmissions.size() - 3, recentSubmissions.size());
-                            var allFailed = lastThreeSubmissions.stream()
-                                    .allMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() < 80.0);
-                            if (allFailed) {
-                                log.info("All last 3 submissions failed for user " + studentParticipation.getParticipant().getName());
-                                eventService.trigger(new SubmissionFailedEvent(result));
-                            }
-                        }
-                        else {
-                            log.info("Submission was not successful for user " + studentParticipation.getParticipant().getName());
-                            if (successfulSubmission) {
-                                log.info("User " + studentParticipation.getParticipant().getName()
-                                        + " has already successfully submitted before, so we do not inform Iris about the submission failure");
-                            }
-                        }
+                        eventService.trigger(new SubmissionFailedEvent(result));
                     }
                     else {
-                        log.info("Submission was successful for user " + studentParticipation.getParticipant().getName());
-                        // The submission was successful, so we inform Iris about the successful submission,
-                        // but before we do that, we check if this is the first successful time out of all submissions out of all submissions for this exercise
-                        var allSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
-                        var latestSubmission = allSubmissions.getLast();
-                        var allSuccessful = allSubmissions.stream().filter(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= 80.0)
-                                .count();
-                        if (allSuccessful == 1 && latestSubmission.getLatestResult().getScore() >= 80.0) {
-                            log.info("First successful submission for user " + studentParticipation.getParticipant().getName());
-                            eventService.trigger(new SubmissionSuccessfulEvent(result));
-                        }
-                        else {
-                            log.info("User " + studentParticipation.getParticipant().getName()
-                                    + " has already successfully submitted before, so we do not inform Iris about the successful submission");
-                        }
+                        eventService.trigger(new SubmissionSuccessfulEvent(result));
                     }
-
                 }
                 catch (Exception e) {
                     log.error("Could not trigger submission failed event for result " + result.getId(), e);
