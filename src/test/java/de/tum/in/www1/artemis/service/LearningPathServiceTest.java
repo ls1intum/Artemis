@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -84,6 +85,9 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private StudentScoreUtilService studentScoreUtilService;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
 
     private Course course;
 
@@ -187,6 +191,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnit));
             competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnit);
             final var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+            exercise.setReleaseDate(null);
             competencyUtilService.linkExerciseToCompetency(competency, exercise);
             final var startNodeId = LearningPathNgxService.getCompetencyStartNodeId(competency.getId());
             final var endNodeId = LearningPathNgxService.getCompetencyEndNodeId(competency.getId());
@@ -587,12 +592,34 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(actual.nodes()).hasSize(6);
         }
 
+        @Test
+        void testDoesNotLeakUnreleasedLearningObjects() {
+            generateLectureUnits(3);
+            generateExercises(3);
+
+            lectureUnits[0].setReleaseDate(ZonedDateTime.now().plusDays(1));
+            lectureUnits[1].setReleaseDate(ZonedDateTime.now().minusDays(1));
+            lectureUnits[2].setReleaseDate(null);
+            lectureUnitRepository.saveAll(List.of(lectureUnits));
+
+            exercises[0].setReleaseDate(ZonedDateTime.now().plusDays(1));
+            exercises[1].setReleaseDate(ZonedDateTime.now().minusDays(1));
+            exercises[2].setReleaseDate(null);
+            exerciseRepository.saveAll(List.of(exercises));
+
+            LearningPath learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, user);
+            learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPath.getId());
+            NgxLearningPathDTO actual = learningPathService.generateNgxPathRepresentation(learningPath);
+            // competency start & end, lecture unit, and one exercise per difficulty level
+            assertThat(actual.nodes()).hasSize(6);
+        }
+
         private void generateLectureUnits(int numberOfLectureUnits) {
             lectureUnits = new LectureUnit[numberOfLectureUnits];
             for (int i = 0; i < lectureUnits.length; i++) {
                 lectureUnits[i] = lectureUtilService.createTextUnit();
                 lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnits[i]));
-                competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnits[i]);
+                lectureUnits[i] = competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnits[i]);
             }
         }
 
@@ -600,6 +627,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             exercises = new Exercise[numberOfExercises];
             for (int i = 0; i < exercises.length; i++) {
                 exercises[i] = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+                exercises[i].setReleaseDate(null);
                 exercises[i] = competencyUtilService.linkExerciseToCompetency(competency, exercises[i]);
             }
         }

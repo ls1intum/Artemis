@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -103,6 +104,9 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private StudentScoreUtilService studentScoreUtilService;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
 
     private Course course;
 
@@ -681,6 +685,29 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         verifyNavigationResult(result, secondTextUnit, thirdTextUnit, null);
     }
 
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationDoesNotLeakUnreleasedLearningObjects() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        textExercise.setCompetencies(Set.of());
+        textExercise = exerciseRepository.save(textExercise);
+
+        TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[1], false);
+        secondTextUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        lectureUnitRepository.save(secondTextUnit);
+        TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[2], false);
+        TextUnit fourthTextUnit = createAndLinkTextUnit(student, competencies[3], false);
+        fourthTextUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        lectureUnitRepository.save(fourthTextUnit);
+        TextUnit fifthTextUnit = createAndLinkTextUnit(student, competencies[4], false);
+
+        var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        verifyNavigationResult(result, textUnit, thirdTextUnit, fifthTextUnit);
+    }
+
     private LearningPathNavigationObjectDTO.LearningObjectType getLearningObjectType(LearningObject learningObject) {
         return switch (learningObject) {
             case LectureUnit ignored -> LearningPathNavigationObjectDTO.LearningObjectType.LECTURE;
@@ -836,7 +863,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private TextUnit createAndLinkTextUnit(User student, Competency competency, boolean completed) {
         TextUnit textUnit = lectureUtilService.createTextUnit();
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
-        competencyUtilService.linkLectureUnitToCompetency(competency, textUnit);
+        textUnit = (TextUnit) competencyUtilService.linkLectureUnitToCompetency(competency, textUnit);
 
         if (completed) {
             lectureUnitService.setLectureUnitCompletion(textUnit, student, true);

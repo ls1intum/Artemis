@@ -137,7 +137,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
 
     @JsonProperty("visibleToStudents")
     public boolean isVisibleToStudents() {
-        if (!lecture.isVisibleToStudents()) {
+        if (lecture == null || !lecture.isVisibleToStudents()) {
             return false;
         }
 
