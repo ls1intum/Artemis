@@ -42,11 +42,11 @@ export class SidebarCardMediumComponent {
     async refreshChildComponent(): Promise<void> {
         await this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild });
         if (this.sidebarItem.routerLink) {
-            console.log('routerLink', this.sidebarItem.routerLink);
             await this.router.navigate(['./', this.sidebarItem.routerLink], { relativeTo: this.route.firstChild, replaceUrl: true });
         } else {
             await this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
         }
+        // TODO: Delete comment
         // this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
         //     this.itemSelected
         //         ? this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route })
