@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
  * @param type      the type of the learning object
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LearningPathNavigationObjectDTO(long id, boolean completed, String name, long competencyId, LearningObjectType type) {
+public record LearningPathNavigationObjectDTO(long id, boolean completed, String name, long competencyId, LearningObjectType type, boolean unreleased) {
 
     /**
      * Create a navigation object DTO from a learning object.
@@ -28,6 +28,7 @@ public record LearningPathNavigationObjectDTO(long id, boolean completed, String
         long id = learningObject.getId();
         String name;
         LearningObjectType type;
+        boolean unreleased = !learningObject.isVisibleToStudents();
 
         switch (learningObject) {
             case LectureUnit lectureUnit -> {
@@ -40,11 +41,10 @@ public record LearningPathNavigationObjectDTO(long id, boolean completed, String
             }
             default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         }
-        ;
 
-        name = learningObject.isVisibleToStudents() ? name : "";
+        name = unreleased ? "" : name;
 
-        return new LearningPathNavigationObjectDTO(id, completed, name, competencyId, type);
+        return new LearningPathNavigationObjectDTO(id, completed, name, competencyId, type, unreleased);
     }
 
     public enum LearningObjectType {
