@@ -22,6 +22,7 @@ describe('LearningPathStudentNavComponent', () => {
             type: LearningObjectType.EXERCISE,
             completed: true,
             competencyId: 1,
+            unreleased: false,
         },
         currentLearningObject: {
             id: 2,
@@ -29,6 +30,7 @@ describe('LearningPathStudentNavComponent', () => {
             type: LearningObjectType.LECTURE,
             completed: false,
             competencyId: 2,
+            unreleased: false,
         },
         successorLearningObject: {
             id: 3,
@@ -36,6 +38,7 @@ describe('LearningPathStudentNavComponent', () => {
             type: LearningObjectType.EXERCISE,
             completed: false,
             competencyId: 2,
+            unreleased: false,
         },
         progress: 50,
     };
