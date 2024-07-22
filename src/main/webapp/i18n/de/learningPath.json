@@ -8,10 +8,10 @@
                 "overview": {
                     "title": "Lernpfad Kompetenzen",
                     "showCompetenciesGraphButton": "Kompetenzgraph",
-                    "emptyLearningObjectsLabel": "Diese Kompetenz enthält bisher noch keine Lernobjekte!",
+                    "emptyLearningObjectsLabel": "Diese Kompetenz enthält bisher noch keine Lernheiten!",
                     "nextLearningObjectOnPathLabel": "Nächste"
                 },
-                "recapLabel": "Lernpfadobjekte wiederholen"
+                "recapLabel": "Lerneinheiten wiederholen"
             },
             "competencyGraphModal": {
                 "title": "Abhängigkeiten der Lernpfadkompetenzen"
