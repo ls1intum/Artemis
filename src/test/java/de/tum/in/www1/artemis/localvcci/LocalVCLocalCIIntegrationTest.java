@@ -2,9 +2,9 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_BASE;
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_HIGH;
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_LOW;
+import static de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_EXAM_CONDUCTION;
+import static de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_NORMAL;
+import static de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
@@ -931,13 +931,13 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        testPriority(instructor1Login, PRIORITY_LOW);
+        testPriority(instructor1Login, PRIORITY_OPTIONAL_EXERCISE);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildPriorityBeforeDueDate() throws Exception {
-        testPriority(student1Login, PRIORITY_BASE);
+        testPriority(student1Login, PRIORITY_NORMAL);
     }
 
     @Test
@@ -963,7 +963,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         studentExam.setStartedAndStartDate(now.minusHours(1));
         studentExamRepository.save(studentExam);
 
-        testPriority(student1Login, PRIORITY_HIGH);
+        testPriority(student1Login, PRIORITY_EXAM_CONDUCTION);
     }
 
     private void testPriority(String login, int expectedPriority) throws Exception {
