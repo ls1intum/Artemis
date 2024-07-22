@@ -85,22 +85,7 @@ describe('LearningPathNavigationService', () => {
     });
 
     it('should complete learning path', async () => {
-        const previousNavigationDto = {
-            predecessorLearningObject: {
-                id: 1,
-                name: 'Lecture 1',
-                completed: true,
-                type: LearningObjectType.LECTURE,
-            },
-            currentLearningObject: {
-                id: 2,
-                name: 'Exercise 1',
-                completed: false,
-                type: LearningObjectType.EXERCISE,
-            },
-            progress: 80,
-        } as LearningPathNavigationDTO;
-        const currentNavigationDto = {
+        const navigationDto = {
             predecessorLearningObject: {
                 id: 2,
                 name: 'Exercise 1',
@@ -110,20 +95,18 @@ describe('LearningPathNavigationService', () => {
             progress: 90,
         } as LearningPathNavigationDTO;
 
-        jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(currentNavigationDto);
+        jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(navigationDto);
         const completeLearningPathSpy = jest.spyOn(learningPathNavigationService, 'completeLearningPath');
 
         await learningPathNavigationService.loadLearningPathNavigation(learningPathId);
 
-        jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(previousNavigationDto);
-
-        await learningPathNavigationService.completeLearningPath(learningPathId);
+        learningPathNavigationService.completeLearningPath();
 
         expect(learningPathNavigationService.learningPathNavigation()).toEqual({
-            predecessorLearningObject: currentNavigationDto.predecessorLearningObject,
+            predecessorLearningObject: navigationDto.currentLearningObject,
             currentLearningObject: undefined,
             successorLearningObject: undefined,
-            progress: currentNavigationDto.progress,
+            progress: 100,
         });
         expect(completeLearningPathSpy).toHaveBeenCalled();
     });

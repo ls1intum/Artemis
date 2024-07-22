@@ -46,7 +46,7 @@ export class LearningPathNavComponent implements OnInit {
     }
 
     completeLearningPath(): void {
-        this.learningPathNavigationService.completeLearningPath(this.learningPathId());
+        this.learningPathNavigationService.completeLearningPath();
     }
 
     setIsDropdownOpen(isOpen: boolean): void {
