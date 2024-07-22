@@ -85,7 +85,7 @@ describe('LearningPathNavigationService', () => {
     });
 
     it('should complete learning path', async () => {
-        const learningPathNavigationDto = {
+        const previousNavigationDto = {
             predecessorLearningObject: {
                 id: 1,
                 name: 'Lecture 1',
@@ -100,19 +100,30 @@ describe('LearningPathNavigationService', () => {
             },
             progress: 80,
         } as LearningPathNavigationDTO;
+        const currentNavigationDto = {
+            predecessorLearningObject: {
+                id: 2,
+                name: 'Exercise 1',
+                completed: false,
+                type: LearningObjectType.EXERCISE,
+            },
+            progress: 90,
+        } as LearningPathNavigationDTO;
 
-        jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(learningPathNavigationDto);
+        jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(currentNavigationDto);
         const completeLearningPathSpy = jest.spyOn(learningPathNavigationService, 'completeLearningPath');
 
         await learningPathNavigationService.loadLearningPathNavigation(learningPathId);
 
-        learningPathNavigationService.completeLearningPath();
+        jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(previousNavigationDto);
+
+        await learningPathNavigationService.completeLearningPath(learningPathId);
 
         expect(learningPathNavigationService.learningPathNavigation()).toEqual({
-            predecessorLearningObject: learningPathNavigationDto.currentLearningObject,
+            predecessorLearningObject: currentNavigationDto.predecessorLearningObject,
             currentLearningObject: undefined,
             successorLearningObject: undefined,
-            progress: 100,
+            progress: currentNavigationDto.progress,
         });
         expect(completeLearningPathSpy).toHaveBeenCalled();
     });
