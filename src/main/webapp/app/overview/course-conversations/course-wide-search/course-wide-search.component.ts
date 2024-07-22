@@ -1,5 +1,6 @@
 import {
     AfterViewInit,
+    ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
     ElementRef,
@@ -29,6 +30,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
     templateUrl: './course-wide-search.component.html',
     styleUrls: ['./course-wide-search.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input()
