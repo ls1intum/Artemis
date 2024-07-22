@@ -3,6 +3,7 @@
         class="markdown-editor background-editor-color w-100"
         [markdown]="content"
         (markdownChange)="updateField($event)"
+        [changeEmitDelay]="200"
         (onEditSelect)="previewMode = false"
         (onPreviewSelect)="previewMode = true"
         [metaActions]="[]"
