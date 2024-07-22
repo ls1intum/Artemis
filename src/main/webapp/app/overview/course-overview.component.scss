@@ -37,14 +37,14 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
     }
 
     &.exam-wrapper {
-        height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height);
+        height: 100%;
 
         &.exam-height-dev {
-            height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
+            height: 100%;
         }
 
         @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height) !important;
+            height: 100% !important;
         }
     }
 
@@ -76,14 +76,14 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
             margin-left 0.2s ease-in-out !important;
 
         &.exam-wrapper {
-            height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height);
+            height: 100%;
 
             &.exam-height-dev {
-                height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
+                height: 100%;
             }
 
             @media (max-width: 768px) {
-                height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height) !important;
+                height: 100% !important;
             }
         }
 
