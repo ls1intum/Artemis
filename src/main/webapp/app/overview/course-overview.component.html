@@ -239,6 +239,7 @@
         routerLinkActive="active"
         [jhiFeatureToggleHide]="sidebarItem.featureToggle"
         [title]="sidebarItem.title"
+        (click)="itemsDrop.close()"
     >
         <ng-template *ngTemplateOutlet="iconTextTemplate; context: { $implicit: sidebarItem }" />
     </a>
@@ -257,6 +258,7 @@
         routerLinkActive="active"
         [jhiFeatureToggleHide]="sidebarItem.featureToggle"
         [title]="sidebarItem.title"
+        (click)="itemsDrop.close()"
     >
         <ng-template *ngTemplateOutlet="iconTextTemplate; context: { $implicit: sidebarItem }" />
     </a>

@@ -189,10 +189,12 @@ a:not(.btn):not(.tab-link):hover {
     font-size: xx-small;
 }
 
-.newMessage:after {
+.newMessage:after,
+.dropdown-content > .nav-item > .newMessage:after {
     @extend %message-block;
     margin-left: 0.25rem;
 }
+
 .collapsed.newMessage:after {
     @extend %message-block;
     margin-left: -0.9rem;
