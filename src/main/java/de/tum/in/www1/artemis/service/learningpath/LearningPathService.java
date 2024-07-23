@@ -352,8 +352,9 @@ public class LearningPathService {
     }
 
     /**
-     * Finds a learning path by its id and eagerly fetches the competencies, linked lecture units and exercises, and the corresponding domain objects storing the progress of the
-     * connected user.
+     * Finds a learning path by its id and eagerly fetches the competencies, linked and released lecture units and exercises, and the corresponding domain objects storing the
+     * progress of the
+     * connected user. Only
      * <p>
      * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
      *
@@ -363,11 +364,13 @@ public class LearningPathService {
     public LearningPath findWithCompetenciesAndLearningObjectsAndCompletedUsersById(long learningPathId) {
         LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
 
+        // Remove exercises that are not visible to students
         learningPath.getCompetencies()
                 .forEach(competency -> competency.setExercises(competency.getExercises().stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet())));
-        // Remove exercise units, since they are already retrieved as exercises
+        // Remove unreleased lecture units as well as exercise units, since they are already retrieved as exercises
         learningPath.getCompetencies().forEach(competency -> competency.setLectureUnits(competency.getLectureUnits().stream()
                 .filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit) && lectureUnit.isVisibleToStudents()).collect(Collectors.toSet())));
+
         if (learningPath.getUser() == null) {
             learningPath.getCompetencies().forEach(competency -> {
                 competency.setUserProgress(Collections.emptySet());
