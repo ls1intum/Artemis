@@ -163,14 +163,6 @@ in an Artemis message.
 
 |message-with-references|
 
-Reference Messages
-""""""""""""""""""
-
-If users want to refer to other messages, they can integrate a simple pattern including the hashtag (``#``) combined with
-the message identifier. A message's identifier is appended to the message title (such as seen in the screenshots above).
-
-When clicking a message reference used in a message's text, the user is navigated to the referenced message.
-
 Reference Course Exercises
 """"""""""""""""""""""""""
 Users can refer to exercises of the current course, via the dropdown menu ``Exercise`` available on the posting markdown
