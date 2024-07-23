@@ -283,19 +283,19 @@ As soon as the announcement is created, all participants who did not actively re
 .. |message-with-references| image:: communication/message-with-all-references.png
     :width: 750
 .. |resolved-post| image:: communication/resolved-post.png
-    :width: 300
+    :width: 400
 .. |instructor-user| image:: communication/user-authorities/instructor.png
-    :width: 600
+    :width: 500
 .. |tutor-user| image:: communication/user-authorities/tutor.png
-    :width: 600
+    :width: 500
 .. |student-user| image:: communication/user-authorities/student.png
-    :width: 600
+    :width: 500
 .. |messages| image:: communication/messages.png
     :width: 1000
 .. |slide-reference| image:: communication/slide-reference.png
     :width: 600
 .. |slide-reference-menu| image:: communication/slide-reference-menu.png
-    :width: 1000
+    :width: 800
 .. |referenced-slide-preview| image:: communication/referenced-slide-preview.png
     :width: 600
 .. |link-preview| image:: communication/link-preview.png
