@@ -116,13 +116,12 @@ public class IrisRequestMockProvider {
     }
 
     public void mockSubmissionSuccessfulEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/course-chat/submission_successful/run")).andExpect(method(HttpMethod.POST))
-                .andRespond(request -> {
-                    var mockRequest = (MockClientHttpRequest) request;
-                    var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCourseChatPipelineExecutionDTO.class);
-                    responseConsumer.accept(dto);
-                    return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
-                });
+        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/course-chat/submission_successful/run")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCourseChatPipelineExecutionDTO.class);
+            responseConsumer.accept(dto);
+            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+        });
     }
 
     public void mockJolEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
