@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.programming.RepositoryService;
@@ -284,28 +283,6 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         var commitInfo = programmingExerciseParticipationService.getCommitInfos(participation);
         return ResponseEntity.ok(commitInfo);
-    }
-
-    /**
-     * GET /programming-exercise-participations/{participationId}/user : Get the user of a programming exercise participation.
-     * Here we check if the requesting user is at least a teaching assistant for the exercise
-     * If the user is a student, it checks if the user is the owner of the participation.
-     *
-     * @param participationId the id of the participation for which to retrieve the user
-     * @return the ResponseEntity with status 200 (OK) and with body a UserDTO, or status 404 if the participation or user does not exist or is a team participation
-     *
-     */
-    @GetMapping("programming-exercise-participations/{participationId}/user")
-    @EnforceAtLeastStudent
-    public ResponseEntity<UserDTO> getUserForParticipation(@PathVariable long participationId) {
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-
-        if (participation.getTeam().isPresent()) {
-            throw new BadRequestAlertException("Team participation cannot have a single user.", ENTITY_NAME, "participationIsTeam");
-        }
-
-        return participation.getStudent().map(user -> ResponseEntity.ok(new UserDTO(user))).orElse(ResponseEntity.notFound().build());
     }
 
     /**
