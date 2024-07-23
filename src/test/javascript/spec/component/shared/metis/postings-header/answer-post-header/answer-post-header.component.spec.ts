@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisModule } from 'app/shared/metis/metis.module';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { DebugElement, ViewContainerRef } from '@angular/core';
 import dayjs from 'dayjs/esm';
@@ -35,7 +36,7 @@ describe('AnswerPostHeaderComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip), MockModule(MetisModule)],
             providers: [
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
@@ -54,6 +55,7 @@ describe('AnswerPostHeaderComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(ConfirmIconComponent),
+                // MockDirective(TranslateDirective),
             ],
         })
             .compileComponents()
@@ -70,6 +72,8 @@ describe('AnswerPostHeaderComponent', () => {
                 component.posting = metisResolvingAnswerPostUser1;
                 component.posting.creationDate = yesterday;
                 component.ngOnInit();
+                component.userRoleBadge = 'artemisApp.metis.userRoles.student';
+                component.todayFlag = 'artemisApp.metis.today';
             });
     });
 
