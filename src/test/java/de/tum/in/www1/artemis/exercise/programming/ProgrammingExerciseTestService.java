@@ -722,7 +722,7 @@ public class ProgrammingExerciseTestService {
 
         examExercise.setId(generatedExercise.getId());
         assertThat(examExercise).isEqualTo(generatedExercise);
-        final Exam loadedExam = examRepository.findWithExerciseGroupsAndExercisesById(examExercise.getExamViaExerciseGroupOrCourseMember().getId()).orElseThrow();
+        final Exam loadedExam = examRepository.findWithExerciseGroupsAndExercisesById(examExercise.getExam().getId()).orElseThrow();
         assertThat(loadedExam.getNumberOfExercisesInExam()).isEqualTo(1);
     }
 

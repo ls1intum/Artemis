@@ -6,8 +6,11 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
@@ -17,6 +20,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -27,13 +32,13 @@ import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
@@ -296,13 +301,22 @@ public class SharedQueueManagementService {
         Duration buildDurationLower = search.buildDurationLower() == null ? null : Duration.ofSeconds(search.buildDurationLower());
         Duration buildDurationUpper = search.buildDurationUpper() == null ? null : Duration.ofSeconds(search.buildDurationUpper());
 
+        var sortOptions = Sort.by(search.pageable().getSortedColumn());
+        sortOptions = search.pageable().getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
+        var pageRequest = PageRequest.of(search.pageable().getPage() - 1, search.pageable().getPageSize(), sortOptions);
+
         Page<Long> buildJobIdsPage = buildJobRepository.findAllByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
-                search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper,
-                PageUtil.createDefaultPageRequest(search.pageable(), PageUtil.ColumnMapping.BUILD_JOB));
+                search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper, pageRequest);
 
-        List<BuildJob> buildJobs = buildJobRepository.findWithDataByIdIn(buildJobIdsPage.toList());
+        List<Long> buildJobIds = buildJobIdsPage.toList();
+        // Fetch the build jobs with results. Since this query used "IN" clause, the order of the results is not guaranteed. We need to order them by the order of the ids.
+        List<BuildJob> unorderedBuildJobs = buildJobRepository.findAllByIdWithResults(buildJobIds);
 
-        return new PageImpl<>(buildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
+        Map<Long, BuildJob> buildJobMap = unorderedBuildJobs.stream().collect(Collectors.toMap(BuildJob::getId, Function.identity()));
+
+        List<BuildJob> orderedBuildJobs = buildJobIds.stream().map(buildJobMap::get).toList();
+
+        return new PageImpl<>(orderedBuildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
     }
 
 }
