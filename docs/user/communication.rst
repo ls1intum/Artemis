@@ -128,9 +128,9 @@ To search within a specific channel in the communications module, users can navi
 Verify User Authority
 ^^^^^^^^^^^^^^^^^^^^^
 
-To build trust between users utilizing the system's communication features, we prepend an icon to the author’s name in the
-headers of messages and their replies. The icon we introduce differs according to the role of the author within the course
-and reveals their highest authoritative role. Via tooltips that are shown as users hover over these icons (see images below),
+To build trust between users utilizing the system's communication features, we prepend an role badge to the author’s name in the
+headers of messages and their replies. The badge we introduce differs according to the role of the author within the course
+and reveals their highest authoritative role. Via tooltips that are shown as users hover over these badges (see images below),
 the system displays a brief explanation of that specific role. This way, the system builds trust in the author, and readers
 can tangibly confirm the origin of the shared information.
 
@@ -273,7 +273,7 @@ Announcements can be created in the course messaging overview by selecting the `
 As soon as the announcement is created, all participants who did not actively refrain from being notified will receive an email containing the announcement's content.
 
 .. |communication-toggle| image:: communication/communication-checkbox.png
-    :width: 600
+    :width: 500
 .. |messaging-page| image:: communication/messaging-page.png
     :width: 1000
 .. |lecture-messages| image:: communication/lecture-messages.png
