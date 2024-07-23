@@ -444,7 +444,7 @@ public class LearningPathResource {
         }
         learningPathService.changeLearningPathsConfiguration(course, learningPathsConfiguration);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     /**
