@@ -295,7 +295,7 @@ As soon as the announcement is created, all participants who did not actively re
 .. |slide-reference| image:: communication/slide-reference.png
     :width: 600
 .. |slide-reference-menu| image:: communication/slide-reference-menu.png
-    :width: 800
+    :width: 1000
 .. |referenced-slide-preview| image:: communication/referenced-slide-preview.png
     :width: 600
 .. |link-preview| image:: communication/link-preview.png
