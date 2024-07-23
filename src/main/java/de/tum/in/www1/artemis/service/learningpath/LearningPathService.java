@@ -344,7 +344,7 @@ public class LearningPathService {
      * @return the navigation overview
      */
     public LearningPathNavigationOverviewDTO getLearningPathNavigationOverview(long learningPathId) {
-        var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
+        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");
         }
@@ -353,15 +353,14 @@ public class LearningPathService {
 
     /**
      * Finds a learning path by its id and eagerly fetches the competencies, linked and released lecture units and exercises, and the corresponding domain objects storing the
-     * progress of the
-     * connected user. Only
+     * progress of the connected user.
      * <p>
      * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
      *
      * @param learningPathId the id of the learning path to fetch
      * @return the learning path with fetched data
      */
-    public LearningPath findWithCompetenciesAndLearningObjectsAndCompletedUsersById(long learningPathId) {
+    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(long learningPathId) {
         LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
 
         // Remove exercises that are not visible to students
