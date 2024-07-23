@@ -37,7 +37,7 @@
                     <div class="btn-group me-1" role="group">
                         @if (activeConversationAsChannel?.subTypeReferenceId) {
                             <a
-                                jhiTranslate="channelSubTypeReferenceTranslationKey"
+                                [jhiTranslate]="channelSubTypeReferenceTranslationKey ?? ''"
                                 class="btn btn-sm btn-outline-secondary sub-type-reference"
                                 [routerLink]="channelSubTypeReferenceRouterLink"
                             >

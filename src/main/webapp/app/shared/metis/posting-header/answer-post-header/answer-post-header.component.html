@@ -2,7 +2,7 @@
     <div id="header-author-date" class="d-flex align-items-center gap-2 flex-wrap">
         @if (posting.author) {
             <span
-                jhiTranslate="userRoleBadge"
+                [jhiTranslate]="userRoleBadge"
                 ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}"
                 class="badge fs-xx-small rounded-3"
                 [ngClass]="'badge-' + userAuthority"
@@ -14,7 +14,7 @@
         }
         <span>-</span>
         @if (postingIsOfToday) {
-            <span jhiTranslate="todayFlag" id="today-flag" class="fs-x-small"></span>
+            <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-x-small"></span>
         }
         <span class="fs-x-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
             {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
