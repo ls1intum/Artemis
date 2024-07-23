@@ -16,6 +16,8 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.GitCommand;
+import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -42,6 +44,8 @@ public class BuildJobGitService extends AbstractGitService {
 
     @Value("${artemis.version-control.build-agent-git-password}")
     private String buildAgentGitPassword;
+
+    private CredentialsProvider credentialsProvider;
 
     /**
      * initialize the BuildJobGitService, in particular which authentication mechanism should be used
@@ -115,10 +119,6 @@ public class BuildJobGitService extends AbstractGitService {
         Git git = null;
         try {
             CloneCommand cloneCommand = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
-            if (!useSsh()) {
-                CredentialsProvider credentialsProvider = new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword);
-                cloneCommand.setCredentialsProvider(credentialsProvider);
-            }
             git = cloneCommand.call();
             return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
         }
@@ -146,5 +146,21 @@ public class BuildJobGitService extends AbstractGitService {
             log.warn("Cannot get existing checkout out repository by local path: {}", ex.getMessage());
             return null;
         }
+    }
+
+    protected <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
+        if (useSsh()) {
+            return command.setTransportConfigCallback(sshCallback);
+        }
+        else {
+            return command.setCredentialsProvider(getCachedCredentialsProvider());
+        }
+    }
+
+    private CredentialsProvider getCachedCredentialsProvider() {
+        if (credentialsProvider == null) {
+            credentialsProvider = new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword);
+        }
+        return credentialsProvider;
     }
 }

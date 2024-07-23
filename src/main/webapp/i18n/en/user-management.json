@@ -85,6 +85,8 @@
             "deactivated": "Deactivated",
             "profiles": "Profiles",
             "langKey": "Language",
+            "passwordTooltip": "You can only change passwords for internal users.",
+            "internal": "Internal",
             "createdBy": "Created by",
             "createdDate": "Created date",
             "lastModifiedBy": "Modified by",

@@ -27,16 +27,6 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
                 LEFT JOIN FETCH lu.competencies
                 LEFT JOIN FETCH lu.exercise exercise
                 LEFT JOIN FETCH exercise.competencies
-            WHERE lu.id = :lectureUnitId
-            """)
-    Optional<LectureUnit> findWithCompetenciesById(@Param("lectureUnitId") Long lectureUnitId);
-
-    @Query("""
-            SELECT lu
-            FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencies
-                LEFT JOIN FETCH lu.exercise exercise
-                LEFT JOIN FETCH exercise.competencies
                 LEFT JOIN FETCH lu.slides
             WHERE lu.id = :lectureUnitId
             """)

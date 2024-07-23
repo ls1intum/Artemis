@@ -24,6 +24,7 @@
                     [exercises]="studentExam.exercises!"
                     (examAboutToEnd)="examEnded()"
                     (onExamHandInEarly)="toggleHandInEarly()"
+                    (heightChange)="updateHeight($event)"
                 />
 
                 <div class="d-flex justify-content-between gap-3">

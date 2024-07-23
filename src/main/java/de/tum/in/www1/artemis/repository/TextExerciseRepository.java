@@ -34,6 +34,9 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
             """)
     List<TextExercise> findByCourseIdWithCategories(@Param("courseId") long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "competencies" })
+    Optional<TextExercise> findWithEagerCompetenciesById(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(long exerciseId);
 
@@ -63,6 +66,11 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @NotNull
     default TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {
         return findWithGradingCriteriaById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+    }
+
+    @NotNull
+    default TextExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
     }
 
     @NotNull

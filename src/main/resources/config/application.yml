@@ -184,7 +184,7 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        lazy-initialization: true
+        lazy-initialization: false # cannot set this to true (even if we would want, because then LocalCI does not process build results correctly)
     task:
         execution:
             thread-name-prefix: artemis-task-

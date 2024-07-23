@@ -68,7 +68,7 @@ export class AlertService {
         private sanitizer: DomSanitizer,
         private ngZone: NgZone,
         private translateService: TranslateService,
-        private eventManager: EventManager,
+        eventManager: EventManager,
     ) {
         this.errorListener = eventManager.subscribe('artemisApp.error', (response: EventWithContent<unknown> | string) => {
             const errorResponse = (response as EventWithContent<AlertError>).content;
