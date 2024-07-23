@@ -39,7 +39,6 @@ describe('CommitsInfoGroupComponent', () => {
         component.previousSubmissionHash = '123';
         component.exerciseProjectKey = 'exerciseProjectKey';
         component.isRepositoryView = false;
-        component.user = { name: 'testUser', email: 'test@example.com', internal: true, guidedTourSettings: [] };
         component.groupCount = 1;
         component.groupIndex = 0;
         component.pushNumber = 0;
