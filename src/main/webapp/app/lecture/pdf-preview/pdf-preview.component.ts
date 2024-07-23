@@ -77,7 +77,7 @@ export class PdfPreviewComponent implements OnInit {
     private createContainer(canvas: HTMLCanvasElement, pageIndex: number): HTMLDivElement {
         const container = document.createElement('div');
         container.classList.add('pdf-page-container');
-        container.style.cssText = `position: relative; display: inline-block; width: ${canvas.style.width}; height: ${canvas.style.height}; margin: 20px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);`;
+        container.style.cssText = `position: relative; display: inline-block; width: ${canvas.style.width}; height: ${canvas.style.height}; margin: 20px; box-shadow: 0 2px 6px var(--pdf-preview-canvas-shadow);`;
 
         const overlay = this.createOverlay(pageIndex);
         container.appendChild(canvas);

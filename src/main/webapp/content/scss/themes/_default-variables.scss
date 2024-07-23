@@ -239,6 +239,11 @@ $stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
 $stat-av-sc-legend-median: rgba(127, 127, 127, 255);
 $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
 
+// Component: pdf-preview.component.scss
+$pdf-preview-pdf-container-shadow: rgba(0, 0, 0, 0.1);
+$pdf-preview-canvas-shadow: rgba(0, 0, 0, 0.1);
+$pdf-preview-enlarged-container-overlay: rgba(0, 0, 0, 0.2);
+
 // Programming Exercise Update
 $update-programming-exercise-plan-preview-box-background: transparentize(black, 0.95);
 

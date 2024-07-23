@@ -6,11 +6,11 @@
     max-height: 60vh;
     height: 60vh;
     overflow-y: auto;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color);
     padding: 10px;
     margin: 10px;
     width: 95%;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px var(--pdf-preview-pdf-container-shadow);
     align-items: start;
 
     @media (max-width: 800px) {
@@ -31,7 +31,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--pdf-preview-enlarged-container-overlay);
     z-index: 1050;
 
     .btn-close {
@@ -39,7 +39,7 @@
         top: 10px;
         right: 10px;
         cursor: pointer;
-        color: white;
+        color: var(--white);
     }
 }
 
@@ -47,8 +47,6 @@
     position: absolute;
     transform: translateY(-50%);
     cursor: pointer;
-    background-color: #fff;
-    border: 1px solid #ccc;
     border-radius: 50%;
     width: 30px;
     height: 30px;
@@ -80,7 +78,7 @@
     bottom: 10px;
     right: calc(5% + 10px);
     font-size: 18px;
-    color: white;
+    color: var(--bs-body-color);
     z-index: 2;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 

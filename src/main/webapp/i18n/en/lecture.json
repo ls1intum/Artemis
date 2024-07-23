@@ -96,7 +96,10 @@
             "deleteQuestion": "Do you really want to delete the attachment?",
             "created": "Created new attachment with identifier {{ param }}",
             "updated": "Updated attachment with identifier {{ param }}",
-            "deleted": "Deleted attachment with identifier {{ param }}"
+            "deleted": "Deleted attachment with identifier {{ param }}",
+            "pdfPreview": {
+                "title": "Attachment"
+            }
         }
     }
 }
