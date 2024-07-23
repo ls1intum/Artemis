@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.velocity.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -222,9 +223,16 @@ public class AttachmentResource {
         return Paths.get(baseDir, pathWithoutPrefix).toString();
     }
 
-    @GetMapping("/attachments/{id}/file")
-    public ResponseEntity<Resource> getAttachmentFile(@PathVariable Long id) {
-        Attachment attachment = attachmentRepository.findById(id).orElseThrow();
+    /**
+     * GET courses/{id}/file : Returns the file associated with the
+     * given attachment ID as a downloadable resource
+     *
+     * @param attachmentId the ID of the attachment to retrieve
+     * @return ResponseEntity containing the file as a resource
+     */
+    @GetMapping("/attachments/{attachmentId}/file")
+    public ResponseEntity<Resource> getAttachmentFile(@PathVariable Long attachmentId) {
+        Attachment attachment = attachmentRepository.findById(attachmentId).orElseThrow(() -> new ResourceNotFoundException("Attachment not found with id: " + attachmentId));
         String actualFilePath = resolveFilePath(attachment.getLink());
         Resource resource = new FileSystemResource(actualFilePath);
         if (!resource.exists()) {
