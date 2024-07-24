@@ -56,8 +56,9 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(loadedSettings2).isNotNull().usingRecursiveComparison().ignoringFieldsOfTypes(HashSet.class, TreeSet.class).ignoringActualNullFields()
                 .isEqualTo(irisSettingsService.getCombinedIrisSettingsFor(course, false));
         assertThat(loadedSettings1).isNotNull().usingRecursiveComparison()
-                .ignoringFields("id", "course", "irisChatSettings.id", "iris_lecture_ingestion_settings_id", "irisHestiaSettings.id", "irisCompetencyGenerationSettings.id")
-                .isEqualTo(irisSettingsService.getDefaultSettingsFor(course));
+                .ignoringFields("id", "course", "irisChatSettings.id", "iris_lecture_ingestion_settings_id", "irisHestiaSettings.id", "irisCompetencyGenerationSettings.id",
+                        "irisProactivitySettings.id")
+                .ignoringFieldsOfTypes(HashSet.class, TreeSet.class).ignoringActualNullFields().isEqualTo(irisSettingsService.getDefaultSettingsFor(course));
     }
 
     @Test
@@ -70,10 +71,9 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         var loadedSettings1 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
         var loadedSettings2 = request.get("/api/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
 
-        assertThat(loadedSettings1).isNotNull().usingRecursiveComparison()
-                .ignoringFields("id", "course", "irisChatSettings.id", "irisLectureIngestionSettings.id", "irisHestiaSettings.id", "irisCompetencyGenerationSettings.id")
-                .ignoringExpectedNullFields().isEqualTo(loadedSettings2);
-        assertThat(loadedSettings1).isNotNull().usingRecursiveComparison().ignoringFields("course")
+        assertThat(loadedSettings1).isNotNull().usingRecursiveComparison().ignoringFields("id", "course", "irisChatSettings.id", "irisLectureIngestionSettings.id",
+                "irisHestiaSettings.id", "irisCompetencyGenerationSettings.id", "irisProactivitySettings.id").ignoringExpectedNullFields().isEqualTo(loadedSettings2);
+        assertThat(loadedSettings1).isNotNull().usingRecursiveComparison().ignoringFields("course").ignoringFieldsOfTypes(HashSet.class, TreeSet.class).ignoringActualNullFields()
                 .isEqualTo(irisSettingsRepository.findCourseSettings(course.getId()).orElseThrow());
     }
 
