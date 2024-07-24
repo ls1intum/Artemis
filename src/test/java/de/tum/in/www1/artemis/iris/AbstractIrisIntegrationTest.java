@@ -9,16 +9,13 @@ import static org.mockito.Mockito.verify;
 import java.util.Set;
 import java.util.TreeSet;
 
-import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
-import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
-import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentMatcher;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
@@ -35,8 +32,11 @@ import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisTemplateRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
+import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 
 public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
