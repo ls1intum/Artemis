@@ -58,6 +58,7 @@ import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/s
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -1144,5 +1145,81 @@ describe('ExamParticipationComponent', () => {
         comp.onExamEndConfirmed();
 
         expect(examLayoutStub).toHaveBeenCalledOnce();
+    });
+
+    it('should display exam bar and timer during working time', () => {
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        const exercise0 = new QuizExercise(undefined, undefined);
+        exercise0.id = 5;
+        const exercise1 = new ProgrammingExercise(undefined, undefined);
+        exercise1.id = 6;
+        comp.studentExam = new StudentExam();
+        comp.studentExam.submitted = false;
+        comp.studentExam.exercises = [exercise0, exercise1];
+        comp.examStartConfirmed = true;
+        jest.spyOn(comp, 'isActive').mockReturnValue(true);
+        jest.spyOn(comp, 'isOver').mockReturnValue(false);
+        comp.activeExamPage = new ExamPage();
+        comp.activeExamPage.exercise = exercise1;
+        jest.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(false);
+
+        fixture.detectChanges();
+        expect(fixture).toBeTruthy();
+        const examBarDebugElement = fixture.debugElement.query(By.directive(ExamBarComponent));
+        expect(examBarDebugElement).toBeTruthy();
+    });
+
+    it('should not display exam bar and timer when exam was not submitted', () => {
+        jest.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(true);
+
+        fixture.detectChanges();
+
+        const examBarDebugElement = fixture.debugElement.query(By.directive(ExamBarComponent));
+        expect(examBarDebugElement).toBeFalsy();
+    });
+
+    it('should get whether student failed to submit', () => {
+        comp.studentExam = new StudentExam();
+        comp.testRunId = 1;
+
+        expect(comp.studentFailedToSubmit).toBeFalse();
+
+        comp.testRunId = 0;
+        const startDate = dayjs();
+        const now = dayjs();
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        comp.exam.startDate = startDate.subtract(2, 'hours');
+        comp.exam.testExam = false;
+        comp.studentExam.workingTime = 3600;
+        comp.exam.gracePeriod = 1;
+        comp.studentExam.submitted = false;
+        expect(comp.studentFailedToSubmit).toBeTrue();
+    });
+
+    it('should get whether student failed to submit a TestExam', () => {
+        comp.studentExam = new StudentExam();
+        comp.testRunId = 0;
+        comp.exam.testExam = true;
+
+        comp.studentExam.started = false;
+        expect(comp.studentFailedToSubmit).toBeFalse();
+
+        comp.studentExam.started = true;
+        comp.studentExam.startedDate = undefined;
+        expect(comp.studentFailedToSubmit).toBeFalse();
+
+        const now = dayjs();
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        comp.studentExam.startedDate = now.subtract(2, 'hours');
+        comp.studentExam.workingTime = 3600;
+        comp.exam.gracePeriod = 1;
+        comp.studentExam.submitted = false;
+        expect(comp.studentFailedToSubmit).toBeTrue();
+
+        comp.studentExam.startedDate = now.subtract(1, 'hours');
+        comp.studentExam.workingTime = 3600;
+        comp.exam.gracePeriod = 1;
+        comp.studentExam.submitted = false;
+        expect(comp.studentFailedToSubmit).toBeFalse();
     });
 });
