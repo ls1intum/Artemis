@@ -1,4 +1,18 @@
-import { AfterContentInit, AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, Signal, ViewChild, computed } from '@angular/core';
+import {
+    AfterContentInit,
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnDestroy,
+    Output,
+    Signal,
+    ViewChild,
+    computed,
+} from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
@@ -56,6 +70,7 @@ const BORDER_WIDTH_OFFSET = 3;
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
     styleUrls: ['./markdown-editor-monaco.component.scss', '../markdown-editor.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
@@ -177,7 +192,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         protected readonly changeDetectorRef: ChangeDetectorRef,
     ) {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
-        this.changeDetectorRef.detach();
     }
 
     ngAfterContentInit(): void {
