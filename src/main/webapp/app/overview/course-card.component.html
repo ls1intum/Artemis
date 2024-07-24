@@ -1,50 +1,51 @@
 <div class="card" [class.guided-tour]="hasGuidedTour">
     <div id="course-{{ course.id }}-header" class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="{ '--background-color-for-hover': courseColor }">
-        <!-- <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a> -->
+        <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="container">
-            <div class="row d-flex">
-                <div class="col-2 header-col image-col">
+            <div class="row align-items-center justify-content-center">
+                <div class="col-auto">
                     @if (course.courseIcon) {
                         <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
                     }
                 </div>
-                <div class="col-7 header-col title-col px-3">
-                    <h5 class="card-title text-center">
+                <div class="col text-center">
+                    <h5 class="card-title">
                         {{ course.title }}
                     </h5>
                 </div>
-                <div class="col-2 header-col course-info-col">
+            </div>
+        </div>
+        <!-- <div class="col-2 header-col course-info-col">
                     <div class="course-info-amounts">
                         @if (exerciseCount === 0) {
                             <span>Exercises: {{ exerciseCount }}</span>
-                        }
-                        @if (exerciseCount > 0) {
-                            <a [routerLink]="['/courses', course.id!, 'exercises']">Exercises: {{ exerciseCount }}</a>
-                        }
-                        @if (lectureCount === 0) {
-                            <span>Lectures: {{ lectureCount }}</span>
-                        }
-                        @if (lectureCount > 0) {
-                            <a [routerLink]="['/courses', course.id!, 'lectures']">Lectures: {{ lectureCount }}</a>
-                        }
-                        @if (examCount === 0) {
+                            }
+                            @if (exerciseCount > 0) {
+                                <a [routerLink]="['/courses', course.id!, 'exercises']">Exercises: {{ exerciseCount }}</a>
+                                }
+                                @if (lectureCount === 0) {
+                                    <span>Lectures: {{ lectureCount }}</span>
+                                    }
+                                    @if (lectureCount > 0) {
+                                        <a [routerLink]="['/courses', course.id!, 'lectures']">Lectures: {{ lectureCount }}</a>
+                                        }
+                                        @if (examCount === 0) {
                             <span>Exams: {{ examCount }}</span>
                         }
                         @if (examCount > 0) {
                             <a (click)="navigateToExams($event)">Exams: {{ examCount }}</a>
                         }
                     </div>
-                </div>
-            </div>
-        </div>
+                </div> -->
     </div>
     <div class="card-body2">
-        <h4 class="fw-bold my-3">{{ course.title }}</h4>
+        <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
+        <br />
         @if (nextRelevantExercise) {
             <div class="d-flex justify-content-between">
                 <div>
-                    <div class="fw-bold text-secondary">Next Unit</div>
                     <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]"></a>
+                    <div class="fw-bold text-secondary">Next Unit</div>
                     <div class="fw-bold">
                         <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
                     </div>
@@ -52,9 +53,12 @@
                 <fa-icon class="next-exercise-icon align-self-center" [style.marginRight.px]="27" [icon]="nextExerciseIcon" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
             </div>
         } @else {
-            <div class="fw-bold text-secondary">Next Unit</div>
-            <div class="fw-bold">
-                <span jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></span>
+            <div>
+                <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
+                <div class="fw-bold text-secondary">Next Unit</div>
+                <div class="fw-bold">
+                    <span jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></span>
+                </div>
             </div>
         }
         <hr />
@@ -86,16 +90,18 @@
                 </div>
             </div>
         } @else {
-            <div class="fw-bold text-secondary">Score</div>
-            <div class="fw-bold">
-                <span jhiTranslate="artemisApp.studentDashboard.noStatistics"></span>
+            <div class="no-score">
+                <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
+                <div class="fw-bold text-secondary">Score</div>
+                <div class="fw-bold">
+                    <span jhiTranslate="artemisApp.studentDashboard.noStatistics"></span>
+                </div>
             </div>
         }
         <hr />
-        <div class="d-flex justify-content-end">
-            <a class="btn btn-primary" [routerLink]="['/courses', course.id!]">View Course</a>
+        <div *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']" class="d-flex justify-content-start">
+            <a class="btn btn-outline-primary btn-management" [routerLink]="['/course-management', course.id!]">Manage Course</a>
         </div>
-
         <!-- @if (nextRelevantExercise) {
         <div class="card-footer text-body-secondary">
             <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]"></a>

@@ -1,5 +1,5 @@
 .card {
-    min-height: 320px;
+    min-height: 380px;
     transition: transform 0.2s linear;
     border-radius: 20px;
 
@@ -10,8 +10,8 @@
 
     .card-header {
         position: relative;
-        padding: 0;
-        height: 120px;
+        padding: 15px;
+        height: 100px;
         border-top-right-radius: 20px;
         border-top-left-radius: 20px;
         display: flex;
@@ -33,7 +33,7 @@
         }
 
         .image-col {
-            justify-content: flex-start;
+            text-align: left;
         }
 
         .title-col {
@@ -62,7 +62,7 @@
 
             .row {
                 height: 80px;
-                justify-content: space-between;
+                // justify-content: space-between;
             }
         }
 
@@ -75,6 +75,38 @@
 
     .card-body2 {
         padding: 20px;
+        
+        .next-exercise-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .next-exercise-icon {
+            z-index: 1;
+            font-size: large;
+        }
+
+        .chart-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .chart-level {
+                z-index: 2;
+                cursor: pointer;
+            }
+        }
+
+        .no-score {
+            padding-top: 10px;
+            padding-bottom: 16px;
+        }
+
+        .btn-management {
+            z-index: 2;
+            position: relative;
+        }
     }
 
     .card-body {

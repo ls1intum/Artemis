@@ -12,7 +12,6 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
-    styleUrls: ['./main.component.scss'],
 })
 export class JhiMainComponent implements OnInit, OnDestroy {
     /**

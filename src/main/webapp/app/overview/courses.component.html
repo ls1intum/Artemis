@@ -1,5 +1,5 @@
 @if (nextRelevantExam && nextRelevantCourseForExam) {
-    <div class="row">
+    <div class="row module-bg p-3 rounded-3 mb-3">
         <h3 class="col mb-3 fw-medium">
             {{ 'artemisApp.studentDashboard.examTitle' | artemisTranslate: { course: nextRelevantCourseForExam.title } }}
         </h3>
@@ -21,16 +21,15 @@
         </div>
     </div>
 }
-<div class="row mb-3 justify-content-between module-bg p-3 rounded-3">
+<div class="row mb-3 justify-content-between">
     <div class="col-sm-8">
         <h3 class="fw-medium" jhiTranslate="artemisApp.studentDashboard.title"></h3>
     </div>
-
     @if (regularCourses.length) {
         <div class="col-sm-auto d-flex">
             <a class="btn btn-primary" [routerLink]="['/courses/enroll']">{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</a>
         </div>
-    }
+    } 
 </div>
 @if (recentlyAccessedCourses.length > 0) {
     <div class="row">
