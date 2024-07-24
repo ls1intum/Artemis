@@ -392,27 +392,28 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     setSimpleTextFieldMode(): void {
         this._editor.updateOptions({
+            // Sets up the layout to make the editor look more like a text field (no line numbers, margin, or line highlights).
             lineNumbers: 'off',
             glyphMargin: false,
             folding: false,
             lineDecorationsWidth: '1ch',
             lineNumbersMinChars: 0,
+            padding: {
+                top: 5,
+            },
             renderLineHighlight: 'none',
-            fontFamily: 'Helvetica',
+            // Hide the scrollbar / overview ruler
             scrollbar: {
-                vertical: 'hidden',
+                vertical: 'auto',
                 horizontal: 'hidden',
             },
             overviewRulerLanes: 0,
             hideCursorInOverviewRuler: true,
-            padding: {
-                top: 5,
-            },
+            // The suggestions from showWords are shared between editors of the same language.
             suggest: {
                 showWords: false,
             },
-            wrappingStrategy: 'advanced',
-            // Fixes a lot of issues with the editor suggest widget, but sticks to the page when scrolling.
+            // Separates the editor suggest widget from the editor's layout. It will stick to the page, but it won't interfere with other elements.
             fixedOverflowWidgets: true,
         });
         this.setWordWrap(true);
