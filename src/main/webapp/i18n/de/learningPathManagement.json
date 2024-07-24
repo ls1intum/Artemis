@@ -1,0 +1,25 @@
+{
+    "artemisApp": {
+        "learningPathManagement": {
+            "learningPathHealthStatus": {
+                "type": {
+                    "missing": {
+                        "title": "Fehlende Lernpfade",
+                        "description": "Einige Studierende haben ihre Lernpfade noch nicht generiert. Ihre Lernpfade werden erst erstellt, wenn sie ihren Lernpfad zum ersten Mal anfordern.",
+                        "actionButton": "Lernpfad generieren"
+                    },
+                    "noCompetencies": {
+                        "title": "Keine Kompetenzen",
+                        "description": "Es existieren noch keine Kompetenzen für diesen Kurs. Bitte erstelle Kompetenzen für diesen Kurs.",
+                        "actionButton": "Kompetenzen zuweisen"
+                    },
+                    "noRelations": {
+                        "title": "Keine Kompetenzbeziehungen",
+                        "description": "Einigen Kompetenzen wurden noch keine Beziehungen zugewiesen. Bitte weisen Sie diesen Kompetenzen Beziehungen zu.",
+                        "actionButton": "Beziehungen zuweisen"
+                    }
+                }
+            }
+        }
+    }
+}

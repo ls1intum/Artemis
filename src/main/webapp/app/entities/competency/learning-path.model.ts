@@ -16,9 +16,9 @@ export class LearningPath implements BaseEntity {
 }
 
 export class LearningPathInformationDTO {
-    public id?: number;
-    public user?: UserNameAndLoginDTO;
-    public progress?: number;
+    public id: number;
+    public user: UserNameAndLoginDTO;
+    public progress: number;
 }
 
 export enum LearningObjectType {
@@ -49,6 +49,10 @@ export interface LearningPathNavigationDTO {
 
 export interface LearningPathNavigationOverviewDTO {
     learningObjects: LearningPathNavigationObjectDTO[];
+}
+
+export interface LearningPathsConfigurationDTO {
+    includeAllGradedExercises: boolean;
 }
 
 export interface CompetencyGraphNodeDTO {

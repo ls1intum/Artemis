@@ -1,0 +1,37 @@
+<div class="col">
+    <div class="row m-0 align-items-center justify-content-between">
+        <h5 class="m-0 col-md-auto p-0">State</h5>
+        <button class="btn btn-secondary btn-sm col-md-auto" (click)="loadLearningPathHealthStatus(courseId())">
+            @if (isLoading()) {
+                <fa-icon [icon]="faSpinner" animation="spin" />
+            }
+            <span>Refresh</span>
+        </button>
+    </div>
+    <hr class="my-2" />
+    <div class="vh-25">
+        @if (isLoading()) {
+            <div class="row justify-content-center p-2">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only" jhiTranslate="loading"></span>
+                </div>
+            </div>
+        } @else {
+            @for (learningPathHealthItem of learningPathHealthItems(); let first = $first; track learningPathHealthItem) {
+                <div class="px-2 py-1 learning-paths-state-container" [class.mt-3]="!first"
+                     [ngClass]="learningPathHealthItem.statusClass">
+                <span><strong
+                    [jhiTranslate]="learningPathHealthItem.translationKey + '.title'"></strong></span>
+                    <p class="m-0"><small
+                        [jhiTranslate]="learningPathHealthItem.translationKey + '.description'"></small>
+                    </p>
+                    <button class="mt-2 btn btn-outline-secondary btn-sm align-self-end"
+                            (click)="handleHealthStatusAction(learningPathHealthItem.healthStatus)"
+                            [jhiTranslate]="learningPathHealthItem.translationKey + '.actionButton'"></button>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+

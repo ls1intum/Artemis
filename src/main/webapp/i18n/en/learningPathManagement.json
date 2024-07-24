@@ -1,0 +1,25 @@
+{
+    "artemisApp": {
+        "learningPathManagement": {
+            "learningPathHealthStatus": {
+                "type": {
+                    "missing": {
+                        "title": "Missing learning paths",
+                        "description": "Some students have not generated their learning paths yet. Their learning paths will be created once they request their learning path for the first time.",
+                        "actionButton": "Generate learning paths"
+                    },
+                    "noCompetencies": {
+                        "title": "No competencies",
+                        "description": "Some students have not been assigned any competencies yet. Please assign competencies to these students.",
+                        "actionButton": "Assign competencies"
+                    },
+                    "noRelations": {
+                        "title": "No relations",
+                        "description": "Some competencies have not been assigned any relations yet. Please assign relations to these competencies.",
+                        "actionButton": "Assign relations"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,31 @@
+<div>
+    <div class="row m-0 align-items-center justify-content-between">
+        <h5 class="m-0 col-md-auto p-0">Configuration</h5>
+        @if (isEditMode()) {
+            <button class="btn btn-primary btn-sm col-md-auto" (click)="saveLearningPathsConfiguration()">
+                @if (isSaving()) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                }
+                <span>Save</span>
+            </button>
+        } @else {
+            <button class="btn btn-secondary btn-sm col-md-auto" (click)="enableEditMode()">Edit</button>
+        }
+    </div>
+    <hr class="my-2" />
+    <div class="row align-items-center m-0">
+        @if (isConfigLoading()) {
+            <div class="row justify-content-center p-2">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only" jhiTranslate="loading"></span>
+                </div>
+            </div>
+        } @else {
+            <input type="checkbox" class="col-md-auto" (change)="toggleIncludeAllGradedExercises()"
+                   [checked]="includeAllGradedExercisesEnabled()" [disabled]="!isEditMode()" />
+            <label class="col-md-auto">Include all graded exercises</label>
+            <!--        TODO: Add tooltip-->
+            <fa-icon [icon]="faCircleQuestion" class="col-md-auto p-0" />
+        }
+    </div>
+</div>

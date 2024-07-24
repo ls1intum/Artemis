@@ -3,12 +3,16 @@ import {
     CompetencyGraphDTO,
     LearningObjectType,
     LearningPathCompetencyDTO,
+    LearningPathInformationDTO,
     LearningPathNavigationDTO,
     LearningPathNavigationObjectDTO,
     LearningPathNavigationOverviewDTO,
+    LearningPathsConfigurationDTO,
 } from 'app/entities/competency/learning-path.model';
 import { HttpParams } from '@angular/common/http';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
+import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 
 @Injectable({
     providedIn: 'root',
@@ -53,5 +57,30 @@ export class LearningPathApiService extends BaseApiHttpService {
 
     async getLearningPathCompetencyLearningObjects(learningPathId: number, competencyId: number): Promise<LearningPathNavigationObjectDTO[]> {
         return await this.get<LearningPathNavigationObjectDTO[]>(`learning-path/${learningPathId}/competencies/${competencyId}/learning-objects`);
+    }
+
+    async getLearningPathsConfiguration(courseId: number): Promise<LearningPathsConfigurationDTO> {
+        return await this.get<LearningPathsConfigurationDTO>(`courses/${courseId}/learning-paths/configuration`);
+    }
+
+    async getLearningPathHealthStatus(courseId: number): Promise<LearningPathHealthDTO> {
+        return await this.get<LearningPathHealthDTO>(`courses/${courseId}/learning-path-health`);
+    }
+
+    async updateLearningPathsConfiguration(courseId: number, updatedLearningPathsConfiguration: LearningPathsConfigurationDTO): Promise<void> {
+        await this.put<void>(`courses/${courseId}/learning-paths/configuration`, updatedLearningPathsConfiguration);
+    }
+
+    async enableLearningPaths(courseId: number): Promise<void> {
+        await this.put<void>(`courses/${courseId}/learning-paths/enable`);
+    }
+
+    async generateMissingLearningPaths(courseId: number): Promise<void> {
+        await this.put<void>(`courses/${courseId}/learning-paths/generate-missing`);
+    }
+
+    async getLearningPathInformation(courseId: number, pageable: SearchTermPageableSearch): Promise<SearchResult<LearningPathInformationDTO>> {
+        const params = this.createHttpSearchParams(pageable);
+        return await this.get<SearchResult<LearningPathInformationDTO>>(`courses/${courseId}/learning-paths`, { params });
     }
 }

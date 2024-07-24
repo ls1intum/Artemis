@@ -76,7 +76,7 @@
                                     <ngb-highlight [result]="learningPath.user?.login" [term]="searchTerm" />
                                 </td>
                                 <td class="col-4">
-                                    <ngb-progressbar type="primary" [showValue]="true" [value]="learningPath.progress ?? 0" [max]="100" />
+                                    <ngb-progressbar type="primary" [showValue]="true" [value]="learningPath.progress" [max]="100" />
                                 </td>
                                 <td class="col-1">
                                     <jhi-button (onClick)="viewLearningPath(learningPath)" [title]="'entity.action.view'" />

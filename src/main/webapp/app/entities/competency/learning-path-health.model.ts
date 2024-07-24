@@ -1,5 +1,5 @@
 export class LearningPathHealthDTO {
-    public status?: HealthStatus[];
+    public status: HealthStatus[] = [];
     public missingLearningPaths?: number;
 
     constructor(status: HealthStatus[]) {
