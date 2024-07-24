@@ -56,9 +56,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     accountName = '';
     enteredName = '';
 
-    graceEndDate: dayjs.Dayjs;
-    criticalTime = dayjs.duration(30, 'seconds');
-
     // Icons
     faSpinner = faSpinner;
     faArrowLeft = faArrowLeft;
@@ -97,14 +94,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
             this.examParticipationService.setEndView(true);
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
-            // this should be the individual working end + the grace period
-            if (this.testRun) {
-                this.graceEndDate = dayjs(this.testRunStartTime!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            } else if (this.testExam) {
-                this.graceEndDate = dayjs(this.studentExam.startedDate!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            } else {
-                this.graceEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            }
         }
 
         this.accountService.identity().then((user) => {

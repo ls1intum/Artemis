@@ -109,14 +109,12 @@
     } @else {
         <div [innerHTML]="formattedGeneralInformation"></div>
         <br />
-        <div>
-            <p class="fw-bold">
-                <span jhiTranslate="artemisApp.examParticipation.submitFinalExam"></span>
-            </p>
+        <div class="mb-1">
+            <span class="fw-bold" jhiTranslate="artemisApp.examParticipation.submitFinalExam"></span>
         </div>
         @if (handInEarly) {
             <div class="mb-3">
-                <div class="mb-1 fw-bold text-danger">
+                <div class="mb-1 mt-3 fw-bold text-danger">
                     <fa-icon [icon]="faCircleExclamation" />
                     <span jhiTranslate="artemisApp.examParticipation.handInEarly"> </span>
                 </div>

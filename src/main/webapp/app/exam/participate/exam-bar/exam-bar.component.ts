@@ -34,6 +34,8 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
 
     readonly faDoorClosed = faDoorClosed;
     criticalTime = dayjs.duration(5, 'minutes');
+    criticalTimeEndView = dayjs.duration(30, 'seconds');
+
     private previousHeight: number;
     graceEndDate: dayjs.Dayjs;
     examTitle: string;
@@ -69,6 +71,7 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
         resizeObserver.observe(barElement);
 
         if (this.isEndView) {
+            // this should be the individual working end + the grace period
             if (this.testRun) {
                 this.graceEndDate = dayjs(this.testRunStartTime!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
             } else if (this.testExam) {
