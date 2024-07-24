@@ -61,7 +61,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         actions.push(cleanBuildAction);
         actions.push(platformAction);
         windFile.actions = actions;
-        programmingExercise.windFile = windFile;
+        programmingExercise.buildConfig!.windFile = windFile;
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -85,10 +85,10 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     });
 
     it('should set correct code', () => {
-        programmingExercise.buildScript = 'nottest';
+        programmingExercise.buildConfig!.buildScript = 'nottest';
         comp.code = 'nottest';
         comp.codeChanged('test');
-        expect(comp.code).toEqual(programmingExercise.buildScript);
+        expect(comp.code).toEqual(programmingExercise.buildConfig?.buildScript);
         expect(comp.code).toBe('test');
     });
 
@@ -107,29 +107,29 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     it('should return false to reload template', () => {
         comp.programmingLanguage = programmingExercise.programmingLanguage;
         comp.projectType = programmingExercise.projectType;
-        comp.sequentialTestRuns = programmingExercise.sequentialTestRuns;
+        comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         comp.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
-        comp.testwiseCoverageEnabled = programmingExercise.testwiseCoverageEnabled;
+        comp.testwiseCoverageEnabled = programmingExercise.buildConfig?.testwiseCoverageEnabled;
         expect(comp.shouldReloadTemplate()).toBeFalse();
     });
 
     it('should return true to reload template', () => {
         comp.programmingLanguage = ProgrammingLanguage.JAVA;
         comp.projectType = ProjectType.PLAIN_GRADLE;
-        comp.sequentialTestRuns = programmingExercise.sequentialTestRuns;
+        comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         comp.staticCodeAnalysisEnabled = true;
         comp.testwiseCoverageEnabled = true;
         expect(comp.shouldReloadTemplate()).toBeTrue();
     });
 
     it('should reset buildplan', () => {
-        programmingExercise.windFile = windFile;
-        programmingExercise.buildPlanConfiguration = 'some build plan';
-        expect(programmingExercise.windFile).toBeDefined();
-        expect(programmingExercise.buildPlanConfiguration).toBeDefined();
+        programmingExercise.buildConfig!.windFile = windFile;
+        programmingExercise.buildConfig!.buildPlanConfiguration = 'some build plan';
+        expect(programmingExercise.buildConfig?.windFile).toBeDefined();
+        expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeDefined();
         comp.resetCustomBuildPlan();
-        expect(programmingExercise.windFile).toBeUndefined();
-        expect(programmingExercise.buildPlanConfiguration).toBeUndefined();
+        expect(programmingExercise.buildConfig?.windFile).toBeUndefined();
+        expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
     });
 
     it('should do nothing without a programming language', () => {
@@ -150,9 +150,9 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.loadAeolusTemplate();
         expect(comp.programmingLanguage).toBe(programmingExercise.programmingLanguage);
         expect(comp.projectType).toBe(programmingExercise.projectType);
-        expect(comp.sequentialTestRuns).toBe(programmingExercise.sequentialTestRuns);
+        expect(comp.sequentialTestRuns).toBe(programmingExercise.buildConfig?.sequentialTestRuns);
         expect(comp.staticCodeAnalysisEnabled).toBe(programmingExercise.staticCodeAnalysisEnabled);
-        expect(comp.testwiseCoverageEnabled).toBe(programmingExercise.testwiseCoverageEnabled);
+        expect(comp.testwiseCoverageEnabled).toBe(programmingExercise.buildConfig?.testwiseCoverageEnabled);
     });
 
     it('should not call loadAeolusTemplate', () => {
@@ -181,23 +181,23 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     });
 
     it('should update windfile', () => {
-        comp.programmingExercise.windFile = undefined;
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
         jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.next("echo 'test'")));
         comp.loadAeolusTemplate();
-        expect(comp.programmingExercise.windFile).toBeDefined();
+        expect(comp.programmingExercise.buildConfig?.windFile).toBeDefined();
     });
 
     it('should call this.resetCustomBuildPlan', () => {
-        comp.programmingExercise.windFile = undefined;
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         const resetSpy = jest.spyOn(comp, 'resetCustomBuildPlan');
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
         comp.loadAeolusTemplate();
-        expect(comp.programmingExercise.windFile).toBeUndefined();
+        expect(comp.programmingExercise.buildConfig?.windFile).toBeUndefined();
         expect(resetSpy).toHaveBeenCalled();
     });
 
@@ -210,7 +210,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
         comp.loadAeolusTemplate();
         expect(comp.resetCustomBuildPlan).not.toHaveBeenCalled();
-        expect(comp.programmingExercise.buildScript).toBe("echo 'test'");
+        expect(comp.programmingExercise.buildConfig?.buildScript).toBe("echo 'test'");
     });
 
     it('should call getAeolusTemplateScript and reset', () => {
@@ -221,31 +221,31 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         jest.spyOn(comp, 'resetCustomBuildPlan');
         comp.loadAeolusTemplate();
         expect(comp.resetCustomBuildPlan).toHaveBeenCalledOnce();
-        expect(comp.programmingExercise.buildScript).toBeUndefined();
+        expect(comp.programmingExercise.buildConfig?.buildScript).toBeUndefined();
     });
 
     it('should accept editor for existing exercise', () => {
         comp.programmingExercise.id = 1;
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
         const zone: NgZone = new NgZone({});
-        comp.programmingExercise.buildScript = 'buildscript';
+        comp.programmingExercise.buildConfig!.buildScript = 'buildscript';
         const editor = new AceEditorComponent(elementRef, zone, mockThemeService);
         expect(comp.editor).toBeUndefined();
         comp.editor = editor;
         expect(comp.code).toBe('buildscript');
         expect(comp.editor).toBeDefined();
-        comp.programmingExercise.buildScript = undefined;
+        comp.programmingExercise.buildConfig!.buildScript = undefined;
         comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
         expect(comp.code).toBe('');
     });
 
     it('should set docker image correctly', () => {
-        comp.programmingExercise.windFile = windFile;
-        comp.programmingExercise.windFile.metadata.docker.image = 'old';
+        comp.programmingExercise.buildConfig!.windFile = windFile;
+        comp.programmingExercise.buildConfig!.windFile.metadata.docker.image = 'old';
         comp.setDockerImage('testImage');
-        expect(comp.programmingExercise.windFile?.metadata.docker.image).toBe('testImage');
-        comp.programmingExercise.windFile = undefined;
+        expect(comp.programmingExercise.buildConfig?.windFile?.metadata.docker.image).toBe('testImage');
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         comp.setDockerImage('testImage');
-        expect(comp.programmingExercise.windFile).toBeUndefined();
+        expect(comp.programmingExercise.buildConfig?.windFile).toBeUndefined();
     });
 });
