@@ -58,6 +58,14 @@ public interface StudentScoreRepository extends ArtemisJpaRepository<StudentScor
             """)
     List<StudentScore> findAllByExerciseAndUserWithEagerExercise(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 
+    @Query("""
+            SELECT stud
+            FROM StudentScore s
+                LEFT JOIN s.user stud
+            WHERE s.exercise = :exercise
+            """)
+    Set<User> findAllUsersWithScoresByExercise(@Param("exercise") Exercise exercise);
+
     @Transactional // ok because of delete
     @Modifying
     void deleteByExerciseAndUser(Exercise exercise, User user);

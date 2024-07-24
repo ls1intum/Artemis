@@ -2,9 +2,9 @@ import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -26,9 +26,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     constructor(private aeolusService: AeolusService) {}
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
-    private _editor?: AceEditorComponent;
+    private _editor?: MonacoEditorComponent;
 
-    @ViewChild('editor', { static: false }) set editor(value: AceEditorComponent) {
+    @ViewChild('editor', { static: false }) set editor(value: MonacoEditorComponent) {
         this._editor = value;
         if (this._editor) {
             this.setupEditor();
@@ -112,7 +112,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         }
     }
 
-    get editor(): AceEditorComponent | undefined {
+    get editor(): MonacoEditorComponent | undefined {
         return this._editor;
     }
 
@@ -130,19 +130,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         if (!this._editor) {
             return;
         }
-        this._editor.getEditor().setOptions({
-            animatedScroll: true,
-            maxLines: 30,
-            showPrintMargin: false,
-            readOnly: false,
-            highlightActiveLine: false,
-            highlightGutterLine: false,
-            minLines: 30,
-            mode: 'ace/mode/sh',
-        });
-        this._editor.getEditor().renderer.setOptions({
-            showFoldWidgets: false,
-        });
+        this._editor.changeModel('build-plan.sh', '');
     }
 
     setDockerImage(dockerImage: string) {

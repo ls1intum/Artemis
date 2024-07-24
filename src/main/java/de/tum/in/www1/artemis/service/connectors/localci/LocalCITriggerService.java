@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
@@ -32,6 +33,7 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -75,11 +77,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
+    private final ExerciseDateService exerciseDateService;
+
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService) {
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -89,6 +93,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.gitService = gitService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     @PostConstruct
@@ -131,6 +136,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
         else if (triggeredByPushTo.equals(RepositoryType.TESTS)) {
             assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
+            commitHashToBuild = Objects.requireNonNullElseGet(commitHashToBuild,
+                    () -> gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName());
             testCommitHash = commitHashToBuild;
         }
         else {
@@ -142,8 +149,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
-        // Exam exercises have a higher priority than normal exercises
-        int priority = programmingExercise.isExamExercise() ? 1 : 2;
+        // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
+        int priority = determinePriority(programmingExercise, participation);
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
@@ -272,5 +279,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
+    }
+
+    private int determinePriority(ProgrammingExercise programmingExercise, ProgrammingExerciseParticipation participation) {
+        if (programmingExercise.isExamExercise() && programmingExercise.getExerciseGroup().getExam().isTestExam()) {
+            return 2;
+        }
+        return exerciseDateService.isAfterDueDate(participation) ? 3 : programmingExercise.isExamExercise() ? 1 : 2;
     }
 }

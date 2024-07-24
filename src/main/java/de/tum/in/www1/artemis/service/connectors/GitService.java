@@ -38,12 +38,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.GitCommand;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
@@ -1286,6 +1288,10 @@ public class GitService extends AbstractGitService {
 
     private LsRemoteCommand lsRemoteCommand(Git git) {
         return authenticate(git.lsRemote());
+    }
+
+    protected <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
+        return command.setTransportConfigCallback(sshCallback);
     }
 
     /**

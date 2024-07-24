@@ -354,9 +354,9 @@ public class BuildJobExecutionService {
                     }
                 }
             }
-            catch (IllegalStateException e) {
-                // Exceptions due to one invalid sca file should not lead to the whole build to fail.
-                String msg = "Invalid report format in file " + fileName + ", ignoring.";
+            catch (Exception e) {
+                // Exceptions due to one invalid file should not lead to the whole build to fail.
+                String msg = "Error while parsing report file" + fileName + ", ignoring.";
                 buildLogsMap.appendBuildLogEntry(buildJobId, msg);
                 log.warn(msg, e);
             }

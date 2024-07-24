@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -80,6 +80,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
+    channelSearchCollapsed = false;
 
     conversationSelected = true;
     sidebarData: SidebarData;
@@ -97,6 +98,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     @ViewChild(CourseWideSearchComponent)
     courseWideSearch: CourseWideSearchComponent;
+    @ViewChild('courseWideSearchInput')
+    searchElement: ElementRef;
 
     courseWideSearchConfig: CourseWideSearchConfig;
     courseWideSearchTerm = '';
@@ -240,7 +243,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSearch() {
-        this.activeConversation = undefined;
+        this.metisConversationService.setActiveConversation(undefined);
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
         this.courseWideSearch?.onSearch();
@@ -372,5 +375,17 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             return ChannelSubType.EXAM;
         }
         return ChannelSubType.GENERAL;
+    }
+
+    toggleChannelSearch() {
+        this.channelSearchCollapsed = !this.channelSearchCollapsed;
+    }
+
+    @HostListener('document:keydown', ['$event'])
+    handleSearchShortcut(event: KeyboardEvent) {
+        if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+            event.preventDefault();
+            this.searchElement.nativeElement.focus();
+        }
     }
 }

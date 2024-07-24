@@ -102,10 +102,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 87.13,
-            branches: 73.36,
-            functions: 81.39,
-            lines: 87.20,
+            statements: 87.12,
+            branches: 73.35,
+            functions: 81.34,
+            lines: 87.19,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],

@@ -107,7 +107,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
-    exerciseSelected = true;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -280,10 +279,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } else {
                 this.examParticipationService.setExamLayout();
             }
-            // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
-            const exercises: Exercise[] = this.studentExam.exercises!;
-            const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
-            this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
             if (!!this.testRunId || this.testExam) {
                 this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
@@ -652,7 +647,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.problemStatementUpdateEventsSubscription = this.liveEventsService
             .observeNewEventsAsSystem([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE])
             .subscribe((event: ProblemStatementUpdateEvent) => {
-                this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
+                this.updateProblemStatement(event);
                 this.liveEventsService.acknowledgeEvent(event, false);
             });
     }
@@ -941,5 +936,35 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
             });
+    }
+
+    /**
+     * Updates the problem statement of an exercise.
+     * If the exercise was already opened, the problem statement is updated using ExamExerciseUpdateService,
+     * and differences between the old and new problem statements are highlighted.
+     *
+     * If the exercise wasn't previously opened, the problem statement will be updated without highlighting differences.
+     * This is because ExamExerciseUpdateHighlighterComponents are initialized only when a student opens an exercise.
+     *
+     * We avoid initializing all exercise components when a student opens an exam to prevent system overload.
+     * For large exams, initializing all components at once could result in even 16,000 REST calls, potentially overloading the system.
+     */
+    private updateProblemStatement(event: ProblemStatementUpdateEvent): void {
+        const index = this.studentExam.exercises!.findIndex((exercise) => exercise.id === event.exerciseId);
+        const wasExerciseOpened = this.pageComponentVisited[index];
+        if (wasExerciseOpened) {
+            this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
+        } else {
+            const exercise = this.studentExam.exercises![index];
+            exercise.problemStatement = event.problemStatement;
+        }
+    }
+
+    /**
+     * Updates the current exam height offset property to recalculate the height of exam sidebar and sidebar content
+     * @param newHeight New exam bar height calculated based on the window resizements
+     */
+    updateHeight(newHeight: number) {
+        document.documentElement.style.setProperty('--exam-height-offset', `${newHeight}px`);
     }
 }

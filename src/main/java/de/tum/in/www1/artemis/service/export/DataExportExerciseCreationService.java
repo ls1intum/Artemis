@@ -206,7 +206,7 @@ public class DataExportExerciseCreationService {
     private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir, User user) throws IOException {
         // quizzes do not have an assessment due date, so we need to check if they have ended according to their due date
         boolean isInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        boolean includeResults = (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished())
+        boolean includeResults = (exercise.isExamExercise() && exercise.getExam().resultsPublished())
                 || (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise) && !(exercise instanceof QuizExercise))
                 || (exercise.isCourseExercise() && exercise instanceof QuizExercise quizExercise && quizExercise.isQuizEnded()) || isInstructor;
         for (var participation : exercise.getStudentParticipations()) {

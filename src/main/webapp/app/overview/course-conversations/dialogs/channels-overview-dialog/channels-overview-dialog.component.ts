@@ -115,7 +115,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                 this.close([channelAction.channel, this.channelModificationPerformed]);
                 break;
             case 'create':
-                this.createChannelFn &&
+                if (this.createChannelFn) {
                     this.createChannelFn(channelAction.channel)
                         .pipe(takeUntil(this.ngUnsubscribe))
                         .subscribe({
@@ -124,6 +124,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                                 this.channelModificationPerformed = true;
                             },
                         });
+                }
                 break;
         }
     }
