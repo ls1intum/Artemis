@@ -9,6 +9,10 @@ import static org.mockito.Mockito.verify;
 import java.util.Set;
 import java.util.TreeSet;
 
+import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
+import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentMatcher;
@@ -32,6 +36,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisTemplateRepository;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 
 public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -50,6 +55,18 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     private IrisSettingsRepository irisSettingsRepository;
+
+    @SpyBean
+    protected IrisCourseChatSessionService irisCourseChatSessionService;
+
+    @SpyBean
+    protected CompetencyJolService competencyJolService;
+
+    @SpyBean
+    protected PyrisPipelineService pyrisPipelineService;
+
+    @SpyBean
+    protected IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;

@@ -19,7 +19,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
@@ -44,16 +43,13 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
-import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
-import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisStatusUpdateService;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.CompetencyJolSetEvent;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.PyrisEvent;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.PyrisEventService;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.SubmissionFailedEvent;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.SubmissionSuccessfulEvent;
-import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
@@ -74,20 +70,8 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    @SpyBean
-    private PyrisPipelineService pyrisPipelineService;
-
-    @SpyBean
-    private IrisExerciseChatSessionService irisExerciseChatSessionService;
-
     @Autowired
     private SubmissionRepository submissionRepository;
-
-    @SpyBean
-    private IrisCourseChatSessionService irisCourseChatSessionService;
-
-    @SpyBean
-    private CompetencyJolService competencyJolService;
 
     @Autowired
     private PyrisEventService pyrisEventService;
