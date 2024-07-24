@@ -58,7 +58,6 @@ import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/s
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
