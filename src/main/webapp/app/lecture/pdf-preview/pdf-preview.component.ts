@@ -4,6 +4,9 @@ import { AttachmentService } from 'app/lecture/attachment.service';
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
 import { Attachment } from 'app/entities/attachment.model';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
@@ -13,7 +16,9 @@ import { Attachment } from 'app/entities/attachment.model';
 export class PdfPreviewComponent implements OnInit {
     @ViewChild('pdfContainer', { static: true }) pdfContainer: ElementRef;
     @ViewChild('enlargedCanvas') enlargedCanvas: ElementRef;
-    attachment: Attachment;
+    lecture?: Lecture;
+    attachment?: Attachment;
+    attachmentUnit?: AttachmentUnit;
     isEnlargedView: boolean = false;
     currentPage: number = 1;
     totalPages: number = 0;
@@ -21,13 +26,27 @@ export class PdfPreviewComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private attachmentService: AttachmentService,
+        private attachmentUnitService: AttachmentUnitService,
     ) {}
 
     ngOnInit() {
-        this.route.data.subscribe((data: { attachment: Attachment }) => {
-            this.attachment = data.attachment;
-            if (this.attachment && this.attachment.id) {
-                this.attachmentService.getAttachmentFile(this.attachment.id).subscribe({
+            this.route.data.subscribe((data: { attachment: Attachment }) => {
+                this.attachment = data.attachment;
+                if (this.attachment?.id) {
+                    this.attachmentService.getAttachmentFile(this.attachment.id).subscribe({
+                        next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
+                        error: (error) => console.error('Failed to load PDF file', error),
+                    });
+                } else {
+                    console.error('Invalid attachment or attachment ID.');
+                }
+            });
+
+        this.route.data.subscribe((data: { attachmentUnit: AttachmentUnit }) => {
+            this.attachmentUnit = data.attachmentUnit;
+            console.log(this.attachmentUnit);
+            if (this.attachmentUnit?.id) {
+                this.attachmentUnitService.getAttachmentFile(this.attachmentUnit.id).subscribe({
                     next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
                     error: (error) => console.error('Failed to load PDF file', error),
                 });

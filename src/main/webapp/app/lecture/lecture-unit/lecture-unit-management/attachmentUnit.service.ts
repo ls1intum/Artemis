@@ -60,4 +60,14 @@ export class AttachmentUnitService {
         const params = new HttpParams().set('commaSeparatedKeyPhrases', keyPhrases);
         return this.httpClient.get<Array<number>>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/slides-to-remove/${filename}`, { params, observe: 'response' });
     }
+
+    /**
+     * Retrieve the file associated with a given attachment ID as a Blob object
+     *
+     * @param attachmentUnitId The ID of the attachment to retrieve
+     * @returns An Observable that emits the Blob object of the file when the HTTP request completes successfully
+     */
+    getAttachmentFile(attachmentUnitId: number): Observable<Blob> {
+        return this.httpClient.get(`${this.resourceURL}/files/attachments/attachment-units/${attachmentUnitId}/file`, { responseType: 'blob' });
+    }
 }

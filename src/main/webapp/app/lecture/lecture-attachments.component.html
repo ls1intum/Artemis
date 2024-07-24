@@ -80,12 +80,13 @@
                                                 <td class="text-end">
                                                     <div class="flex-btn-group-container">
                                                         <button
-                                                            [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'attachments', attachment.id]"
-                                                            type="submit"
+                                                            type="button"
                                                             class="btn btn-primary btn-sm me-1"
+                                                            [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'attachments', attachment.id]"
+                                                            [ngbTooltip]="'entity.action.view' | artemisTranslate"
                                                         >
-                                                            <fa-icon [icon]="faPencilAlt" />
-                                                            <span class="d-none d-md-inline">Preview</span>
+                                                            <fa-icon [icon]="faEye" />
+                                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
                                                         </button>
                                                         <button
                                                             [disabled]="attachmentToBeCreated?.id === attachment?.id"

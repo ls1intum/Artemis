@@ -4,24 +4,16 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.FilePathService.actualPathForPublicPath;
 import static de.tum.in.www1.artemis.service.FilePathService.getLectureAttachmentFilePath;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -50,7 +42,6 @@ import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import org.springframework.web.server.ResponseStatusException;
 import tech.jhipster.web.util.ResponseUtil;
 
 
@@ -220,37 +211,5 @@ public class AttachmentResource {
             // this catch is required for deleting wrongly formatted attachment database entries
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, attachmentId.toString())).build();
-    }
-
-
-    /**
-     * GET courses/{id}/file : Returns the file associated with the
-     * given attachment ID as a downloadable resource
-     *
-     * @param attachmentId the ID of the attachment to retrieve
-     * @return ResponseEntity containing the file as a resource
-     */
-    @GetMapping("/attachments/{attachmentId}/file")
-    public ResponseEntity<InputStreamResource> getAttachmentFile(@PathVariable Long attachmentId) throws IOException {
-        Attachment attachment = attachmentRepository.findById(attachmentId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found with id: " + attachmentId));
-
-        Path filePath = actualPathForPublicPath(URI.create(attachment.getLink()));
-        byte[] fileBytes = fileService.getFileForPath(filePath);
-
-        try (PDDocument document = Loader.loadPDF(fileBytes)) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            document.save(out);
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getName() + "\"");
-            headers.setContentType(MediaType.APPLICATION_PDF);
-
-            return ResponseEntity.ok()
-                .headers(headers)
-                .contentLength(out.size())
-                .body(new InputStreamResource(new ByteArrayInputStream(out.toByteArray())));
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error processing PDF file " + filePath, e);
-        }
     }
 }

@@ -8,7 +8,7 @@ import { Subject } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
-import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { LectureService } from 'app/lecture/lecture.service';
 
@@ -47,6 +47,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     faPencilAlt = faPencilAlt;
     faPaperclip = faPaperclip;
     faQuestionCircle = faQuestionCircle;
+    faEye = faEye;
 
     constructor(
         protected activatedRoute: ActivatedRoute,

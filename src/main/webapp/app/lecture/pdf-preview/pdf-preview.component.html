@@ -2,7 +2,14 @@
     <div class="col-12">
         <div>
             <h4>
-                <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span> {{ attachment.id }}: {{ attachment.name }}
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
+                @if (attachment) {
+                    {{ attachment.id }} : {{ attachment?.name }}
+                }
+                @if (attachmentUnit) {
+                    : {{ attachmentUnit.name }}
+                }
+
             </h4>
             <div class="row">
                 <div class="pdf-container" #pdfContainer>

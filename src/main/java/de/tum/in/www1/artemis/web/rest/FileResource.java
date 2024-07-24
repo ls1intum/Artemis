@@ -76,6 +76,7 @@ import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * REST controller for managing Files.
@@ -373,6 +374,28 @@ public class FileResource {
     }
 
     /**
+     * GET courses/{id}/file : Returns the file associated with the
+     * given attachment ID as a downloadable resource
+     *
+     * @param attachmentId the ID of the attachment to retrieve
+     * @return ResponseEntity containing the file as a resource
+     */
+    @GetMapping("/attachments/{attachmentId}/file")
+    public ResponseEntity<byte[]> getLectureAttachmentById(@PathVariable Long attachmentId) {
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found with id: " + attachmentId));
+
+        // get the course for a lecture attachment
+        Lecture lecture = attachment.getLecture();
+        Course course = lecture.getCourse();
+
+        // check if the user is authorized to access the requested attachment unit
+        checkAttachmentAuthorizationOrThrow(course, attachment);
+
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+    }
+
+    /**
      * GET /files/attachments/lecture/{lectureId}/merge-pdf : Get the lecture units
      * PDF attachments merged
      *
@@ -414,7 +437,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
+    public ResponseEntity<byte[]> getLectureUnitAttachment(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
@@ -425,6 +448,23 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+    }
+
+    @GetMapping("files/attachments/attachment-units/{attachmentUnitId}/file")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getLectureUnitFile(@PathVariable Long attachmentUnitId) {
+        log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findById(attachmentUnitId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment unit not found with id: " + attachmentUnitId));
+
+        Attachment attachment = attachmentUnit.getAttachment();
+        Course course = attachmentUnit.getLecture().getCourse();
+
+        // Check authorization
+        checkAttachmentAuthorizationOrThrow(course, attachment);
+
+        // Build and return file response
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
 
