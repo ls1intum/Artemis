@@ -78,10 +78,10 @@ public class ExerciseDateService {
         final Exercise exercise = participation.getExercise();
         if (exercise.isExamExercise()) {
             if (participation instanceof StudentParticipation studentParticipation) {
-                return examDateService.isIndividualExerciseWorkingPeriodOver(exercise.getExamViaExerciseGroupOrCourseMember(), studentParticipation);
+                return examDateService.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
             }
             else {
-                return examDateService.isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
+                return examDateService.isExamWithGracePeriodOver(exercise.getExam());
             }
         }
         else {
@@ -168,7 +168,7 @@ public class ExerciseDateService {
      */
     public static boolean isAfterAssessmentDueDate(Exercise exercise) {
         if (exercise.isExamExercise()) {
-            return exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished();
+            return exercise.getExam().resultsPublished();
         }
         return exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
     }
