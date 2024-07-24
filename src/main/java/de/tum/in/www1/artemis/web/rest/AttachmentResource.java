@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.service.FilePathService.actualPathForPublic
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -216,13 +215,6 @@ public class AttachmentResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, attachmentId.toString())).build();
     }
 
-    private String resolveFilePath(String webPath) {
-        String baseDir = "uploads";
-        String prefixToRemove = "/api/files/";
-        String pathWithoutPrefix = webPath.replace(prefixToRemove, "");
-        return Paths.get(baseDir, pathWithoutPrefix).toString();
-    }
-
     /**
      * GET courses/{id}/file : Returns the file associated with the
      * given attachment ID as a downloadable resource
@@ -233,10 +225,10 @@ public class AttachmentResource {
     @GetMapping("/attachments/{attachmentId}/file")
     public ResponseEntity<Resource> getAttachmentFile(@PathVariable Long attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId).orElseThrow(() -> new ResourceNotFoundException("Attachment not found with id: " + attachmentId));
-        String actualFilePath = resolveFilePath(attachment.getLink());
-        Resource resource = new FileSystemResource(actualFilePath);
+        String filePath = attachment.getLink();
+        Resource resource = new FileSystemResource(filePath);
         if (!resource.exists()) {
-            throw new RuntimeException("File not found " + actualFilePath);
+            throw new RuntimeException("File not found " + filePath);
         }
 
         String contentType = "application/pdf";
