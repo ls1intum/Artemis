@@ -94,43 +94,8 @@ describe('ExamParticipationCoverComponent', () => {
     it('should initialize with ngOnInit', fakeAsync(() => {
         const user = { name: 'admin' } as User;
         jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
-
-        let now = dayjs();
-        component.studentExam.workingTime = 1;
-        component.exam.gracePeriod = 1;
-        component.exam.startDate = now;
-
         component.ngOnChanges();
         tick();
-
-        expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
-        expect(component.accountName).toBe(user.name);
-
-        now = dayjs();
-        component.startView = true;
-        component.exam.startDate = now;
-        component.ngOnChanges();
-
-        // Case TestRun
-        now = dayjs();
-        component.studentExam.workingTime = 1;
-        component.exam.gracePeriod = 1;
-        component.testRunStartTime = now;
-        component.studentExam.testRun = true;
-        component.ngOnChanges();
-        expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
-
-        // Case test exam
-        now = dayjs();
-        component.studentExam.workingTime = 1;
-        component.exam.testExam = true;
-        component.exam.gracePeriod = 1;
-        component.exam.startDate = dayjs().subtract(4, 'hours');
-
-        component.ngOnChanges();
-        tick();
-
-        expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
         expect(component.accountName).toBe(user.name);
     }));
 

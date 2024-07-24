@@ -26,15 +26,15 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
     @Input() endDate: dayjs.Dayjs;
     @Input() exerciseIndex = 0;
     @Input() isEndView: boolean;
-    @Input() testRun: boolean;
-    @Input() testExam: boolean;
     @Input() testRunStartTime: dayjs.Dayjs | undefined;
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
-
+    
     readonly faDoorClosed = faDoorClosed;
     criticalTime = dayjs.duration(5, 'minutes');
     criticalTimeEndView = dayjs.duration(30, 'seconds');
+    testExam: boolean;
+    testRun: boolean;
 
     private previousHeight: number;
     graceEndDate: dayjs.Dayjs;
@@ -46,6 +46,8 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
     ngOnInit(): void {
         this.examTitle = this.exam.title!;
         this.exercises = this.studentExam.exercises!;
+        this.testExam = this.exam.testExam!;
+        this.testRun = this.studentExam.testRun ?? false;
     }
 
     /**

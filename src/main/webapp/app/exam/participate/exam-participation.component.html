@@ -149,8 +149,6 @@
                         [exam]="exam"
                         [studentExam]="studentExam"
                         [testRunStartTime]="testStartTime"
-                        [testRun]="testRunId ? true : false"
-                        [testExam]="testExam"
                         (examAboutToEnd)="examEnded()"
                         (onExamHandInEarly)="toggleHandInEarly()"
                         (heightChange)="updateHeight($event)"
