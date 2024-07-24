@@ -38,7 +38,7 @@ describe('ExamBarComponent', () => {
         comp = fixture.componentInstance;
 
         comp.exam = new Exam();
-        comp.exam.title = "Test Exam";
+        comp.exam.title = 'Test Exam';
         comp.studentExam = new StudentExam();
         comp.endDate = dayjs();
         const exercises = [
