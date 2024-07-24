@@ -108,7 +108,7 @@ public class PageableSearchUtilService {
         final var search = new PageableSearchDTO<String>();
         search.setPage(1);
         search.setPageSize(10);
-        search.setSortedColumn("build_completion_date");
+        search.setSortedColumn("buildCompletionDate");
         search.setSortingOrder(SortingOrder.DESCENDING);
         return search;
     }
