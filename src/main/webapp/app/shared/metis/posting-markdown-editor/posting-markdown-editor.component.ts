@@ -1,4 +1,17 @@
-import { AfterContentChecked, AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation, forwardRef } from '@angular/core';
+import {
+    AfterContentChecked,
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    ViewChild,
+    ViewEncapsulation,
+    forwardRef,
+} from '@angular/core';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
@@ -42,6 +55,7 @@ import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor
         },
     ],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
     @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
