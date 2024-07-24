@@ -15,7 +15,6 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
@@ -32,10 +31,6 @@ import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisTemplateRepository;
-import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
-import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
-import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -55,18 +50,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     private IrisSettingsRepository irisSettingsRepository;
-
-    @SpyBean
-    protected IrisCourseChatSessionService irisCourseChatSessionService;
-
-    @SpyBean
-    protected CompetencyJolService competencyJolService;
-
-    @SpyBean
-    protected PyrisPipelineService pyrisPipelineService;
-
-    @SpyBean
-    protected IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;

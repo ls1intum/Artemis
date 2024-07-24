@@ -41,9 +41,13 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
@@ -115,6 +119,18 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @SpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
+
+    @SpyBean
+    protected IrisCourseChatSessionService irisCourseChatSessionService;
+
+    @SpyBean
+    protected CompetencyJolService competencyJolService;
+
+    @SpyBean
+    protected PyrisPipelineService pyrisPipelineService;
+
+    @SpyBean
+    protected IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @Value("${artemis.version-control.url}")
     protected URL localVCBaseUrl;
