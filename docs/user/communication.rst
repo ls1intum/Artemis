@@ -128,7 +128,7 @@ To search within a specific channel in the communications module, users can navi
 Verify User Authority
 ^^^^^^^^^^^^^^^^^^^^^
 
-To build trust between users utilizing the system's communication features, we prepend an role badge to the author’s name in the
+To build trust between users utilizing the system's communication features, we prepend a role badge to the author’s name in the
 headers of messages and their replies. The badge we introduce differs according to the role of the author within the course
 and reveals their highest authoritative role. Via tooltips that are shown as users hover over these badges (see images below),
 the system displays a brief explanation of that specific role. This way, the system builds trust in the author, and readers
