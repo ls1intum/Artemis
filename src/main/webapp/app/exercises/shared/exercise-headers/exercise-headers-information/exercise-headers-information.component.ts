@@ -235,6 +235,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             return submissionsLeft <= 0 ? 'danger' : 'warning';
         }
     }
+
     getPointsItem(points: number | undefined, title: string): InformationBox {
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.' + title,

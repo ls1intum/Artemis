@@ -23,18 +23,22 @@ interface DateContent {
     type: 'timeAgo' | 'dateTime';
     value: DateType;
 }
+
 interface DifficultyLevelContent {
     type: 'difficultyLevel';
     value: DifficultyLevel;
 }
+
 interface ExerciseContent {
     type: 'submissionStatus' | 'categories';
     value: Exercise;
 }
+
 interface StringContent {
     type: 'string';
     value: string;
 }
+
 export type InformationBoxContent = StudentExamContent | DateContent | ExerciseContent | DifficultyLevelContent | StringContent;
 
 @Component({

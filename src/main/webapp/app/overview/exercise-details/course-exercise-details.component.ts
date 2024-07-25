@@ -455,6 +455,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.instructorActionItems.push(this.getReEvaluateItem());
         }
     }
+
     createTutorActions(): InstructorActionItem[] {
         const tutorActionItems = [...this.getDefaultItems()];
         if (this.exercise?.type === ExerciseType.QUIZ) {
@@ -557,7 +558,9 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.participationUpdateListener.unsubscribe();
             if (this.studentParticipations) {
                 this.studentParticipations.forEach((participation) => {
-                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
+                    if (participation.id && this.exercise) {
+                        this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id, this.exercise);
+                    }
                 });
             }
         }
