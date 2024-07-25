@@ -175,12 +175,10 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
         const fileName = this.importFile.name;
         const fileExtension = fileName.split('.').pop()?.toLowerCase();
 
-        if (fileExtension === 'json') {
-            this.handleJsonFile(this.importFile);
-        } else if (fileExtension === 'zip') {
+        if (fileExtension === 'zip') {
             await this.handleZipFile(this.importFile);
         } else {
-            return;
+            this.handleJsonFile(this.importFile);
         }
     }
 
@@ -200,7 +198,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             const images = await this.extractImagesFromZip(zipContent);
             const jsonFile = zipContent.files[jsonFiles[0]];
             const jsonContent = await jsonFile.async('string');
-            await this.processJsonContent(jsonContent, true, images);
+            await this.processJsonContent(jsonContent, images);
         } catch (error) {
             return;
         }
@@ -211,7 +209,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
         for (const [fileName, zipEntry] of Object.entries(zipContent.files)) {
             if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
                 const lastDotIndex = fileName.lastIndexOf('.');
-                const fileNameNoExtension =  fileName.substring(0, lastDotIndex);
+                const fileNameNoExtension = fileName.substring(0, lastDotIndex);
                 const imageData = await zipEntry.async('blob');
                 const imageFile = new File([imageData], fileName);
                 images.set(fileNameNoExtension, imageFile);
@@ -220,24 +218,19 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
         return images;
     }
 
-    async processJsonContent(jsonContent: string, isZip: boolean = false, images: Map<string, File> = new Map()) {
-        if(isZip){
+    async processJsonContent(jsonContent: string, images: Map<string, File> = new Map()) {
+        try {
             const questions = JSON.parse(jsonContent) as QuizQuestion[];
-            await this.handleConversionOfExistingQuestions(questions, images);
-        } else {
-            try {
-                const questions = JSON.parse(jsonContent) as QuizQuestion[];
-                await this.addQuestions(questions);
-                // Clearing html elements
-                this.importFile = undefined;
-                this.importFileName = '';
-                const control = document.getElementById('importFileInput') as HTMLInputElement;
-                if (control) {
-                    control.value = '';
-                }
-            } catch (e) {
-                alert('Import Quiz Failed! Invalid quiz file.');
+            await this.addQuestions(questions, images);
+            // Clearing html elements
+            this.importFile = undefined;
+            this.importFileName = '';
+            const control = document.getElementById('importFileInput') as HTMLInputElement;
+            if (control) {
+                control.value = '';
             }
+        } catch (e) {
+            alert('Import Quiz Failed! Invalid quiz file.');
         }
     }
 
@@ -275,7 +268,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
      * Images are duplicated for drag and drop questions.
      * @param quizQuestions questions to be added to currently edited quiz exercise
      */
-    async addQuestions(quizQuestions: Array<QuizQuestion>) {
+    async addQuestions(quizQuestions: Array<QuizQuestion>, images: Map<string, File> = new Map()) {
         const invalidQuizQuestionMap = checkForInvalidFlaggedQuestions(quizQuestions);
         const validQuizQuestions = quizQuestions.filter((quizQuestion) => !invalidQuizQuestionMap[quizQuestion.id!]);
         const invalidQuizQuestions = quizQuestions.filter((quizQuestion) => invalidQuizQuestionMap[quizQuestion.id!]);
@@ -292,10 +285,10 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             });
             modal.componentInstance.shouldImport.subscribe(async () => {
                 const newQuizQuestions = validQuizQuestions.concat(invalidQuizQuestions);
-                return this.handleConversionOfExistingQuestions(newQuizQuestions);
+                return this.handleConversionOfExistingQuestions(newQuizQuestions, images);
             });
         } else {
-            return this.handleConversionOfExistingQuestions(validQuizQuestions);
+            return this.handleConversionOfExistingQuestions(validQuizQuestions, images);
         }
     }
 
@@ -348,7 +341,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 // Get image from the old question and duplicate it on the server and then save new image to the question,
-                const backgroundImageFile :File|undefined = images.get(`q${questionIndex}_background`);
+                const backgroundImageFile : File | undefined = images.get(`q${questionIndex}_background`);
                 if (backgroundImageFile) {
                     const backgroundFile = backgroundImageFile;
                     files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });
