@@ -17,6 +17,7 @@ export class ProgrammingExerciseOverviewPage {
 
     async getResultScore() {
         // TODO this is not the correct selector
+        
         const resultScore = this.page.locator('.tab-bar-exercise-details').locator('#result-score');
         await resultScore.waitFor({ state: 'visible' });
         return resultScore;

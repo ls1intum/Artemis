@@ -13,9 +13,6 @@ describe('InformationBoxComponent', () => {
         await TestBed.configureTestingModule({
             imports: [InformationBoxComponent, ArtemisTestModule, TranslateModule.forRoot(), NgbTooltipModule],
         }).compileComponents();
-    });
-
-    beforeEach(() => {
         fixture = TestBed.createComponent(InformationBoxComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
