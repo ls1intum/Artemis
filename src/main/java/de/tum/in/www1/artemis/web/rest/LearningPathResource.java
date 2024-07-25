@@ -431,7 +431,7 @@ public class LearningPathResource {
      *
      * @param courseId                   the id of the course for which to update the learning paths configuration
      * @param learningPathsConfiguration the updated configuration
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @PutMapping("courses/{courseId}/learning-paths/configuration")
     @FeatureToggle(Feature.LearningPaths)

@@ -903,7 +903,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testUpdateLearningPathsConfiguration() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         course.getLearningPathsConfiguration().setIncludeAllGradedExercises(true);
-        request.put("/api/courses/" + course.getId() + "/learning-paths/configuration", course.getLearningPathsConfiguration(), HttpStatus.OK);
+        request.put("/api/courses/" + course.getId() + "/learning-paths/configuration", course.getLearningPathsConfiguration(), HttpStatus.NO_CONTENT);
         course = courseRepository.findWithEagerLearningPathsConfigurationByIdElseThrow(course.getId());
         assertThat(course.getLearningPathsConfiguration()).isNotNull();
         assertThat(course.getLearningPathsConfiguration().getIncludeAllGradedExercises()).isTrue();
