@@ -167,7 +167,6 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     /**
      * Imports a json quiz file and adds questions to current quiz exercise.
      */
-
     async importQuiz() {
         if (!this.importFile) {
             return;
@@ -197,9 +196,9 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
 
         try {
             const zipContent = await jszip.loadAsync(file);
-            const jsonFiles = Object.keys(zipContent.files).filter(fileName => fileName.endsWith('.json'));
+            const jsonFiles = Object.keys(zipContent.files).filter((fileName) => fileName.endsWith('.json'));
 
-            const images = await this.extractImagesFromZip(zipContent)
+            const images = await this.extractImagesFromZip(zipContent);
             const jsonFile = zipContent.files[jsonFiles[0]];
             const jsonContent = await jsonFile.async('string');
             await this.processJsonContent(jsonContent,true,images);
@@ -224,8 +223,8 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
 
         return images;
     }
-    async processJsonContent(jsonContent: string , isZip: boolean = false, images : Map<string, File> = new Map()) {
-        if(isZip){
+    async processJsonContent(jsonContent: string, isZip: boolean = false, images : Map<string, File> = new Map()) {
+        if( isZip ){
             const questions = JSON.parse(jsonContent) as QuizQuestion[];
             await this.handleConversionOfExistingQuestions(questions, images);
         } else {
@@ -243,7 +242,6 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                 alert('Import Quiz Failed! Invalid quiz file.');
             }
         }
-
     }
 
     async onFileLoadImport(fileReader: FileReader) {
@@ -356,12 +354,12 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                 const backgroundImageFile :File|undefined = images.get(`q${questionIndex}_background`);
                 if(backgroundImageFile) {
                     const backgroundFile = backgroundImageFile;
-                    files.set(backgroundFile.name, {path: dndQuestion.backgroundFilePath!, file: backgroundFile});
+                    files.set(backgroundFile.name, {path: dndQuestion.backgroundFilePath!, file: backgroundFile });
                     dndQuestion.backgroundFilePath = backgroundFile.name;
 
                 } else {
                     const backgroundFile = await this.fileService.getFile(dndQuestion.backgroundFilePath!, this.filePool);
-                    files.set(backgroundFile.name, {path: dndQuestion.backgroundFilePath!, file: backgroundFile});
+                    files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });
                     dndQuestion.backgroundFilePath = backgroundFile.name;
                 }
 
@@ -373,21 +371,20 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                     dropLocation.invalid = false;
                 });
                 for (const dragItem of dndQuestion.dragItems || []) {
-                    var dragItemCounter = 0
+                    var dragItemCounter = 0;
                     // Duplicating image on server. This is only valid for image drag items. For text drag items, pictureFilePath is undefined,
                     if (dragItem.pictureFilePath) {
                         const exportedDragItemFile :File|undefined = images.get(`q${questionIndex}_dragItem-${dragItemCounter}`);
-                        if(exportedDragItemFile){
+                        if (exportedDragItemFile) {
                             files.set(exportedDragItemFile.name, { path: dragItem.pictureFilePath, file: exportedDragItemFile });
                             dragItem.pictureFilePath = exportedDragItemFile.name;
-                        }
-                        else {
+                        } else {
                             const dragItemFile = await this.fileService.getFile(dragItem.pictureFilePath, this.filePool);
                             files.set(dragItemFile.name, { path: dragItem.pictureFilePath, file: dragItemFile });
                             dragItem.pictureFilePath = dragItemFile.name;
                         }
 
-                        dragItemCounter+=1
+                        dragItemCounter += 1
 
                     }
                     dragItem.tempID = dragItem.id;
@@ -440,7 +437,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                 });
             }
             newQuizQuestions.push(question);
-            questionIndex +=1
+            questionIndex += 1
         }
         if (files.size > 0) {
             this.onFilesAdded.emit(files);
