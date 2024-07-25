@@ -35,9 +35,9 @@
     <div class="row">
         <h4 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.recentlyAccessed"></h4>
     </div>
-    <div class="row">
+    <div class="row card-body">
         @for (course of recentlyAccessedCourses; track course) {
-            <jhi-overview-course-card class="col-sm-12 col-md-6 col-lg-4 col-xl-3 pe-2 ps-2 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
+            <jhi-overview-course-card class="col-sm-12 col-md-6 col-lg-4 col-xl-3 px-4 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
         }
     </div>
     @if (regularCourses.length > 0) {
