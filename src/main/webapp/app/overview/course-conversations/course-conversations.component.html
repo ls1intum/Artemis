@@ -26,7 +26,7 @@
         <div class="d-flex justify-content-between">
             <div class="me-3" [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
                 <jhi-sidebar
-                    (onSelectConversation)="onConversationSelected($event)"
+                    (onSelectItemId)="onConversationSelected($event)"
                     (onUpdateSidebar)="prepareSidebarData()"
                     [itemSelected]="conversationSelected"
                     [courseId]="course.id"

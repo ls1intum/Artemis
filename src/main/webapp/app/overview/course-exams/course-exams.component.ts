@@ -55,6 +55,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     sidebarExams: SidebarCardElement[] = [];
     isCollapsed = false;
     isExamStarted = false;
+    //todo change name
+    wasSelectedExerciseUpdated: boolean;
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
 
@@ -64,6 +66,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         private serverDateService: ArtemisServerDateService,
         private examParticipationService: ExamParticipationService,
         private courseOverviewService: CourseOverviewService,
+        // private changeDetectorRef: ChangeDetectorRef,
         private router: Router,
     ) {}
 
@@ -103,20 +106,20 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         }
 
         // If no exam is selected navigate to the last selected or upcoming Exam
-        this.navigateToExam();
+        const examId = this.route.firstChild?.snapshot.params.examId;
+        this.examSelected = examId ? true : false;
     }
 
-    navigateToExam() {
-        const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.realExamsOfCourse, ...this.testExamsOfCourse]);
-        const lastSelectedExam = this.getLastSelectedExam();
-        const examId = this.route.firstChild?.snapshot.params.examId;
-        if (!examId && lastSelectedExam) {
-            this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
-        } else if (!examId && upcomingExam) {
-            this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+    updateSelectedExam(examId: number) {
+        this.wasSelectedExerciseUpdated = true;
+        if (this.examSelected) {
+            this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
+                this.router.navigate(['./' + examId], { relativeTo: this.route });
+            });
         } else {
-            this.examSelected = examId ? true : false;
+            this.router.navigate([examId], { relativeTo: this.route });
         }
+        this.examSelected = true;
     }
 
     private updateExams(): void {
@@ -256,10 +259,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     onSubRouteDeactivate() {
-        if (this.route.firstChild) {
-            return;
+        if (!this.wasSelectedExerciseUpdated) {
+            this.examSelected = false;
         }
-        this.navigateToExam();
+        this.wasSelectedExerciseUpdated = false;
     }
 
     getAllStudentExamsForRealExams(): StudentExam[] {
