@@ -179,14 +179,14 @@ export class Postprocessor {
         }
 
         if (node.type === 'BinaryExpression') {
-            // TODO: Implement Binary Expression
-            // let tempResult = this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
-            // if (tempResult.resultType === ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS) {
-            //     resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-            //     result = tempResult.result;
-            // } else {
-            //     result.push('Unknown URL');
-            //     resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+            let tempResult = this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
+            if (tempResult.resultType === ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS) {
+                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+                result = tempResult.result;
+            } else {
+                result.push('Unknown URL');
+                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+            }
         }
 
         return new ParsingResult(resultType, result);
@@ -223,32 +223,23 @@ export class Postprocessor {
         return new ParsingResult(resultType, [evaluatedURL]);
     }
 
-    // evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
-    //     const left = binaryExpression.left;
-    //     const right = binaryExpression.right;
-    //     let leftParsingResult = this.evaluateUrl(left, methodDefinition, restCall, classBody);
-    //     let rightParsingResult = this.evaluateUrl(right, methodDefinition, restCall, classBody);
-    //
-    //     let results = [{value: leftParsingResult, node: left}, {value: rightParsingResult, node: right}];
-    //     for (let result of results) {
-    //         if (Array.isArray(result.value)) {
-    //             if (result.node.type !== 'ThisExpression' && result.node.type === 'Identifier') {
-    //                 result.value = '${' + result.node.name + '}';
-    //             }
-    //         }
-    //     }
-    //     let resultString = '';
-    //     for (let resultValue of results) {
-    //         if (typeof resultValue.value === 'string') {
-    //             resultString += resultValue.value;
-    //         } else {
-    //             resultString += 'Unknown URL';
-    //         }
-    //     }
-    //     return resultString;
-    //
-    // }
-    //
+    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+        const left = binaryExpression.left;
+        const right = binaryExpression.right;
+        let leftParsingResult = this.evaluateUrl(left, methodDefinition, restCall, classBody);
+        let rightParsingResult = this.evaluateUrl(right, methodDefinition, restCall, classBody);
+
+        let parsingResult: string[] = [];
+        let parsingResultType = ParsingResultType.EVALUATE_BINARY_EXPRESSION_FAILURE;
+
+        if (leftParsingResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS && rightParsingResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
+            parsingResult.push(leftParsingResult.result[0] + rightParsingResult.result[0]);
+            parsingResultType = ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS;
+        }
+
+        return new ParsingResult(parsingResultType, parsingResult);
+    }
+
     // /**
     //  * Evaluates the URL from a given AST node within the context of a method definition and a REST call expression.
     //  * This method processes different types of nodes to extract or compute the URL string or parts of it.

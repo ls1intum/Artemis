@@ -27,12 +27,12 @@ const tsFiles: string[] = [];
 
 // tsFiles.push('');
 
-// tsFiles.push('src/main/webapp/app/exam/participate/exam-participation.service.ts');
+tsFiles.push('src/main/webapp/app/exam/participate/exam-participation.service.ts'); // TODO: This file is not working
 // tsFiles.push('src/main/webapp/app/exercises/programming/manage/services/programming-exercise-participation.service.ts');
 // tsFiles.push('src/main/webapp/app/exam/participate/exam-participation-live-events.service.ts');
 // tsFiles.push('src/main/webapp/app/admin/standardized-competencies/admin-standardized-competency.service.ts');
 // tsFiles.push('src/main/webapp/app/admin/logs/logs.service.ts');
-tsFiles.push('src/main/webapp/app/complaints/complaint.service.ts');
+// tsFiles.push('src/main/webapp/app/complaints/complaint.service.ts');
 // tsFiles.push('src/main/webapp/app/admin/organization-management/organization-management.service.ts');
 // tsFiles.push('src/main/webapp/app/account/activate/activate.service.ts');
 // tsFiles.push('src/main/webapp/app/shared/user-settings/user-settings.service.ts');
