@@ -8,6 +8,37 @@ interface RestCall {
     fileName: string;
 }
 
+enum ParsingResultType {
+    EVALUATE_TEMPLATE_LITERAL_SUCCESS,
+    EVALUATE_TEMPLATE_LITERAL_FAILURE,
+    EVALUATE_BINARY_EXPRESSION_SUCCESS,
+    EVALUATE_BINARY_EXPRESSION_FAILURE,
+    EVALUATE_MEMBER_EXPRESSION_SUCCESS,
+    EVALUATE_MEMBER_EXPRESSION_FAILURE,
+    EVALUATE_IDENTIFIER_SUCCESS,
+    EVALUATE_IDENTIFIER_FAILURE,
+    EVALUATE_LITERAL_SUCCESS,
+    EVALUATE_LITERAL_FAILURE,
+    GET_VARIABLE_FROM_METHOD_SUCCESS,
+    GET_VARIABLE_FROM_METHOD_FAILURE,
+    EVALUATE_URL_SUCCESS,
+    EVALUATE_URL_FAILURE,
+    GET_URLS_FROM_CALLING_METHODS_SUCCESS,
+    GET_URL_FROM_CALLING_METHOD_FAILURE,
+
+    UNABLE_TO_EVALUATE, // TODO, Incorporate this Type when no matching URL Parser is found
+}
+
+class ParsingResult {
+    resultType: ParsingResultType;
+    result: string[];
+
+    constructor(resultType: ParsingResultType, result: string[]) {
+        this.resultType = resultType;
+        this.result = result;
+    }
+}
+
 export class Postprocessor {
     static filesWithRestCalls: { filePath: string, restCalls: RestCall[]}[] = [];
     private restCalls: RestCall[] = [];
@@ -21,14 +52,13 @@ export class Postprocessor {
 
     extractRestCalls() {
         this.extractRestCallsFromProgram();
-        // this.extractRestCallsFromTree(this.ast, this.filePath);
     }
 
     extractRestCallsFromProgram() {
         this.ast.body.forEach(node => {
             if (node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'ClassDeclaration') {
                 this.extractRestCallsFromClassDeclaration(node.declaration);
-            } else if (node.type === 'ClassDeclaration') {
+            } else if (node.type === 'ClassDeclaration') { // Todo: Is this needed? This could cause REST Calls do be identified twice
                 this.extractRestCallsFromClassDeclaration(node);
             }
         });
@@ -53,25 +83,20 @@ export class Postprocessor {
                         const calleeIsHttpClient = this.isCalleeHttpClient(node.callee);
 
                         if (calleeIsHttpClient && (node.callee.object.type === 'Identifier' || node.callee.object.type === 'MemberExpression')) {
-                            // if (node.callee.object.type === 'httpClient') {
-                            // console.log('callee.object: ' + node.callee.object);
                             if (node.callee.property.type === 'Identifier') {
                                 if (['get', 'post', 'put', 'delete', 'patch'].includes(node.callee.property.name)) {
                                     const method = node.callee.property.name.toUpperCase();
-                                    let url: string | string[] = 'Unknown URL';
+                                    let urlEvaluationResult: ParsingResult = new ParsingResult(ParsingResultType.EVALUATE_URL_FAILURE, []);
                                     const line = node.loc.start.line;
 
                                     if (node.arguments.length > 0) {
-                                        // Check if the first argument is a TemplateLiteral
-                                        url = this.evaluateUrl(node.arguments[0], methodDefinition, node, classBody);
+                                        urlEvaluationResult = this.evaluateUrl(node.arguments[0], methodDefinition, node, classBody);
                                     }
 
                                     const fileName = this.filePath;
-                                    if (typeof url === 'string') {
-                                        this.restCalls.push({ method, url, line, fileName });
-                                    } else {
-                                        for (let urlPart of url) {
-                                            this.restCalls.push({method, url: urlPart, line, fileName});
+                                    if (urlEvaluationResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
+                                        for (let url of urlEvaluationResult.result) {
+                                            this.restCalls.push({ method, url, line, fileName });
                                         }
                                     }
                                 }
@@ -85,133 +110,207 @@ export class Postprocessor {
         });
     }
 
+    evaluateUrl(node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+        let resultType = ParsingResultType.EVALUATE_URL_FAILURE;
+        let result: string[] = [];
+
+        if (node.type === 'Literal' && node.value) {
+            result.push(node.value.toString());
+            resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+        }
+
+        if (node.type === 'TemplateLiteral') {
+            const tempResult = this.evaluateTemplateLiteralExpression(node, methodDefinition, restCall, classBody);
+            if (tempResult.resultType === ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS) {
+                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+                result = tempResult.result;
+            } else {
+
+            }
+        }
+
+        if (node.type === 'MemberExpression') {
+            if (node.object.type === 'ThisExpression' && node.property.type === 'Identifier') {
+                let tempResult = this.getMemberExpressionValueFromNameAndClassBody(node.property.name, classBody);
+
+                if (tempResult.resultType === ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE) {
+                    // If the member expression value is not found in the class body, try to evaluate it from the Child Classes
+                    tempResult = this.evaluateMemberVariableFromChildClasses(classBody, node.property.name);
+                    if (tempResult.resultType === ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE) {
+                        // if the member expression value is not found in the child classes, the value is defined dynamically and a placeholder is returned.
+                        result.push('${' + `this.${node.property.name}` + '}');
+                        resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+                    } else  {
+                        // else, the values found in the child classes are returned.
+                        result = tempResult.result;
+                        resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+                    }
+                } else {
+                    // if the member expression value is found in the class body, the value is returned.
+                    resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+                    result = tempResult.result;
+                }
+            }
+        }
+
+        if (node.type === 'Identifier') {
+            // TODO: If the value is passed on hard coded in the code, identify and return it.
+            let tempResult = this.getMethodVariableValueFromNameAndMethod(node.name, node, methodDefinition, restCall, classBody);
+            if (tempResult.resultType === ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS) {
+                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+                result = tempResult.result;
+            } else {
+                // If the value is not found in the method, try to find method calls from the method name and return the parameter value. If there are method calls that pass on the URL, it is the complete URL that is passed on.
+                let tempResult: ParsingResult = new ParsingResult(ParsingResultType.GET_URL_FROM_CALLING_METHOD_FAILURE, []);
+
+                if (methodDefinition.key.type === 'Identifier') {
+                    tempResult = this.findMethodCallsFromMethodNameAndClassBody(methodDefinition.key.name, classBody, restCall);
+                }
+
+                if (tempResult.resultType === ParsingResultType.GET_URLS_FROM_CALLING_METHODS_SUCCESS) {
+                    result = tempResult.result;
+                    resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+                } else {
+                    // If the value is not found in the method calls, the value is defined dynamically and a placeholder is returned.
+                    result.push('${' + node.name + '}');
+                    resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+                }
+            }
+        }
+
+        if (node.type === 'BinaryExpression') {
+            // TODO: Implement Binary Expression
+            // let tempResult = this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
+            // if (tempResult.resultType === ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS) {
+            //     resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+            //     result = tempResult.result;
+            // } else {
+            //     result.push('Unknown URL');
+            //     resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+        }
+
+        return new ParsingResult(resultType, result);
+    }
+
     isCalleeHttpClient(callee: TSESTree.MemberExpression) {
         if (callee.object.type === 'MemberExpression' && callee.object.property.type === 'Identifier') {
             return this.getMemberExpressionTypeFromName(callee.object.property.name) === 'HttpClient';
         }
-
         return false;
     }
 
-    evaluateTemplateLiteralExpression(templateLiteral: TSESTree.TemplateLiteral, classBody: TSESTree.ClassDeclaration): string {
-        return templateLiteral.quasis.reduce((acc, quasi, index) => {
-            let expression = '';
+    evaluateTemplateLiteralExpression(templateLiteral: TSESTree.TemplateLiteral, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+        let resultType = ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS;
+        let evaluatedURL = templateLiteral.quasis.reduce((acc, quasi, index) => {
+            let expression = 'Unknown URL';
             if (index < templateLiteral.expressions.length) {
-                expression = 'Unknown URL';
-                const expr = templateLiteral.expressions[index];
-                if (expr.type === 'Literal' && expr.value) {
-                    expression = expr.value.toString();
-                } else if (expr.type === 'TemplateLiteral') {
-                    expression = this.evaluateTemplateLiteralExpression(expr, classBody);
-                } else if (expr.type === 'MemberExpression') {
-                    let memberExprKey = '';
-                    if (expr.property.type === 'Identifier' && expr.property.name) {
-                        memberExprKey = expr.property.name;
-                    } else {
-                        console.error('expr.object or expr.property are not Identifiers');
-                    }
+                let subResult = this.evaluateUrl(templateLiteral.expressions[index], methodDefinition, restCall, classBody);
 
-                    const memberExpressionValue = this.getMemberExpressionValueFromName(memberExprKey);
-
-                    if (memberExpressionValue === 'Unknown URL') {
-                        if (expr.type === 'MemberExpression' && expr.object.type === 'ThisExpression') {
-                            expression = this.evaluateMemberVariableFromConstructorCall(classBody, memberExprKey)
-                            if (expression === 'Unknown URL' && expr.property.type === 'Identifier') {
-                                expression = '${' + `this.${expr.property.name}` + '}';
-                            }
-                        } else if (expr.object.type === 'Identifier' && expr.property.type === 'Identifier') {
-                            expression = '${' + `${expr.object.name}.${expr.property.name}`  + '}';
-                        }
-                    } else if (memberExpressionValue.length > 0) {
-                        expression = memberExpressionValue;
+                if (subResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
+                    if (subResult.result.length === 1) {
+                        expression = subResult.result[0];
                     }
                 } else {
-                    // For complex or undefined expressions, keep as-is
-                    if (expr.type === 'Identifier') {
-                        expression = '${' + expr.name + '}';
-                    } else {
-                        expression = '${' + expr.type + '}';
-                    }
+                    resultType = ParsingResultType.EVALUATE_TEMPLATE_LITERAL_FAILURE;
                 }
+
+                return acc + quasi.value.raw + expression;
+            } else {
+                return acc;
             }
-            return acc + quasi.value.raw + expression;
         }, '');
+
+        return new ParsingResult(resultType, [evaluatedURL]);
     }
 
-    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
-        const left = binaryExpression.left;
-        const right = binaryExpression.right;
-        let leftValue = this.evaluateUrl(left, methodDefinition, restCall, classBody);
-        let rightValue = this.evaluateUrl(right, methodDefinition, restCall, classBody);
+    // evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+    //     const left = binaryExpression.left;
+    //     const right = binaryExpression.right;
+    //     let leftParsingResult = this.evaluateUrl(left, methodDefinition, restCall, classBody);
+    //     let rightParsingResult = this.evaluateUrl(right, methodDefinition, restCall, classBody);
+    //
+    //     let results = [{value: leftParsingResult, node: left}, {value: rightParsingResult, node: right}];
+    //     for (let result of results) {
+    //         if (Array.isArray(result.value)) {
+    //             if (result.node.type !== 'ThisExpression' && result.node.type === 'Identifier') {
+    //                 result.value = '${' + result.node.name + '}';
+    //             }
+    //         }
+    //     }
+    //     let resultString = '';
+    //     for (let resultValue of results) {
+    //         if (typeof resultValue.value === 'string') {
+    //             resultString += resultValue.value;
+    //         } else {
+    //             resultString += 'Unknown URL';
+    //         }
+    //     }
+    //     return resultString;
+    //
+    // }
+    //
+    // /**
+    //  * Evaluates the URL from a given AST node within the context of a method definition and a REST call expression.
+    //  * This method processes different types of nodes to extract or compute the URL string or parts of it.
+    //  * It supports handling `TemplateLiteral`, `BinaryExpression`, `MemberExpression`, `Identifier`, and `Literal` nodes.
+    //  * The method aims to return a single URL string or an array of strings if multiple URLs are derived from the node.
+    //  * If the node type does not match any of the expected types or if the URL cannot be determined, it returns 'Unknown URL'.
+    //  *
+    //  * @param node - The AST node to evaluate for URL extraction.
+    //  * @param methodDefinition - The method definition context in which the node is evaluated.
+    //  * @param restCall - The REST call expression context for the evaluation.
+    //  * @returns The evaluated URL as a string or an array of strings if multiple URLs are found, or 'Unknown URL' if the URL cannot be determined.
+    //  */
+    // evaluateUrl(node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+    //     let evaluationResult: ParsingResult = new ParsingResult();
+    //     if (node.type === 'TemplateLiteral') {
+    //         evaluationResult = this.evaluateTemplateLiteralExpression(node, classBody);
+    //     }
+    //     else if (node.type === 'BinaryExpression') {
+    //         return this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
+    //     } else if (node.type === 'MemberExpression' && node.property.type === 'Identifier' && node.object.type === 'ThisExpression') { // TODO ========================
+    //         result =  this.getMemberExpressionValueFromName(node.property.name);
+    //         if (result === 'Unknown URL' && Preprocessor.PREPROCESSING_RESULTS.has(this.getClassNameFromClassBody(classBody))) {
+    //             result = this.evaluateMemberVariableFromConstructorCall(classBody, node.property.name);
+    //         }
+    //         return result;
+    //     } else if (node.type === 'Identifier') {
+    //         result = this.getMethodVariableValueFromNameAndMethod(node.name, methodDefinition, classBody);
+    //         if (result === 'Unknown URL' && methodDefinition.key.type === 'Identifier') {
+    //             let tempResult: string[] = [];
+    //             for (let methodCall of this.findMethodCallsFromMethodName(methodDefinition.key.name)) {
+    //                 tempResult.push(methodCall.parameterValue);
+    //             }
+    //             result = tempResult;
+    //         }
+    //     } else if (node.type === 'Literal' && node.value) {
+    //         result = node.value.toString();
+    //     }
+    //     return evaluationResult;
+    // }
 
-        if (typeof leftValue === 'string' && typeof rightValue === 'string') {
-            return leftValue + rightValue;
-        }
-
-        return 'Unknown URL';
-    }
-
-    /**
-     * Evaluates the URL from a given AST node within the context of a method definition and a REST call expression.
-     * This method processes different types of nodes to extract or compute the URL string or parts of it.
-     * It supports handling `TemplateLiteral`, `BinaryExpression`, `MemberExpression`, `Identifier`, and `Literal` nodes.
-     * The method aims to return a single URL string or an array of strings if multiple URLs are derived from the node.
-     * If the node type does not match any of the expected types or if the URL cannot be determined, it returns 'Unknown URL'.
-     *
-     * @param node - The AST node to evaluate for URL extraction.
-     * @param methodDefinition - The method definition context in which the node is evaluated.
-     * @param restCall - The REST call expression context for the evaluation.
-     * @returns The evaluated URL as a string or an array of strings if multiple URLs are found, or 'Unknown URL' if the URL cannot be determined.
-     */
-    evaluateUrl(node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): string | string[] {
-        let result: (string | string[]) = 'Unknown URL';
-        if (node.type === 'TemplateLiteral') {
-            return this.evaluateTemplateLiteralExpression(node, classBody);
-        } else if (node.type === 'BinaryExpression') {
-            return this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
-        } else if (node.type === 'MemberExpression' && node.property.type === 'Identifier' && node.object.type === 'ThisExpression') {
-            result =  this.getMemberExpressionValueFromName(node.property.name);
-            if (result === 'Unknown URL' && Preprocessor.PREPROCESSING_RESULTS.has(this.getClassNameFromClassBody(classBody))) {
-                result = this.evaluateMemberVariableFromConstructorCall(classBody, node.property.name);
-            }
-            return result;
-        } else if (node.type === 'Identifier') {
-            result = this.getMethodVariableValueFromNameAndMethod(node.name, methodDefinition, classBody);
-            if (result === 'Unknown URL' && methodDefinition.key.type === 'Identifier') {
-                let tempResult: string[] = [];
-                for (let methodCall of this.findMethodCallsFromMethodName(methodDefinition.key.name)) {
-                    tempResult.push(methodCall.parameterValue);
-                }
-                result = tempResult;
-            }
-        } else if (node.type === 'Literal' && node.value) {
-            result = node.value.toString();
-        }
-        return result;
-    }
-
-    /**
-     * Searches for method calls of a given method name within the AST of the current file.
-     * This method iterates over all nodes in the AST's body. For each node that is a class declaration
-     * (either directly or through an export declaration), it delegates the search to `findMethodCallsFromMethodNameAndClassBody`,
-     * which looks for method calls within the class body that match the given method name.
-     *
-     * @param methodName - The name of the method to search for calls to.
-     * @returns An array of objects, each containing a `callExpression` (the AST node representing the call expression)
-     *          and a `parameterValue` (the value of the parameter passed to the method call, as a string).
-     */
-    findMethodCallsFromMethodName(methodName: string) {
-        let methodCalls: { callExpression: TSESTree.CallExpression, parameterValue: string }[] = [];
-        for (const node of this.ast.body) {
-            let classBody;
-            if (node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'ClassDeclaration') {
-                methodCalls.push(... this.findMethodCallsFromMethodNameAndClassBody(methodName, node.declaration));
-            } else if (node.type === 'ClassDeclaration') {
-                methodCalls.push(... this.findMethodCallsFromMethodNameAndClassBody(methodName, node));
-            }
-        }
-        return methodCalls;
-    }
+    // /**
+    //  * Searches for method calls of a given method name within the AST of the current file.
+    //  * This method iterates over all nodes in the AST's body. For each node that is a class declaration
+    //  * (either directly or through an export declaration), it delegates the search to `findMethodCallsFromMethodNameAndClassBody`,
+    //  * which looks for method calls within the class body that match the given method name.
+    //  *
+    //  * @param methodName - The name of the method to search for calls to.
+    //  * @returns An array of objects, each containing a `callExpression` (the AST node representing the call expression)
+    //  *          and a `parameterValue` (the value of the parameter passed to the method call, as a string).
+    //  */
+    // findMethodCallsFromMethodName(methodName: string) {
+    //     let methodCalls: { callExpression: TSESTree.CallExpression, parameterValue: string }[] = [];
+    //     for (const node of this.ast.body) {
+    //         let classBody;
+    //         if (node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'ClassDeclaration') {
+    //             methodCalls.push(... this.findMethodCallsFromMethodNameAndClassBody(methodName, node.declaration));
+    //         } else if (node.type === 'ClassDeclaration') {
+    //             methodCalls.push(... this.findMethodCallsFromMethodNameAndClassBody(methodName, node));
+    //         }
+    //     }
+    //     return methodCalls;
+    // }
 
     /**
      * Finds and collects method calls by a specified method name within a given class body.
@@ -228,36 +327,52 @@ export class Postprocessor {
      *          `callExpression` is the AST node representing the found call expression,
      *          and `parameterValue` is the value of the first argument passed to the call expression.
      */
-    findMethodCallsFromMethodNameAndClassBody(methodName: string, classBody: TSESTree.ClassDeclaration) {
+    findMethodCallsFromMethodNameAndClassBody(methodName: string, classBody: TSESTree.ClassDeclaration, restCall: TSESTree.CallExpression) {
         let methodCalls: { callExpression: TSESTree.CallExpression, parameterValue: string }[] = [];
-        for (const methodNode of classBody.body.body) {
-            if (methodNode.type === 'MethodDefinition' && methodNode.key.type === 'Identifier') {
-                simpleTraverse(methodNode, {
+        let parsingResultType = ParsingResultType.GET_URL_FROM_CALLING_METHOD_FAILURE;
+
+        for (const methodDefinition of classBody.body.body) {
+            if (methodDefinition.type === 'MethodDefinition' && methodDefinition.key.type === 'Identifier') {
+                simpleTraverse(methodDefinition, {
                     enter: (node) => {
                         if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression' && node.callee.property.type === 'Identifier' &&
                             node.callee.property.name === methodName && node.arguments[0].type === 'Identifier') {
-                            let parameterValue = this.getMethodVariableValueFromNameAndMethod(node.arguments[0].name, methodNode, classBody);
-                            methodCalls.push({ callExpression: node, parameterValue: parameterValue });
+                            let parameterValue = this.getMethodVariableValueFromNameAndMethod(node.arguments[0].name, node, methodDefinition, restCall, classBody);
+                            if (parameterValue.resultType === ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS) {
+                                methodCalls.push({ callExpression: node, parameterValue: parameterValue.result[0] });
+                            }
                         }
                     }
                 });
             }
         }
-        return methodCalls;
+
+        let result: string[] = [];
+        for (const methodCall of methodCalls) {
+            result.push(methodCall.parameterValue);
+        }
+
+        if (result.length > 0) {
+            parsingResultType = ParsingResultType.GET_URLS_FROM_CALLING_METHODS_SUCCESS;
+        }
+        return new ParsingResult(parsingResultType, result);
     }
 
-    getMemberExpressionValueFromName(name: string) {
-        let memberExpression = 'Unknown URL';
-        simpleTraverse(this.ast, {
+    getMemberExpressionValueFromNameAndClassBody(name: string, classBody: TSESTree.ClassDeclaration) {
+        let memberExpressionResult: string[] = [];
+        let resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE;
+        simpleTraverse(classBody, {
             enter(node) {
                 if (node.type === 'PropertyDefinition' && node.value?.type === 'Literal' && node.key.type === 'Identifier' && node.value.value) {
                     if (node.key.name === name) {
-                        memberExpression = node.value.value.toString();
+                        memberExpressionResult.push(node.value.value.toString());
+                        resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_SUCCESS;
+                        return;
                     }
                 }
             }
         });
-        return memberExpression;
+        return new ParsingResult(resultType, memberExpressionResult);
     }
 
     getMemberExpressionTypeFromName(name: string) {
@@ -276,17 +391,23 @@ export class Postprocessor {
         return memberExpressionType;
     }
 
-    getMethodVariableValueFromNameAndMethod(name: string, method: TSESTree.MethodDefinition, classBody: TSESTree.ClassDeclaration) {
-        let methodVariableValue = 'Unknown URL';
-        simpleTraverse(method, {
+    getMethodVariableValueFromNameAndMethod(name: string, node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+        let result: string[] = [];
+        let resultType = ParsingResultType.EVALUATE_IDENTIFIER_FAILURE;
+        simpleTraverse(methodDefinition, {
             enter: (node) => {
                 if (node.type === 'VariableDeclaration') {
                     for (let decl of node.declarations) {
-                        if (decl.id.type === 'Identifier' && decl.id.name === name) {
+                        if (decl.id.type === 'Identifier' && decl.id.name === name && decl.init) {
                             if (decl.init?.type === 'Literal' && decl.init.value) {
-                                methodVariableValue = decl.init.value.toString();
+                                result.push(decl.init.value.toString());
+                                resultType = ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS;
                             } else if (decl.init?.type === 'TemplateLiteral') {
-                                methodVariableValue = this.evaluateTemplateLiteralExpression(decl.init, classBody);
+                                const tempResult = this.evaluateTemplateLiteralExpression(decl.init, methodDefinition, restCall, classBody);
+                                if (tempResult.resultType === ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS) {
+                                    result = tempResult.result;
+                                    resultType = ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS;
+                                }
                             }
                             return;
                         }
@@ -294,7 +415,7 @@ export class Postprocessor {
                 }
             }
         });
-        return methodVariableValue;
+        return new ParsingResult(resultType, result);
     }
 
     getClassNameFromClassBody(classBody: TSESTree.ClassDeclaration) {
@@ -314,7 +435,10 @@ export class Postprocessor {
         return [];
     }
 
-    evaluateMemberVariableFromConstructorCall(classBody: TSESTree.ClassDeclaration, memberExprKey: string) {
+    evaluateMemberVariableFromChildClasses(classBody: TSESTree.ClassDeclaration, memberExprKey: string) {
+        let memberExpressionResult: string[] = [];
+        let resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE;
+
         const superClass = Preprocessor.PREPROCESSING_RESULTS.get(this.getClassNameFromClassBody(classBody));
         if (superClass) {
             const constructorArguments = this.getConstructorArgumentsFromClassBody(classBody.body);
@@ -323,11 +447,13 @@ export class Postprocessor {
                     let constructorArgument = constructorArguments[i];
                     if (superConstructorCallArguments.arguments[i] !== '' && constructorArgument.type === 'TSParameterProperty'
                     && constructorArgument.parameter.type === 'Identifier' && constructorArgument.parameter.name === memberExprKey) {
-                        return superConstructorCallArguments.arguments[i];  // Todo: this should return a string[] containing all the possible values
+                        memberExpressionResult.push(superConstructorCallArguments.arguments[i]);
+                        resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_SUCCESS;
                     }
                 }
             }
         }
-        return 'Unknown URL';
+
+        return new ParsingResult(resultType, memberExpressionResult);
     }
 }
