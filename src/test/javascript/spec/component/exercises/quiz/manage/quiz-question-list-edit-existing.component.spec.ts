@@ -477,8 +477,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const result = await component.extractImagesFromZip(zip);
             expect(extractImagesFromZipSpy).toHaveBeenCalledWith(zip);
             expect(result.size).toBe(2);
-            expect(result.has('image1')).toBe(true);
-            expect(result.has('image2')).toBe(true);
+            expect(result.has('image1')).toBeTrue();
+            expect(result.has('image2')).toBeTrue();
         });
     });
 });
