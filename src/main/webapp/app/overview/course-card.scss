@@ -26,43 +26,11 @@
             background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
         }
 
-        .header-col {
-            height: 80px;
-            display: flex;
-            align-items: center;
-        }
-
-        .image-col {
-            text-align: left;
-        }
-
-        .title-col {
-            justify-content: center;
-        }
-
-        .course-info-col {
-            justify-content: flex-end;
-
-            .course-info-amounts {
-                display: flex;
-                flex-direction: column;
-                line-height: 20px;
-                white-space: nowrap;
-                z-index: 1;
-
-                a {
-                    color: white;
-                    font-weight: unset;
-                }
-            }
-        }
-
         .container {
             height: 80px;
 
             .row {
                 height: 80px;
-                // justify-content: space-between;
             }
         }
 
@@ -73,9 +41,9 @@
         }
     }
 
-    .card-body2 {
+    .card-body {
         padding: 20px;
-        
+
         .next-exercise-title {
             overflow: hidden;
             text-overflow: ellipsis;
@@ -107,99 +75,14 @@
             z-index: 2;
             position: relative;
         }
-    }
 
-    .card-body {
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
+        .btn-exercise {
+            color: var(--bs-body-color);
+            z-index: 2;
+            position: relative;
 
-        .chart-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            .chart-text {
-                position: absolute;
-            }
-
-            .chart-level {
-                z-index: 2;
-                cursor: pointer;
-            }
-        }
-
-        .points {
-            display: block;
-            max-width: 11ch;
-        }
-
-        canvas {
-            cursor: pointer;
-            z-index: 1;
-            width: 150px;
-            height: 150px;
-        }
-
-        .no-statistics {
-            display: flex;
-            height: 200px;
-            justify-content: center;
-            flex-direction: column;
-            margin-bottom: 0;
-        }
-    }
-
-    .card-footer {
-        position: relative;
-        padding: 0;
-        height: 50px;
-
-        .container {
-            height: 50px;
-
-            .row {
-                height: 50px;
-            }
-        }
-
-        .next-exercise-col {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-
-            .next-exercise-icon {
-                z-index: 1;
-                font-size: large;
-            }
-
-            .next-exercise-title {
-                font-weight: bolder;
-                font-size: large;
-                margin-bottom: 0;
-                display: inline-block;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                max-width: 40ch;
-                padding-left: 15px;
-            }
-
-            h6 {
-                margin-bottom: 0;
-            }
-        }
-
-        .no-exercise {
-            display: flex;
-            height: 50px;
-            align-items: center;
-            padding-left: 30px;
-
-            h6 {
-                margin-bottom: 0;
+            &:hover {
+                text-decoration: none !important;
             }
         }
     }
