@@ -402,10 +402,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 top: 5,
             },
             renderLineHighlight: 'none',
-            // Hide the scrollbar / overview ruler
+            occurrencesHighlight: 'off',
+            // Only show scrollbars if required.
             scrollbar: {
                 vertical: 'auto',
-                horizontal: 'hidden',
+                horizontal: 'auto',
             },
             overviewRulerLanes: 0,
             hideCursorInOverviewRuler: true,
@@ -415,6 +416,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             },
             // Separates the editor suggest widget from the editor's layout. It will stick to the page, but it won't interfere with other elements.
             fixedOverflowWidgets: true,
+            // We use the 'simple' strategy for word wraps to prevent performance issues. This prevents us from switching to a different font as the lines would no longer break correctly.
+            wrappingStrategy: 'simple',
         });
         this.setWordWrap(true);
     }
