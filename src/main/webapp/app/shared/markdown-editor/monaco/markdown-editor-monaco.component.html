@@ -106,80 +106,81 @@
                             </div>
                         }
                         @if (displayedActions.lecture) {
-                            <div>
-                                <button mat-button [matMenuTriggerFor]="subMenuLecture" type="button" class="btn btn-sm p-0 default-font-size">
-                                    <span [jhiTranslate]="displayedActions.lecture.translationKey"></span>
-                                    <fa-icon [icon]="faAngleDown" class="ms-1" />
-                                </button>
-                                <mat-menu #subMenuLecture="matMenu" type="button">
-                                    @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
-                                        <button mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
+                            <button [matMenuTriggerFor]="subMenuLecture" type="button" class="btn btn-sm py-0 m-0">
+                                <span [jhiTranslate]="displayedActions.lecture.translationKey"></span>
+                                <fa-icon [icon]="faAngleDown" class="ms-1" />
+                            </button>
+                            <mat-menu #subMenuLecture="matMenu" type="button">
+                                @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
+                                    <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
+                                        {{ lecture.title }}
+                                    </button>
+                                    <mat-menu #lectureMenuUnits="matMenu" type="button">
+                                        <button
+                                            class="ps-1 me-1"
+                                            mat-menu-item
+                                            (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })"
+                                            type="button"
+                                            class="border-bottom"
+                                        >
                                             {{ lecture.title }}
                                         </button>
-                                        <mat-menu #lectureMenuUnits="matMenu" type="button">
-                                            <button
-                                                mat-menu-item
-                                                (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })"
-                                                type="button"
-                                                class="border-bottom"
-                                            >
-                                                {{ lecture.title }}
-                                            </button>
-                                            @for (unit of lecture.lectureUnits; track unit.id) {
-                                                @if (unit.type === LectureUnitType.ATTACHMENT) {
-                                                    <button mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
-                                                        <span>{{ unit.name }}</span>
+                                        @for (unit of lecture.lectureUnits; track unit.id) {
+                                            @if (unit.type === LectureUnitType.ATTACHMENT) {
+                                                <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
+                                                    <span>{{ unit.name }}</span>
+                                                </button>
+                                                <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
+                                                    <button
+                                                        class="ps-1 me-1"
+                                                        mat-menu-item
+                                                        (click)="
+                                                            displayedActions.lecture.executeInCurrentEditor({
+                                                                reference: ReferenceType.ATTACHMENT_UNITS,
+                                                                lecture,
+                                                                attachmentUnit: unit,
+                                                            })
+                                                        "
+                                                        type="button"
+                                                        class="border-bottom"
+                                                    >
+                                                        {{ unit.name }}
                                                     </button>
-                                                    <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
+                                                    @if (!unit['slides'] || unit['slides'].length === 0) {
+                                                        <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
+                                                    }
+                                                    @for (slide of unit['slides']; track slide.id) {
                                                         <button
                                                             mat-menu-item
                                                             (click)="
                                                                 displayedActions.lecture.executeInCurrentEditor({
-                                                                    reference: ReferenceType.ATTACHMENT_UNITS,
+                                                                    reference: ReferenceType.SLIDE,
                                                                     lecture,
+                                                                    slide,
                                                                     attachmentUnit: unit,
                                                                 })
                                                             "
                                                             type="button"
-                                                            class="border-bottom"
                                                         >
-                                                            {{ unit.name }}
+                                                            <span>Slide {{ slide.slideNumber }}</span>
                                                         </button>
-                                                        @if (!unit['slides'] || unit['slides'].length === 0) {
-                                                            <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
-                                                        }
-                                                        @for (slide of unit['slides']; track slide.id) {
-                                                            <button
-                                                                mat-menu-item
-                                                                (click)="
-                                                                    displayedActions.lecture.executeInCurrentEditor({
-                                                                        reference: ReferenceType.SLIDE,
-                                                                        lecture,
-                                                                        slide,
-                                                                        attachmentUnit: unit,
-                                                                    })
-                                                                "
-                                                                type="button"
-                                                            >
-                                                                <span>Slide {{ slide.slideNumber }}</span>
-                                                            </button>
-                                                        }
-                                                    </mat-menu>
-                                                }
+                                                    }
+                                                </mat-menu>
                                             }
-                                            @for (attachment of lecture.attachments; track attachment.id) {
-                                                <button
-                                                    mat-menu-item
-                                                    type="button"
-                                                    (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture, attachment })"
-                                                >
-                                                    <span>{{ attachment.name }}</span>
-                                                </button>
-                                            }
-                                        </mat-menu>
-                                    }
-                                </mat-menu>
-                            </div>
+                                        }
+                                        @for (attachment of lecture.attachments; track attachment.id) {
+                                            <button
+                                                class="ps-1 me-1"
+                                                mat-menu-item
+                                                type="button"
+                                                (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture, attachment })"
+                                            >
+                                                <span>{{ attachment.name }}</span>
+                                            </button>
+                                        }
+                                    </mat-menu>
+                                }
+                            </mat-menu>
                         }
                         <!-- Meta -->
                         @for (action of displayedActions.meta; track action.id) {
@@ -213,7 +214,7 @@
         @if (action.icon) {
             <fa-icon [icon]="action.icon" />
         } @else {
-            <span class="default-font-size" [jhiTranslate]="action.translationKey"></span>
+            <span [jhiTranslate]="action.translationKey"></span>
         }
     </button>
 </ng-template>
