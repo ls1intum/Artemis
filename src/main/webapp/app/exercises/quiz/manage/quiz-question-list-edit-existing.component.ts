@@ -182,6 +182,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             await this.handleZipFile(this.importFile);
         } else {
             alert('Unsupported file type. Please upload a JSON or ZIP file.');
+            return;
         }
     }
 
@@ -198,17 +199,13 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             const zipContent = await jszip.loadAsync(file);
             const jsonFiles = Object.keys(zipContent.files).filter(fileName => fileName.endsWith('.json'));
 
-            if (jsonFiles.length !== 1) {
-                alert('The ZIP file must contain exactly one JSON file.');
-                return;
-            }
-
             const images = await this.extractImagesFromZip(zipContent)
             const jsonFile = zipContent.files[jsonFiles[0]];
             const jsonContent = await jsonFile.async('string');
             await this.processJsonContent(jsonContent,true,images);
         } catch (error) {
             alert('Failed to read ZIP file.');
+            return;
         }
     }
     async extractImagesFromZip(zipContent: JSZip) {
@@ -332,6 +329,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
      * Convert the given list of existing QuizQuestions to a list of new QuizQuestions
      *
      * @param existingQuizQuestions the list of existing QuizQuestions to be converted
+     * @param images if a zip file was provided, the images exported will be used to create the Dnd
      * @return the list of new QuizQuestions
      */
     private async handleConversionOfExistingQuestions(existingQuizQuestions: Array<QuizQuestion>, images: Map<string, File> = new Map()) {
