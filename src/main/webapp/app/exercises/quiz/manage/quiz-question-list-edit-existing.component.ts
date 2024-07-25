@@ -341,7 +341,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 // Get image from the old question and duplicate it on the server and then save new image to the question,
-                const backgroundImageFile : File | undefined = images.get(`q${questionIndex}_background`);
+                const backgroundImageFile: File | undefined = images.get(`q${questionIndex}_background`);
                 if (backgroundImageFile) {
                     const backgroundFile = backgroundImageFile;
                     files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });

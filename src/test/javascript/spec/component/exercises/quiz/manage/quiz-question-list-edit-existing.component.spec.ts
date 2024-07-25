@@ -341,7 +341,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(generateFileReaderStub).toHaveBeenCalledOnce();
             const addQuestionSpy = jest.spyOn(component, 'addQuestions').mockImplementation();
             await component.onFileLoadImport(reader);
-            expect(addQuestionSpy).toHaveBeenCalledWith(questions);
+            expect(addQuestionSpy).toHaveBeenCalledWith(questions, new Map());
             expect(component.importFile).toBeUndefined();
             expect(component.importFileName).toBe('');
             expect(getElementStub).toHaveBeenCalledOnce();
