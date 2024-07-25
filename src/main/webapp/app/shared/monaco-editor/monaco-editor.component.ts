@@ -397,7 +397,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 top: 5,
             },
             renderLineHighlight: 'none',
-            occurrencesHighlight: 'off',
+            selectionHighlight: false,
             // Only show scrollbars if required.
             scrollbar: {
                 vertical: 'auto',
