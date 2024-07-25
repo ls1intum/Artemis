@@ -12,23 +12,11 @@ import {
     ViewEncapsulation,
     forwardRef,
 } from '@angular/core';
-import { Command } from 'app/shared/markdown-editor/commands/command';
-import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
-import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
-import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.command';
-import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
-import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
-import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
-import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
-import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { LectureService } from 'app/lecture/lecture.service';
-import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ChannelMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/channelMentionCommand';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { isCommunicationEnabled } from 'app/entities/course.model';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
@@ -64,7 +52,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
     @Input() isInputLengthDisplayed = true;
     @Output() valueChange = new EventEmitter();
-    defaultCommands: Command[];
     lectureReferenceAction: MonacoLectureAttachmentReferenceAction;
     defaultActions: MonacoEditorAction[];
     content?: string;
@@ -84,22 +71,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
      */
     ngOnInit(): void {
-        const messagingOnlyCommands = isCommunicationEnabled(this.metisService.getCourse())
-            ? [new UserMentionCommand(this.courseManagementService, this.metisService), new ChannelMentionCommand(this.channelService, this.metisService)]
+        const messagingOnlyActions = isCommunicationEnabled(this.metisService.getCourse())
+            ? [new MonacoUserMentionAction(this.courseManagementService, this.metisService), new MonacoChannelReferenceAction(this.metisService, this.channelService)]
             : [];
-
-        this.defaultCommands = [
-            new BoldCommand(),
-            new ItalicCommand(),
-            new UnderlineCommand(),
-            new ReferenceCommand(),
-            new CodeCommand(),
-            new CodeBlockCommand(),
-            new LinkCommand(),
-            ...messagingOnlyCommands,
-            new ExerciseReferenceCommand(this.metisService),
-            new LectureAttachmentReferenceCommand(this.metisService, this.lectureService),
-        ];
 
         this.defaultActions = [
             new MonacoBoldAction(),
@@ -108,9 +82,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new MonacoQuoteAction(),
             new MonacoCodeAction(),
             new MonacoCodeBlockAction(),
-            /* TODO: Exercise/Lecture reference & messaging */
-            new MonacoChannelReferenceAction(this.metisService, this.channelService),
-            new MonacoUserMentionAction(this.courseManagementService, this.metisService),
+            ...messagingOnlyActions,
             new MonacoExerciseReferenceAction(this.metisService),
         ];
 
