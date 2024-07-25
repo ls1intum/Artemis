@@ -51,6 +51,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
 
     interval: number;
     waitingForExamStart = false;
+    waitingForExamFetching = false;
     timeUntilStart = '0';
 
     accountName = '';
@@ -149,9 +150,11 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
             this.onExamStarted.emit(this.studentExam);
         } else {
+            this.waitingForExamFetching = true;
             this.examParticipationService
                 .loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!, this.studentExam.id!)
                 .subscribe((studentExam: StudentExam) => {
+                    this.waitingForExamFetching = false;
                     this.studentExam = studentExam;
                     this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
                     if (this.hasStarted()) {
