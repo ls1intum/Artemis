@@ -37,19 +37,19 @@ export class LearningPathsTableComponent {
     readonly page = signal<number>(1);
     private readonly sortingOrder = signal<SortingOrder>(SortingOrder.ASCENDING);
     private readonly sortedColumn = signal<TableColumn>(TableColumn.ID);
-    private readonly pageSize = 50;
+    readonly pageSize = signal<number>(50).asReadonly();
     readonly collectionSize = computed(() => {
-        if (this.learningPaths().length <= this.pageSize) {
+        if (this.learningPaths().length <= this.pageSize()) {
             return this.learningPaths().length;
         } else {
-            return (this.searchResults()?.numberOfPages ?? 1) * this.pageSize;
+            return (this.searchResults()?.numberOfPages ?? 1) * this.pageSize();
         }
     });
 
     private readonly searchState = computed(() => {
         return <SearchTermPageableSearch>{
             page: this.page(),
-            pageSize: this.pageSize,
+            pageSize: this.pageSize(),
             searchTerm: this.searchTerm(),
             sortingOrder: this.sortingOrder(),
             sortedColumn: this.sortedColumn(),
@@ -71,5 +71,9 @@ export class LearningPathsTableComponent {
         } finally {
             this.isLoading.set(false);
         }
+    }
+
+    onPageChange(pageNumber: number) {
+        this.page.set(pageNumber);
     }
 }

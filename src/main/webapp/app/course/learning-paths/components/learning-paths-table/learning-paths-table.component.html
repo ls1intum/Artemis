@@ -31,7 +31,7 @@
                             <td>
                                 <ngb-highlight [result]="learningPath.user.login" [term]="searchTerm()" />
                             </td>
-                            <td>{{ learningPath.progress }}%</td>
+                            <td>{{ learningPath.progress }} %</td>
                         </tr>
                     } @empty {
                         <tr>
@@ -43,7 +43,7 @@
                 </tbody>
             </table>
         </div>
-        <ngb-pagination [collectionSize]="collectionSize()" [page]="page()" size="sm"
+        <ngb-pagination [collectionSize]="collectionSize()" [page]="page()" (pageChange)="onPageChange($event)" [pageSize]="pageSize()" size="sm"
                         class="d-flex justify-content-end mt-2 pagination" />
     </div>
 </div>
