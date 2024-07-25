@@ -12,7 +12,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     standalone: true,
     imports: [FontAwesomeModule, ArtemisSharedCommonModule],
     templateUrl: './learning-paths-configuration.component.html',
-    styleUrl: './learning-paths-configuration.component.scss',
+    styleUrls: ['./learning-paths-configuration.component.scss', '../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsConfigurationComponent {
     protected readonly faCircleQuestion = faCircleQuestion;

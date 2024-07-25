@@ -1,0 +1,19 @@
+.learning-paths-table-container {
+    max-height: 185px;
+    overflow-y: scroll;
+
+    table {
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: var(--bs-card-bg);
+        }
+    }
+}
+
+.pagination {
+    height: 27px;
+    overflow-y: hidden;
+}
+

@@ -5,6 +5,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { onError } from 'app/shared/util/global.utils';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 enum TableColumn {
     ID = 'ID',
@@ -18,9 +19,11 @@ enum TableColumn {
     standalone: true,
     imports: [ArtemisSharedCommonModule],
     templateUrl: './learning-paths-table.component.html',
-    styleUrl: './learning-paths-table.component.scss',
+    styleUrls: ['./learning-paths-table.component.scss', '../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsTableComponent {
+    protected readonly faSpinner = faSpinner;
+
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
 
@@ -31,14 +34,22 @@ export class LearningPathsTableComponent {
     readonly learningPaths = computed(() => this.searchResults()?.resultsOnPage ?? []);
 
     readonly searchTerm = model<string>('');
-    private readonly page = signal<number>(1);
+    readonly page = signal<number>(1);
     private readonly sortingOrder = signal<SortingOrder>(SortingOrder.ASCENDING);
     private readonly sortedColumn = signal<TableColumn>(TableColumn.ID);
+    private readonly pageSize = 50;
+    readonly collectionSize = computed(() => {
+        if (this.learningPaths().length <= this.pageSize) {
+            return this.learningPaths().length;
+        } else {
+            return (this.searchResults()?.numberOfPages ?? 1) * this.pageSize;
+        }
+    });
 
     private readonly searchState = computed(() => {
         return <SearchTermPageableSearch>{
             page: this.page(),
-            pageSize: 50,
+            pageSize: this.pageSize,
             searchTerm: this.searchTerm(),
             sortingOrder: this.sortingOrder(),
             sortedColumn: this.sortedColumn(),

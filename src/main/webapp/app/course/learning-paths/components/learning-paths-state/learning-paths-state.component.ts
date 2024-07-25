@@ -18,7 +18,7 @@ interface LearningPathHealthStatusItem {
     standalone: true,
     imports: [ArtemisSharedCommonModule],
     templateUrl: './learning-paths-state.component.html',
-    styleUrl: './learning-paths-state.component.scss',
+    styleUrls: ['./learning-paths-state.component.scss', '../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsStateComponent {
     protected readonly faSpinner = faSpinner;
