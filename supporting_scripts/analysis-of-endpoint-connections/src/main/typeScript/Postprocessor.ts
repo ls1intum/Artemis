@@ -24,7 +24,9 @@ enum ParsingResultType {
     EVALUATE_URL_SUCCESS,
     EVALUATE_URL_FAILURE,
     GET_URLS_FROM_CALLING_METHODS_SUCCESS,
-    GET_URL_FROM_CALLING_METHOD_FAILURE,
+    GET_URLS_FROM_CALLING_METHODS_FAILURE,
+    GET_URL_FROM_GETTER_SUCCESS,
+    GET_URL_FROM_GETTER_FAILURE,
 
     UNABLE_TO_EVALUATE, // TODO, Incorporate this Type when no matching URL Parser is found
 }
@@ -154,14 +156,13 @@ export class Postprocessor {
         }
 
         if (node.type === 'Identifier') {
-            // TODO: If the value is passed on hard coded in the code, identify and return it.
             let tempResult = this.getMethodVariableValueFromNameAndMethod(node.name, node, methodDefinition, restCall, classBody);
             if (tempResult.resultType === ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS) {
                 resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
                 result = tempResult.result;
             } else {
                 // If the value is not found in the method, try to find method calls from the method name and return the parameter value. If there are method calls that pass on the URL, it is the complete URL that is passed on.
-                let tempResult: ParsingResult = new ParsingResult(ParsingResultType.GET_URL_FROM_CALLING_METHOD_FAILURE, []);
+                tempResult = new ParsingResult(ParsingResultType.GET_URLS_FROM_CALLING_METHODS_FAILURE, []);
 
                 if (methodDefinition.key.type === 'Identifier') {
                     tempResult = this.findMethodCallsFromMethodNameAndClassBody(methodDefinition.key.name, classBody, restCall);
@@ -186,6 +187,17 @@ export class Postprocessor {
             } else {
                 result.push('Unknown URL');
                 resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+            }
+        }
+
+        if (node.type === 'CallExpression') {
+            // Sometimes, The ResourceURL is built and fetched using a getterMethod
+            let tempResult= this.getUrlFromGetterMethodCall(node, classBody);
+            if (tempResult.resultType === ParsingResultType.GET_URL_FROM_GETTER_SUCCESS) {
+                result = tempResult.result;
+                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+            } else {
+                resultType = ParsingResultType.UNABLE_TO_EVALUATE;
             }
         }
 
@@ -320,7 +332,7 @@ export class Postprocessor {
      */
     findMethodCallsFromMethodNameAndClassBody(methodName: string, classBody: TSESTree.ClassDeclaration, restCall: TSESTree.CallExpression) {
         let methodCalls: { callExpression: TSESTree.CallExpression, parameterValue: string }[] = [];
-        let parsingResultType = ParsingResultType.GET_URL_FROM_CALLING_METHOD_FAILURE;
+        let parsingResultType = ParsingResultType.GET_URLS_FROM_CALLING_METHODS_FAILURE;
 
         for (const methodDefinition of classBody.body.body) {
             if (methodDefinition.type === 'MethodDefinition' && methodDefinition.key.type === 'Identifier') {
@@ -382,23 +394,43 @@ export class Postprocessor {
         return memberExpressionType;
     }
 
+    getUrlFromGetterMethodCall(callExpression: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+        let parsingResultType = ParsingResultType.GET_URL_FROM_GETTER_FAILURE;
+        let parsingResult: string[] = [];
+
+        if (callExpression.callee.type === 'MemberExpression' && callExpression.callee.property.type === 'Identifier') {
+            const methodName = callExpression.callee.property.name;
+            for (const methodDefinition of classBody.body.body) {
+                // find the getter method
+                if (methodDefinition.type === 'MethodDefinition' && methodDefinition.key.type === 'Identifier' && methodDefinition.key.name === methodName && methodDefinition.value.type === 'FunctionExpression') {
+                    for (const node of methodDefinition.value.body.body) {
+                        if (node.type === 'ReturnStatement' && node.argument) {
+                            const tempResult = this.evaluateUrl(node.argument, methodDefinition, callExpression, classBody);
+                            if (tempResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
+                                parsingResult = tempResult.result;
+                                parsingResultType = ParsingResultType.GET_URL_FROM_GETTER_SUCCESS;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return new ParsingResult(parsingResultType, parsingResult);
+    }
+
     getMethodVariableValueFromNameAndMethod(name: string, node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
         let result: string[] = [];
-        let resultType = ParsingResultType.EVALUATE_IDENTIFIER_FAILURE;
+        let resultType = ParsingResultType.GET_VARIABLE_FROM_METHOD_FAILURE;
         simpleTraverse(methodDefinition, {
             enter: (node) => {
                 if (node.type === 'VariableDeclaration') {
                     for (let decl of node.declarations) {
                         if (decl.id.type === 'Identifier' && decl.id.name === name && decl.init) {
-                            if (decl.init?.type === 'Literal' && decl.init.value) {
-                                result.push(decl.init.value.toString());
+                            const tempResult = this.evaluateUrl(decl.init, methodDefinition, restCall, classBody);
+                            if (tempResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
+                                result = tempResult.result;
                                 resultType = ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS;
-                            } else if (decl.init?.type === 'TemplateLiteral') {
-                                const tempResult = this.evaluateTemplateLiteralExpression(decl.init, methodDefinition, restCall, classBody);
-                                if (tempResult.resultType === ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS) {
-                                    result = tempResult.result;
-                                    resultType = ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS;
-                                }
                             }
                             return;
                         }
