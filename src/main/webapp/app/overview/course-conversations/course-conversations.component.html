@@ -2,6 +2,7 @@
     <div class="input-group mb-1 rounded-2 p-2 me-2 module-bg" [hidden]="!isCodeOfConductAccepted">
         <!-- search bar -->
         <input
+            #courseWideSearchInput
             name="searchText"
             id="search"
             [(ngModel)]="courseWideSearchTerm"
