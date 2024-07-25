@@ -13,6 +13,7 @@ import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programmi
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
 import { ProgrammingExerciseTaskStatus } from '../../support/pageobjects/exam/ExamResultsPage';
 import { Page } from '@playwright/test';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 test.describe('Exam Results', () => {
     let course: Course;
@@ -38,6 +39,7 @@ test.describe('Exam Results', () => {
     test.describe('Check exam exercise results', () => {
         for (const testCase of testCases) {
             let exam: Exam;
+            let studentExam: StudentExam;
             let examEndDate: Dayjs;
             let exercise: Exercise;
             const exerciseTypeString = testCase.exerciseType.toString().toLowerCase();
@@ -80,14 +82,15 @@ test.describe('Exam Results', () => {
                     }
                     exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, testCase.exerciseType, additionalData);
                     await examAPIRequests.registerStudentForExam(exam, studentOne);
-                    await examAPIRequests.generateMissingIndividualExams(exam);
+                    const studentExams = await examAPIRequests.generateMissingIndividualExams(exam);
+                    studentExam = studentExams[0];
                     await examAPIRequests.prepareExerciseStartForExam(exam);
                 });
 
                 test.beforeEach('Participate in exam', async ({ login, examParticipation, examNavigation, examStartEnd }) => {
                     await login(admin);
                     await examParticipation.startParticipation(studentOne, course, exam);
-                    await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+                    await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
                     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
                     await examParticipation.handInEarly();
                     await examStartEnd.pressShowSummary();
@@ -166,7 +169,7 @@ test.describe('Exam Results', () => {
                     test('Check exam result overview', async ({ page, login, examAPIRequests, examResultsPage }) => {
                         await login(studentOne);
                         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-                        const gradeSummary = await examAPIRequests.getGradeSummary(exam);
+                        const gradeSummary = await examAPIRequests.getGradeSummary(exam, studentExam);
                         await examResultsPage.checkGradeSummary(gradeSummary);
                     });
                 }

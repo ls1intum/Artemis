@@ -102,7 +102,11 @@ describe('KnowledgeAreaEditComponent', () => {
 
         compareFormValues(component.form.getRawValue(), knowledgeArea);
         expect(component.isEditing).toBeFalse();
-        shouldClose ? expect(closeSpy).toHaveBeenCalled() : expect(closeSpy).not.toHaveBeenCalled();
+        if (shouldClose) {
+            expect(closeSpy).toHaveBeenCalled();
+        } else {
+            expect(closeSpy).not.toHaveBeenCalled();
+        }
     });
 
     it('should delete', () => {

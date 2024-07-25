@@ -134,7 +134,7 @@ describe('Profile Service', () => {
         allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
         activeProfiles: ['prod', 'jenkins', 'gitlab', 'athena', 'openapi', 'apollon'],
         git: {
-            branch: 'clone-repo-button',
+            branch: 'code-button',
             commit: {
                 id: {
                     abbrev: '95ef2a',
@@ -249,7 +249,7 @@ describe('Profile Service', () => {
             },
         ],
         git: {
-            branch: 'clone-repo-button',
+            branch: 'code-button',
             commit: {
                 id: {
                     abbrev: '95ef2a',
