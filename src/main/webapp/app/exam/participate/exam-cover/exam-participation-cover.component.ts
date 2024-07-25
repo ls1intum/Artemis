@@ -13,6 +13,7 @@ import dayjs from 'dayjs/esm';
 import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -51,7 +52,8 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
 
     interval: number;
     waitingForExamStart = false;
-    waitingForExamFetching = false;
+    isFetching = false;
+    loadExamSubscription?: Subscription;
     timeUntilStart = '0';
 
     accountName = '';
@@ -117,6 +119,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
         if (this.interval) {
             clearInterval(this.interval);
         }
+        this.loadExamSubscription?.unsubscribe();
     }
 
     /**
@@ -150,11 +153,11 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
             this.onExamStarted.emit(this.studentExam);
         } else {
-            this.waitingForExamFetching = true;
-            this.examParticipationService
+            this.isFetching = true;
+            this.loadExamSubscription = this.examParticipationService
                 .loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!, this.studentExam.id!)
                 .subscribe((studentExam: StudentExam) => {
-                    this.waitingForExamFetching = false;
+                    this.isFetching = false;
                     this.studentExam = studentExam;
                     this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
                     if (this.hasStarted()) {
