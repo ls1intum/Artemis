@@ -147,10 +147,11 @@
                                                         {{ unit.name }}
                                                     </button>
                                                     @if (!unit['slides'] || unit['slides'].length === 0) {
-                                                        <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
+                                                        <button class="ps-1 me-1" mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
                                                     }
                                                     @for (slide of unit['slides']; track slide.id) {
                                                         <button
+                                                            class="ps-1 me-1"
                                                             mat-menu-item
                                                             (click)="
                                                                 displayedActions.lecture.executeInCurrentEditor({
