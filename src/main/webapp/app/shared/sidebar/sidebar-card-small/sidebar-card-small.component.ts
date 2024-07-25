@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from '../sidebar-event.service';
@@ -9,6 +9,7 @@ import { Location } from '@angular/common';
     selector: 'jhi-small-sidebar-card',
     templateUrl: './sidebar-card-small.component.html',
     styleUrls: ['./sidebar-card-small.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarCardSmallComponent {
     DifficultyLevel = DifficultyLevel;
