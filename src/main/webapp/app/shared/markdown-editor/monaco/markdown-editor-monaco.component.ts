@@ -185,6 +185,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     readonly colorPickerMarginTop = 35;
     readonly colorPickerHeight = 110;
+    protected readonly LectureUnitType = LectureUnitType;
+    protected readonly ReferenceType = ReferenceType;
 
     constructor(
         private alertService: AlertService,
@@ -429,7 +431,4 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     setTextFieldMode(): void {
         this.monacoEditor.setSimpleTextFieldMode();
     }
-
-    protected readonly LectureUnitType = LectureUnitType;
-    protected readonly ReferenceType = ReferenceType;
 }
