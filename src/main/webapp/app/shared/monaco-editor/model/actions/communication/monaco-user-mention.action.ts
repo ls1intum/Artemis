@@ -19,7 +19,6 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
     ) {
         super(MonacoUserMentionAction.ID, 'artemisApp.metis.editor.user', faAt);
     }
-    // TODO: refactor to use same method as MonacoChannelReferenceAction
     register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<UserNameAndLoginDTO>(
