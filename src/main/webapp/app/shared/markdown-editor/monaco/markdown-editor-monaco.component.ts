@@ -283,7 +283,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     /**
      * Adjusts the height of the element when the content height changes.
-     * @param newContentHeight
+     * @param newContentHeight The new height of the content in the editor.
      */
     onContentHeightChanged(newContentHeight: number): void {
         if (this.linkEditorHeightToContentHeight) {
@@ -428,6 +428,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         return this.initialEditorHeight === EXTERNAL_HEIGHT;
     }
 
+    /**
+     * Enable the text field mode of the editor. This makes the editor look and behave like a normal text field.
+     */
     enableTextFieldMode(): void {
         this.monacoEditor.enableTextFieldMode();
     }
