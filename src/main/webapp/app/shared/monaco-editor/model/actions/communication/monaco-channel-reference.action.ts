@@ -23,10 +23,6 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
 
     register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
         super.register(editor, translateService);
-        const model = editor.getModel();
-        if (!model) {
-            throw new Error(`A model must be attached to the editor to use the ${this.id} action.`);
-        }
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ChannelIdAndNameDTO>(
             editor,
             this.getChannels.bind(this),
@@ -62,5 +58,6 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
     dispose() {
         super.dispose();
         this.disposableCompletionProvider?.dispose();
+        this.cachedChannels = undefined;
     }
 }
