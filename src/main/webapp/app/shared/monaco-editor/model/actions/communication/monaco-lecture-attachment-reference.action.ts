@@ -5,18 +5,26 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/lecture.service';
 import { ReferenceType } from 'app/shared/metis/metis.util';
-import { Lecture } from 'app/entities/lecture.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 interface LectureWithDetails {
-    id?: number;
-    title?: string;
+    id: number;
+    title: string;
     attachmentUnits?: AttachmentUnit[];
     attachments?: Attachment[];
 }
+
+interface LectureAttachmentReferenceActionArgs {
+    reference: ReferenceType;
+    lecture: LectureWithDetails;
+    attachmentUnit?: AttachmentUnit;
+    slide?: Slide;
+    attachment?: Attachment;
+}
+
 export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
     static readonly ID = 'monaco-lecture-attachment-reference.action';
 
@@ -30,12 +38,14 @@ export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
         firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
             const lectures = response.body;
             if (lectures) {
-                this.lecturesWithDetails = lectures.map((lecture) => ({
-                    id: lecture.id,
-                    title: lecture.title,
-                    attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
-                    attachments: lecture.attachments,
-                }));
+                this.lecturesWithDetails = lectures
+                    .filter((lecture) => !!lecture.id && !!lecture.title)
+                    .map((lecture) => ({
+                        id: lecture.id!,
+                        title: lecture.title!,
+                        attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
+                        attachments: lecture.attachments,
+                    }));
             }
         });
     }
@@ -44,47 +54,56 @@ export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
         super.register(editor, translateService);
     }
 
-    run(editor: monaco.editor.ICodeEditor, args?: { reference: ReferenceType; lecture: Lecture; attachmentUnit?: AttachmentUnit; slide?: Slide; attachment?: Attachment }): void {
+    run(editor: monaco.editor.ICodeEditor, args?: LectureAttachmentReferenceActionArgs): void {
         switch (args?.reference) {
             case ReferenceType.LECTURE:
-                this.insertLectureOrAttachmentReference(editor, args.lecture, args.lecture.id!, ReferenceType.LECTURE);
+                this.insertLectureReference(editor, args.lecture);
                 break;
             case ReferenceType.ATTACHMENT:
-                this.insertLectureOrAttachmentReference(editor, args.lecture, args.attachment!.id!, ReferenceType.ATTACHMENT);
+                if (args.attachment) {
+                    this.insertAttachmentReference(editor, args.attachment);
+                } else {
+                    throw new Error(`[${this.id}] No attachment provided to reference.`);
+                }
                 break;
             case ReferenceType.SLIDE:
+                if (args.attachmentUnit && args.slide) {
+                    this.insertSlideReference(editor, args.attachmentUnit, args.slide);
+                } else {
+                    throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
+                }
+                break;
             case ReferenceType.ATTACHMENT_UNITS:
-                this.insertAttachmentUnitReference(editor, args.lecture, args.attachmentUnit!, args.slide);
+                if (args.attachmentUnit) {
+                    this.insertAttachmentUnitReference(editor, args.attachmentUnit);
+                } else {
+                    throw new Error(`[${this.id}] No attachment unit provided to reference.`);
+                }
                 break;
             default:
-                throw new Error('Unsupported reference type.');
+                throw new Error(`[${this.id}] Unsupported reference type.`);
         }
-    }
-
-    insertAttachmentUnitReference(editor: monaco.editor.ICodeEditor, lectureWithDetails: Lecture, attachmentUnit: AttachmentUnit, slide?: Slide): void {
-        if (slide) {
-            const shortLink = slide.slideImagePath!.split('attachments/')[1];
-            // Use a regular expression and the replace() method to remove the file name and last slash
-            const shortLinkWithoutFileName: string = shortLink.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
-            const referenceLink = `[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`;
-            this.replaceTextAtCurrentSelection(editor, referenceLink);
-            editor.focus();
-        } else {
-            const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
-            const referenceLink = `[lecture-unit]${attachmentUnit.name}(${shortLink})[/lecture-unit]`;
-            this.replaceTextAtCurrentSelection(editor, referenceLink);
-            editor.focus();
-        }
-    }
-
-    insertLectureOrAttachmentReference(editor: monaco.editor.ICodeEditor, lectureWithDetails: Lecture, attachmentId: number, referenceType: ReferenceType) {
-        const selectedAttachment = lectureWithDetails.attachments?.find((value) => value.id === attachmentId);
-        const shortLink = selectedAttachment?.link ? selectedAttachment.link.split('attachments/')[1] : undefined;
-        const referenceLink =
-            ReferenceType.LECTURE === referenceType
-                ? `[lecture]${lectureWithDetails.title}(${this.metisService.getLinkForLecture(lectureWithDetails.id!.toString())})[/lecture]`
-                : `[attachment]${selectedAttachment!.name}(${shortLink})[/attachment]`;
-        this.replaceTextAtCurrentSelection(editor, referenceLink);
         editor.focus();
+    }
+
+    insertLectureReference(editor: monaco.editor.ICodeEditor, lecture: LectureWithDetails): void {
+        this.replaceTextAtCurrentSelection(editor, `[lecture]${lecture.title}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
+    }
+
+    insertAttachmentReference(editor: monaco.editor.ICodeEditor, attachment: Attachment): void {
+        const shortLink = attachment.link?.split('attachments/')[1];
+        this.replaceTextAtCurrentSelection(editor, `[attachment]${attachment.name}(${shortLink})[/attachment]`);
+    }
+
+    insertSlideReference(editor: monaco.editor.ICodeEditor, attachmentUnit: AttachmentUnit, slide: Slide): void {
+        const shortLink = slide.slideImagePath?.split('attachments/')[1];
+        // Remove the trailing slash and the file name.
+        const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
+        this.replaceTextAtCurrentSelection(editor, `[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`);
+    }
+
+    insertAttachmentUnitReference(editor: monaco.editor.ICodeEditor, attachmentUnit: AttachmentUnit): void {
+        const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
+        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${attachmentUnit.name}(${shortLink})[/lecture-unit]`);
     }
 }
