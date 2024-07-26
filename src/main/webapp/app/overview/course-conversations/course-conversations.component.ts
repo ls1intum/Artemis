@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -69,9 +69,8 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     styleUrls: ['../course-overview.scss', './course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService],
-    changeDetection: ChangeDetectionStrategy.Default,
 })
-export class CourseConversationsComponent implements OnInit, OnDestroy, AfterViewInit {
+export class CourseConversationsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
     course?: Course;
     isLoading = false;
@@ -119,7 +118,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, AfterVie
         private metisService: MetisService,
         private courseOverviewService: CourseOverviewService,
         private modalService: NgbModal,
-        private readonly cdRef: ChangeDetectorRef,
     ) {}
 
     getAsChannel = getAsChannelDTO;
@@ -160,11 +158,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, AfterVie
                 this.isServiceSetUp = true;
             }
         });
-        this.cdRef.detectChanges();
-    }
-
-    ngAfterViewInit() {
-        this.cdRef.detectChanges();
     }
 
     subscribeToQueryParameter() {
@@ -290,7 +283,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, AfterVie
         } else {
             this.openChannelOverviewDialog(chatType);
         }
-        this.cdRef.detectChanges();
     }
 
     openCreateGroupChatDialog() {
