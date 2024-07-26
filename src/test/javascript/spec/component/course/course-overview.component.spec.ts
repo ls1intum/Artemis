@@ -48,7 +48,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -56,6 +56,7 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -146,6 +147,7 @@ describe('CourseOverviewComponent', () => {
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
     let findAllForDropdownSpy: jest.SpyInstance;
+    let itemsDrop: NgbDropdown;
 
     let metisConversationService: MetisConversationService;
 
@@ -162,7 +164,14 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
+            imports: [
+                ArtemisTestModule,
+                RouterTestingModule.withRoutes([]),
+                MockModule(MatSidenavModule),
+                MockModule(NgbTooltipModule),
+                MockModule(BrowserAnimationsModule),
+                NgbDropdownMocksModule,
+            ],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -199,6 +208,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: NgbDropdown, useClass: NgbDropdownMocksModule },
             ],
         })
             .compileComponents()
@@ -215,6 +225,7 @@ describe('CourseOverviewComponent', () => {
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
+                itemsDrop = component.itemsDrop;
                 jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
@@ -252,8 +263,7 @@ describe('CourseOverviewComponent', () => {
         const notifyAboutCourseAccessStub = jest.spyOn(courseAccessStorageService, 'onCourseAccessed');
         const getSidebarItems = jest.spyOn(component, 'getSidebarItems');
         const getCourseActionItems = jest.spyOn(component, 'getCourseActionItems');
-        const getUpdateVisibility = jest.spyOn(component, 'updateVisibility');
-        const getUpdateMenuPosition = jest.spyOn(component, 'updateMenuPosition');
+        const getUpdateVisibility = jest.spyOn(component, 'updateVisibleNavbarItems');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
@@ -275,7 +285,6 @@ describe('CourseOverviewComponent', () => {
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
         );
         expect(getUpdateVisibility).toHaveBeenCalledOnce();
-        expect(getUpdateMenuPosition).toHaveBeenCalledOnce();
     });
 
     it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
@@ -628,33 +637,24 @@ describe('CourseOverviewComponent', () => {
         expect(component.courseActionItemClick).toHaveBeenCalledWith(component.courseActionItems[0]);
     });
 
-    it('should call updateVisibility and updateMenuPosition after window resizement', async () => {
-        const getUpdateVisibility = jest.spyOn(component, 'updateVisibility');
-        const getUpdateMenuPosition = jest.spyOn(component, 'updateMenuPosition');
+    it('should call updateVisibleNavbarItems after window resizement', async () => {
+        const getUpdateVisibility = jest.spyOn(component, 'updateVisibleNavbarItems');
 
         await component.ngOnInit();
         window.dispatchEvent(new Event('resize'));
 
         expect(getUpdateVisibility).toHaveBeenCalled();
-        expect(getUpdateMenuPosition).toHaveBeenCalled();
     });
 
-    it('should toggle dropdownOpen when toggleDropdown is called', () => {
-        component.toggleDropdown();
-        expect(component.dropdownOpen).toBeTrue();
-
-        component.toggleDropdown();
-        expect(component.dropdownOpen).toBeFalse();
+    it('should display content of dropdown when dropdownOpen changes', () => {
+        itemsDrop.open();
+        fixture.detectChanges();
+        expect(component.itemsDrop.isOpen).toBeTrue();
     });
-
-    it('should display and hide content of dropdown when dropdownOpen changes', () => {
-        component.dropdownOpen = true;
+    it('should hide content of dropdown when dropdownOpen changes', () => {
+        itemsDrop.close();
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
-
-        component.dropdownOpen = false;
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeTrue();
+        expect(component.itemsDrop.isOpen).toBeFalse();
     });
 
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
@@ -668,13 +668,11 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should change dropdownOpen when clicking on More', () => {
-        component.dropdownOpen = false;
-        fixture.detectChanges();
-
+        itemsDrop.close();
         const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
         clickOnMoreItem.click();
 
-        expect(component.dropdownOpen).toBeTrue();
+        expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
     });
 
     it('should apply exam-wrapper and exam-is-active if exam is started', () => {

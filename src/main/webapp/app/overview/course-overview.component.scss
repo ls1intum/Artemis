@@ -189,10 +189,12 @@ a:not(.btn):not(.tab-link):hover {
     font-size: xx-small;
 }
 
-.newMessage:after {
+.newMessage:after,
+.dropdown-content > .nav-item > .newMessage:after {
     @extend %message-block;
     margin-left: 0.25rem;
 }
+
 .collapsed.newMessage:after {
     @extend %message-block;
     margin-left: -0.9rem;
@@ -287,11 +289,10 @@ jhi-secured-image {
     position: absolute;
     background-color: var(--dropdown-bg);
     border: 1px solid var(--border-color);
-    z-index: 1000000;
+    z-index: 3000;
     border-radius: 4px;
     &.fixedContentSize {
-        bottom: 0px;
-        max-height: 91px; // To avoid cut offs in the dropdown menu content
+        max-height: 171px; // To avoid cut offs in the dropdown menu content (4 items)
     }
 }
 
