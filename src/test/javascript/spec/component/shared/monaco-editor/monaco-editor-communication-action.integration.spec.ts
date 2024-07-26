@@ -22,21 +22,23 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-lecture-attachment-reference.action';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { ReferenceType } from 'app/shared/metis/metis.util';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
     let comp: MonacoEditorComponent;
     let fixture: ComponentFixture<MonacoEditorComponent>;
-    // let debugElement: DebugElement;
     let metisService: MetisService;
     let courseManagementService: CourseManagementService;
     let channelService: ChannelService;
-    // let lectureService: LectureService;
+    let lectureService: LectureService;
     let provider: monaco.languages.CompletionItemProvider;
 
     // Actions
     let channelReferenceAction: MonacoChannelReferenceAction;
     let userMentionAction: MonacoUserMentionAction;
-    // let lectureAttachmentReferenceAction: MonacoLectureAttachmentReferenceAction;
     let exerciseReferenceAction: MonacoExerciseReferenceAction;
 
     beforeEach(() => {
@@ -61,11 +63,10 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 // debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
                 courseManagementService = TestBed.inject(CourseManagementService);
-                // lectureService = TestBed.inject(LectureService);
+                lectureService = TestBed.inject(LectureService);
                 channelService = TestBed.inject(ChannelService);
                 channelReferenceAction = new MonacoChannelReferenceAction(metisService, channelService);
                 userMentionAction = new MonacoUserMentionAction(courseManagementService, metisService);
-                // lectureAttachmentReferenceAction = new MonacoLectureAttachmentReferenceAction(metisService, lectureService);
                 exerciseReferenceAction = new MonacoExerciseReferenceAction(metisService);
             });
     });
@@ -300,6 +301,136 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                     expect(suggestion.detail).toBe(exercises[index].type);
                 });
             });
+        });
+    });
+
+    describe('MonacoLectureAttachmentReferenceAction', () => {
+        let lectures: Lecture[];
+        let lectureAttachmentReferenceAction: MonacoLectureAttachmentReferenceAction;
+
+        beforeEach(() => {
+            lectures = metisService.getCourse().lectures!;
+            jest.spyOn(lectureService, 'findAllByCourseIdWithSlides').mockReturnValue(of(new HttpResponse({ body: lectures, status: 200 })));
+            lectureAttachmentReferenceAction = new MonacoLectureAttachmentReferenceAction(metisService, lectureService);
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('should correctly initialize lecturesWithDetails', () => {
+            fixture.detectChanges();
+            comp.registerAction(lectureAttachmentReferenceAction);
+
+            const lecturesWithDetails = lectures.map((lecture) => ({
+                id: lecture.id!,
+                title: lecture.title!,
+                attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
+                attachments: lecture.attachments,
+            }));
+
+            expect(lectureAttachmentReferenceAction.lecturesWithDetails).toEqual(lecturesWithDetails);
+        });
+
+        it('should error on unsupported reference type', () => {
+            fixture.detectChanges();
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const executeAction = () =>
+                lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.PROGRAMMING, lecture: lectureAttachmentReferenceAction.lecturesWithDetails[0] });
+            expect(executeAction).toThrow(Error);
+        });
+
+        it('should reference a lecture', () => {
+            fixture.detectChanges();
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
+            lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture });
+            expect(comp.getText()).toBe(`[lecture]${lecture.title}(${metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
+        });
+
+        it('should reference an attachment', () => {
+            fixture.detectChanges();
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
+            const attachment = lecture.attachments![0];
+            const attachmentFileName = 'Metis-Attachment.pdf';
+            lectureAttachmentReferenceAction.executeInCurrentEditor({
+                reference: ReferenceType.ATTACHMENT,
+                lecture,
+                attachment,
+            });
+            expect(comp.getText()).toBe(`[attachment]${attachment.name}(${attachmentFileName})[/attachment]`);
+        });
+
+        it('should error when trying to reference a nonexistent attachment', () => {
+            fixture.detectChanges();
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
+            const executeAction = () =>
+                lectureAttachmentReferenceAction.executeInCurrentEditor({
+                    reference: ReferenceType.ATTACHMENT,
+                    lecture,
+                    attachment: undefined,
+                });
+            expect(executeAction).toThrow(Error);
+        });
+
+        it('should reference an attachment unit', () => {
+            fixture.detectChanges();
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
+            const attachmentUnit = lecture.attachmentUnits![0];
+            const attachmentUnitFileName = 'Metis-Attachment.pdf';
+            lectureAttachmentReferenceAction.executeInCurrentEditor({
+                reference: ReferenceType.ATTACHMENT_UNITS,
+                lecture,
+                attachmentUnit,
+            });
+            expect(comp.getText()).toBe(`[lecture-unit]${attachmentUnit.name}(${attachmentUnitFileName})[/lecture-unit]`);
+        });
+
+        it('should error when trying to reference a nonexistent attachment unit', () => {
+            fixture.detectChanges();
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
+            const executeAction = () =>
+                lectureAttachmentReferenceAction.executeInCurrentEditor({
+                    reference: ReferenceType.ATTACHMENT_UNITS,
+                    lecture,
+                    attachmentUnit: undefined,
+                });
+            expect(executeAction).toThrow(Error);
+        });
+
+        it('should reference a slide', () => {
+            fixture.detectChanges();
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
+            const attachmentUnit = lecture.attachmentUnits![0];
+            const slide = attachmentUnit.slides![0];
+            const slideLink = 'slides';
+            lectureAttachmentReferenceAction.executeInCurrentEditor({
+                reference: ReferenceType.SLIDE,
+                lecture,
+                attachmentUnit,
+                slide,
+            });
+            expect(comp.getText()).toBe(`[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${slideLink})[/slide]`);
+        });
+
+        it('should error when incorrectly referencing a slide', () => {
+            fixture.detectChanges();
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
+            const attachmentUnit = lecture.attachmentUnits![0];
+            const executeAction = () =>
+                lectureAttachmentReferenceAction.executeInCurrentEditor({
+                    reference: ReferenceType.SLIDE,
+                    lecture,
+                    attachmentUnit,
+                    slide: undefined,
+                });
+            expect(executeAction).toThrow(Error);
         });
     });
 });

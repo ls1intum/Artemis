@@ -83,13 +83,6 @@ export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
                     throw new Error(`[${this.id}] No attachment provided to reference.`);
                 }
                 break;
-            case ReferenceType.SLIDE:
-                if (args.attachmentUnit && args.slide) {
-                    this.insertSlideReference(editor, args.attachmentUnit, args.slide);
-                } else {
-                    throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
-                }
-                break;
             case ReferenceType.ATTACHMENT_UNITS:
                 if (args.attachmentUnit) {
                     this.insertAttachmentUnitReference(editor, args.attachmentUnit);
@@ -97,10 +90,22 @@ export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
                     throw new Error(`[${this.id}] No attachment unit provided to reference.`);
                 }
                 break;
+            case ReferenceType.SLIDE:
+                if (args.attachmentUnit && args.slide) {
+                    this.insertSlideReference(editor, args.attachmentUnit, args.slide);
+                } else {
+                    throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
+                }
+                break;
             default:
                 throw new Error(`[${this.id}] Unsupported reference type.`);
         }
         editor.focus();
+    }
+
+    dispose() {
+        super.dispose();
+        this.lecturesWithDetails = [];
     }
 
     insertLectureReference(editor: monaco.editor.ICodeEditor, lecture: LectureWithDetails): void {
