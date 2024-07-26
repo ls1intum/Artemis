@@ -14,7 +14,6 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MonacoChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-channel-reference.action';
 import { MonacoUserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-user-mention.action';
-import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-lecture-attachment-reference.action';
 import { MonacoExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-exercise-reference.action';
 import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisTutor, metisUser1, metisUser2 } from '../../../helpers/sample/metis-sample-data';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
@@ -31,7 +30,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
     let metisService: MetisService;
     let courseManagementService: CourseManagementService;
     let channelService: ChannelService;
-    let lectureService: LectureService;
+    // let lectureService: LectureService;
     let provider: monaco.languages.CompletionItemProvider;
 
     // Actions
@@ -59,14 +58,14 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 });
                 fixture = TestBed.createComponent(MonacoEditorComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
+                // debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
                 courseManagementService = TestBed.inject(CourseManagementService);
-                lectureService = TestBed.inject(LectureService);
+                // lectureService = TestBed.inject(LectureService);
                 channelService = TestBed.inject(ChannelService);
                 channelReferenceAction = new MonacoChannelReferenceAction(metisService, channelService);
                 userMentionAction = new MonacoUserMentionAction(courseManagementService, metisService);
-                lectureAttachmentReferenceAction = new MonacoLectureAttachmentReferenceAction(metisService, lectureService);
+                // lectureAttachmentReferenceAction = new MonacoLectureAttachmentReferenceAction(metisService, lectureService);
                 exerciseReferenceAction = new MonacoExerciseReferenceAction(metisService);
             });
     });
