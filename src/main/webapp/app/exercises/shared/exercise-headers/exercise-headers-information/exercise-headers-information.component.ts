@@ -72,6 +72,23 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         this.addCategoryItems();
     }
 
+    ngOnChanges() {
+        this.course = this.course ?? getCourseFromExercise(this.exercise);
+
+        if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) {
+            this.updateSubmissionPolicyItem();
+        }
+        if (this.studentParticipation?.results?.length) {
+            // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
+            this.sortService.sortByProperty(this.studentParticipation.results, 'id', false);
+
+            const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
+            if (latestRatedResult) {
+                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
+            }
+        }
+    }
+
     addPointsItems() {
         const { maxPoints, bonusPoints } = this.exercise;
         if (maxPoints) {
@@ -228,7 +245,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         };
     }
 
-    getSubmissionColor() {
+    getSubmissionColor(): string {
         const submissionsLeft = this.submissionPolicy?.submissionLimit ? this.submissionPolicy?.submissionLimit - this.numberOfSubmissions : 2;
         if (submissionsLeft > 1) return 'body-color';
         else {
@@ -253,23 +270,6 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         const submissionItemIndex = this.informationBoxItems.findIndex((item) => item.title === 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle');
         if (submissionItemIndex !== -1) {
             this.informationBoxItems.splice(submissionItemIndex, 1, this.getSubmissionPolicyItem());
-        }
-    }
-
-    ngOnChanges() {
-        this.course = this.course ?? getCourseFromExercise(this.exercise);
-
-        if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) {
-            this.updateSubmissionPolicyItem();
-        }
-        if (this.studentParticipation?.results?.length) {
-            // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
-            this.sortService.sortByProperty(this.studentParticipation.results, 'id', false);
-
-            const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
-            if (latestRatedResult) {
-                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
-            }
         }
     }
 

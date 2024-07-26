@@ -1,5 +1,5 @@
 @if (exercise) {
-    <div class="d-flex flex-row flex-wrap column-gap-3 overflow-auto">
+    <div id="exercise-headers-information" class="d-flex flex-row flex-wrap column-gap-3 overflow-auto">
         @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
             <jhi-information-box [informationBoxData]="informationBoxItem">
                 @switch (informationBoxItem.content.type) {
@@ -33,37 +33,6 @@
                     />
                     }
                 }
-
-                <!-- @if (informationBoxItem.content.type === 'difficultyLevel') {
-                    <jhi-difficulty-level contentComponent [difficultyLevel]="informationBoxItem.content.value" />
-                }
-                @if (informationBoxItem.content.type === 'categories') {
-                    <jhi-exercise-categories
-                        contentComponent
-                        [exercise]="informationBoxItem.content.value"
-                        [showTags]="{ difficulty: false, notReleased: true, includedInScore: true }"
-                        [ngClass]="'badge-row'"
-                        [isSmall]="true"
-                    />
-                } 
-                 @if (informationBoxItem.content.type === 'timeAgo') {
-                    <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content.value | artemisTimeAgo }}</span>
-                }
-                @if (informationBoxItem.content.type === 'dateTime') {
-                    <span contentComponent>{{ informationBoxItem.content.value | artemisDate }}</span>
-                }
-
-                @if (informationBoxItem.content.type === 'submissionStatus') {
-                    <jhi-submission-result-status
-                        contentComponent
-                        class="text-truncate result"
-                        [exercise]="informationBoxItem.content.value"
-                        [studentParticipation]="studentParticipation"
-                        [triggerLastGraded]="false"
-                        [showCompletion]="false"
-                        [showBadge]="false"
-                    />
-                } -->
             </jhi-information-box>
         }
     </div>

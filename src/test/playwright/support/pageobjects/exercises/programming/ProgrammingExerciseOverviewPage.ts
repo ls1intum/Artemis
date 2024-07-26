@@ -16,9 +16,7 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     async getResultScore() {
-        // TODO this is not the correct selector
-        
-        const resultScore = this.page.locator('.tab-bar-exercise-details').locator('#result-score');
+        const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
         await resultScore.waitFor({ state: 'visible' });
         return resultScore;
     }
@@ -48,7 +46,6 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     getExerciseDetails() {
-        // TODO this is not the correct selector
-        return this.page.locator('.tab-bar-exercise-details');
+        return this.page.locator('#exercise-headers-information');
     }
 }
