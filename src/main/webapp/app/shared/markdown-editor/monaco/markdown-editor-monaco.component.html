@@ -105,6 +105,7 @@
                                 </div>
                             </div>
                         }
+                        <!-- Special case: Lecture attachment reference. -->
                         @if (displayedActions.lecture) {
                             <button [matMenuTriggerFor]="subMenuLecture" type="button" class="btn btn-sm py-0 m-0">
                                 <span [jhiTranslate]="displayedActions.lecture.translationKey"></span>
@@ -117,11 +118,10 @@
                                     </button>
                                     <mat-menu #lectureMenuUnits="matMenu" type="button">
                                         <button
-                                            class="ps-1 me-1"
+                                            class="border-bottom ps-1 me-1"
                                             mat-menu-item
                                             (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })"
                                             type="button"
-                                            class="border-bottom"
                                         >
                                             {{ lecture.title }}
                                         </button>
@@ -131,7 +131,7 @@
                                             </button>
                                             <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
                                                 <button
-                                                    class="ps-1 me-1"
+                                                    class="border-bottom ps-1 me-1"
                                                     mat-menu-item
                                                     (click)="
                                                         displayedActions.lecture.executeInCurrentEditor({
@@ -141,7 +141,6 @@
                                                         })
                                                     "
                                                     type="button"
-                                                    class="border-bottom"
                                                 >
                                                     {{ unit.name }}
                                                 </button>
@@ -159,7 +158,7 @@
                                                         "
                                                         type="button"
                                                     >
-                                                        <span>Slide {{ slide.slideNumber }}</span>
+                                                        <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: slide.slideNumber }"></span>
                                                     </button>
                                                 } @empty {
                                                     <ng-container [ngTemplateOutlet]="noItemsAvailable" />
@@ -175,8 +174,6 @@
                                             >
                                                 <span>{{ attachment.name }}</span>
                                             </button>
-                                        } @empty {
-                                            <ng-container [ngTemplateOutlet]="noItemsAvailable" />
                                         }
                                     </mat-menu>
                                 } @empty {
