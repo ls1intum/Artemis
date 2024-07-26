@@ -90,6 +90,114 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         expect(provider.triggerCharacters).toEqual(triggerCharacter ? [triggerCharacter] : undefined);
     };
 
+    describe.each([
+        { actionId: MonacoChannelReferenceAction.ID, defaultInsertText: '#', triggerCharacter: '#' },
+        { actionId: MonacoUserMentionAction.ID, defaultInsertText: '@', triggerCharacter: '@' },
+        { actionId: MonacoExerciseReferenceAction.ID, defaultInsertText: '/exercise', triggerCharacter: '/' },
+    ])('Suggestions and default behavior for $actionId', ({ actionId, defaultInsertText, triggerCharacter }) => {
+        let action: MonacoChannelReferenceAction | MonacoUserMentionAction | MonacoExerciseReferenceAction;
+        let channels: ChannelIdAndNameDTO[];
+        let users: User[];
+        let exercises: Exercise[];
+
+        beforeEach(() => {
+            fixture.detectChanges();
+            comp.changeModel('initial', '');
+            channels = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
+            channelReferenceAction.cachedChannels = channels;
+            users = [metisUser1, metisUser2, metisTutor];
+            jest.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
+            exercises = metisService.getCourse().exercises!;
+
+            switch (actionId) {
+                case MonacoChannelReferenceAction.ID:
+                    action = channelReferenceAction;
+                    break;
+                case MonacoUserMentionAction.ID:
+                    action = userMentionAction;
+                    break;
+                case MonacoExerciseReferenceAction.ID:
+                    action = exerciseReferenceAction;
+                    break;
+            }
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('should suggest no values for the wrong model', async () => {
+            registerActionWithCompletionProvider(action, triggerCharacter);
+            comp.changeModel('other', '#ch');
+            const suggestions = await provider.provideCompletionItems(comp.models[1], new monaco.Position(1, 4), {} as any, {} as any);
+            expect(suggestions).toBeUndefined();
+        });
+
+        it('should suggest no values if the user is not typing a reference', async () => {
+            comp.setText('some text that is no reference');
+            registerActionWithCompletionProvider(action, triggerCharacter);
+            const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, 4), {} as any, {} as any);
+            expect(providerResult).toBeUndefined();
+        });
+
+        it('should insert the correct default text when executed', () => {
+            registerActionWithCompletionProvider(action, triggerCharacter);
+            action.executeInCurrentEditor();
+            expect(comp.getText()).toBe(defaultInsertText);
+        });
+
+        const checkChannelSuggestions = (suggestions: monaco.languages.CompletionItem[], channels: ChannelIdAndNameDTO[]) => {
+            expect(suggestions).toHaveLength(channels.length);
+            suggestions.forEach((suggestion, index) => {
+                expect(suggestion.label).toBe(`#${channels[index].name}`);
+                expect(suggestion.insertText).toBe(`[channel]${channels[index].name}(${channels[index].id})[/channel]`);
+                expect(suggestion.detail).toBe(action.label);
+            });
+        };
+
+        const checkUserSuggestions = (suggestions: monaco.languages.CompletionItem[], users: User[]) => {
+            expect(suggestions).toHaveLength(users.length);
+            suggestions.forEach((suggestion, index) => {
+                expect(suggestion.label).toBe(`@${users[index].name}`);
+                expect(suggestion.insertText).toBe(`[user]${users[index].name}(${users[index].login})[/user]`);
+                expect(suggestion.detail).toBe(action.label);
+            });
+        };
+
+        const checkExerciseSuggestions = (suggestions: monaco.languages.CompletionItem[], exercises: Exercise[]) => {
+            expect(suggestions).toHaveLength(exercises.length);
+            suggestions.forEach((suggestion, index) => {
+                expect(suggestion.label).toBe(`/exercise ${exercises[index].title}`);
+                expect(suggestion.insertText).toBe(
+                    `[${exercises[index].type}]${exercises[index].title}(${metisService.getLinkForExercise(exercises[index].id!.toString())})[/${exercises[index].type}]`,
+                );
+                expect(suggestion.detail).toBe(exercises[index].type);
+            });
+        };
+
+        it.each(['', 'ex'])('should suggest the correct values if the user is typing a reference (suffix "%s")', async (referenceSuffix: string) => {
+            const reference = triggerCharacter + referenceSuffix;
+            comp.setText(reference);
+            const column = reference.length + 1;
+            registerActionWithCompletionProvider(action, triggerCharacter);
+            const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, column), {} as any, {} as any);
+            expect(providerResult).toBeDefined();
+            expect(providerResult!.incomplete).toBe(actionId === MonacoUserMentionAction.ID ? true : undefined);
+            const suggestions = providerResult!.suggestions;
+            switch (actionId) {
+                case MonacoChannelReferenceAction.ID:
+                    checkChannelSuggestions(suggestions, channels);
+                    break;
+                case MonacoUserMentionAction.ID:
+                    checkUserSuggestions(suggestions, users);
+                    break;
+                case MonacoExerciseReferenceAction.ID:
+                    checkExerciseSuggestions(suggestions, exercises);
+                    break;
+            }
+        });
+    });
+
     // TODO: refactor to reduce redundancy
     describe('MonacoChannelReferenceAction', () => {
         it('should use cached channels if available', async () => {
