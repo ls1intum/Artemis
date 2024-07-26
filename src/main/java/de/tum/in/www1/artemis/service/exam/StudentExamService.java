@@ -797,16 +797,18 @@ public class StudentExamService {
     }
 
     /**
-     * Generates a new test exam for the student and stores it in the database
+     * Generates an individual StudentExam
      *
-     * @param exam    the exam with loaded exercise groups and exercises for which the StudentExam should be created
-     * @param student the corresponding student
-     * @return a StudentExam for the student and exam
+     * @param exam    with eagerly loaded users, exerciseGroups and exercises loaded
+     * @param student the student for which the StudentExam should be created
+     * @return the generated StudentExam
      */
-    public StudentExam generateTestExam(Exam exam, User student) {
+    public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
         long start = System.nanoTime();
-        StudentExam studentExam = generateIndividualStudentExam(exam, student);
+        HashSet<User> userHashSet = new HashSet<>();
+        userHashSet.add(student);
+        StudentExam studentExam = studentExamRepository.createRandomStudentExams(exam, userHashSet, examQuizQuestionsGenerator).getFirst();
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
@@ -816,19 +818,6 @@ public class StudentExamService {
         return studentExam;
     }
 
-    /**
-     * Generates an individual StudentExam
-     *
-     * @param exam    with eagerly loaded users, exerciseGroups and exercises loaded
-     * @param student the student for which the StudentExam should be created
-     * @return the generated StudentExam
-     */
-    private StudentExam generateIndividualStudentExam(Exam exam, User student) {
-        // StudentExams are saved in the called method
-        HashSet<User> userHashSet = new HashSet<>();
-        userHashSet.add(student);
-        return studentExamRepository.createRandomStudentExams(exam, userHashSet, examQuizQuestionsGenerator).getFirst();
-    }
 
     /**
      * Generates the student exams randomly based on the exam configuration and the exercise groups
