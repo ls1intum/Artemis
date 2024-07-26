@@ -82,16 +82,17 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     /**
      * Registers a completion provider for the current model of the given editor. This is useful to provide completion items for a specific editor, which is not supported by the monaco API.
      * @param editor The editor whose model to register the completion provider for.
-     * @param provideCompletionItems The completion item provider to register.
      * @param searchFn Function that returns all relevant items for the current search term. Note that Monaco also filters the items based on the user input.
      * @param mapToSuggestionFn Function that maps an item to a Monaco completion suggestion.
      * @param triggerCharacter The character that triggers the completion provider.
+     * @param listIncomplete Whether the list of suggestions is incomplete. If true, Monaco will keep searching for more suggestions.
      */
     registerCompletionProviderForCurrentModel<ItemType>(
         editor: monaco.editor.IStandaloneCodeEditor,
         searchFn: (searchTerm?: string) => Promise<ItemType[]>,
         mapToSuggestionFn: (item: ItemType, range: monaco.IRange) => monaco.languages.CompletionItem,
         triggerCharacter?: string,
+        listIncomplete?: boolean,
     ): monaco.IDisposable {
         const model = editor.getModel();
         if (!model) {
@@ -134,6 +135,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
                 return searchFn(wordUntilPosition.word).then((items) => {
                     return {
                         suggestions: items.map((item) => mapToSuggestionFn(item, range)),
+                        incomplete: listIncomplete,
                     };
                 });
             },

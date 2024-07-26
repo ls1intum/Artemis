@@ -32,6 +32,7 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
                 detail: this.label,
             }),
             '@',
+            true,
         );
     }
 
