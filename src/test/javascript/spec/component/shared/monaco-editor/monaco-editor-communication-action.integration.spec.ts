@@ -198,7 +198,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         });
     });
 
-    // TODO: refactor to reduce redundancy
     describe('MonacoChannelReferenceAction', () => {
         it('should use cached channels if available', async () => {
             const channels: ChannelIdAndNameDTO[] = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
@@ -226,189 +225,14 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             channelReferenceAction.executeInCurrentEditor();
             expect(comp.getText()).toBe('#');
         });
-
-        describe('Suggestions', () => {
-            const channels = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
-
-            beforeEach(() => {
-                fixture.detectChanges();
-                channelReferenceAction.cachedChannels = channels;
-                comp.changeModel('initial', '');
-            });
-
-            afterEach(() => {
-                jest.restoreAllMocks();
-            });
-
-            it('should suggest no channels for the wrong model', async () => {
-                registerActionWithCompletionProvider(channelReferenceAction, '#');
-                comp.changeModel('other', '#ch');
-                const suggestions = await provider.provideCompletionItems(comp.models[1], new monaco.Position(1, 4), {} as any, {} as any);
-                expect(suggestions).toBeUndefined();
-            });
-
-            it('should suggest no channels if the user is not typing a channel reference', async () => {
-                comp.setText('some text that is no channel reference');
-                registerActionWithCompletionProvider(channelReferenceAction, '#');
-                const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, 4), {} as any, {} as any);
-                expect(providerResult).toBeUndefined();
-            });
-
-            it.each([
-                { text: '#ch', column: 4 },
-                // Edge case: The cursor is immediately after the #
-                { text: '#', column: 2 },
-            ])('should suggest channels if the user is typing a channel reference (text $text)', async ({ text, column }) => {
-                comp.setText(text);
-                registerActionWithCompletionProvider(channelReferenceAction, '#');
-                const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, column), {} as any, {} as any);
-                expect(providerResult).toBeDefined();
-                expect(providerResult!.incomplete).toBeUndefined();
-                expect(providerResult!.suggestions).toHaveLength(channels.length);
-                providerResult!.suggestions.forEach((suggestion, index) => {
-                    expect(suggestion.label).toBe(`#${channels[index].name}`);
-                    expect(suggestion.insertText).toBe(`[channel]${channels[index].name}(${channels[index].id})[/channel]`);
-                    expect(suggestion.detail).toBe(channelReferenceAction.label);
-                });
-            });
-        });
     });
 
-    describe('MonacoUserMentionAction', () => {
-        beforeEach(() => {
-            fixture.detectChanges();
-            comp.changeModel('initial', '');
-        });
-
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
-
-        it('should insert @ for user mentions', () => {
-            fixture.detectChanges();
-            comp.registerAction(userMentionAction);
-            userMentionAction.executeInCurrentEditor();
-            expect(comp.getText()).toBe('@');
-        });
-
-        describe('Suggestions', () => {
-            let users: User[];
-
-            beforeEach(() => {
-                fixture.detectChanges();
-                comp.changeModel('initial', '');
-                users = [metisUser1, metisUser2, metisTutor];
-                jest.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
-            });
-
-            afterEach(() => {
-                jest.restoreAllMocks();
-            });
-
-            it('should suggest no users for the wrong model', async () => {
-                registerActionWithCompletionProvider(userMentionAction, '@');
-                comp.changeModel('other', '@us');
-                const suggestions = await provider.provideCompletionItems(comp.models[1], new monaco.Position(1, 4), {} as any, {} as any);
-                expect(suggestions).toBeUndefined();
-            });
-
-            it('should suggest no users if the user is not typing a user mention', async () => {
-                comp.setText('some text that is no user mention');
-                registerActionWithCompletionProvider(userMentionAction, '@');
-                const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, 4), {} as any, {} as any);
-                expect(providerResult).toBeUndefined();
-            });
-
-            it.each([
-                { text: '@us', column: 4 },
-                // Edge case: The cursor is immediately after the @
-                { text: '@', column: 2 },
-            ])('should suggest users if the user is typing a user mention (text $text)', async ({ text, column }) => {
-                comp.setText(text);
-                registerActionWithCompletionProvider(userMentionAction, '@');
-                const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, column), {} as any, {} as any);
-                expect(providerResult).toBeDefined();
-                expect(providerResult!.incomplete).toBeTrue();
-                expect(providerResult!.suggestions).toHaveLength(users.length);
-                providerResult!.suggestions.forEach((suggestion, index) => {
-                    expect(suggestion.label).toBe(`@${users[index].name}`);
-                    expect(suggestion.insertText).toBe(`[user]${users[index].name}(${users[index].login})[/user]`);
-                    expect(suggestion.detail).toBe(userMentionAction.label);
-                });
-            });
-        });
-    });
-
-    describe('MonacoExerciseReferenceAction', () => {
-        let exercises: Exercise[];
-
-        beforeEach(() => {
-            fixture.detectChanges();
-            comp.changeModel('initial', '');
-            exercises = metisService.getCourse().exercises!;
-        });
-
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
-
+    describe('MonacoExerciseReferenceAction (edge cases)', () => {
         it('should initialize with empty values if exercises are not available', () => {
             jest.spyOn(metisService, 'getCourse').mockReturnValue({ exercises: undefined } as any);
             fixture.detectChanges();
             comp.registerAction(exerciseReferenceAction);
             expect(exerciseReferenceAction.getValues()).toEqual([]);
-        });
-
-        it('should insert /exercise for exercise references', () => {
-            fixture.detectChanges();
-            comp.registerAction(exerciseReferenceAction);
-            exerciseReferenceAction.executeInCurrentEditor();
-            expect(comp.getText()).toBe('/exercise');
-        });
-
-        describe('Suggestions', () => {
-            beforeEach(() => {
-                fixture.detectChanges();
-                comp.changeModel('initial', '');
-            });
-
-            afterEach(() => {
-                jest.restoreAllMocks();
-            });
-
-            it('should suggest no exercises for the wrong model', async () => {
-                registerActionWithCompletionProvider(exerciseReferenceAction, '/');
-                comp.changeModel('other', '/ex');
-                const suggestions = await provider.provideCompletionItems(comp.models[1], new monaco.Position(1, 4), {} as any, {} as any);
-                expect(suggestions).toBeUndefined();
-            });
-
-            it('should suggest no exercises if the user is not typing an exercise reference', async () => {
-                comp.setText('some text that is no exercise reference');
-                registerActionWithCompletionProvider(exerciseReferenceAction, '/');
-                const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, 4), {} as any, {} as any);
-                expect(providerResult).toBeUndefined();
-            });
-
-            it.each([
-                { text: '/ex', column: 4 },
-                // Edge case: The cursor is immediately after the /
-                { text: '/', column: 2 },
-            ])('should suggest exercises if the user is typing an exercise reference (text $text)', async ({ text, column }) => {
-                comp.setText(text);
-                registerActionWithCompletionProvider(exerciseReferenceAction, '/');
-                const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, column), {} as any, {} as any);
-                expect(providerResult).toBeDefined();
-                expect(providerResult!.incomplete).toBeUndefined();
-                expect(providerResult!.suggestions).toHaveLength(exercises.length);
-                providerResult!.suggestions.forEach((suggestion, index) => {
-                    expect(suggestion.label).toBe(`/exercise ${exercises[index].title}`);
-                    expect(suggestion.insertText).toBe(
-                        `[${exercises[index].type}]${exercises[index].title}(${metisService.getLinkForExercise(exercises[index].id!.toString())})[/${exercises[index].type}]`,
-                    );
-                    expect(suggestion.detail).toBe(exercises[index].type);
-                });
-            });
         });
     });
 
