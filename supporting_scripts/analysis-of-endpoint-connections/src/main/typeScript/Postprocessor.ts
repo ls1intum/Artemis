@@ -152,6 +152,9 @@ export class Postprocessor {
                     resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
                     result = tempResult.result;
                 }
+            } else if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
+                result.push('${' + `${node.object.name}.${node.property.name}` + '}');
+                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
             }
         }
 
