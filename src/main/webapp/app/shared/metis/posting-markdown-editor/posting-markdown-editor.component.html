@@ -18,7 +18,6 @@
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
         (keydown)="onKeyDown($event)"
     >
-        <!-- Preview todo showdefaultpreview-->
         <ng-container id="previewMonaco">
             @if (previewMode) {
                 <jhi-posting-content [content]="content" />
