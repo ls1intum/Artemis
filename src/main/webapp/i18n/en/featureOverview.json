@@ -150,7 +150,7 @@
                 "offline": {
                     "title": "Continue Working Offline",
                     "shortDescription": "Continue working offline if you are disconnected.",
-                    "descriptionTextOne": "The exam mode in Artemis is tolerant towards internet connection issues. In case you are not connected, you can continue working on text, quiz and modeling exercises. If your internet connection recovers, Artemis will automatically save your solution. This is possible, as the platform tries to save your solution every 30 seconds, when you navigate between exercises as well as when you click hit save. For programming exercises, if you work using your own local IDE, you only need to be online when you clone the repository and when you push your commits (i.e. submit your solution)."
+                    "descriptionTextOne": "The exam mode in Artemis is tolerant towards internet connection issues. In case you are not connected, you can continue working on text, quiz and modeling exercises. If your internet connection recovers, Artemis will automatically save your solution. This is possible, as the platform tries to save your solution every 30 seconds, when you navigate between exercises as well as when you click on the current exercise in the navigation sidebar. For programming exercises, if you work using your own local IDE, you only need to be online when you clone the repository and when you push your commits (i.e. submit your solution)."
                 },
                 "summary": {
                     "title": "Exam Summary",
