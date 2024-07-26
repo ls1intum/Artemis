@@ -35,6 +35,6 @@ to a Jenkins and LocalVC Setup.
 
    1. Adjust ``url`` to point to your Artemis instance instead of your GitLab instance.
       (Same adjustment for ``ssh-template-clone-url`` if present.)
-   2. Remove all entries for the authentication (i.e. ``user``, ``password`` and ``token``).
+   2. Remove all entries for the authentication (i.e. ``password`` and ``token``).
 6. Now you can start your Artemis again.
    Make sure to remove the migration profile and replace the ``gitlab`` profile with the ``localvc`` profile.
