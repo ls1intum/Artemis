@@ -9,11 +9,18 @@ import { Lecture } from 'app/entities/lecture.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
+interface LectureWithDetails {
+    id?: number;
+    title?: string;
+    attachmentUnits?: AttachmentUnit[];
+    attachments?: Attachment[];
+}
 export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
     static readonly ID = 'monaco-lecture-attachment-reference.action';
 
-    lecturesWithDetails: Lecture[] = [];
+    lecturesWithDetails: LectureWithDetails[] = [];
 
     constructor(
         private readonly metisService: MetisService,
@@ -23,7 +30,12 @@ export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
         firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
             const lectures = response.body;
             if (lectures) {
-                this.lecturesWithDetails = lectures;
+                this.lecturesWithDetails = lectures.map((lecture) => ({
+                    id: lecture.id,
+                    title: lecture.title,
+                    attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
+                    attachments: lecture.attachments,
+                }));
             }
         });
     }
