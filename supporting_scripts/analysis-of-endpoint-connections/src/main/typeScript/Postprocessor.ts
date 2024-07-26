@@ -338,7 +338,7 @@ export class Postprocessor {
             if (methodDefinition.type === 'MethodDefinition' && methodDefinition.key.type === 'Identifier') {
                 simpleTraverse(methodDefinition, {
                     enter: (node) => {
-                        if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression' && node.callee.property.type === 'Identifier' &&
+                        if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression' && node.callee.object.type === 'ThisExpression' && node.callee.property.type === 'Identifier' &&
                             node.callee.property.name === methodName && node.arguments[0].type === 'Identifier') {
                             let parameterValue = this.getMethodVariableValueFromNameAndMethod(node.arguments[0].name, node, methodDefinition, restCall, classBody);
                             if (parameterValue.resultType === ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS) {
