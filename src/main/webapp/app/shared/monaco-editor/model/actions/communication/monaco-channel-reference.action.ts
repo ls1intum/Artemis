@@ -43,16 +43,11 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
     }
 
     async getChannels(): Promise<ChannelIdAndNameDTO[]> {
-        if (this.cachedChannels) {
-            return Promise.resolve(this.cachedChannels);
+        if (!this.cachedChannels) {
+            const response = await firstValueFrom(this.channelService.getPublicChannelsOfCourse(this.metisService.getCourse().id!));
+            this.cachedChannels = response.body!;
         }
-        const response = await firstValueFrom(this.channelService.getPublicChannelsOfCourse(this.metisService.getCourse().id!));
-        if (response?.body) {
-            this.cachedChannels = response.body;
-            return response.body;
-        } else {
-            return [];
-        }
+        return this.cachedChannels;
     }
 
     dispose() {
