@@ -7,6 +7,9 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { firstValueFrom } from 'rxjs';
 
+/**
+ * Action to insert a reference to a channel into the editor. Users that type a # will see a list of available channels to reference.
+ */
 export class MonacoChannelReferenceAction extends MonacoEditorAction {
     static readonly ID = 'monaco-channel-reference.action';
     static readonly DEFAULT_INSERT_TEXT = '#';
@@ -21,6 +24,11 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
         super(MonacoChannelReferenceAction.ID, 'artemisApp.metis.editor.channel', faHashtag);
     }
 
+    /**
+     * Registers this action in the provided editor. This will register a completion provider that shows the available channels.
+     * @param editor The editor to register the action in.
+     * @param translateService The translate service to use for translations, e.g. the label.
+     */
     register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ChannelIdAndNameDTO>(
@@ -50,7 +58,7 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
         return this.cachedChannels;
     }
 
-    dispose() {
+    dispose(): void {
         super.dispose();
         this.disposableCompletionProvider?.dispose();
         this.cachedChannels = undefined;
