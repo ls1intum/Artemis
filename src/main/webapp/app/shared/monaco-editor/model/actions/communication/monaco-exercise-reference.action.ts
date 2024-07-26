@@ -4,6 +4,9 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
 import { ValueItem } from 'app/shared/markdown-editor/command-constants';
 
+/**
+ * Action to insert a reference to an exercise into the editor. Users that type a / will see a list of available exercises to reference.
+ */
 export class MonacoExerciseReferenceAction extends MonacoEditorDomainActionWithOptions {
     static readonly ID = 'monaco-exercise-reference.action';
     static readonly DEFAULT_INSERT_TEXT = '/exercise';
@@ -14,7 +17,12 @@ export class MonacoExerciseReferenceAction extends MonacoEditorDomainActionWithO
         super(MonacoExerciseReferenceAction.ID, 'artemisApp.metis.editor.exercise');
     }
 
-    register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
+    /**
+     * Registers this action in the provided editor. This will register a completion provider that shows the available exercises.
+     * @param editor The editor to register the completion provider for.
+     * @param translateService The translate service to use for translations.
+     */
+    register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService): void {
         super.register(editor, translateService);
         const exercises = this.metisService.getCourse().exercises ?? [];
         this.setValues(
@@ -38,12 +46,16 @@ export class MonacoExerciseReferenceAction extends MonacoEditorDomainActionWithO
         );
     }
 
+    /**
+     * Types the text '/exercise' into the editor and focuses it. This will trigger the completion provider to show the available exercises.
+     * @param editor The editor to type the text into.
+     */
     run(editor: monaco.editor.ICodeEditor): void {
         this.typeText(editor, MonacoExerciseReferenceAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
 
-    dispose() {
+    dispose(): void {
         super.dispose();
         this.disposableCompletionProvider?.dispose();
     }
