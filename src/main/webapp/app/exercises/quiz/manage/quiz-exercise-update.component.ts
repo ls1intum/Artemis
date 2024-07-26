@@ -8,11 +8,11 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Duration } from './quiz-exercise-interfaces';
-import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Course } from 'app/entities/course.model';
@@ -30,6 +30,9 @@ import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-sv
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -88,6 +91,16 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     readonly QuizMode = QuizMode;
     readonly documentationType: DocumentationType = 'Quiz';
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+
+    readonly defaultSecondLayerDialogOptions: NgbModalOptions = {
+        size: 'md',
+        scrollable: false,
+        backdrop: 'static',
+        backdropClass: 'second-layer-modal-bg',
+        centered: true,
+    };
 
     constructor(
         private route: ActivatedRoute,
@@ -102,6 +115,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         private navigationUtilService: ArtemisNavigationUtilService,
         dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
+        private modalService: NgbModal,
     ) {
         super(dragAndDropQuestionUtil, shortAnswerQuestionUtil);
     }
@@ -381,6 +395,64 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.cacheValidation();
     }
 
+    checkItemCountDragAndDrop(dragAndDropQuestions: DragAndDropQuestion[]): boolean {
+        if (!dragAndDropQuestions) return false;
+        return dragAndDropQuestions?.some((dragAndDropQuestion) => {
+            const numberOfDropLocations = dragAndDropQuestion.dropLocations?.length ?? 1;
+            const numberOfDragItems = dragAndDropQuestion.dragItems?.length ?? 1;
+            const numberOfCorrectMappings = dragAndDropQuestion.correctMappings?.length ?? 1;
+            // Magic number is 15 * 15 * 15
+            return numberOfCorrectMappings * numberOfDragItems * numberOfDropLocations > 3375;
+        });
+    }
+    checkItemCountShortAnswer(shortAnswerQuestions: ShortAnswerQuestion[]): boolean {
+        if (!shortAnswerQuestions) return false;
+        return shortAnswerQuestions?.some((shortAnswerQuestion) => {
+            const numberOfCorrectMappings = shortAnswerQuestion.correctMappings?.length ?? 1;
+            const numberOfSpots = shortAnswerQuestion.spots?.length ?? 1;
+            const numberOfSolutions = shortAnswerQuestion.solutions?.length ?? 1;
+            // Magic number is 15 * 15 * 15
+            return numberOfCorrectMappings * numberOfSpots * numberOfSolutions > 3375;
+        });
+    }
+
+    validateItemLimit() {
+        const dragAndDropQuestions = this.quizExercise.quizQuestions?.filter((question) => {
+            return question.type === this.DRAG_AND_DROP;
+        });
+
+        const shortAnswerQuestions = this.quizExercise.quizQuestions?.filter((question) => {
+            return question.type === this.SHORT_ANSWER;
+        });
+
+        const dragAndDropItemsExceedLimit = this.checkItemCountDragAndDrop(dragAndDropQuestions as DragAndDropQuestion[]);
+        const shortAnswerItemsExceedLimit = this.checkItemCountShortAnswer(shortAnswerQuestions as ShortAnswerQuestion[]);
+
+        if (dragAndDropItemsExceedLimit || shortAnswerItemsExceedLimit) {
+            const keys = {
+                titleKey: 'artemisApp.quizWarning.title',
+                questionKey: 'artemisApp.quizWarning.question',
+                descriptionKey: 'artemisApp.quizWarning.description',
+                confirmButtonKey: 'artemisApp.quizWarning.confirmButton',
+            };
+            const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, this.defaultSecondLayerDialogOptions);
+            modalRef.componentInstance.translationKeys = keys;
+            modalRef.componentInstance.canBeUndone = true;
+            modalRef.componentInstance.initialize();
+            modalRef.result.then(
+                () => {
+                    // On confirm
+                    this.save();
+                },
+                () => {
+                    // On cancel
+                    return;
+                },
+            );
+        } else {
+            this.save();
+        }
+    }
     /**
      * Save the quiz to the server and invoke callback functions depending on result
      */
