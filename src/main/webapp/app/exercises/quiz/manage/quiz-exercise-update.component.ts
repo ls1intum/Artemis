@@ -401,8 +401,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             const numberOfDropLocations = dragAndDropQuestion.dropLocations?.length ?? 1;
             const numberOfDragItems = dragAndDropQuestion.dragItems?.length ?? 1;
             const numberOfCorrectMappings = dragAndDropQuestion.correctMappings?.length ?? 1;
-            // Magic number is 15 * 15 * 15
-            return numberOfCorrectMappings * numberOfDragItems * numberOfDropLocations > 3375;
+            // Magic number is 13 * 13 * 13
+            return numberOfCorrectMappings * numberOfDragItems * numberOfDropLocations > 2197;
         });
     }
     checkItemCountShortAnswer(shortAnswerQuestions: ShortAnswerQuestion[]): boolean {
@@ -411,8 +411,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             const numberOfCorrectMappings = shortAnswerQuestion.correctMappings?.length ?? 1;
             const numberOfSpots = shortAnswerQuestion.spots?.length ?? 1;
             const numberOfSolutions = shortAnswerQuestion.solutions?.length ?? 1;
-            // Magic number is 15 * 15 * 15
-            return numberOfCorrectMappings * numberOfSpots * numberOfSolutions > 3375;
+            // Magic number is 13 * 13 * 13
+            return numberOfCorrectMappings * numberOfSpots * numberOfSolutions > 2197;
         });
     }
 
