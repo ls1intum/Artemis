@@ -55,8 +55,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     sidebarExams: SidebarCardElement[] = [];
     isCollapsed = false;
     isExamStarted = false;
-    //todo change name
-    wasSelectedExerciseUpdated: boolean;
+    examSelectionUpdated: boolean;
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
 
@@ -66,7 +65,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         private serverDateService: ArtemisServerDateService,
         private examParticipationService: ExamParticipationService,
         private courseOverviewService: CourseOverviewService,
-        // private changeDetectorRef: ChangeDetectorRef,
         private router: Router,
     ) {}
 
@@ -111,7 +109,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     updateSelectedExam(examId: number) {
-        this.wasSelectedExerciseUpdated = true;
+        this.examSelectionUpdated = true;
         if (this.examSelected) {
             this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
                 this.router.navigate(['./' + examId], { relativeTo: this.route });
@@ -259,10 +257,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     onSubRouteDeactivate() {
-        if (!this.wasSelectedExerciseUpdated) {
+        if (!this.examSelectionUpdated) {
             this.examSelected = false;
         }
-        this.wasSelectedExerciseUpdated = false;
+        this.examSelectionUpdated = false;
     }
 
     getAllStudentExamsForRealExams(): StudentExam[] {
