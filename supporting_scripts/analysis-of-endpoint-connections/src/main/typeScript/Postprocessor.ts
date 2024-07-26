@@ -60,7 +60,7 @@ export class Postprocessor {
         this.ast.body.forEach(node => {
             if (node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'ClassDeclaration') {
                 this.extractRestCallsFromClassDeclaration(node.declaration);
-            } else if (node.type === 'ClassDeclaration') { // Todo: Is this needed? This could cause REST Calls do be identified twice
+            } else if (node.type === 'ClassDeclaration') {
                 this.extractRestCallsFromClassDeclaration(node);
             }
         });
@@ -119,9 +119,7 @@ export class Postprocessor {
         if (node.type === 'Literal' && node.value) {
             result.push(node.value.toString());
             resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-        }
-
-        if (node.type === 'TemplateLiteral') {
+        } else if (node.type === 'TemplateLiteral') {
             const tempResult = this.evaluateTemplateLiteralExpression(node, methodDefinition, restCall, classBody);
             if (tempResult.resultType === ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS) {
                 resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
@@ -129,9 +127,7 @@ export class Postprocessor {
             } else {
 
             }
-        }
-
-        if (node.type === 'MemberExpression') {
+        } else if (node.type === 'MemberExpression') {
             if (node.object.type === 'ThisExpression' && node.property.type === 'Identifier') {
                 let tempResult = this.getMemberExpressionValueFromNameAndClassBody(node.property.name, classBody);
 
@@ -156,9 +152,7 @@ export class Postprocessor {
                 result.push('${' + `${node.object.name}.${node.property.name}` + '}');
                 resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
             }
-        }
-
-        if (node.type === 'Identifier') {
+        } else if (node.type === 'Identifier') {
             let tempResult = this.getMethodVariableValueFromNameAndMethod(node.name, node, methodDefinition, restCall, classBody);
             if (tempResult.resultType === ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS) {
                 resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
@@ -180,9 +174,7 @@ export class Postprocessor {
                     resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
                 }
             }
-        }
-
-        if (node.type === 'BinaryExpression') {
+        } else if (node.type === 'BinaryExpression') {
             let tempResult = this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
             if (tempResult.resultType === ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS) {
                 resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
@@ -191,9 +183,7 @@ export class Postprocessor {
                 result.push('Unknown URL');
                 resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
             }
-        }
-
-        if (node.type === 'CallExpression') {
+        } else if (node.type === 'CallExpression') {
             // Sometimes, The ResourceURL is built and fetched using a getterMethod
             let tempResult= this.getUrlFromGetterMethodCall(node, classBody);
             if (tempResult.resultType === ParsingResultType.GET_URL_FROM_GETTER_SUCCESS) {
@@ -202,6 +192,9 @@ export class Postprocessor {
             } else {
                 resultType = ParsingResultType.UNABLE_TO_EVALUATE;
             }
+        } else {
+            result.push('FAILED_TO_EVALUATE_URL');
+            resultType = ParsingResultType.UNABLE_TO_EVALUATE;
         }
 
         return new ParsingResult(resultType, result);
@@ -216,7 +209,10 @@ export class Postprocessor {
 
     evaluateTemplateLiteralExpression(templateLiteral: TSESTree.TemplateLiteral, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
         let resultType = ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS;
-        let evaluatedURL = templateLiteral.quasis.reduce((acc, quasi, index) => {
+
+        let evaluatedURL = '';
+        for (let index = 0; index < templateLiteral.quasis.length; index++) {
+            const quasi = templateLiteral.quasis[index];
             let expression = 'Unknown URL';
             if (index < templateLiteral.expressions.length) {
                 let subResult = this.evaluateUrl(templateLiteral.expressions[index], methodDefinition, restCall, classBody);
@@ -225,15 +221,18 @@ export class Postprocessor {
                     if (subResult.result.length === 1) {
                         expression = subResult.result[0];
                     }
+                } else if (subResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+                    resultType = ParsingResultType.UNABLE_TO_EVALUATE;
+                    break;
                 } else {
                     resultType = ParsingResultType.EVALUATE_TEMPLATE_LITERAL_FAILURE;
                 }
 
-                return acc + quasi.value.raw + expression;
+                evaluatedURL += quasi.value.raw + expression;
             } else {
-                return acc;
+                evaluatedURL += quasi.value.raw;
             }
-        }, '');
+        }
 
         return new ParsingResult(resultType, [evaluatedURL]);
     }
