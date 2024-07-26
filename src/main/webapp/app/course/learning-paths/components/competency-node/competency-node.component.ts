@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, InputSignal, OutputEmitterRef, Signal, computed, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, InputSignal, OutputEmitterRef, Signal, afterRender, computed, inject, input, output } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NodeDimension } from '@swimlane/ngx-graph';
