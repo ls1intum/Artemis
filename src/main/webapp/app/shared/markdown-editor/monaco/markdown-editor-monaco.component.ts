@@ -2,7 +2,6 @@ import {
     AfterContentInit,
     AfterViewInit,
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     ElementRef,
     EventEmitter,
@@ -191,7 +190,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     constructor(
         private alertService: AlertService,
         private fileUploaderService: FileUploaderService,
-        protected readonly changeDetectorRef: ChangeDetectorRef,
     ) {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
     }
@@ -211,7 +209,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             lecture: this.lectureReferenceAction,
             meta: this.metaActions,
         };
-        this.changeDetectorRef.detectChanges();
     }
 
     ngAfterViewInit(): void {
@@ -242,7 +239,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 }
                 this.monacoEditor.registerAction(action);
             });
-        this.changeDetectorRef.detectChanges();
     }
 
     /**
@@ -278,7 +274,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         event.source.reset();
         // The editor's bottom edge becomes the top edge of the handle.
         this.targetWrapperHeight = event.pointerPosition.y - this.wrapper.nativeElement.getBoundingClientRect().top - this.getElementClientHeight(this.resizePlaceholder) / 2;
-        this.changeDetectorRef.detectChanges();
     }
 
     /**
@@ -290,7 +285,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             const totalHeight = newContentHeight + this.getElementClientHeight(this.fileUploadFooter) + this.getElementClientHeight(this.actionPalette);
             // Clamp the height so it is between the minimum and maximum height.
             this.targetWrapperHeight = Math.max(this.resizableMinHeight, Math.min(this.resizableMaxHeight, totalHeight));
-            this.changeDetectorRef.detectChanges();
         }
     }
 
@@ -325,7 +319,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     adjustEditorDimensions(): void {
         this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), this.getEditorHeight());
-        this.changeDetectorRef.detectChanges();
     }
 
     /**
