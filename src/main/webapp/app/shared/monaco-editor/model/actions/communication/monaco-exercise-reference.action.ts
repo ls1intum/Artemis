@@ -40,7 +40,7 @@ export class MonacoExerciseReferenceAction extends MonacoEditorDomainActionWithO
                 kind: monaco.languages.CompletionItemKind.Constant,
                 insertText: `[${item.type}]${item.value}(${this.metisService.getLinkForExercise(item.id)})[/${item.type}]`,
                 range,
-                detail: item.type ?? this.label,
+                detail: item.type!,
             }),
             '/',
         );
