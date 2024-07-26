@@ -124,8 +124,8 @@ export class Postprocessor {
             if (tempResult.resultType === ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS) {
                 resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
                 result = tempResult.result;
-            } else {
-
+            } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+                resultType = ParsingResultType.UNABLE_TO_EVALUATE;
             }
         } else if (node.type === 'MemberExpression') {
             if (node.object.type === 'ThisExpression' && node.property.type === 'Identifier') {
@@ -179,9 +179,11 @@ export class Postprocessor {
             if (tempResult.resultType === ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS) {
                 resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
                 result = tempResult.result;
+            } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+                resultType = ParsingResultType.UNABLE_TO_EVALUATE;
             } else {
                 result.push('Unknown URL');
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
+                resultType = ParsingResultType.EVALUATE_URL_FAILURE;
             }
         } else if (node.type === 'CallExpression') {
             // Sometimes, The ResourceURL is built and fetched using a getterMethod
@@ -193,8 +195,11 @@ export class Postprocessor {
                 resultType = ParsingResultType.UNABLE_TO_EVALUATE;
             }
         } else {
-            result.push('FAILED_TO_EVALUATE_URL');
             resultType = ParsingResultType.UNABLE_TO_EVALUATE;
+        }
+
+        if (resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+            result = ['FAILED_TO_EVALUATE_URL']
         }
 
         return new ParsingResult(resultType, result);
@@ -249,6 +254,8 @@ export class Postprocessor {
         if (leftParsingResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS && rightParsingResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
             parsingResult.push(leftParsingResult.result[0] + rightParsingResult.result[0]);
             parsingResultType = ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS;
+        } else if (leftParsingResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE || rightParsingResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+            parsingResultType = ParsingResultType.UNABLE_TO_EVALUATE;
         }
 
         return new ParsingResult(parsingResultType, parsingResult);
@@ -345,6 +352,8 @@ export class Postprocessor {
                             let parameterValue = this.getMethodVariableValueFromNameAndMethod(node.arguments[0].name, node, methodDefinition, restCall, classBody);
                             if (parameterValue.resultType === ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS) {
                                 methodCalls.push({ callExpression: node, parameterValue: parameterValue.result[0] });
+                            } else if (parameterValue.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+                                parsingResultType = ParsingResultType.UNABLE_TO_EVALUATE;
                             }
                         }
                     }
@@ -411,6 +420,8 @@ export class Postprocessor {
                             if (tempResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
                                 parsingResult = tempResult.result;
                                 parsingResultType = ParsingResultType.GET_URL_FROM_GETTER_SUCCESS;
+                            } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+                                parsingResultType = ParsingResultType.UNABLE_TO_EVALUATE;
                             }
                         }
                     }
@@ -433,6 +444,8 @@ export class Postprocessor {
                             if (tempResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
                                 result = tempResult.result;
                                 resultType = ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS;
+                            } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+                                resultType = ParsingResultType.UNABLE_TO_EVALUATE;
                             }
                             return;
                         }
