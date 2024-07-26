@@ -6,6 +6,7 @@
             [maxContentLength]="maxContentLength"
             [isInputLengthDisplayed]="false"
             (keydown.enter)="confirm()"
+            (valueChange)="valueChange.emit()"
         />
         <div class="col mt-1 text-end">
             @if (!warningDismissed) {
