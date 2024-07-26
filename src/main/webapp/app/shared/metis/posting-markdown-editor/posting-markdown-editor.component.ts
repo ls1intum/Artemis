@@ -90,7 +90,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     }
 
     ngAfterViewInit(): void {
-        this.markdownEditor.setTextFieldMode();
+        this.markdownEditor.enableTextFieldMode();
     }
 
     /**

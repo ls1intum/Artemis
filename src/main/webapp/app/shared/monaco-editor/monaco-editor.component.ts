@@ -378,7 +378,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    setSimpleTextFieldMode(): void {
+    enableTextFieldMode(): void {
         this._editor.updateOptions({
             // Sets up the layout to make the editor look more like a text field (no line numbers, margin, or line highlights).
             lineNumbers: 'off',
