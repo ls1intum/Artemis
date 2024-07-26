@@ -15,10 +15,6 @@ enum ParsingResultType {
     EVALUATE_BINARY_EXPRESSION_FAILURE,
     EVALUATE_MEMBER_EXPRESSION_SUCCESS,
     EVALUATE_MEMBER_EXPRESSION_FAILURE,
-    EVALUATE_IDENTIFIER_SUCCESS,
-    EVALUATE_IDENTIFIER_FAILURE,
-    EVALUATE_LITERAL_SUCCESS,
-    EVALUATE_LITERAL_FAILURE,
     GET_VARIABLE_FROM_METHOD_SUCCESS,
     GET_VARIABLE_FROM_METHOD_FAILURE,
     EVALUATE_URL_SUCCESS,
@@ -260,69 +256,6 @@ export class Postprocessor {
 
         return new ParsingResult(parsingResultType, parsingResult);
     }
-
-    // /**
-    //  * Evaluates the URL from a given AST node within the context of a method definition and a REST call expression.
-    //  * This method processes different types of nodes to extract or compute the URL string or parts of it.
-    //  * It supports handling `TemplateLiteral`, `BinaryExpression`, `MemberExpression`, `Identifier`, and `Literal` nodes.
-    //  * The method aims to return a single URL string or an array of strings if multiple URLs are derived from the node.
-    //  * If the node type does not match any of the expected types or if the URL cannot be determined, it returns 'Unknown URL'.
-    //  *
-    //  * @param node - The AST node to evaluate for URL extraction.
-    //  * @param methodDefinition - The method definition context in which the node is evaluated.
-    //  * @param restCall - The REST call expression context for the evaluation.
-    //  * @returns The evaluated URL as a string or an array of strings if multiple URLs are found, or 'Unknown URL' if the URL cannot be determined.
-    //  */
-    // evaluateUrl(node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
-    //     let evaluationResult: ParsingResult = new ParsingResult();
-    //     if (node.type === 'TemplateLiteral') {
-    //         evaluationResult = this.evaluateTemplateLiteralExpression(node, classBody);
-    //     }
-    //     else if (node.type === 'BinaryExpression') {
-    //         return this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
-    //     } else if (node.type === 'MemberExpression' && node.property.type === 'Identifier' && node.object.type === 'ThisExpression') { // TODO ========================
-    //         result =  this.getMemberExpressionValueFromName(node.property.name);
-    //         if (result === 'Unknown URL' && Preprocessor.PREPROCESSING_RESULTS.has(this.getClassNameFromClassBody(classBody))) {
-    //             result = this.evaluateMemberVariableFromConstructorCall(classBody, node.property.name);
-    //         }
-    //         return result;
-    //     } else if (node.type === 'Identifier') {
-    //         result = this.getMethodVariableValueFromNameAndMethod(node.name, methodDefinition, classBody);
-    //         if (result === 'Unknown URL' && methodDefinition.key.type === 'Identifier') {
-    //             let tempResult: string[] = [];
-    //             for (let methodCall of this.findMethodCallsFromMethodName(methodDefinition.key.name)) {
-    //                 tempResult.push(methodCall.parameterValue);
-    //             }
-    //             result = tempResult;
-    //         }
-    //     } else if (node.type === 'Literal' && node.value) {
-    //         result = node.value.toString();
-    //     }
-    //     return evaluationResult;
-    // }
-
-    // /**
-    //  * Searches for method calls of a given method name within the AST of the current file.
-    //  * This method iterates over all nodes in the AST's body. For each node that is a class declaration
-    //  * (either directly or through an export declaration), it delegates the search to `findMethodCallsFromMethodNameAndClassBody`,
-    //  * which looks for method calls within the class body that match the given method name.
-    //  *
-    //  * @param methodName - The name of the method to search for calls to.
-    //  * @returns An array of objects, each containing a `callExpression` (the AST node representing the call expression)
-    //  *          and a `parameterValue` (the value of the parameter passed to the method call, as a string).
-    //  */
-    // findMethodCallsFromMethodName(methodName: string) {
-    //     let methodCalls: { callExpression: TSESTree.CallExpression, parameterValue: string }[] = [];
-    //     for (const node of this.ast.body) {
-    //         let classBody;
-    //         if (node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'ClassDeclaration') {
-    //             methodCalls.push(... this.findMethodCallsFromMethodNameAndClassBody(methodName, node.declaration));
-    //         } else if (node.type === 'ClassDeclaration') {
-    //             methodCalls.push(... this.findMethodCallsFromMethodNameAndClassBody(methodName, node));
-    //         }
-    //     }
-    //     return methodCalls;
-    // }
 
     /**
      * Finds and collects method calls by a specified method name within a given class body.
