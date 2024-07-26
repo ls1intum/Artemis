@@ -130,4 +130,29 @@ describe('PostingsMarkdownEditor', () => {
         component.writeValue(metisAnswerPostUser2);
         expect(component.content).toEqual(metisAnswerPostUser2);
     });
+
+    it('should write an empty string into content for undefined values', () => {
+        component.writeValue(undefined);
+        expect(component.content).toBe('');
+    });
+
+    it('should register onChange', () => {
+        const onChange = jest.fn();
+        component.registerOnChange(onChange);
+        expect(component.onChange).toBe(onChange);
+    });
+
+    it('should call preventDefault when she user presses enter', () => {
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        component.onKeyDown(event);
+        expect(preventDefaultSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not call preventDefault when the user presses shift+enter', () => {
+        const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        component.onKeyDown(event);
+        expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
 });
