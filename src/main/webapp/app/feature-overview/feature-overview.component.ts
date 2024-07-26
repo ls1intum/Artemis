@@ -160,7 +160,10 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.offline.shortDescription',
             'featureOverview.students.feature.offline.descriptionTextOne',
             faSignal,
+            undefined,
+            '/content/images/feature-overview/students/workingOffline.png',
         );
+        featureOffline.centerAndExpandImage();
 
         const featureSummary = new Feature(
             'featureOverview.students.feature.summary.title',

@@ -150,7 +150,7 @@
                 "offline": {
                     "title": "Offline Weiterarbeiten",
                     "shortDescription": "Arbeite offline weiter, wenn deine Verbindung unterbrochen wird.",
-                    "descriptionTextOne": "Der Klausurmodus in Artemis toleriert Probleme mit der Internetverbindung. Falls du nicht verbunden bist, kannst du weiter an Text-, Quiz- und Modellierungsaufgaben arbeiten. Wenn sich deine Internetverbindung wiederherstellt, wird Artemis deine Lösung automatisch speichern. Dies ist möglich, da die Plattform alle 30 Sekunden versucht deine Lösung zu speichern, wenn du zwischen den Aufgaben navigierst, als auch wenn du auf Speichern klickst. Für Programmieraufgaben brauchst du nur online zu sein, wenn du mit deiner eigenen lokalen IDE arbeitest, wenn du das Repository klonst und wenn du deine Commits pushst (d.h. deine Lösung abschickst)."
+                    "descriptionTextOne": "Der Klausurmodus in Artemis toleriert Probleme mit der Internetverbindung. Falls du nicht verbunden bist, kannst du weiter an Text-, Quiz- und Modellierungsaufgaben arbeiten. Wenn sich deine Internetverbindung wiederherstellt, wird Artemis deine Lösung automatisch speichern. Dies ist möglich, da die Plattform alle 30 Sekunden versucht deine Lösung zu speichern, wenn du zwischen den Aufgaben navigierst, als auch wenn du auf die aktuelle Aufgabe in der Seitenleiste klickst. Für Programmieraufgaben brauchst du nur online zu sein, wenn du mit deiner eigenen lokalen IDE arbeitest, wenn du das Repository klonst und wenn du deine Commits pushst (d.h. deine Lösung abschickst)."
                 },
                 "summary": {
                     "title": "Überblick auf deiner Abgabe",
