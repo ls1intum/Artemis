@@ -75,7 +75,7 @@ describe('PostingsMarkdownEditor', () => {
             new MonacoExerciseReferenceAction(metisService),
         ]);
 
-        expect(component.lectureReferenceAction).toEqual(new MonacoLectureAttachmentReferenceAction(metisService, lectureService));
+        expect(component.lectureAttachmentReferenceAction).toEqual(new MonacoLectureAttachmentReferenceAction(metisService, lectureService));
     });
 
     it('should have set the correct default commands on init if communication and messaging and communication is disabled', () => {
@@ -92,7 +92,7 @@ describe('PostingsMarkdownEditor', () => {
             new MonacoExerciseReferenceAction(metisService),
         ]);
 
-        expect(component.lectureReferenceAction).toEqual(new MonacoLectureAttachmentReferenceAction(metisService, lectureService));
+        expect(component.lectureAttachmentReferenceAction).toEqual(new MonacoLectureAttachmentReferenceAction(metisService, lectureService));
     });
 
     it('should show the correct amount of characters below the markdown input', () => {

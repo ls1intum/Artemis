@@ -52,7 +52,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
     @Input() isInputLengthDisplayed = true;
     @Output() valueChange = new EventEmitter();
-    lectureReferenceAction: MonacoLectureAttachmentReferenceAction;
+    lectureAttachmentReferenceAction: MonacoLectureAttachmentReferenceAction;
     defaultActions: MonacoEditorAction[];
     content?: string;
     previewMode = false;
@@ -86,7 +86,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new MonacoExerciseReferenceAction(this.metisService),
         ];
 
-        this.lectureReferenceAction = new MonacoLectureAttachmentReferenceAction(this.metisService, this.lectureService);
+        this.lectureAttachmentReferenceAction = new MonacoLectureAttachmentReferenceAction(this.metisService, this.lectureService);
     }
 
     ngAfterViewInit(): void {
