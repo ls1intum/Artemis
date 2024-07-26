@@ -243,6 +243,13 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             jest.restoreAllMocks();
         });
 
+        it('should initialize with empty values if exercises are not available', () => {
+            jest.spyOn(metisService, 'getCourse').mockReturnValue({ exercises: undefined } as any);
+            fixture.detectChanges();
+            comp.registerAction(exerciseReferenceAction);
+            expect(exerciseReferenceAction.getValues()).toEqual([]);
+        });
+
         it('should insert /exercise for exercise references', () => {
             fixture.detectChanges();
             comp.registerAction(exerciseReferenceAction);
