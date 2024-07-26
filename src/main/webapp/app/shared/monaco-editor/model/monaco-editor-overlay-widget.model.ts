@@ -2,7 +2,7 @@ import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-c
 import * as monaco from 'monaco-editor';
 
 // null is used by the monaco editor API
-export type OverlayWidgetPosition = monaco.editor.IOverlayWidgetPosition | null;
+type OverlayWidgetPosition = monaco.editor.IOverlayWidgetPosition | null;
 
 /**
  * Class representing an overlay widget floating above the editor content.
