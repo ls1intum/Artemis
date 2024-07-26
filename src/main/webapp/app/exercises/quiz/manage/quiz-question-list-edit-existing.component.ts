@@ -173,7 +173,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
         }
 
         const fileName = this.importFile.name;
-        const fileExtension = fileName.split('.').pop()?.toLowerCase();
+        const fileExtension = fileName.split('.').last()?.toLowerCase();
 
         if (fileExtension === 'zip') {
             await this.handleZipFile(this.importFile);
