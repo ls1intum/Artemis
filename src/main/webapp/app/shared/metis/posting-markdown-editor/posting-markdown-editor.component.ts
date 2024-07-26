@@ -91,7 +91,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     ngAfterViewInit(): void {
         this.markdownEditor.setTextFieldMode();
-        // this.markdownEditor.monacoEditor.addOverlayWidget('markdown-send-btn', this.sendButton.nativeElement, { preference: 1 });
     }
 
     /**
