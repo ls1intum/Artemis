@@ -3,7 +3,7 @@
         "quizWarning": {
             "title": "Attention!",
             "question": "Potential Performance Issues",
-            "description": "You are using a very large number of Short-Answer items and/or Drag-and-Drop items in this quiz. This can lead to significant performance issues. Are you sure you want to save the task this way?",
+            "description": "You are using a very large number of Short-Answer items and/or Drag-and-Drop items in this quiz. This can lead to significant performance issues. Are you sure you want to save the exercise this way?",
             "confirmButton": "Save anyway"
         },
         "quizExercise": {
