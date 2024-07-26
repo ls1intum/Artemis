@@ -27,51 +27,22 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
         if (!model) {
             throw new Error(`A model must be attached to the editor to use the ${this.id} action.`);
         }
-        const languageId = model.getLanguageId();
-        const modelId = model.id;
-        const getChannelFn: () => Promise<ChannelIdAndNameDTO[]> = this.getChannels.bind(this);
-        this.disposableCompletionProvider = monaco.languages.registerCompletionItemProvider(languageId, {
-            triggerCharacters: ['#'],
-            provideCompletionItems: (model: monaco.editor.ITextModel, position: monaco.Position): monaco.languages.ProviderResult<monaco.languages.CompletionList> => {
-                if (model.id !== modelId) {
-                    return undefined;
-                }
-                const wordUntilPosition = model.getWordUntilPosition(position);
-                const range = {
-                    startLineNumber: position.lineNumber,
-                    startColumn: wordUntilPosition.startColumn - 1,
-                    endLineNumber: position.lineNumber,
-                    endColumn: wordUntilPosition.endColumn,
-                };
-                // Check if before the word, we have a #
-                const beforeWord = model.getValueInRange({
-                    startLineNumber: position.lineNumber,
-                    startColumn: wordUntilPosition.startColumn - 1,
-                    endLineNumber: position.lineNumber,
-                    endColumn: wordUntilPosition.startColumn,
-                });
-                if (wordUntilPosition.word !== MonacoChannelReferenceAction.DEFAULT_INSERT_TEXT) {
-                    if (beforeWord !== MonacoChannelReferenceAction.DEFAULT_INSERT_TEXT) {
-                        return undefined;
-                    }
-                }
-                return getChannelFn().then((channels) => {
-                    return {
-                        suggestions: channels.map((ch) => ({
-                            label: '#' + ch.name!,
-                            kind: monaco.languages.CompletionItemKind.Constant,
-                            insertText: `[channel]${ch.name}(${ch.id})[/channel]`,
-                            range,
-                            detail: this.label,
-                        })),
-                    };
-                });
-            },
-        });
+        this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ChannelIdAndNameDTO>(
+            editor,
+            this.getChannels.bind(this),
+            (channel: ChannelIdAndNameDTO, range: monaco.IRange) => ({
+                label: '#' + channel.name,
+                kind: monaco.languages.CompletionItemKind.Constant,
+                insertText: `[channel]${channel.name}(${channel.id})[/channel]`,
+                range,
+                detail: this.label,
+            }),
+            '#',
+        );
     }
 
     run(editor: monaco.editor.ICodeEditor) {
-        editor.trigger('keyboard', 'type', { text: MonacoChannelReferenceAction.DEFAULT_INSERT_TEXT });
+        this.typeText(editor, MonacoChannelReferenceAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
 

@@ -22,55 +22,22 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
     // TODO: refactor to use same method as MonacoChannelReferenceAction
     register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
         super.register(editor, translateService);
-        const model = editor.getModel();
-        if (!model) {
-            throw new Error(`A model must be attached to the editor to use the ${this.id} action.`);
-        }
-        const languageId = model.getLanguageId();
-        const modelId = model.id;
-        const searchFn: (searchTerm: string) => Promise<UserNameAndLoginDTO[]> = this.loadUsersForSearchTerm.bind(this);
-        this.disposableCompletionProvider = monaco.languages.registerCompletionItemProvider(languageId, {
-            triggerCharacters: ['@'],
-            provideCompletionItems: (model: monaco.editor.ITextModel, position: monaco.Position): monaco.languages.ProviderResult<monaco.languages.CompletionList> => {
-                if (model.id !== modelId) {
-                    return undefined;
-                }
-                const wordUntilPosition = model.getWordUntilPosition(position);
-                const range = {
-                    startLineNumber: position.lineNumber,
-                    startColumn: wordUntilPosition.startColumn - 1,
-                    endLineNumber: position.lineNumber,
-                    endColumn: wordUntilPosition.endColumn,
-                };
-                // Check if before the word, we have a @
-                const beforeWord = model.getValueInRange({
-                    startLineNumber: position.lineNumber,
-                    startColumn: wordUntilPosition.startColumn - 1,
-                    endLineNumber: position.lineNumber,
-                    endColumn: wordUntilPosition.startColumn,
-                });
-                if (wordUntilPosition.word !== MonacoUserMentionAction.DEFAULT_INSERT_TEXT) {
-                    if (beforeWord !== MonacoUserMentionAction.DEFAULT_INSERT_TEXT) {
-                        return undefined;
-                    }
-                }
-                return searchFn(wordUntilPosition.word).then((users) => {
-                    return {
-                        suggestions: users.map((ch) => ({
-                            label: '@' + ch.name!,
-                            kind: monaco.languages.CompletionItemKind.User,
-                            insertText: `[user]${ch.name}(${ch.login!})[/user]`,
-                            range,
-                            detail: this.label,
-                        })),
-                    };
-                });
-            },
-        });
+        this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<UserNameAndLoginDTO>(
+            editor,
+            this.loadUsersForSearchTerm.bind(this),
+            (user: UserNameAndLoginDTO, range: monaco.IRange) => ({
+                label: '@' + user.name,
+                kind: monaco.languages.CompletionItemKind.User,
+                insertText: `[user]${user.name}(${user.login})[/user]`,
+                range,
+                detail: this.label,
+            }),
+            '@',
+        );
     }
 
     run(editor: monaco.editor.ICodeEditor) {
-        editor.trigger('keyboard', 'type', { text: MonacoUserMentionAction.DEFAULT_INSERT_TEXT });
+        this.typeText(editor, MonacoUserMentionAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
 
