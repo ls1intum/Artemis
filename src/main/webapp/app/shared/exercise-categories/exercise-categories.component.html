@@ -11,9 +11,11 @@
     </span>
 }
 @for (category of exercise.categories; track category) {
-    <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
-        <span class="badge" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-    </span>
+    @if (category.category) {
+        <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
+            <span class="badge" [ngStyle]="{ backgroundColor: category.color }">{{ category.category | truncate:30 }}</span>
+        </span>
+    }
 }
 @if (exercise.difficulty && showTags.difficulty) {
     <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">

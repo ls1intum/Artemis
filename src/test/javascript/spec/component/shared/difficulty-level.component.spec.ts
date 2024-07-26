@@ -21,7 +21,6 @@ describe('DifficultyLevelComponent', () => {
 
     it('should set coloredDifficultyLevel correctly for EASY', () => {
         component.difficultyLevel = 'EASY';
-        component.ngOnInit();
         fixture.detectChanges();
 
         expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.easy');
@@ -30,7 +29,6 @@ describe('DifficultyLevelComponent', () => {
 
     it('should set coloredDifficultyLevel correctly for MEDIUM', () => {
         component.difficultyLevel = 'MEDIUM';
-        component.ngOnInit();
         fixture.detectChanges();
 
         expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.medium');
@@ -39,7 +37,6 @@ describe('DifficultyLevelComponent', () => {
 
     it('should set coloredDifficultyLevel correctly for HARD', () => {
         component.difficultyLevel = 'HARD';
-        component.ngOnInit();
         fixture.detectChanges();
 
         expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.hard');
@@ -48,7 +45,6 @@ describe('DifficultyLevelComponent', () => {
 
     it('should set coloredDifficultyLevel correctly for no level', () => {
         component.difficultyLevel = 'UNKNOWN';
-        component.ngOnInit();
         fixture.detectChanges();
 
         expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.noLevel');
@@ -56,7 +52,6 @@ describe('DifficultyLevelComponent', () => {
     });
     it('should display the correct tooltip label', () => {
         component.difficultyLevel = 'EASY';
-        component.ngOnInit();
         fixture.detectChanges();
 
         const tooltipElement: HTMLElement = fixture.nativeElement.querySelector('#difficulty-level');
@@ -69,7 +64,6 @@ describe('DifficultyLevelComponent', () => {
 
     it('should apply the correct classes for difficulty colors', () => {
         component.difficultyLevel = 'EASY';
-        component.ngOnInit();
         fixture.detectChanges();
         const skillBars: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.skill-bar');
         expect(skillBars).toHaveLength(3);
