@@ -7,6 +7,10 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { UserNameAndLoginDTO } from 'app/core/user/user.model';
 
+/**
+ * Action to insert a user mention into the editor. Users that type a @ will see a list of available users to mention.
+ * Users will be fetched repeatedly as the user types to provide up-to-date results.
+ */
 export class MonacoUserMentionAction extends MonacoEditorAction {
     disposableCompletionProvider?: monaco.IDisposable;
 
@@ -19,6 +23,12 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
     ) {
         super(MonacoUserMentionAction.ID, 'artemisApp.metis.editor.user', faAt);
     }
+
+    /**
+     * Registers this action in the provided editor. This will register a completion provider that shows the available users.
+     * @param editor The editor to register the action in.
+     * @param translateService The translate service to use for translations, e.g. the label.
+     */
     register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<UserNameAndLoginDTO>(
@@ -36,6 +46,10 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
         );
     }
 
+    /**
+     * Types the text '@' into the editor and focuses it. This will trigger the completion provider to show the available users.
+     * @param editor The editor to type the text into.
+     */
     run(editor: monaco.editor.ICodeEditor) {
         this.typeText(editor, MonacoUserMentionAction.DEFAULT_INSERT_TEXT);
         editor.focus();

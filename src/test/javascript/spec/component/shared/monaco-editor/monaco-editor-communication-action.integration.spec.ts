@@ -205,7 +205,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const getChannelsSpy = jest.spyOn(channelService, 'getPublicChannelsOfCourse');
             fixture.detectChanges();
             comp.registerAction(channelReferenceAction);
-            expect(await channelReferenceAction.getChannels()).toBe(channels);
+            expect(await channelReferenceAction.fetchChannels()).toBe(channels);
             expect(getChannelsSpy).not.toHaveBeenCalled();
         });
 
@@ -214,7 +214,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const getChannelsStub = jest.spyOn(channelService, 'getPublicChannelsOfCourse').mockReturnValue(of(new HttpResponse({ body: channels, status: 200 })));
             fixture.detectChanges();
             comp.registerAction(channelReferenceAction);
-            expect(await channelReferenceAction.getChannels()).toBe(channels);
+            expect(await channelReferenceAction.fetchChannels()).toBe(channels);
             expect(getChannelsStub).toHaveBeenCalledExactlyOnceWith(metisService.getCourse().id!);
             expect(channelReferenceAction.cachedChannels).toBe(channels);
         });

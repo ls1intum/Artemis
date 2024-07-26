@@ -33,7 +33,7 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
         super.register(editor, translateService);
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ChannelIdAndNameDTO>(
             editor,
-            this.getChannels.bind(this),
+            this.fetchChannels.bind(this),
             (channel: ChannelIdAndNameDTO, range: monaco.IRange) => ({
                 label: '#' + channel.name,
                 kind: monaco.languages.CompletionItemKind.Constant,
@@ -45,12 +45,16 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
         );
     }
 
+    /**
+     * Types the text '#' into the editor and focuses it. This will trigger the completion provider to show the available channels.
+     * @param editor The editor to type the text into.
+     */
     run(editor: monaco.editor.ICodeEditor) {
         this.typeText(editor, MonacoChannelReferenceAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
 
-    async getChannels(): Promise<ChannelIdAndNameDTO[]> {
+    async fetchChannels(): Promise<ChannelIdAndNameDTO[]> {
         if (!this.cachedChannels) {
             const response = await firstValueFrom(this.channelService.getPublicChannelsOfCourse(this.metisService.getCourse().id!));
             this.cachedChannels = response.body!;
