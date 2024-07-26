@@ -21,7 +21,7 @@ export class MonacoEditorOverlayWidget extends MonacoCodeEditorElement implement
         super(editor, id);
         this.domNode = domNode;
         // At the moment, the inline feedback nodes will only reach their maximum width with the following line. This workaround can be removed as soon as the Ace editor has been replaced.
-        // this.domNode.style.width = '100%';
+        this.domNode.style.width = '100%';
         this.position = position;
     }
 
