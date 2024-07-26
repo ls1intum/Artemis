@@ -1,4 +1,3 @@
-import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import * as monaco from 'monaco-editor';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -25,6 +24,10 @@ interface LectureAttachmentReferenceActionArgs {
     attachment?: Attachment;
 }
 
+/**
+ * Action to insert a reference to a lecture, attachment, slide, or attachment unit into the editor.
+ * The specific format of the reference depends on the type of reference.
+ */
 export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
     static readonly ID = 'monaco-lecture-attachment-reference.action';
 
@@ -50,10 +53,24 @@ export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
         });
     }
 
-    register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
-        super.register(editor, translateService);
+    /**
+     * Executes the action in the current editor for the given arguments (lecture, attachment, slide, and/or attachment unit).
+     * @param args The arguments to execute the action with.
+     */
+    executeInCurrentEditor(args: LectureAttachmentReferenceActionArgs): void {
+        super.executeInCurrentEditor(args);
     }
 
+    /**
+     * Inserts, at the current position, a reference to the specified lecture, attachment, slide, or attachment unit.
+     * Depending on the reference type, the reference will be formatted differently:
+     * - Lecture: [lecture]Lecture Title(link)[/lecture]
+     * - Attachment: [attachment]Attachment Name(link)[/attachment]
+     * - Slide: [slide]Attachment Unit Name Slide Number(link)[/slide]
+     * - Attachment Unit: [lecture-unit]Attachment Unit Name(link)[/lecture-unit]
+     * @param editor The editor to insert the reference in.
+     * @param args An object containing the item to reference and the type of reference.
+     */
     run(editor: monaco.editor.ICodeEditor, args?: LectureAttachmentReferenceActionArgs): void {
         switch (args?.reference) {
             case ReferenceType.LECTURE:
