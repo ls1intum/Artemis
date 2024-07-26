@@ -378,9 +378,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Enables a text field mode for the editor. This will make the editor look more like a text field and less like a code editor.
+     * In particular, line numbers, margins, and highlights will be disabled.
+     */
     enableTextFieldMode(): void {
         this._editor.updateOptions({
-            // Sets up the layout to make the editor look more like a text field (no line numbers, margin, or line highlights).
+            // Sets up the layout to make the editor look more like a text field (no line numbers, margin, or highlights).
             lineNumbers: 'off',
             glyphMargin: false,
             folding: false,
@@ -391,6 +395,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             },
             renderLineHighlight: 'none',
             selectionHighlight: false,
+            occurrencesHighlight: 'off',
             // Only show scrollbars if required.
             scrollbar: {
                 vertical: 'auto',
