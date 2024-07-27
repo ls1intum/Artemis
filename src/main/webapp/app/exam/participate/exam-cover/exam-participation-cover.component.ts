@@ -214,6 +214,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * Notify the parent component that the user wants to continue after hand in early
      */
     continueAfterHandInEarly() {
+        this.examParticipationService.setEndView(false);
         this.onExamContinueAfterHandInEarly.emit();
     }
 

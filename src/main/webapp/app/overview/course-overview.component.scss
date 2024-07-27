@@ -37,14 +37,11 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
     }
 
     &.exam-wrapper {
-        height: 100%;
+        height: 100vh !important;
 
-        &.exam-height-dev {
-            height: 100%;
-        }
-
-        @media (max-width: 768px) {
-            height: 100% !important;
+        &.exam-end-view {
+            overflow-y: auto !important;
+            height: 85vh !important;
         }
     }
 
@@ -76,14 +73,11 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
             margin-left 0.2s ease-in-out !important;
 
         &.exam-wrapper {
-            height: 100%;
+            height: 100vh !important;
 
-            &.exam-height-dev {
-                height: 100%;
-            }
-
-            @media (max-width: 768px) {
-                height: 100% !important;
+            &.exam-end-view {
+                overflow-y: auto !important;
+                height: 85vh !important;
             }
         }
 
@@ -124,10 +118,6 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
             margin-left: $menu-width-closed !important;
         }
     }
-}
-
-.exam-end-view {
-    overflow-y: auto !important;
 }
 
 a:not(.btn):not(.tab-link):hover {
