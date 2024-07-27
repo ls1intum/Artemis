@@ -389,7 +389,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            if (this.programmingExercise.buildConfig!.buildPlanConfiguration) {
+            if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
                 this.programmingExercise.buildConfig!.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig!.buildPlanConfiguration);
             }
             this.backupExercise = cloneDeep(this.programmingExercise);
