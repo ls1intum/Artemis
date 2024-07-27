@@ -1222,7 +1222,7 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentFailedToSubmit).toBeFalse();
     });
 
-    it('should initialize individualStudentEndDateWithGracePeriod', fakeAsync(() => {
+    it('should initialize individualStudentEndDateWithGracePeriod', () => {
         let now = dayjs();
         comp.studentExam = new StudentExam();
 
@@ -1243,8 +1243,7 @@ describe('ExamParticipationComponent', () => {
         comp.exam.startDate = dayjs().subtract(4, 'hours');
 
         comp.initIndividualEndDates(now);
-        tick();
 
         expect(comp.individualStudentEndDateWithGracePeriod).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
-    }));
+    });
 });
