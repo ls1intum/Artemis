@@ -13,8 +13,6 @@ import { UserNameAndLoginDTO } from 'app/core/user/user.model';
  */
 export class MonacoUserMentionAction extends MonacoEditorAction {
     disposableCompletionProvider?: monaco.IDisposable;
-    debounceTimer?: number;
-    pendingResolves: ((value: UserNameAndLoginDTO[]) => void)[] = [];
 
     static readonly ID = 'monaco-user-mention.action';
     static readonly DEFAULT_INSERT_TEXT = '@';
