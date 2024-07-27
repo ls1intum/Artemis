@@ -96,6 +96,7 @@ examples.forEach((activeConversation) => {
         it('should create', fakeAsync(() => {
             expect(component).toBeTruthy();
             component.handleScrollOnNewMessage();
+            tick();
         }));
 
         it('should set initial values correctly', fakeAsync(() => {

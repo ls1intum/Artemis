@@ -68,6 +68,8 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
@@ -265,6 +267,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private BuildPlanRepository buildPlanRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public Course course;
 
@@ -726,7 +731,7 @@ public class ProgrammingExerciseTestService {
 
         examExercise.setId(generatedExercise.getId());
         assertThat(examExercise).isEqualTo(generatedExercise);
-        final Exam loadedExam = examRepository.findWithExerciseGroupsAndExercisesById(examExercise.getExamViaExerciseGroupOrCourseMember().getId()).orElseThrow();
+        final Exam loadedExam = examRepository.findWithExerciseGroupsAndExercisesById(examExercise.getExam().getId()).orElseThrow();
         assertThat(loadedExam.getNumberOfExercisesInExam()).isEqualTo(1);
     }
 
@@ -1630,6 +1635,38 @@ public class ProgrammingExerciseTestService {
             else {
                 assertThat(listOfIncludedFiles).noneMatch((filename) -> BUILD_PLAN_FILE_NAME.equals(filename.toString()));
             }
+        }
+
+        FileUtils.deleteDirectory(extractedZipDir.toFile());
+        FileUtils.delete(zipFile);
+    }
+
+    void exportProgrammingExerciseInstructorMaterial_withTeamConfig() throws Exception {
+        TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(exercise);
+        teamAssignmentConfig.setMinTeamSize(1);
+        teamAssignmentConfig.setMaxTeamSize(10);
+        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        exercise = programmingExerciseRepository.save(exercise);
+
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true);
+        // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
+        await().until(zipFile::exists);
+        assertThat(zipFile).isNotNull();
+
+        // Recursively unzip the exported file, to make sure there is no erroneous content
+        Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
+
+        try (var files = Files.walk(extractedZipDir)) {
+            // Only test the correctly exported team assignment, other properties are tested above
+            var json = files.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json")).findFirst();
+            assertThat(json).isPresent();
+
+            var exportedExercise = objectMapper.readValue(json.get().toFile(), ProgrammingExercise.class);
+            assertThat(exportedExercise.getTeamAssignmentConfig()).isNotNull();
+            assertThat(exportedExercise.getTeamAssignmentConfig().getId()).isNull();
+            assertThat(exportedExercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(1);
+            assertThat(exportedExercise.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(10);
         }
 
         FileUtils.deleteDirectory(extractedZipDir.toFile());

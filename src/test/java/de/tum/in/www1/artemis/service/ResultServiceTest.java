@@ -115,7 +115,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsBeforePublish() {
-        Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
+        Exam exam = examStudentParticipation.getExercise().getExam();
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(2));
         examRepository.save(exam);
         Result result = participationUtilService.addResultToParticipation(null, null, examStudentParticipation);
@@ -129,7 +129,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsAfterPublish() {
-        Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
+        Exam exam = examStudentParticipation.getExercise().getExam();
         exam.setPublishResultsDate(ZonedDateTime.now().minusDays(2));
         examRepository.save(exam);
         Result result = participationUtilService.addResultToParticipation(null, null, examStudentParticipation);

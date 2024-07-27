@@ -356,7 +356,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     void shouldMapNonJavaTestsToDefaultTestCaseType() {
         Set<ProgrammingExerciseTestCase> testCases;
 
-        for (ProgrammingLanguage language : ProgrammingLanguage.values()) {
+        for (ProgrammingLanguage language : ProgrammingLanguage.getEnabledLanguages()) {
             if (language == ProgrammingLanguage.JAVA) {
                 continue;
             }

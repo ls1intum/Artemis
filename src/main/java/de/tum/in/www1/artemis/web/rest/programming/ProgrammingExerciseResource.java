@@ -683,7 +683,7 @@ public class ProgrammingExerciseResource {
      * 1. deleteBuildPlans: Deleting all student build plans (except BASE/SOLUTION).
      * 2. deleteRepositories: Deleting all student repositories (requires: 1. deleteBuildPlans == true).
      * 3. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results.
-     * 4. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans.
+     * 4. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
      *
      * @param exerciseId                         - Id of the programming exercise to reset.
      * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
