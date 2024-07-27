@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.FilePathService.actualPathForPublicPath;
-import static de.tum.in.www1.artemis.service.FilePathService.getLectureAttachmentFilePath;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,7 +42,6 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.web.util.ResponseUtil;
-
 
 /**
  * REST controller for managing Attachment.
@@ -93,7 +91,7 @@ public class AttachmentResource {
         log.debug("REST request to save Attachment : {}", attachment);
         attachment.setId(null);
 
-        Path basePath = getLectureAttachmentFilePath().resolve(attachment.getLecture().getId().toString());
+        Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(attachment.getLecture().getId().toString());
         Path savePath = fileService.saveFile(file, basePath, false);
         attachment.setLink(FilePathService.publicPathForActualPath(savePath, attachment.getLecture().getId()).toString());
 
@@ -124,7 +122,7 @@ public class AttachmentResource {
         attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
 
         if (file != null) {
-            Path basePath = getLectureAttachmentFilePath().resolve(originalAttachment.getLecture().getId().toString());
+            Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(originalAttachment.getLecture().getId().toString());
             Path savePath = fileService.saveFile(file, basePath, false);
             attachment.setLink(FilePathService.publicPathForActualPath(savePath, originalAttachment.getLecture().getId()).toString());
             // Delete the old file

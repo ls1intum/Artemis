@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
@@ -76,7 +77,6 @@ import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * REST controller for managing Files.
@@ -383,7 +383,7 @@ public class FileResource {
     @GetMapping("/attachments/{attachmentId}/file")
     public ResponseEntity<byte[]> getLectureAttachmentById(@PathVariable Long attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found with id: " + attachmentId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found with id: " + attachmentId));
 
         // get the course for a lecture attachment
         Lecture lecture = attachment.getLecture();
@@ -456,7 +456,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getLectureUnitFile(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findById(attachmentUnitId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment unit not found with id: " + attachmentUnitId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment unit not found with id: " + attachmentUnitId));
 
         Attachment attachment = attachmentUnit.getAttachment();
         Course course = attachmentUnit.getLecture().getCourse();
