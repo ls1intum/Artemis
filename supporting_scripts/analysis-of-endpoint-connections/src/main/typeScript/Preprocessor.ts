@@ -26,7 +26,6 @@ interface MemberVariable {
     value?: string;
 }
 
-
 export class Preprocessor {
     public static PREPROCESSING_RESULTS = new Map<string, SuperClass>();
     public static readonly pathPrefix = '../../../../../'
@@ -41,6 +40,13 @@ export class Preprocessor {
         this.ast = Preprocessor.parseTypeScriptFile(Preprocessor.pathPrefix + this.fileToPreprocess);
     }
 
+    /**
+     * Preprocesses the TypeScript file.
+     * This method checks if the AST (Abstract Syntax Tree) type is 'Program'.
+     * If it is, it iterates over the body of the AST to find class declarations.
+     * For each class declaration found, it calls the `preprocessClass` method to process the class.
+     * It also handles named exports that are class declarations.
+     */
     preprocessFile() {
         if (this.ast.type !== 'Program') {
             return;
@@ -55,56 +61,30 @@ export class Preprocessor {
         });
     }
 
+    /**
+     * Preprocesses a class declaration.
+     * This method checks if the class has a superclass. If it does, it identifies and stores the member variables
+     * from the class body and then identifies the superclass and processes its related information.
+     *
+     * @param classDeclaration - The class declaration node to preprocess.
+     */
     preprocessClass(classDeclaration: TSESTree.ClassDeclaration) {
-        this.identifyMemberVariablesFromClassBody(classDeclaration);
-
         if (classDeclaration.superClass) {
-            let superClass = classDeclaration.superClass;
+            this.identifyMemberVariablesFromClassBody(classDeclaration);
             this.identifySuperClass(classDeclaration);
-
-        }
-
-        classDeclaration.body.body.forEach((node) => {
-            if (node.type === 'MethodDefinition') {
-                this.preprocessMethod(node);
-            }
-        });
-    }
-
-    preprocessMethod(methodDefinition: TSESTree.MethodDefinition) {
-        if (methodDefinition.kind === 'constructor') {
-            this.identifyMemberVariablesFromConstructorParams(methodDefinition);
-
-            if (methodDefinition.value.type === 'FunctionExpression' && methodDefinition.value.body.body.length > 0) {
-                methodDefinition.value.body.body.forEach((node) => {
-                    // super constructor is called. The parameters passed to the super constructor are parsed out and stored for later use.
-                    if (node.type === 'ExpressionStatement' && node.expression.type === 'CallExpression' && node.expression.callee.type === 'Super') {
-                        let superConstructorCall = node.expression;
-                        superConstructorCall.arguments.forEach((argument) => {
-                            let parameterName = '';
-                            let parameterValue = '';
-                            if (argument.type === 'Identifier' && this.memberVariables.has(argument.name) && this.memberVariables.get(argument.name)?.value && this.memberVariables.get(argument.name.toString())!.value){
-                                parameterName = argument.name;
-                                let tempParameterValue = this.memberVariables.get(argument.name)?.value;
-                                if (tempParameterValue) {
-                                    parameterValue = tempParameterValue;
-                                }
-
-                                // parameterValue = memberVariables.get(argument.name.toString());
-                                // findParameterValueByParameterNameAndFilePath(parameterName, 'filePath');
-
-                                // Todo: store parameterValue in a map for later use
-                            } else if (argument.type ==='BinaryExpression' ) {
-                                this.evaluateBinaryExpression(argument);
-                            }
-                        });
-                    }
-                });
-            }
         }
     }
 
-
+    /**
+     * Evaluates a binary expression to find its corresponding value.
+     * This method processes the left and right nodes of the binary expression.
+     * If a node is a member expression, it evaluates the member expression to find its value.
+     * If a node is a literal, it converts the literal value to a string.
+     * The method concatenates the evaluated values of the left and right nodes and returns the result as a string.
+     *
+     * @param binaryExpression - The binary expression to be evaluated.
+     * @returns The evaluated value of the binary expression as a string.
+     */
     evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression) { // todo: finish implementation
         let left = binaryExpression.left;
         let right = binaryExpression.right;
@@ -116,10 +96,6 @@ export class Preprocessor {
                     let parameterObjectName = node.object.name;
                     let parameterName = node.property.name;
                     parameterValue = this.findParameterValueByParameterNameAndFilePath(parameterName, this.identifyImportedClassByName(parameterObjectName));
-                } else if (node.object.type === 'ThisExpression') {
-                    // if (this.memberVariables.has(node.property.name)) {
-                    //     let memberVariable = this.memberVariables.get(node.property.name);
-                    //     if (memberVariable) {
                 } else if (node.object.type === 'Literal' && node.object.value) {
                     parameterValue = node.object.value.toString();
                 }
@@ -149,38 +125,6 @@ export class Preprocessor {
                     this.memberVariables.set(node.key.name, { name: node.key.name, type: 'string', value: node.value.value.toString() });
                 } else if (node.value?.type === 'TemplateLiteral') {
                     this.memberVariables.set(node.key.name, { name: node.key.name, type: 'string' });
-                }
-            }
-        });
-    }
-
-    /**
-     * Identifies and stores member variables of a class from the parameters of the constructor.
-     * This method iterates over the parameters of the constructor, looking for TSParameterProperties.
-     * When a TSParameterProperty is found, it checks the type of the parameter's typeAnnotation.
-     * If the typeAnnotation is a TSTypeReference and the typeName is an Identifier, it stores the parameter's name and type.
-     * These member variables are stored in the `memberVariables` map with the parameter's name as the key.
-     *
-     * @param constructor - The constructor method definition node from which to identify member variables.
-     */
-    identifyMemberVariablesFromConstructorParams(constructor: TSESTree.MethodDefinition) {
-        if (constructor.kind !== 'constructor') {
-            return;
-        }
-
-        constructor.value.params.forEach((param) => {
-            if (param.type === 'TSParameterProperty' && param.parameter.type === 'Identifier' && param.parameter.typeAnnotation && param.parameter.typeAnnotation.typeAnnotation.type === 'TSTypeReference'
-                && param.parameter.typeAnnotation.typeAnnotation.typeName.type === 'Identifier') {
-                let memberVariableName = param.parameter.name;
-                let memberVariableType = param.parameter.typeAnnotation.typeAnnotation.typeName.name;
-
-                if (this.memberVariables.has(memberVariableName)) {
-                    let memberVariable = this.memberVariables.get(memberVariableName);
-                    if (memberVariable) {
-                        memberVariable.type = memberVariableType;
-                    }
-                } else {
-                    this.memberVariables.set(memberVariableName, { name: memberVariableName, value: '', type: memberVariableType });
                 }
             }
         });
@@ -220,6 +164,16 @@ export class Preprocessor {
         }
     }
 
+    /**
+     * Identifies calls to the superclass constructor within a class declaration.
+     * This method iterates over the body of the class to find the constructor method.
+     * Within the constructor, it looks for call expressions to `super` and evaluates their arguments.
+     * The evaluated arguments are collected and returned as an array of objects, each containing an `arguments` array.
+     *
+     * @param classDeclaration - The class declaration node to process.
+     * @param superClassName - The name of the superclass to identify constructor calls for.
+     * @returns An array of objects, each containing an `arguments` array with the evaluated values of the super constructor call arguments.
+     */
     identifySuperConstructorCalls(classDeclaration: TSESTree.ClassDeclaration, superClassName: string) {
         let result: {arguments: string[]}[]= [];
         classDeclaration.body.body.forEach((node) => {
@@ -230,7 +184,6 @@ export class Preprocessor {
                         let superConstructorCallParameters = superConstructorCall.arguments;
                         let superConstructorCallParameterValues: string[] = [];
                         superConstructorCallParameters.forEach((parameter) => {
-                            // Todo: Find the parameter values and store them in the according array
                             superConstructorCallParameterValues.push(this.evaluateCallExpressionArgument(parameter));
                         });
                         result.push({arguments: superConstructorCallParameterValues});
@@ -242,6 +195,17 @@ export class Preprocessor {
         return result;
     }
 
+    /**
+     * Evaluates a call expression argument to find its corresponding value.
+     * This method checks the type of the call expression argument and processes it accordingly.
+     * If the argument is an identifier, it evaluates the identifier to find its value.
+     * If the argument is a binary expression, it evaluates the binary expression to find its value.
+     * If the argument is a literal, it converts the literal value to a string.
+     * The method returns the evaluated value as a string, or an empty string if no value is found.
+     *
+     * @param callExpressionArgument - The call expression argument to be evaluated.
+     * @returns The evaluated value of the call expression argument as a string, or an empty string if no value is found.
+     */
     evaluateCallExpressionArgument(callExpressionArgument: TSESTree.CallExpressionArgument) {
         let result = '';
         if (callExpressionArgument.type === 'Identifier') {
@@ -254,6 +218,15 @@ export class Preprocessor {
         return result? result : '';
     }
 
+    /**
+     * Evaluates an identifier argument to find its corresponding value.
+     * This method checks if the identifier name exists in the `memberVariables` map.
+     * If it exists, it returns the value associated with the identifier name.
+     * If it does not exist, it returns an empty string.
+     *
+     * @param identifier - The identifier whose value is to be evaluated.
+     * @returns The value of the identifier if found; otherwise, an empty string.
+     */
     evaluateIdentifierArgument(identifier: TSESTree.Identifier) {
         if (this.memberVariables.has(identifier.name)) {
             return this.memberVariables.get(identifier.name)?.value;
@@ -305,6 +278,16 @@ export class Preprocessor {
         return '';
     }
 
+    /**
+     * Finds the value of a parameter by its name within a given AST (Abstract Syntax Tree).
+     * This method iterates over the body of a class to find a property definition that matches the specified parameter name.
+     * If a matching property definition is found and its value is a literal, the method returns the string representation of the value.
+     * If no matching property definition is found, the method returns an empty string.
+     *
+     * @param parameterName - The name of the parameter whose value is to be found.
+     * @param ast - The AST of the class body to search within.
+     * @returns The value of the parameter if found; otherwise, an empty string.
+     */
     private static findParameterValueByParameterNameAndAST(parameterName: string, ast: TSESTree.ClassBody) {
         for (let classBodyNode of ast.body) {
             if (classBodyNode.type === 'PropertyDefinition' && classBodyNode.key.type === 'Identifier' && classBodyNode.key.name === parameterName) {
@@ -317,6 +300,12 @@ export class Preprocessor {
         return '';
     }
 
+    /**
+     * Parses a TypeScript file and returns its Abstract Syntax Tree (AST).
+     *
+     * @param filePath - The path to the TypeScript file to be parsed.
+     * @returns The AST of the parsed TypeScript file.
+     */
     static parseTypeScriptFile(filePath: string) {
         const code = readFileSync(filePath, 'utf8');
         return parse(code, {
