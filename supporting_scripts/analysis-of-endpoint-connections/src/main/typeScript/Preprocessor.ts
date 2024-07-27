@@ -1,5 +1,5 @@
 import { parse, TSESTree } from '@typescript-eslint/typescript-estree';
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 
 interface SuperClass {
     name: string;
@@ -86,15 +86,15 @@ export class Preprocessor {
      * @returns The evaluated value of the binary expression as a string.
      */
     evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression) {
-        let left = binaryExpression.left;
-        let right = binaryExpression.right;
+        const left = binaryExpression.left;
+        const right = binaryExpression.right;
         let result = '';
         [left, right].forEach((node) => {
             let parameterValue = '';
             if (node.type === 'MemberExpression') {
                 if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
-                    let parameterObjectName = node.object.name;
-                    let parameterName = node.property.name;
+                    const parameterObjectName = node.object.name;
+                    const parameterName = node.property.name;
                     parameterValue = this.findParameterValueByParameterNameAndFilePath(parameterName, this.identifyImportedClassByName(parameterObjectName));
                 } else if (node.object.type === 'Literal' && node.object.value) {
                     parameterValue = node.object.value.toString();
@@ -150,10 +150,10 @@ export class Preprocessor {
         if (classDeclaration.superClass && classDeclaration.superClass.type === 'Identifier') {
             superClassName = classDeclaration.superClass.name;
             superClassPath = this.identifyImportedClassByName(superClassName);
-            let childClassName = classDeclaration.id!.name;
-            let childClass = { superClass: superClassName, name: childClassName, memberVariables: this.memberVariables, parentMethodCalls: [] };
+            const childClassName = classDeclaration.id?.name ?? '';
+            const childClass = { superClass: superClassName, name: childClassName, memberVariables: this.memberVariables, parentMethodCalls: [] };
 
-            let superConstructorCall = this.identifySuperConstructorCalls(classDeclaration, superClassName);
+            const superConstructorCall = this.identifySuperConstructorCalls(classDeclaration, superClassName);
 
             if (Preprocessor.PREPROCESSING_RESULTS.has(superClassName)) {
                 Preprocessor.PREPROCESSING_RESULTS.get(superClassName)?.childClasses.push(childClass);
@@ -175,14 +175,14 @@ export class Preprocessor {
      * @returns An array of objects, each containing an `arguments` array with the evaluated values of the super constructor call arguments.
      */
     identifySuperConstructorCalls(classDeclaration: TSESTree.ClassDeclaration, superClassName: string) {
-        let result: {arguments: string[]}[]= [];
+        const result: {arguments: string[]}[]= [];
         classDeclaration.body.body.forEach((node) => {
             if (node.type === 'MethodDefinition' && node.kind === 'constructor' && node.value.type === 'FunctionExpression') {
                 node.value.body.body.forEach((statement) => {
                     if (statement.type === 'ExpressionStatement' && statement.expression.type === 'CallExpression' && statement.expression.callee.type === 'Super') {
-                        let superConstructorCall = statement.expression;
-                        let superConstructorCallParameters = superConstructorCall.arguments;
-                        let superConstructorCallParameterValues: string[] = [];
+                        const superConstructorCall = statement.expression;
+                        const superConstructorCallParameters = superConstructorCall.arguments;
+                        const superConstructorCallParameterValues: string[] = [];
                         superConstructorCallParameters.forEach((parameter) => {
                             superConstructorCallParameterValues.push(this.evaluateCallExpressionArgument(parameter));
                         });
@@ -209,7 +209,7 @@ export class Preprocessor {
     evaluateCallExpressionArgument(callExpressionArgument: TSESTree.CallExpressionArgument) {
         let result = '';
         if (callExpressionArgument.type === 'Identifier') {
-            result = this.evaluateIdentifierArgument(callExpressionArgument)!;
+            result = this.evaluateIdentifierArgument(callExpressionArgument) ?? '';
         } else if (callExpressionArgument.type === 'BinaryExpression') {
             result = this.evaluateBinaryExpression(callExpressionArgument);
         } else if (callExpressionArgument.type === 'Literal' && callExpressionArgument.value) {
@@ -264,7 +264,7 @@ export class Preprocessor {
      * @returns The value of the parameter if found; otherwise, an empty string.
      */
     findParameterValueByParameterNameAndFilePath (parameterName: string, filePath: string) {
-        const targetAST = Preprocessor.parseTypeScriptFile(Preprocessor.pathPrefix + this.directoryPrefix + filePath + '.ts');
+        const targetAST = Preprocessor.parseTypeScriptFile(`${Preprocessor.pathPrefix}${this.directoryPrefix}${filePath}.ts`);
 
         for (const node of targetAST.body) {
             if (node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'ClassDeclaration') {
@@ -289,7 +289,7 @@ export class Preprocessor {
      * @returns The value of the parameter if found; otherwise, an empty string.
      */
     private static findParameterValueByParameterNameAndAST(parameterName: string, ast: TSESTree.ClassBody) {
-        for (let classBodyNode of ast.body) {
+        for (const classBodyNode of ast.body) {
             if (classBodyNode.type === 'PropertyDefinition' && classBodyNode.key.type === 'Identifier' && classBodyNode.key.name === parameterName) {
                 if (classBodyNode.value?.type === 'Literal' && classBodyNode.value.value) {
                     return classBodyNode.value.value.toString();

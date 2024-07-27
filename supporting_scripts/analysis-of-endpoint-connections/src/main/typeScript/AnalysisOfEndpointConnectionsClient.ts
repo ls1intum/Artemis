@@ -1,5 +1,5 @@
-import { readdirSync } from 'fs';
-import { join, resolve } from 'path';
+import { readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { Preprocessor } from './Preprocessor';
 import { Postprocessor } from './Postprocessor';
 import { writeFileSync } from 'node:fs';
@@ -30,17 +30,15 @@ const clientDirPath = resolve('src/main/webapp/app');
 
 const tsFiles = collectTypeScriptFiles(clientDirPath);
 
-console.log('Working Directory: ' + process.cwd());
-
 // preprocess each file
 tsFiles.forEach((filePath) => {
-    let preProcessor = new Preprocessor(filePath);
+    const preProcessor = new Preprocessor(filePath);
     preProcessor.preprocessFile();
 });
 
 // postprocess each file
 tsFiles.forEach((filePath) => {
-    let postProcessor = new Postprocessor(filePath);
+    const postProcessor = new Postprocessor(filePath);
     postProcessor.extractRestCalls();
 });
 
