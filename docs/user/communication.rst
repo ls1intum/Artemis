@@ -128,9 +128,9 @@ To search within a specific channel in the communications module, users can navi
 Verify User Authority
 ^^^^^^^^^^^^^^^^^^^^^
 
-To build trust between users utilizing the system's communication features, we prepend an icon to the author’s name in the
-headers of messages and their replies. The icon we introduce differs according to the role of the author within the course
-and reveals their highest authoritative role. Via tooltips that are shown as users hover over these icons (see images below),
+To build trust between users utilizing the system's communication features, we prepend a role badge to the author’s name in the
+headers of messages and their replies. The badge we introduce differs according to the role of the author within the course
+and reveals their highest authoritative role. Via tooltips that are shown as users hover over these badges (see images below),
 the system displays a brief explanation of that specific role. This way, the system builds trust in the author, and readers
 can tangibly confirm the origin of the shared information.
 
@@ -162,14 +162,6 @@ to help users distinguish them conveniently. In the image below, we see all poss
 in an Artemis message.
 
 |message-with-references|
-
-Reference Messages
-""""""""""""""""""
-
-If users want to refer to other messages, they can integrate a simple pattern including the hashtag (``#``) combined with
-the message identifier. A message's identifier is appended to the message title (such as seen in the screenshots above).
-
-When clicking a message reference used in a message's text, the user is navigated to the referenced message.
 
 Reference Course Exercises
 """"""""""""""""""""""""""
@@ -281,7 +273,7 @@ Announcements can be created in the course messaging overview by selecting the `
 As soon as the announcement is created, all participants who did not actively refrain from being notified will receive an email containing the announcement's content.
 
 .. |communication-toggle| image:: communication/communication-checkbox.png
-    :width: 600
+    :width: 500
 .. |messaging-page| image:: communication/messaging-page.png
     :width: 1000
 .. |lecture-messages| image:: communication/lecture-messages.png
@@ -291,13 +283,13 @@ As soon as the announcement is created, all participants who did not actively re
 .. |message-with-references| image:: communication/message-with-all-references.png
     :width: 750
 .. |resolved-post| image:: communication/resolved-post.png
-    :width: 300
+    :width: 400
 .. |instructor-user| image:: communication/user-authorities/instructor.png
-    :width: 600
+    :width: 500
 .. |tutor-user| image:: communication/user-authorities/tutor.png
-    :width: 600
+    :width: 500
 .. |student-user| image:: communication/user-authorities/student.png
-    :width: 600
+    :width: 500
 .. |messages| image:: communication/messages.png
     :width: 1000
 .. |slide-reference| image:: communication/slide-reference.png
