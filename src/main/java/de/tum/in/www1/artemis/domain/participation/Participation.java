@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
- * A ParticipationVcsAccessToken.
+ * A Participation.
  */
 @Entity
 @Table(name = "participation", uniqueConstraints = { @UniqueConstraint(columnNames = { "student_id", "exercise_id", "initialization_state" }),
