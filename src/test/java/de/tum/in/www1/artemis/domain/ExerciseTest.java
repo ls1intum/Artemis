@@ -233,20 +233,20 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void getExamViaExerciseGroupOrCourseMember_withExamExercise() {
+    void getExam_withExamExercise() {
         Exam exam = ExamFactory.generateExam(null);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam);
         Exercise examExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
 
-        Exam result = examExercise.getExamViaExerciseGroupOrCourseMember();
+        Exam result = examExercise.getExam();
         assertThat(result).isEqualTo(exam);
     }
 
     @Test
-    void getExamViaExerciseGroupOrCourseMember_withoutExamExercise() {
+    void getExam_withoutExamExercise() {
         Exercise examExercise = TextExerciseFactory.generateTextExerciseForExam(null);
 
-        Exam result = examExercise.getExamViaExerciseGroupOrCourseMember();
+        Exam result = examExercise.getExam();
         assertThat(result).isNull();
     }
 
