@@ -23,6 +23,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Get list of modified files
+        run: |
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
+
       # Analyze the client sided REST-API calls
       - name: Set up Node.js
         uses: actions/setup-node@v4
