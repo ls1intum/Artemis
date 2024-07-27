@@ -191,11 +191,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const visibleDate = dayjs(this.exam.visibleDate);
         const startDate = dayjs(this.exam.startDate);
 
-        // Calculate the difference in hours
-        const differenceInHours = startDate.diff(visibleDate, 'minute');
+        // Calculate the difference in minutes
+        const differenceInMinutes = startDate.diff(visibleDate, 'minute');
 
         // Check if the difference is more than 4 hours (240 minutes)
-        return differenceInHours > 240;
+        return differenceInMinutes > 240;
     }
 
     /**
