@@ -16,11 +16,11 @@ public class LocalVCPersonalAccessTokenManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCPersonalAccessTokenManagementService.class);
 
-    private static final String TOKEN_PREFIX = "vcpat-";
+    public static final String TOKEN_PREFIX = "vcpat-";
 
-    private static final int RANDOM_STRING_LENGTH = 44;
+    public static final int VCS_ACCESS_TOKEN_LENGTH = 50; // database stores token as varchar(50)
 
-    public static final int VCS_ACCESS_TOKEN_LENGTH = TOKEN_PREFIX.length() + RANDOM_STRING_LENGTH; // can be at most 50; database stores token as varchar(50)
+    private static final int RANDOM_STRING_LENGTH = VCS_ACCESS_TOKEN_LENGTH - TOKEN_PREFIX.length();
 
     private static final String[] CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split("");
 
