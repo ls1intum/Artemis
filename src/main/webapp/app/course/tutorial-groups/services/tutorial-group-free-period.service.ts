@@ -13,8 +13,6 @@ export class TutorialGroupFreePeriodDTO {
     public reason?: string;
 }
 
-// testChange
-
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupFreePeriodService {
     private resourceURL = 'api';

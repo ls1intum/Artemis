@@ -4,7 +4,13 @@ import { Preprocessor } from './Preprocessor';
 import { Postprocessor } from './Postprocessor';
 import { writeFileSync } from 'node:fs';
 
-// Recursively collect all TypeScript files in a directory
+/**
+ * Recursively collects all TypeScript files in a directory.
+ *
+ * @param dir - The directory to search for TypeScript files.
+ * @param files - An array to store the collected TypeScript file paths.
+ * @returns An array of TypeScript file paths relative to 'src/main/webapp/app'.
+ */
 function collectTypeScriptFiles(dir: string, files: string[] = []) {
     const entries = readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
@@ -37,12 +43,5 @@ tsFiles.forEach((filePath) => {
     let postProcessor = new Postprocessor(filePath);
     postProcessor.extractRestCalls();
 });
-
-// Output REST calls
-for (let restCallFile of Postprocessor.filesWithRestCalls) {
-    if (restCallFile.restCalls.length > 0) {
-        console.log(`REST calls in ${restCallFile.filePath}:`, restCallFile.restCalls);
-    }
-}
 
 writeFileSync('supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
