@@ -251,6 +251,8 @@ public class StudentExamResource {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
             if (now.isAfter(exam.getVisibleDate())) {
                 instanceMessageSendService.sendStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
+            }
+            if (exam.isStarted()) {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false, userRepository.getUser());
             }
             if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {

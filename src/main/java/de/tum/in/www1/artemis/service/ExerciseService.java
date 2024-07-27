@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -777,7 +778,11 @@ public class ExerciseService {
         }
         else if (originalExercise.isExamExercise() && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
             User instructor = userRepository.getUser();
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
+            Exam exam = originalExercise.getExam();
+            // notify the student only if the exam is started
+            if (exam.isStarted()) {
+                this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
+            }
         }
     }
 }
