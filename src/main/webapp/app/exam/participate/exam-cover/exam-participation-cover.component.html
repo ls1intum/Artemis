@@ -83,7 +83,7 @@
             </div>
         </div>
         <ng-container #startButton>
-            <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
+            <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart || isFetching" type="submit" (click)="startExam()" class="btn btn-primary">
                 <span jhiTranslate="artemisApp.exam.startExam"></span>
             </button>
             @if (!startButtonEnabled) {
