@@ -60,7 +60,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         },
     ];
     // Used for storing absolute values to display in tooltip
-    absoluteSeries = [{}];
+    absoluteSeries: [{ absoluteValue?: number; name?: string }] = [{}];
     curve: any = shape.curveMonotoneX;
     average = { name: 'Mean', value: 0 };
     startDateDisplayed = false;
