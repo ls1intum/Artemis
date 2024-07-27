@@ -30,17 +30,17 @@ export class PdfPreviewComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-            this.route.data.subscribe((data: { attachment: Attachment }) => {
-                this.attachment = data.attachment;
-                if (this.attachment?.id) {
-                    this.attachmentService.getAttachmentFile(this.attachment.id).subscribe({
-                        next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
-                        error: (error) => console.error('Failed to load PDF file', error),
-                    });
-                } else {
-                    console.error('Invalid attachment or attachment ID.');
-                }
-            });
+        this.route.data.subscribe((data: { attachment: Attachment }) => {
+            this.attachment = data.attachment;
+            if (this.attachment?.id) {
+                this.attachmentService.getAttachmentFile(this.attachment.id).subscribe({
+                    next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
+                    error: (error) => console.error('Failed to load PDF file', error),
+                });
+            } else {
+                console.error('Invalid attachment or attachment ID.');
+            }
+        });
 
         this.route.data.subscribe((data: { attachmentUnit: AttachmentUnit }) => {
             this.attachmentUnit = data.attachmentUnit;

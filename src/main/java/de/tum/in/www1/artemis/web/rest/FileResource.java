@@ -437,7 +437,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getLectureUnitAttachment(@PathVariable Long attachmentUnitId) {
+    public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 

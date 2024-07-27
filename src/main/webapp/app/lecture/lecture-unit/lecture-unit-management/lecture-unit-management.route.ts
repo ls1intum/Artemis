@@ -37,7 +37,6 @@ export class AttachmentUnitResolve implements Resolve<AttachmentUnit> {
     }
 }
 
-
 export const lectureUnitRoute: Routes = [
     {
         path: 'unit-management',
