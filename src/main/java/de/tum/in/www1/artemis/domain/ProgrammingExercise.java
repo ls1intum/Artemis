@@ -630,7 +630,7 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
-        if (buildConfig != null) {
+        if (buildConfig != null && Hibernate.isInitialized(buildConfig)) {
             buildConfig.filterSensitiveInformation();
         }
         super.filterSensitiveInformation();
