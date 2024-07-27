@@ -278,7 +278,6 @@ public class ProgrammingExerciseService {
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
         // Step 1: Setting constant facts for a programming exercise
         savedProgrammingExercise.generateAndSetProjectKey();
-        // saved
         savedProgrammingExercise.getBuildConfig().setBranch(versionControl.getDefaultBranchOfArtemis());
 
         // Step 2: Creating repositories for new exercise
@@ -312,7 +311,6 @@ public class ProgrammingExerciseService {
         if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(savedProgrammingExercise);
             if (windfile != null) {
-                // saved
                 savedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
                 programmingExerciseBuildConfigRepository.saveAndFlush(savedProgrammingExercise.getBuildConfig());
             }
@@ -476,7 +474,6 @@ public class ProgrammingExerciseService {
         Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
         if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getBuildScript() == null) {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
-            // saved
             programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
             programmingExercise.getBuildConfig().setBuildScript(script);
             programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
@@ -613,14 +610,12 @@ public class ProgrammingExerciseService {
             // We skip this for pure LocalCI to prevent the build script from being overwritten by the default one.
             if (profileService.isAeolusActive() && buildScriptGenerationService.isPresent()) {
                 String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
-                // saved
                 updatedProgrammingExercise.getBuildConfig().setBuildScript(script);
                 programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
             }
         }
         else {
             // if the user does not change the build plan configuration, we have to set the old one again
-            // save
             updatedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration());
         }
     }

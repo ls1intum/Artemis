@@ -630,6 +630,9 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
+        if (buildConfig != null) {
+            buildConfig.filterSensitiveInformation();
+        }
         super.filterSensitiveInformation();
     }
 

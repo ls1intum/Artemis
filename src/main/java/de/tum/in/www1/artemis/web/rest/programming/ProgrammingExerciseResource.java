@@ -322,7 +322,6 @@ public class ProgrammingExerciseResource {
         athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
         // Ignore changes to the default branch
-        // saved
         updatedProgrammingExercise.getBuildConfig().setBranch(programmingExerciseBeforeUpdate.getBuildConfig().getBranch());
 
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {

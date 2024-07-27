@@ -146,12 +146,8 @@ public class LocalCIResultProcessingService {
                     if (participation.getProgrammingExercise() == null) {
                         participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation));
                     }
-                    // TODO: Add new method instead of this
-                    var debug = programmingExerciseBuildConfigRepository.findAll();
-                    var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseWithBuildConfig(participation.getProgrammingExercise());
-                    if (buildConfig != null) {
-                        participation.getProgrammingExercise().setBuildConfig(buildConfig);
-                    }
+                    var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseWithBuildConfigElseThrow(participation.getProgrammingExercise());
+                    participation.getProgrammingExercise().setBuildConfig(buildConfig);
                     result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
 
                 }

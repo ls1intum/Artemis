@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 
@@ -24,19 +24,19 @@ public class GitLabCITriggerService implements ContinuousIntegrationTriggerServi
 
     private final UriService uriService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    public GitLabCITriggerService(GitLabApi gitlab, UriService uriService, ProgrammingExerciseRepository programmingExerciseRepository) {
+    public GitLabCITriggerService(GitLabApi gitlab, UriService uriService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.gitlab = gitlab;
         this.uriService = uriService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws ContinuousIntegrationException {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
-            programmingExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise);
+            programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise));
         }
         triggerBuild(participation.getVcsRepositoryUri(), programmingExercise.getBuildConfig().getBranch());
     }
