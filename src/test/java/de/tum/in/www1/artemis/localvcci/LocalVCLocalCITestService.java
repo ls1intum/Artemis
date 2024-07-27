@@ -92,6 +92,9 @@ public class LocalVCLocalCITestService {
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
+    private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
+
+    @Autowired
     private ResultRepository resultRepository;
 
     @Value("${artemis.version-control.url}")
@@ -106,9 +109,6 @@ public class LocalVCLocalCITestService {
 
     // Cannot inject {local.server.port} here, because it is not available at the time this class is instantiated.
     private int port;
-
-    @Autowired
-    private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
 
     public void setPort(int port) {
         this.port = port;
