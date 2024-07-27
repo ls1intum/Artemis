@@ -4,7 +4,7 @@ import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -199,8 +199,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Determines if the visibility date is set more than 4 hours before the exam start date. 
-     * If the visibility date exceeds this limit, it displays a confirmation dialog to the 
+     * Determines if the visibility date is set more than 4 hours before the exam start date.
+     * If the visibility date exceeds this limit, it displays a confirmation dialog to the
      * user with a warning.
      */
     handleVisibilityDate() {
