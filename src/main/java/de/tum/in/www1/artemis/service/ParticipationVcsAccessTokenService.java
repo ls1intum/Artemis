@@ -52,7 +52,7 @@ public class ParticipationVcsAccessTokenService {
      * @param participationId the participation's id which the token belongs to
      * @return an Optional participationVCSAccessToken,
      */
-    public ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(Long userId, Long participationId) {
+    public ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(long userId, long participationId) {
         return participationVcsAccessTokenRepository.findByUserIdAndParticipationIdOrElseThrow(userId, participationId);
     }
 

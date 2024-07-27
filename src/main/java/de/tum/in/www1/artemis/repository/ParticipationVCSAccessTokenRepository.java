@@ -45,11 +45,11 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
             """)
     Optional<ParticipationVCSAccessToken> findByUserIdAndParticipationId(@Param("userId") long userId, @Param("participationId") long participationId);
 
-    default ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(Long userId, Long participationId) {
+    default ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(long userId, long participationId) {
         return getValueElseThrow(findByUserIdAndParticipationId(userId, participationId));
     }
 
-    default void findByUserIdAndParticipationIdAndThrowIfExists(Long userId, Long participationId) {
+    default void findByUserIdAndParticipationIdAndThrowIfExists(long userId, long participationId) {
         findByUserIdAndParticipationId(userId, participationId).ifPresent(token -> {
             throw new IllegalStateException();
         });
