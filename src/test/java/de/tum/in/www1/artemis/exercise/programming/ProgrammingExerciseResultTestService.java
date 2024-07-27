@@ -50,6 +50,7 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
@@ -106,6 +107,9 @@ public class ProgrammingExerciseResultTestService {
     private ProgrammingExerciseStudentParticipationRepository participationRepository;
 
     @Autowired
+    private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
+
+    @Autowired
     private ResultRepository resultRepository;
 
     @Autowired
@@ -127,7 +131,7 @@ public class ProgrammingExerciseResultTestService {
     private ParticipationUtilService participationUtilService;
 
     @Autowired
-    private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     private Course course;
 
@@ -169,7 +173,9 @@ public class ProgrammingExerciseResultTestService {
     public void shouldUpdateFeedbackInSemiAutomaticResult(AbstractBuildResultNotificationDTO buildResultNotification, String loginName) throws Exception {
         // Make sure we only have one participation
         var participations = participationRepository.findByExerciseId(programmingExercise.getId());
-        participationVcsAccessTokenService.deleteAllByParticipations(participations);
+        for (ProgrammingExerciseStudentParticipation participation : participations) {
+            participationVCSAccessTokenRepository.deleteByParticipationId(participation.getId());
+        }
         participationRepository.deleteAll(participations);
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, loginName);
 
