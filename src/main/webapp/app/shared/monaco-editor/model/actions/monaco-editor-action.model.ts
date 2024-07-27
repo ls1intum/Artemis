@@ -132,7 +132,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
                         }
                     }
                 }
-                return searchFn(wordUntilPosition.word).then((items) => {
+                return searchFn(wordUntilPosition.word.trim().toLowerCase()).then((items) => {
                     return {
                         suggestions: items.map((item) => mapToSuggestionFn(item, range)),
                         incomplete: listIncomplete,

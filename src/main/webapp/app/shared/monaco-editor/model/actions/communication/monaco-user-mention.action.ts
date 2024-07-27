@@ -13,6 +13,8 @@ import { UserNameAndLoginDTO } from 'app/core/user/user.model';
  */
 export class MonacoUserMentionAction extends MonacoEditorAction {
     disposableCompletionProvider?: monaco.IDisposable;
+    debounceTimer?: number;
+    pendingResolves: ((value: UserNameAndLoginDTO[]) => void)[] = [];
 
     static readonly ID = 'monaco-user-mention.action';
     static readonly DEFAULT_INSERT_TEXT = '@';
@@ -61,7 +63,20 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
     }
 
     async loadUsersForSearchTerm(searchTerm: string): Promise<UserNameAndLoginDTO[]> {
-        const response = await firstValueFrom(this.courseManagementService.searchMembersForUserMentions(this.metisService.getCourse().id!, searchTerm));
-        return response.body ?? [];
+        // Clear the existing timer, if any
+        if (this.debounceTimer) {
+            window.clearTimeout(this.debounceTimer);
+            this.pendingResolves.forEach((resolve) => resolve([]));
+            this.pendingResolves = [];
+        }
+
+        // Return a new Promise that will resolve after the debounce delay
+        return new Promise((resolve) => {
+            this.pendingResolves.push(resolve);
+            this.debounceTimer = window.setTimeout(async () => {
+                const response = await firstValueFrom(this.courseManagementService.searchMembersForUserMentions(this.metisService.getCourse().id!, searchTerm));
+                resolve(response.body ?? []);
+            }, 200);
+        });
     }
 }
