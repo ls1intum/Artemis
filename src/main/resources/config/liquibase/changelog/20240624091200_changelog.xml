@@ -8,10 +8,10 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="user_id" type="bigint">
-                <constraints nullable="false" unique="true" uniqueConstraintName="user-participation_unique"/>
+                <constraints nullable="false"/>
             </column>
             <column name="participation_id" type="bigint">
-                <constraints nullable="false" unique="true" uniqueConstraintName="user-participation_unique"/>
+                <constraints nullable="false"/>
             </column>
             <column name="vcs_access_token" type="varchar(50)">
                 <constraints nullable="false"/>
