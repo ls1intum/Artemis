@@ -43,6 +43,9 @@ jobs:
         run: |
           node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js > analysis_output.log 2>&1
 
+      - name: List directory contents
+        run: ls -la supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/
+
       - name: Upload analysis output log
         uses: actions/upload-artifact@v3
         with:
