@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -10,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -51,37 +49,6 @@ public class ParticipationVcsAccessTokenService {
     }
 
     /**
-     * Creates vcs tokens for StudentParticipations which do not yet have one
-     *
-     * @param participations The participations, for which tokens should be generated, if they do not already have one
-     */
-    public void createMissingParticipationVCSAccessTokens(List<ProgrammingExerciseStudentParticipation> participations) {
-        try {
-            var existingTokens = participationVcsAccessTokenRepository.findAllByParticipationIds(participations.stream().map(DomainObject::getId).toList());
-            var participationsWithTokens = existingTokens.stream().map(ParticipationVCSAccessToken::getParticipation).toList();
-            log.info("Create missing VcsAccessTokens for participationIds: {}", participations);
-            List<ParticipationVCSAccessToken> vcsAccessTokens = new ArrayList<>();
-
-            for (ProgrammingExerciseStudentParticipation participation : participations) {
-                if (!participationsWithTokens.contains(participation) && participation.getParticipant() instanceof User user) {
-                    var participationVCSAccessToken = new ParticipationVCSAccessToken();
-                    participationVCSAccessToken.setUser(user);
-                    participationVCSAccessToken.setParticipation(participation);
-                    participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
-                    vcsAccessTokens.add(participationVCSAccessToken);
-                }
-            }
-
-            log.info("Successfully generated {} missing VcsAccessTokens", vcsAccessTokens);
-            participationVcsAccessTokenRepository.saveAll(vcsAccessTokens);
-            log.info("Successfully saved missing VcsAccessTokens");
-        }
-        catch (Exception e) {
-            log.error("Error creating missing VCS access tokens: {}", e.getMessage());
-        }
-    }
-
-    /**
      * Retrieves the participationVCSAccessToken for a User,Participation pair if it exists
      *
      * @param userId          the user's id which is owner of the token
@@ -99,19 +66,10 @@ public class ParticipationVcsAccessTokenService {
      * @param participationId the participation's id which the token belongs to
      * @return an Optional participationVCSAccessToken,
      */
-    public ParticipationVCSAccessToken createVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
+    public ParticipationVCSAccessToken createVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, long participationId) {
         participationVcsAccessTokenRepository.findByUserIdAndParticipationIdAndThrowIfExists(user.getId(), participationId);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         return createParticipationVCSAccessToken(user, participation);
-    }
-
-    /**
-     * Create missing participationVcsAccessTokens
-     */
-    public void createMissingParticipationVcsAccessToken() {
-        log.info("Creating missing participation VCS access tokens");
-        List<ProgrammingExerciseStudentParticipation> programmingExerciseStudentParticipations = programmingExerciseStudentParticipationRepository.findAll();
-        createMissingParticipationVCSAccessTokens(programmingExerciseStudentParticipations);
     }
 
     /**
@@ -120,7 +78,7 @@ public class ParticipationVcsAccessTokenService {
      * @param participationId the participation id for which the token should get deleted
      */
     public void deleteByParticipationId(long participationId) {
-        participationVcsAccessTokenRepository.deleteByParticipation_id(participationId);
+        participationVcsAccessTokenRepository.deleteByParticipationId(participationId);
     }
 
     /**
@@ -130,7 +88,7 @@ public class ParticipationVcsAccessTokenService {
      */
     public void deleteAllByParticipations(List<ProgrammingExerciseStudentParticipation> participations) {
         for (ProgrammingExerciseStudentParticipation participation : participations) {
-            participationVcsAccessTokenRepository.deleteByParticipation_id(participation.getId());
+            participationVcsAccessTokenRepository.deleteByParticipationId(participation.getId());
         }
     }
 

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 import static de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
 import java.io.IOException;
@@ -11,8 +12,10 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -39,6 +42,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
@@ -256,17 +260,26 @@ public class LocalVCServletService {
             throw new LocalVCAuthException();
         }
 
+        // check user VCS access token
+        if (Objects.equals(user.getVcsAccessToken(), password) && user.getVcsAccessTokenExpiryDate() != null && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
+            return user;
+        }
+
         // Note: we first check if the user has used a vcs access token instead of a password
-        if (password.startsWith("vcpat-") && password.length() == VCS_ACCESS_TOKEN_LENGTH) {
+        if (password.startsWith(TOKEN_PREFIX) && password.length() == VCS_ACCESS_TOKEN_LENGTH) {
             try {
-                // check user VCS access token
-                if (Objects.equals(user.getVcsAccessToken(), password) && user.getVcsAccessTokenExpiryDate() != null
-                        && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
-                    return user;
-                }
+
                 // check participation vcs access token
-                var participations = programmingExerciseParticipationService.findStudentParticipationsByExerciseAndStudentId(exercise, user.getLogin());
-                var studentParticipation = participations.stream().filter(participation -> participation.getRepositoryUri().equals(localVCRepositoryUri.toString())).findAny();
+                // var part = programmingExerciseParticipationService.findTeamParticipationByExerciseAndTeamShortNameOrThrow()
+                List<ProgrammingExerciseStudentParticipation> participations;
+                Optional<ProgrammingExerciseStudentParticipation> studentParticipation;
+                if (exercise.isTeamMode()) {
+                    studentParticipation = programmingExerciseParticipationService.findTeamParticipationByExerciseAndUser(exercise, user);
+                }
+                else {
+                    participations = programmingExerciseParticipationService.findStudentParticipationsByExerciseAndStudentId(exercise, user.getLogin());
+                    studentParticipation = participations.stream().filter(participation -> participation.getRepositoryUri().equals(localVCRepositoryUri.toString())).findAny();
+                }
                 if (studentParticipation.isPresent()) {
                     var token = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.get().getId());
                     if (token.isPresent() && Objects.equals(token.get().getVcsAccessToken(), password)) {

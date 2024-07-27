@@ -155,6 +155,18 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     * Tries to retrieve a student participation for the given team exercise and user
+     *
+     * @param exercise the exercise for which to find a participation.
+     * @param user     the user who is member of the team to which the participation belongs.
+     * @return the participation for the given exercise and user.
+     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
+     */
+    public Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseAndUser(ProgrammingExercise exercise, User user) {
+        return studentParticipationRepository.findTeamParticipationByExerciseIdAndStudentId(exercise.getId(), user.getId());
+    }
+
+    /**
      * Tries to retrieve a student participation for the given exercise and username and test run flag.
      *
      * @param exercise        the exercise for which to find a participation.

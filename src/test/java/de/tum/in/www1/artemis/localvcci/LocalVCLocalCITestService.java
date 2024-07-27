@@ -56,6 +56,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -105,6 +106,9 @@ public class LocalVCLocalCITestService {
 
     // Cannot inject {local.server.port} here, because it is not available at the time this class is instantiated.
     private int port;
+
+    @Autowired
+    private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
 
     public void setPort(int port) {
         this.port = port;
@@ -676,15 +680,18 @@ public class LocalVCLocalCITestService {
      *
      * @param participationId The participationVcsAccessToken's participationId
      */
-    public void deleteParticipationVcsAccessToken(Long participationId) {
+    public void deleteParticipationVcsAccessToken(long participationId) {
         participationVCSAccessTokenService.deleteByParticipationId(participationId);
     }
 
     /**
-     * Deletes the participationVcsAccessToken for a participation
+     * Creates the participationVcsAccessToken for a user and a participation
+     *
+     * @param user            The user for which the token should get created
+     * @param participationId The participationVcsAccessToken's participationId
      */
-    public void createMissingParticipationVcsAccessTokens() {
-        participationVCSAccessTokenService.createMissingParticipationVcsAccessToken();
+    public void createParticipationVcsAccessToken(User user, long participationId) {
+        participationVcsAccessTokenService.createVcsAccessTokenForUserAndParticipationIdOrElseThrow(user, participationId);
     }
 
     /**

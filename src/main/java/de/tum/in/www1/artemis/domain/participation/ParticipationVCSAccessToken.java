@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
- * A Participation.
+ * A ParticipationVcsAccessToken.
  */
 @Entity
 @Table(name = "participation_vcs_access_token", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "participation_id" }) })

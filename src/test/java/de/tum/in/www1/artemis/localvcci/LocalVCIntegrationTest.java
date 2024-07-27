@@ -114,7 +114,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         // Try to fetch and push, when token is removed and re-added, which makes the previous token invalid
         userUtilService.deleteUserVcsAccessToken(studentWithToken);
         localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
-        localVCLocalCITestService.createMissingParticipationVcsAccessTokens();
+        localVCLocalCITestService.createParticipationVcsAccessToken(student, programmingParticipation.getId());
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
