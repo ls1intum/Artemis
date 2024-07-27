@@ -1,8 +1,13 @@
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import * as monaco from 'monaco-editor';
 
+interface InsertShortAnswerOptionArgs {
+    spotNumber?: number;
+    optionText?: string;
+}
 export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
     static readonly ID = 'monaco.insert-short-answer-option.action';
+    static readonly DEFAULT_TEXT = 'Enter an answer option here and ensure the spot number is correct.';
     static readonly DEFAULT_TEXT_SHORT = 'Enter an answer option here.';
 
     constructor() {
@@ -11,8 +16,12 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
         this.translationKey = 'artemisApp.shortAnswerQuestion.editor.addOption';
     }
 
-    run(editor: monaco.editor.ICodeEditor, args?: { spotNumber: number; optionText: string }): void {
-        const text = args?.optionText || this.getSelectedText(editor) || 'Enter an answer option here and ensure the spot number is correct.';
+    executeInCurrentEditor(args?: InsertShortAnswerOptionArgs) {
+        super.executeInCurrentEditor(args);
+    }
+
+    run(editor: monaco.editor.ICodeEditor, args?: InsertShortAnswerOptionArgs): void {
+        const text = args?.optionText || this.getSelectedText(editor) || MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT;
         let snippet;
         if (args?.spotNumber) {
             snippet = `\n[-option ${args.spotNumber}] \${1:${text}}`;
