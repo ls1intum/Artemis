@@ -20,9 +20,11 @@ function collectTypeScriptFiles(dir: string, files: string[] = []) {
     return files;
 }
 
-const clientDirPath = resolve('../../../../../src/main/webapp/app');
+const clientDirPath = resolve('src/main/webapp/app');
 
 const tsFiles = collectTypeScriptFiles(clientDirPath);
+
+console.log('Working Directory: ' + process.cwd());
 
 // preprocess each file
 tsFiles.forEach((filePath) => {

@@ -37,7 +37,7 @@ jobs:
 
       - name: Run analysis-of-endpoint-connections-client
         run: |
-          node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js $(cat modified_files.txt)
+          node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
 
       # Analyze the server sided endpoints
       - name: Set up JDK 21

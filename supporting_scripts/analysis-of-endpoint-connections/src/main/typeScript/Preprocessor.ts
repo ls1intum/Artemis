@@ -28,7 +28,7 @@ interface MemberVariable {
 
 export class Preprocessor {
     public static PREPROCESSING_RESULTS = new Map<string, SuperClass>();
-    public static readonly pathPrefix = '../../../../../'
+    public static readonly pathPrefix = ''
     private readonly directoryPrefix = 'src/main/webapp/';
     private readonly fileToPreprocess: string;
     private ast: TSESTree.Program;
@@ -85,7 +85,7 @@ export class Preprocessor {
      * @param binaryExpression - The binary expression to be evaluated.
      * @returns The evaluated value of the binary expression as a string.
      */
-    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression) { // todo: finish implementation
+    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression) {
         let left = binaryExpression.left;
         let right = binaryExpression.right;
         let result = '';
