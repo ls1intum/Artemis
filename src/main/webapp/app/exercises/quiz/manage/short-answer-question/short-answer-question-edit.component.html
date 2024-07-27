@@ -278,14 +278,6 @@
         }
         <div class="markupEditorArea" [hidden]="showVisualMode">
             @if (!reEvaluationInProgress) {
-                <div class="toolbar">
-                    <div class="btn-group">
-                        <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursor()"></div>
-                        <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addOption" (click)="addOption()"></div>
-                    </div>
-                </div>
-            }
-            @if (!reEvaluationInProgress) {
                 <div class="question-content">
                     <jhi-markdown-editor-monaco
                         #questionEditor
@@ -294,6 +286,8 @@
                         [hideEditButton]="true"
                         [hidePreviewButton]="true"
                         [defaultActions]="markdownActions"
+                        [colorAction]="undefined"
+                        [metaActions]="[]"
                         [initialEditorHeight]="'external'"
                         [(markdown)]="questionEditorText"
                         (markdownChange)="onTextChange($event)"

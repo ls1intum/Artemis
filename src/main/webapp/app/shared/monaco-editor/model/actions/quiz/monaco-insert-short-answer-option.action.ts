@@ -12,12 +12,13 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
 
     run(editor: monaco.editor.ICodeEditor, args?: { spotNumber: number; optionText: string }): void {
         // TODO: Localize this text
-        const text = args?.optionText || 'Enter an answer option here and ensure the spot number is correct.';
+        alert('Insert opt' + JSON.stringify(args));
+        const text = args?.optionText || this.getSelectedText(editor) || 'Enter an answer option here and ensure the spot number is correct.';
         let snippet;
         if (args?.spotNumber) {
-            snippet = `\n[-option ${args.spotNumber}] \${1:${text}`;
+            snippet = `\n[-option ${args.spotNumber}] \${1:${text}}`;
         } else {
-            snippet = `\n[-option \${2:#}] \${1:${text}`;
+            snippet = `\n[-option \${1:#}] \${2:${text}}`;
         }
         // Add additional spacing if the last line is not also an option
         if (!this.getLineText(editor, this.getLineCount(editor))?.startsWith('[-option')) {

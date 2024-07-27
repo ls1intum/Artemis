@@ -383,6 +383,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * an option connected to the spot below the last visible row
      */
     addSpotAtCursor(): void {
+        alert('SpotNumber: ' + this.numberOfSpot);
         this.insertShortAnswerSpotAction.executeInCurrentEditor({ spotNumber: this.numberOfSpot }); // TODO do we want to add an option as well?
         this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionNumber: this.numberOfSpot });
         return;
@@ -401,22 +402,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     /**
      * add the markdown for a solution option below the last visible row, which is connected to a spot in the given editor
      *
-     * @param numberOfSpot
-     * @param optionText
-     * @param firstPressed
+     * @param numberOfSpot the number of the spot to which the option should be connected
+     * @param optionText the text of the option
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    addOptionToSpot(numberOfSpot: number, optionText: string, firstPressed: number) {
-        this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionNumber: numberOfSpot, optionText });
-        /*let addedText: string;
-        if (numberOfSpot === 1 && firstPressed === 1) {
-            addedText = '\n\n\n[-option ' + numberOfSpot + '] ' + optionText;
-        } else {
-            addedText = '\n[-option ' + numberOfSpot + '] ' + optionText;
-        }*/
-        //editor.focus();
-        // editor.clearSelection();
-        // editor.insert(addedText); TODO insert
+    addOptionToSpot(numberOfSpot: number, optionText: string) {
+        this.insertShortAnswerOptionAction.executeInCurrentEditor({ spotNumber: numberOfSpot, optionText });
     }
 
     /**
@@ -424,23 +414,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for a solution option below the last visible row
      */
     addOption(): void {
-        /*
-        const editor = this.questionEditor.getEditor();
-        let addedText: string;
-        if (this.firstPressed === 1) {
-            addedText = '\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
-        } else {
-            addedText = '\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
-        }
-        editor.clearSelection();
-        editor.moveCursorTo(editor.getLastVisibleRow(), Number.POSITIVE_INFINITY);
-        editor.insert(addedText);
-        const range = editor.selection.getRange();
-        range.setStart(range.start.row, 12);
-        editor.selection.setRange(range);
-
-        this.firstPressed++;
-         */
+        this.insertShortAnswerOptionAction.executeInCurrentEditor({});
     }
 
     /**
@@ -505,7 +479,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.setQuestionEditorValue(this.generateMarkdown());
         // TODO: move cursor to end
         // editor.moveCursorTo(editor.getLastVisibleRow() + currentSpotNumber, Number.POSITIVE_INFINITY);
-        this.addOptionToSpot(currentSpotNumber, markedText, this.firstPressed);
+        this.addOptionToSpot(currentSpotNumber, markedText);
         this.parseMarkdown(this.questionEditor.monacoEditor.getText());
 
         this.firstPressed++;
@@ -799,8 +773,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     onTextChange(newText: string) {
-        this.numberOfSpot = this.getHighestSpotNumbers(newText) + 1;
+        alert('changed!');
         this.parseMarkdown(this.questionEditorText);
+        this.numberOfSpot = this.getHighestSpotNumbers(newText) + 1;
+        this.insertShortAnswerSpotAction.spotNumber = this.numberOfSpot;
         this.questionUpdated.emit();
     }
 
