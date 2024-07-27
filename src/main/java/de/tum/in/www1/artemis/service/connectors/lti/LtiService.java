@@ -179,7 +179,7 @@ public class LtiService {
      * @param response             the response to add the JWT cookie to
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
-        // TODO SK: why do we logout the user here if it was already activated? this does not make sense to me, so I deactivated it for now
+        // TODO SK: why do we logout the user here if it was already activated?
 
         User user = userRepository.getUser();
 
