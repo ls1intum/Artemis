@@ -1647,6 +1647,7 @@ public class ProgrammingExerciseTestService {
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
 
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true);

@@ -36,6 +36,9 @@ public class QuizSubmission extends AbstractQuizSubmission {
         return "QuizSubmission{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + "'" + "}";
     }
 
+    /**
+     * Filter the sensitive information of the quiz submission
+     */
     public void filterForStudentsDuringQuiz() {
         for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
             if (submittedAnswer.getQuizQuestion() != null) {
