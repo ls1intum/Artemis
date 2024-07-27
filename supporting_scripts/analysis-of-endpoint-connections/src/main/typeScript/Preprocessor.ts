@@ -244,7 +244,7 @@ export class Preprocessor {
      * @returns The path of the imported class, or an empty string if the class is not found.
      */
     identifyImportedClassByName(className: string) {
-        for (let node of this.ast.body) {
+        for (const node of this.ast.body) {
             if (node.type === 'ImportDeclaration' && node.specifiers[0].local.name === className) {
                 return node.source.value;
             }
