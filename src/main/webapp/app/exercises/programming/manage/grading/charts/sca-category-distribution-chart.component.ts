@@ -104,7 +104,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
     @Input() categoryIssuesMap?: CategoryIssuesMap;
     @Input() exercise: ProgrammingExercise;
 
-    @Output() categoryColorsChange = new EventEmitter<any>();
+    @Output() categoryColorsChange = new EventEmitter<{ [key: string]: string }>();
     @Output() scaCategoryFilter = new EventEmitter<number>();
 
     readonly scaChartBarTitle = ScaChartBarTitle;

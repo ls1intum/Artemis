@@ -117,7 +117,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
 
     testCaseColors = {};
-    categoryColors = {};
+    categoryColors: { [key: string]: string } = {};
     totalWeight = 0;
 
     submissionPolicy?: SubmissionPolicy;
