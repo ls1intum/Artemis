@@ -451,6 +451,13 @@ public class FileResource {
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
 
+    /**
+     * GET courses/{id}/file : Returns the file associated with the
+     * given attachmentUnit ID as a downloadable resource
+     *
+     * @param attachmentUnitId the ID of the attachment to retrieve
+     * @return ResponseEntity containing the file as a resource
+     */
     @GetMapping("files/attachments/attachment-units/{attachmentUnitId}/file")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLectureUnitFile(@PathVariable Long attachmentUnitId) {
