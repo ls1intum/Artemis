@@ -21,7 +21,7 @@ import { takeUntil } from 'rxjs/operators';
  * 		"Column Header 2": "bar"
  * 	}
  */
-type ParsedCSVRow = object;
+type ParsedCSVRow = { [header: string]: string };
 
 // ToDo: Idea for future: Let the specify the column names / values in the dialog
 const POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS = ['gruppe', 'titel', 'group', 'title'];
