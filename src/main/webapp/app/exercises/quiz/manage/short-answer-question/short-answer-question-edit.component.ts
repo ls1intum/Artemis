@@ -13,8 +13,6 @@ import {
     ViewEncapsulation,
 } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import 'brace/theme/chrome';
-import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -84,7 +82,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
-    /** Ace Editor configuration constants **/
+    /** Ace Editor configuration constants **/ // TODO remove
     questionEditorText: any = '';
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
@@ -383,9 +381,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * an option connected to the spot below the last visible row
      */
     addSpotAtCursor(): void {
-        alert('SpotNumber: ' + this.numberOfSpot);
         this.insertShortAnswerSpotAction.executeInCurrentEditor({ spotNumber: this.numberOfSpot }); // TODO do we want to add an option as well?
-        this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionNumber: this.numberOfSpot });
         return;
         /*const editor = this.questionEditor.getEditor();
         const optionText = editor.getCopyText(); // todo get selected text
@@ -497,9 +493,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             this.shortAnswerQuestion.solutions = [];
         }
         const solution = new ShortAnswerSolution();
-        solution.text = 'Please enter here your text';
+        solution.text = MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
         this.shortAnswerQuestion.solutions.push(solution);
-        this.questionEditorText = this.generateMarkdown();
+        this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: solution.text });
         this.questionUpdated.emit();
     }
 
@@ -773,7 +769,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     onTextChange(newText: string) {
-        alert('changed!');
         this.parseMarkdown(this.questionEditorText);
         this.numberOfSpot = this.getHighestSpotNumbers(newText) + 1;
         this.insertShortAnswerSpotAction.spotNumber = this.numberOfSpot;

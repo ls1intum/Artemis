@@ -3,6 +3,7 @@ import * as monaco from 'monaco-editor';
 
 export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
     static readonly ID = 'monaco.insert-short-answer-option.action';
+    static readonly DEFAULT_TEXT_SHORT = 'Enter an answer option here.';
 
     constructor() {
         super(MonacoInsertShortAnswerOptionAction.ID, 'artemisApp.shortAnswerQuestion.editor.addOption', undefined);
@@ -11,8 +12,6 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
     }
 
     run(editor: monaco.editor.ICodeEditor, args?: { spotNumber: number; optionText: string }): void {
-        // TODO: Localize this text
-        alert('Insert opt' + JSON.stringify(args));
         const text = args?.optionText || this.getSelectedText(editor) || 'Enter an answer option here and ensure the spot number is correct.';
         let snippet;
         if (args?.spotNumber) {
