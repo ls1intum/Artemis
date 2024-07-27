@@ -316,20 +316,26 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(lastLine).toInclude(lastLine!);
     });
 
-    it('should add and delete text solution', () => {
+    it('should add text solution', () => {
+        // Setup text
+        component.questionEditorText = '';
+        component.addOptionToSpot(1, shortAnswerSolution1.text!);
+        component.addOptionToSpot(2, shortAnswerSolution2.text!);
+
         expect(component.shortAnswerQuestion.solutions).toHaveLength(2);
         component.shortAnswerQuestion.spots = [spot1, spot2];
         const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
         component.shortAnswerQuestion.correctMappings = [mapping1, mapping2];
 
-        const solution1 = component.shortAnswerQuestion.solutions![0];
-
         component.addTextSolution();
         expect(component.shortAnswerQuestion.solutions).toHaveLength(3);
+    });
 
-        component.deleteSolution(solution1);
-        expect(component.shortAnswerQuestion.solutions).toHaveLength(2);
+    it('should delete text solution', () => {
+        component.shortAnswerQuestion.solutions = [shortAnswerSolution1, shortAnswerSolution2];
+        component.deleteSolution(shortAnswerSolution1);
+        expect(component.shortAnswerQuestion.solutions).toEqual([shortAnswerSolution2]);
     });
 
     it('should add spot at cursor visual mode', () => {

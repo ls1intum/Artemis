@@ -494,7 +494,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         }
         const solution = new ShortAnswerSolution();
         solution.text = MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
-        this.shortAnswerQuestion.solutions.push(solution);
         this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: solution.text });
         this.questionUpdated.emit();
     }
