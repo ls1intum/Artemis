@@ -1,5 +1,11 @@
 {
     "artemisApp": {
+        "quizWarning": {
+            "title": "Achtung!",
+            "question": "Mögliche Leistungsprobleme",
+            "description": "Du verwendest in dieser Quizaufgabe eine sehr große Anzahl an Short-Answer Elementen und/oder Drag-and-Drop Elementen. Dies kann zu erheblichen Performancebeeinträchtigungen führen. Bist du sicher, dass du die Aufgabe so speichern möchtest?",
+            "confirmButton": "Trotzdem speichern"
+        },
         "quizExercise": {
             "home": {
                 "title": "Quiz",

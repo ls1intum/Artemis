@@ -35,4 +35,12 @@ public class QuizSubmission extends AbstractQuizSubmission {
     public String toString() {
         return "QuizSubmission{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + "'" + "}";
     }
+
+    public void filterForStudentsDuringQuiz() {
+        for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
+            if (submittedAnswer.getQuizQuestion() != null) {
+                submittedAnswer.getQuizQuestion().filterForStudentsDuringQuiz();
+            }
+        }
+    }
 }

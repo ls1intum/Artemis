@@ -277,6 +277,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         var participation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, userLogin).orElseThrow();
         quizSubmission.setParticipation(participation);
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
+        quizSubmission.filterForStudentsDuringQuiz();
         log.info("{} Saved quiz submission for user {} in quiz {} after {} ", logText, userLogin, exerciseId, TimeLogUtil.formatDurationFrom(start));
 
         return quizSubmission;
@@ -386,6 +387,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     @Override
     protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
-        return quizSubmissionRepository.save(quizSubmission);
+        var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
+        savedQuizSubmission.filterForStudentsDuringQuiz();
+        return savedQuizSubmission;
     }
 }
