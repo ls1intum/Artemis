@@ -138,13 +138,13 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     };
 
     private compareNumForAttribute = (attributeKey: string): TaskComparator => {
-        return (a, b) => {
+        return (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
             return ((a[attributeKey] as number) ?? 0) - ((b[attributeKey] as number) ?? 0);
         };
     };
 
     private compareStringForAttribute = (attributeKey: string): TaskComparator => {
-        return (a, b) => {
+        return (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
             const aType = a[attributeKey] ?? '';
             const bType = b[attributeKey] ?? '';
 

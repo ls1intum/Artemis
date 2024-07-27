@@ -12,4 +12,6 @@ export class ProgrammingExerciseTask extends ProgrammingExerciseServerSideTask {
     resultingPoints?: number;
     resultingPointsPercent?: number;
     stats: TestCaseStats | undefined;
+
+    [key: string]: number | string | undefined | TestCaseStats | ProgrammingExerciseTestCase[];
 }
