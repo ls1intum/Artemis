@@ -446,6 +446,12 @@
                 "text": "Klausurtexte",
                 "examSolutions": "Klausurlösungen"
             },
+            "visibilitityWarning": {
+                "title": "Achtung!",
+                "question": "Klausursichtbarkeitsdatum",
+                "description": "Das Klausursichtbarkeitsdatum ist zu früh festgelegt, mehr als 4 Stunden vor dem Startdatum der Klausur. Bist du sicher, dass du das Datum auf diese Weise speichern möchtest?",
+                "confirmButton": "Trotzdem speichern"
+            },
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
             "importExam": "Importiere eine Klausur",

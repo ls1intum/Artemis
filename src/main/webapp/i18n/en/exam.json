@@ -448,6 +448,12 @@
                 "text": "Exam Texts",
                 "examSolutions": "Exam Solutions"
             },
+            "visibilitityWarning": {
+                "title": "Attention!",
+                "question": "Exam Visibility Date",
+                "description": "The exam visibility date is set too early, more than 4 hours from the start date of the exam. Are you sure you want to save the date this way?",
+                "confirmButton": "Save anyway"
+            },
             "title": "Exam Management",
             "createExam": "Create a new exam",
             "importExam": "Import an exam",
