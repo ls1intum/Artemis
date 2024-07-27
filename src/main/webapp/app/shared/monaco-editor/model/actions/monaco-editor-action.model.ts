@@ -132,6 +132,15 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     }
 
     /**
+     * Gets the text of the current selection. If there is no selection, undefined is returned.
+     * @param editor The editor to get the selection text from.
+     */
+    getSelectedText(editor: monaco.editor.ICodeEditor): string | undefined {
+        const selection = editor.getSelection();
+        return selection ? this.getTextAtRange(editor, selection) : undefined;
+    }
+
+    /**
      * Inserts the given text at the current cursor position.
      * @param editor The editor to insert the text in.
      * @param position The position to insert the text at.

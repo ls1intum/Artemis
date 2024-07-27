@@ -30,6 +30,17 @@ import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, f
 import { MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
+import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
+import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
+import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
+import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
+import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
+import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
+import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
+import { MonacoInsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-spot.action';
+import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { MonacoInsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-option.action';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -44,6 +55,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     private clickLayer: ElementRef;
     @ViewChild('question', { static: false })
     questionElement: ElementRef;
+
+    markdownActions: MonacoEditorAction[];
+    insertShortAnswerOptionAction = new MonacoInsertShortAnswerOptionAction();
+    insertShortAnswerSpotAction = new MonacoInsertShortAnswerSpotAction(this.insertShortAnswerOptionAction);
 
     shortAnswerQuestion: ShortAnswerQuestion;
 
@@ -112,6 +127,19 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     ) {}
 
     ngOnInit(): void {
+        this.markdownActions = [
+            new MonacoBoldAction(),
+            new MonacoItalicAction(),
+            new MonacoUnderlineAction(),
+            new MonacoCodeAction(),
+            new MonacoCodeBlockAction(),
+            new MonacoUrlAction(),
+            new MonacoUnorderedListAction(),
+            new MonacoOrderedListAction(),
+            this.insertShortAnswerSpotAction,
+            this.insertShortAnswerOptionAction,
+        ];
+
         // create deepcopy
         this.backupQuestion = cloneDeep(this.shortAnswerQuestion);
 
@@ -355,6 +383,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * an option connected to the spot below the last visible row
      */
     addSpotAtCursor(): void {
+        this.insertShortAnswerSpotAction.executeInCurrentEditor({ spotNumber: this.numberOfSpot }); // TODO do we want to add an option as well?
+        this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionNumber: this.numberOfSpot });
         return;
         /*const editor = this.questionEditor.getEditor();
         const optionText = editor.getCopyText(); // todo get selected text
@@ -377,6 +407,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     addOptionToSpot(numberOfSpot: number, optionText: string, firstPressed: number) {
+        this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionNumber: numberOfSpot, optionText });
         /*let addedText: string;
         if (numberOfSpot === 1 && firstPressed === 1) {
             addedText = '\n\n\n[-option ' + numberOfSpot + '] ' + optionText;

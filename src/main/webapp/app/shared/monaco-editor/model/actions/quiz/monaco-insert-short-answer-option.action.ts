@@ -5,23 +5,25 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
     static readonly ID = 'monaco.insert-short-answer-option.action';
 
     constructor() {
+        super(MonacoInsertShortAnswerOptionAction.ID, 'artemisApp.shortAnswerQuestion.editor.addOption', undefined);
         this.id = MonacoInsertShortAnswerOptionAction.ID;
         this.translationKey = 'artemisApp.shortAnswerQuestion.editor.addOption';
     }
 
-    run(editor: monaco.editor.ICodeEditor, args?: { optionNumber: number }): void {
+    run(editor: monaco.editor.ICodeEditor, args?: { spotNumber: number; optionText: string }): void {
         // TODO: Localize this text
+        const text = args?.optionText || 'Enter an answer option here and ensure the spot number is correct.';
         let snippet;
-        if (args?.optionNumber) {
-            snippet = `\n[-option ${args.optionNumber}] \${1:Enter an answer option here.}`;
+        if (args?.spotNumber) {
+            snippet = `\n[-option ${args.spotNumber}] \${1:${text}`;
         } else {
-            snippet = `\n[-option \${2:#}] \${1:Enter an answer option here. Do not forget to set the number of the spot.}`;
+            snippet = `\n[-option \${2:#}] \${1:${text}`;
         }
         // Add additional spacing if the last line is not also an option
         if (!this.getLineText(editor, this.getLineCount(editor))?.startsWith('[-option')) {
             snippet = `\n\n${snippet}`;
         }
-        this.insertSnippetAtPosition(editor, snippet, this.getEndPosition());
+        this.insertSnippetAtPosition(editor, this.getEndPosition(editor), snippet);
         editor.focus();
     }
 }

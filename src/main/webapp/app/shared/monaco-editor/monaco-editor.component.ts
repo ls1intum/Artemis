@@ -164,6 +164,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.trigger('MonacoEditorComponent::triggerKeySequence', 'type', { text });
     }
 
+    /**
+     * Triggers a tab key press in the editor.
+     */
+    triggerTab(): void {
+        this._editor.trigger('MonacoEditorComponent::triggerTab', 'tab', undefined);
+    }
+
     focus(): void {
         this._editor.focus();
     }
