@@ -8,7 +8,7 @@
                 <jhi-exam-timer
                     class="me-3"
                     [criticalTime]="isEndView ? criticalTimeEndView : criticalTime"
-                    [endDate]="isEndView ? graceEndDate : endDate"
+                    [endDate]="endDate"
                     [isEndView]="isEndView"
                     (timerAboutToEnd)="triggerExamAboutToEnd()"
                 />

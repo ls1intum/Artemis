@@ -37,7 +37,6 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
     testRun: boolean;
 
     private previousHeight: number;
-    graceEndDate: dayjs.Dayjs;
     examTitle: string;
     exercises: Exercise[] = [];
 
@@ -71,17 +70,6 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
             }
         });
         resizeObserver.observe(barElement);
-
-        if (this.isEndView) {
-            // this should be the individual working end + the grace period
-            if (this.testRun) {
-                this.graceEndDate = dayjs(this.testRunStartTime!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            } else if (this.testExam) {
-                this.graceEndDate = dayjs(this.studentExam.startedDate!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            } else {
-                this.graceEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            }
-        }
     }
     /**
      * Save the currently active exercise

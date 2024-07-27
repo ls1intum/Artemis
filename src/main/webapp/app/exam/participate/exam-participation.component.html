@@ -143,7 +143,7 @@
             @if (!studentFailedToSubmit) {
                 <div class="exam-background-wrapper" [ngClass]="{ 'py-2': testRunId }">
                     <jhi-exam-bar
-                        [endDate]="individualStudentEndDate"
+                        [endDate]="individualStudentEndDateWithGracePeriod"
                         [exerciseIndex]="exerciseIndex"
                         [isEndView]="true"
                         [exam]="exam"
