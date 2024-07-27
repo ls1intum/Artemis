@@ -5,6 +5,7 @@ import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reaction
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -26,12 +27,13 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     // Icons
     farSmile = faSmile;
+    faArrowRight = faArrowRight;
 
     @Input()
     readOnlyMode = false;
     @Input() showAnswers: boolean;
     @Input() sortedAnswerPosts: AnswerPost[];
-    @Input() isCourseMessagesPage: boolean;
+    @Input() isCommunicationPage: boolean;
     @Input() lastReadDate?: dayjs.Dayjs;
 
     @Output() showAnswersChange = new EventEmitter<boolean>();

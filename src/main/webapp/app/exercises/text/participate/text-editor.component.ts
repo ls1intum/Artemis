@@ -45,6 +45,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     @Input() inputExercise?: TextExercise;
     @Input() inputSubmission?: TextSubmission;
     @Input() inputParticipation?: StudentParticipation;
+    @Input() isExamSummary = false;
 
     textExercise: TextExercise;
     participation: StudentParticipation;

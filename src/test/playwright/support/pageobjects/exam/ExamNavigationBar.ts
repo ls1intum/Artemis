@@ -11,15 +11,19 @@ export class ExamNavigationBar {
     }
 
     /**
-     * Opens the exercise at the specified index.
-     * @param index 0-based index
+     * Opens the exercise with the given group title
+     * @param exerciseGroupTitle
      */
-    async openExerciseAtIndex(index: number) {
-        await this.page.locator('#exam-exercise-' + index).click();
+    async openOrSaveExerciseByTitle(exerciseGroupTitle: string) {
+        await this.page.getByText(exerciseGroupTitle).nth(0).click();
     }
 
-    async openExerciseOverview() {
-        await this.page.locator('.exam-navigation .navigation-item.overview').click();
+    async openFromOverviewByTitle(exerciseGroupTitle: string) {
+        await this.page.getByText(exerciseGroupTitle).locator('xpath=ancestor-or-self::a').click();
+    }
+
+    async openOverview() {
+        await this.page.getByText('Overview').nth(0).click();
     }
 
     /**

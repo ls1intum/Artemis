@@ -173,9 +173,9 @@ export class CompetencyService {
     }
 
     //relations
-
     createCompetencyRelation(relation: CompetencyRelation, courseId: number) {
-        return this.httpClient.post<CompetencyRelation>(`${this.resourceURL}/courses/${courseId}/competencies/relations`, relation, {
+        const relationDTO: CompetencyRelationDTO = { tailCompetencyId: relation.tailCompetency?.id, headCompetencyId: relation.headCompetency?.id, relationType: relation.type };
+        return this.httpClient.post<CompetencyRelationDTO>(`${this.resourceURL}/courses/${courseId}/competencies/relations`, relationDTO, {
             observe: 'response',
         });
     }
@@ -188,6 +188,12 @@ export class CompetencyService {
 
     removeCompetencyRelation(competencyRelationId: number, courseId: number) {
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/competencies/relations/${competencyRelationId}`, {
+            observe: 'response',
+        });
+    }
+
+    getCourseCompetencyTitles(courseId: number) {
+        return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/competencies/titles`, {
             observe: 'response',
         });
     }

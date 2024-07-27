@@ -244,7 +244,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     }
 
     TutorialGroup buildTutorialGroupWithoutSchedule(String tutorLogin) {
-        var course = courseRepository.findWithEagerCompetenciesById(exampleCourseId).orElseThrow();
+        var course = courseRepository.findByIdElseThrow(exampleCourseId);
         var tutorialGroup = new TutorialGroup();
         tutorialGroup.setCourse(course);
         tutorialGroup.setTitle(generateRandomTitle());
@@ -253,7 +253,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     }
 
     TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {
-        var course = courseRepository.findWithEagerCompetenciesById(exampleCourseId).orElseThrow();
+        var course = courseRepository.findByIdElseThrow(exampleCourseId);
         var newTutorialGroup = new TutorialGroup();
         newTutorialGroup.setCourse(course);
         newTutorialGroup.setTitle(generateRandomTitle());
@@ -368,11 +368,11 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         var nonModerators = members.stream().filter(participant -> !participant.getIsModerator()).collect(Collectors.toSet());
 
         var registeredStudents = tutorialGroupFromDb.getRegistrations().stream().map(TutorialGroupRegistration::getStudent).collect(Collectors.toSet());
-        if (registeredStudents.size() > 0) {
-            assertThat(nonModerators.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet())).containsExactlyInAnyOrderElementsOf(registeredStudents);
+        if (registeredStudents.isEmpty()) {
+            assertThat(nonModerators).isEmpty();
         }
         else {
-            assertThat(nonModerators).isEmpty();
+            assertThat(nonModerators).map(ConversationParticipant::getUser).containsExactlyInAnyOrderElementsOf(registeredStudents);
         }
 
         if (tutorialGroupFromDb.getTeachingAssistant() != null) {

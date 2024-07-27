@@ -231,7 +231,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         @Override
         ProgrammingExercise changeRelevantExerciseEndDate(ProgrammingExercise programmingExercise, ZonedDateTime endDate) {
-            Exam exam = programmingExercise.getExamViaExerciseGroupOrCourseMember();
+            Exam exam = programmingExercise.getExam();
             // Only change the exam end date, as exam exercises don't have individual dates (all dates are null)
             exam.setEndDate(endDate);
             super.examRepository.save(exam);
@@ -322,7 +322,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         tests.add(programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test4"));
         List<Feedback> feedbacks = new ArrayList<>();
         // we deliberately don't set the credits here, null must work as well
-        feedbacks.add(new Feedback().testCase(tests.get(0)).positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().testCase(tests.getFirst()).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(1)).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(2)).positive(false).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(3)).positive(false).type(FeedbackType.AUTOMATIC));
@@ -521,7 +521,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().testCase(tests.get(0)).positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().testCase(tests.getFirst()).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(1)).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(2)).positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
@@ -550,7 +550,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().testCase(tests.get(0)).positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().testCase(tests.getFirst()).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(1)).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(2)).positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
@@ -1324,7 +1324,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         var testCases = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExerciseSCAEnabled.getId()));
         var bonusMultiplier = withBonus ? 2D : null;
         var bonusPoints = withBonus ? 4D : null;
-        testCases.get(0).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
+        testCases.getFirst().active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
         testCases.get(1).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
         testCases.get(2).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
         testCaseRepository.saveAll(testCases);
@@ -1493,7 +1493,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     private void createStudentExam(ProgrammingExercise exercise, String student) {
-        var exam = exercise.getExamViaExerciseGroupOrCourseMember();
+        var exam = exercise.getExam();
         examUtilService.addStudentExamWithUser(exam, student);
     }
 }

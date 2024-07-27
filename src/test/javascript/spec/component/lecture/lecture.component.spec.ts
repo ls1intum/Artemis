@@ -8,6 +8,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureComponent, LectureDateFilter } from 'app/lecture/lecture.component';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -101,6 +102,10 @@ describe('Lecture', () => {
         lectureToIngest.course = new Course();
         consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
+        const profileInfo = {
+            activeProfiles: [],
+        } as unknown as ProfileInfo;
+
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
@@ -117,6 +122,7 @@ describe('Lecture', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useValue: new MockProfileService() },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -156,6 +162,8 @@ describe('Lecture', () => {
                 lectureComponent = lectureComponentFixture.componentInstance;
                 lectureService = TestBed.inject(LectureService);
                 modalService = TestBed.inject(NgbModal);
+                profileService = lectureComponentFixture.debugElement.injector.get(ProfileService);
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
             });
     });
 

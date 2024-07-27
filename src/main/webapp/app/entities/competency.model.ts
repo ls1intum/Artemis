@@ -32,33 +32,52 @@ export enum CompetencyRelationError {
     EXISTING = 'EXISTING',
 }
 
-export enum CompetencyValidators {
+export enum CourseCompetencyValidators {
     TITLE_MAX = 255,
     DESCRIPTION_MAX = 10000,
+    MASTERY_THRESHOLD_MIN = 0,
+    MASTERY_THRESHOLD_MAX = 100,
 }
 
-export const DEFAULT_MASTERY_THRESHOLD = 80;
+// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in CourseCompetency.java
+export enum CourseCompetencyType {
+    COMPETENCY = 'competency',
+    PREREQUISITE = 'prerequisite',
+}
 
-export interface BaseCompetency extends BaseEntity {
+export const DEFAULT_MASTERY_THRESHOLD = 100;
+
+export abstract class BaseCompetency implements BaseEntity {
+    id?: number;
     title?: string;
     description?: string;
     taxonomy?: CompetencyTaxonomy;
 }
 
-export interface CourseCompetency extends BaseCompetency {
+export abstract class CourseCompetency extends BaseCompetency {
     softDueDate?: dayjs.Dayjs;
     masteryThreshold?: number;
     optional?: boolean;
-    course?: Course;
-    linkedCourseCompetency?: CourseCompetency;
-}
-
-export interface Competency extends CourseCompetency {
+    linkedStandardizedCompetency?: StandardizedCompetency;
     exercises?: Exercise[];
     lectureUnits?: LectureUnit[];
     userProgress?: CompetencyProgress[];
     courseProgress?: CourseCompetencyProgress;
-    linkedStandardizedCompetency?: StandardizedCompetency;
+    course?: Course;
+    linkedCourseCompetency?: CourseCompetency;
+
+    public type?: CourseCompetencyType;
+
+    protected constructor(type: CourseCompetencyType) {
+        super();
+        this.type = type;
+    }
+}
+
+export class Competency extends CourseCompetency {
+    constructor() {
+        super(CourseCompetencyType.COMPETENCY);
+    }
 }
 
 export class CompetencyJol {
@@ -144,8 +163,8 @@ export class CourseCompetencyProgress {
 
 export class CompetencyRelation implements BaseEntity {
     public id?: number;
-    public tailCompetency?: Competency;
-    public headCompetency?: Competency;
+    public tailCompetency?: CourseCompetency;
+    public headCompetency?: CourseCompetency;
     public type?: CompetencyRelationType;
 }
 

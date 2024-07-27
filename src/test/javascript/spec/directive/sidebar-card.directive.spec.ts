@@ -64,10 +64,6 @@ describe('SidebarCardDirective', () => {
         jest.resetAllMocks();
     });
 
-    it('should create an instance', () => {
-        expect(component.directive).toBeDefined();
-    });
-
     it('directive and viewContainerRef should be defined', () => {
         expect(component.directive).toBeDefined();
         expect(component.directive.viewContainerRef).toBeDefined();

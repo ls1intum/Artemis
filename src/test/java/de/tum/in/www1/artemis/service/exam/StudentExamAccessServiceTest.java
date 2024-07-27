@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -33,9 +32,6 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private StudentExamRepository studentExamRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private UserUtilService userUtilService;

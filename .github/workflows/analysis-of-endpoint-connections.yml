@@ -1,5 +1,3 @@
-name: Analysis-of-Endpoint-Connections
-
 on:
   pull_request:
     types:

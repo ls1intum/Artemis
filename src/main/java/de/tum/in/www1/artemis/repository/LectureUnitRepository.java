@@ -27,16 +27,6 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
                 LEFT JOIN FETCH lu.competencies
                 LEFT JOIN FETCH lu.exercise exercise
                 LEFT JOIN FETCH exercise.competencies
-            WHERE lu.id = :lectureUnitId
-            """)
-    Optional<LectureUnit> findWithCompetenciesById(@Param("lectureUnitId") Long lectureUnitId);
-
-    @Query("""
-            SELECT lu
-            FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencies
-                LEFT JOIN FETCH lu.exercise exercise
-                LEFT JOIN FETCH exercise.competencies
                 LEFT JOIN FETCH lu.slides
             WHERE lu.id = :lectureUnitId
             """)
@@ -63,6 +53,18 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             WHERE lu.id IN :lectureUnitIds
             """)
     Set<LectureUnit> findAllByIdWithCompetenciesBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
+
+    @Query("""
+            SELECT lu
+            FROM LectureUnit lu
+                LEFT JOIN FETCH lu.completedUsers
+            WHERE lu.id = :lectureUnitId
+            """)
+    Optional<LectureUnit> findByIdWithCompletedUsers(@Param("lectureUnitId") long lectureUnitId);
+
+    default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
+        return findByIdWithCompletedUsers(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
+    }
 
     default LectureUnit findByIdWithCompetenciesBidirectionalElseThrow(long lectureUnitId) {
         return findByIdWithCompetenciesBidirectional(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));

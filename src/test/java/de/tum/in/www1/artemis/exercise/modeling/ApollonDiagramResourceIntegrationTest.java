@@ -19,8 +19,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -28,12 +26,6 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private ApollonDiagramRepository apollonDiagramRepository;
-
-    @Autowired
-    private CourseRepository courseRepo;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     private ApollonDiagram apollonDiagram;
 
@@ -51,8 +43,8 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
 
         course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course2 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        courseRepo.save(course1);
-        courseRepo.save(course2);
+        courseRepository.save(course1);
+        courseRepository.save(course2);
     }
 
     @AfterEach

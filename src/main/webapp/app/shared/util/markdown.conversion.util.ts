@@ -1,7 +1,7 @@
 import showdown from 'showdown';
 import showdownKatex from 'showdown-katex';
 import showdownHighlight from 'showdown-highlight';
-import DOMPurify from 'dompurify';
+import DOMPurify, { Config } from 'dompurify';
 
 /**
  * showdown will add the classes to the converted html
@@ -50,14 +50,16 @@ export function htmlForMarkdown(
         extensions: [...extensions, showdownKatex(), showdownHighlight({ pre: true }), ...addCSSClass],
     });
     const html = converter.makeHtml(markdownText);
-    const purifyParameters = {};
+    const purifyParameters = {} as Config;
+    // Prevents sanitizer from deleting <testid>id</testid>
+    purifyParameters['ADD_TAGS'] = ['testid'];
     if (allowedHtmlTags) {
         purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
     }
     if (allowedHtmlAttributes) {
         purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
-    return DOMPurify.sanitize(html, purifyParameters);
+    return DOMPurify.sanitize(html, purifyParameters) as string;
 }
 
 export function markdownForHtml(htmlText: string): string {

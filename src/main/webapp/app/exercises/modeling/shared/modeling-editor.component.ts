@@ -63,6 +63,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             if (this.readonlyApollonDiagram?.svg) {
                 this.readOnlySVG = this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg);
             }
+
+            // Destroy the Apollon editor after exporting the SVG, to avoid SVG <marker> id collisions
+            this.destroyApollonEditor();
         } else {
             this.guidedTourService.checkModelingComponent().subscribe((key) => {
                 if (key) {
@@ -139,6 +142,27 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         document.addEventListener('scroll', this.scrollListener);
     }
 
+    /**
+     * Destroys the Apollon editor instance, unsubscribes from events, and removes event listeners to clean up resources.
+     */
+    private destroyApollonEditor(): void {
+        if (this.apollonEditor) {
+            if (this.modelSubscription) {
+                this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
+            }
+            if (this.modelPatchSubscription) {
+                this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);
+            }
+            this.apollonEditor.destroy();
+            this.apollonEditor = undefined;
+        }
+
+        if (this.mouseDownListener) {
+            document.removeEventListener('mousedown', this.mouseDownListener);
+            document.removeEventListener('scroll', this.scrollListener!);
+        }
+    }
+
     get isApollonEditorMounted(): boolean {
         return this.apollonEditor != undefined;
     }
@@ -195,21 +219,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     ngOnDestroy(): void {
         try {
-            if (this.apollonEditor) {
-                if (this.modelSubscription) {
-                    this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
-                }
-                if (this.modelPatchSubscription) {
-                    this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);
-                }
-                this.apollonEditor.destroy();
-                this.apollonEditor = undefined;
-            }
-
-            if (this.mouseDownListener) {
-                document.removeEventListener('mousedown', this.mouseDownListener);
-                document.removeEventListener('scroll', this.scrollListener!);
-            }
+            this.destroyApollonEditor();
         } catch (err) {
             console.log(err);
             throw err;

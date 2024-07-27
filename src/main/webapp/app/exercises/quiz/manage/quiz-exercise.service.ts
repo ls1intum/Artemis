@@ -5,9 +5,12 @@ import { map } from 'rxjs/operators';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { downloadFile } from 'app/shared/util/download.util';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/download.util';
 import { objectToJsonBlob } from 'app/utils/blob-util';
+import { FileService } from 'app/shared/http/file.service';
+import JSZip from 'jszip';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -228,6 +231,7 @@ export class QuizExerciseService {
     exportQuiz(quizQuestions?: QuizQuestion[], exportAll?: boolean, fileName?: string) {
         // Make list of questions which we need to export,
         const questions: QuizQuestion[] = [];
+
         quizQuestions!.forEach((question) => {
             if (exportAll === true || question.exportQuiz) {
                 question.quizQuestionStatistic = undefined;
@@ -238,10 +242,66 @@ export class QuizExerciseService {
         if (questions.length === 0) {
             return;
         }
-        // Make blob from the list of questions and download the file,
+        this.exportAssetsFromAllQuestions(questions, fileName ?? 'quiz');
+    }
+
+    /**
+     * Exports assets (images) embedded in the markdown and from drag and drop exercises
+     * @param questions list of questions which will be exported
+     * @param fileName name of the output zip file
+     */
+    exportAssetsFromAllQuestions(questions: QuizQuestion[], fileName: string) {
+        const zip: JSZip = new JSZip();
+        const filePromises: Promise<void | File>[] = [];
         const quizJson = JSON.stringify(questions);
         const blob = new Blob([quizJson], { type: 'application/json' });
-        downloadFile(blob, (fileName ?? 'quiz') + '.json');
+        questions.forEach((question, questionIndex) => {
+            if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+                if ((question as DragAndDropQuestion).backgroundFilePath) {
+                    filePromises.push(this.fetchFilePromise(`q${questionIndex}_background.png`, zip, (question as DragAndDropQuestion).backgroundFilePath!));
+                }
+                if ((question as DragAndDropQuestion).dragItems) {
+                    (question as DragAndDropQuestion).dragItems?.forEach((dragItem, drag_index) => {
+                        if (dragItem.pictureFilePath) {
+                            filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.png`, zip, dragItem.pictureFilePath));
+                        }
+                    });
+                }
+            }
+            this.findImagesInMarkdown(JSON.stringify(question)).forEach((embeddedImage) => {
+                filePromises.push(this.fetchFilePromise(`q${questionIndex}_${embeddedImage[1]}`, zip, embeddedImage[2]));
+            });
+        });
+        if (filePromises.length === 0) {
+            downloadFile(blob, (fileName ?? 'quiz') + '.json');
+            return;
+        }
+        zip.file((fileName ?? 'quiz') + '.json', blob);
+        downloadZipFromFilePromises(zip, filePromises, fileName);
+    }
+
+    findImagesInMarkdown(description: string) {
+        // Will return all matches of ![file_name](path), will group file_name and path
+        const embeddedImageRegex = /!\[(.+?)\]\((.+?)\)/g;
+        return [...description.matchAll(embeddedImageRegex)];
+    }
+
+    /**
+     * This method fetches a file through the file Service, zips it and pushes it to the provided list of file Promises
+     * @param fileName the name of the file to be zipped
+     * @param zip a JSZip instance
+     * @param filePath the internal path of the file to be fetched
+     */
+    async fetchFilePromise(fileName: string, zip: JSZip, filePath: string) {
+        const fileService = new FileService(this.http);
+        return fileService
+            .getFile(filePath)
+            .then((fileResult) => {
+                zip.file(fileName, fileResult);
+            })
+            .catch((error) => {
+                throw new Error(`File with name: ${fileName} at path: ${filePath} could not be fetched`, error);
+            });
     }
 
     /**
