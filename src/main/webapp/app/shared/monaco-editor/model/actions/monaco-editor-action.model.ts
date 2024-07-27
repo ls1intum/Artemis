@@ -164,19 +164,18 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         if (!triggerCharacter) {
             return model.getWordUntilPosition(position);
         }
-        const scanRange = new monaco.Range(position.lineNumber, Math.max(1, position.column - lengthLimit), position.lineNumber, position.column);
+        const scanColumn = Math.max(1, position.column - lengthLimit);
+        const scanRange = new monaco.Range(position.lineNumber, scanColumn, position.lineNumber, position.column);
         const text = model.getValueInRange(scanRange);
         const triggerIndex = text.lastIndexOf(triggerCharacter);
         if (triggerIndex === -1) {
             return undefined;
         }
-        const startIndex = triggerIndex + 1;
-        // End index needs to adjust for the position of the word in the text.
-        const endIndex = position.column - scanRange.startColumn + 1;
+        // The word not including the trigger character.
         return {
-            word: text.slice(startIndex, endIndex),
-            startColumn: startIndex + 1,
-            endColumn: endIndex + 1,
+            word: text.slice(triggerIndex + 1),
+            startColumn: scanRange.startColumn + triggerIndex + 1,
+            endColumn: position.column,
         };
     }
 
