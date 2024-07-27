@@ -38,7 +38,7 @@ public class GitLabCITriggerService implements ContinuousIntegrationTriggerServi
         if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
             programmingExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise);
         }
-        triggerBuild(participation.getVcsRepositoryUri(), participation.getProgrammingExercise().getBranch());
+        triggerBuild(participation.getVcsRepositoryUri(), programmingExercise.getBuildConfig().getBranch());
     }
 
     private void triggerBuild(VcsRepositoryUri vcsRepositoryUri, String branch) {
