@@ -96,7 +96,6 @@ public class CustomLti13Configurer extends Lti13Configurer {
     protected OptimisticAuthorizationRequestRepository configureRequestRepository() {
         HttpSessionOAuth2AuthorizationRequestRepository sessionRepository = new HttpSessionOAuth2AuthorizationRequestRepository();
         stateRepository.setLimitIpAddress(limitIpAddresses);
-        stateRepository.init();
         return new StateBasedOptimisticAuthorizationRequestRepository(sessionRepository, stateRepository);
     }
 }
