@@ -144,9 +144,9 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.translationKeys = translationKeys;
         modalRef.componentInstance.isRequired = isRequired;
         modalRef.componentInstance.regexPattern = regexPattern;
-
-        if (get(channelOrGroupChat, propertyName) && get(channelOrGroupChat, propertyName).length > 0) {
-            modalRef.componentInstance.initialValue = get(channelOrGroupChat, propertyName);
+        const property = get(channelOrGroupChat, propertyName);
+        if (property && typeof property === 'string' && property.length > 0) {
+            modalRef.componentInstance.initialValue = property;
         }
         modalRef.componentInstance.initialize();
         from(modalRef.result)
@@ -199,7 +199,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (updatedChannel: ChannelDTO) => {
-                    channel[propertyName] = updatedChannel[propertyName];
+                    channel[propertyName] = updatedChannel[propertyName as keyof ChannelDTO];
                     this.onChangePerformed();
                 },
                 error: (errorResponse: HttpErrorResponse) => {
