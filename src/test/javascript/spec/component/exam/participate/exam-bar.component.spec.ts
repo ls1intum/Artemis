@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -60,41 +60,6 @@ describe('ExamBarComponent', () => {
     beforeEach(() => {
         fixture.detectChanges();
     });
-
-    it('should initialize graceEndDate with ngAfterViewInit', fakeAsync(() => {
-        comp.isEndView = true;
-        let now = dayjs();
-        comp.studentExam.workingTime = 1;
-        comp.exam.gracePeriod = 1;
-        comp.exam.startDate = now;
-
-        comp.ngOnInit();
-        comp.ngAfterViewInit();
-        tick();
-
-        // Case TestRun
-        now = dayjs();
-        comp.studentExam.workingTime = 1;
-        comp.exam.gracePeriod = 1;
-        comp.testRunStartTime = now;
-        comp.studentExam.testRun = true;
-        comp.ngOnInit();
-        comp.ngAfterViewInit();
-        expect(comp.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
-
-        // Case test exam
-        now = dayjs();
-        comp.studentExam.workingTime = 1;
-        comp.exam.testExam = true;
-        comp.exam.gracePeriod = 1;
-        comp.exam.startDate = dayjs().subtract(4, 'hours');
-
-        comp.ngOnInit();
-        comp.ngAfterViewInit();
-        tick();
-
-        expect(comp.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
-    }));
 
     it('trigger emit and call saveExercise when the exam is about to end', () => {
         jest.spyOn(comp, 'saveExercise');

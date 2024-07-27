@@ -1221,4 +1221,30 @@ describe('ExamParticipationComponent', () => {
         comp.studentExam.submitted = false;
         expect(comp.studentFailedToSubmit).toBeFalse();
     });
+
+    it('should initialize individualStudentEndDateWithGracePeriod', fakeAsync(() => {
+        let now = dayjs();
+        comp.studentExam = new StudentExam();
+
+        // Case test run
+        comp.studentExam.workingTime = 1;
+        comp.exam.gracePeriod = 1;
+        comp.exam.startDate = now;
+        comp.studentExam.testRun = true;
+        comp.initIndividualEndDates(now);
+
+        expect(comp.individualStudentEndDateWithGracePeriod).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
+
+        // Case test exam
+        now = dayjs();
+        comp.studentExam.workingTime = 1;
+        comp.exam.testExam = true;
+        comp.exam.gracePeriod = 1;
+        comp.exam.startDate = dayjs().subtract(4, 'hours');
+
+        comp.initIndividualEndDates(now);
+        tick();
+
+        expect(comp.individualStudentEndDateWithGracePeriod).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
+    }));
 });
