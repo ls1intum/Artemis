@@ -901,7 +901,6 @@ public class StudentExamResource {
     @EnforceAtLeastInstructor
     @GetMapping("courses/{courseId}/exams/{examId}/longest-working-time")
     public ResponseEntity<Integer> getLongestWorkingTimeForExam(@PathVariable Long courseId, @PathVariable Long examId) {
-
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         Integer longestWorkingTime = studentExamRepository.findLongestWorkingTimeForExam(examId);
         return ResponseEntity.ok().body(longestWorkingTime);
