@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
@@ -26,7 +25,7 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
      */
     @Transactional // ok because of delete
     @Modifying
-    void deleteByParticipation_id(long participationId);
+    void deleteByParticipationId(long participationId);
 
     /**
      * Delete all tokens of a user
@@ -36,15 +35,6 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByUserId(long userId);
-
-    @Query("""
-            SELECT p
-            FROM ParticipationVCSAccessToken p
-                 LEFT JOIN FETCH p.participation
-                 LEFT JOIN FETCH p.user
-            WHERE p.participation.id IN :participationIds
-            """)
-    List<ParticipationVCSAccessToken> findAllByParticipationIds(@Param("participationIds") List<Long> participationIds);
 
     @Query("""
             SELECT DISTINCT p
