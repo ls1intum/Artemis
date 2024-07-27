@@ -76,10 +76,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     enableResize = true;
 
     @Input()
-    hidePreviewButton = false;
+    showPreviewButton = true;
 
     @Input()
-    hideEditButton = false;
+    showEditButton = true;
 
     /**
      * The initial height the editor should have. If set to 'external', the editor will try to grow to the available space.

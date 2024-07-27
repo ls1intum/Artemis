@@ -283,11 +283,9 @@
                         #questionEditor
                         [enableResize]="false"
                         [enableFileUpload]="false"
-                        [hideEditButton]="true"
-                        [hidePreviewButton]="true"
+                        [showPreviewButton]="false"
                         [defaultActions]="markdownActions"
                         [colorAction]="undefined"
-                        [metaActions]="[]"
                         [initialEditorHeight]="'external'"
                         [(markdown)]="questionEditorText"
                         (markdownChange)="onTextChange($event)"

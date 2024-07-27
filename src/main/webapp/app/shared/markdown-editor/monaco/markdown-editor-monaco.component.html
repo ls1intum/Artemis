@@ -7,9 +7,8 @@
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
     >
         <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
-            <!-- TODO if show edit -->
             <ng-container ngbNavItem="editor_edit">
-                @if (!hideEditButton) {
+                @if (showEditButton) {
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
                 }
                 <ng-template ngbNavContent>
@@ -43,7 +42,7 @@
                 </ng-template>
             </ng-container>
             <ng-container ngbNavItem="editor_preview">
-                @if (!hidePreviewButton) {
+                @if (showPreviewButton) {
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
                 }
                 <ng-template ngbNavContent>
