@@ -51,6 +51,7 @@ jobs:
 #        with:
 #          name: analysis-output-log
 #          path: supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/analysis_output.log
+#
 
       - name: Upload JSON file
         uses: actions/upload-artifact@v3
