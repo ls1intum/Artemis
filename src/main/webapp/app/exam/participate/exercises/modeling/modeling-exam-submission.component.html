@@ -1,7 +1,7 @@
 @if (exercise) {
     <h3 class="text-align-left fw-normal">
         <span>
-            {{ exercise.title }}
+            {{ exercise.exerciseGroup?.title }}
         </span>
         <!-- prettier-ignore -->
         <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
