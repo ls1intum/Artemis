@@ -127,13 +127,14 @@ describe('OrganizationManagementDetailComponent', () => {
     it('should search users in the used DataTable component and return them and add organization icons', fakeAsync(() => {
         const user1 = { id: 11, login: 'user1' } as User;
         const user2 = { id: 12, login: 'user2' } as User;
+        const user3 = { id: 13, login: 'user3' } as User;
 
         let typeAheadButtons = [
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() } },
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() } },
+            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
+            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
         ];
 
-        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2] })));
+        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2, user3] })));
         component.dataTable = { typeaheadButtons: typeAheadButtons } as any as DataTableComponent;
         component.organization = { users: undefined };
 
@@ -143,6 +144,7 @@ describe('OrganizationManagementDetailComponent', () => {
             expect(a).toStrictEqual([
                 { id: user1.id, login: user1.login },
                 { id: user2.id, login: user2.login },
+                { id: user3.id, login: user3.login },
             ]);
             expect(component.searchNoResults).toBeFalse();
             expect(component.searchFailed).toBeFalse();
@@ -158,8 +160,9 @@ describe('OrganizationManagementDetailComponent', () => {
 
         component.organization = { users: [user1] };
         typeAheadButtons = [
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() } },
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() } },
+            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
+            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
+            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn().mockReturnValue(true) },
         ];
         component.dataTable = { typeaheadButtons: typeAheadButtons } as any as DataTableComponent;
         component.searchAllUsers(of({ text: 'user', entities: [] })).subscribe();
@@ -172,6 +175,8 @@ describe('OrganizationManagementDetailComponent', () => {
         expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledOnce();
         expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users-plus']);
         expect(typeAheadButtons[1].classList.add).not.toHaveBeenCalled();
+        // The third button already has a user icon (indicated but the truthy return value of the querySelector) and insertAdjacentHTML should not be called
+        expect(typeAheadButtons[2].insertAdjacentHTML).not.toHaveBeenCalled();
     }));
 
     it('should return zero users if search term is less then 3 chars', fakeAsync(() => {
