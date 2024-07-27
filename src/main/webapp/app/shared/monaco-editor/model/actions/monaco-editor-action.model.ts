@@ -180,6 +180,52 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     }
 
     /**
+     * Gets the number of lines in the editor.
+     * @param editor The editor to get the line count from.
+     */
+    getLineCount(editor: monaco.editor.ICodeEditor): number {
+        return editor.getModel()?.getLineCount() ?? 0;
+    }
+
+    /**
+     * Gets the position of the last character in the editor.
+     * @param editor The editor to get the position from.
+     */
+    getEndPosition(editor: monaco.editor.ICodeEditor): monaco.IPosition {
+        return editor.getModel()?.getFullModelRange().getEndPosition() ?? { lineNumber: 1, column: 1 };
+    }
+
+    /**
+     * Inserts a snippet at the current cursor position. A snippet can contain placeholders for the user to fill in.
+     * @param editor The editor to insert the snippet in.
+     * @param position The position to insert the snippet at.
+     * @param snippet The snippet to insert.
+     */
+    insertSnippetAtPosition(editor: monaco.editor.ICodeEditor, position: monaco.IPosition, snippet: string): void {
+        // See https://github.com/Microsoft/monaco-editor/issues/342. No type definition exists for the snippet controller, hence the use of any.
+        const snippetController = editor.getContribution('snippetController2') as any;
+        if (snippetController && 'insert' in snippetController) {
+            this.setPosition(editor, position);
+            snippetController.insert(snippet, position);
+        } else {
+            throw new Error('Snippet controller not available or cannot insert snippet.');
+        }
+    }
+
+    /**
+     * Sets the position of the cursor in the given editor.
+     * @param editor The editor to set the position in.
+     * @param position The position to set.
+     * @param revealLine Whether to scroll the editor to reveal the line the position is on. Defaults to false.
+     */
+    setPosition(editor: monaco.editor.ICodeEditor, position: monaco.IPosition, revealLine = false): void {
+        editor.setPosition(position);
+        if (revealLine) {
+            editor.revealLineInCenter(position.lineNumber);
+        }
+    }
+
+    /**
      * Toggles the fullscreen mode of the given element. If no element is provided, the editor's DOM node is used.
      * @param editor The editor to toggle the fullscreen mode for.
      * @param element The element to toggle the fullscreen mode for.
