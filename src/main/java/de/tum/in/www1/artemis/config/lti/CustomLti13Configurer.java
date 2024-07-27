@@ -6,7 +6,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
@@ -21,7 +21,7 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorization
  * Configures and registers Security Filters to handle LTI 1.3 Resource Link Launches
  */
 @Profile("lti")
-@Service
+@Component
 public class CustomLti13Configurer extends Lti13Configurer {
 
     /** Path for login. **/

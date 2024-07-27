@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ import com.hazelcast.core.HazelcastInstance;
  * This is based on a copy of {@link uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository}.
  */
 @Component
+@Profile("lti")
 class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedStateAuthorizationRequestRepository.class);
