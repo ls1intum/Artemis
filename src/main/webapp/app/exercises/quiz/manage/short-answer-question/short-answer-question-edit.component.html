@@ -287,14 +287,15 @@
             }
             @if (!reEvaluationInProgress) {
                 <div class="question-content">
-                    <jhi-ace-editor
+                    <jhi-markdown-editor-monaco
                         #questionEditor
-                        [(text)]="questionEditorText"
-                        [mode]="questionEditorMode"
-                        [autoUpdateContent]="questionEditorAutoUpdate"
-                        (textChange)="onTextChange($event)"
-                        style="min-height: 200px; width: 100%; overflow: auto"
-                        class="form-control"
+                        [enableResize]="false"
+                        [enableFileUpload]="false"
+                        [hideEditButton]="true"
+                        [hidePreviewButton]="true"
+                        [initialEditorHeight]="'external'"
+                        [(markdown)]="questionEditorText"
+                        (markdownChange)="onTextChange($event)"
                     />
                 </div>
             }

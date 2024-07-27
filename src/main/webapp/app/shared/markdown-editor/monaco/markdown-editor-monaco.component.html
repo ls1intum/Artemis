@@ -9,7 +9,9 @@
         <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
             <!-- TODO if show edit -->
             <ng-container ngbNavItem="editor_edit">
-                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
+                @if (!hideEditButton) {
+                    <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
+                }
                 <ng-template ngbNavContent>
                     <div class="markdown-editor markdown-editor-wrapper d-flex flex-column">
                         <jhi-monaco-editor class="h-100" [shrinkToFit]="false" [stickyScroll]="false" (textChanged)="onTextChanged($event)" (drop)="onFileDrop($event)" />
@@ -41,7 +43,9 @@
                 </ng-template>
             </ng-container>
             <ng-container ngbNavItem="editor_preview">
-                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
+                @if (!hidePreviewButton) {
+                    <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
+                }
                 <ng-template ngbNavContent>
                     <ng-content class="overflow-auto" select="[#previewMonaco]" />
                     <!-- TODO preview handling for other exercise types -->
