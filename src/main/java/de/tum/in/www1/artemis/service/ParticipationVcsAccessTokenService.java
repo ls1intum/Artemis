@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -11,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -55,7 +52,7 @@ public class ParticipationVcsAccessTokenService {
      * @param participationId the participation's id which the token belongs to
      * @return an Optional participationVCSAccessToken,
      */
-    public ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(Long userId, Long participationId) {
+    public ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(long userId, long participationId) {
         return participationVcsAccessTokenRepository.findByUserIdAndParticipationIdOrElseThrow(userId, participationId);
     }
 
@@ -79,17 +76,6 @@ public class ParticipationVcsAccessTokenService {
      */
     public void deleteByParticipationId(long participationId) {
         participationVcsAccessTokenRepository.deleteByParticipationId(participationId);
-    }
-
-    /**
-     * Deletes all tokens for a given list of participations
-     *
-     * @param participations the participations for which the tokens should get deleted
-     */
-    public void deleteAllByParticipations(List<ProgrammingExerciseStudentParticipation> participations) {
-        for (ProgrammingExerciseStudentParticipation participation : participations) {
-            participationVcsAccessTokenRepository.deleteByParticipationId(participation.getId());
-        }
     }
 
     /**
