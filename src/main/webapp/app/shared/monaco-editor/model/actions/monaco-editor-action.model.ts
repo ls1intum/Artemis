@@ -106,33 +106,38 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         // We have to subtract an offset of 1 from the start column to include the trigger character in the range that will be replaced.
         const triggerCharacterOffset = triggerCharacter ? 1 : 0;
         return monaco.languages.registerCompletionItemProvider(languageId, {
-            triggerCharacters: triggerCharacter ? [triggerCharacter] : undefined,
+            // We only want to trigger the completion provider if the trigger character is typed. However, we also allow numbers to trigger the completion, as they would not normally trigger it.
+            triggerCharacters: triggerCharacter ? [triggerCharacter, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'] : undefined,
             provideCompletionItems: async (model: monaco.editor.ITextModel, position: monaco.Position): Promise<monaco.languages.CompletionList | undefined> => {
                 if (model.id !== modelId) {
                     return undefined;
                 }
-                const wordUntilPosition = model.getWordUntilPosition(position);
+                const sequenceUntilPosition = this.findTypedSequenceUntilPosition(model, position, triggerCharacter);
+                if (!sequenceUntilPosition) {
+                    return undefined;
+                }
                 const range = {
                     startLineNumber: position.lineNumber,
-                    startColumn: wordUntilPosition.startColumn - triggerCharacterOffset,
+                    startColumn: sequenceUntilPosition.startColumn - triggerCharacterOffset,
                     endLineNumber: position.lineNumber,
-                    endColumn: wordUntilPosition.endColumn,
+                    endColumn: sequenceUntilPosition.endColumn,
                 };
                 const beforeWord = model.getValueInRange({
                     startLineNumber: position.lineNumber,
-                    startColumn: wordUntilPosition.startColumn - triggerCharacterOffset,
+                    startColumn: sequenceUntilPosition.startColumn - triggerCharacterOffset,
                     endLineNumber: position.lineNumber,
-                    endColumn: wordUntilPosition.startColumn,
+                    endColumn: sequenceUntilPosition.startColumn,
                 });
+
                 // We only want suggestions if the trigger character is at the beginning of the word.
                 if (triggerCharacter) {
-                    if (wordUntilPosition.word !== triggerCharacter) {
+                    if (sequenceUntilPosition.word !== triggerCharacter) {
                         if (beforeWord !== triggerCharacter) {
                             return undefined;
                         }
                     }
                 }
-                return searchFn(wordUntilPosition.word.trim().toLowerCase()).then((items) => {
+                return searchFn(sequenceUntilPosition.word).then((items) => {
                     return {
                         suggestions: items.map((item) => mapToSuggestionFn(item, range)),
                         incomplete: listIncomplete,
@@ -140,6 +145,39 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
                 });
             },
         });
+    }
+
+    /**
+     * Finds the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word (default Monaco behavior).
+     * @param model The model to find the typed sequence in.
+     * @param position The position until which to find the typed sequence.
+     * @param triggerCharacter The character that triggers the sequence. If not provided, the sequence is assumed to start at the beginning of the word.
+     * @param lengthLimit The maximum length of the sequence to find. Defaults to 25.
+     */
+    findTypedSequenceUntilPosition(
+        model: monaco.editor.ITextModel,
+        position: monaco.Position,
+        triggerCharacter?: string,
+        lengthLimit = 25,
+    ): monaco.editor.IWordAtPosition | undefined {
+        // Find the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word.
+        if (!triggerCharacter) {
+            return model.getWordUntilPosition(position);
+        }
+        const scanRange = new monaco.Range(position.lineNumber, Math.max(1, position.column - lengthLimit), position.lineNumber, position.column);
+        const text = model.getValueInRange(scanRange);
+        const triggerIndex = text.lastIndexOf(triggerCharacter);
+        if (triggerIndex === -1) {
+            return undefined;
+        }
+        const startIndex = triggerIndex + 1;
+        // End index needs to adjust for the position of the word in the text.
+        const endIndex = position.column - scanRange.startColumn + 1;
+        return {
+            word: text.slice(startIndex, endIndex),
+            startColumn: startIndex + 1,
+            endColumn: endIndex + 1,
+        };
     }
 
     /**

@@ -87,7 +87,9 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         provider = registerCompletionProviderStub.mock.calls[0][1];
         expect(provider).toBeDefined();
         expect(provider.provideCompletionItems).toBeDefined();
-        expect(provider.triggerCharacters).toEqual(triggerCharacter ? [triggerCharacter] : undefined);
+        if (triggerCharacter) {
+            expect(provider.triggerCharacters).toContain(triggerCharacter);
+        }
     };
 
     describe.each([
