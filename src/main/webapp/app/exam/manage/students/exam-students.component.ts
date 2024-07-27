@@ -166,9 +166,13 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                 setTimeout(() => {
                     for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
                         const isAlreadyInCourseGroup = this.allRegisteredUsers.map((user) => user.id).includes(users[i].id);
-                        this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInCourseGroup ? 'users' : 'users-plus']);
+                        const button = this.dataTable.typeaheadButtons[i];
+                        const hasIcon = button.querySelector('fa-icon');
+                        if (!hasIcon) {
+                            button.insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInCourseGroup ? 'users' : 'users-plus']);
+                        }
                         if (isAlreadyInCourseGroup) {
-                            this.dataTable.typeaheadButtons[i].classList.add(cssClasses.alreadyRegistered);
+                            button.classList.add(cssClasses.alreadyRegistered);
                         }
                     }
                 });
