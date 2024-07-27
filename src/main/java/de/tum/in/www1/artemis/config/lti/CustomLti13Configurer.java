@@ -6,8 +6,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-
-import com.hazelcast.core.HazelcastInstance;
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
@@ -22,6 +21,7 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorization
  * Configures and registers Security Filters to handle LTI 1.3 Resource Link Launches
  */
 @Profile("lti")
+@Service
 public class CustomLti13Configurer extends Lti13Configurer {
 
     /** Path for login. **/
@@ -51,13 +51,13 @@ public class CustomLti13Configurer extends Lti13Configurer {
     /** Value for LTI 1.3 deep linking request message. */
     public static final String LTI13_DEEPLINK_MESSAGE_REQUEST = "LtiDeepLinkingRequest";
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedStateAuthorizationRequestRepository stateRepository;
 
-    public CustomLti13Configurer(HazelcastInstance hazelcastInstance) {
+    public CustomLti13Configurer(DistributedStateAuthorizationRequestRepository stateRepository) {
         super.ltiPath("/" + LTI13_BASE_PATH);
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
         super.loginPath(LOGIN_PATH);
-        this.hazelcastInstance = hazelcastInstance;
+        this.stateRepository = stateRepository;
     }
 
     @Override
@@ -95,7 +95,6 @@ public class CustomLti13Configurer extends Lti13Configurer {
     @Override
     protected OptimisticAuthorizationRequestRepository configureRequestRepository() {
         HttpSessionOAuth2AuthorizationRequestRepository sessionRepository = new HttpSessionOAuth2AuthorizationRequestRepository();
-        DistributedStateAuthorizationRequestRepository stateRepository = new DistributedStateAuthorizationRequestRepository(hazelcastInstance);
         stateRepository.setLimitIpAddress(limitIpAddresses);
         stateRepository.init();
         return new StateBasedOptimisticAuthorizationRequestRepository(sessionRepository, stateRepository);

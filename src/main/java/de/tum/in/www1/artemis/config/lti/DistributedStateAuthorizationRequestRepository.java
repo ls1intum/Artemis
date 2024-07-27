@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -20,9 +21,10 @@ import com.hazelcast.core.HazelcastInstance;
 /**
  * A specialized {@link AuthorizationRequestRepository} that uses Hazelcast to store OAuth2 authorization requests.
  * This allows for sharing state across multiple nodes.
- *
+ * <p>
  * This is based on a copy of {@link uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository}.
  */
+@Component
 class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedStateAuthorizationRequestRepository.class);
