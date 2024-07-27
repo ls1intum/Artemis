@@ -43,6 +43,12 @@ jobs:
         run: |
           node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js > analysis_output.log 2>&1
 
+      - name: Upload analysis output log
+        uses: actions/upload-artifact@v3
+        with:
+          name: analysis-output-log
+          path: supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/analysis_output.log
+
       # Analyze the server sided endpoints
       - name: Set up JDK 21
         uses: actions/setup-java@v2
