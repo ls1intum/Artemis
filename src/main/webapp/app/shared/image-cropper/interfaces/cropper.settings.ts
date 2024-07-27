@@ -37,14 +37,14 @@ export class CropperSettings {
     setOptions(options: Partial<CropperOptions>): void {
         Object.keys(options)
             .filter((k) => k in this)
-            .forEach((k) => (this[k] = options[k]));
+            .forEach((k) => ((this as any)[k] = options[k as keyof CropperOptions]));
         this.validateOptions();
     }
 
     setOptionsFromChanges(changes: SimpleChanges): void {
         Object.keys(changes)
             .filter((k) => k in this)
-            .forEach((k) => (this[k] = changes[k].currentValue));
+            .forEach((k) => (this[k as keyof this] = changes[k].currentValue));
         this.validateOptions();
     }
 
