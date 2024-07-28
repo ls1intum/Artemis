@@ -33,7 +33,7 @@ public class HadesBuildResultNotificationDTO extends AbstractBuildResultNotifica
     @JsonProperty("testsRepoCommitHash")
     private final String testsRepoCommitHash;
 
-    @JsonProperty("isBuildSuccessful") // For some reason this annotation is necessary for jackson to work
+    @JsonProperty("isBuildSuccessful")
     private final boolean isBuildSuccessful;
 
     // This is the timestamp when the build was completed
@@ -41,7 +41,7 @@ public class HadesBuildResultNotificationDTO extends AbstractBuildResultNotifica
     @JsonProperty("buildCompletionTime")
     private final ZonedDateTime buildRunDate;
 
-    @JsonProperty("buildJobs") // For some reason this annotation is necessary for jackson to work
+    @JsonProperty("buildJobs")
     private final List<HadesBuildJobResultDTO> buildJobs;
 
     public HadesBuildResultNotificationDTO(String jobName, String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful,

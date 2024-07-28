@@ -92,6 +92,12 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws ContinuousIntegrationException {
+        log.warn("Triggering builds with a trigger all option is not supported for Hades. Triggering build while ignoring option.");
+        triggerBuild(participation);
+    }
+
+    @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
         log.warn("Triggering builds with a commit hash is not supported for Hades. Triggering build without commit hash.");
         triggerBuild(participation);
@@ -127,7 +133,7 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         var steps = new ArrayList<HadesBuildStepDTO>();
 
         // Create Clone Step
-        // TODO: We need a solution to clone with less critical credentials - This requires changes in the localvc implementation
+        // TODO: Add support for ssh authentication
         var cloneMetadata = new HashMap<String, String>();
         cloneMetadata.put("REPOSITORY_DIR", "/shared");
         cloneMetadata.put("HADES_TEST_USERNAME", gitUsername);
@@ -150,7 +156,7 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         var script = buildScriptGenerationService.getScript(participation.getProgrammingExercise());
         steps.add(new HadesBuildStepDTO(2, "Execute", image, script));
 
-        var resultMetadata = getStringStringHashMap(participation);
+        var resultMetadata = getResultMetadata(participation);
         steps.add(new HadesBuildStepDTO(3, "Result", resultDockerImage, resultMetadata));
 
         // Create Hades Job
@@ -158,7 +164,7 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         return new HadesBuildJobDTO("Test", metadata, timestamp, 1, steps);
     }
 
-    private HashMap<String, String> getStringStringHashMap(ProgrammingExerciseParticipation participation) {
+    private HashMap<String, String> getResultMetadata(ProgrammingExerciseParticipation participation) {
         var resultMetadata = new HashMap<String, String>();
         resultMetadata.put("API_TOKEN", resultToken);
         resultMetadata.put("INGEST_DIR", "/shared/build/test-results/test");
