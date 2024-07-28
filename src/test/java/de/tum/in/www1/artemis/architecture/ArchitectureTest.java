@@ -52,6 +52,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -63,7 +64,9 @@ import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaParameter;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
+import com.tngtech.archunit.core.domain.properties.HasType;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
@@ -289,6 +292,30 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
+    @Test
+    void testNoRequiredFalseOnMethodParams() {
+        methods().should(notHaveRequestParamWithRequiredFalse()).check(allClasses);
+    }
+
+    private ArchCondition<JavaMethod> notHaveRequestParamWithRequiredFalse() {
+        return new ArchCondition<>("Do not use 'required = false' with @RequestParam") {
+
+            @Override
+            public void check(final JavaMethod method, final ConditionEvents events) {
+
+                final var violated = method.getParameters().stream().map(JavaParameter::getAnnotations).flatMap(Set::stream).filter(HasType.Predicates.rawType(RequestParam.class))
+                        .map(annotation -> annotation.get("required").orElse(true)) // if not set, the default is true
+                        .map(Boolean.class::cast) // since we filter for the annotation and field we know this cast is safe!
+                        .anyMatch(required -> !required);
+
+                if (violated) {
+                    final String message = String.format("Method %s uses 'required = false', use Optional<T> instead!", method.getFullName());
+                    events.add(SimpleConditionEvent.violated(method, message));
+                }
+            }
+        };
+    }
+
     private static ArchCondition<JavaClass> beProfileAnnotated() {
         return new ArchCondition<>("be annotated with @Profile") {
 
@@ -395,4 +422,5 @@ class ArchitectureTest extends AbstractArchitectureTest {
         }
         return false;
     }
+
 }
