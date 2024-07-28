@@ -36,7 +36,7 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
@@ -157,6 +157,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // Using a list query to be able to listen for changes (late mount); need both as this only returns native nodes
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
+    @ViewChild('itemsDrop', { static: true }) itemsDrop: NgbDropdown;
+
     // Icons
     faTimes = faTimes;
     faEye = faEye;
@@ -229,71 +231,42 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         await this.initAfterCourseLoad();
         this.sidebarItems = this.getSidebarItems();
         this.courseActionItems = this.getCourseActionItems();
-        this.updateVisibility(window.innerHeight);
-        this.updateMenuPosition();
+        this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
     }
 
     /** Listen window resize event by height */
     @HostListener('window: resize', ['$event'])
     onResize() {
-        this.dropdownOpen = false;
-        this.dropdownClickNumber = 0;
-        this.updateVisibility(window.innerHeight);
-        this.updateMenuPosition();
-    }
-
-    /** Listen click event whether on outside of the menu or one of the items in the menu to close the dropdown menu */
-    @HostListener('document: click', ['$event'])
-    onClickCloseDropdownMenu() {
-        if (this.dropdownOpen) {
-            this.dropdownClickNumber += 1;
-            if (this.dropdownClickNumber === 2) {
-                this.dropdownOpen = false;
-                this.dropdownClickNumber = 0;
-            }
-        }
+        this.updateVisibleNavbarItems(window.innerHeight);
+        if (!this.anyItemHidden) this.itemsDrop.close();
     }
 
     /** Update sidebar item's hidden property based on the window height to display three-dots */
-    updateVisibility(height: number) {
-        let thresholdLevelForCurrentSidebar = this.calculateThreshold();
+    updateVisibleNavbarItems(height: number) {
+        const threshold = this.calculateThreshold();
+        this.applyThreshold(threshold, height);
+    }
+
+    /**  Applies the visibility threshold to sidebar items, determining which items should be hidden.*/
+    private applyThreshold(threshold: number, height: number) {
         this.anyItemHidden = false;
         this.hiddenItems = [];
-
-        for (let i = 0; i < this.sidebarItems.length - 1; i++) {
-            this.thresholdsForEachSidebarItem.unshift(thresholdLevelForCurrentSidebar);
-            thresholdLevelForCurrentSidebar -= this.ITEM_HEIGHT;
-        }
-        this.thresholdsForEachSidebarItem.unshift(0);
-
-        this.sidebarItems.forEach((item, index) => {
-            item.hidden = height <= this.thresholdsForEachSidebarItem[index];
+        // Reverse the sidebar items to remove items starting from the bottom
+        const reversedSidebarItems = [...this.sidebarItems].reverse();
+        reversedSidebarItems.forEach((item, index) => {
+            const currentThreshold = threshold - index * this.ITEM_HEIGHT;
+            item.hidden = height <= currentThreshold;
             if (item.hidden) {
                 this.anyItemHidden = true;
-                this.hiddenItems.push(item);
+                this.hiddenItems.unshift(item);
             }
         });
     }
 
-    /** Calculate dropdown-menu position based on the number of entries in the sidebar */
-    updateMenuPosition() {
-        const leftSidebarItems: number = this.sidebarItems.length - this.hiddenItems.length;
-        this.dropdownOffset = leftSidebarItems * this.ITEM_HEIGHT + this.BREADCRUMB_AND_NAVBAR_HEIGHT;
-    }
-
     /** Calculate threshold levels based on the number of entries in the sidebar */
     calculateThreshold(): number {
-        const numberOfSidebarItems: number = this.sidebarItems.length;
-        return numberOfSidebarItems * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
-    }
-
-    toggleDropdown() {
-        this.dropdownOpen = !this.dropdownOpen;
-        // Refresh click numbers after toggle
-        if (!this.dropdownOpen) {
-            this.dropdownClickNumber = 0;
-        }
+        return this.sidebarItems.length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
     }
 
     /** initialize courses attribute by retrieving all courses from the server */
@@ -343,7 +316,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             const examsItem: SidebarItem = this.getExamsItems();
             sidebarItems.unshift(examsItem);
         }
-        if (isMessagingEnabled(this.course) || isCommunicationEnabled(this.course)) {
+        if (isCommunicationEnabled(this.course)) {
             const communicationsItem: SidebarItem = this.getCommunicationsItems();
             sidebarItems.push(communicationsItem);
         }
