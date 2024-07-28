@@ -52,17 +52,20 @@ public class LectureImportService {
 
     private final FileService fileService;
 
+    private final SlideSplitterService slideSplitterService;
+
     private final LectureUnitProcessingService lectureUnitProcessingService;
 
     private final Optional<IrisSettingsRepository> irisSettingsRepository;
 
     public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository,
-                                Optional<PyrisWebhookService> pyrisWebhookService, FileService fileService, LectureUnitProcessingService lectureUnitProcessingService, Optional<IrisSettingsRepository> irisSettingsRepository) {
+                                Optional<PyrisWebhookService> pyrisWebhookService, FileService fileService, SlideSplitterService slideSplitterService, LectureUnitProcessingService lectureUnitProcessingService, Optional<IrisSettingsRepository> irisSettingsRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.pyrisWebhookService = pyrisWebhookService;
         this.fileService = fileService;
+        this.slideSplitterService = slideSplitterService;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.irisSettingsRepository = irisSettingsRepository;
     }
@@ -104,7 +107,7 @@ public class LectureImportService {
         log.debug("Importing attachments from lecture");
         Set<Attachment> attachments = new HashSet<>();
         for (Attachment attachment : importedLecture.getAttachments()) {
-            Attachment clonedAttachment = cloneAttachment(lecture.getId(), null,false, attachment);
+            Attachment clonedAttachment = cloneAttachment(lecture.getId(), false, null, attachment);
             clonedAttachment.setLecture(lecture);
             attachments.add(clonedAttachment);
         }
@@ -150,7 +153,7 @@ public class LectureImportService {
             attachmentUnit.setLecture(newLecture);
             lectureUnitRepository.save(attachmentUnit);
 
-            Attachment attachment = cloneAttachment(attachmentUnit.getId(), newLecture.getId(), true, importedAttachmentUnit.getAttachment());
+            Attachment attachment = cloneAttachment(attachmentUnit.getId(), true, attachmentUnit, importedAttachmentUnit.getAttachment());
             attachment.setAttachmentUnit(attachmentUnit);
             attachmentRepository.save(attachment);
             attachmentUnit.setAttachment(attachment);
@@ -177,7 +180,7 @@ public class LectureImportService {
      * @param importedAttachment The original attachment to be copied
      * @return The cloned attachment with the file also duplicated to the temp directory on disk
      */
-    private Attachment cloneAttachment(Long entityId, Long lectureId, boolean isLectureUnitAttachment, final Attachment importedAttachment) {
+    private Attachment cloneAttachment(Long entityId, boolean isLectureUnitAttachment, AttachmentUnit attachmentUnit, final Attachment importedAttachment) {
         log.debug("Creating a new Attachment from attachment {}", importedAttachment);
 
         Attachment attachment = new Attachment();
@@ -191,23 +194,16 @@ public class LectureImportService {
         Path basePath;
         if (isLectureUnitAttachment) {
             basePath = FilePathService.getAttachmentUnitFilePath().resolve(entityId.toString());
+            if (Objects.equals(FilenameUtils.getExtension(oldPath.getFileName().toString()), "pdf")) {
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(attachmentUnit);
+            }
         } else {
             basePath = FilePathService.getLectureAttachmentFilePath().resolve(entityId.toString());
         }
-        if (isLectureUnitAttachment && Objects.equals(FilenameUtils.getExtension(oldPath.getFileName().toString()), "pdf")) {
-            try {
-                FileUtils.copyDirectory(oldPath.getParent().toFile(), basePath.toFile());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(oldPath, entityId).toString());
-        } else {
-            log.debug("Copying attachment file from {} to {}", oldPath, basePath);
-            Path savePath = fileService.copyExistingFileToTarget(oldPath, basePath);
-            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
 
-        }
-
+        log.debug("Copying attachment file from {} to {}", oldPath, basePath);
+        Path savePath = fileService.copyExistingFileToTarget(oldPath, basePath);
+        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
 
         return attachment;
     }
