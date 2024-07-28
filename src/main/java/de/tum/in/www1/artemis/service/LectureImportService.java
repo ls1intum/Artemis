@@ -177,6 +177,7 @@ public class LectureImportService {
     /**
      * This helper function clones the {@code importedAttachment} (and duplicates its file) and returns it
      *
+     * @param entityId           The id of the new entity to which the attachment is linked
      * @param importedAttachment The original attachment to be copied
      * @return The cloned attachment with the file also duplicated to the temp directory on disk
      */
