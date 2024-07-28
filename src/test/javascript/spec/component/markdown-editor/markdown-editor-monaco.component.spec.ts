@@ -20,6 +20,7 @@ import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/mona
 import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
 import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
 import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -199,5 +200,13 @@ describe('MarkdownEditorMonacoComponent', () => {
     it('should compute height 0 for a missing element', () => {
         fixture.detectChanges();
         expect(comp.getElementClientHeight(undefined)).toBe(0);
+    });
+
+    it('should apply option presets to the editor', () => {
+        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
+        fixture.detectChanges();
+        const preset = new MonacoEditorOptionPreset({ lineNumbers: 'off' });
+        comp.applyOptionPreset(preset);
+        expect(applySpy).toHaveBeenCalledExactlyOnceWith(preset);
     });
 });
