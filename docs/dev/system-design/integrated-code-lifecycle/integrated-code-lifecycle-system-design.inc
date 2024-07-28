@@ -103,7 +103,7 @@ Build jobs are assigned a priority value when they are added to the job queue. T
 The higher the priority value, the sooner the build job is executed.
 
 The priority value is determined based on several factors related to the programming exercise and its context.
-Exercises that are part of an ongoing exam are given a higher priority of ``1`` to ensure quick feedback.
+Exercises that are part of an ongoing exam are given the highest priority of ``1`` to ensure quick feedback.
 Exam exercises that are part of a test exam or a test run within an exam are assigned a priority of ``2``.
 Submissions made after the due date, such as those in practice mode or finished exams, receive a lower priority of ``3``.
 Optional exercises, which are not included in the overall score, are also assigned a priority of ``3``.
