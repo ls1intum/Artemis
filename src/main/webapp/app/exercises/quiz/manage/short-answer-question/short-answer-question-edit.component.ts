@@ -376,7 +376,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for a solution option below the last visible row
      */
     addOption(): void {
-        this.insertShortAnswerOptionAction.executeInCurrentEditor({});
+        this.insertShortAnswerOptionAction.executeInCurrentEditor();
     }
 
     /**
