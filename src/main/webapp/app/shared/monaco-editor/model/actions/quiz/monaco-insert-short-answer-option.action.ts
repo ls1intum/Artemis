@@ -21,7 +21,7 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
     }
 
     run(editor: monaco.editor.ICodeEditor, args?: InsertShortAnswerOptionArgs): void {
-        const optionText = args?.optionText || this.getSelectedText(editor) || MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT;
+        const optionText = args?.optionText || MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT;
         let insertedText: string;
         if (args?.spotNumber) {
             insertedText = `\n[-option ${args.spotNumber}] ${optionText}`;
