@@ -422,5 +422,4 @@ class ArchitectureTest extends AbstractArchitectureTest {
         }
         return false;
     }
-
 }
