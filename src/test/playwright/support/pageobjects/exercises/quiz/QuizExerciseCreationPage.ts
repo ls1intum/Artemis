@@ -37,7 +37,7 @@ export class QuizExerciseCreationPage {
         const fileContent = await Fixtures.get('exercise/quiz/short_answer/question.txt');
         const textInputField = this.page.locator('.monaco-editor');
         await clearTextField(textInputField);
-        await this.page.locator('.monaco-editor').fill(fileContent!);
+        await this.page.locator('.monaco-editor textarea').fill(fileContent!);
         await this.page.locator('#short-answer-show-visual').click();
     }
 
