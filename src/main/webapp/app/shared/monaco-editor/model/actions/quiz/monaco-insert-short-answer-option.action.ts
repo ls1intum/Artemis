@@ -5,8 +5,12 @@ interface InsertShortAnswerOptionArgs {
     spotNumber?: number;
     optionText?: string;
 }
+
+/**
+ * Action to insert a short answer option ([-option #] Option text) at the end of the editor.
+ */
 export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
-    static readonly ID = 'monaco.insert-short-answer-option.action';
+    static readonly ID = 'monaco-insert-short-answer-option.action';
     static readonly DEFAULT_TEXT = 'Enter an answer option here and ensure the spot number is correct.';
     static readonly DEFAULT_TEXT_SHORT = 'Enter an answer option here.';
 
@@ -20,6 +24,11 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
         super.executeInCurrentEditor(args);
     }
 
+    /**
+     * Inserts a short answer option at the end of the editor. This option has the format [-option #] Option text, where # is the spot number.
+     * @param editor The editor to insert the option in.
+     * @param args The optional arguments for the action. Can include a spot number (will be # otherwise) and the option text (if blank/absent, the default text will be used).
+     */
     run(editor: monaco.editor.ICodeEditor, args?: InsertShortAnswerOptionArgs): void {
         // Note that even if the optionText is provided, it may be blank. This is why we use || instead of ?? here.
         const optionText = args?.optionText || MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT;

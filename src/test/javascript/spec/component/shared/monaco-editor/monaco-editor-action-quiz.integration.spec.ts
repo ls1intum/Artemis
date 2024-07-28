@@ -39,13 +39,9 @@ describe('MonacoEditorActionQuizIntegration', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(comp).toBeTruthy();
-    });
-
-    const getLastLine = () => comp.getText().split('\n').last();
-
     describe('MonacoInsertShortAnswerOption', () => {
+        const getLastLine = () => comp.getText().split('\n').last();
+
         it('should insert text with the default answer option', () => {
             insertShortAnswerOptionAction.executeInCurrentEditor();
             // Text must match
