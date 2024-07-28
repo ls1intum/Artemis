@@ -2,16 +2,16 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20240624091200" author="entholzer">
+    <changeSet id="20240727091201" author="entholzer">
         <createTable tableName="participation_vcs_access_token">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="user_id" type="bigint">
-                <constraints nullable="false"/>
+                <constraints nullable="false" unique="true" uniqueConstraintName="user-participation_unique"/>
             </column>
             <column name="participation_id" type="bigint">
-                <constraints nullable="false"/>
+                <constraints nullable="false" unique="true" uniqueConstraintName="user-participation_unique"/>
             </column>
             <column name="vcs_access_token" type="varchar(50)">
                 <constraints nullable="false"/>
@@ -27,5 +27,12 @@
                                  constraintName="FK_participation_vcs_access_token_participation"
                                  referencedColumnNames="id"
                                  referencedTableName="participation"/>
+        <createIndex indexName="idx_vcs_access_token" tableName="participation_vcs_access_token">
+            <column name="vcs_access_token"/>
+        </createIndex>
+        <createIndex indexName="idx_participation_vcs_access_token_user_participation" tableName="participation_vcs_access_token">
+            <column name="user_id"/>
+            <column name="participation_id"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>
