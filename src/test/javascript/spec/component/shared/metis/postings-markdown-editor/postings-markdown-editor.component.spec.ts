@@ -142,7 +142,8 @@ describe('PostingsMarkdownEditor', () => {
         expect(component.onChange).toBe(onChange);
     });
 
-    it('should call preventDefault when she user presses enter', () => {
+    it('should call preventDefault when the user presses enter', () => {
+        component.suppressNewlineOnEnter = true;
         const event = new KeyboardEvent('keydown', { key: 'Enter' });
         const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
         component.onKeyDown(event);
@@ -150,7 +151,16 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should not call preventDefault when the user presses shift+enter', () => {
+        component.suppressNewlineOnEnter = true;
         const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        component.onKeyDown(event);
+        expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not suppress newlines on enter if disabled', () => {
+        component.suppressNewlineOnEnter = false;
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
         const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
         component.onKeyDown(event);
         expect(preventDefaultSpy).not.toHaveBeenCalled();

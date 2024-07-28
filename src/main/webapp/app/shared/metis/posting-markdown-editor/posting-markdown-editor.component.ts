@@ -51,6 +51,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() maxContentLength: number;
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
     @Input() isInputLengthDisplayed = true;
+    @Input() suppressNewlineOnEnter = true;
     @Output() valueChange = new EventEmitter();
     lectureAttachmentReferenceAction: MonacoLectureAttachmentReferenceAction;
     defaultActions: MonacoEditorAction[];
@@ -147,8 +148,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     }
 
     onKeyDown(event: KeyboardEvent) {
-        // Prevent a newline from being added when pressing enter
-        if (event.key === 'Enter' && !event.shiftKey) {
+        // Prevent a newline from being added to the text when pressing enter
+        if (this.suppressNewlineOnEnter && event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
         }
     }
