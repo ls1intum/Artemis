@@ -373,9 +373,8 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                             files.set(dragItemFile.name, { path: dragItem.pictureFilePath, file: dragItemFile });
                             dragItem.pictureFilePath = dragItemFile.name;
                         }
-
-                        dragItemCounter += 1;
                     }
+                    dragItemCounter += 1;
                     dragItem.tempID = dragItem.id;
                     dragItem.id = undefined;
                     dragItem.invalid = false;
