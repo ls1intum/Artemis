@@ -318,7 +318,7 @@
                         <button
                             id="quiz-save"
                             class="btn btn-success"
-                            (click)="save()"
+                            (click)="validateItemLimit()"
                             [disabled]="isSaveDisabled()"
                             jhiTranslate="entity.action.save"
                             [ngbTooltip]="quizIsValid ? '' : tooltipTranslate"

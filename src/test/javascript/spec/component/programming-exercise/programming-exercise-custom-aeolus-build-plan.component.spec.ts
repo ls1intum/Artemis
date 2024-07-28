@@ -14,8 +14,7 @@ import {
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { ElementRef, NgZone } from '@angular/core';
+import { ElementRef, Renderer2 } from '@angular/core';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,6 +23,8 @@ import { programmingExerciseCreationConfigMock } from './update-components/progr
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { PROFILE_AEOLUS } from 'app/app.constants';
 import { Observable } from 'rxjs';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -38,6 +39,8 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let cleanBuildAction: ScriptAction = new ScriptAction();
     let platformAction: PlatformAction = new PlatformAction();
     let mockAeolusService: AeolusService;
+    let renderer2: Renderer2;
+    let translateService: TranslateService;
 
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
@@ -67,7 +70,12 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseCustomAeolusBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(AceEditorComponent)],
+            declarations: [
+                ProgrammingExerciseCustomAeolusBuildPlanComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(MonacoEditorComponent),
+            ],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()
@@ -77,6 +85,9 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
             });
 
         const fixture = TestBed.createComponent(ProgrammingExerciseCustomAeolusBuildPlanComponent);
+        // These are not directly injected into the component, but are needed for the tests.
+        renderer2 = fixture.debugElement.injector.get(Renderer2);
+        translateService = fixture.debugElement.injector.get(TranslateService);
         comp = fixture.componentInstance;
 
         comp.programmingExercise = programmingExercise;
@@ -120,9 +131,8 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should accept editor', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        const zone: NgZone = new NgZone({});
         expect(comp.editor).toBeUndefined();
-        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         expect(comp.editor).toBeDefined();
     });
 
@@ -172,10 +182,9 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should set editor text', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        const zone: NgZone = new NgZone({});
-        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         comp.changeActiveAction('gradle');
-        expect(comp.editor.text).toBe(gradleBuildAction.script);
+        expect(comp.editor?.getText()).toBe(gradleBuildAction.script);
     });
 
     it('should return false to reload template', () => {
