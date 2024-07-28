@@ -4,7 +4,7 @@ import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -18,7 +18,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.utils';
-import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -42,14 +41,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
 
     readonly documentationType: DocumentationType = 'Exams';
-
-    readonly defaultSecondLayerDialogOptions: NgbModalOptions = {
-        size: 'md',
-        scrollable: false,
-        backdrop: 'static',
-        backdropClass: 'second-layer-modal-bg',
-        centered: true,
-    };
 
     // Icons
     faSave = faSave;
@@ -146,16 +137,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
     /**
      * Updates the working time for real exams based on the start and end dates.
-     * @param {boolean} startDate - Indicates if the working time update is caused by start date changes
      */
-    updateExamWorkingTime(startDate: boolean = false) {
+    updateExamWorkingTime() {
         if (this.exam.testExam) return;
 
         this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
-        // Check the difference between visible date and new start date
-        if (startDate) {
-            this.handleVisibilityDate();
-        }
     }
 
     onExamModeChange() {
@@ -183,7 +169,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      *
      * @returns {boolean} true if the visibility date is more than 4 hours before the start date, false otherwise.
      */
-    checkExamVisibilityTime(): boolean {
+    get checkExamVisibilityTime(): boolean {
         if (!this.isVisibleDateSet || !this.isStartDateSet) {
             return false;
         }
@@ -196,36 +182,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
         // Check if the difference is more than 4 hours (240 minutes)
         return differenceInMinutes > 240;
-    }
-
-    /**
-     * Determines if the visibility date is set more than 4 hours before the exam start date.
-     * If the visibility date exceeds this limit, it displays a confirmation dialog to the
-     * user with a warning.
-     */
-    handleVisibilityDate() {
-        const examVisibilityExceedLimit = this.checkExamVisibilityTime();
-
-        if (examVisibilityExceedLimit) {
-            const keys = {
-                titleKey: 'artemisApp.examManagement.visibilitityWarning.title',
-                questionKey: 'artemisApp.examManagement.visibilitityWarning.question',
-                descriptionKey: 'artemisApp.examManagement.visibilitityWarning.description',
-                confirmButtonKey: 'artemisApp.examManagement.visibilitityWarning.confirmButton',
-            };
-            const modalRef = this.modalService.open(GenericConfirmationDialogComponent, this.defaultSecondLayerDialogOptions);
-            modalRef.componentInstance.translationKeys = keys;
-            modalRef.componentInstance.canBeUndone = true;
-            modalRef.componentInstance.initialize();
-            modalRef.result.then(
-                // On confirm, do nothing
-                () => {},
-                () => {
-                    // On cancel, unset visibleDate
-                    this.exam.visibleDate = undefined;
-                },
-            );
-        }
     }
 
     /**

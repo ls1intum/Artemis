@@ -22,6 +22,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
+    @Input() warning: boolean;
     @Input() requiredField: boolean = false;
     @Input() startAt?: dayjs.Dayjs; // Default selected date. By default this sets it to the current time without seconds or milliseconds;
     @Input() min?: dayjs.Dayjs; // Dates before this date are not selectable.
