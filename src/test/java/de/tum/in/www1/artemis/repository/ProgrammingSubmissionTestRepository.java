@@ -8,20 +8,20 @@ import java.util.Optional;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity tests.
  */
 @Repository
-public interface ProgrammingSubmissionTestRepository extends JpaRepository<ProgrammingSubmission, Long> {
+public interface ProgrammingSubmissionTestRepository extends ArtemisJpaRepository<ProgrammingSubmission, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     @Query("""

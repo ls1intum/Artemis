@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,12 +7,13 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA testing repository for the ProgrammingExerciseStudentParticipation entity.
  */
 @Repository
-public interface ProgrammingExerciseStudentParticipationTestRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
+public interface ProgrammingExerciseStudentParticipationTestRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
     /**
      * updates the build plan id of all programming exercise student participations

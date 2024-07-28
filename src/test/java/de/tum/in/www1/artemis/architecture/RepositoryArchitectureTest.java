@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -33,6 +34,7 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.repository.base.RepositoryImpl;
 
 /**
  * This class contains architecture tests for the persistence layer.
@@ -148,12 +150,17 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    public void orElseThrowShouldNotBeCalled() {
+    void repositoriesImplementArtemisJpaRepository() {
+        classes().that().areAssignableTo(JpaRepository.class).and().doNotBelongToAnyOf(RepositoryImpl.class).should().beAssignableTo(ArtemisJpaRepository.class).check(allClasses);
+    }
+
+    @Test
+    void orElseThrowShouldNotBeCalled() {
         var result = noClasses().that().areAssignableTo(ArtemisJpaRepository.class).should().callMethod(Optional.class, "orElseThrow").orShould()
                 .callMethod(Optional.class, "orElseThrow", Supplier.class).because("ArtemisJpaRepository offers the method getValueElseThrow for this use case")
                 .evaluate(allClasses);
         // If you refactor a repository and fail the test due to a lower number of violations, you can update the expected number of violations here
         // hasSizeLessThenOrEqualTo is not used to avoid adding new violations after a few refactorings
-        assertThat(result.getFailureReport().getDetails()).hasSize(144);
+        assertThat(result.getFailureReport().getDetails()).hasSize(146);
     }
 }
