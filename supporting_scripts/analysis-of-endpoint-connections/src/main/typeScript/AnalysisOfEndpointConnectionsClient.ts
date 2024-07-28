@@ -26,7 +26,7 @@ function collectTypeScriptFiles(dir: string, files: string[] = []) {
     return files;
 }
 
-const clientDirPath = resolve('src/main/webapp/app');
+const clientDirPath = resolve('../../../../../src/main/webapp/app');
 
 const tsFiles = collectTypeScriptFiles(clientDirPath);
 
@@ -42,4 +42,4 @@ tsFiles.forEach((filePath) => {
     postProcessor.extractRestCalls();
 });
 
-writeFileSync('supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
+writeFileSync('../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));

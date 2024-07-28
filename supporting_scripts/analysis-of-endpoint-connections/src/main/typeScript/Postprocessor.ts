@@ -24,7 +24,7 @@ enum ParsingResultType {
     GET_URL_FROM_GETTER_SUCCESS,
     GET_URL_FROM_GETTER_FAILURE,
 
-    UNABLE_TO_EVALUATE, // TODO, Incorporate this Type when no matching URL Parser is found
+    UNABLE_TO_EVALUATE,
 }
 
 class ParsingResult {
@@ -38,13 +38,13 @@ class ParsingResult {
 }
 
 export class Postprocessor {
-    static filesWithRestCalls: { filePath: string, restCalls: RestCall[]}[] = [];
+    static filesWithRestCalls: { fileName: string, restCalls: RestCall[]}[] = [];
     private restCalls: RestCall[] = [];
-    private readonly filePath: string;
+    private readonly fileName: string;
     private ast: TSESTree.Program;
 
     constructor(filePath: string) {
-        this.filePath = filePath;
+        this.fileName = filePath;
         this.ast = Preprocessor.parseTypeScriptFile(Preprocessor.pathPrefix + filePath)
     }
 
@@ -61,7 +61,7 @@ export class Postprocessor {
             }
         });
         if (this.restCalls.length > 0) {
-            Postprocessor.filesWithRestCalls.push( {filePath: this.filePath, restCalls: this.restCalls} );
+            Postprocessor.filesWithRestCalls.push( {fileName: this.fileName, restCalls: this.restCalls} );
         }
     }
 
@@ -91,7 +91,7 @@ export class Postprocessor {
                                         urlEvaluationResult = this.evaluateUrl(node.arguments[0], methodDefinition, node, classBody);
                                     }
 
-                                    const fileName = this.filePath;
+                                    const fileName = this.fileName;
                                     if (urlEvaluationResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
                                         for (let url of urlEvaluationResult.result) {
                                             this.restCalls.push({ method, url, line, fileName });

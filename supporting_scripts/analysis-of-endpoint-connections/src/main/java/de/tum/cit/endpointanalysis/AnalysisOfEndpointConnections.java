@@ -52,8 +52,8 @@ public class AnalysisOfEndpointConnections {
 
         parseServerEndpoints(filesToParse);
         analyzeEndpoints();
-        printEndpointAnalysisResult();
-        // analyzeRestCalls();
+//        printEndpointAnalysisResult();
+        analyzeRestCalls();
     }
 
     private static void parseServerEndpoints(String[] filePaths) {
@@ -147,6 +147,7 @@ public class AnalysisOfEndpointConnections {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"),
                     new TypeReference<List<EndpointClassInformation>>() {
                     });
+
             List<RestCallFileInformation> restCallFiles = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
                     new TypeReference<List<RestCallFileInformation>>() {
                     });
@@ -218,34 +219,36 @@ public class AnalysisOfEndpointConnections {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"),
                     new TypeReference<List<EndpointClassInformation>>() {
                     });
-            List<RestCallInformation> restCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
-                    new TypeReference<List<RestCallInformation>>() {
+            List<RestCallFileInformation> restCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
+                    new TypeReference<List<RestCallFileInformation>>() {
                     });
 
-            for (RestCallInformation restCall : restCalls) {
-                boolean matchingEndpointFound = false;
-                System.out.println("=============================================");
-                System.out.println("REST call URI: " + restCall.buildCompleteRestCallURI());
-                System.out.println("HTTP method: " + restCall.getMethod());
-                System.out.println("File path: " + restCall.getFilePath());
-                System.out.println("Line: " + restCall.getLine());
-                System.out.println("=============================================");
-                for (EndpointClassInformation endpointClass : endpointClasses) {
-                    for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
-                        String endpointURI = endpoint.buildComparableEndpointUri();
-                        String restCallURI = restCall.buildComparableRestCallUri();
-                        if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().equals(restCall.getMethod())) {
-                            matchingEndpointFound = true;
-                            System.out.println("Matching endpoint found.\nURI: " + endpoint.buildCompleteEndpointURI() + "\nHTTP method: " + endpoint.getHttpMethodAnnotation());
-                            System.out.println("---------------------------------------------");
+            for (RestCallFileInformation restCallFile : restCalls) {
+                for (RestCallInformation restCall : restCallFile.getRestCalls()) {
+                    boolean matchingEndpointFound = false;
+                    System.out.println("=============================================");
+                    System.out.println("REST call URI: " + restCall.buildCompleteRestCallURI());
+                    System.out.println("HTTP method: " + restCall.getMethod());
+                    System.out.println("File path: " + restCall.getFileName());
+                    System.out.println("Line: " + restCall.getLine());
+                    System.out.println("=============================================");
+                    for (EndpointClassInformation endpointClass : endpointClasses) {
+                        for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
+                            String endpointURI = endpoint.buildComparableEndpointUri();
+                            String restCallURI = restCall.buildComparableRestCallUri();
+                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().equals(restCall.getMethod())) {
+                                matchingEndpointFound = true;
+                                System.out.println("Matching endpoint found.\nURI: " + endpoint.buildCompleteEndpointURI() + "\nHTTP method: " + endpoint.getHttpMethodAnnotation());
+                                System.out.println("---------------------------------------------");
+                            }
                         }
                     }
+                    if (!matchingEndpointFound) {
+                        System.out.println("No matching endpoint found for REST call: " + restCall.buildCompleteRestCallURI());
+                        System.out.println("---------------------------------------------");
+                    }
+                    System.out.println();
                 }
-                if (!matchingEndpointFound) {
-                    System.out.println("No matching endpoint found for REST call: " + restCall.buildCompleteRestCallURI());
-                    System.out.println("---------------------------------------------");
-                }
-                System.out.println();
             }
         }
         catch (IOException e) {
