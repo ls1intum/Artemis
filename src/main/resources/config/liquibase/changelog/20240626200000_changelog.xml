@@ -16,7 +16,6 @@
             <column name="checkout_path" type="VARCHAR(128)"/>
             <column name="timeout_seconds" type="INT"/>
             <column name="docker_flags" type="VARCHAR(255)"/>
-            <column name="common_key_id" type="BIGINT"/>
             <column name="testwise_coverage_enabled" type="BOOLEAN"/>
         </createTable>
 
@@ -44,15 +43,15 @@
     <!-- Move data from programming_exercise to programming_exercise_build_config and remove the column from programming_exercise -->
     <changeSet id="20240626200000_2" author="bbesrour">
         <sql>
-            INSERT INTO programming_exercise_build_config (sequential_test_runs, branch, build_plan_configuration, build_script, checkout_solution_repository, common_key_id, testwise_coverage_enabled)
-            SELECT exercise.sequential_test_runs, programming_exercise_details.branch, programming_exercise_details.build_plan_configuration, programming_exercise_details.build_script, programming_exercise_details.checkout_solution_repository, exercise.id, programming_exercise_details.testwise_coverage_enabled
+            INSERT INTO programming_exercise_build_config (id, sequential_test_runs, branch, build_plan_configuration, build_script, checkout_solution_repository, testwise_coverage_enabled)
+            SELECT exercise.id, exercise.sequential_test_runs, programming_exercise_details.branch, programming_exercise_details.build_plan_configuration, programming_exercise_details.build_script, programming_exercise_details.checkout_solution_repository, programming_exercise_details.testwise_coverage_enabled
             FROM exercise JOIN programming_exercise_details ON exercise.id = programming_exercise_details.id
             WHERE exercise.discriminator = 'P';
 
             UPDATE programming_exercise_details SET programming_exercise_build_config_id = (
-                SELECT id
+                SELECT programming_exercise_build_config.id
                 FROM programming_exercise_build_config
-                WHERE common_key_id = programming_exercise_details.id
+                WHERE programming_exercise_build_config.id = programming_exercise_details.id
             );
 
             ALTER TABLE exercise DROP COLUMN sequential_test_runs;
@@ -61,7 +60,6 @@
             ALTER TABLE programming_exercise_details DROP COLUMN build_script;
             ALTER TABLE programming_exercise_details DROP COLUMN checkout_solution_repository;
             ALTER TABLE programming_exercise_details DROP COLUMN testwise_coverage_enabled;
---            ALTER TABLE programming_exercise_build_config DROP COLUMN common_key_id;
         </sql>
     </changeSet>
 </databaseChangeLog>
