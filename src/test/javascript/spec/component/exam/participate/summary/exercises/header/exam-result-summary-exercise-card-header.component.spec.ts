@@ -34,7 +34,12 @@ const programmingSubmission = { id: 1 } as ProgrammingSubmission;
 
 const programmingParticipation = { id: 4, student: user, submissions: [programmingSubmission] } as StudentParticipation;
 
-const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation], exerciseGroup } as ProgrammingExercise;
+const programmingExercise = {
+    id: 4,
+    type: ExerciseType.PROGRAMMING,
+    studentParticipations: [programmingParticipation],
+    exerciseGroup,
+} as ProgrammingExercise;
 
 describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
     beforeEach(() => {
