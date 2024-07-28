@@ -11,6 +11,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import com.github.javaparser.ast.expr.ArrayInitializerExpr;
+import com.github.javaparser.ast.expr.Expression;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -50,10 +52,14 @@ public class AnalysisOfEndpointConnections {
 
         }
 
-        parseServerEndpoints(filesToParse);
+//        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/lecture/AttachmentUnitResource.java"};
+        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/AeolusTemplateResource.java"};
+        parseServerEndpoints(test);
+
+//        parseServerEndpoints(filesToParse);
         analyzeEndpoints();
         printEndpointAnalysisResult();
-        analyzeRestCalls();
+//        analyzeRestCalls();
     }
 
     private static void parseServerEndpoints(String[] filePaths) {
@@ -94,24 +100,34 @@ public class AnalysisOfEndpointConnections {
                     for (MethodDeclaration method : javaClass.getMethods()) {
                         for (AnnotationExpr annotation : method.getAnnotations()) {
                             if (httpMethodClasses.contains(annotation.getNameAsString())) {
-                                final String[] annotationPathValue = { "" };
+                                final List<String> annotationPathValue = new ArrayList<>();
 
                                 if (annotation instanceof SingleMemberAnnotationExpr) {
                                     SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
-                                    annotationPathValue[0] = single.getMemberValue().toString();
+
+                                    Expression memberValue = single.getMemberValue();
+                                    if (memberValue instanceof ArrayInitializerExpr) {
+                                        ArrayInitializerExpr arrayExpr = (ArrayInitializerExpr) memberValue;
+                                        annotationPathValue.addAll(arrayExpr.getValues().stream().map(Expression::toString).toList());
+                                    } else {
+                                        annotationPathValue.add(single.getMemberValue().toString());
+                                    }
                                 }
                                 else if (annotation instanceof NormalAnnotationExpr) {
                                     NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
-                                    Optional<MemberValuePair> annotationPathOptional = normal.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).findFirst();
+                                    Optional<MemberValuePair> annotationPathOptional = normal.getPairs().stream().filter(pair -> "value".equals(pair.getNameAsString())).findFirst();
                                     annotationPathOptional.ifPresent(pair -> {
-                                        annotationPathValue[0] = pair.getValue().toString();
+                                        annotationPathValue.add(pair.getValue().toString());
                                     });
                                 }
 
                                 List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.toString()).toList();
-                                EndpointInformation endpointInformation = new EndpointInformation(classRequestMapping[0], method.getNameAsString(), annotation.getNameAsString(),
-                                        annotationPathValue[0], javaClass.getNameAsString(), method.getBegin().get().line, annotations);
-                                endpoints.add(endpointInformation);
+
+                                for (String path : annotationPathValue) {
+                                    EndpointInformation endpointInformation = new EndpointInformation(classRequestMapping[0], method.getNameAsString(), annotation.getNameAsString(),
+                                        path, javaClass.getNameAsString(), method.getBegin().get().line, annotations);
+                                    endpoints.add(endpointInformation);
+                                }
                             }
                         }
                     }
