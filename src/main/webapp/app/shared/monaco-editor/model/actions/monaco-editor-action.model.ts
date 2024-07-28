@@ -205,23 +205,6 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     }
 
     /**
-     * Inserts a snippet at the current cursor position. A snippet can contain placeholders for the user to fill in.
-     * @param editor The editor to insert the snippet in.
-     * @param position The position to insert the snippet at.
-     * @param snippet The snippet to insert.
-     */
-    insertSnippetAtPosition(editor: monaco.editor.ICodeEditor, position: monaco.IPosition, snippet: string): void {
-        // See https://github.com/Microsoft/monaco-editor/issues/342. No type definition exists for the snippet controller, hence the use of any.
-        const snippetController = editor.getContribution('snippetController2') as any;
-        if (snippetController && 'insert' in snippetController) {
-            this.setPosition(editor, position);
-            snippetController.insert(snippet, position);
-        } else {
-            throw new Error('Snippet controller not available or cannot insert snippet.');
-        }
-    }
-
-    /**
      * Sets the position of the cursor in the given editor.
      * @param editor The editor to set the position in.
      * @param position The position to set.
@@ -232,6 +215,16 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         if (revealLine) {
             editor.revealLineInCenter(position.lineNumber);
         }
+    }
+
+    /**
+     * Sets the selection of the given editor to the given range and reveals it in the center of the editor.
+     * @param editor The editor to set the selection in.
+     * @param selection The selection to set.
+     */
+    setSelection(editor: monaco.editor.ICodeEditor, selection: monaco.IRange): void {
+        editor.setSelection(selection);
+        editor.revealRangeInCenter(selection);
     }
 
     /**

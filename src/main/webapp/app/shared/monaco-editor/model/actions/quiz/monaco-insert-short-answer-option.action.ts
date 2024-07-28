@@ -21,18 +21,18 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
     }
 
     run(editor: monaco.editor.ICodeEditor, args?: InsertShortAnswerOptionArgs): void {
-        const text = args?.optionText || this.getSelectedText(editor) || MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT;
-        let snippet;
+        const optionText = args?.optionText || this.getSelectedText(editor) || MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT;
+        let insertedText: string;
         if (args?.spotNumber) {
-            snippet = `\n[-option ${args.spotNumber}] \${1:${text}}`;
+            insertedText = `\n[-option ${args.spotNumber}] ${optionText}`;
         } else {
-            snippet = `\n[-option \${1:#}] \${2:${text}}`;
+            insertedText = `\n[-option #] ${optionText}`;
         }
         // Add additional spacing if the last line is not also an option
         if (!this.getLineText(editor, this.getLineCount(editor))?.startsWith('[-option')) {
-            snippet = `\n\n${snippet}`;
+            insertedText = `\n\n${insertedText}`;
         }
-        this.insertSnippetAtPosition(editor, this.getEndPosition(editor), snippet);
+        this.insertTextAtPosition(editor, this.getEndPosition(editor), insertedText);
         editor.focus();
     }
 }
