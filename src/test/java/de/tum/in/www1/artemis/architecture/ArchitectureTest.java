@@ -304,6 +304,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             public void check(final JavaMethod method, final ConditionEvents events) {
 
                 final var violated = method.getParameters().stream().map(JavaParameter::getAnnotations).flatMap(Set::stream).filter(HasType.Predicates.rawType(RequestParam.class))
+                        .filter(annotation -> annotation.get("defaultValue").isEmpty()) // if there is a default value set, then required false does not need to be checked for
                         .map(annotation -> annotation.get("required").orElse(true)) // if not set, the default is true
                         .map(Boolean.class::cast) // since we filter for the annotation and field we know this cast is safe!
                         .anyMatch(required -> !required);
