@@ -10,11 +10,13 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,6 +31,8 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * This class contains architecture tests for the persistence layer.
@@ -132,7 +136,7 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
         // Method <de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService.importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)>
         // Method <de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService.onTimeZoneUpdate(Course)>
         var result = transactionalRule.evaluate(allClasses);
-        Assertions.assertThat(result.getFailureReport().getDetails()).hasSize(5);
+        assertThat(result.getFailureReport().getDetails()).hasSize(5);
     }
 
     @Test
@@ -141,5 +145,15 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
                 .beAnnotatedWith(jakarta.transaction.Transactional.class)
                 .because("Only Spring's Transactional annotation should be used as the usage of the other two is not reliable.");
         onlySpringTransactionalAnnotation.check(allClasses);
+    }
+
+    @Test
+    public void orElseThrowShouldNotBeCalled() {
+        var result = noClasses().that().areAssignableTo(ArtemisJpaRepository.class).should().callMethod(Optional.class, "orElseThrow").orShould()
+                .callMethod(Optional.class, "orElseThrow", Supplier.class).because("ArtemisJpaRepository offers the method getValueElseThrow for this use case")
+                .evaluate(allClasses);
+        // If you refactor a repository and fail the test due to a lower number of violations, you can update the expected number of violations here
+        // hasSizeLessThenOrEqualTo is not used to avoid adding new violations after a few refactorings
+        assertThat(result.getFailureReport().getDetails()).hasSize(144);
     }
 }
