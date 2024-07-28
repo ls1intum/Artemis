@@ -12,11 +12,11 @@
             <column name="branch" type="VARCHAR(128)"/>
             <column name="build_plan_configuration" type="longtext"/>
             <column name="build_script" type="longtext"/>
-            <column name="checkout_solution_repository" type="BOOLEAN"/>
+            <column defaultValueBoolean="false" name="checkout_solution_repository" type="BOOLEAN"/>
             <column name="checkout_path" type="VARCHAR(128)"/>
-            <column name="timeout_seconds" type="INT"/>
+            <column  defaultValueNumeric="0" name="timeout_seconds" type="INT"/>
             <column name="docker_flags" type="VARCHAR(255)"/>
-            <column name="testwise_coverage_enabled" type="BOOLEAN"/>
+            <column defaultValueBoolean="false" name="testwise_coverage_enabled" type="BOOLEAN"/>
         </createTable>
 
         <!-- Add a new column to the programming_exercise table to reference the programming_exercise_build_config -->

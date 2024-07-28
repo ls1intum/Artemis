@@ -38,7 +38,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         programmingExercise.getBuildConfig().setBranch(null);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository to copy the student assignment repository from.
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";

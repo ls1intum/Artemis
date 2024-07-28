@@ -18,9 +18,9 @@ public interface ProgrammingExerciseBuildConfigRepository extends ArtemisJpaRepo
 
     Optional<ProgrammingExerciseBuildConfig> findByProgrammingExerciseId(Long programmingExerciseId);
 
-    default ProgrammingExerciseBuildConfig getProgrammingExerciseWithBuildConfigElseThrow(ProgrammingExercise programmingExercise) {
+    default ProgrammingExerciseBuildConfig getProgrammingExerciseBuildConfigElseThrow(ProgrammingExercise programmingExercise) {
         if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
-            return findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+            return getValueElseThrow(findByProgrammingExerciseId(programmingExercise.getId()));
         }
         return programmingExercise.getBuildConfig();
     }

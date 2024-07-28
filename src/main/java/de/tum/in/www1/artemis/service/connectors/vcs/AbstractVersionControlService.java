@@ -184,7 +184,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Override
     public String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise) {
         if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
-            programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise));
+            programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise));
         }
         if (programmingExercise.getBuildConfig().getBranch() == null) {
             if (!Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
@@ -193,7 +193,6 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUri());
             programmingExercise.getBuildConfig().setBranch(branch);
             programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-            programmingExerciseRepository.save(programmingExercise);
         }
 
         return programmingExercise.getBuildConfig().getBranch();
