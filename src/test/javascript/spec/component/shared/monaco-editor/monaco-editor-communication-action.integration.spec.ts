@@ -75,11 +75,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create', () => {
-        fixture.detectChanges();
-        expect(comp).toBeTruthy();
-    });
-
     const registerActionWithCompletionProvider = (action: MonacoEditorAction, triggerCharacter?: string) => {
         const registerCompletionProviderStub = jest.spyOn(monaco.languages, 'registerCompletionItemProvider').mockImplementation();
         comp.registerAction(action);
