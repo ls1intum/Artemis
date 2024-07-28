@@ -25,7 +25,9 @@
     <jhi-notification-popup />
     @if (showSkeleton) {
         <div>
-            <jhi-footer [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" />
+            @if (isTestRunExam || !isExamStarted) {
+                <jhi-footer [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" />
+            }
         </div>
     }
 </div>
