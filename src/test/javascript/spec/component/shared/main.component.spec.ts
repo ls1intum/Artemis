@@ -41,11 +41,12 @@ describe('JhiMainComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(JhiMainComponent);
                 comp = fixture.componentInstance;
+                fixture.detectChanges();
             });
     });
 
-    beforeEach(() => {
-        fixture.detectChanges();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should display footer if there is no exam', () => {
