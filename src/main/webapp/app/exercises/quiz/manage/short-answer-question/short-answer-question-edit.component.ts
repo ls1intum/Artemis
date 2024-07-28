@@ -12,7 +12,6 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -39,6 +38,7 @@ import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/
 import { MonacoInsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-spot.action';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { MonacoInsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-option.action';
+import { SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -82,10 +82,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
-    /** Ace Editor configuration constants **/ // TODO remove
-    questionEditorText: any = '';
-    questionEditorMode = 'markdown';
-    questionEditorAutoUpdate = true;
+    questionEditorText = '';
     showVisualMode: boolean;
 
     /** Status boolean for collapse status **/
@@ -94,8 +91,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     /** Variables needed for the setup of editorText **/
     // equals the highest spotNr
     numberOfSpot = 1;
-    // defines the first gap between text and solutions when
-    firstPressed = 1;
     // has all solution options with their mapping (each spotNr)
     optionsWithID: string[] = [];
 
@@ -115,10 +110,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
 
-    readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
+    protected readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
         public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,
@@ -212,28 +207,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     setupQuestionEditor(): void {
         // Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
         this.numberOfSpot = this.shortAnswerQuestion.spots!.length + 1;
-
-        // Default editor settings for inline markup editor
-        // TODO setup Monaco
-        /*this.questionEditor.getEditor().renderer.setShowGutter(false);
-        this.questionEditor.getEditor().renderer.setPadding(10);
-        this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);
-        this.questionEditor.getEditor().setHighlightActiveLine(false);
-        this.questionEditor.getEditor().setShowPrintMargin(false); */
-
+        this.questionEditor.applyOptionPreset(SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS);
         // Generate markdown from question and show result in editor
         this.questionEditorText = this.generateMarkdown();
-
-        // Register the onBlur listener
-        /*this.questionEditor.getEditor().on(
-            'blur',
-            () => {
-                // Parse the markdown in the editor and update question accordingly
-                this.parseMarkdown(this.questionEditorText);
-                this.questionUpdated.emit();
-            },
-            this,
-        );*/ // TODO: Implement onBlur
         this.changeDetector.detectChanges();
         this.parseMarkdown(this.questionEditorText);
         this.questionUpdated.emit();
@@ -382,18 +358,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * an option connected to the spot below the last visible row
      */
     addSpotAtCursor(): void {
-        this.insertShortAnswerSpotAction.executeInCurrentEditor({ spotNumber: this.numberOfSpot }); // TODO do we want to add an option as well?
-        return;
-        /*const editor = this.questionEditor.getEditor();
-        const optionText = editor.getCopyText(); // todo get selected text
-        const currentSpotNumber = this.numberOfSpot;
-        const addedText = '[-spot ' + currentSpotNumber + ']';
-        editor.focus();
-        editor.insert(addedText);
-        editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
-        this.addOptionToSpot(editor, currentSpotNumber, optionText, this.firstPressed);
-
-        this.firstPressed++; */
+        this.insertShortAnswerSpotAction.executeInCurrentEditor({ spotNumber: this.numberOfSpot });
     }
 
     /**
@@ -474,12 +439,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
         this.setQuestionEditorValue(this.generateMarkdown());
-        // TODO: move cursor to end
-        // editor.moveCursorTo(editor.getLastVisibleRow() + currentSpotNumber, Number.POSITIVE_INFINITY);
         this.addOptionToSpot(currentSpotNumber, markedText);
         this.parseMarkdown(this.questionEditor.monacoEditor.getText());
-
-        this.firstPressed++;
 
         this.questionUpdated.emit();
     }
@@ -792,6 +753,4 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     setQuestionEditorValue(text: string): void {
         this.questionEditor.markdown = text;
     }
-
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }

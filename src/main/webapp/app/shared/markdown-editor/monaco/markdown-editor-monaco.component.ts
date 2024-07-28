@@ -25,6 +25,7 @@ import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector
 import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
 interface MarkdownActionsByGroup {
     standard: MonacoEditorAction[];
@@ -371,5 +372,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     private isInitialHeightExternal(): boolean {
         return this.initialEditorHeight === EXTERNAL_HEIGHT;
+    }
+
+    /**
+     * Applies the given option preset to the Monaco editor.
+     * @param preset The preset to apply.
+     */
+    applyOptionPreset(preset: MonacoEditorOptionPreset): void {
+        this.monacoEditor.applyOptionPreset(preset);
     }
 }

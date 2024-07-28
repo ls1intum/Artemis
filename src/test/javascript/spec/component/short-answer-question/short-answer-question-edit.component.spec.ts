@@ -415,7 +415,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.addSpotAtCursorVisualMode();
 
         expect(component.numberOfSpot).toBe(2);
-        expect(component.firstPressed).toBe(2);
         expect(questionUpdated).toHaveBeenCalledTimes(3);
     });
 
