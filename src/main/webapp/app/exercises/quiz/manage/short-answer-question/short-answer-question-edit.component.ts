@@ -260,7 +260,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
                     option += ',' + this.shortAnswerQuestion.spots?.filter((spot) => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                 }
             });
-            option += ']';
+            option += option === '[-option ' ? '#]' : ']';
             this.optionsWithID.push(option);
         });
     }
