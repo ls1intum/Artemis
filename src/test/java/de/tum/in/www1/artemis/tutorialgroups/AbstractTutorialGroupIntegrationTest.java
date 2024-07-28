@@ -117,43 +117,43 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     Integer defaultSessionEndHour = 12;
 
-    final static LocalDate FIRST_AUGUST_MONDAY = LocalDate.of(2022, 8, 1);
+    static final LocalDate FIRST_AUGUST_MONDAY = LocalDate.of(2022, 8, 1);
 
-    final static LocalDate SECOND_AUGUST_MONDAY = LocalDate.of(2022, 8, 8);
+    static final LocalDate SECOND_AUGUST_MONDAY = LocalDate.of(2022, 8, 8);
 
-    final static LocalDate THIRD_AUGUST_MONDAY = LocalDate.of(2022, 8, 15);
+    static final LocalDate THIRD_AUGUST_MONDAY = LocalDate.of(2022, 8, 15);
 
-    final static LocalDate FOURTH_AUGUST_MONDAY = LocalDate.of(2022, 8, 22);
+    static final LocalDate FOURTH_AUGUST_MONDAY = LocalDate.of(2022, 8, 22);
 
-    final static LocalDate FIRST_SEPTEMBER_MONDAY = LocalDate.of(2022, 9, 5);
+    static final LocalDate FIRST_SEPTEMBER_MONDAY = LocalDate.of(2022, 9, 5);
 
-    final static LocalDateTime FIRST_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 1, 0, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 1, 0, 0);
 
-    final static LocalDateTime FIRST_AUGUST_MONDAY_08_00 = LocalDateTime.of(2022, 8, 1, 8, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_08_00 = LocalDateTime.of(2022, 8, 1, 8, 0);
 
-    final static LocalDateTime FIRST_AUGUST_MONDAY_10_00 = LocalDateTime.of(2022, 8, 1, 10, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_10_00 = LocalDateTime.of(2022, 8, 1, 10, 0);
 
-    final static LocalDateTime FIRST_AUGUST_MONDAY_11_00 = LocalDateTime.of(2022, 8, 1, 11, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_11_00 = LocalDateTime.of(2022, 8, 1, 11, 0);
 
-    final static LocalDateTime FIRST_AUGUST_MONDAY_12_00 = LocalDateTime.of(2022, 8, 1, 12, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_12_00 = LocalDateTime.of(2022, 8, 1, 12, 0);
 
-    final static LocalDateTime FIRST_AUGUST_MONDAY_13_00 = LocalDateTime.of(2022, 8, 1, 13, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_13_00 = LocalDateTime.of(2022, 8, 1, 13, 0);
 
-    final static LocalDateTime FIRST_AUGUST_MONDAY_18_00 = LocalDateTime.of(2022, 8, 1, 18, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_18_00 = LocalDateTime.of(2022, 8, 1, 18, 0);
 
-    final static LocalDateTime FIRST_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 1, 23, 59);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 1, 23, 59);
 
-    final static LocalDateTime SECOND_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 8, 0, 0);
+    static final LocalDateTime SECOND_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 8, 0, 0);
 
-    final static LocalDateTime SECOND_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 8, 23, 59);
+    static final LocalDateTime SECOND_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 8, 23, 59);
 
-    final static LocalDateTime THIRD_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 15, 0, 0);
+    static final LocalDateTime THIRD_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 15, 0, 0);
 
-    final static LocalDateTime THIRD_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 15, 23, 59);
+    static final LocalDateTime THIRD_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 15, 23, 59);
 
-    final static LocalDateTime FOURTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 22, 0, 0);
+    static final LocalDateTime FOURTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 22, 0, 0);
 
-    final static LocalDateTime FIRST_SEPTEMBER_MONDAY_00_00 = LocalDateTime.of(2022, 9, 5, 0, 0);
+    static final LocalDateTime FIRST_SEPTEMBER_MONDAY_00_00 = LocalDateTime.of(2022, 9, 5, 0, 0);
 
     @BeforeEach
     void setupTestScenario() {

@@ -37,7 +37,7 @@ public class QuizSubmission extends AbstractQuizSubmission {
     }
 
     /**
-     * Filter the sensitive information of the quiz submission
+     * Remove details that should not be sent to the client from the quiz questions.
      */
     public void filterForStudentsDuringQuiz() {
         for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
