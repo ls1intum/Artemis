@@ -274,10 +274,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     generateMarkdown(): string {
         this.setOptionsWithID();
-        const markdownText =
-            generateExerciseHintExplanation(this.shortAnswerQuestion) +
-            '\n\n\n' +
-            this.shortAnswerQuestion.solutions?.map((solution, index) => this.optionsWithID[index] + ' ' + solution.text!.trim()).join('\n');
+        let markdownText = generateExerciseHintExplanation(this.shortAnswerQuestion);
+
+        if (this.shortAnswerQuestion.solutions?.length) {
+            markdownText += '\n\n\n' + this.shortAnswerQuestion.solutions.map((solution, index) => this.optionsWithID[index] + ' ' + solution.text!.trim()).join('\n');
+        }
         return markdownText;
     }
 
