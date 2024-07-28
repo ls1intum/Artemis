@@ -34,7 +34,7 @@ describe('JhiMainComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ThemeService, useClass: MockThemeService }, // Use the mock theme service
+                { provide: ThemeService, useClass: MockThemeService },
             ],
         })
             .compileComponents()
