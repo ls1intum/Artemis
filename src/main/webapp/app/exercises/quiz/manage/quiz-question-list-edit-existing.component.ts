@@ -200,6 +200,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             const jsonContent = await jsonFile.async('string');
             await this.processJsonContent(jsonContent, images);
         } catch (error) {
+            alert('Import Quiz Failed! Invalid zip file.');
             return;
         }
     }
@@ -231,6 +232,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             }
         } catch (e) {
             alert('Import Quiz Failed! Invalid quiz file.');
+            return;
         }
     }
 
