@@ -31,7 +31,6 @@ import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-
 import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
 import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
 import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
-import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
 import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
 import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
 import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
@@ -125,7 +124,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             new MonacoItalicAction(),
             new MonacoUnderlineAction(),
             new MonacoCodeAction(),
-            new MonacoCodeBlockAction(),
             new MonacoUrlAction(),
             new MonacoUnorderedListAction(),
             new MonacoOrderedListAction(),
