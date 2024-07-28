@@ -1,11 +1,9 @@
 import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule, provideAnimations } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
-import { By } from '@angular/platform-browser';
-import { AnimationDriver } from '@angular/animations/browser';
 
 describe('CompetencyGraphComponent', () => {
     let component: CompetencyGraphComponent;
@@ -34,7 +32,11 @@ describe('CompetencyGraphComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CompetencyGraphComponent, NoopAnimationsModule],
             providers: [
-                provideAnimations(),
+                // provideAnimations(),
+                // {
+                //     provide: AnimationDriver,
+                //     useClass: NoopAnimationDriver,
+                // },
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
@@ -57,12 +59,12 @@ describe('CompetencyGraphComponent', () => {
         expect(component.competencyGraph()).toEqual(competencyGraph);
     });
 
-    it('should show nodes and edges', async () => {
+    it('should have nodes and edges', async () => {
+        const edgesWithUniqueIds = competencyGraph.edges!.map((edge) => ({ ...edge, id: `edge-${edge.id}` }));
+
         fixture.detectChanges();
 
-        const nodes = fixture.debugElement.queryAll(By.css('.node'));
-        const edges = fixture.debugElement.queryAll(By.css('.edge'));
-        expect(nodes.length).toHaveLength(2);
-        expect(edges.length).toHaveLength(1);
+        expect(component.nodes()).toEqual(competencyGraph.nodes);
+        expect(component.edges()).toEqual(edgesWithUniqueIds);
     });
 });
