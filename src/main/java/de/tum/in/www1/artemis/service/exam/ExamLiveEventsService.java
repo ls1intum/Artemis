@@ -142,7 +142,7 @@ public class ExamLiveEventsService {
      */
     @Async
     public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message, User instructor) {
-        Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
+        Exam exam = exercise.getExam();
         studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
                 .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message, instructor));
     }
