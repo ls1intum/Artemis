@@ -21,7 +21,7 @@ export class CompetencyGraphModalComponent {
     private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
     private readonly alertService: AlertService = inject(AlertService);
 
-    learningPathId = input.required<number>();
+    readonly learningPathId = input.required<number>();
 
     readonly isLoading = signal<boolean>(false);
     readonly competencyGraph = signal<CompetencyGraphDTO | undefined>(undefined);

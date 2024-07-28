@@ -1,24 +1,17 @@
 import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
-import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideHttpClient } from '@angular/common/http';
+import { NoopAnimationsModule, provideAnimations } from '@angular/platform-browser/animations';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
-import { CompetencyNodeComponent } from 'app/course/learning-paths/components/competency-node/competency-node.component';
-import { AlertService } from 'app/core/util/alert.service';
-import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
+import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
+import { By } from '@angular/platform-browser';
+import { AnimationDriver } from '@angular/animations/browser';
 
 describe('CompetencyGraphComponent', () => {
     let component: CompetencyGraphComponent;
     let fixture: ComponentFixture<CompetencyGraphComponent>;
-    let learningPathApiService: LearningPathApiService;
-    let alertService: AlertService;
-    let getLearningPathCompetencyGraphSpy: jest.SpyInstance;
 
-    const learningPathId = 1;
-    const competencyGraph = {
+    const competencyGraph = <CompetencyGraphDTO>{
         nodes: [
             {
                 id: '1',
@@ -39,34 +32,20 @@ describe('CompetencyGraphComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CompetencyGraphComponent],
+            imports: [CompetencyGraphComponent, NoopAnimationsModule],
             providers: [
                 provideAnimations(),
-                provideHttpClient(),
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
-                {
-                    provide: AlertService,
-                    useClass: MockAlertService,
-                },
             ],
-        })
-            .overrideComponent(CompetencyGraphComponent, {
-                remove: {
-                    imports: [CompetencyNodeComponent],
-                },
-            })
-            .compileComponents();
-
-        learningPathApiService = TestBed.inject(LearningPathApiService);
-        alertService = TestBed.inject(AlertService);
-        getLearningPathCompetencyGraphSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencyGraph').mockResolvedValue(competencyGraph);
+        }).compileComponents();
 
         fixture = TestBed.createComponent(CompetencyGraphComponent);
         component = fixture.componentInstance;
-        fixture.componentRef.setInput('learningPathId', learningPathId);
+
+        fixture.componentRef.setInput('competencyGraph', competencyGraph);
     });
 
     afterEach(() => {
@@ -74,29 +53,16 @@ describe('CompetencyGraphComponent', () => {
     });
 
     it('should initialize', async () => {
-        const loadCompetencyGraphSpy = jest.spyOn(component, 'loadCompetencyGraph');
-        fixture.detectChanges();
         expect(component).toBeTruthy();
-        expect(loadCompetencyGraphSpy).toHaveBeenCalledWith(learningPathId);
+        expect(component.competencyGraph()).toEqual(competencyGraph);
     });
 
-    it('should call loadCompetencyGraph', async () => {
-        await component.loadCompetencyGraph(learningPathId);
-        expect(getLearningPathCompetencyGraphSpy).toHaveBeenCalledWith(learningPathId);
-    });
-
-    it('should center graph', () => {
-        const centerSpy = jest.spyOn(component.zoomToFit$, 'next');
+    it('should show nodes and edges', async () => {
         fixture.detectChanges();
-        expect(centerSpy).toHaveBeenCalled();
-    });
 
-    it('should show alert on error', async () => {
-        const getLearningPathCompetencyGraphErrorSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencyGraph').mockRejectedValue(new Error('Error'));
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
-
-        await component.loadCompetencyGraph(learningPathId);
-        expect(getLearningPathCompetencyGraphErrorSpy).toHaveBeenCalled();
-        expect(alertServiceErrorSpy).toHaveBeenCalled();
+        const nodes = fixture.debugElement.queryAll(By.css('.node'));
+        const edges = fixture.debugElement.queryAll(By.css('.edge'));
+        expect(nodes.length).toHaveLength(2);
+        expect(edges.length).toHaveLength(1);
     });
 });
