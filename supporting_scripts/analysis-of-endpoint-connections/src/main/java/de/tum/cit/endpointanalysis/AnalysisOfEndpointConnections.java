@@ -53,10 +53,11 @@ public class AnalysisOfEndpointConnections {
         }
 
 //        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/lecture/AttachmentUnitResource.java"};
-        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/AeolusTemplateResource.java"};
-        parseServerEndpoints(test);
+//        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/AeolusTemplateResource.java"};
+//        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/FileResource.java"};
+//        parseServerEndpoints(test);
 
-//        parseServerEndpoints(filesToParse);
+        parseServerEndpoints(filesToParse);
         analyzeEndpoints();
         printEndpointAnalysisResult();
 //        analyzeRestCalls();
@@ -182,6 +183,9 @@ public class AnalysisOfEndpointConnections {
                             if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
                                 // System.out.println("Matching REST call found.\nURI: " + endpoint.getURI() + "\nHTTP method: " + restCall.getMethod());
                                 // System.out.println("---------------------------------------------");
+                                matchingRestCalls.add(restCall);
+                            } else if (endpointURI.endsWith("*") && restCallURI.startsWith(endpointURI.substring(0, endpointURI.length() - 1)) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
+                                // WildCard matching
                                 matchingRestCalls.add(restCall);
                             }
                         }
