@@ -208,13 +208,11 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
         const images: Map<string, File> = new Map();
 
         for (const [fileName, zipEntry] of Object.entries(zipContent.files)) {
-            if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
-                const lastDotIndex = fileName.lastIndexOf('.');
-                const fileNameNoExtension = fileName.substring(0, lastDotIndex);
-                const imageData = await zipEntry.async('blob');
-                const imageFile = new File([imageData], fileName);
-                images.set(fileNameNoExtension, imageFile);
-            }
+            const lastDotIndex = fileName.lastIndexOf('.');
+            const fileNameNoExtension = fileName.substring(0, lastDotIndex);
+            const imageData = await zipEntry.async('blob');
+            const imageFile = new File([imageData], fileName);
+            images.set(fileNameNoExtension, imageFile);
         }
         return images;
     }
