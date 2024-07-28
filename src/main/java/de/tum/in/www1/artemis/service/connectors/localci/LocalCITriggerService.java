@@ -304,6 +304,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         List<String> resultPaths = getTestResultPaths(windfile);
 
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
+        programmingExercise.setBuildConfig(buildConfig);
         String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
