@@ -312,7 +312,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.addOption();
         await firstValueFrom(component.questionUpdated);
         const text: string = component.questionEditorText;
-        const lastLine = text.split('\n').pop();
+        const lastLine = text.split('\n').last();
         expect(lastLine).toInclude(lastLine!);
     });
 
