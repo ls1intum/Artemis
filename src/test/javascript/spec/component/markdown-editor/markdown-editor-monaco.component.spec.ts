@@ -203,8 +203,8 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should apply option presets to the editor', () => {
-        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
         fixture.detectChanges();
+        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
         const preset = new MonacoEditorOptionPreset({ lineNumbers: 'off' });
         comp.applyOptionPreset(preset);
         expect(applySpy).toHaveBeenCalledExactlyOnceWith(preset);
