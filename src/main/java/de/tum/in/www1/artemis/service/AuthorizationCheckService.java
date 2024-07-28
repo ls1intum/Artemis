@@ -882,7 +882,7 @@ public class AuthorizationCheckService {
         if (this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || exercise.isCourseExercise()) {
             return true;
         }
-        Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
+        Exam exam = exercise.getExam();
         if (!examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation)) {
             // students can always see their results during the exam.
             return true;

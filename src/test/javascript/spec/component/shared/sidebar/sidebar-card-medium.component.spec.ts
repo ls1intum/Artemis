@@ -39,21 +39,24 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should have success border class for easy difficulty', () => {
-        (component.sidebarItem.difficulty = DifficultyLevel.EASY), fixture.detectChanges();
+        component.sidebarItem.difficulty = DifficultyLevel.EASY;
+        fixture.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-success');
     });
 
     it('should have success border class for medium difficulty', () => {
-        (component.sidebarItem.difficulty = DifficultyLevel.MEDIUM), fixture.detectChanges();
+        component.sidebarItem.difficulty = DifficultyLevel.MEDIUM;
+        fixture.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-warning');
     });
 
     it('should have success border class for hard difficulty', () => {
-        (component.sidebarItem.difficulty = DifficultyLevel.HARD), fixture.detectChanges();
+        component.sidebarItem.difficulty = DifficultyLevel.HARD;
+        fixture.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-danger');
