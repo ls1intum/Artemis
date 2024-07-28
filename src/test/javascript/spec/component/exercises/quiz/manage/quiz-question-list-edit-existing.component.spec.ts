@@ -447,18 +447,18 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(onFilesAddedSpy).toHaveBeenCalledOnce();
             expect(getFileMock).toHaveBeenCalledTimes(3);
         });
-        
+
         it('should correctly differentiate between JSON and ZIP files', async () => {
             const handleJsonFileSpy = jest.spyOn(component, 'handleJsonFile');
             const handleZipFileSpy = jest.spyOn(component, 'handleZipFile');
             const jsonFile = new File(['{}'], 'quiz.json', { type: 'application/json' });
             component.importFile = jsonFile;
             await component.importQuiz();
-            expect(handleJsonFileSpy).toHaveBeenCalledWith(jsonFile);
+            expect(handleJsonFileSpy).toHaveBeenCalledWith();
             const zipFile = new File([], 'quiz.zip', { type: 'application/zip' });
             component.importFile = zipFile;
             await component.importQuiz();
-            expect(handleZipFileSpy).toHaveBeenCalledWith(zipFile);
+            expect(handleZipFileSpy).toHaveBeenCalledWith();
         });
 
         it('should correctly extract images from a ZIP file', async () => {

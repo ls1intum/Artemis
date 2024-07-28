@@ -206,13 +206,14 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     }
     async extractImagesFromZip(zipContent: JSZip) {
         const images: Map<string, File> = new Map();
-
         for (const [fileName, zipEntry] of Object.entries(zipContent.files)) {
-            const lastDotIndex = fileName.lastIndexOf('.');
-            const fileNameNoExtension = fileName.substring(0, lastDotIndex);
-            const imageData = await zipEntry.async('blob');
-            const imageFile = new File([imageData], fileName);
-            images.set(fileNameNoExtension, imageFile);
+            if (!fileName.endsWith('.json')){
+                const lastDotIndex = fileName.lastIndexOf('.');
+                const fileNameNoExtension = fileName.substring(0, lastDotIndex);
+                const imageData = await zipEntry.async('blob');
+                const imageFile = new File([imageData], fileName);
+                images.set(fileNameNoExtension, imageFile);
+            }
         }
         return images;
     }

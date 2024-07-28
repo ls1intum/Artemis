@@ -260,7 +260,7 @@ export class QuizExerciseService {
                 if ((question as DragAndDropQuestion).backgroundFilePath) {
                     const filePath = (question as DragAndDropQuestion).backgroundFilePath!;
                     const fileNameExtension = filePath.split('.').last();
-                    filePromises.push(this.fetchFilePromise(`q${questionIndex}_background.${fileNameExtension}`, zip, filePath ));
+                    filePromises.push(this.fetchFilePromise(`q${questionIndex}_background.${fileNameExtension}`, zip, filePath));
                 }
                 if ((question as DragAndDropQuestion).dragItems) {
                     (question as DragAndDropQuestion).dragItems?.forEach((dragItem, drag_index) => {
