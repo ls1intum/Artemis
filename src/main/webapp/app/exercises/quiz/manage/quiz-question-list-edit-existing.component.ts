@@ -176,23 +176,23 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
         const fileExtension = fileName.split('.').last()?.toLowerCase();
 
         if (fileExtension === 'zip') {
-            await this.handleZipFile(this.importFile);
+            await this.handleZipFile();
         } else {
-            this.handleJsonFile(this.importFile);
+            this.handleJsonFile();
         }
     }
 
-    handleJsonFile(file: File) {
+    handleJsonFile() {
         const fileReader = this.generateFileReader();
         fileReader.onload = () => this.onFileLoadImport(fileReader);
-        fileReader.readAsText(file);
+        fileReader.readAsText(this.importFile!);
     }
 
-    async handleZipFile(file: File) {
+    async handleZipFile() {
         const jszip = new JSZip();
 
         try {
-            const zipContent = await jszip.loadAsync(file);
+            const zipContent = await jszip.loadAsync(this.importFile!);
             const jsonFiles = Object.keys(zipContent.files).filter((fileName) => fileName.endsWith('.json'));
 
             const images = await this.extractImagesFromZip(zipContent);
