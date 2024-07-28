@@ -360,8 +360,8 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                     dropLocation.id = undefined;
                     dropLocation.invalid = false;
                 });
+                let dragItemCounter = 0;
                 for (const dragItem of dndQuestion.dragItems || []) {
-                    var dragItemCounter = 0;
                     // Duplicating image on server. This is only valid for image drag items. For text drag items, pictureFilePath is undefined,
                     if (dragItem.pictureFilePath) {
                         const exportedDragItemFile: File | undefined = images.get(`q${questionIndex}_dragItem-${dragItemCounter}`);
