@@ -52,7 +52,7 @@ public class AnalysisOfEndpointConnections {
 
         parseServerEndpoints(filesToParse);
         analyzeEndpoints();
-//        printEndpointAnalysisResult();
+        printEndpointAnalysisResult();
         analyzeRestCalls();
     }
 
@@ -158,12 +158,12 @@ public class AnalysisOfEndpointConnections {
             for (EndpointClassInformation endpointClass : endpointClasses) {
                 for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
                     List<RestCallInformation> matchingRestCalls = new ArrayList<>();
+                    String endpointURI = endpoint.buildComparableEndpointUri();
 
                     for (RestCallFileInformation restCallFile : restCallFiles) {
                         for (RestCallInformation restCall : restCallFile.getRestCalls()) {
-                            String endpointURI = endpoint.buildComparableEndpointUri();
                             String restCallURI = restCall.buildComparableRestCallUri();
-                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().equals(restCall.getMethod())) {
+                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
                                 // System.out.println("Matching REST call found.\nURI: " + endpoint.getURI() + "\nHTTP method: " + restCall.getMethod());
                                 // System.out.println("---------------------------------------------");
                                 matchingRestCalls.add(restCall);
@@ -236,7 +236,7 @@ public class AnalysisOfEndpointConnections {
                         for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
                             String endpointURI = endpoint.buildComparableEndpointUri();
                             String restCallURI = restCall.buildComparableRestCallUri();
-                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().equals(restCall.getMethod())) {
+                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
                                 matchingEndpointFound = true;
                                 System.out.println("Matching endpoint found.\nURI: " + endpoint.buildCompleteEndpointURI() + "\nHTTP method: " + endpoint.getHttpMethodAnnotation());
                                 System.out.println("---------------------------------------------");
