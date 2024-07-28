@@ -11,8 +11,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +18,6 @@ import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
@@ -32,15 +29,12 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
@@ -59,6 +53,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     private IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
     private IrisMessageService irisMessageService;
 
     @Autowired
@@ -75,43 +72,12 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     private AtomicBoolean pipelineDone;
 
     @BeforeEach
-    void initTestCase() throws GitAPIException, IOException, URISyntaxException {
+    void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
-        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        String projectKey = exercise.getProjectKey();
-        exercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        exercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
-        programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
-
-        // Set the correct repository URIs for the template and the solution participation.
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
-        TemplateProgrammingExerciseParticipation templateParticipation = exercise.getTemplateParticipation();
-        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
-        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
-        SolutionProgrammingExerciseParticipation solutionParticipation = exercise.getSolutionParticipation();
-        solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-
-        String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
-
-        // Add a participation for student1.
-        ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        studentParticipation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
-        studentParticipation.setBranch(defaultBranch);
-        programmingExerciseStudentParticipationRepository.save(studentParticipation);
-
-        // Prepare the repositories.
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentRepositorySlug);
-
-        // Check that the repository folders were created in the file system for all base repositories.
-        localVCLocalCITestService.verifyRepositoryFoldersExist(exercise, localVCBasePath);
+        localVCLocalCITestService.setupProgrammingExerciseWithRepositories(TEST_PREFIX, localVCBasePath);
+        final Course course = localVCLocalCITestService.getCourse();
+        exercise = localVCLocalCITestService.getProgrammingExercise();
 
         activateIrisGlobally();
         activateIrisFor(course);

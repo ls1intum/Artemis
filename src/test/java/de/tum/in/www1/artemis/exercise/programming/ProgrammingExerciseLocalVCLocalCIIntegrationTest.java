@@ -38,12 +38,11 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
-import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -63,17 +62,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     @Autowired
     private CompetencyUtilService competencyUtilService;
 
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
+
     private Course course;
 
     private ProgrammingExercise programmingExercise;
-
-    private LocalRepository templateRepository;
-
-    private LocalRepository solutionRepository;
-
-    private LocalRepository testsRepository;
-
-    private LocalRepository assignmentRepository;
 
     private Competency competency;
 
@@ -97,51 +91,17 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     void setup() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        String projectKey = programmingExercise.getProjectKey();
-        programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
-        programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
-
-        // Set the correct repository URIs for the template and the solution participation.
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
-        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
-        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
-        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
-        solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-
-        String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
-
-        // Add a participation for student1.
-        ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
-                TEST_PREFIX + "student1");
-        studentParticipation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
-        studentParticipation.setBranch(defaultBranch);
-        programmingExerciseStudentParticipationRepository.save(studentParticipation);
-
-        // Prepare the repositories.
-        templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentRepositorySlug);
-
-        // Check that the repository folders were created in the file system for all base repositories.
-        localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
+        // setup programming exercise with repositories
+        localVCLocalCITestService.setupProgrammingExerciseWithRepositories(TEST_PREFIX, localVCBasePath);
+        course = localVCLocalCITestService.getCourse();
+        programmingExercise = localVCLocalCITestService.getProgrammingExercise();
 
         competency = competencyUtilService.createCompetency(course);
     }
 
     @AfterEach
     void tearDown() throws IOException {
-        templateRepository.resetLocalRepo();
-        solutionRepository.resetLocalRepo();
-        testsRepository.resetLocalRepo();
-        assignmentRepository.resetLocalRepo();
+        localVCLocalCITestService.cleanUpRepositories();
     }
 
     @Test

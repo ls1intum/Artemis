@@ -52,19 +52,29 @@ import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -86,7 +96,37 @@ public class LocalVCLocalCITestService {
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    protected ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
     private ResultRepository resultRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    private Course course;
+
+    private ProgrammingExercise programmingExercise;
+
+    private LocalRepository templateRepository;
+
+    private LocalRepository solutionRepository;
+
+    private LocalRepository testsRepository;
+
+    private LocalRepository assignmentRepository;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -640,4 +680,60 @@ public class LocalVCLocalCITestService {
         LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
     }
+
+    public void setupProgrammingExerciseWithRepositories(String testPrefix, String localVCBasePath) throws Exception {
+        userUtilService.addUsers(testPrefix, 1, 1, 1, 1);
+
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        String projectKey = programmingExercise.getProjectKey();
+        programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+
+        // Set the correct repository URIs for the template and the solution participation.
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + testPrefix + "student1";
+
+        // Add a participation for student1.
+        ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                testPrefix + "student1");
+        studentParticipation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
+        studentParticipation.setBranch(defaultBranch);
+        programmingExerciseStudentParticipationRepository.save(studentParticipation);
+
+        // Prepare the repositories.
+        templateRepository = createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        testsRepository = createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
+        solutionRepository = createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
+        assignmentRepository = createAndConfigureLocalRepository(projectKey, assignmentRepositorySlug);
+
+        // Check that the repository folders were created in the file system for all base repositories.
+        verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public ProgrammingExercise getProgrammingExercise() {
+        return programmingExercise;
+    }
+
+    public void cleanUpRepositories() throws IOException {
+        templateRepository.resetLocalRepo();
+        solutionRepository.resetLocalRepo();
+        testsRepository.resetLocalRepo();
+        assignmentRepository.resetLocalRepo();
+    }
+
 }
