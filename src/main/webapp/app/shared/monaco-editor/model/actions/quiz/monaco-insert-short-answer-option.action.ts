@@ -33,6 +33,17 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
             insertedText = `\n\n${insertedText}`;
         }
         this.insertTextAtPosition(editor, this.getEndPosition(editor), insertedText);
+        // We want to select the option text if it is the default text
+        if (optionText === MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT) {
+            const newEndPosition = this.getEndPosition(editor);
+            const selection = {
+                startLineNumber: newEndPosition.lineNumber,
+                startColumn: newEndPosition.column - MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT.length,
+                endLineNumber: newEndPosition.lineNumber,
+                endColumn: newEndPosition.column,
+            };
+            this.setSelection(editor, selection);
+        }
         editor.focus();
     }
 }
