@@ -62,7 +62,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     // default value is 3 if the placeholder cannot be resolved
     @Value("${artemis.athena.allowed-self-learning-feedback-attempts:3}")
-    private Integer allowedSelfLearningFeedbackAttempts;
+    private int allowedSelfLearningFeedbackAttempts;
 
     public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService,
             Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService, ResultService resultService,
