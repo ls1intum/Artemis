@@ -20,7 +20,11 @@ Artemis offers three different modes of exercise assessment:
 Manual Assessment
 -----------------
 
-Manual assessment refers to evaluating or grading student assignments, typically performed by a reviewer rather than in an automated way. It is available and tailored to all exercise types except quiz exercises.
+Manual assessment refers to evaluating or grading student assignments, typically performed by a reviewer rather than in an automated way.
+
+.. note::
+    This section introduces the general concepts of manual assessment. However, manual assessment is available and tailored to all exercise types except quiz exercises. The corresponding sections
+    :ref:`programming`, :ref:`file-upload`, :ref:`textual` and :ref:`modeling` exercises provide more information about manual assessment for these exercise types.
 
 Manual assessment in Artemis involves the following steps:
 

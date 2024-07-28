@@ -181,6 +181,16 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(String groupName);
 
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                LEFT JOIN FETCH user.groups userGroup
+                LEFT JOIN FETCH user.authorities userAuthority
+            WHERE user.isDeleted = FALSE
+                AND userGroup IN :groupNames
+            """)
+    Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(@Param("groupNames") Set<String> groupNames);
+
     Set<User> findAllByIsDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
@@ -761,17 +771,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
-     * Get user with authorities with the username (i.e. user.getLogin() or principal.getName())
-     *
-     * @param username the username of the user who should be retrieved from the database
-     * @return the user that belongs to the given principal with eagerly loaded authorities
-     */
-    default User getUserWithAuthorities(@NotNull String username) {
-        Optional<User> user = findOneWithAuthoritiesByLogin(username);
-        return unwrapOptionalUser(user, username);
-    }
-
-    /**
      * Finds a single user with groups and authorities using the registration number
      *
      * @param registrationNumber user registration number as string
@@ -878,6 +877,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
+     * Get all users for a given course
+     *
+     * @param course The course for which to fetch all users
+     * @return all users in the course
+     */
+    default Set<User> getUsersInCourse(Course course) {
+        Set<String> groupNames = Set.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName());
+        return findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(groupNames);
+    }
+
+    /**
      * Finds all users that are part of the specified group, but are not contained in the collection of excluded users
      *
      * @param groupName     The group by which all users should get filtered
@@ -979,6 +989,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.vcsAccessToken IS NULL
             """)
     Set<User> getUsersWithAccessTokenNull();
+
+    @Query("""
+            SELECT user.login
+            FROM User user
+            WHERE :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.activated = TRUE
+                AND user.isDeleted = FALSE
+            """)
+    Set<String> findAllActiveAdminLogins();
 
     @Query("""
             SELECT COUNT(user) > 0

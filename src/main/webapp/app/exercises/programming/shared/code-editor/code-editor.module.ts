@@ -4,7 +4,6 @@ import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
-import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
@@ -48,7 +47,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         CodeEditorFileBrowserFolderComponent,
         CodeEditorFileBrowserBadgeComponent,
         CodeEditorFileBrowserCreateNodeComponent,
-        CodeEditorAceComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorInstructionsComponent,
         CodeEditorStatusComponent,
@@ -62,7 +60,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     exports: [
         CodeEditorGridComponent,
         CodeEditorRepositoryIsLockedComponent,
-        CodeEditorAceComponent,
         CodeEditorFileBrowserComponent,
         CodeEditorActionsComponent,
         CodeEditorInstructionsComponent,

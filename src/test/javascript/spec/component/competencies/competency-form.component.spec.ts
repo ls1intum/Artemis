@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyFormComponent, CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
@@ -59,17 +59,16 @@ describe('CompetencyFormComponent', () => {
     it('should submit valid form', fakeAsync(() => {
         // stubbing competency service for asynchronous validator
         const competencyService = TestBed.inject(CompetencyService);
+        const getAllTitlesSpy = jest.spyOn(competencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
-        const competencyOfResponse: Competency = {};
-        competencyOfResponse.id = 1;
-        competencyOfResponse.title = 'test';
+        const competencyOfResponse: Competency = { id: 1, title: 'test' };
 
         const response: HttpResponse<Competency[]> = new HttpResponse({
             body: [competencyOfResponse],
             status: 200,
         });
 
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(response));
+        jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(response));
 
         competencyFormComponentFixture.detectChanges();
 
@@ -92,7 +91,7 @@ describe('CompetencyFormComponent', () => {
         competencyFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(competencyFormComponent.form.valid).toBeTrue();
-        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllTitlesSpy).toHaveBeenCalledOnce();
         const submitFormSpy = jest.spyOn(competencyFormComponent, 'submitForm');
         const submitFormEventSpy = jest.spyOn(competencyFormComponent.formSubmitted, 'emit');
 
@@ -155,6 +154,33 @@ describe('CompetencyFormComponent', () => {
         expect(translateSpy).toHaveBeenCalledTimes(12);
         expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.competency.taxonomies.REMEMBER', 'artemisApp.competency.taxonomies.UNDERSTAND']);
     });
+
+    it('validator should verify title is unique', fakeAsync(() => {
+        const competencyService = TestBed.inject(CompetencyService);
+        const existingTitles = ['nameExisting'];
+        jest.spyOn(competencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
+        competencyFormComponent.isEditMode = true;
+        competencyFormComponent.formData.title = 'initialName';
+
+        competencyFormComponentFixture.detectChanges();
+
+        const titleControl = competencyFormComponent.titleControl!;
+        tick(250);
+        expect(titleControl.errors?.titleUnique).toBeUndefined();
+
+        titleControl.setValue('anotherName');
+        tick(250);
+        expect(titleControl.errors?.titleUnique).toBeUndefined();
+
+        titleControl.setValue('');
+        tick(250);
+        expect(titleControl.errors?.titleUnique).toBeUndefined();
+
+        titleControl.setValue('nameExisting');
+        tick(250);
+        expect(titleControl.errors?.titleUnique).toBeDefined();
+        flush();
+    }));
 
     function createTranslateSpy() {
         return jest.spyOn(translateService, 'instant').mockImplementation((key) => {

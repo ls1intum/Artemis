@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Post } from 'app/entities/metis/post.model';
-import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -182,21 +182,9 @@ describe('Metis Service', () => {
             postsSub.unsubscribe();
         }));
 
-        it('should update post tags', () => {
-            const postServiceSpy = jest.spyOn(postService, 'getAllPostTagsByCourseId');
-            metisService.updateCoursePostTags();
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-        });
-
         it('should get posts for course', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
             metisService.getFilteredPosts({ courseId: course.id });
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should get similar posts within course', () => {
-            const postServiceSpy = jest.spyOn(postService, 'computeSimilarityScoresWithCoursePosts');
-            metisService.getSimilarPosts(post);
             expect(postServiceSpy).toHaveBeenCalledOnce();
         });
     });
@@ -307,15 +295,6 @@ describe('Metis Service', () => {
         expect(metisUserIsAuthorOfPostingReturn).toBeFalse();
     });
 
-    it('should not fetch course post tags if communication is not enabled', () => {
-        const updateCoursePostTagsSpy = jest.spyOn(metisService, 'updateCoursePostTags');
-        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.MESSAGING_ONLY;
-        metisService.setCourse(course);
-        const getCourseReturn = metisService.getCourse();
-        expect(getCourseReturn).toEqual(course);
-        expect(updateCoursePostTagsSpy).not.toHaveBeenCalled();
-    });
-
     it('should set course when current course has different id', () => {
         metisService.setCourse(course);
         const newCourse = new Course();
@@ -389,7 +368,7 @@ describe('Metis Service', () => {
     it('should determine context information for a conversation message', () => {
         metisService.setCourse(course);
         const contextInformation = metisService.getContextInformation(metisPostInChannel);
-        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'messages']);
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'communication']);
         expect(contextInformation.displayName).not.toBeEmpty();
     });
 

@@ -10,11 +10,12 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisLearningPathProgressModule } from 'app/course/learning-paths/progress-modal/learning-path-progress.module';
 import { ArtemisLearningPathGraphModule } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.module';
+import { LearningPathStudentPageComponent } from 'app/course/learning-paths/pages/learning-path-student-page/learning-path-student-page.component';
 
 const routes: Routes = [
     {
         path: '',
-        component: LearningPathContainerComponent,
+        component: LearningPathStudentPageComponent,
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.learningPath',
@@ -45,6 +46,10 @@ const routes: Routes = [
                         loadChildren: () => import('app/overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
                     },
                 ],
+            },
+            {
+                path: 'exercises/:exerciseId',
+                loadChildren: () => import('app/overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
             },
         ],
     },

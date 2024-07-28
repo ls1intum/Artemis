@@ -1,3 +1,5 @@
+import org.apache.tools.ant.DirectoryScanner
+
 pluginManagement {
     plugins {
         id 'org.springframework.boot' version "${spring_boot_version}"
@@ -22,3 +24,7 @@ findProject(':supporting_scripts:analysis-of-endpoint-connections:RestCallAnalys
 include 'supporting_scripts:analysis-of-endpoint-connections:shared'
 findProject(':supporting_scripts:analysis-of-endpoint-connections:shared')?.name = 'shared'
 
+
+// needed for programming exercise templates
+DirectoryScanner.removeDefaultExclude "**/.gitattributes"
+DirectoryScanner.removeDefaultExclude "**/.gitignore"

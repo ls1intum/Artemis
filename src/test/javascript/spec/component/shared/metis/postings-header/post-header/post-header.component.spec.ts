@@ -13,7 +13,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
-import { metisAnnouncement, metisPostInChannel, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisAnnouncement, metisPostExerciseUser1, metisPostInChannel, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { UserRole } from 'app/shared/metis/metis.util';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
@@ -63,6 +63,16 @@ describe('PostHeaderComponent', () => {
     it('should set date information correctly for post of today', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.today-flag')).toBeDefined();
+    });
+
+    it('should display resolved icon on resolved post header', () => {
+        component.posting = metisPostExerciseUser1;
+        component.posting.resolved = true;
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(getElement(debugElement, '.resolved')).not.toBeNull();
     });
 
     it('should display edit and delete options to tutor if posting is not announcement', () => {
@@ -124,9 +134,9 @@ describe('PostHeaderComponent', () => {
 
     it.each`
         input                  | expect
-        ${UserRole.INSTRUCTOR} | ${'fa fa-user-graduate'}
-        ${UserRole.TUTOR}      | ${'fa fa-user-check'}
-        ${UserRole.USER}       | ${'fa fa-user'}
+        ${UserRole.INSTRUCTOR} | ${'badge-instructor'}
+        ${UserRole.TUTOR}      | ${'badge-tutor'}
+        ${UserRole.USER}       | ${'badge-student'}
     `('should display relevant icon and tooltip for author authority', (param: { input: UserRole; expect: string }) => {
         component.posting = metisAnnouncement;
         component.posting.authorRole = param.input;
@@ -134,8 +144,8 @@ describe('PostHeaderComponent', () => {
         fixture.detectChanges();
 
         // should display relevant icon for author authority
-        const icon = getElement(debugElement, 'fa-icon');
-        expect(icon).not.toBeNull();
-        expect(icon.innerHTML).toInclude(param.expect);
+        const badge = getElement(debugElement, '#role-badge');
+        expect(badge).not.toBeNull();
+        expect(badge.classList.contains(param.expect)).toBeTrue();
     });
 });

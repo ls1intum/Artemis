@@ -50,6 +50,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     content: ElementRef;
     @Input()
     course?: Course;
+    @Input()
+    searchbarCollapsed = false;
 
     getAsChannel = getAsChannelDTO;
 
@@ -221,7 +223,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     };
 
     scrollToBottomOfMessages() {
-        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+        // Use setTimeout to ensure the scroll happens after the new message is rendered
+        setTimeout(() => {
+            this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+        }, 0);
     }
 
     onSearchQueryInput($event: Event) {

@@ -1,24 +1,10 @@
-import {
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnChanges,
-    Output,
-    QueryList,
-    SimpleChanges,
-    ViewChild,
-    ViewChildren,
-    ViewEncapsulation,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { firstValueFrom } from 'rxjs';
-import { Annotation, FileSession } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { firstValueFrom, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
@@ -32,11 +18,12 @@ import {
     RenameFileChange,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { fromPairs, pickBy } from 'lodash-es';
-import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
 
+type FileSession = { [fileName: string]: { code: string; cursor: { column: number; row: number }; loadingError: boolean } };
+export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',
     templateUrl: './code-editor-monaco.component.html',
@@ -47,8 +34,6 @@ import { FileTypeService } from 'app/exercises/programming/shared/service/file-t
 export class CodeEditorMonacoComponent implements OnChanges {
     @ViewChild('editor', { static: true })
     editor: MonacoEditorComponent;
-    @ViewChild('addFeedbackButton', { static: true })
-    addFeedbackButton: ElementRef<HTMLDivElement>;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
     inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)
@@ -98,16 +83,18 @@ export class CodeEditorMonacoComponent implements OnChanges {
     onHighlightLines = new EventEmitter<MonacoEditorLineHighlight[]>();
 
     editorLocked = false;
-    isLoading = false;
+    /**
+     * The number of currently loading files. If this number is greater than 0, the editor is in a loading state and hides its content.
+     */
+    loadingCount = 0;
 
     fileSession: FileSession = {};
     newFeedbackLines: number[] = [];
     binaryFileSelected = false;
 
-    faPlusSquare = faPlusSquare;
-
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
-    static readonly CLASS_DIFF_MARGIN_HIGHLIGHT = 'monaco-diff-margin-highlight';
+    static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
+    static readonly FILE_TIMEOUT = 10000;
 
     // Expose to template
     protected readonly Feedback = Feedback;
@@ -156,12 +143,14 @@ export class CodeEditorMonacoComponent implements OnChanges {
             // There is nothing to be done, as the editor will be hidden when there is no file.
             return;
         }
+        this.loadingCount++;
         if (!this.fileSession[fileName] || this.fileSession[fileName].loadingError) {
-            this.isLoading = true;
             let fileContent = '';
             let loadingError = false;
             try {
-                fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName)).then((fileObj) => fileObj.fileContent);
+                fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
+                    (fileObj) => fileObj.fileContent,
+                );
             } catch (error) {
                 loadingError = true;
                 if (error.message === ConnectionError.message) {
@@ -171,16 +160,17 @@ export class CodeEditorMonacoComponent implements OnChanges {
                 }
             }
             this.fileSession[fileName] = { code: fileContent, loadingError, cursor: { column: 0, row: 0 } };
-            this.isLoading = false;
         }
 
         const code = this.fileSession[fileName].code;
         this.binaryFileSelected = this.fileTypeService.isBinaryContent(code);
 
-        if (!this.binaryFileSelected) {
+        // Since fetching the file may take some time, we need to check if the file is still selected.
+        if (!this.binaryFileSelected && this.selectedFile === fileName) {
             this.editor.changeModel(fileName, code);
             this.editor.setPosition(this.fileSession[fileName].cursor);
         }
+        this.loadingCount--;
     }
 
     onFileTextChanged(text: string): void {
@@ -202,12 +192,12 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     highlightLines(startLine: number, endLine: number) {
-        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_DIFF_MARGIN_HIGHLIGHT);
+        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT);
         this.onHighlightLines.emit(this.getLineHighlights());
     }
 
     setupAddFeedbackButton(): void {
-        this.editor.setGlyphMarginHoverButton(this.addFeedbackButton.nativeElement, (lineNumber) => this.addNewFeedback(lineNumber));
+        this.editor.setLineDecorationsHoverButton(CodeEditorMonacoComponent.CLASS_FEEDBACK_HOVER_BUTTON, (lineNumber) => this.addNewFeedback(lineNumber));
     }
 
     /**
@@ -380,9 +370,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.setBuildAnnotations(this.annotationsArray);
     }
 
-    /*
-     * Taken from code-editor-ace.component.ts
-     */
     /**
      * Saves the updated annotations to local storage
      * @param savedFiles

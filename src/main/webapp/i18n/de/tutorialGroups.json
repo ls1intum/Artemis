@@ -93,7 +93,7 @@
                 },
                 "updateChannelNameInput": {
                     "label": "Kanalnamen aktualisieren",
-                    "explanation": "Wenn mit dieser Übungsgruppe ein Nachrichtenkanal verbunden ist, wird der Name des Kanals mit dem Titel der Übungsgruppe aktualisiert, falls du diese Option aktivierst."
+                    "explanation": "Wenn mit dieser Übungsgruppe ein Kommunikationskanal verbunden ist, wird der Name des Kanals mit dem Titel der Übungsgruppe aktualisiert, falls du diese Option aktivierst."
                 },
                 "teachingAssistantInput": {
                     "label": "Tutor:in",
@@ -234,9 +234,9 @@
                     "invalidRangeError": "Der Zeitraum muss ein gültiger Datumsbereich sein"
                 },
                 "useTutorialGroupChannelsInput": {
-                    "label": "Artemis verwaltete Übungsgruppen-Nachrichtenkanäle verwenden",
-                    "channelDeletionWarning": "Wenn diese Option deaktiviert wird, werden alle Übungsgruppen-Nachrichtenkanäle gelöscht. Soll das wirklich gemacht werden?",
-                    "explanation": "Wenn diese Option aktiviert ist, erstellt Artemis für jede Übungsgruppe einen eigenen Kanal im Abschnitt 'Nachrichten' des Kurses. Der Kanal kann immer noch manuell verwaltet werden, aber Artemis führt einige allgemeine Verwaltungsaufgaben automatisch aus. Artemis fügt automatisch Studierende zum Kanal hinzu oder entfernt sie aus diesem, wenn sie sich für die Übungsgruppe an- oder abmelden. Der / Die zugewiesene Tutor:in der Übungsgruppe wird zum / zur Moderator:in des Kanals. Der Kanal wird gelöscht, wenn die Übungsgruppe gelöscht wird. Er kann nicht manuell gelöscht werden. Diese Option kann später noch geändert werden."
+                    "label": "Artemis verwaltete Übungsgruppen-Kommunikationskanäle verwenden",
+                    "channelDeletionWarning": "Wenn diese Option deaktiviert wird, werden alle Übungsgruppen-Kommunikationskanäle gelöscht. Soll das wirklich gemacht werden?",
+                    "explanation": "Wenn diese Option aktiviert ist, erstellt Artemis für jede Übungsgruppe einen eigenen Kanal im Abschnitt 'Kommunikation' des Kurses. Der Kanal kann immer noch manuell verwaltet werden, aber Artemis führt einige allgemeine Verwaltungsaufgaben automatisch aus. Artemis fügt automatisch Studierende zum Kanal hinzu oder entfernt sie aus diesem, wenn sie sich für die Übungsgruppe an- oder abmelden. Der / Die zugewiesene Tutor:in der Übungsgruppe wird zum / zur Moderator:in des Kanals. Der Kanal wird gelöscht, wenn die Übungsgruppe gelöscht wird. Er kann nicht manuell gelöscht werden. Diese Option kann später noch geändert werden."
                 }
             }
         },

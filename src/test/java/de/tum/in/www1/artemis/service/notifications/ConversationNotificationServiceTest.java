@@ -95,7 +95,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
 
     private void verifyRepositoryCallWithCorrectNotification(String expectedNotificationTitle) {
         List<ConversationNotification> capturedNotifications = conversationNotificationRepository.findAll();
-        Notification capturedNotification = capturedNotifications.get(0);
+        Notification capturedNotification = capturedNotifications.getFirst();
         assertThat(capturedNotification.getTitle()).isEqualTo(expectedNotificationTitle);
     }
 

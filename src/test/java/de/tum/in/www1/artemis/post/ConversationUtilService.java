@@ -144,7 +144,7 @@ public class ConversationUtilService {
         courseRepo.save(course1);
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
-        plagiarismCase.setExercise(testExerciseChannels.get(0).getExercise());
+        plagiarismCase.setExercise(testExerciseChannels.getFirst().getExercise());
         plagiarismCase.setStudent(userUtilService.getUserByLogin(userPrefix + "student1"));
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 

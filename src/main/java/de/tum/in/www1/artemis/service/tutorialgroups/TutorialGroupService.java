@@ -4,11 +4,16 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS;
 import static jakarta.persistence.Persistence.getPersistenceUtil;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,9 +24,14 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -612,4 +622,223 @@ public class TutorialGroupService {
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
 
+    /**
+     * Exports tutorial groups for a specific course to a CSV file.
+     *
+     * @param course the course for which the tutorial groups should be exported
+     * @param user   the user performing the export operation
+     * @param fields the list of fields to include in the CSV export
+     * @return a String containing the CSV data
+     * @throws IOException if an I/O error occurs
+     */
+    public String exportTutorialGroupsToCSV(Course course, User user, List<String> fields) throws IOException {
+        Set<TutorialGroup> tutorialGroups = findAllForCourse(course, user);
+
+        StringWriter out = new StringWriter();
+
+        // Check if "Students" is in the fields list and add separate columns for student details
+        boolean includeStudents = fields.contains("Students");
+        if (includeStudents) {
+            fields.remove("Students");
+            fields.add("Registration Number");
+            fields.add("First Name");
+            fields.add("Last Name");
+        }
+
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(fields.toArray(new String[0])).build();
+        try (CSVPrinter printer = new CSVPrinter(out, csvFormat)) {
+            for (TutorialGroup tutorialGroup : tutorialGroups) {
+                writeTutorialGroupRow(printer, tutorialGroup, fields, null);
+                if (includeStudents) {
+                    Set<User> students = getStudentsRegisteredForTutorial(tutorialGroup.getRegistrations());
+                    for (User student : students) {
+                        writeTutorialGroupRow(printer, tutorialGroup, fields, student);
+                    }
+                }
+            }
+        }
+        return out.toString();
+    }
+
+    // Method to write a row for a tutorial group, optionally including student details
+    private void writeTutorialGroupRow(CSVPrinter printer, TutorialGroup tutorialGroup, List<String> fields, User student) throws IOException {
+        for (String field : fields) {
+            printer.print(switch (field) {
+                case "Registration Number" -> getStudentField(student, StudentField.REGISTRATION_NUMBER);
+                case "First Name" -> getStudentField(student, StudentField.FIRST_NAME);
+                case "Last Name" -> getStudentField(student, StudentField.LAST_NAME);
+                default -> getCSVInput(tutorialGroup, field);
+            });
+        }
+        printer.println();
+    }
+
+    private String getCSVInput(TutorialGroup tutorialGroup, String field) {
+        return switch (field) {
+            case "ID" -> getValueOrDefault(tutorialGroup.getId());
+            case "Title" -> getValueOrDefault(tutorialGroup.getTitle());
+            case "Campus" -> getValueOrDefault(tutorialGroup.getCampus());
+            case "Language" -> getValueOrDefault(tutorialGroup.getLanguage());
+            case "Additional Information" -> getValueOrDefault(tutorialGroup.getAdditionalInformation());
+            case "Capacity" -> getValueOrDefault(tutorialGroup.getCapacity());
+            case "Is Online" -> getValueOrDefault(tutorialGroup.getIsOnline());
+            case "Day of Week" -> getDayOfWeek(tutorialGroup);
+            case "Start Time" -> getScheduleField(tutorialGroup, ScheduleField.START_TIME);
+            case "End Time" -> getScheduleField(tutorialGroup, ScheduleField.END_TIME);
+            case "Location" -> getScheduleField(tutorialGroup, ScheduleField.LOCATION);
+            default -> "";
+        };
+    }
+
+    /**
+     * Exports the tutorial groups for a given course to a JSON string.
+     * Each tutorial group and its related information, including optional fields specified in the selectedFields list, are included in the export.
+     * The method utilizes helper methods to handle null checks and field assignments.
+     *
+     * @param courseId       the ID of the course for which tutorial groups are to be exported
+     * @param selectedFields the list of fields to include in the JSON export
+     * @return a JSON string representing the exported tutorial groups and their details
+     * @throws JsonProcessingException if an error occurs during JSON processing
+     */
+    public String exportTutorialGroupsToJSON(Long courseId, List<String> selectedFields) throws JsonProcessingException {
+        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(courseId);
+
+        List<Map<String, Object>> exportData = new ArrayList<>();
+        for (TutorialGroup tutorialGroup : tutorialGroups) {
+            Map<String, Object> groupData = new LinkedHashMap<>();
+            writeTutorialGroupJSON(groupData, tutorialGroup, selectedFields);
+            if (selectedFields.contains("Students")) {
+                if ((tutorialGroup.getRegistrations() != null) && (!tutorialGroup.getRegistrations().isEmpty())) {
+                    for (TutorialGroupRegistration registration : tutorialGroup.getRegistrations()) {
+                        User student = registration.getStudent();
+                        groupData.put("Students",
+                                groupData.get("Students") != null ? groupData.get("Students") + convertStudentToString(student) : convertStudentToString(student));
+                    }
+                    groupData.put("Students", groupData.get("Students").toString().substring(0, groupData.get("Students").toString().length() - 1));
+                }
+            }
+            exportData.add(groupData);
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportData);
+    }
+
+    private void writeTutorialGroupJSON(Map<String, Object> groupData, TutorialGroup tutorialGroup, List<String> selectedFields) throws JsonProcessingException {
+        for (String field : selectedFields) {
+            groupData.put(field, getCSVInput(tutorialGroup, field));
+        }
+    }
+
+    private String getValueOrDefault(Object value) {
+        return value != null ? value.toString() : "";
+    }
+
+    /**
+     * Returns the string representation of the day of the week for the tutorial group's schedule.
+     * If the schedule or day of the week is null, returns the default day of "None".
+     */
+    private String getDayOfWeek(TutorialGroup tutorialGroup) {
+        if (tutorialGroup.getTutorialGroupSchedule() != null && tutorialGroup.getTutorialGroupSchedule().getDayOfWeek() != null) {
+            return getDayOfWeekString(tutorialGroup.getTutorialGroupSchedule().getDayOfWeek());
+        }
+        return getDayOfWeekString(8); // Default to "None"
+    }
+
+    /**
+     * Returns the requested field (start time, end time, location) from the tutorial group's schedule.
+     * If the schedule or the requested field is null, returns an empty string.
+     */
+    private String getScheduleField(TutorialGroup tutorialGroup, ScheduleField field) {
+        if (tutorialGroup.getTutorialGroupSchedule() != null) {
+            switch (field) {
+                case START_TIME -> {
+                    return getValueOrDefault(tutorialGroup.getTutorialGroupSchedule().getStartTime());
+                }
+                case END_TIME -> {
+                    return getValueOrDefault(tutorialGroup.getTutorialGroupSchedule().getEndTime());
+                }
+                case LOCATION -> {
+                    return getValueOrDefault(tutorialGroup.getTutorialGroupSchedule().getLocation());
+                }
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Returns the requested field (registration number, first name, last name) from the student.
+     * If the student or the requested field is null, returns an empty string.
+     */
+    private String getStudentField(User student, StudentField field) {
+        if (student != null) {
+            switch (field) {
+                case REGISTRATION_NUMBER -> {
+                    return getValueOrDefault(student.getRegistrationNumber());
+                }
+                case FIRST_NAME -> {
+                    return getValueOrDefault(student.getFirstName());
+                }
+                case LAST_NAME -> {
+                    return getValueOrDefault(student.getLastName());
+                }
+            }
+        }
+        return "";
+    }
+
+    // Enum to represent the different fields of the schedule
+    private enum ScheduleField {
+        START_TIME, END_TIME, LOCATION
+    }
+
+    // Enum to represent the different fields of the student
+    private enum StudentField {
+        REGISTRATION_NUMBER, FIRST_NAME, LAST_NAME
+    }
+
+    /**
+     * Converts a numeric representation of a day of the week to its corresponding String name.
+     * This method is used primarily for CSV export purposes.
+     *
+     * @param dayOfWeek the numeric representation of the day of the week, where Monday = 1 and Sunday = 7. 8 is a default value which will be applied if a tutorial group schedule
+     *                      is not created yet.
+     * @return a String representing the name of the corresponding day of the week.
+     * @throws IllegalArgumentException if the provided dayOfWeek is not within the range 1 to 8.
+     */
+    public String getDayOfWeekString(int dayOfWeek) {
+        if (dayOfWeek < 1 || dayOfWeek > 8) {
+            throw new IllegalArgumentException("Invalid day of the week: " + dayOfWeek);
+        }
+        String[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "None" };
+        return days[dayOfWeek - 1];
+    }
+
+    /**
+     * Retrieves the set of students registered for a specific tutorial group.
+     *
+     * @param registrations the set of tutorial group registrations
+     * @return a set of users (students) registered for the tutorial group
+     */
+    public Set<User> getStudentsRegisteredForTutorial(Set<TutorialGroupRegistration> registrations) {
+        Set<User> students = new HashSet<>();
+        for (TutorialGroupRegistration registration : registrations) {
+            User user = registration.getStudent();
+            if (user != null) {
+                students.add(user);
+            }
+        }
+        return students;
+    }
+
+    private String convertStudentToString(User student) {
+        StringBuilder studentString = new StringBuilder();
+        studentString.append(student.getRegistrationNumber());
+        studentString.append(" ");
+        studentString.append(student.getFirstName());
+        studentString.append(" ");
+        studentString.append(student.getLastName());
+        studentString.append(",");
+        return studentString.toString();
+    }
 }

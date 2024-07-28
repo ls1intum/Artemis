@@ -14,6 +14,8 @@ import { IrisModule } from 'app/iris/iris.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
+import { NoDataComponent } from 'app/shared/no-data-component';
 
 @NgModule({
     imports: [
@@ -31,6 +33,8 @@ import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/e
         ArtemisModelingEditorModule,
         ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
+        ExerciseDetailDirective,
+        NoDataComponent,
     ],
     declarations: [DetailOverviewListComponent],
     exports: [DetailOverviewListComponent],

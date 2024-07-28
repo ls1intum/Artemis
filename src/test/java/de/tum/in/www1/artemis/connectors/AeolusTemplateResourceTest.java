@@ -114,7 +114,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         Windfile windfile = Windfile.deserialize(validWindfile);
         assertThat(windfile).isNotNull();
-        assertThat(windfile.getActions().get(0)).isInstanceOf(ScriptAction.class);
+        assertThat(windfile.getActions().getFirst()).isInstanceOf(ScriptAction.class);
     }
 
     @Test()

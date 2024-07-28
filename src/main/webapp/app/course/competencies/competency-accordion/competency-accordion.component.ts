@@ -94,7 +94,7 @@ export class CompetencyAccordionComponent implements OnChanges {
         const courseExercises = this.course?.exercises ?? [];
         const exerciseIdToExercise = Object.fromEntries(courseExercises.map((exercise) => [exercise.id, exercise] as [number, Exercise]));
         const activeCompetencyExercises = (this.metrics.competencyMetrics?.exercises?.[this.competency.id] ?? [])
-            .flatMap((exerciseId) => [exerciseIdToExercise[exerciseId]] ?? [])
+            .flatMap((exerciseId) => [exerciseIdToExercise[exerciseId]])
             .filter((exercise) => exercise.releaseDate?.isBefore(dayjs()))
             .filter((exercise) => exercise.dueDate?.isAfter(dayjs()) || isStartPracticeAvailable(exercise));
 
@@ -110,8 +110,8 @@ export class CompetencyAccordionComponent implements OnChanges {
         this.nextExercises = activeCompetencyExercises
             .filter((exercise) => exercise.id && exerciseIdToMaxScore[exercise.id] <= completionThreshold)
             .sort((a, b) => {
-                const scoreA = a.id ? exerciseIdToMaxScore[a.id] ?? 0 : 0;
-                const scoreB = b.id ? exerciseIdToMaxScore[b.id] ?? 0 : 0;
+                const scoreA = a.id ? (exerciseIdToMaxScore[a.id] ?? 0) : 0;
+                const scoreB = b.id ? (exerciseIdToMaxScore[b.id] ?? 0) : 0;
 
                 if (scoreA !== scoreB) {
                     return scoreA - scoreB;

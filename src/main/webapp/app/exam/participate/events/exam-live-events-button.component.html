@@ -1,6 +1,6 @@
 @if (eventCount) {
     <button class="btn btn-md btn-info" (click)="openDialog($event)">
         <fa-icon [icon]="faBullhorn" />
-        <span class="d-none d-md-inline">{{ 'artemisApp.exam.events.button' | artemisTranslate }} ({{ eventCount }})</span>
+        <span>({{ eventCount }})</span>
     </button>
 }

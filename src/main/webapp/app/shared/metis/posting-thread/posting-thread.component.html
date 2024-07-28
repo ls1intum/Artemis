@@ -1,17 +1,15 @@
-<div class="row mb-2 mx-0" [class]="post.displayPriority === DisplayPriority.PINNED ? 'highlight-pinned' : ''">
-    <div class="col-12">
-        <jhi-post
-            [readOnlyMode]="readOnlyMode"
-            [lastReadDate]="lastReadDate"
-            [posting]="post"
-            [showAnswers]="showAnswers"
-            [isCourseMessagesPage]="isCourseMessagesPage"
-            [isCommunicationPage]="isCommunicationPage"
-            [hasChannelModerationRights]="hasChannelModerationRights"
-            (openThread)="openThread.emit(post)"
-        />
-    </div>
+<div class="col-12 mx-0">
+    <jhi-post
+        [readOnlyMode]="readOnlyMode"
+        [lastReadDate]="lastReadDate"
+        [posting]="post"
+        [showAnswers]="showAnswers"
+        [isCommunicationPage]="isCommunicationPage"
+        [showChannelReference]="showChannelReference"
+        [hasChannelModerationRights]="hasChannelModerationRights"
+        (openThread)="openThread.emit(post)"
+    />
 </div>
-@if (!isCourseMessagesPage) {
+@if (!isCommunicationPage) {
     <div class="post-separation-line"></div>
 }
