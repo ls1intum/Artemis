@@ -35,7 +35,7 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
             editor,
             this.loadUsersForSearchTerm.bind(this),
             (user: UserNameAndLoginDTO, range: monaco.IRange) => ({
-                label: '@' + user.name,
+                label: `@${user.name}`,
                 kind: monaco.languages.CompletionItemKind.User,
                 insertText: `[user]${user.name}(${user.login})[/user]`,
                 range,

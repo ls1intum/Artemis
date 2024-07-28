@@ -35,7 +35,7 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
             editor,
             this.fetchChannels.bind(this),
             (channel: ChannelIdAndNameDTO, range: monaco.IRange) => ({
-                label: '#' + channel.name,
+                label: `#${channel.name}`,
                 kind: monaco.languages.CompletionItemKind.Constant,
                 insertText: `[channel]${channel.name}(${channel.id})[/channel]`,
                 range,
