@@ -21,6 +21,7 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
     }
 
     run(editor: monaco.editor.ICodeEditor, args?: InsertShortAnswerOptionArgs): void {
+        // Note that even if the optionText is provided, it may be blank. This is why we use || instead of ?? here.
         const optionText = args?.optionText || MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT;
         let insertedText: string;
         if (args?.spotNumber) {
@@ -33,7 +34,7 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
             insertedText = `\n\n${insertedText}`;
         }
         this.insertTextAtPosition(editor, this.getEndPosition(editor), insertedText);
-        // We want to select the option text if it is the default text
+        // For convenience, we want to select the option text if it is the default text
         if (optionText === MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT) {
             const newEndPosition = this.getEndPosition(editor);
             const selection = {

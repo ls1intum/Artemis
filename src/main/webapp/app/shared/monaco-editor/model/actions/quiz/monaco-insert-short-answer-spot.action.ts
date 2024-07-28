@@ -11,7 +11,6 @@ export class MonacoInsertShortAnswerSpotAction extends MonacoEditorAction {
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        alert('Insert spot');
         // Changes to the editor contents will trigger an update of the spot number. We keep it stored here to use it when inserting the spot.
         const number = this.spotNumber;
         const text = `[-spot ${number}]`;
