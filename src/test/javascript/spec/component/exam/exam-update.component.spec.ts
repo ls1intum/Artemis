@@ -411,12 +411,12 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.testExam = false;
             examWithoutExercises.visibleDate = dayjs('this is not a date');
             fixture.detectChanges();
-            const result = component.checkExamVisibilityTime();
+            const result = component.checkExamVisibilityTime;
             expect(result).toBeFalse();
 
             examWithoutExercises.visibleDate = dayjs();
             examWithoutExercises.startDate = dayjs('this is not a date');
-            const result2 = component.checkExamVisibilityTime();
+            const result2 = component.checkExamVisibilityTime;
             expect(result2).toBeFalse();
         });
 
@@ -425,23 +425,13 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.visibleDate = dayjs();
             examWithoutExercises.startDate = dayjs().add(240, 'minute');
             fixture.detectChanges();
-            const result = component.checkExamVisibilityTime();
+            const result = component.checkExamVisibilityTime;
             expect(result).toBeFalse();
 
             examWithoutExercises.startDate = dayjs().add(241, 'minute');
             fixture.detectChanges();
-            const result2 = component.checkExamVisibilityTime();
+            const result2 = component.checkExamVisibilityTime;
             expect(result2).toBeTrue();
-        });
-
-        it('should call handleVisibilityDate in updateExamWorkingTime', () => {
-            component.exam = examWithoutExercises;
-            examWithoutExercises.testExam = false;
-            examWithoutExercises.startDate = dayjs();
-            examWithoutExercises.endDate = dayjs().add(240, 'minute');
-            const visibilityStub = jest.spyOn(component, 'handleVisibilityDate');
-            component.updateExamWorkingTime(true);
-            expect(visibilityStub).toHaveBeenCalledOnce();
         });
 
         it('should correctly catch HTTPError when updating the examWithoutExercises', fakeAsync(() => {
