@@ -54,6 +54,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ValueConstants;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hazelcast.core.HazelcastInstance;
@@ -303,14 +304,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
             @Override
             public void check(final JavaMethod method, final ConditionEvents events) {
 
-                final String defaultDefaultValue = "\n\t\t\n\t\t\n\ue000\ue001\ue002\n\t\t\t\t\n";
-
                 final var violated = method.getParameters().stream().map(JavaParameter::getAnnotations).flatMap(Set::stream).filter(HasType.Predicates.rawType(RequestParam.class))
                         .filter(annotation -> {
                             // if there is a default value set, then required false does not need to be checked for
-                            // The Annotation sets a default value for defaultValue so we have to make sure it is not equal to that
-                            final String value = (String) annotation.get("defaultValue").orElse(defaultDefaultValue);
-                            return defaultDefaultValue.equals(value);
+                            // The annotation sets a default value for defaultValue so we have to make sure it is not equal to that
+                            final String value = (String) annotation.get("defaultValue").orElse(ValueConstants.DEFAULT_NONE);
+                            return ValueConstants.DEFAULT_NONE.equals(value);
                         }).map(annotation -> annotation.get("required").orElse(true)) // if not set, the default is true
                         .map(Boolean.class::cast) // since we filter for the annotation and field we know this cast is safe!
                         .anyMatch(required -> !required);
