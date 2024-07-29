@@ -134,7 +134,7 @@ public class LocalCIResultProcessingService {
         BuildJob savedBuildJob;
 
         SecurityUtils.setAuthorizationObject();
-        Optional<Participation> participationOptional = participationRepository.findById(buildJob.participationId());
+        Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
 
         if (buildResult != null) {
             Result result = null;
@@ -145,11 +145,6 @@ public class LocalCIResultProcessingService {
                     // In case the participation does not contain the exercise, we have to load it from the database
                     if (participation.getProgrammingExercise() == null) {
                         participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
-                    }
-                    else {
-                        // Load the build config from the database, as it is not included in the participation
-                        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
-                        participation.getProgrammingExercise().setBuildConfig(buildConfig);
                     }
                     result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
 
