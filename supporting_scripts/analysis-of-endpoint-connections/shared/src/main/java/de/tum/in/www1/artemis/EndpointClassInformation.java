@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class EndpointClassInformation {
 
     @JsonProperty
-    private String filePath;
+    private String fileName;
 
     @JsonProperty
     private String classRequestMapping;
@@ -18,8 +18,8 @@ public class EndpointClassInformation {
 
     }
 
-    public EndpointClassInformation(String filePath, String classRequestMapping, List<EndpointInformation> endpoints) {
-        this.filePath = filePath;
+    public EndpointClassInformation(String fileName, String classRequestMapping, List<EndpointInformation> endpoints) {
+        this.fileName = fileName;
         this.classRequestMapping = classRequestMapping;
         this.endpoints = endpoints;
     }
@@ -32,12 +32,12 @@ public class EndpointClassInformation {
         this.classRequestMapping = classRequestMapping;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public String getFileName() {
+        return fileName;
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public List<EndpointInformation> getEndpoints() {
