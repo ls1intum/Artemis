@@ -11,15 +11,15 @@ export class ExamNavigationBar {
     }
 
     /**
-     * Opens the exercise with the given title
-     * @param exerciseTitle
+     * Opens the exercise with the given group title
+     * @param exerciseGroupTitle
      */
-    async openOrSaveExerciseByTitle(exerciseTitle: string) {
-        await this.page.getByText(exerciseTitle).nth(0).click();
+    async openOrSaveExerciseByTitle(exerciseGroupTitle: string) {
+        await this.page.getByText(exerciseGroupTitle).nth(0).click();
     }
 
-    async openFromOverviewByTitle(exerciseTitle: string) {
-        await this.page.getByText(exerciseTitle).locator('xpath=ancestor-or-self::a').click();
+    async openFromOverviewByTitle(exerciseGroupTitle: string) {
+        await this.page.getByText(exerciseGroupTitle).locator('xpath=ancestor-or-self::a').click();
     }
 
     async openOverview() {

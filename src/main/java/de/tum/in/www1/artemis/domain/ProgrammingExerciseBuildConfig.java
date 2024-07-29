@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.Objects;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
@@ -12,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
@@ -26,7 +23,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildConfig.class);
 
     @Column(name = "sequential_test_runs")
-    private Boolean sequentialTestRuns;
+    private boolean sequentialTestRuns;
 
     @Column(name = "branch")
     private String branch;
@@ -48,7 +45,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     private String checkoutPath;
 
     @Column(name = "timeout_seconds")
-    private Integer timeoutSeconds;
+    private int timeoutSeconds;
 
     @Column(name = "docker_flags")
     private String dockerFlags;
@@ -60,9 +57,8 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "testwise_coverage_enabled")
     private boolean testwiseCoverageEnabled;
 
-    @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
-        return Objects.requireNonNullElse(sequentialTestRuns, false);
+        return sequentialTestRuns;
     }
 
     public void setSequentialTestRuns(Boolean sequentialTestRuns) {
@@ -119,11 +115,11 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.buildScript = buildScript;
     }
 
-    public Boolean getCheckoutSolutionRepository() {
+    public boolean getCheckoutSolutionRepository() {
         return checkoutSolutionRepository;
     }
 
-    public void setCheckoutSolutionRepository(Boolean checkoutSolutionRepository) {
+    public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
         this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 
@@ -135,11 +131,11 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.checkoutPath = checkoutPath;
     }
 
-    public Integer getTimeoutSeconds() {
+    public int getTimeoutSeconds() {
         return timeoutSeconds;
     }
 
-    public void setTimeoutSeconds(Integer timeoutSeconds) {
+    public void setTimeoutSeconds(int timeoutSeconds) {
         this.timeoutSeconds = timeoutSeconds;
     }
 
@@ -175,11 +171,11 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         setBuildScript(null);
     }
 
-    public Boolean isTestwiseCoverageEnabled() {
+    public boolean isTestwiseCoverageEnabled() {
         return testwiseCoverageEnabled;
     }
 
-    public void setTestwiseCoverageEnabled(Boolean testwiseCoverageEnabled) {
+    public void setTestwiseCoverageEnabled(boolean testwiseCoverageEnabled) {
         this.testwiseCoverageEnabled = testwiseCoverageEnabled;
     }
 

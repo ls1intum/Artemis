@@ -144,12 +144,11 @@ public class LocalCIResultProcessingService {
 
                     // In case the participation does not contain the exercise, we have to load it from the database
                     if (participation.getProgrammingExercise() == null) {
-                        participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation));
+                        participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
                     }
-                    // TODO: Add new method instead of this
-                    var debug = programmingExerciseBuildConfigRepository.findAll();
-                    var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseWithBuildConfig(participation.getProgrammingExercise());
-                    if (buildConfig != null) {
+                    else {
+                        // Load the build config from the database, as it is not included in the participation
+                        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
                         participation.getProgrammingExercise().setBuildConfig(buildConfig);
                     }
                     result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);

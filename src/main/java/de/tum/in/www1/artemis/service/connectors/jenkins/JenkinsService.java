@@ -119,7 +119,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
         Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(exercise);
         if (windfile != null) {
-            // saved
             exercise.getBuildConfig().setBuildPlanConfiguration(mapper.writeValueAsString(windfile));
         }
         if (profileService.isAeolusActive()) {

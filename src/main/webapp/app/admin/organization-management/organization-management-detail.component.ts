@@ -116,8 +116,12 @@ export class OrganizationManagementDetailComponent implements OnInit {
                         if (this.organization.users === undefined) {
                             this.organization.users = [];
                         }
+                        const button = this.dataTable.typeaheadButtons[i];
                         const isAlreadyInOrganization = this.organization.users!.map((user) => user.id).includes(users[i].id);
-                        this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInOrganization ? 'users' : 'users-plus']);
+                        const hasIcon = button.querySelector('fa-icon');
+                        if (!hasIcon) {
+                            button.insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInOrganization ? 'users' : 'users-plus']);
+                        }
                         if (isAlreadyInOrganization) {
                             this.dataTable.typeaheadButtons[i].classList.add(cssClasses.alreadyMember);
                         }

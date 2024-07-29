@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -49,18 +48,14 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final AeolusTemplateService aeolusTemplateService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final SharedQueueManagementService sharedQueueManagementService;
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SharedQueueManagementService sharedQueueManagementService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            SharedQueueManagementService sharedQueueManagementService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
@@ -87,7 +82,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
         buildConfig.setBuildScript(script);
         buildConfig.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
-        // recreating the build plans for the exercise means we need to store the updated exercise in the database
+        // recreating the build plans for the exercise means we need to store the updated build config in the database
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }
 

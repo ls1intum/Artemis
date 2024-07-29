@@ -144,7 +144,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
         staticCodeAnalysisService.createDefaultCategories(programmingExercise);
 
         // Set the correct repository URIs for the template and the solution participation.

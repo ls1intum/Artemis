@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -249,7 +248,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
-        return Arrays.stream(ProgrammingLanguage.values())
+        return ProgrammingLanguage.getEnabledLanguages().stream()
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
     }
 
@@ -319,7 +318,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     private final List<String> logs = List.of("[2023-03-10T15:19:49.741Z] [ERROR] Log1", "[2023-03-10T15:19:49.742Z] [ERROR] Log2", "[2023-03-10T15:19:49.743Z] [ERROR] Log3");
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationWithoutResultArguments() {
-        return Arrays.stream(ProgrammingLanguage.values()).flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true, true),
+        return ProgrammingLanguage.getEnabledLanguages().stream().flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true, true),
                 Arguments.of(programmingLanguage, false, true), Arguments.of(programmingLanguage, true, false), Arguments.of(programmingLanguage, false, false)));
     }
 

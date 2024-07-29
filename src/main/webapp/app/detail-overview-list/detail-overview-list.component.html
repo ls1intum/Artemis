@@ -15,36 +15,6 @@
                     </dt>
                 }
                 @switch (detail.type) {
-                    @case (DetailType.Text) {
-                        <div jhiExerciseDetail [detail]="detail"></div>
-                    }
-                    @case (DetailType.Date) {
-                        <div jhiExerciseDetail [detail]="detail"></div>
-                    }
-                    @case (DetailType.Link) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            @if (detail.data.text) {
-                                @if (detail.data.routerLink?.length) {
-                                    <a [routerLink]="detail.data.routerLink" [queryParams]="detail.data.queryParams">
-                                        {{ detail.data.text }}
-                                    </a>
-                                } @else if (detail.data.href) {
-                                    <a href="{{ detail.data.href }}">
-                                        {{ detail.data.text }}
-                                    </a>
-                                } @else {
-                                    <span>{{ detail.data.text }}</span>
-                                }
-                            } @else {
-                                <ng-container *ngTemplateOutlet="noData" />
-                            }
-                        </dd>
-                    }
-                    @case (DetailType.Boolean) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            <jhi-checklist-check [checkAttribute]="detail.data.boolean" />
-                        </dd>
-                    }
                     @case (DetailType.ProgrammingRepositoryButtons) {
                         <dd id="detail-value-{{ detail.title }}">
                             @if (detail.data.participation?.repositoryUri && detail.data.exerciseId) {
@@ -270,6 +240,11 @@
                                 [isLocal]="detail.data.isLocal"
                                 [checkoutSolutionRepository]="detail.data.exercise.buildConfig?.checkoutSolutionRepository"
                             />
+                        </dd>
+                    }
+                    @default {
+                        <dd id="detail-value-{{ detail.title }}">
+                            <div jhiExerciseDetail [detail]="detail"></div>
                         </dd>
                     }
                 }

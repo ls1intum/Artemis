@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -133,12 +132,9 @@ public class ProgrammingExerciseImportBasicService {
         setupTestRepository(newProgrammingExercise);
         programmingExerciseService.initParticipations(newProgrammingExercise);
 
-        ProgrammingExerciseBuildConfig originalBuildConfig = originalProgrammingExercise.getBuildConfig();
-
         if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
-            // saved
-            newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalBuildConfig.getBuildPlanConfiguration());
+            newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
         }
 
         // Hints, tasks, test cases and static code analysis categories
@@ -206,7 +202,6 @@ public class ProgrammingExerciseImportBasicService {
         if (originalProgrammingExercise.hasBuildPlanAccessSecretSet()) {
             newProgrammingExercise.generateAndSetBuildPlanAccessSecret();
         }
-        // saved
         newProgrammingExercise.getBuildConfig().setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
     }
 

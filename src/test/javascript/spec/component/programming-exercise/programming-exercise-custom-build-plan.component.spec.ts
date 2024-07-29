@@ -13,8 +13,7 @@ import {
 } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { ElementRef, NgZone } from '@angular/core';
+import { ElementRef, Renderer2 } from '@angular/core';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,6 +23,8 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Observable } from 'rxjs';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -38,6 +39,8 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     let cleanBuildAction: ScriptAction = new ScriptAction();
     let platformAction: PlatformAction = new PlatformAction();
     let mockAeolusService: AeolusService;
+    let renderer2: Renderer2;
+    let translateService: TranslateService;
 
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
@@ -65,8 +68,8 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseCustomBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(AceEditorComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            declarations: [ProgrammingExerciseCustomBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(MonacoEditorComponent)],
+            providers: [{ provide: ActivatedRoute, useValue: route }, Renderer2],
         })
             .compileComponents()
             .then(() => {
@@ -76,7 +79,9 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
         const fixture = TestBed.createComponent(ProgrammingExerciseCustomBuildPlanComponent);
         comp = fixture.componentInstance;
-
+        // These are not directly injected into the component, but are needed for the tests.
+        renderer2 = fixture.debugElement.injector.get(Renderer2);
+        translateService = fixture.debugElement.injector.get(TranslateService);
         comp.programmingExercise = programmingExercise;
     });
 
@@ -94,9 +99,8 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
     it('should accept editor', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        const zone: NgZone = new NgZone({});
         expect(comp.editor).toBeUndefined();
-        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         expect(comp.editor).toBeDefined();
     });
 
@@ -227,15 +231,14 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     it('should accept editor for existing exercise', () => {
         comp.programmingExercise.id = 1;
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        const zone: NgZone = new NgZone({});
         comp.programmingExercise.buildConfig!.buildScript = 'buildscript';
-        const editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        const editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         expect(comp.editor).toBeUndefined();
         comp.editor = editor;
         expect(comp.code).toBe('buildscript');
         expect(comp.editor).toBeDefined();
         comp.programmingExercise.buildConfig!.buildScript = undefined;
-        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         expect(comp.code).toBe('');
     });
 

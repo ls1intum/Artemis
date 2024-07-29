@@ -68,6 +68,11 @@ export class ProgrammingExerciseBuildConfig {
     public dockerFlags?: string;
     public windFile?: WindFile;
     public testwiseCoverageEnabled?: boolean;
+
+    constructor() {
+        this.checkoutSolutionRepository = false; // default value
+        this.testwiseCoverageEnabled = false; // default value
+    }
 }
 
 export enum ProgrammingLanguage {
@@ -149,8 +154,6 @@ export class ProgrammingExercise extends Exercise {
         this.projectType = ProjectType.PLAIN_GRADLE; // default value
         this.showTestNamesToStudents = false; // default value
         this.buildConfig = new ProgrammingExerciseBuildConfig();
-        this.buildConfig.testwiseCoverageEnabled = false; // default value
-        this.buildConfig.checkoutSolutionRepository = false; // default value
     }
 }
 

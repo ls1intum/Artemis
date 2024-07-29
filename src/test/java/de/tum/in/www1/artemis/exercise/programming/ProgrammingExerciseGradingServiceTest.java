@@ -236,7 +236,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         @Override
         ProgrammingExercise changeRelevantExerciseEndDate(ProgrammingExercise programmingExercise, ZonedDateTime endDate) {
-            Exam exam = programmingExercise.getExamViaExerciseGroupOrCourseMember();
+            Exam exam = programmingExercise.getExam();
             // Only change the exam end date, as exam exercises don't have individual dates (all dates are null)
             exam.setEndDate(endDate);
             super.examRepository.save(exam);
@@ -1498,7 +1498,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     private void createStudentExam(ProgrammingExercise exercise, String student) {
-        var exam = exercise.getExamViaExerciseGroupOrCourseMember();
+        var exam = exercise.getExam();
         examUtilService.addStudentExamWithUser(exam, student);
     }
 }
