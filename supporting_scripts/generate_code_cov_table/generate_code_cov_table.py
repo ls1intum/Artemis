@@ -148,12 +148,12 @@ def get_coverage_artifact_for_key(artifacts, key):
 
 
 def get_branch_name():
-    repo = git.Repo(repo_path)
+    repo = git.Repo(repo_path, search_parent_directories=True)
     return repo.active_branch.name
 
 
 def get_changed_files(branch_name, base_branch_name="origin/develop"):
-    repo = git.Repo(repo_path)
+    repo = git.Repo(repo_path, search_parent_directories=True)
     try:
         branch_head = repo.commit(branch_name)
     except Exception as e:
@@ -379,11 +379,17 @@ def main(argv):
     if args.print_results:
         print(result)
     else:
-        result_utf16 = result.encode("utf-16le") + b"\x00\x00"
-        pyperclip.copy(result_utf16.decode("utf-16le"))
-        logging.info(
-            "Code coverage report copied to clipboard. Use --print-results to print it to console instead."
-        )
+        try:
+            result_utf16 = result.encode("utf-16le") + b"\x00\x00"
+            pyperclip.copy(result_utf16.decode("utf-16le"))
+            logging.info(
+                "Code coverage report copied to clipboard. Use --print-results to print it to console instead."
+            )
+        except pyperclip.PyperclipException as e:
+            logging.error(
+                f"Failed to copy the code coverage report to clipboard:\n{e}\n\nPrinted results instead. Use --print-results to directly print it to console."
+            )
+            print(result)
 
 
 if __name__ == "__main__":
