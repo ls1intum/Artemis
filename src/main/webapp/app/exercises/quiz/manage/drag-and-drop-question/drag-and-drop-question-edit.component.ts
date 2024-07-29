@@ -265,11 +265,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     makeFileMapPreview() {
         this.filePool.forEach((value, key) => {
             this.filePreviewPaths.set(key, URL.createObjectURL(value.file));
-            this.addNewFile.emit({
-                fileName: key,
-                file: value.file,
-                path: value.path,
-            });
             this.changeDetector.detectChanges();
         });
     }
