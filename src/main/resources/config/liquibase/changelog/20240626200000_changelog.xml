@@ -62,4 +62,21 @@
             ALTER TABLE programming_exercise_details DROP COLUMN testwise_coverage_enabled;
         </sql>
     </changeSet>
+
+    <changeSet id="202406200000_3" author="iyannsch">
+        <!-- Add theia information to the programming_exercise_details table -->
+        <addColumn tableName="programming_exercise_details">
+            <column name="allow_online_ide" defaultValueBoolean="false" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="theia_image" type="varchar(128)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="programming_exercise_details" columnName="allow_online_ide"/>
+            <dropColumn tableName="programming_exercise_details" columnName="theia_image"/>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>
