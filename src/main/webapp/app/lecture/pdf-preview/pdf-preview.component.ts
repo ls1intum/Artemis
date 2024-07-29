@@ -1,11 +1,10 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
 import { Attachment } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { Lecture } from 'app/entities/lecture.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -15,10 +14,9 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './pdf-preview.component.html',
     styleUrls: ['./pdf-preview.component.scss'],
 })
-export class PdfPreviewComponent implements OnInit {
+export class PdfPreviewComponent implements OnInit, OnDestroy {
     @ViewChild('pdfContainer', { static: true }) pdfContainer: ElementRef;
     @ViewChild('enlargedCanvas') enlargedCanvas: ElementRef;
-    lecture?: Lecture;
     attachment?: Attachment;
     attachmentUnit?: AttachmentUnit;
     isEnlargedView: boolean = false;
@@ -57,6 +55,10 @@ export class PdfPreviewComponent implements OnInit {
             }
         });
         document.addEventListener('keydown', this.handleKeyboardEvents);
+    }
+
+    ngOnDestroy() {
+        document.removeEventListener('keydown', this.handleKeyboardEvents);
     }
 
     private async loadPdf(fileUrl: string) {
@@ -119,7 +121,7 @@ export class PdfPreviewComponent implements OnInit {
         return overlay;
     }
 
-    private displayEnlargedCanvas(originalCanvas: HTMLCanvasElement, pageIndex: number) {
+    displayEnlargedCanvas(originalCanvas: HTMLCanvasElement, pageIndex: number) {
         this.isEnlargedView = true;
         this.currentPage = pageIndex;
         this.updateEnlargedCanvas(originalCanvas);
