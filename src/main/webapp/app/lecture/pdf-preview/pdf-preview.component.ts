@@ -7,6 +7,8 @@ import { Attachment } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
@@ -27,6 +29,7 @@ export class PdfPreviewComponent implements OnInit {
         private route: ActivatedRoute,
         private attachmentService: AttachmentService,
         private attachmentUnitService: AttachmentUnitService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -35,23 +38,22 @@ export class PdfPreviewComponent implements OnInit {
             if (this.attachment?.id) {
                 this.attachmentService.getAttachmentFile(this.attachment.id).subscribe({
                     next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
-                    error: (error) => console.error('Failed to load PDF file', error),
+                    error: (error) => onError(this.alertService, error),
                 });
             } else {
-                console.error('Invalid attachment or attachment ID.');
+                this.alertService.error('artemisApp.attachment.pdfPreview.attachmentIDError');
             }
         });
 
         this.route.data.subscribe((data: { attachmentUnit: AttachmentUnit }) => {
             this.attachmentUnit = data.attachmentUnit;
-            console.log(this.attachmentUnit);
             if (this.attachmentUnit?.id) {
                 this.attachmentUnitService.getAttachmentFile(this.attachmentUnit.id).subscribe({
                     next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
-                    error: (error) => console.error('Failed to load PDF file', error),
+                    error: (error) => onError(this.alertService, error),
                 });
             } else {
-                console.error('Invalid attachment or attachment ID.');
+                this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUnitIDError');
             }
         });
         document.addEventListener('keydown', this.handleKeyboardEvents);
@@ -78,7 +80,7 @@ export class PdfPreviewComponent implements OnInit {
 
             URL.revokeObjectURL(fileUrl);
         } catch (error) {
-            console.error('Error loading PDF:', error);
+            onError(this.alertService, error);
         }
     }
 

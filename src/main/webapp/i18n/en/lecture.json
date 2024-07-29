@@ -98,7 +98,9 @@
             "updated": "Updated attachment with identifier {{ param }}",
             "deleted": "Deleted attachment with identifier {{ param }}",
             "pdfPreview": {
-                "title": "Attachment"
+                "title": "Attachment",
+                "attachmentIDError": "Invalid Attachment or Attachment ID.",
+                "attachmentUnitIDError": "Invalid Attachment Unit or Attachment Unit ID."
             }
         }
     }
