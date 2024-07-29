@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.exercise.modeling;
 
 import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
-import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
