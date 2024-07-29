@@ -11,5 +11,9 @@ import de.tum.in.www1.artemis.domain.settings.ide.Ide;
  * @param ide
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IdeSettingsDTO(ProgrammingLanguage programmingLanguage, Ide ide) {
+public record IdeMappingDTO(ProgrammingLanguage programmingLanguage, IdeDTO ide) {
+
+    public IdeMappingDTO(ProgrammingLanguage programmingLanguage, Ide ide) {
+        this(programmingLanguage, new IdeDTO(ide));
+    }
 }

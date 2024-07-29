@@ -58,7 +58,7 @@ public class IdeSettingsResource {
         log.debug("REST request to get IDEs of user {}", user.getLogin());
 
         var ideMappings = userIdeMappingRepository.findAllByUserId(user.getId());
-        var ideRecords = ideMappings.stream().map(x -> new IdeSettingsDTO(x.getProgrammingLanguage(), x.getIde()));
+        var ideRecords = ideMappings.stream().map(x -> new IdeMappingDTO(x.getProgrammingLanguage(), x.getIde())).toArray();
         log.debug("Successfully queried IDEs of user {}", user.getLogin());
 
         return ResponseEntity.ok(ideRecords);
@@ -71,20 +71,20 @@ public class IdeSettingsResource {
      */
     @PutMapping("ide-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<?> setIde(@RequestParam ProgrammingLanguage programmingLanguage, @RequestBody Ide ide) {
+    public ResponseEntity<?> setIde(@RequestParam ProgrammingLanguage programmingLanguage, @RequestBody IdeDTO ide) {
         User user = userRepository.getUser();
         log.debug("REST request to set IDE of user {}", user.getLogin());
 
         // find or create the ide
-        var savedIde = ideRepository.findByDeepLink(ide.getDeepLink()).orElse(null);
+        var savedIde = ideRepository.findByDeepLink(ide.deepLink()).orElse(null);
         if (savedIde == null) {
-            savedIde = ideRepository.save(ide);
+            savedIde = ideRepository.save(new Ide(ide.name(), ide.deepLink()));
         }
 
         // Create or update user ide mapping
         UserIdeMapping ideMapping = new UserIdeMapping(user, programmingLanguage, savedIde);
         ideMapping = userIdeMappingRepository.save(ideMapping);
-        var ideRecord = new IdeSettingsDTO(ideMapping.getProgrammingLanguage(), ideMapping.getIde());
+        var ideRecord = new IdeMappingDTO(ideMapping.getProgrammingLanguage(), ideMapping.getIde());
         log.debug("Successfully set IDE of user {}", user.getLogin());
 
         return ResponseEntity.ok(ideRecord);
