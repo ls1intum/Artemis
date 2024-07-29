@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the PlagiarismComparison entity.
@@ -39,7 +38,7 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
     Optional<PlagiarismComparison<?>> findByIdWithSubmissions(@Param("comparisonId") long comparisonId);
 
     default PlagiarismComparison<?> findByIdWithSubmissionsStudentsElseThrow(long comparisonId) {
-        return findByIdWithSubmissions(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
+        return getValueElseThrow(findByIdWithSubmissions(comparisonId), comparisonId);
     }
 
     @Query("""
@@ -55,7 +54,7 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
     Optional<PlagiarismComparison<?>> findByIdWithSubmissionsAndElementsA(@Param("comparisonId") long comparisonId);
 
     default PlagiarismComparison<?> findByIdWithSubmissionsStudentsAndElementsAElseThrow(long comparisonId) {
-        return findByIdWithSubmissionsAndElementsA(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
+        return getValueElseThrow(findByIdWithSubmissionsAndElementsA(comparisonId), comparisonId);
     }
 
     @Query("""
@@ -68,7 +67,7 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
     Optional<PlagiarismComparison<?>> findByIdWithSubmissionsAndElementsB(@Param("comparisonId") long comparisonId);
 
     default PlagiarismComparison<?> findByIdWithSubmissionsStudentsAndElementsBElseThrow(long comparisonId) {
-        return findByIdWithSubmissionsAndElementsB(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
+        return getValueElseThrow(findByIdWithSubmissionsAndElementsB(comparisonId), comparisonId);
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "submissionA", "submissionA.plagiarismCase", "submissionB", "submissionB.plagiarismCase" })

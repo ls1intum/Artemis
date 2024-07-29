@@ -20,7 +20,7 @@ public interface ArtemisJpaRepository<T, ID> extends JpaRepository<T, ID> {
      * @param optional the optional to get the entity from
      * @return the entity if it exists
      */
-    T getValueElseThrow(Optional<T> optional);
+    <U extends T> U getValueElseThrow(Optional<U> optional);
 
     /**
      * Get the entity if it exists or throw an EntityNotFoundException.
@@ -30,7 +30,28 @@ public interface ArtemisJpaRepository<T, ID> extends JpaRepository<T, ID> {
      * @param id       the id of the entity to find
      * @return the entity if it exists
      */
-    T getValueElseThrow(Optional<T> optional, ID id);
+    <U extends T> U getValueElseThrow(Optional<U> optional, ID id);
+
+    /**
+     * Get an arbitrary value if it exists or throw an EntityNotFoundException.
+     * Implemented in {@link RepositoryImpl#getArbitraryValueElseThrow(Optional)}.
+     *
+     * @param <U>      the type of the entity
+     * @param optional the optional to get the entity from
+     * @return the entity if it exists
+     */
+    <U> U getArbitraryValueElseThrow(Optional<U> optional);
+
+    /**
+     * Get an arbitrary value if it exists or throw an EntityNotFoundException.
+     * Implemented in {@link RepositoryImpl#getArbitraryValueElseThrow(Optional, String)}.
+     *
+     * @param <U>      the type of the entity
+     * @param optional the optional to get the entity from
+     * @param id       the id of the entity to find in string representation
+     * @return the entity if it exists
+     */
+    <U> U getArbitraryValueElseThrow(Optional<U> optional, String id);
 
     /**
      * Find an entity by its id or throw an EntityNotFoundException if it does not exist.

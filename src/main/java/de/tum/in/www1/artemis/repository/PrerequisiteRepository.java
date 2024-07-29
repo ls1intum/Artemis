@@ -25,7 +25,7 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
      * @return the prerequisite
      */
     default Prerequisite findByIdAndCourseIdElseThrow(long prerequisiteId, long courseId) {
-        return findByIdAndCourseId(prerequisiteId, courseId).orElseThrow(() -> new EntityNotFoundException("Prerequisite", prerequisiteId));
+        return getValueElseThrow(findByIdAndCourseId(prerequisiteId, courseId), prerequisiteId);
     }
 
     long countByCourse(Course course);

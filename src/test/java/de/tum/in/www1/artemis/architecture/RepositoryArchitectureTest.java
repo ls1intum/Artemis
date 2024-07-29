@@ -156,11 +156,8 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void orElseThrowShouldNotBeCalled() {
-        var result = noClasses().that().areAssignableTo(ArtemisJpaRepository.class).should().callMethod(Optional.class, "orElseThrow").orShould()
-                .callMethod(Optional.class, "orElseThrow", Supplier.class).because("ArtemisJpaRepository offers the method getValueElseThrow for this use case")
-                .evaluate(allClasses);
-        // If you refactor a repository and fail the test due to a lower number of violations, you can update the expected number of violations here
-        // hasSizeLessThenOrEqualTo is not used to avoid adding new violations after a few refactorings
-        assertThat(result.getFailureReport().getDetails()).hasSize(146);
+        noClasses().that().areAssignableTo(ArtemisJpaRepository.class).should().callMethod(Optional.class, "orElseThrow").orShould()
+                .callMethod(Optional.class, "orElseThrow", Supplier.class).because("ArtemisJpaRepository offers the method getValueElseThrow for this use case").check(allClasses);
+
     }
 }
