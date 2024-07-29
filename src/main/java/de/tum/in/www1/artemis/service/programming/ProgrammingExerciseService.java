@@ -566,7 +566,7 @@ public class ProgrammingExerciseService {
             scheduleOperations(updatedProgrammingExercise.getId());
         }
 
-        exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
+        exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, Optional.ofNullable(notificationText));
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
 
@@ -660,7 +660,8 @@ public class ProgrammingExerciseService {
         programmingExercise.validateDates();
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise,
+                Optional.ofNullable(notificationText));
         return savedProgrammingExercise;
     }
 
@@ -686,7 +687,7 @@ public class ProgrammingExerciseService {
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
 
-        exerciseService.notifyAboutExerciseChanges(programmingExercise, updatedProgrammingExercise, notificationText);
+        exerciseService.notifyAboutExerciseChanges(programmingExercise, updatedProgrammingExercise, Optional.ofNullable(notificationText));
 
         return updatedProgrammingExercise;
     }

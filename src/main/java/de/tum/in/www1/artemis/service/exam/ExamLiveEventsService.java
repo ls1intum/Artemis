@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -141,7 +143,7 @@ public class ExamLiveEventsService {
      * @param instructor The user who performed the update
      */
     @Async
-    public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message, User instructor) {
+    public void createAndSendProblemStatementUpdateEvent(Exercise exercise, Optional<String> message, User instructor) {
         Exam exam = exercise.getExam();
         studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
                 .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message, instructor));
@@ -155,7 +157,7 @@ public class ExamLiveEventsService {
      * @param message     The message to send
      * @param sentBy      The user who performed the update
      */
-    public void createAndSendProblemStatementUpdateEvent(StudentExam studentExam, Exercise exercise, String message, User sentBy) {
+    public void createAndSendProblemStatementUpdateEvent(StudentExam studentExam, Exercise exercise, Optional<String> message, User sentBy) {
         var event = new ProblemStatementUpdateEvent();
 
         // Common fields
@@ -164,7 +166,7 @@ public class ExamLiveEventsService {
         event.setCreatedBy(sentBy.getName());
 
         // Specific fields
-        event.setTextContent(message);
+        event.setTextContent(message.orElse(null));
         event.setProblemStatement(exercise.getProblemStatement());
         event.setExerciseId(exercise.getId());
         event.setExerciseName(exercise.getTitle());

@@ -25,6 +25,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,7 +78,7 @@ public class GroupNotificationService {
      * @param exercise         that is updated
      * @param notificationText that is used for the notification process
      */
-    public void notifyAboutExerciseUpdate(Exercise exercise, String notificationText) {
+    public void notifyAboutExerciseUpdate(Exercise exercise, Optional<String> notificationText) {
 
         if (exercise.isExamExercise()) {
             // Do not send an exercise-update notification if it's an exam exercise.
@@ -90,10 +91,8 @@ public class GroupNotificationService {
             return;
         }
 
-        if (notificationText != null) {
-            // sends an exercise-update notification
-            notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
-        }
+        // sends an exercise-update notification
+        notificationText.ifPresent(text -> notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, text));
     }
 
     /**

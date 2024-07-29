@@ -246,8 +246,8 @@ public class TextExerciseResource {
      */
     @PutMapping("text-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+    public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise, @RequestParam(value = "notificationText") Optional<String> notificationText)
+            throws URISyntaxException {
         log.debug("REST request to update TextExercise : {}", textExercise);
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
@@ -626,6 +626,6 @@ public class TextExerciseResource {
 
         exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
-        return updateTextExercise(textExercise, null);
+        return updateTextExercise(textExercise, Optional.empty());
     }
 }

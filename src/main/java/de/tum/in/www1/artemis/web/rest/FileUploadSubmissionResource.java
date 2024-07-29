@@ -181,7 +181,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("file-upload-submissions/{submissionId}")
     @EnforceAtLeastTutor
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId") Optional<Long> resultId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
         var fileUploadSubmission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
@@ -191,11 +191,12 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(fileUploadExercise, user, resultId);
 
         // load submission with results either by resultId or by correctionRound
-        if (resultId != null) {
+
+        if (resultId.isPresent()) {
             // load the submission with additional needed properties by resultId
             fileUploadSubmission = (FileUploadSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
             // check if result with the requested id exists
-            Result result = fileUploadSubmission.getManualResultsById(resultId);
+            Result result = fileUploadSubmission.getManualResultsById(resultId.get());
             if (result == null) {
                 return ResponseEntity.badRequest()
                         .headers(HeaderUtil.createFailureAlert(applicationName, true, "FileUploadSubmission", "ResultNotFound", "No Result was found for the given ID."))

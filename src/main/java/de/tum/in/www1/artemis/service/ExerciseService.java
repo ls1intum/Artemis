@@ -771,7 +771,7 @@ public class ExerciseService {
      * @param updatedExercise  the updated exercise
      * @param notificationText custom notification text
      */
-    public void notifyAboutExerciseChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
+    public void notifyAboutExerciseChanges(Exercise originalExercise, Exercise updatedExercise, Optional<String> notificationText) {
         if (originalExercise.isCourseExercise()) {
             groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
         }

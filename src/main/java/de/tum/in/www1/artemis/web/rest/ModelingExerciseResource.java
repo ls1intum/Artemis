@@ -216,7 +216,7 @@ public class ModelingExerciseResource {
     @PutMapping("modeling-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+            @RequestParam(value = "notificationText") Optional<String> notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() == null) {
             return createModelingExercise(modelingExercise);
@@ -457,7 +457,7 @@ public class ModelingExerciseResource {
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
+            @RequestParam(value = "deleteFeedback", required = false) boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);
 
         modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
@@ -471,6 +471,6 @@ public class ModelingExerciseResource {
 
         exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
-        return updateModelingExercise(modelingExercise, null);
+        return updateModelingExercise(modelingExercise, Optional.empty());
     }
 }

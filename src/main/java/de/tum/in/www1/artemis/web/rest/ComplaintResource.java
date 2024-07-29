@@ -214,8 +214,8 @@ public class ComplaintResource {
      */
     @GetMapping(value = "complaints", params = { "courseId", "complaintType" })
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType,
-            @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
+    public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType, @RequestParam Optional<Long> tutorId,
+            @RequestParam boolean allComplaintsForTutor) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
 
@@ -224,11 +224,11 @@ public class ComplaintResource {
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
 
         if (!isAtLeastInstructor) {
-            tutorId = user.getId();
+            tutorId = Optional.of(user.getId());
         }
         List<Complaint> complaints;
 
-        if (tutorId == null) {
+        if (tutorId.isEmpty()) {
             complaints = complaintService.getAllComplaintsByCourseId(courseId);
             filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
         }
@@ -239,7 +239,7 @@ public class ComplaintResource {
             complaints.forEach(complaint -> complaint.filterForeignReviewer(user));
         }
         else {
-            complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId);
+            complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId.get());
             filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
         }
 
@@ -257,7 +257,7 @@ public class ComplaintResource {
     @GetMapping(value = "complaints", params = { "exerciseId", "complaintType" })
     @EnforceAtLeastTutor
     public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
-            @RequestParam(required = false) Long tutorId) {
+            @RequestParam Optional<Long> tutorId) {
         // Filtering by exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -267,19 +267,13 @@ public class ComplaintResource {
 
         // Only instructors can access all complaints about an exercise without filtering by tutorId
         if (!isAtLeastInstructor) {
-            tutorId = userRepository.getUser().getId();
+            tutorId = Optional.of(userRepository.getUser().getId());
         }
 
-        List<Complaint> complaints;
+        List<Complaint> complaints = tutorId.map(id -> complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, id))
+                .orElseGet(() -> complaintService.getAllComplaintsByExerciseId(exerciseId));
 
-        if (tutorId == null) {
-            complaints = complaintService.getAllComplaintsByExerciseId(exerciseId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
-        }
-        else {
-            complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
-        }
+        filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
     }

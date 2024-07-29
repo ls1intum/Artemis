@@ -259,7 +259,7 @@ public class FileUploadExerciseResource {
     @PutMapping("file-upload-exercises/{exerciseId}")
     @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
+            @RequestParam(value = "notificationText") Optional<String> notificationText, @PathVariable Long exerciseId) {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
         // TODO: The route has an exerciseId but we don't do anything useful with it. Change route and client requests?
 
@@ -403,7 +403,7 @@ public class FileUploadExerciseResource {
     @PutMapping("file-upload-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+            @RequestParam(value = "deleteFeedback", required = false) boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
 
         // check that the exercise exists for given id
@@ -415,6 +415,6 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to update the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbackAfterGradingInstructionUpdate);
-        return updateFileUploadExercise(fileUploadExercise, null, fileUploadExercise.getId());
+        return updateFileUploadExercise(fileUploadExercise, Optional.empty(), fileUploadExercise.getId());
     }
 }

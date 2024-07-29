@@ -195,7 +195,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("modeling-submissions/{submissionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId") Optional<Long> resultId,
             @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
@@ -213,23 +213,20 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             return ResponseEntity.ok(modelingSubmission);
         }
 
-        if (!withoutResults) {
-            // load submission with results either by resultId or by correctionRound
-            if (resultId != null) {
-                // load the submission with additional needed properties
-                modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
-                // check if result exists
-                Result result = modelingSubmission.getManualResultsById(resultId);
-                if (result == null) {
-                    return ResponseEntity.badRequest()
-                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "ModelingSubmission", "ResultNotFound", "No Result was found for the given ID."))
-                            .body(null);
-                }
+        // load submission with results either by resultId or by correctionRound
+        if (!withoutResults && resultId.isPresent()) {
+            // load the submission with additional needed properties
+            modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
+            // check if result exists
+            Result result = modelingSubmission.getManualResultsById(resultId.get());
+            if (result == null) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "ModelingSubmission", "ResultNotFound", "No Result was found for the given ID.")).body(null);
             }
-            else {
-                // load and potentially lock the submission with additional needed properties by correctionRound
-                modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
-            }
+        }
+        else {
+            // load and potentially lock the submission with additional needed properties by correctionRound
+            modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
         }
 
         // Make sure the exercise is connected to the participation in the json response

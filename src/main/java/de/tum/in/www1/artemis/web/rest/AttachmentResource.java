@@ -113,7 +113,7 @@ public class AttachmentResource {
     @PutMapping(value = "attachments/{attachmentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<Attachment> updateAttachment(@PathVariable Long attachmentId, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText") Optional<String> notificationText) {
         log.debug("REST request to update Attachment : {}", attachment);
         attachment.setId(attachmentId);
 
@@ -132,9 +132,7 @@ public class AttachmentResource {
         }
 
         Attachment result = attachmentRepository.save(attachment);
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
-        }
+        notificationText.ifPresent(text -> groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, text));
         return ResponseEntity.ok(result);
     }
 
