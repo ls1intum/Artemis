@@ -163,6 +163,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                 }
             }
         }
+        // render import images on UI immediatly
+        this.makeFileMapPreview();
     }
 
     /**
@@ -254,6 +256,22 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     drop(): void {
         this.dropAllowed = false;
+    }
+
+    /**
+     * This method takes the files and creates preview objects so that images
+     * are rendered immediately on the UI after importing
+     */
+    makeFileMapPreview() {
+        this.filePool.forEach((value, key) => {
+            this.filePreviewPaths.set(key, URL.createObjectURL(value.file));
+            this.addNewFile.emit({
+                fileName: key,
+                file: value.file,
+                path: value.path,
+            });
+            this.changeDetector.detectChanges();
+        });
     }
 
     /**
