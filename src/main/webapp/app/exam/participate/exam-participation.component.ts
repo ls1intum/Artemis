@@ -63,6 +63,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILEUPLOAD = ExerciseType.FILE_UPLOAD;
 
+    // needed for recalculation of exam content height
+    readonly EXAM_HEIGHT_OFFSET = 88;
+
     courseId: number;
     examId: number;
     testRunId: number;
@@ -107,7 +110,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
-    exerciseSelected = true;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -280,10 +282,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } else {
                 this.examParticipationService.setExamLayout();
             }
-            // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
-            const exercises: Exercise[] = this.studentExam.exercises!;
-            const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
-            this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
             if (!!this.testRunId || this.testExam) {
                 this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
@@ -963,5 +961,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const exercise = this.studentExam.exercises![index];
             exercise.problemStatement = event.problemStatement;
         }
+    }
+
+    /**
+     * Updates the current exam height offset property to recalculate the height of exam sidebar and sidebar content
+     * @param newHeight New exam bar height calculated based on the window resizements
+     */
+    updateHeight(newHeight: number) {
+        document.documentElement.style.setProperty('--exam-height-offset', `${newHeight + this.EXAM_HEIGHT_OFFSET}px`);
     }
 }

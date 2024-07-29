@@ -1,4 +1,3 @@
-$breadcrumb-height: 38px;
 $management-header-height: 230px;
 
 .update-footer {
@@ -51,12 +50,8 @@ $management-header-height: 230px;
 }
 
 .content-exam-height {
-    height: calc(100vh - var(--sidebar-footer-height-prod) - $breadcrumb-height);
+    height: calc(100vh - var(--exam-height-offset));
     overflow-y: auto;
-
-    &.content-exam-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
-    }
 
     &.content-exam-height-testRun {
         height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height);
@@ -80,9 +75,5 @@ $management-header-height: 230px;
         @media (max-width: 768px) {
             height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height - 20px) !important;
         }
-    }
-
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - $breadcrumb-height) !important;
     }
 }
