@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -65,7 +66,6 @@ import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaMethod;
-import com.tngtech.archunit.core.domain.JavaParameter;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.core.domain.properties.HasType;
 import com.tngtech.archunit.lang.ArchCondition;
@@ -304,10 +304,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
             @Override
             public void check(final JavaMethod method, final ConditionEvents events) {
 
-                final var violated = method.getParameters().stream().map(JavaParameter::getAnnotations).flatMap(Set::stream).filter(HasType.Predicates.rawType(RequestParam.class))
-                        .filter(annotation -> {
-                            // if there is a default value set, then required false does not need to be checked for
-                            // The annotation sets a default value for defaultValue so we have to make sure it is not equal to that
+                // We only care about the case where required is false and the Parameter is not an Optional, any other combination is fine.
+
+                final var violated = method.getParameters().stream().filter(not(HasType.Predicates.rawType(Optional.class))).flatMap(param -> param.getAnnotations().stream())
+                        .filter(HasType.Predicates.rawType(RequestParam.class)).filter(annotation -> {
                             final String value = (String) annotation.get("defaultValue").orElse(ValueConstants.DEFAULT_NONE);
                             return ValueConstants.DEFAULT_NONE.equals(value);
                         }).map(annotation -> annotation.get("required").orElse(true)) // if not set, the default is true
