@@ -173,7 +173,7 @@ public class ProgrammingExercise extends Exercise {
     private ProgrammingExerciseBuildConfig buildConfig;
 
     @Column(name = "allow_branching", table = "programming_exercise_details", columnDefinition = "boolean default false")
-    private boolean allowBranching;
+    private boolean allowBranching = false;
 
     @Column(name = "branch_regex", table = "programming_exercise_details")
     private String branchRegex;
