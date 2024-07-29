@@ -72,7 +72,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             .then((user) => {
                 this.user = user!;
             })
-            .then(() => this.loadVcsAccessToken());
+            .then(() => this.loadVcsAccessTokens());
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -126,38 +126,52 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         if (this.isTeamParticipation) {
             return this.addCredentialsToHttpUrl(this.repositoryUriForTeam(this.getRepositoryUri()), insertPlaceholder);
         }
-
         return this.addCredentialsToHttpUrl(this.getRepositoryUri(), insertPlaceholder);
+    }
+
+    loadVcsAccessTokens() {
+        if (this.useVersionControlAccessToken && this.localVCEnabled) {
+            this.participations?.forEach((participation) => {
+                if (participation?.id && !participation.vcsAccessToken) {
+                    this.loadVcsAccessToken(participation);
+                }
+            });
+            this.user.vcsAccessToken = this.activeParticipation?.vcsAccessToken;
+        }
     }
 
     /**
      * Loads the vcsAccessToken for a participation from the server. If none exists, sens a request to create one
      */
-    loadVcsAccessToken() {
-        if (this.useVersionControlAccessToken && this.localVCEnabled && this.activeParticipation?.id && this.user) {
-            this.accountService.getVcsAccessToken(this.activeParticipation.id).subscribe({
-                next: (res: HttpResponse<string>) => {
-                    if (res.body) {
+    loadVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
+        this.accountService.getVcsAccessToken(participation!.id!).subscribe({
+            next: (res: HttpResponse<string>) => {
+                if (res.body) {
+                    participation.vcsAccessToken = res.body;
+                    if (this.activeParticipation?.id == participation.id) {
                         this.user.vcsAccessToken = res.body;
                     }
-                },
-                error: (error: HttpErrorResponse) => {
-                    if (error.status == 404) {
-                        this.createNewVcsAccessToken();
-                    }
-                },
-            });
-        }
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (error.status == 404) {
+                    this.createNewVcsAccessToken(participation);
+                }
+            },
+        });
     }
 
     /**
      * Sends the request to create a new
      */
-    createNewVcsAccessToken() {
-        this.accountService.createVcsAccessToken(this.activeParticipation!.id!).subscribe({
+    createNewVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
+        this.accountService.createVcsAccessToken(participation!.id!).subscribe({
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
-                    this.user.vcsAccessToken = res.body;
+                    participation.vcsAccessToken = res.body;
+                    if (this.activeParticipation?.id == participation.id) {
+                        this.user.vcsAccessToken = res.body;
+                    }
                 }
             },
             error: () => {},
@@ -249,5 +263,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.isPracticeMode = !this.isPracticeMode;
         this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, this.isPracticeMode)!;
         this.cloneHeadline = this.isPracticeMode ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
+        if (this.activeParticipation.vcsAccessToken) {
+            this.user.vcsAccessToken = this.activeParticipation.vcsAccessToken; // this.activeParticipation.vcsAccessToken;
+        }
     }
 }
