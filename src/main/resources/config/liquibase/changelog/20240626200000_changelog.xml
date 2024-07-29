@@ -72,9 +72,6 @@
             <column name="theia_image" type="varchar(128)">
                 <constraints nullable="true"/>
             </column>
-            <column name="theia_image" type="varchar(128)">
-                <constraints nullable="true"/>
-            </column>
             <column name="allow_branching" type="boolean" defaultValueBoolean="false"/>
             <column name="branch_regex" type="varchar(128)">
                 <constraints nullable="true"/>

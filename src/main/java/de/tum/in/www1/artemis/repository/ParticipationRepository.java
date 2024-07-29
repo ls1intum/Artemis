@@ -118,7 +118,7 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
                     LEFT JOIN FETCH e.buildConfig
                 WHERE p.id = :participationId
             """)
-    Optional<Participation> findWithProgrammingExerciseWithBuildConfigById(Long participationId);
+    Optional<Participation> findWithProgrammingExerciseWithBuildConfigById(@Param("participationId") long participationId);
 
     Set<Participation> findByExerciseId(long exerciseId);
 
