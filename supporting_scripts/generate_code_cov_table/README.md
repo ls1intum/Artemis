@@ -89,4 +89,14 @@ The output will be separated into client and server sections, each containing a 
 - Line Coverage: Percentage of lines covered by tests
 - Confirmation (assert/expect): A checkbox for manual confirmation of test coverage
 
+### Printing
+
+The output can be printed to the commandline using the `--print-results` option.
+
+### Linux
+
+On linux, pyperclip requires either `xclip` or `xsel` to be installed. 
+Alternativley, the python modules `qtpy` or `PyQT5` have to present. 
+If no option to insert text into the clipboard is found, to script falls back to printing to stdout.
+
 **You will have to manually adjust the confirmation column for each file!**
