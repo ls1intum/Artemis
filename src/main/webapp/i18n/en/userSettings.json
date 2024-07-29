@@ -12,6 +12,12 @@
             "scienceSettings": "Science",
             "scienceSettingsFeatureDisabled": "The science feature is currently disabled. You can still edit your settings in case the feature gets enabled again.",
             "scienceSettingsInfo": "Help Artemis to get better!",
+            "idePreferences": "IDE Preferences",
+            "idePreferencesPage": {
+                "description": "Choose the IDEs you want to use for opening programming exercises.",
+                "default": "Default",
+                "jetbrainsHelp": "To use Jetbrains IDEs, please install the Jetbrains Toolbox."
+            },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
                 "deleteSshKeyQuestion": "Are you sure you want to delete your public SSH key?",
