@@ -17,6 +17,7 @@ public interface ArtemisJpaRepository<T, ID> extends JpaRepository<T, ID> {
      * Get the entity if it exists or throw an EntityNotFoundException.
      * Implemented in {@link RepositoryImpl#getValueElseThrow(Optional)}.
      *
+     * @param <U>      the type or a subclass of the entity
      * @param optional the optional to get the entity from
      * @return the entity if it exists
      */
@@ -26,6 +27,7 @@ public interface ArtemisJpaRepository<T, ID> extends JpaRepository<T, ID> {
      * Get the entity if it exists or throw an EntityNotFoundException.
      * Implemented in {@link RepositoryImpl#getValueElseThrow(Optional, ID)}.
      *
+     * @param <U>      the type or a subclass of the entity
      * @param optional the optional to get the entity from
      * @param id       the id of the entity to find
      * @return the entity if it exists

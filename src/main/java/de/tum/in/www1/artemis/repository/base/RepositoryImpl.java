@@ -91,6 +91,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
     /**
      * Get the entity if it exists or throw an EntityNotFoundException.
      *
+     * @param <U>      the type of the entity
      * @param optional the optional to get the entity from
      * @return the entity if it exists
      */
