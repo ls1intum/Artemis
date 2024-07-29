@@ -21,7 +21,7 @@ describe('CompetencyGraphModalComponent', () => {
 
     const learningPathId = 1;
 
-    const competencyPath = <CompetencyGraphDTO>{
+    const competencyGraph = <CompetencyGraphDTO>{
         nodes: [
             {
                 id: '1',
@@ -61,7 +61,7 @@ describe('CompetencyGraphModalComponent', () => {
         learningPathApiService = TestBed.inject(LearningPathApiService);
         alertService = TestBed.inject(AlertService);
 
-        getCompetencyPathSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencyGraph').mockReturnValue(Promise.resolve(competencyPath));
+        getCompetencyPathSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencyGraph').mockReturnValue(Promise.resolve(competencyGraph));
 
         fixture = TestBed.createComponent(CompetencyGraphModalComponent);
         component = fixture.componentInstance;
@@ -78,8 +78,8 @@ describe('CompetencyGraphModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(getCompetencyPathSpy).toHaveBeenCalledWith(learningPathId);
-        expect(component.competencyGraph()).toEqual(competencyPath);
+        expect(getCompetencyPathSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
+        expect(component.competencyGraph()).toEqual(competencyGraph);
     });
 
     it('should show alert on failed data loading', async () => {
@@ -89,7 +89,7 @@ describe('CompetencyGraphModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(errorSpy).toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledOnce();
     });
 
     it('should set isLoading correctly', async () => {
@@ -109,6 +109,6 @@ describe('CompetencyGraphModalComponent', () => {
 
         fixture.detectChanges();
 
-        expect(closeSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 });

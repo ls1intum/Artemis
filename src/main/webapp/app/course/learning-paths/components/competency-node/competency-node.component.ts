@@ -38,6 +38,8 @@ export class CompetencyNodeComponent implements AfterViewInit {
         switch (this.valueType()) {
             case CompetencyGraphNodeValueType.MASTERY_PROGRESS:
                 return this.value() >= 100;
+            default:
+                return false;
         }
     }
 
@@ -45,6 +47,8 @@ export class CompetencyNodeComponent implements AfterViewInit {
         switch (this.valueType()) {
             case CompetencyGraphNodeValueType.MASTERY_PROGRESS:
                 return this.value() > 0 && this.value() < 100;
+            default:
+                return false;
         }
     }
 
@@ -52,6 +56,8 @@ export class CompetencyNodeComponent implements AfterViewInit {
         switch (this.valueType()) {
             case CompetencyGraphNodeValueType.MASTERY_PROGRESS:
                 return this.value() === 0;
+            default:
+                return false;
         }
     }
 

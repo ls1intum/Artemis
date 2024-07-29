@@ -32,11 +32,6 @@ describe('CompetencyGraphComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CompetencyGraphComponent, NoopAnimationsModule],
             providers: [
-                // provideAnimations(),
-                // {
-                //     provide: AnimationDriver,
-                //     useClass: NoopAnimationDriver,
-                // },
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,

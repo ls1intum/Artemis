@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -307,7 +308,8 @@ public class LearningPathService {
                 .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
 
         Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream().map(competency -> {
-            var masteryProgress = CompetencyProgressService.getMasteryProgress(competencyProgresses.get(competency.getId()));
+            var competencyProgressOptional = Optional.ofNullable(competencyProgresses.get(competency.getId()));
+            var masteryProgress = competencyProgressOptional.isPresent() ? CompetencyProgressService.getMasteryProgress(competencyProgresses.get(competency.getId())) : 0;
             return CompetencyGraphNodeDTO.of(competency, Math.floor(masteryProgress * 100), CompetencyGraphNodeDTO.CompetencyNodeValueType.MASTERY_PROGRESS);
         }).collect(Collectors.toSet());
 
