@@ -252,6 +252,7 @@ public class StudentExamResource {
             if (now.isAfter(exam.getVisibleDate())) {
                 instanceMessageSendService.sendStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
             }
+            // notify the student only if the exam is started
             if (exam.isStarted()) {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false, userRepository.getUser());
             }
