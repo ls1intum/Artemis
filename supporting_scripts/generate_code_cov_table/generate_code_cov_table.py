@@ -39,7 +39,7 @@ def download_and_extract_zip(url, headers, key):
     if url is None:
         return None
     try:
-        response = requests.get(url, headers=headers, stream=True)
+        response = requests.get(url, headers=headers, stream=True, timeout=10)
         response.raise_for_status()
         total_size = int(response.headers.get("content-length", 0))
     except requests.RequestException:
@@ -72,9 +72,10 @@ def download_and_extract_zip(url, headers, key):
 
 def get_html_content(zip_file_bytes, file_name):
     try:
-        with zipfile.ZipFile(zip_file_bytes, "r") as zip_ref:
-            with zip_ref.open(file_name + ".html") as file_data:
-                return file_data.read().decode("utf-8")
+        with zipfile.ZipFile(zip_file_bytes, "r") as zip_ref, zip_ref.open(
+            file_name + ".html"
+        ) as file_data:
+            return file_data.read().decode("utf-8")
     except KeyError:
         logging.error(f"File {file_name} not found in the archive.")
         return None
@@ -84,7 +85,9 @@ def get_html_content(zip_file_bytes, file_name):
 
 
 def get_artifacts_of_the_last_completed_run(headers, branch, run_id):
-    response = requests.get(runs_url, headers=headers, params={"branch": branch})
+    response = requests.get(
+        runs_url, headers=headers, params={"branch": branch}, timeout=10
+    )
 
     if response.status_code == 200:
         runs = response.json()["workflow_runs"]
@@ -114,7 +117,7 @@ def get_artifacts_of_the_last_completed_run(headers, branch, run_id):
                 )
             artifacts_url = filtered_runs[0]["artifacts_url"]
 
-        response = requests.get(artifacts_url, headers=headers)
+        response = requests.get(artifacts_url, headers=headers, timeout=10)
         artifacts = response.json()["artifacts"]
 
         if not artifacts:
@@ -131,9 +134,7 @@ def get_artifacts_of_the_last_completed_run(headers, branch, run_id):
 
 
 def get_coverage_artifact_for_key(artifacts, key):
-    matching_artifacts = list(
-        artifact for artifact in artifacts if artifact["name"] == key
-    )
+    matching_artifacts = [artifact for artifact in artifacts if artifact["name"] == key]
 
     if len(matching_artifacts) == 1:
         return matching_artifacts[0]["archive_download_url"]
@@ -146,7 +147,7 @@ def get_coverage_artifact_for_key(artifacts, key):
         return None
 
 
-def get_branch_name(repo_path):
+def get_branch_name(repo_path: str) -> str:
     repo = git.Repo(repo_path, search_parent_directories=True)
     return repo.active_branch.name
 
@@ -186,14 +187,18 @@ def filter_file_changes(file_changes):
     server_file_changes = {}
 
     for file_name, change_type in file_changes.items():
-        if file_name.startswith("src/main/webapp/app"):
-            if file_name.endswith(".ts") and not file_name.endswith("module.ts"):
-                client_file_changes[file_name[len("src/main/webapp/") :]] = change_type
-                continue
-        elif file_name.startswith("src/main/java/de/tum/in/www1/artemis"):
-            if file_name.endswith(".java"):
-                server_file_changes[file_name[len("src/main/java/") :]] = change_type
-                continue
+        if (
+            file_name.startswith("src/main/webapp/app")
+            and file_name.endswith(".ts")
+            and not file_name.endswith("module.ts")
+        ):
+            client_file_changes[file_name[len("src/main/webapp/") :]] = change_type
+            continue
+        elif file_name.startswith(
+            "src/main/java/de/tum/in/www1/artemis"
+        ) and file_name.endswith(".java"):
+            server_file_changes[file_name[len("src/main/java/") :]] = change_type
+            continue
         logging.debug(f"Skipping {file_name}")
     return client_file_changes, server_file_changes
 
@@ -303,7 +308,7 @@ def main(argv):
         logging.getLogger().setLevel(logging.DEBUG)
     if args.base_branch_name is None:
         args.base_branch_name = "origin/develop"
-        logging.info(f"Base branch set to: {args.base_branch_name}")
+        logging.info("Base branch set to: %s", args.base_branch_name)
     if args.build_id is None:
         logging.info("Using latest build ID")
     try:
@@ -313,14 +318,14 @@ def main(argv):
             args.repo_path, args.branch_name, args.base_branch_name
         )
     except git.exc.InvalidGitRepositoryError:
-        logging.error(f"{args.repo_path} is not part of a valid Git repository.")
+        logging.exception("%s is not part of a valid Git repository.", args.repo_path)
         sys.exit(1)
 
     client_file_changes, server_file_changes = filter_file_changes(file_changes)
 
     if args.token is None:
         args.token = getpass.getpass("Please enter your GitHub token: ")
-        logging.info(f"Using current branch: {args.branch_name}")
+        logging.info("Using current branch: %s", args.branch_name)
 
     headers = {
         "Authorization": f"token {args.token}",
@@ -397,8 +402,9 @@ def main(argv):
                 "Code coverage report copied to clipboard. Use --print-results to print it to console instead."
             )
         except pyperclip.PyperclipException as e:
-            logging.error(
-                f"Failed to copy the code coverage report to clipboard:\n{e}\n\nPrinted results instead. Use --print-results to directly print it to console."
+            logging.exception(
+                "Failed to copy the code coverage report to clipboard:\n%s\n\nPrinted results instead. Use --print-results to directly print it to console.",
+                e,
             )
             print(result)
 
