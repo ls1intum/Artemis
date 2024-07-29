@@ -1,15 +1,14 @@
 <div class="d-inline-block competency-node">
-    <div class="progress-container d-inline-block"
-         [ngClass]="{ 'green-competency': isGreen(), 'yellow-competency': isYellow(), 'gray-competency': isGray() }">
+    <div class="progress-container d-inline-block" [ngClass]="{ 'green-competency': isGreen(), 'yellow-competency': isYellow(), 'gray-competency': isGray() }">
         <small class="font-bold"
-        ><strong>
-            @if (valueType() === CompetencyGraphNodeValueType.MASTERY_PROGRESS) {
-                {{ value() }} %
-            }
-        </strong></small
+            ><strong>
+                @if (valueType() === CompetencyGraphNodeValueType.MASTERY_PROGRESS) {
+                    {{ value() }} %
+                }
+            </strong></small
         >
     </div>
     <span class="d-inline-block ms-1"
-    ><strong>{{ competencyNode().label }}</strong></span
+        ><strong>{{ competencyNode().label }}</strong></span
     >
 </div>

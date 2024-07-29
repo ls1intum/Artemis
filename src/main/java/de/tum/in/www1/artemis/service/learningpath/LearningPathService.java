@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -307,11 +306,10 @@ public class LearningPathService {
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, user.getId()).stream()
                 .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
 
-        Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream()
-                .map(competency -> {
-                    var masteryProgress = CompetencyProgressService.getMasteryProgress(competencyProgresses.get(competency.getId()));
-                    return CompetencyGraphNodeDTO.of(competency,Math.floor(masteryProgress * 100) , CompetencyGraphNodeDTO.CompetencyNodeValueType.MASTERY_PROGRESS);
-                }).collect(Collectors.toSet());
+        Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream().map(competency -> {
+            var masteryProgress = CompetencyProgressService.getMasteryProgress(competencyProgresses.get(competency.getId()));
+            return CompetencyGraphNodeDTO.of(competency, Math.floor(masteryProgress * 100), CompetencyGraphNodeDTO.CompetencyNodeValueType.MASTERY_PROGRESS);
+        }).collect(Collectors.toSet());
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(learningPath.getCourse().getId());
         Set<CompetencyGraphEdgeDTO> relationDTOs = relations.stream().map(CompetencyGraphEdgeDTO::of).collect(Collectors.toSet());
