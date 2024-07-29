@@ -219,7 +219,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
 
     private void testCourseAndExamFilters(boolean withSCA, String programmingExerciseTitle) throws Exception {
         programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA);
-        programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork");
+        programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork", false);
         exerciseIntegrationTestService.testCourseAndExamFilters("/api/programming-exercises", programmingExerciseTitle);
         testSCAFilter(programmingExerciseTitle, withSCA);
     }

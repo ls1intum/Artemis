@@ -668,6 +668,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_changeEndDateDuringConduction_shouldNotifyStudents() throws Exception {
+        // Since the notification is sent after the start of an exam, start date is set before the current time
+        ZonedDateTime currentTime = now();
+        exam1.setVisibleDate(currentTime.minusMinutes(10));
+        exam1.setStartDate(currentTime.minusMinutes(5));
+
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         exam1.setEndDate(exam1.getEndDate().plusHours(1));
 
