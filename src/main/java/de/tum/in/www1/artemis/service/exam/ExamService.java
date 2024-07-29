@@ -1433,8 +1433,8 @@ public class ExamService {
                 studentExam.setWorkingTime(adjustedWorkingTime);
             }
 
-            // NOTE: if the exam is started, notify the student about the working time change
-            if (exam.isStarted()) {
+            // NOTE: if the exam is already visible, notify the student about the working time change
+            if (now.isAfter(exam.getVisibleDate())) {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
             }
         }
