@@ -77,7 +77,6 @@ public class FileUploadExerciseUtilService {
      *
      * @param startDateBeforeCurrentTime True, if the start date of the created Exam with one mandatory FileUploadExercis should be before the current time, needed for
      *                                       examLiveEvent tests
-     *
      * @return The created FileUploadExercise
      */
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise(boolean startDateBeforeCurrentTime) {
