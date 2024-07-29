@@ -26,7 +26,7 @@ to a Jenkins and LocalVC Setup.
    As a minimum, the profiles ``core,gitlab,jenkins,migrate-gitlab-jenkins-to-localvc`` are required.
    Additional profiles may be required for your setup (e.g., profile ``prod`` if you have additional configuration in ``application-prod.yml``).
    You should not yet add ``localvc``.
-   After it Artemis stops automatically (with a ``Application run failed`` message).
+   After it Artemis stops automatically (with a ``Application run failed`` message and a ``IllegalStateException``).
    Check the log of Artemis for entries with ``Migration`` to see if there were any problems.
 4. Adjust the credential on your Jenkins, which was previously used to :ref:`access your GitLab Repositories <Jenkins GitLab Repository Access>`.
    The same credential ID now have to provide username and password of an administrator account of your Artemis instance
