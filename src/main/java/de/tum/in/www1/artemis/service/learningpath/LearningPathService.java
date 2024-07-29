@@ -309,7 +309,7 @@ public class LearningPathService {
 
         Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream().map(competency -> {
             var competencyProgressOptional = Optional.ofNullable(competencyProgresses.get(competency.getId()));
-            var masteryProgress = competencyProgressOptional.isPresent() ? CompetencyProgressService.getMasteryProgress(competencyProgresses.get(competency.getId())) : 0;
+            var masteryProgress = competencyProgressOptional.map(CompetencyProgressService::getMasteryProgress).orElse(0.0);
             return CompetencyGraphNodeDTO.of(competency, Math.floor(masteryProgress * 100), CompetencyGraphNodeDTO.CompetencyNodeValueType.MASTERY_PROGRESS);
         }).collect(Collectors.toSet());
 
