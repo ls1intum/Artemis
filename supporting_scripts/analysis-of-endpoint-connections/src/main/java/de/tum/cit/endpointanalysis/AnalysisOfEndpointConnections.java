@@ -60,7 +60,7 @@ public class AnalysisOfEndpointConnections {
         parseServerEndpoints(filesToParse);
         analyzeEndpoints();
         printEndpointAnalysisResult();
-//        analyzeRestCalls();
+        analyzeRestCalls();
     }
 
     private static void parseServerEndpoints(String[] filePaths) {
