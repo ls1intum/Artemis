@@ -90,6 +90,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
 
+    @Column(name = "allow_online_ide", table = "programming_exercise_details", nullable = false)
+    private boolean allowOnlineIde = false;
+
     @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
     private Boolean staticCodeAnalysisEnabled;
 
@@ -102,6 +105,10 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "package_name")
     private String packageName;
+
+    @Nullable
+    @Column(name = "theia_image", table = "programming_exercise_details")
+    private String theiaImage;
 
     @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
     private boolean showTestNamesToStudents;
@@ -275,6 +282,23 @@ public class ProgrammingExercise extends Exercise {
 
     public void setAllowOfflineIde(Boolean allowOfflineIde) {
         this.allowOfflineIde = allowOfflineIde;
+    }
+
+    public boolean isAllowOnlineIde() {
+        return allowOnlineIde;
+    }
+
+    public void setAllowOnlineIde(boolean allowOnlineIde) {
+        this.allowOnlineIde = allowOnlineIde;
+    }
+
+    @Nullable
+    public String getTheiaImage() {
+        return theiaImage;
+    }
+
+    public void setTheiaImage(@Nullable String theiaImage) {
+        this.theiaImage = theiaImage;
     }
 
     public String getProjectKey() {
@@ -714,8 +738,8 @@ public class ProgrammingExercise extends Exercise {
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", allowOnlineEditor='"
-                + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='"
-                + testCasesChanged + "'" + "}";
+                + isAllowOnlineEditor() + "'" + ", allowOnlineIde='" + isAllowOnlineIde() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='"
+                + getPackageName() + "'" + ", theiaImage='" + getTheiaImage() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     /**
