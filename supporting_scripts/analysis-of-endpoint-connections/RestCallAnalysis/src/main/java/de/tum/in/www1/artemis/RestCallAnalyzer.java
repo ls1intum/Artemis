@@ -38,14 +38,16 @@ public class RestCallAnalyzer {
                         for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
                             String endpointURI = endpoint.buildComparableEndpointUri();
                             String restCallURI = restCall.buildComparableRestCallUri();
-                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().equals(restCall.getMethod())) {
+                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
+                                matchingEndpoint = Optional.of(endpoint);
+                            } else if (endpointURI.endsWith("*") && restCallURI.startsWith(endpointURI.substring(0, endpointURI.length() - 1)) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
                                 matchingEndpoint = Optional.of(endpoint);
                             }
                         }
                     }
 
                     if (matchingEndpoint.isPresent()) {
-                        restCallsWithMatchingEndpoint.add(new RestCallWithMatchingEndpoint(matchingEndpoint.get(), restCall, restCall.getFilePath()));
+                        restCallsWithMatchingEndpoint.add(new RestCallWithMatchingEndpoint(matchingEndpoint.get(), restCall, restCall.getFileName()));
                     }
                     else {
                         restCallsWithoutMatchingEndpoint.add(restCall);
@@ -78,7 +80,7 @@ public class RestCallAnalyzer {
             System.out.println("=============================================");
             System.out.println("REST call URI: " + endpoint.buildCompleteRestCallURI());
             System.out.println("HTTP method: " + endpoint.getMethod());
-            System.out.println("File path: " + endpoint.getFilePath());
+            System.out.println("File path: " + endpoint.getFileName());
             System.out.println("Line: " + endpoint.getLine());
             System.out.println("=============================================");
             System.out.println("No matching endpoint found for REST call: " + endpoint.buildCompleteRestCallURI());
