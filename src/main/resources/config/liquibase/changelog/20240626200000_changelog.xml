@@ -14,7 +14,7 @@
             <column name="build_script" type="longtext"/>
             <column defaultValueBoolean="false" name="checkout_solution_repository" type="BOOLEAN"/>
             <column name="checkout_path" type="VARCHAR(128)"/>
-            <column  defaultValueNumeric="0" name="timeout_seconds" type="INT"/>
+            <column name="timeout_seconds" type="INT" defaultValueNumeric="0"/>
             <column name="docker_flags" type="VARCHAR(255)"/>
             <column defaultValueBoolean="false" name="testwise_coverage_enabled" type="BOOLEAN"/>
         </createTable>
@@ -72,11 +72,20 @@
             <column name="theia_image" type="varchar(128)">
                 <constraints nullable="true"/>
             </column>
+            <column name="theia_image" type="varchar(128)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="allow_branching" type="boolean" defaultValueBoolean="false"/>
+            <column name="branch_regex" type="varchar(128)">
+                <constraints nullable="true"/>
+            </column>
         </addColumn>
 
         <rollback>
             <dropColumn tableName="programming_exercise_details" columnName="allow_online_ide"/>
             <dropColumn tableName="programming_exercise_details" columnName="theia_image"/>
+            <dropColumn tableName="programming_exercise_details" columnName="allow_branching"/>
+            <dropColumn tableName="programming_exercise_details" columnName="branch_regex"/>
         </rollback>
     </changeSet>
 </databaseChangeLog>

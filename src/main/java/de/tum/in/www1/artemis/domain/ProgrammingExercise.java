@@ -172,6 +172,12 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("programmingExercise")
     private ProgrammingExerciseBuildConfig buildConfig;
 
+    @Column(name = "allow_branching", table = "programming_exercise_details", columnDefinition = "boolean default false")
+    private boolean allowBranching;
+
+    @Column(name = "branch_regex", table = "programming_exercise_details")
+    private String branchRegex;
+
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
      *
@@ -476,6 +482,22 @@ public class ProgrammingExercise extends Exercise {
 
     public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
         this.buildConfig = buildConfig;
+    }
+
+    public String getBranchRegex() {
+        return branchRegex;
+    }
+
+    public void setBranchRegex(String branchRegex) {
+        this.branchRegex = branchRegex;
+    }
+
+    public boolean isAllowBranching() {
+        return allowBranching;
+    }
+
+    public void setAllowBranching(boolean allowBranching) {
+        this.allowBranching = allowBranching;
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove

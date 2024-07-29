@@ -382,14 +382,7 @@ public class ProgrammingExerciseUtilService {
         var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, title, shortName, null);
-        course = courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
-        for (var exercise : course.getExercises()) {
-            if (exercise instanceof ProgrammingExercise) {
-                course.getExercises().remove(exercise);
-                course.addExercises(programmingExerciseRepository.findForCreationByIdElseThrow(exercise.getId()));
-            }
-        }
-        return course;
+        return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
     }
 
     /**
