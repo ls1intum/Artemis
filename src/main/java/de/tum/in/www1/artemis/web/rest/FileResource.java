@@ -374,7 +374,7 @@ public class FileResource {
     }
 
     /**
-     * GET courses/{id}/file : Returns the file associated with the
+     * GET /attachments/{id}/file : Returns the file associated with the
      * given attachment ID as a downloadable resource
      *
      * @param attachmentId the ID of the attachment to retrieve
@@ -385,11 +385,9 @@ public class FileResource {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found with id: " + attachmentId));
 
-        // get the course for a lecture attachment
         Lecture lecture = attachment.getLecture();
         Course course = lecture.getCourse();
 
-        // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
@@ -452,7 +450,7 @@ public class FileResource {
     }
 
     /**
-     * GET courses/{id}/file : Returns the file associated with the
+     * GET /attachments/{id}/file : Returns the file associated with the
      * given attachmentUnit ID as a downloadable resource
      *
      * @param attachmentUnitId the ID of the attachment to retrieve
@@ -468,10 +466,8 @@ public class FileResource {
         Attachment attachment = attachmentUnit.getAttachment();
         Course course = attachmentUnit.getLecture().getCourse();
 
-        // Check authorization
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        // Build and return file response
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
 
