@@ -1,17 +1,23 @@
-@if (learningPathsEnabled()) {
+@if (isLoading()) {
+    <div class="row justify-content-center p-2">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only" jhiTranslate="loading"></span>
+        </div>
+    </div>
+} @else if (learningPathsEnabled()) {
     <div class="col">
         <div class="row w-100 p-0 m-0 gap-3">
-            <div class="col p-2">
+            <div class="col p-2 learning-paths-container">
                 <jhi-learning-paths-configuration [courseId]="courseId()" />
             </div>
-            <div class="col p-2">
+            <div class="col p-2 learning-paths-container">
                 <jhi-learning-paths-state [courseId]="courseId()" />
             </div>
-            <div class="col-6 p-2">
+            <div class="col-6 p-2 learning-paths-container">
                 <jhi-learning-paths-table [courseId]="courseId()" />
             </div>
         </div>
-        <div class="row w-100 p-0 m-0 g-3">
+        <div class="row w-100 p-0 m-0 g-3 learning-paths-container">
             <div class="p-2">
                 <h5 class="m-0">Analytics</h5>
                 <hr class="my-2" />
