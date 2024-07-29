@@ -167,7 +167,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
         apollonRequestMockProvider.enableMockingOfRequests();
 
-        // mock apollon conversion 8 times, because the last test includes 8 modeling exercises, because each test adds modeling exercises
+        // mock apollon conversion 8 times, because the last test includes 8 modeling
+        // exercises, because each test adds modeling exercises
         for (int i = 0; i < 8; i++) {
             mockApollonConversion();
         }
@@ -229,11 +230,14 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     /**
      * Asserts the content of the science events CSV file.
-     * Allows for a 500ns difference between the timestamps due to the reimport from the csv export.
-     * Might cause the test to be flaky if multiple events are created overlapping and matched wrongly.
+     * Allows for a 500ns difference between the timestamps due to the reimport from
+     * the csv export.
+     * Might cause the test to be flaky if multiple events are created overlapping
+     * and matched wrongly.
      *
      * @param extractedZipDirPath The path to the extracted zip directory
-     * @param events              The set of science events to compare with the content of the CSV file
+     * @param events              The set of science events to compare with the
+     *                                content of the CSV file
      */
     private void assertScienceEventsCSVFile(Path extractedZipDirPath, Set<ScienceEvent> events) {
         assertThat(extractedZipDirPath).isDirectoryContaining(path -> "science_events.csv".equals(path.getFileName().toString()));
@@ -332,9 +336,13 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
     }
 
     private Set<ScienceEvent> createScienceEvents(String userLogin) {
-        return Set.of(scienceUtilService.createScienceEvent(userLogin, ScienceEventType.EXERCISE__OPEN, 1L),
-                scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN, 2L),
-                scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN_UNIT, 3L));
+
+        ZonedDateTime timestamp = ZonedDateTime.now();
+        // Rounding timestamp due to rounding during export
+        timestamp = timestamp.withNano(timestamp.getNano() - timestamp.getNano() % 10000);
+        return Set.of(scienceUtilService.createScienceEvent(userLogin, ScienceEventType.EXERCISE__OPEN, 1L, timestamp),
+                scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN, 2L, timestamp.plusMinutes(1)),
+                scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN_UNIT, 3L, timestamp.plusSeconds(30)));
 
     }
 
@@ -402,7 +410,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
                         .isDirectoryContaining(path -> path.getFileName().toString().contains("plagiarism_case") && path.getFileName().toString().endsWith(FILE_FORMAT_CSV));
             }
         }
-        // only include automatic test feedback if the assessment due date is in the future
+        // only include automatic test feedback if the assessment due date is in the
+        // future
         if (exerciseDirPath.toString().contains("Programming") && assessmentDueDateInTheFuture && courseExercise) {
             var fileContentResult1 = Files.readString(getProgrammingResultsFilePath(exerciseDirPath, true));
             // automatic feedback
@@ -635,7 +644,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
         conversationUtilService.addOneMessageForUserInCourse(TEST_PREFIX + "student1", course, "only one post");
         var dataExport = initDataExport();
-        // by setting the course groups to a different value we simulate unenrollment because the user is no longer part of the user group and hence, the course.
+        // by setting the course groups to a different value we simulate unenrollment
+        // because the user is no longer part of the user group and hence, the course.
         courseUtilService.updateCourseGroups("abc", course, "");
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
