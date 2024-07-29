@@ -8,16 +8,16 @@ public class RestCallInformation {
 
     private int line;
 
-    private String filePath;
+    private String fileName;
 
     public RestCallInformation() {
     }
 
-    public RestCallInformation(String method, String url, int line, String filePath) {
+    public RestCallInformation(String method, String url, int line, String fileName) {
         this.method = method;
         this.url = url;
         this.line = line;
-        this.filePath = filePath;
+        this.fileName = fileName;
     }
 
     public String getMethod() {
@@ -44,12 +44,12 @@ public class RestCallInformation {
         this.line = line;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public String getFileName() {
+        return fileName;
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public String buildCompleteRestCallURI() {
