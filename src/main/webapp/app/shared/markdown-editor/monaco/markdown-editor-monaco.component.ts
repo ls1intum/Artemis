@@ -153,9 +153,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     inPreviewMode = false;
     uniqueMarkdownEditorId: string;
-    faQuestionCircle = faQuestionCircle;
-    faGripLines = faGripLines;
-    faAngleDown = faAngleDown;
     resizeObserver?: ResizeObserver;
     targetWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -184,6 +181,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     readonly colorPickerMarginTop = 35;
     readonly colorPickerHeight = 110;
+    // Icons
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faGripLines = faGripLines;
+    protected readonly faAngleDown = faAngleDown;
+    // Types exposed to the template
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ReferenceType = ReferenceType;
 
