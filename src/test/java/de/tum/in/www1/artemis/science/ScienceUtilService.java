@@ -41,14 +41,7 @@ public class ScienceUtilService {
      */
     public static Comparator<ScienceEvent> scienceEventComparator = Comparator.comparing(ScienceEvent::getResourceId).thenComparing(ScienceEvent::getType)
             .thenComparing((ScienceEvent e1, ScienceEvent e2) -> {
-
-                Duration d = Duration.between(e1.getTimestamp(), e2.getTimestamp());
-                if (d.toNanos() > 500) {
-                    return 1;
-                }
-                else if (d.toNanos() < -500) {
-                    return -1;
-                }
-                return 0;
-            });
+                Duration duration = Duration.between(e1.getTimestamp(), e2.getTimestamp());
+                return Math.abs(duration.toNanos()) < 1e5 ? 0 : duration.isNegative() ? -1 : 1;
+            }).thenComparing(ScienceEvent::getIdentity);
 }
