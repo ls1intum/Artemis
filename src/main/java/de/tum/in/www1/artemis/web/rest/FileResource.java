@@ -380,7 +380,7 @@ public class FileResource {
      * @param attachmentId the ID of the attachment to retrieve
      * @return ResponseEntity containing the file as a resource
      */
-    @GetMapping("/attachments/{attachmentId}/file")
+    @GetMapping("attachments/{attachmentId}/file")
     public ResponseEntity<byte[]> getLectureAttachmentById(@PathVariable Long attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found with id: " + attachmentId));
