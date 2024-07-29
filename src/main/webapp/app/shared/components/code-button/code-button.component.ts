@@ -113,6 +113,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         } else if (this.repositoryUri) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
+        this.loadVcsAccessTokens();
     }
 
     private getRepositoryUri() {
@@ -264,7 +265,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, this.isPracticeMode)!;
         this.cloneHeadline = this.isPracticeMode ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
         if (this.activeParticipation.vcsAccessToken) {
-            this.user.vcsAccessToken = this.activeParticipation.vcsAccessToken; // this.activeParticipation.vcsAccessToken;
+            this.user.vcsAccessToken = this.activeParticipation.vcsAccessToken;
         }
     }
 }
