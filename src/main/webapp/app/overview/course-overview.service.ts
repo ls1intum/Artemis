@@ -13,7 +13,7 @@ import { cloneDeep } from 'lodash-es';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { faBullhorn, faHashtag } from '@fortawesome/free-solid-svg-icons';
+import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -75,6 +75,7 @@ export class CourseOverviewService {
 
     faBullhorn = faBullhorn;
     faHashtag = faHashtag;
+    faLock = faLock;
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
         if (tutorialGroups && tutorialGroups.length) {
@@ -313,7 +314,7 @@ export class CourseOverviewService {
             title: this.conversationService.getConversationName(conversation) ?? '',
             id: conversation.id ?? '',
             type: conversation.type,
-            icon: getAsChannelDTO(conversation)?.name === 'announcement' ? this.faBullhorn : this.faHashtag,
+            icon: getAsChannelDTO(conversation)?.isPublic === false ? this.faLock : getAsChannelDTO(conversation)?.name === 'announcement' ? this.faBullhorn : this.faHashtag,
             conversation: conversation,
             size: 'S',
         };
