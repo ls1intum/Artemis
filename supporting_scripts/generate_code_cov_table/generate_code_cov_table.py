@@ -20,7 +20,6 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 repo = "Artemis"
 owner = "ls1intum"
-repo_path = "./"  # relative to execution pwd
 runs_url = f"https://api.github.com/repos/{owner}/{repo}/actions/runs"
 
 server_tests_key = "Coverage Report Server Tests"
@@ -147,12 +146,12 @@ def get_coverage_artifact_for_key(artifacts, key):
         return None
 
 
-def get_branch_name():
+def get_branch_name(repo_path):
     repo = git.Repo(repo_path, search_parent_directories=True)
     return repo.active_branch.name
 
 
-def get_changed_files(branch_name, base_branch_name="origin/develop"):
+def get_changed_files(repo_path, branch_name, base_branch_name="origin/develop"):
     repo = git.Repo(repo_path, search_parent_directories=True)
     try:
         branch_head = repo.commit(branch_name)
@@ -293,6 +292,11 @@ def main(argv):
         action="store_true",
         help="Print the report to console instead of copying to clipboard",
     )
+    parser.add_argument(
+        "--repo-path",
+        default="./",
+        help="Path to the repository (default: current working directory)",
+    )
 
     args = parser.parse_args(argv)
     if args.verbose:
@@ -300,7 +304,7 @@ def main(argv):
     if args.token is None:
         args.token = getpass.getpass("Please enter your GitHub token: ")
     if args.branch_name is None:
-        args.branch_name = get_branch_name()
+        args.branch_name = get_branch_name(args.repo_path)
         logging.info(f"Using current branch: {args.branch_name}")
     if args.base_branch_name is None:
         args.base_branch_name = "origin/develop"
@@ -308,7 +312,9 @@ def main(argv):
     if args.build_id is None:
         logging.info("Using latest build ID")
 
-    file_changes = get_changed_files(args.branch_name, args.base_branch_name)
+    file_changes = get_changed_files(
+        args.repo_path, args.branch_name, args.base_branch_name
+    )
     client_file_changes, server_file_changes = filter_file_changes(file_changes)
 
     headers = {
