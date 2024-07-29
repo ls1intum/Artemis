@@ -2,15 +2,20 @@ package de.tum.in.www1.artemis.service.connectors.hades;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_HADES;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -32,8 +37,14 @@ public class HadesCIService extends AbstractContinuousIntegrationService {
 
     private final ObjectMapper objectMapper;
 
-    public HadesCIService(ObjectMapper objectMapper) {
+    private final RestTemplate shortTimeoutRestTemplate;
+
+    @Value("${artemis.continuous-integration.url}")
+    private String hadesServerUrl;
+
+    public HadesCIService(ObjectMapper objectMapper, @Qualifier("shortTimeoutHadesRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.objectMapper = objectMapper;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     @Override
@@ -123,8 +134,18 @@ public class HadesCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        // TODO: implement Health check
-        return null;
+        var additionalInfo = new HashMap<String, Object>();
+        additionalInfo.put("url", hadesServerUrl);
+        ConnectorHealth health;
+        try {
+            final var response = shortTimeoutRestTemplate.getForObject(hadesServerUrl + "/ping", JsonNode.class);
+            final var hadesStatus = response != null ? response.get("message").asText() : null;
+            health = new ConnectorHealth("pong".equals(hadesStatus), additionalInfo);
+        }
+        catch (Exception ex) {
+            health = new ConnectorHealth(false, additionalInfo, ex);
+        }
+        return health;
     }
 
     @Override
