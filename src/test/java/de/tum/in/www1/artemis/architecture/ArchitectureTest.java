@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.AfterAll;
@@ -301,12 +302,16 @@ class ArchitectureTest extends AbstractArchitectureTest {
     private ArchCondition<JavaMethod> notHaveRequestParamWithRequiredFalse() {
         return new ArchCondition<>("Do not use 'required = false' with @RequestParam") {
 
+            final static DescribedPredicate<HasType> ALLOWED_CLASSES = Stream
+                    .of(byte.class, short.class, int.class, long.class, float.class, double.class, char.class, boolean.class, Optional.class).map(HasType.Predicates::rawType)
+                    .reduce(DescribedPredicate.alwaysTrue(), (lhs, rhs) -> lhs.or(rhs));
+
             @Override
             public void check(final JavaMethod method, final ConditionEvents events) {
 
                 // We only care about the case where required is false and the Parameter is not an Optional, any other combination is fine.
 
-                final var violated = method.getParameters().stream().filter(not(HasType.Predicates.rawType(Optional.class))).flatMap(param -> param.getAnnotations().stream())
+                final var violated = method.getParameters().stream().filter(not(ALLOWED_CLASSES)).flatMap(param -> param.getAnnotations().stream())
                         .filter(HasType.Predicates.rawType(RequestParam.class)).filter(annotation -> {
                             final String value = (String) annotation.get("defaultValue").orElse(ValueConstants.DEFAULT_NONE);
                             return ValueConstants.DEFAULT_NONE.equals(value);
