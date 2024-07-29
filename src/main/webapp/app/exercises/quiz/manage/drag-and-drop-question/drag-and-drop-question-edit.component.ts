@@ -263,10 +263,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * are rendered immediately on the UI after importing
      */
     makeFileMapPreview() {
-        this.filePool.forEach((value, key) => {
-            this.filePreviewPaths.set(key, URL.createObjectURL(value.file));
+        if (this.filePool) {
+            this.filePool.forEach((value, key) => {
+                this.filePreviewPaths.set(key, URL.createObjectURL(value.file));
+            });
+            this.adjustClickLayerWidth();
             this.changeDetector.detectChanges();
-        });
+        }
     }
 
     /**
