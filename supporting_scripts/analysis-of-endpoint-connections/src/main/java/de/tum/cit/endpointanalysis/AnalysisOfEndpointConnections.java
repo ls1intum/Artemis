@@ -55,6 +55,8 @@ public class AnalysisOfEndpointConnections {
 //        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/lecture/AttachmentUnitResource.java"};
 //        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/AeolusTemplateResource.java"};
 //        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/FileResource.java"};
+//        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/CourseResource.java"};
+//        String[] test = {"src/main/java/de/tum/in/www1/artemis/web/rest/open/PublicLtiResource.java"};
 //        parseServerEndpoints(test);
 
         parseServerEndpoints(filesToParse);

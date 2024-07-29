@@ -87,5 +87,7 @@ public class RestCallAnalyzer {
             System.out.println("---------------------------------------------");
             System.out.println();
         });
+
+        System.out.println("Number of REST calls without matching endpoints: " + restCallsAndMatchingEndpoints.getRestCallsWithoutMatchingEndpoints().size());
     }
 }

@@ -39,7 +39,9 @@ public class EndpointAnalyzer {
                         for (RestCallInformation restCall : restCallFile.getRestCalls()) {
                             String endpointURI = endpoint.buildComparableEndpointUri();
                             String restCallURI = restCall.buildComparableRestCallUri();
-                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().equals(restCall.getMethod())) {
+                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
+                                matchingRestCalls.add(restCall);
+                            } else if (endpointURI.endsWith("*") && restCallURI.startsWith(endpointURI.substring(0, endpointURI.length() - 1)) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
                                 matchingRestCalls.add(restCall);
                             }
                         }
