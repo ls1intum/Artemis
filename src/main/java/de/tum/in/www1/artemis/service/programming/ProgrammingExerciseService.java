@@ -25,8 +25,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -545,7 +543,7 @@ public class ProgrammingExerciseService {
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
-            @Nullable String notificationText) throws JsonProcessingException {
+            Optional<String> notificationText) throws JsonProcessingException {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
@@ -566,7 +564,7 @@ public class ProgrammingExerciseService {
             scheduleOperations(updatedProgrammingExercise.getId());
         }
 
-        exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, Optional.ofNullable(notificationText));
+        exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
 
@@ -640,7 +638,7 @@ public class ProgrammingExerciseService {
      * @param notificationText           optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      */
-    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
+    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, Optional<String> notificationText) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
 
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
@@ -660,8 +658,7 @@ public class ProgrammingExerciseService {
         programmingExercise.validateDates();
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise,
-                Optional.ofNullable(notificationText));
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
 
@@ -674,7 +671,7 @@ public class ProgrammingExerciseService {
      * @return the updated ProgrammingExercise object.
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
      */
-    public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
+    public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, Optional<String> notificationText)
             throws EntityNotFoundException {
 
         String oldProblemStatement = programmingExercise.getProblemStatement();
@@ -687,7 +684,7 @@ public class ProgrammingExerciseService {
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
 
-        exerciseService.notifyAboutExerciseChanges(programmingExercise, updatedProgrammingExercise, Optional.ofNullable(notificationText));
+        exerciseService.notifyAboutExerciseChanges(programmingExercise, updatedProgrammingExercise, notificationText);
 
         return updatedProgrammingExercise;
     }

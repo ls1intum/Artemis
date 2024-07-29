@@ -457,7 +457,7 @@ public class ModelingExerciseResource {
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
-            @RequestParam(value = "deleteFeedback", required = false) boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
+            @RequestParam(value = "deleteFeedback", required = false, defaultValue = "false") boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);
 
         modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);

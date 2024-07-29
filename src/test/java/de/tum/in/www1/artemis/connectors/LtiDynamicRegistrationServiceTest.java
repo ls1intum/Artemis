@@ -8,6 +8,8 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,7 +87,7 @@ class LtiDynamicRegistrationServiceTest {
         doThrow(HttpClientErrorException.class).when(restTemplate).getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class);
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, Optional.of(registrationToken)));
     }
 
     @Test
@@ -94,7 +96,7 @@ class LtiDynamicRegistrationServiceTest {
         when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, Optional.of(registrationToken)));
     }
 
     @Test
@@ -104,7 +106,7 @@ class LtiDynamicRegistrationServiceTest {
         when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, Optional.of(registrationToken)));
     }
 
     @Test
@@ -115,7 +117,7 @@ class LtiDynamicRegistrationServiceTest {
         doThrow(HttpClientErrorException.class).when(restTemplate).postForEntity(eq(platformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, Optional.of(registrationToken)));
     }
 
     @Test
@@ -125,7 +127,7 @@ class LtiDynamicRegistrationServiceTest {
         when(restTemplate.postForEntity(eq(platformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
                 .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
 
-        ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken);
+        ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, Optional.of(registrationToken));
 
         verify(ltiPlatformConfigurationRepository).save(any());
         verify(oAuth2JWKSService).updateKey(any());
@@ -138,7 +140,7 @@ class LtiDynamicRegistrationServiceTest {
         when(restTemplate.postForEntity(eq(platformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
                 .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
 
-        ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, null);
+        ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, Optional.empty());
 
         verify(ltiPlatformConfigurationRepository).save(any());
         verify(oAuth2JWKSService).updateKey(any());

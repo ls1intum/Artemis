@@ -814,12 +814,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.TEAM);
         assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
         assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, Optional.empty())).isEmpty();
 
         sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).orElseThrow();
         assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
         assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, Optional.empty())).isEmpty();
     }
 
     @Test
@@ -853,12 +853,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, Optional.empty())).isEmpty();
 
         sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).orElseThrow();
         assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
         assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.TEAM);
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).hasSize(1);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, Optional.empty())).hasSize(1);
     }
 
     @Test

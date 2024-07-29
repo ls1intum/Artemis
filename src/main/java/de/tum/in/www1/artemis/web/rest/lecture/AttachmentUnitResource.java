@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -123,7 +124,7 @@ public class AttachmentUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId, @RequestPart AttachmentUnit attachmentUnit,
             @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText") Optional<String> notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findOneWithSlidesAndCompetencies(attachmentUnitId);
         checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
@@ -131,9 +132,7 @@ public class AttachmentUnitResource {
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, keepFilename);
 
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);
-        }
+        notificationText.ifPresent(text -> groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), text));
 
         return ResponseEntity.ok(savedAttachmentUnit);
     }

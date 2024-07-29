@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -147,7 +148,7 @@ public class AdminLtiConfigurationResource {
     @PostMapping("lti13/dynamic-registration")
     @EnforceAdmin
     public ResponseEntity<Void> lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
-            @RequestParam(name = "registration_token", required = false) String registrationToken) {
+            @RequestParam(name = "registration_token") Optional<String> registrationToken) {
 
         authCheckService.checkIsAdminElseThrow(null);
         ltiDynamicRegistrationService.performDynamicRegistration(openIdConfiguration, registrationToken);

@@ -270,7 +270,7 @@ public class TeamResource {
      */
     @GetMapping("exercises/{exerciseId}/teams")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId", required = false) Long teamOwnerId) {
+    public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId") Optional<Long> teamOwnerId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);

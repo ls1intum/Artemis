@@ -94,7 +94,8 @@ public class BonusResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/bonus")
     @EnforceAtLeastStudent
-    public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(required = false) boolean includeSourceGradeSteps) {
+    public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestParam(defaultValue = "false", required = false) boolean includeSourceGradeSteps) {
         log.debug("REST request to get bonus for exam: {}", examId);
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
 

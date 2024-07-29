@@ -172,7 +172,7 @@ public class TutorialGroupSessionResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> updateAttendanceCount(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
-            @RequestParam(required = false) @Min(0) @Max(3000) Integer attendanceCount) {
+            @RequestParam(required = false, defaultValue = "0") @Min(0) @Max(3000) int attendanceCount) {
         log.debug("REST request to update attendance count of session: {} of tutorial group: {} of course {} to {}", sessionId, tutorialGroupId, courseId, attendanceCount);
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));

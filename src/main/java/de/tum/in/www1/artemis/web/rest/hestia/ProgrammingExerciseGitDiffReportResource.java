@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest.hestia;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -169,21 +170,21 @@ public class ProgrammingExerciseGitDiffReportResource {
     @GetMapping("programming-exercises/{exerciseId}/commits/{commitHash1}/diff-report/{commitHash2}")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseGitDiffReportDTO> getGitDiffReportForCommits(@PathVariable long exerciseId, @PathVariable String commitHash1,
-            @PathVariable String commitHash2, @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType)
+            @PathVariable String commitHash2, @RequestParam(required = false) Optional<Long> participationId, @RequestParam Optional<RepositoryType> repositoryType)
             throws GitAPIException, IOException {
         log.debug("REST request to get a diff report for two commits for commit {} and commit {} of participation {}", commitHash1, commitHash2, participationId);
 
         VcsRepositoryUri repositoryUri = null;
-        if (participationId != null) {
-            Participation participation = participationRepository.findByIdElseThrow(participationId);
+        if (participationId.isPresent()) {
+            Participation participation = participationRepository.findByIdElseThrow(participationId.get());
             participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
             var programmingExerciseParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation, ENTITY_NAME);
             repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
         }
-        else if (repositoryType != null) {
+        else if (repositoryType.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
-            repositoryUri = switch (repositoryType) {
+            repositoryUri = switch (repositoryType.get()) {
                 case TEMPLATE -> programmingExercise.getTemplateParticipation().getVcsRepositoryUri();
                 case SOLUTION -> programmingExercise.getSolutionParticipation().getVcsRepositoryUri();
                 case TESTS -> programmingExercise.getVcsTestRepositoryUri();

@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -528,11 +529,11 @@ public class StudentExamResource {
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable long courseId, @PathVariable long examId, @PathVariable long studentExamId,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam Optional<Long> userId) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
-        User targetUser = userId == null ? currentUser : userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        User targetUser = userId.map(userRepository::findByIdWithGroupsAndAuthoritiesElseThrow).orElse(currentUser);
         StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, studentExamId);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);

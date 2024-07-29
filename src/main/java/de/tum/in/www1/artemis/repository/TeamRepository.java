@@ -117,13 +117,9 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
      * @param teamOwnerId Optional user id by which to filter teams on their owner
      * @return List of teams
      */
-    default List<Team> findAllByExerciseIdWithEagerStudents(Exercise exercise, Long teamOwnerId) {
-        if (teamOwnerId != null) {
-            return findAllByExerciseIdAndTeamOwnerIdWithEagerStudents(exercise.getId(), teamOwnerId);
-        }
-        else {
-            return findAllByExerciseIdWithEagerStudents(exercise.getId());
-        }
+    default List<Team> findAllByExerciseIdWithEagerStudents(Exercise exercise, Optional<Long> teamOwnerId) {
+        return teamOwnerId.map(id -> findAllByExerciseIdAndTeamOwnerIdWithEagerStudents(exercise.getId(), id))
+                .orElseGet(() -> findAllByExerciseIdWithEagerStudents(exercise.getId()));
     }
 
     /**

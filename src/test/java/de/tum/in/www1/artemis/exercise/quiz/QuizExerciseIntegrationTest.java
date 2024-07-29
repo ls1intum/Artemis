@@ -1393,13 +1393,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(changedQuiz.getMode()).isEqualTo(ExerciseMode.TEAM);
         assertThat(changedQuiz.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(1);
         assertThat(changedQuiz.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(10);
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null)).isEmpty();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, Optional.empty())).isEmpty();
 
         quizExercise = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
 
         assertThat(quizExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(quizExercise.getTeamAssignmentConfig()).isNull();
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null)).isEmpty();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, Optional.empty())).isEmpty();
     }
 
     /**
@@ -1437,11 +1437,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course.getId());
         assertThat(changedQuiz.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(changedQuiz.getTeamAssignmentConfig()).isNull();
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null)).isEmpty();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, Optional.empty())).isEmpty();
 
         quizExercise = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
         assertThat(quizExercise.getMode()).isEqualTo(ExerciseMode.TEAM);
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null)).hasSize(1);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, Optional.empty())).hasSize(1);
     }
 
     /**
