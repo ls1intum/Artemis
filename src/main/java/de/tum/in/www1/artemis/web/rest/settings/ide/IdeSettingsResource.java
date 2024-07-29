@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.settings.ide.Ide;
 import de.tum.in.www1.artemis.domain.settings.ide.UserIdeMapping;
+import de.tum.in.www1.artemis.domain.settings.ide.UserIdeMappingId;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.settings.IdeRepository;
 import de.tum.in.www1.artemis.repository.settings.UserIdeMappingRepository;
@@ -75,10 +76,13 @@ public class IdeSettingsResource {
         log.debug("REST request to set IDE of user {}", user.getLogin());
 
         // find or create the ide
-        ide = ideRepository.findByDeepLink(ide.getDeepLink()).orElse(ideRepository.save(ide));
+        var savedIde = ideRepository.findByDeepLink(ide.getDeepLink()).orElse(null);
+        if (savedIde == null) {
+            savedIde = ideRepository.save(ide);
+        }
 
         // Create or update user ide mapping
-        UserIdeMapping ideMapping = new UserIdeMapping(user, programmingLanguage, ide);
+        UserIdeMapping ideMapping = new UserIdeMapping(user, programmingLanguage, savedIde);
         ideMapping = userIdeMappingRepository.save(ideMapping);
         var ideRecord = new IdeSettingsDTO(ideMapping.getProgrammingLanguage(), ideMapping.getIde());
         log.debug("Successfully set IDE of user {}", user.getLogin());
@@ -97,7 +101,7 @@ public class IdeSettingsResource {
         User user = userRepository.getUser();
         log.debug("REST request to delete IDE of user {}", user.getLogin());
 
-        userIdeMappingRepository.deleteByUserIdAndProgrammingLanguage(user.getId(), programmingLanguage);
+        userIdeMappingRepository.deleteById(new UserIdeMappingId(user.getId(), programmingLanguage));
 
         log.debug("Successfully deleted IDE of user {}", user.getLogin());
         return ResponseEntity.ok().build();

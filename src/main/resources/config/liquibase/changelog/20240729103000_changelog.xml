@@ -11,7 +11,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="deep_link" type="varchar(200)">
-                <constraints nullable="false"/>
+                <constraints nullable="false" unique="true"/>
             </column>
         </createTable>
         <createTable tableName="user_ide_mapping">

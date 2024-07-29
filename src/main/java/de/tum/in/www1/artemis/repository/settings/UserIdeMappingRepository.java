@@ -7,7 +7,6 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.settings.ide.UserIdeMapping;
 import de.tum.in.www1.artemis.domain.settings.ide.UserIdeMappingId;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
@@ -20,6 +19,4 @@ import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 public interface UserIdeMappingRepository extends ArtemisJpaRepository<UserIdeMapping, UserIdeMappingId> {
 
     List<UserIdeMapping> findAllByUserId(Long userId);
-
-    void deleteByUserIdAndProgrammingLanguage(Long user_id, ProgrammingLanguage programmingLanguage);
 }

@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.domain.settings.ide;
 
+import java.util.Collection;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
@@ -19,6 +22,9 @@ public class Ide extends DomainObject {
 
     @Column(name = "deep_link", nullable = false, unique = true)
     private String deepLink;
+
+    @OneToMany(mappedBy = "ide", orphanRemoval = true)
+    private Collection<UserIdeMapping> userIdeMappings;
 
     public Ide() {
         // empty constructor for Jackson
