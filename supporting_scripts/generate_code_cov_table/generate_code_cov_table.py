@@ -301,9 +301,6 @@ def main(argv):
     args = parser.parse_args(argv)
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
-    if args.token is None:
-        args.token = getpass.getpass("Please enter your GitHub token: ")
-        logging.info(f"Using current branch: {args.branch_name}")
     if args.base_branch_name is None:
         args.base_branch_name = "origin/develop"
         logging.info(f"Base branch set to: {args.base_branch_name}")
@@ -320,6 +317,10 @@ def main(argv):
         sys.exit(1)
 
     client_file_changes, server_file_changes = filter_file_changes(file_changes)
+
+    if args.token is None:
+        args.token = getpass.getpass("Please enter your GitHub token: ")
+        logging.info(f"Using current branch: {args.branch_name}")
 
     headers = {
         "Authorization": f"token {args.token}",
