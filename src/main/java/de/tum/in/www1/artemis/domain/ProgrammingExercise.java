@@ -90,8 +90,8 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
 
-    @Column(name = "allow_online_ide", table = "programming_exercise_details", nullable = false)
-    private boolean allowOnlineIde = false;
+    @Column(name = "allow_online_ide", table = "programming_exercise_details")
+    private Boolean allowOnlineIde = false;
 
     @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
     private Boolean staticCodeAnalysisEnabled;
@@ -291,7 +291,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean isAllowOnlineIde() {
-        return allowOnlineIde;
+        return Objects.requireNonNullElse(allowOnlineIde, false);
     }
 
     public void setAllowOnlineIde(boolean allowOnlineIde) {
