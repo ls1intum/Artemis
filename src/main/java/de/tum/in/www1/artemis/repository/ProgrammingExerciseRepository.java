@@ -529,8 +529,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
-    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig" })
-    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigAndTeamConfigById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig" })
+    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "buildConfig" })
     Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
@@ -569,8 +569,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @return The programming exercise related to the given id
      */
     @NotNull
-    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigAndTeamConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return findWithPlagiarismDetectionConfigAndTeamConfigById(programmingExerciseId)
+    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 

@@ -4,7 +4,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingExerciseBuildConfig } from 'app/entities/programming-exercise.model';
 import JSZip from 'jszip';
 
 @Component({
@@ -49,6 +49,20 @@ export class ExerciseImportFromFileComponent implements OnInit {
         switch (this.exerciseType) {
             case ExerciseType.PROGRAMMING:
                 this.exercise = JSON.parse(exerciseDetails as string) as ProgrammingExercise;
+                // This is needed to make sure that old exported programming exercises can be imported
+                if (!(this.exercise as ProgrammingExercise).buildConfig) {
+                    const buildConfig = new ProgrammingExerciseBuildConfig();
+                    buildConfig.sequentialTestRuns = exerciseJson['sequentialTestRuns'];
+                    buildConfig.checkoutPath = exerciseJson['checkoutPath'];
+                    buildConfig.buildPlanConfiguration = exerciseJson['buildPlanConfiguration'];
+                    buildConfig.checkoutSolutionRepository = exerciseJson['checkoutSolutionRepository'];
+                    buildConfig.timeoutSeconds = exerciseJson['timeoutSeconds'];
+                    buildConfig.windFile = exerciseJson['windFile'];
+                    buildConfig.buildScript = exerciseJson['buildScript'];
+                    buildConfig.testwiseCoverageEnabled = exerciseJson['testwiseCoverageEnabled'];
+                    buildConfig.dockerFlags = exerciseJson['dockerFlags'];
+                    (this.exercise as ProgrammingExercise).buildConfig = buildConfig;
+                }
                 break;
             default:
                 this.alertService.error('artemisApp.exercise.importFromFile.notSupportedExerciseType', {
