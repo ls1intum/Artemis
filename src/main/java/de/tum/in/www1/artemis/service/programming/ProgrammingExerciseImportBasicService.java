@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -132,7 +133,7 @@ public class ProgrammingExerciseImportBasicService {
         setupTestRepository(newProgrammingExercise);
         programmingExerciseService.initParticipations(newProgrammingExercise);
 
-        setupBuildConfig(newProgrammingExercise);
+        setupBuildConfig(newProgrammingExercise, originalProgrammingExercise);
         if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
             newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
@@ -217,12 +218,28 @@ public class ProgrammingExerciseImportBasicService {
         newExercise.setTestRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(newExercise.getProjectKey(), testRepoName).toString());
     }
 
-    private void setupBuildConfig(ProgrammingExercise newExercise) {
+    private void setupBuildConfig(ProgrammingExercise newExercise, ProgrammingExercise originalExercise) {
         if (newExercise.getBuildConfig() != null) {
-            final var buildConfig = newExercise.getBuildConfig();
+            var buildConfig = newExercise.getBuildConfig();
             buildConfig.setId(null);
             buildConfig.setProgrammingExercise(null);
             newExercise.setBuildConfig(buildConfig);
+        }
+        else if (originalExercise.getBuildConfig() != null) {
+            var buildConfig = new ProgrammingExerciseBuildConfig();
+            buildConfig.setBranch(originalExercise.getBuildConfig().getBranch());
+            buildConfig.setBuildPlanConfiguration(originalExercise.getBuildConfig().getBuildPlanConfiguration());
+            buildConfig.setCheckoutPath(originalExercise.getBuildConfig().getCheckoutPath());
+            buildConfig.setCheckoutSolutionRepository(originalExercise.getBuildConfig().getCheckoutSolutionRepository());
+            buildConfig.setDockerFlags(originalExercise.getBuildConfig().getDockerFlags());
+            buildConfig.setSequentialTestRuns(originalExercise.getBuildConfig().hasSequentialTestRuns());
+            buildConfig.setBuildScript(originalExercise.getBuildConfig().getBuildScript());
+            buildConfig.setTestwiseCoverageEnabled(originalExercise.getBuildConfig().isTestwiseCoverageEnabled());
+            buildConfig.setTimeoutSeconds(originalExercise.getBuildConfig().getTimeoutSeconds());
+            newExercise.setBuildConfig(buildConfig);
+        }
+        else {
+            newExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         }
     }
 
