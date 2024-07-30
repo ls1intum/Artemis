@@ -12,22 +12,18 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
-
-
+import { DateContent, InformationBox, StringNumberContent } from 'app/shared/information-box/information-box.component';
 
 describe('ExerciseHeadersInformationComponent', () => {
     let component: ExerciseHeadersInformationComponent;
     let fixture: ComponentFixture<ExerciseHeadersInformationComponent>;
     let exerciseService: ExerciseService;
     let getExerciseDetailsMock: jest.SpyInstance;
-    let participation: StudentParticipation;
-    let complaintService: ComplaintService;
 
     const exercise = {
         id: 42,
@@ -47,12 +43,10 @@ describe('ExerciseHeadersInformationComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseHeadersInformationComponent);
                 component = fixture.componentInstance;
-                complaintService = TestBed.inject(ComplaintService);
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
                 component.exercise = { ...exercise };
-                participation = new StudentParticipation(ParticipationType.PROGRAMMING);
                 fixture.detectChanges();
             });
     });
@@ -126,7 +120,8 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     it('should add points item to informationBoxItems', () => {
         const maxPoints = 10;
-        const pointsItem = { type: 'points', value: maxPoints };
+        const pointsContent: StringNumberContent = { type: 'string', value: maxPoints };
+        const pointsItem: InformationBox = { title: 'Points', content: pointsContent };
 
         jest.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
 
@@ -139,7 +134,8 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     it('should add bonus points item to informationBoxItems', () => {
         const bonusPoints = 5;
-        const pointsItem = { type: 'bonus', value: bonusPoints };
+        const pointsContent: StringNumberContent = { type: 'string', value: bonusPoints };
+        const pointsItem: InformationBox = { title: 'Bonus Points', content: pointsContent };
 
         jest.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
 
@@ -162,13 +158,13 @@ describe('ExerciseHeadersInformationComponent', () => {
         } as unknown as Exercise;
 
         component.exercise = { ...exercise };
-
-        const startDateItem = {
+        const startDateContent: DateContent = {
+            type: 'dateTime',
+            value: dayjs().add(3, 'days'),
+        };
+        const startDateItem: InformationBox = {
             title: 'artemisApp.courseOverview.exerciseDetails.startDate',
-            content: {
-                type: 'dateTime',
-                value: dayjs().add(3, 'days'),
-            },
+            content: startDateContent,
             isContentComponent: true,
         };
         component.informationBoxItems = [];
@@ -221,12 +217,11 @@ describe('ExerciseHeadersInformationComponent', () => {
     it('should add assessment due date item to informationBoxItems if dueDate is in the past and assessmentDueDate is in the future', () => {
         const now = dayjs();
         const dueDate = now.subtract(1, 'day');
-        const assessmentDueItem = {
+
+        const assessmentDueContent: DateContent = { type: 'dateTime', value: dayjs().add(1, 'weeks') };
+        const assessmentDueItem: InformationBox = {
             title: 'artemisApp.courseOverview.exerciseDetails.assessmentDue',
-            content: {
-                type: 'dateTime',
-                value: dayjs().add(1, 'weeks'),
-            },
+            content: assessmentDueContent,
             isContentComponent: true,
             tooltip: 'artemisApp.courseOverview.exerciseDetails.assessmentDueTooltip',
         };
@@ -246,11 +241,16 @@ describe('ExerciseHeadersInformationComponent', () => {
         jest.spyOn(component, 'countSubmissions').mockImplementation(() => {});
 
         // Mock the getSubmissionPolicyItem method
-        const mockSubmissionPolicyItem = { title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle', content: { type: 'text', value: 'Updated Item' } };
+        const mockSubmissionPolicyItem: InformationBox = {
+            title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
+            content: { type: 'string', value: 'Updated Item' } as StringNumberContent,
+        };
         jest.spyOn(component, 'getSubmissionPolicyItem').mockReturnValue(mockSubmissionPolicyItem);
 
         // Initialize informationBoxItems with a mock item
-        component.informationBoxItems = [{ title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle', content: { type: 'text', value: 'Original Item' } }];
+        component.informationBoxItems = [
+            { title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle', content: { type: 'string', value: 'Original Item' } as StringNumberContent },
+        ];
 
         // Call the function
         component.updateSubmissionPolicyItem();
@@ -280,7 +280,6 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(component.numberOfSubmissions).toBe(2);
     });
 
-
     it('should call updateSubmissionPolicyItem if submissionPolicy is active and has a submission limit', () => {
         component.submissionPolicy = new LockRepositoryPolicy();
         component.submissionPolicy.active = true;
@@ -292,6 +291,4 @@ describe('ExerciseHeadersInformationComponent', () => {
 
         expect(updateSubmissionPolicyItemSpy).toHaveBeenCalled();
     });
-
-    
 });

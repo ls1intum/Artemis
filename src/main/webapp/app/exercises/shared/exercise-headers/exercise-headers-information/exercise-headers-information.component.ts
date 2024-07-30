@@ -272,7 +272,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         }
     }
 
-    private countSubmissions() {
+    countSubmissions() {
         const commitHashSet = new Set<string>();
 
         this.studentParticipation?.results

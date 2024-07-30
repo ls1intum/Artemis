@@ -14,32 +14,32 @@ export interface InformationBox {
     contentColor?: string;
 }
 
-interface StudentExamContent {
+export interface StudentExamContent {
     type: 'workingTime';
     value: StudentExam;
 }
 
-interface DateContent {
+export interface DateContent {
     type: 'timeAgo' | 'dateTime';
     value: DateType;
 }
 
-interface DifficultyLevelContent {
+export interface DifficultyLevelContent {
     type: 'difficultyLevel';
     value: DifficultyLevel;
 }
 
-interface ExerciseContent {
+export interface ExerciseContent {
     type: 'submissionStatus' | 'categories';
     value: Exercise;
 }
 
-interface StringContent {
+export interface StringNumberContent {
     type: 'string';
-    value: string;
+    value: string | number;
 }
 
-export type InformationBoxContent = StudentExamContent | DateContent | ExerciseContent | DifficultyLevelContent | StringContent;
+export type InformationBoxContent = StudentExamContent | DateContent | ExerciseContent | DifficultyLevelContent | StringNumberContent;
 
 @Component({
     standalone: true,
