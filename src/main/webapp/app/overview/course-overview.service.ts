@@ -13,6 +13,7 @@ import { cloneDeep } from 'lodash-es';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -309,12 +310,23 @@ export class CourseOverviewService {
         return examCardItem;
     }
 
+    private getChannelIcon(conversation: ConversationDTO): IconDefinition {
+        const channelDTO = getAsChannelDTO(conversation);
+        if (channelDTO?.isPublic === false) {
+            return this.faLock;
+        } else if (channelDTO?.name === 'announcement') {
+            return this.faBullhorn;
+        } else {
+            return this.faHashtag;
+        }
+    }
+
     mapConversationToSidebarCardElement(conversation: ConversationDTO): SidebarCardElement {
         const conversationCardItem: SidebarCardElement = {
             title: this.conversationService.getConversationName(conversation) ?? '',
             id: conversation.id ?? '',
             type: conversation.type,
-            icon: getAsChannelDTO(conversation)?.isPublic === false ? this.faLock : getAsChannelDTO(conversation)?.name === 'announcement' ? this.faBullhorn : this.faHashtag,
+            icon: this.getChannelIcon(conversation),
             conversation: conversation,
             size: 'S',
         };
