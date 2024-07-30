@@ -326,7 +326,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
         const files: Map<string, { path: string; file: File }> = new Map<string, { path: string; file: File }>();
         // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
         // This contains removing all ids, duplicating images in case of dnd questions, the question statistic and the exercise
-        var questionIndex = 0;
+        let questionIndex = 0;
         for (const question of existingQuizQuestions) {
             // do not set question.exercise = this.quizExercise, because it will cause a cycle when converting to json
             question.exercise = undefined;
