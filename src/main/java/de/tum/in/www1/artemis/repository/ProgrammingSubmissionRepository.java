@@ -10,6 +10,7 @@ import java.util.Optional;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -47,12 +48,12 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
         return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
     }
 
-    @Query("""
+    @Query(value = """
             SELECT new de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(ps.id, ps.submissionDate)
             FROM ProgrammingSubmission ps
-            WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC LIMIT 1
+            WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC
             """)
-    Optional<ProgrammingSubmissionIdAndSubmissionDateDTO> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId);
+    List<ProgrammingSubmissionIdAndSubmissionDateDTO> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
@@ -66,11 +67,13 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      *         or an empty {@code Optional} if no submission is found
      */
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(long programmingSubmissionId) {
-        Optional<ProgrammingSubmissionIdAndSubmissionDateDTO> programmingSubmissionOptional = findFirstIdByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId);
-        if (programmingSubmissionOptional.isEmpty()) {
+        Pageable pageable = PageRequest.of(0, 1); // fetch the first row
+        // probably is not the prettiest variant, but we need a way to fetch the first row only, as sql limit does not work with JPQL, as the latter is SQL agnostic
+        List<ProgrammingSubmissionIdAndSubmissionDateDTO> result = findFirstIdByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId, pageable);
+        if (result.isEmpty()) {
             return Optional.empty();
         }
-        long id = programmingSubmissionOptional.get().programmingSubmissionId();
+        long id = result.getFirst().programmingSubmissionId();
         return findProgrammingSubmissionWithResultsById(id);
     }
 
