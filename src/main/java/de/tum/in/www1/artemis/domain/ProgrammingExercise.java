@@ -165,7 +165,7 @@ public class ProgrammingExercise extends Exercise {
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
-    private boolean releaseTestsWithExampleSolution = false;
+    private boolean releaseTestsWithExampleSolution;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
