@@ -315,8 +315,11 @@ public class LearningPathService {
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, user.getId()).stream()
                 .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
 
-        Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream()
-                .map(competency -> CompetencyGraphNodeDTO.of(competency, Optional.ofNullable(competencyProgresses.get(competency.getId())))).collect(Collectors.toSet());
+        Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream().map(competency -> {
+            var competencyProgressOptional = Optional.ofNullable(competencyProgresses.get(competency.getId()));
+            var masteryProgress = competencyProgressOptional.map(CompetencyProgressService::getMasteryProgress).orElse(0.0);
+            return CompetencyGraphNodeDTO.of(competency, Math.floor(masteryProgress * 100), CompetencyGraphNodeDTO.CompetencyNodeValueType.MASTERY_PROGRESS);
+        }).collect(Collectors.toSet());
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(learningPath.getCourse().getId());
         Set<CompetencyGraphEdgeDTO> relationDTOs = relations.stream().map(CompetencyGraphEdgeDTO::of).collect(Collectors.toSet());
