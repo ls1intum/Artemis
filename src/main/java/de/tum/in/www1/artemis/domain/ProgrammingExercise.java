@@ -172,7 +172,7 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("programmingExercise")
     private ProgrammingExerciseBuildConfig buildConfig;
 
-    @Column(name = "allow_branching", table = "programming_exercise_details", columnDefinition = "boolean default false")
+    @Column(name = "allow_branching", table = "programming_exercise_details", columnDefinition = "boolean default false", nullable = false)
     private boolean allowBranching = false;
 
     @Column(name = "branch_regex", table = "programming_exercise_details")
