@@ -500,6 +500,10 @@ public class ProgrammingExercise extends Exercise {
         this.allowBranching = allowBranching;
     }
 
+    public void setAllowBranching(Boolean allowBranching) {
+        this.allowBranching = allowBranching != null && allowBranching;
+    }
+
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
