@@ -132,6 +132,7 @@ public class ProgrammingExerciseImportBasicService {
         setupTestRepository(newProgrammingExercise);
         programmingExerciseService.initParticipations(newProgrammingExercise);
 
+        setupBuildConfig(newProgrammingExercise);
         if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
             newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
@@ -140,7 +141,7 @@ public class ProgrammingExerciseImportBasicService {
         // Hints, tasks, test cases and static code analysis categories
         final Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(originalProgrammingExercise, newProgrammingExercise);
 
-        programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig());
+        newProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig()));
         final ProgrammingExercise importedExercise = programmingExerciseRepository.save(newProgrammingExercise);
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
@@ -214,6 +215,15 @@ public class ProgrammingExerciseImportBasicService {
     private void setupTestRepository(ProgrammingExercise newExercise) {
         final var testRepoName = newExercise.generateRepositoryName(RepositoryType.TESTS);
         newExercise.setTestRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(newExercise.getProjectKey(), testRepoName).toString());
+    }
+
+    private void setupBuildConfig(ProgrammingExercise newExercise) {
+        if (newExercise.getBuildConfig() != null) {
+            final var buildConfig = newExercise.getBuildConfig();
+            buildConfig.setId(null);
+            buildConfig.setProgrammingExercise(null);
+            newExercise.setBuildConfig(buildConfig);
+        }
     }
 
     /**
