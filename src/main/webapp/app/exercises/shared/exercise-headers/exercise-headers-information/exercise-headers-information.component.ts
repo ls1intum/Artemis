@@ -10,20 +10,19 @@ import { Course } from 'app/entities/course.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { isDateLessThanAWeekAway } from 'app/utils/date.utils';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
     standalone: true,
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, SubmissionResultStatusModule, ExerciseCategoriesModule, InformationBoxComponent, DifficultyLevelComponent],
+    imports: [SubmissionResultStatusModule, ExerciseCategoriesModule, InformationBoxComponent, DifficultyLevelComponent, ArtemisSharedCommonModule],
     styleUrls: ['./exercise-headers-information.component.scss'],
     /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
     We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]
@@ -62,16 +61,6 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         this.createInformationBoxItems();
     }
 
-    createInformationBoxItems() {
-        this.addPointsItems();
-        this.addDueDateItems();
-        this.addStartDateItem();
-        this.addSubmissionStatusItem();
-        this.addSubmissionPolicyItem();
-        this.addDifficultyItem();
-        this.addCategoryItems();
-    }
-
     ngOnChanges() {
         this.course = this.course ?? getCourseFromExercise(this.exercise);
 
@@ -87,6 +76,16 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
             }
         }
+    }
+
+    createInformationBoxItems() {
+        this.addPointsItems();
+        this.addDueDateItems();
+        this.addStartDateItem();
+        this.addSubmissionStatusItem();
+        this.addSubmissionPolicyItem();
+        this.addDifficultyItem();
+        this.addCategoryItems();
     }
 
     addPointsItems() {
@@ -273,7 +272,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         }
     }
 
-    private countSubmissions() {
+    countSubmissions() {
         const commitHashSet = new Set<string>();
 
         this.studentParticipation?.results

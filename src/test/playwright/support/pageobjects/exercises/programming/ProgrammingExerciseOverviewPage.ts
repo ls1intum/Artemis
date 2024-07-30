@@ -46,6 +46,6 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     getExerciseDetails() {
-        return this.page.locator('#exercise-headers-information');
+        return this.page.locator('#course-exercise-details');
     }
 }
