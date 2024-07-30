@@ -90,8 +90,8 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
 
-    @Column(name = "allow_online_ide", table = "programming_exercise_details")
-    private Boolean allowOnlineIde = false;
+    @Column(name = "allow_online_ide", table = "programming_exercise_details", nullable = false)
+    private boolean allowOnlineIde = false;
 
     @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
     private Boolean staticCodeAnalysisEnabled;
@@ -164,16 +164,16 @@ public class ProgrammingExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
-    private boolean releaseTestsWithExampleSolution;
+    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
+    private boolean releaseTestsWithExampleSolution = false;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
     @JsonIgnoreProperties("programmingExercise")
     private ProgrammingExerciseBuildConfig buildConfig;
 
-    @Column(name = "allow_branching", table = "programming_exercise_details", columnDefinition = "boolean default false")
-    private Boolean allowBranching = false; // default value
+    @Column(name = "allow_branching", table = "programming_exercise_details", columnDefinition = "boolean default false", nullable = false)
+    private boolean allowBranching = false; // default value
 
     @Column(name = "branch_regex", table = "programming_exercise_details")
     private String branchRegex;
@@ -291,7 +291,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean isAllowOnlineIde() {
-        return Objects.requireNonNullElse(allowOnlineIde, false);
+        return allowOnlineIde;
     }
 
     public void setAllowOnlineIde(boolean allowOnlineIde) {
@@ -493,7 +493,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean isAllowBranching() {
-        return Objects.requireNonNullElse(allowBranching, false);
+        return allowBranching;
     }
 
     public void setAllowBranching(boolean allowBranching) {
