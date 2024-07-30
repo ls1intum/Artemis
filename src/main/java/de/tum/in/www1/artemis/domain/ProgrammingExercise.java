@@ -172,8 +172,8 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("programmingExercise")
     private ProgrammingExerciseBuildConfig buildConfig;
 
-    @Column(name = "allow_branching", table = "programming_exercise_details", columnDefinition = "boolean default false", nullable = false)
-    private boolean allowBranching = false;
+    @Column(name = "allow_branching", table = "programming_exercise_details", columnDefinition = "boolean default false")
+    private Boolean allowBranching = false; // default value
 
     @Column(name = "branch_regex", table = "programming_exercise_details")
     private String branchRegex;
@@ -493,15 +493,11 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean isAllowBranching() {
-        return allowBranching;
+        return Objects.requireNonNullElse(allowBranching, false);
     }
 
     public void setAllowBranching(boolean allowBranching) {
         this.allowBranching = allowBranching;
-    }
-
-    public void setAllowBranching(Boolean allowBranching) {
-        this.allowBranching = allowBranching != null && allowBranching;
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
