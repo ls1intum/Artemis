@@ -267,11 +267,6 @@ public class LearningPathService {
         checkNoCompetencies(course, status);
         checkNoRelations(course, status);
 
-        // if no issues where found, add OK status
-        if (status.isEmpty()) {
-            status.add(LearningPathHealthDTO.HealthStatus.OK);
-        }
-
         return new LearningPathHealthDTO(status, numberOfMissingLearningPaths);
     }
 
