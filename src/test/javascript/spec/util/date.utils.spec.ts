@@ -1,4 +1,11 @@
-import { convertDateFromClient, convertDateFromServer, dayOfWeekZeroSundayToZeroMonday, toISO8601DateString, toISO8601DateTimeString } from 'app/utils/date.utils';
+import {
+    convertDateFromClient,
+    convertDateFromServer,
+    dayOfWeekZeroSundayToZeroMonday,
+    isDateLessThanAWeekAway,
+    toISO8601DateString,
+    toISO8601DateTimeString,
+} from 'app/utils/date.utils';
 import dayjs from 'dayjs/esm';
 
 describe('DateUtils', () => {
@@ -67,6 +74,23 @@ describe('DateUtils', () => {
         it('should throw error if day of week is not in range', () => {
             expect(() => dayOfWeekZeroSundayToZeroMonday(-1)).toThrow();
             expect(() => dayOfWeekZeroSundayToZeroMonday(7)).toThrow();
+        });
+    });
+
+    describe('isDateLessThanAWeekAway', () => {
+        it('should return true if date is less than a week away', () => {
+            const date = dayjs().add(6, 'days');
+            expect(isDateLessThanAWeekAway(date)).toBeTrue();
+        });
+
+        it('should return false if date is more than a week away', () => {
+            const date = dayjs().add(8, 'days');
+            expect(isDateLessThanAWeekAway(date)).toBeFalse();
+        });
+
+        it('should return false if date is more than a week ago', () => {
+            const date = dayjs().subtract(8, 'days');
+            expect(isDateLessThanAWeekAway(date)).toBeFalse();
         });
     });
 });
