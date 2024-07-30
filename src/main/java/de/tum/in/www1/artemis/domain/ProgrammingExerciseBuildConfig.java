@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
@@ -10,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
@@ -23,7 +26,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildConfig.class);
 
     @Column(name = "sequential_test_runs")
-    private boolean sequentialTestRuns;
+    private Boolean sequentialTestRuns;
 
     @Column(name = "branch")
     private String branch;
@@ -39,7 +42,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
      * This is currently only supported for HASKELL and OCAML, thus the default value is false.
      */
     @Column(name = "checkout_solution_repository", columnDefinition = "boolean default false")
-    private boolean checkoutSolutionRepository;
+    private boolean checkoutSolutionRepository = false;
 
     @Column(name = "checkout_path")
     private String checkoutPath;
@@ -57,8 +60,9 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "testwise_coverage_enabled")
     private boolean testwiseCoverageEnabled;
 
+    @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
-        return sequentialTestRuns;
+        return Objects.requireNonNullElse(sequentialTestRuns, false);
     }
 
     public void setSequentialTestRuns(Boolean sequentialTestRuns) {
