@@ -5,8 +5,7 @@
             @if (isLoading()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
-            <input type="search" class="ms-2 form-control rounded" placeholder="Search" [(ngModel)]="searchTerm"
-                   aria-label="Search">
+            <input type="search" class="ms-2 form-control rounded" placeholder="Search" [(ngModel)]="searchTerm" aria-label="Search" />
         </div>
     </div>
     <hr class="my-2" />
@@ -14,16 +13,16 @@
         <div class="learning-paths-table-container">
             <table class="table table-striped">
                 <thead class="thead-dark">
-                <tr>
-                    <th class="col-1">#</th>
-                    <th class="col-4">Name</th>
-                    <th class="col-4">Login</th>
-                    <th class="col-2">Progress</th>
-                </tr>
+                    <tr>
+                        <th class="col-1">#</th>
+                        <th class="col-4">Name</th>
+                        <th class="col-4">Login</th>
+                        <th class="col-2">Progress</th>
+                    </tr>
                 </thead>
                 <tbody>
                     @for (learningPath of learningPaths(); track learningPath.id) {
-                        <tr>
+                        <tr class="align-middle">
                             <td class="col-1">{{ learningPath.id }}</td>
                             <td>
                                 <ngb-highlight [result]="learningPath.user.name" [term]="searchTerm()" />
@@ -31,7 +30,11 @@
                             <td>
                                 <ngb-highlight [result]="learningPath.user.login" [term]="searchTerm()" />
                             </td>
-                            <td>{{ learningPath.progress }} %</td>
+                            <td>
+                                <span class="clickable link-primary" (click)="openCompetencyGraph(learningPath.id)"
+                                    ><u>{{ learningPath.progress }} %</u></span
+                                >
+                            </td>
                         </tr>
                     } @empty {
                         <tr>
@@ -43,7 +46,13 @@
                 </tbody>
             </table>
         </div>
-        <ngb-pagination [collectionSize]="collectionSize()" [page]="page()" (pageChange)="onPageChange($event)" [pageSize]="pageSize()" size="sm"
-                        class="d-flex justify-content-end mt-2 pagination" />
+        <ngb-pagination
+            [collectionSize]="collectionSize()"
+            [page]="page()"
+            (pageChange)="onPageChange($event)"
+            [pageSize]="pageSize()"
+            size="sm"
+            class="d-flex justify-content-end mt-2 pagination"
+        />
     </div>
 </div>
