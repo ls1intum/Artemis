@@ -133,8 +133,8 @@ describe('SidebarComponent', () => {
     describe('openFilterExercisesLink', () => {
         const FILTER_LINK_SELECTOR = '.text-primary a';
 
-        it('should display the filter link when sidebarType is exercise', () => {
-            component.sidebarData.sidebarType = 'exercise';
+        it('should display the filter link', () => {
+            component.showFilter = true;
             fixture.detectChanges();
 
             const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
@@ -149,7 +149,7 @@ describe('SidebarComponent', () => {
         });
 
         it('should open modal on click with initialized filters', () => {
-            component.sidebarData.sidebarType = 'exercise';
+            component.showFilter = true;
             fixture.detectChanges();
             const filterAppliedMock = new EventEmitter<ExerciseFilterResults>();
             const mockReturnValue = {
