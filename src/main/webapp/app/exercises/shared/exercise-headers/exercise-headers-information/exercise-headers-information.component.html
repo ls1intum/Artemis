@@ -8,12 +8,12 @@
                     }
                     @case ('categories') {
                         <jhi-exercise-categories
-                        contentComponent
-                        [exercise]="informationBoxItem.content.value"
-                        [showTags]="{ difficulty: false, notReleased: true, includedInScore: true }"
-                        [ngClass]="'badge-row'"
-                        [isSmall]="true"
-                    />
+                            contentComponent
+                            [exercise]="informationBoxItem.content.value"
+                            [showTags]="{ difficulty: false, notReleased: true, includedInScore: true }"
+                            [ngClass]="'badge-row'"
+                            [isSmall]="true"
+                        />
                     }
                     @case ('timeAgo') {
                         <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content.value | artemisTimeAgo }}</span>
@@ -23,14 +23,14 @@
                     }
                     @case ('submissionStatus') {
                         <jhi-submission-result-status
-                        contentComponent
-                        class="text-truncate result"
-                        [exercise]="informationBoxItem.content.value"
-                        [studentParticipation]="studentParticipation"
-                        [triggerLastGraded]="false"
-                        [showCompletion]="false"
-                        [showBadge]="false"
-                    />
+                            contentComponent
+                            class="text-truncate result"
+                            [exercise]="informationBoxItem.content.value"
+                            [studentParticipation]="studentParticipation"
+                            [triggerLastGraded]="false"
+                            [showCompletion]="false"
+                            [showBadge]="false"
+                        />
                     }
                 }
             </jhi-information-box>
