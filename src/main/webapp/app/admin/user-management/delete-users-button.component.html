@@ -7,6 +7,7 @@
     [buttonSize]="medium"
     [translateValues]="{ users: this.usersString }"
     [entityTitle]="(this.users() ?? []).length.toString()"
+    [renderButtonText]="false"
     (click)="this.loadUserList()"
     (delete)="this.onConfirm()"
 >
