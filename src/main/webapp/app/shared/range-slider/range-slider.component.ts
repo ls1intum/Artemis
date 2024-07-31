@@ -14,7 +14,9 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     @Input() generalMaxValue: number;
     @Input() generalMinValue: number;
     @Input() step: number = DEFAULT_STEP;
-    @Input() label: string;
+
+    /** When extending the supported label symbols you might have to adjust the logic for */
+    @Input() labelSymbol: '%';
 
     @Input() selectedMinValue: number;
     @Input() selectedMaxValue: number;
@@ -31,6 +33,9 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     get sliderMaxPercentage(): number {
         return 100 - ((this.selectedMaxValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
     }
+
+    /** Ensures that the label is placed centered underneath the range thumb */
+    LABEL_MARGIN = 0.4;
 
     /**
      * By trial and error it was found out that the slider thumbs are moving on
@@ -61,6 +66,8 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
             input.addEventListener('input', listener);
             this.eventListeners.push({ element: input, listener });
         });
+
+        this.LABEL_MARGIN = this.getLabelMargin();
     }
 
     ngOnDestroy() {
@@ -94,5 +101,15 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
             this.selectedMaxValue = this.selectedMinValue + this.step;
         }
         return this.selectedMaxValue;
+    }
+
+    /**
+     * @return margin to labels considering the adjustments needed by the added {@link labelSymbol}
+     */
+    private getLabelMargin() {
+        const BASE_LABEL_MARGIN = 0.4; // should be approximately the width of 1 symbol
+        const shiftToTheLeftDueToAddedSymbols = BASE_LABEL_MARGIN * this.labelSymbol.length;
+
+        return BASE_LABEL_MARGIN - shiftToTheLeftDueToAddedSymbols;
     }
 }
