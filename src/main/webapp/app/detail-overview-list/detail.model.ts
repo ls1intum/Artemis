@@ -83,7 +83,7 @@ interface ProgrammingIrisEnabledDetail extends DetailBase {
     data: { exercise?: ProgrammingExercise; course?: Course; disabled: boolean; subSettingsType: IrisSubSettingsType };
 }
 
-interface ProgrammingRepositoryButtonsDetail extends DetailBase {
+export interface ProgrammingRepositoryButtonsDetail extends DetailBase {
     type: DetailType.ProgrammingRepositoryButtons;
     data: {
         exerciseId?: number;

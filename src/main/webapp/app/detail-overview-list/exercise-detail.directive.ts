@@ -5,6 +5,7 @@ import { TextDetailComponent } from 'app/detail-overview-list/components/text-de
 import { DateDetailComponent } from 'app/detail-overview-list/components/date-detail.component';
 import { LinkDetailComponent } from 'app/detail-overview-list/components/link-detail.component';
 import { BooleanDetailComponent } from 'app/detail-overview-list/components/boolean-detail.component';
+import { ProgrammingRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-repository-buttons-detail.component';
 
 @Directive({
     selector: '[jhiExerciseDetail]',
@@ -28,6 +29,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             [DetailType.Date]: DateDetailComponent,
             [DetailType.Link]: LinkDetailComponent,
             [DetailType.Boolean]: BooleanDetailComponent,
+            [DetailType.ProgrammingRepositoryButtons]: ProgrammingRepositoryButtonsDetailComponent,
         };
 
         const detailComponent = detailTypeToComponent[this.detail.type];
