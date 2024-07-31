@@ -43,9 +43,7 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyGraphEdgeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyGraphNodeDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyInstructorGraphNodeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyInstructorGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
@@ -321,32 +319,19 @@ public class LearningPathService {
         return new LearningPathCompetencyGraphDTO(progressDTOs, relationDTOs);
     }
 
-    public LearningPathCompetencyInstructorGraphDTO generateLearningPathCompetencyInstructorGraph(long courseId) {
-        int numberOfStudents = courseRepository.countCourseStudents(courseId);
-
+    public LearningPathCompetencyGraphDTO generateLearningPathCompetencyInstructorGraph(long courseId) {
         List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
-        Set<CompetencyInstructorGraphNodeDTO> progressDTOs = competencies.stream().map(competency -> {
+        Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream().map(competency -> {
             List<CompetencyProgress> studentProgress = competencyProgressRepository.findAllNonZeroStudentProgressByCompetencyId(competency.getId()).stream()
                     .sorted(Comparator.comparingDouble(CompetencyProgressService::getMastery)).toList();
-
-            double masteredStudents = studentProgress.stream().filter(CompetencyProgressService::isMastered).count();
-            double percentOfMasteredStudents = masteredStudents / numberOfStudents;
             double averageMasteryProgress = studentProgress.stream().mapToDouble(CompetencyProgressService::getMasteryProgress).average().orElse(0.0);
-            double meanMasteryProgress;
-            if (studentProgress.isEmpty()) {
-                meanMasteryProgress = 0.0;
-            }
-            else {
-                meanMasteryProgress = CompetencyProgressService.getMasteryProgress(studentProgress.get(studentProgress.size() / 2));
-            }
-
-            return CompetencyInstructorGraphNodeDTO.of(competency, percentOfMasteredStudents, averageMasteryProgress, meanMasteryProgress);
+            return CompetencyGraphNodeDTO.of(competency, averageMasteryProgress, CompetencyGraphNodeDTO.CompetencyNodeValueType.AVERAGE_MASTERY_PROGRESS);
         }).collect(Collectors.toSet());
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
         Set<CompetencyGraphEdgeDTO> relationDTOs = relations.stream().map(CompetencyGraphEdgeDTO::of).collect(Collectors.toSet());
 
-        return new LearningPathCompetencyInstructorGraphDTO(progressDTOs, relationDTOs);
+        return new LearningPathCompetencyGraphDTO(progressDTOs, relationDTOs);
     }
 
     /**

@@ -51,6 +51,10 @@ export class LearningPathApiService extends BaseApiHttpService {
         return await this.get<CompetencyGraphDTO>(`learning-path/${learningPathId}/competency-graph`);
     }
 
+    async getLearningPathInstructorCompetencyGraph(courseId: number): Promise<CompetencyGraphDTO> {
+        return await this.get<CompetencyGraphDTO>(`courses/${courseId}/learning-path/competency-instructor-graph`);
+    }
+
     async getLearningPathCompetencies(learningPathId: number): Promise<LearningPathCompetencyDTO[]> {
         return await this.get<LearningPathCompetencyDTO[]>(`learning-path/${learningPathId}/competencies`);
     }

@@ -18,10 +18,7 @@
             </div>
         </div>
         <div class="row w-100 p-0 m-0 g-3 learning-paths-container">
-            <div class="p-2">
-                <h5 class="m-0">Analytics</h5>
-                <hr class="my-2" />
-            </div>
+            <jhi-learning-paths-analytics [courseId]="courseId()" />
         </div>
     </div>
 } @else {
@@ -30,13 +27,7 @@
             <!--            TODO: Description and its translations -->
             <h3 class="mb-3">Welcome to learning paths</h3>
             <div>Enable Learning paths</div>
-            <button
-                (click)="enableLearningPaths()"
-                type="button"
-                class="mt-4 btn btn-primary"
-                id="enable-learning-paths-button"
-            >Enable learning paths
-            </button>
+            <button (click)="enableLearningPaths()" type="button" class="mt-4 btn btn-primary" id="enable-learning-paths-button">Enable learning paths</button>
         </div>
     </div>
 }

@@ -57,6 +57,7 @@ export interface LearningPathsConfigurationDTO {
 
 export enum CompetencyGraphNodeValueType {
     MASTERY_PROGRESS = 'MASTERY_PROGRESS',
+    AVERAGE_MASTERY_PROGRESS = 'AVERAGE_MASTERY_PROGRESS',
 }
 
 export interface CompetencyGraphNodeDTO {

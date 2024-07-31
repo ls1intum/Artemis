@@ -11,11 +11,12 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { LearningPathsStateComponent } from 'app/course/learning-paths/components/learning-paths-state/learning-paths-state.component';
 import { LearningPathsTableComponent } from 'app/course/learning-paths/components/learning-paths-table/learning-paths-table.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { LearningPathsAnalyticsComponent } from 'app/course/learning-paths/components/learning-paths-analytics/learning-paths-analytics.component';
 
 @Component({
     selector: 'jhi-learning-path-instructor-page',
     standalone: true,
-    imports: [LearningPathsConfigurationComponent, ArtemisSharedCommonModule, LearningPathsStateComponent, LearningPathsTableComponent],
+    imports: [LearningPathsConfigurationComponent, ArtemisSharedCommonModule, LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent],
     templateUrl: './learning-path-instructor-page.component.html',
     styleUrl: './learning-path-instructor-page.component.scss',
 })
