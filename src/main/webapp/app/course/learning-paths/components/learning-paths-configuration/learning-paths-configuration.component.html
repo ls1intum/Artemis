@@ -6,10 +6,14 @@
                 @if (isSaving()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 }
-                <span>Save</span>
+                <span jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.saveButtonLabel"></span>
             </button>
         } @else {
-            <button class="btn btn-secondary btn-sm col-md-auto" (click)="enableEditMode()">Edit</button>
+            <button
+                class="btn btn-secondary btn-sm col-md-auto"
+                (click)="enableEditMode()"
+                jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.editButtonLabel"
+            ></button>
         }
     </div>
     <hr class="my-2" />

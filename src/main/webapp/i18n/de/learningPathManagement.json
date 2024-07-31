@@ -1,12 +1,15 @@
 {
     "artemisApp": {
         "learningPathManagement": {
+            "learningPathDisabled": {
+                "title": "Willkommen bei der Lernpfadverwaltung!",
+                "description": "Die Lernpfadfunktion ist derzeit für diesen Kurs deaktiviert. Mit dieser Funktion können Kursteilnehmer einen personalisierten Lernpfad verfolgen, der auf den von Ihnen definierten Kompetenzen basiert. Jeder Lernpfad wird auf der Grundlage des individuellen Fortschritts des Teilnehmers, der Beziehungen zwischen den Kompetenzen und der festgelegten Fälligkeitsdaten erstellt. Sie können die Lernpfadfunktion aktivieren, indem Sie auf den Button unten klicken.",
+                "buttonLabel": "Lernpfade aktivieren"
+            },
             "learningPathsState": {
-                "learningPathDisabled": {
-                    "title": "Willkommen bei der Lernpfadverwaltung!",
-                    "description": "Die Lernpfadfunktion ist derzeit für diesen Kurs deaktiviert. Mit dieser Funktion können Kursteilnehmer einen personalisierten Lernpfad verfolgen, der auf den von Ihnen definierten Kompetenzen basiert. Jeder Lernpfad wird auf der Grundlage des individuellen Fortschritts des Teilnehmers, der Beziehungen zwischen den Kompetenzen und der festgelegten Fälligkeitsdaten erstellt. Sie können die Lernpfadfunktion aktivieren, indem Sie auf den Button unten klicken.",
-                    "buttonLabel": "Lernpfade aktivieren"
-                },
+                "title": "Status",
+                "emptyState": "Alles ist eingerichtet und bereit!",
+                "refreshButtonLabel": "Aktualisieren",
                 "type": {
                     "missing": {
                         "title": "Fehlende Lernpfade",
@@ -28,6 +31,8 @@
             },
             "learningPathsConfiguration": {
                 "title": "Konfiguration",
+                "saveButtonLabel": "Speichern",
+                "editButtonLabel": "Bearbeiten",
                 "configuration": {
                     "includeAllGradedExercises": "Alle bewerteten Aufgaben einbeziehen",
                     "includeAllGradedExercisesToolTip": "Die Lernpfade werden alle Aufgaben enthalten, die in die Kursbewertung einfließen. Dadurch können Studierende keine wichtigen Aufgaben im Lernpfad übersehen."
@@ -44,7 +49,7 @@
                 "noResults": "Keine Lernpfade gefunden!"
             },
             "learningPathsAnalytics": {
-                "title": "Analytik",
+                "title": "Analyse",
                 "graphSelection": {
                     "AVERAGE_MASTERY_PROGRESS": "Ø Beherrschungsfortschritt"
                 }

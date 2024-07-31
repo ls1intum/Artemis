@@ -1,11 +1,11 @@
 <div class="col">
     <div class="row m-0 align-items-center justify-content-between">
-        <h5 class="m-0 col-md-auto p-0">State</h5>
+        <h5 class="m-0 col-md-auto p-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsState.title"></h5>
         <button class="btn btn-secondary btn-sm col-md-auto" (click)="loadLearningPathHealthStatus(courseId())">
             @if (isLoading()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
-            <span>Refresh</span>
+            <span jhiTranslate="artemisApp.learningPathManagement.learningPathsState.refreshButtonLabel"></span>
         </button>
     </div>
     <hr class="my-2" />
@@ -18,21 +18,22 @@
             </div>
         } @else {
             @for (learningPathHealthItem of learningPathHealthItems(); let first = $first; track learningPathHealthItem) {
-                <div class="px-2 py-1 learning-paths-state-container" [class.mt-3]="!first"
-                     [ngClass]="learningPathHealthItem.statusClass">
-                <span><strong
-                    [jhiTranslate]="learningPathHealthItem.translationKey + '.title'"></strong></span>
-                    <p class="m-0"><small
-                        [jhiTranslate]="learningPathHealthItem.translationKey + '.description'"></small>
-                    </p>
-                    <button class="mt-2 btn btn-outline-secondary btn-sm align-self-end"
-                            (click)="handleHealthStatusAction(learningPathHealthItem.healthStatus)"
-                            [jhiTranslate]="learningPathHealthItem.translationKey + '.actionButton'"></button>
+                <div class="px-2 py-1 learning-paths-state-container" [class.mt-3]="!first" [ngClass]="learningPathHealthItem.statusClass">
+                    <span><strong [jhiTranslate]="learningPathHealthItem.translationKey + '.title'"></strong></span>
+                    <p class="m-0"><small [jhiTranslate]="learningPathHealthItem.translationKey + '.description'"></small></p>
+                    <button
+                        class="mt-2 btn btn-outline-secondary btn-sm align-self-end"
+                        (click)="handleHealthStatusAction(learningPathHealthItem.healthStatus)"
+                        [jhiTranslate]="learningPathHealthItem.translationKey + '.actionButton'"
+                    ></button>
+                </div>
+            } @empty {
+                <div class="row justify-content-center text-center text-secondary p-2">
+                    <span
+                        ><em><small jhiTranslate="artemisApp.learningPathManagement.learningPathsState.emptyState"></small></em
+                    ></span>
                 </div>
             }
-            <!--            TODO: Add empty and remove OK, or DISABLED on server health response -->
         }
     </div>
 </div>
-
-
