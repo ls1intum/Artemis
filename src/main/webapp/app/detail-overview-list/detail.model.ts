@@ -92,7 +92,7 @@ export interface ProgrammingRepositoryButtonsDetail extends DetailBase {
     };
 }
 
-interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase {
+export interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase {
     type: DetailType.ProgrammingAuxiliaryRepositoryButtons;
     data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number };
 }

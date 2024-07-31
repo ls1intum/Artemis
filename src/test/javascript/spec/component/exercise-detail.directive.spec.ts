@@ -7,6 +7,7 @@ import type {
     Detail,
     LinkDetail,
     NotShownDetail,
+    ProgrammingAuxiliaryRepositoryButtonsDetail,
     ProgrammingRepositoryButtonsDetail,
     ShownDetail,
     TextDetail,
@@ -18,6 +19,7 @@ import { DateDetailComponent } from 'app/detail-overview-list/components/date-de
 import { LinkDetailComponent } from 'app/detail-overview-list/components/link-detail.component';
 import { BooleanDetailComponent } from 'app/detail-overview-list/components/boolean-detail.component';
 import { ProgrammingRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-repository-buttons-detail.component';
+import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-auxiliary-repository-buttons-detail.component';
 
 @Component({
     template: `<div jhiExerciseDetail [detail]="detail"></div>`,
@@ -76,6 +78,13 @@ describe('ExerciseDetailDirective', () => {
 
         it('should create ProgrammingRepositoryButtonsDetailComponent component', () => {
             checkComponentForDetailWasCreated({ type: DetailType.ProgrammingRepositoryButtons } as ProgrammingRepositoryButtonsDetail, ProgrammingRepositoryButtonsDetailComponent);
+        });
+
+        it('should create ProgrammingAuxiliaryRepositoryButtonsDetailComponent component', () => {
+            checkComponentForDetailWasCreated(
+                { type: DetailType.ProgrammingAuxiliaryRepositoryButtons } as ProgrammingAuxiliaryRepositoryButtonsDetail,
+                ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
+            );
         });
     });
 

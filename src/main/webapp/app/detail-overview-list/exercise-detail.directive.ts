@@ -6,6 +6,7 @@ import { DateDetailComponent } from 'app/detail-overview-list/components/date-de
 import { LinkDetailComponent } from 'app/detail-overview-list/components/link-detail.component';
 import { BooleanDetailComponent } from 'app/detail-overview-list/components/boolean-detail.component';
 import { ProgrammingRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-repository-buttons-detail.component';
+import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-auxiliary-repository-buttons-detail.component';
 
 @Directive({
     selector: '[jhiExerciseDetail]',
@@ -30,6 +31,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             [DetailType.Link]: LinkDetailComponent,
             [DetailType.Boolean]: BooleanDetailComponent,
             [DetailType.ProgrammingRepositoryButtons]: ProgrammingRepositoryButtonsDetailComponent,
+            [DetailType.ProgrammingAuxiliaryRepositoryButtons]: ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
         };
 
         const detailComponent = detailTypeToComponent[this.detail.type];
