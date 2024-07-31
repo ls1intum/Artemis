@@ -60,7 +60,7 @@ export class LearningPathsStateComponent {
     }
 
     private getHealthStatusTranslationKey(healthStatus: HealthStatus): string {
-        const baseKey = 'artemisApp.learningPathManagement.learningPathHealthStatus.type';
+        const baseKey = 'artemisApp.learningPathManagement.learningPathsState.type';
         switch (healthStatus) {
             case HealthStatus.MISSING:
                 return `${baseKey}.missing`;
@@ -106,7 +106,7 @@ export class LearningPathsStateComponent {
         try {
             await this.learningPathApiService.generateMissingLearningPaths(this.courseId());
             await this.loadLearningPathHealthStatus(this.courseId());
-            //     TODO: Show success message
+            this.alertService.success('artemisApp.learningPathManagement.learningPathsState.type.missing.successAlert');
         } catch (error) {
             onError(this.alertService, error);
         }

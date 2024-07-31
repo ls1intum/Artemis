@@ -1,12 +1,18 @@
 {
     "artemisApp": {
         "learningPathManagement": {
-            "learningPathHealthStatus": {
+            "learningPathsState": {
+                "learningPathDisabled": {
+                    "title": "Willkommen bei der Lernpfadverwaltung!",
+                    "description": "Die Lernpfadfunktion ist derzeit für diesen Kurs deaktiviert. Mit dieser Funktion können Kursteilnehmer einen personalisierten Lernpfad verfolgen, der auf den von Ihnen definierten Kompetenzen basiert. Jeder Lernpfad wird auf der Grundlage des individuellen Fortschritts des Teilnehmers, der Beziehungen zwischen den Kompetenzen und der festgelegten Fälligkeitsdaten erstellt. Sie können die Lernpfadfunktion aktivieren, indem Sie auf den Button unten klicken.",
+                    "buttonLabel": "Lernpfade aktivieren"
+                },
                 "type": {
                     "missing": {
                         "title": "Fehlende Lernpfade",
                         "description": "Einige Studierende haben ihre Lernpfade noch nicht generiert. Ihre Lernpfade werden erst erstellt, wenn sie ihren Lernpfad zum ersten Mal anfordern.",
-                        "actionButton": "Lernpfad generieren"
+                        "actionButton": "Lernpfad generieren",
+                        "success": "Lernpfade wurden erfolgreich generiert."
                     },
                     "noCompetencies": {
                         "title": "Keine Kompetenzen",
@@ -18,6 +24,29 @@
                         "description": "Einigen Kompetenzen wurden noch keine Beziehungen zugewiesen. Bitte weisen Sie diesen Kompetenzen Beziehungen zu.",
                         "actionButton": "Beziehungen zuweisen"
                     }
+                }
+            },
+            "learningPathsConfiguration": {
+                "title": "Konfiguration",
+                "configuration": {
+                    "includeAllGradedExercises": "Alle bewerteten Aufgaben einbeziehen",
+                    "includeAllGradedExercisesToolTip": "Die Lernpfade werden alle Aufgaben enthalten, die in die Kursbewertung einfließen. Dadurch können Studierende keine wichtigen Aufgaben im Lernpfad übersehen."
+                }
+            },
+            "learningPathsTable": {
+                "title": "Individuelle Lernpfade",
+                "searchPlaceholder": "Suchen",
+                "columnLabel": {
+                    "name": "Name",
+                    "login": "Login",
+                    "progress": "Fortschritt"
+                },
+                "noResults": "Keine Lernpfade gefunden!"
+            },
+            "learningPathsAnalytics": {
+                "title": "Analytik",
+                "graphSelection": {
+                    "AVERAGE_MASTERY_PROGRESS": "Ø Beherrschungsfortschritt"
                 }
             }
         }

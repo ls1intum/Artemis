@@ -1,11 +1,17 @@
 <div class="col">
     <div class="row m-0 align-items-center justify-content-between">
-        <h5 class="m-0 col-md-auto p-0">Individual learning paths</h5>
+        <h5 class="m-0 col-md-auto p-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.title"></h5>
         <div class="col-md-auto d-flex align-items-center input-group-sm">
             @if (isLoading()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
-            <input type="search" class="ms-2 form-control rounded" placeholder="Search" [(ngModel)]="searchTerm" aria-label="Search" />
+            <input
+                type="search"
+                class="ms-2 form-control rounded"
+                [placeholder]="'artemisApp.learningPathManagement.learningPathsTable.searchPlaceholder' | artemisTranslate"
+                [(ngModel)]="searchTerm"
+                aria-label="Search"
+            />
         </div>
     </div>
     <hr class="my-2" />
@@ -15,9 +21,9 @@
                 <thead class="thead-dark">
                     <tr>
                         <th class="col-1">#</th>
-                        <th class="col-4">Name</th>
-                        <th class="col-4">Login</th>
-                        <th class="col-2">Progress</th>
+                        <th class="col-4" jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.columnLabel.name"></th>
+                        <th class="col-4" jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.columnLabel.login"></th>
+                        <th class="col-2" jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.columnLabel.progress"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,7 +45,7 @@
                     } @empty {
                         <tr>
                             <td colspan="4" class="text-center">
-                                <span>No learning paths found!</span>
+                                <span jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.noResults"></span>
                             </td>
                         </tr>
                     }

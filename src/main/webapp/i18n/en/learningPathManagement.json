@@ -1,12 +1,18 @@
 {
     "artemisApp": {
         "learningPathManagement": {
-            "learningPathHealthStatus": {
+            "learningPathDisabled": {
+                "title": "Welcome to the learning path management!",
+                "description": "The learning path feature is currently disabled for this course. This feature enables students to follow a personalized learning path based on the competencies you have defined. Each learning path is generated based on the student's individual progress, the relationships between competencies, and the specified soft due dates. You can enable the learning path feature by clicking the button below.",
+                "buttonLabel": "Enable learning paths"
+            },
+            "learningPathsState": {
                 "type": {
                     "missing": {
                         "title": "Missing learning paths",
                         "description": "Some students have not generated their learning paths yet. Their learning paths will be created once they request their learning path for the first time.",
-                        "actionButton": "Generate learning paths"
+                        "actionButton": "Generate learning paths",
+                        "successAlert": "Learning paths have been generated successfully."
                     },
                     "noCompetencies": {
                         "title": "No competencies",
@@ -18,6 +24,29 @@
                         "description": "Some competencies have not been assigned any relations yet. Please assign relations to these competencies.",
                         "actionButton": "Assign relations"
                     }
+                }
+            },
+            "learningPathsConfiguration": {
+                "title": "Configuration",
+                "configuration": {
+                    "includeAllGradedExercises": "Include all graded exercises",
+                    "includeAllGradedExercisesToolTip": "The learning paths will include all exercises that are included in the course score. This way, students cannot miss important exercises in the learning path."
+                }
+            },
+            "learningPathsTable": {
+                "title": "Individual learning paths",
+                "searchPlaceholder": "Search",
+                "columnLabel": {
+                    "name": "Name",
+                    "login": "Login",
+                    "progress": "Progress"
+                },
+                "noResults": "No learning paths found!"
+            },
+            "learningPathsAnalytics": {
+                "title": "Analytics",
+                "graphSelection": {
+                    "AVERAGE_MASTERY_PROGRESS": "Ø Mastery progress"
                 }
             }
         }

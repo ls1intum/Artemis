@@ -24,10 +24,15 @@
 } @else {
     <div class="row align-items-center justify-content-center h-100 p-3">
         <div class="enable-learning-paths-container">
-            <!--            TODO: Description and its translations -->
-            <h3 class="mb-3">Welcome to learning paths</h3>
-            <div>Enable Learning paths</div>
-            <button (click)="enableLearningPaths()" type="button" class="mt-4 btn btn-primary" id="enable-learning-paths-button">Enable learning paths</button>
+            <h3 class="mb-3" jhiTranslate="artemisApp.learningPathManagement.learningPathDisabled.title"></h3>
+            <span jhiTranslate="artemisApp.learningPathManagement.learningPathDisabled.description"></span>
+            <button
+                (click)="enableLearningPaths()"
+                type="button"
+                class="mt-4 btn btn-primary"
+                id="enable-learning-paths-button"
+                jhiTranslate="artemisApp.learningPathManagement.learningPathDisabled.buttonLabel"
+            ></button>
         </div>
     </div>
 }

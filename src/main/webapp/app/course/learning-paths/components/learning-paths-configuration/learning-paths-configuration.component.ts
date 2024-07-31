@@ -6,11 +6,12 @@ import { LearningPathsConfigurationDTO } from 'app/entities/competency/learning-
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-learning-paths-configuration',
     standalone: true,
-    imports: [FontAwesomeModule, ArtemisSharedCommonModule],
+    imports: [FontAwesomeModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule],
     templateUrl: './learning-paths-configuration.component.html',
     styleUrls: ['../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
