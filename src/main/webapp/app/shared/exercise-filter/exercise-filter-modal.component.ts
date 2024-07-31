@@ -179,13 +179,15 @@ export class ExerciseFilterModalComponent implements OnInit {
         );
     }
 
-    resetFilter() {
+    clearFilter() {
         this.categoryFilter?.options.forEach((categoryOption) => (categoryOption.searched = false));
         this.typeFilter?.options.forEach((typeOption) => (typeOption.checked = false));
         this.difficultyFilter?.options.forEach((difficultyOption) => (difficultyOption.checked = false));
 
         this.resetRangeFilter(this.achievedScore);
         this.resetRangeFilter(this.achievablePoints);
+
+        this.applyFilter();
     }
 
     private resetRangeFilter(rangeFilter?: RangeFilter) {

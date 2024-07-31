@@ -205,7 +205,7 @@ describe('ExerciseFilterModalComponent', () => {
         component.difficultyFilter!.options[1].checked = false;
         component.achievablePoints!.filter.selectedMax = 10;
         component.achievedScore!.filter.selectedMin = 10;
-        const resetFilterSpy = jest.spyOn(component, 'resetFilter');
+        const resetFilterSpy = jest.spyOn(component, 'clearFilter');
 
         const resetButton = fixture.debugElement.query(By.css('span[jhiTranslate="artemisApp.courseOverview.exerciseFilter.clearFilter"]'));
         expect(resetButton).not.toBeNull();
