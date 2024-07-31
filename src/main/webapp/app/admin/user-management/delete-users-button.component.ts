@@ -2,6 +2,7 @@ import { Component, Signal, WritableSignal, computed, signal } from '@angular/co
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ButtonSize } from 'app/shared/components/button.component';
+import { AdminUserService } from 'app/core/user/admin-user.service';
 
 @Component({
     standalone: true,
@@ -17,6 +18,8 @@ export class DeleteUsersButtonComponent {
     faEraser = faEraser;
     readonly medium = ButtonSize.MEDIUM;
 
+    constructor(private adminUserService: AdminUserService) {}
+
     loadUserList() {
         if (this.users()) {
             return;
@@ -26,6 +29,16 @@ export class DeleteUsersButtonComponent {
     }
 
     onConfirm() {
-        // TODO call to server to delete users
+        const logins = this.users();
+        if (logins != undefined) {
+            /*
+             * Delete the list of confirmed users. Don't filter in the delete operation
+             * to avoid that there are other users deleted than the confirmed ones.
+             */
+            this.adminUserService.deleteUsers(logins);
+            // TODO show some feedback dialog (similar to delete selected users)
+        } else {
+            throw new Error('Unexpected undefined list of user logins');
+        }
     }
 }
