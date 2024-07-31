@@ -9,6 +9,12 @@
                 },
                 "deleted": "{{ param }} Nutzer:innen wurden gelöscht"
             },
+            "notEnrolled": {
+                "delete": {
+                    "caption": "Nicht eingeschriebene Nutzer:innen löschen",
+                    "question": "Sollen diese Nutzer:innen wirklich dauerhaft gelöscht werden? <br> {{ users }} <br> Das sind <strong>{{ title }}</strong> Nutzer:innen! Diese Aktion kann NICHT rückgängig gemacht werden!"
+                }
+            },
             "filter": {
                 "modal": {
                     "open": "Filter ({{ num }})",

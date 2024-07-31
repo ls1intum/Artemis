@@ -45,6 +45,7 @@ import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent
 import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
+import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-users-button.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -69,6 +70,7 @@ const ENTITY_STATES = [...adminState];
         UserImportModule,
         SubmissionResultStatusModule,
         ArtemisStandardizedCompetencyModule,
+        DeleteUsersButtonComponent,
     ],
     declarations: [
         AuditsComponent,
