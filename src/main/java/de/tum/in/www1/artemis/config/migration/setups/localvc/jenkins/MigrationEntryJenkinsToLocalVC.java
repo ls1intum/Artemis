@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.config.migration.setups.localvc.jenkins;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC;
 
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
@@ -45,6 +46,9 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
     @Value("${artemis.version-control.url}")
     private String sourceVCSBaseUrl;
 
+    @Value("${jenkins.internal-urls.vcs-url}")
+    private Optional<String> internalVcsUrl;
+
     /**
      * URL to the source VCS with a trailing slash.
      * This avoids that a base URL like "http://example.com" also finds "http://example.com:8080".
@@ -64,7 +68,8 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
     @PostConstruct
     public void initialize() {
         localVCRepositoriesBaseUrl = localVCBaseUrl + "/git/";
-        sourceVCSRepositoriesBaseUrl = sourceVCSBaseUrl.endsWith("/") ? sourceVCSBaseUrl : sourceVCSBaseUrl + "/";
+        String baseUrl = internalVcsUrl.orElseGet(() -> sourceVCSBaseUrl);
+        sourceVCSRepositoriesBaseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
     }
 
     /**
