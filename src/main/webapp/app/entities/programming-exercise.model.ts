@@ -73,6 +73,24 @@ export class ProgrammingExerciseBuildConfig {
         this.checkoutSolutionRepository = false; // default value
         this.testwiseCoverageEnabled = false; // default value
     }
+
+    /**
+     * Copy the build configuration from the given exerciseJson to this build configuration.
+     */
+    public copyBuildConfig(exerciseJson: Exercise) {
+        if (exerciseJson.type !== ExerciseType.PROGRAMMING) {
+            return;
+        }
+        this.sequentialTestRuns = exerciseJson['sequentialTestRuns'];
+        this.checkoutPath = exerciseJson['checkoutPath'];
+        this.buildPlanConfiguration = exerciseJson['buildPlanConfiguration'];
+        this.checkoutSolutionRepository = exerciseJson['checkoutSolutionRepository'];
+        this.timeoutSeconds = exerciseJson['timeoutSeconds'];
+        this.windFile = exerciseJson['windFile'];
+        this.buildScript = exerciseJson['buildScript'];
+        this.testwiseCoverageEnabled = exerciseJson['testwiseCoverageEnabled'];
+        this.dockerFlags = exerciseJson['dockerFlags'];
+    }
 }
 
 export enum ProgrammingLanguage {

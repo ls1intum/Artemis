@@ -52,15 +52,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 // This is needed to make sure that old exported programming exercises can be imported
                 if (!(this.exercise as ProgrammingExercise).buildConfig) {
                     const buildConfig = new ProgrammingExerciseBuildConfig();
-                    buildConfig.sequentialTestRuns = exerciseJson['sequentialTestRuns'];
-                    buildConfig.checkoutPath = exerciseJson['checkoutPath'];
-                    buildConfig.buildPlanConfiguration = exerciseJson['buildPlanConfiguration'];
-                    buildConfig.checkoutSolutionRepository = exerciseJson['checkoutSolutionRepository'];
-                    buildConfig.timeoutSeconds = exerciseJson['timeoutSeconds'];
-                    buildConfig.windFile = exerciseJson['windFile'];
-                    buildConfig.buildScript = exerciseJson['buildScript'];
-                    buildConfig.testwiseCoverageEnabled = exerciseJson['testwiseCoverageEnabled'];
-                    buildConfig.dockerFlags = exerciseJson['dockerFlags'];
+                    buildConfig.copyBuildConfig(exerciseJson);
                     (this.exercise as ProgrammingExercise).buildConfig = buildConfig;
                 }
                 break;
