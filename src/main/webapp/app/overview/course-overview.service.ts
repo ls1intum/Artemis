@@ -74,9 +74,9 @@ export class CourseOverviewService {
         private conversationService: ConversationService,
     ) {}
 
-    faBullhorn = faBullhorn;
-    faHashtag = faHashtag;
-    faLock = faLock;
+    readonly faBullhorn = faBullhorn;
+    readonly faHashtag = faHashtag;
+    readonly faLock = faLock;
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
         if (tutorialGroups && tutorialGroups.length) {
