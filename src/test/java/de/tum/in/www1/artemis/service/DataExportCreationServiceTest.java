@@ -253,13 +253,13 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
                 scienceEvent.setTimestamp(ZonedDateTime.parse(record.get("timestamp")));
                 scienceEvent.setType(ScienceEventType.valueOf(record.get("event_type")));
                 scienceEvent.setResourceId(Long.parseLong(record.get("resource_id")));
+                scienceEvent.setIdentity(TEST_PREFIX + "student1");
                 actual.add(scienceEvent);
             }
         }
         catch (IOException e) {
             fail("Failed while reading science events CSV file");
         }
-
         assertThat(actual).usingElementComparator(ScienceUtilService.scienceEventComparator).containsExactlyInAnyOrderElementsOf(events);
     }
 
