@@ -43,9 +43,9 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
     constructor(private elementRef: ElementRef) {}
 
     ngOnInit(): void {
-        this.examTitle = this.exam.title!;
-        this.exercises = this.studentExam.exercises!;
-        this.testExam = this.exam.testExam!;
+        this.examTitle = this.exam.title ?? '';
+        this.exercises = this.studentExam.exercises ?? [];
+        this.testExam = this.exam.testExam ?? false;
         this.testRun = this.studentExam.testRun ?? false;
     }
 

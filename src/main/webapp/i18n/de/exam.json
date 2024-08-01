@@ -326,10 +326,8 @@
             "continueAfterHandInEarly": "Zurück",
             "attendanceCheck": "Anwesenheitskontrolle",
             "continueAfterHandInEarlyDescription": "Um mit der Klausur fortzufahren, klicke auf den Button 'Zurück'.",
-            "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
-            "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
-            "attendanceNotVerifiedWarningFirstSentence": "Deine Anwesenheit wurde noch nicht kontrolliert.",
-            "attendanceNotVerifiedWarningSecondSentence": "Bitte warte, bis deine Anwesenheit kontrolliert wurde, oder kontaktiere die Hörsaalaufsicht wenn du denkst dass ein Fehler aufgetreten ist.",
+            "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen.",
+            "attendanceNotVerifiedWarning": "Deine Anwesenheit wurde noch nicht kontrolliert. Bitte warte, bis deine Anwesenheit kontrolliert wurde, oder kontaktiere die Hörsaalaufsicht wenn du denkst dass ein Fehler aufgetreten ist.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
             "numberOfSavedExercises": "Anzahl der gespeicherten Aufgaben",
             "submissionSuccessful": {

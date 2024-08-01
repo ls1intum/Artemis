@@ -2,27 +2,16 @@
      However, it includes some duplicated code and ids and should be refactored with e.g. ngTemplates
       -->
 <div class="px-3 pb-3" [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunStartTime, 'scrollable-content-exam-cover': !testRunStartTime }">
-    <div class="d-flex justify-content-between">
-        @if (startView) {
+    @if (startView) {
+        <div class="d-flex justify-content-between">
             <h3 class="mt-3">
                 {{ exam.title }}
             </h3>
             <div class="mt-3">
                 <jhi-exam-live-events-button />
             </div>
-        } @else {
-            <h4 id="exam-finished-title">
-                <span
-                    jhiTranslate="artemisApp.examParticipation.finish"
-                    [translateValues]="{
-                        title: exam.title,
-                    }"
-                ></span>
-            </h4>
-        }
-    </div>
-    <hr />
-    @if (startView) {
+        </div>
+        <hr class="mt-2" />
         <jhi-exam-start-information [exam]="exam" [studentExam]="studentExam" [formattedStartText]="formattedGeneralInformation" />
         <div class="d-inline-flex align-items-center my-4">
             <div class="ps-1">
@@ -69,15 +58,17 @@
             </div>
             <div class="row">
                 <div class="form-group" style="width: 60%">
-                    @if (!confirmed && inserted) {
-                        <div class="alert alert-danger mt-1">
-                            <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
-                        </div>
-                    }
-                    @if (!nameIsCorrect && inserted) {
-                        <div class="alert alert-danger mt-1">
-                            <span jhiTranslate="artemisApp.exam.falseName"></span>
-                        </div>
+                    @if (inserted) {
+                        @if (!confirmed) {
+                            <div class="alert alert-danger mt-1">
+                                <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
+                            </div>
+                        }
+                        @if (!nameIsCorrect) {
+                            <div class="alert alert-danger mt-1">
+                                <span jhiTranslate="artemisApp.exam.falseName"></span>
+                            </div>
+                        }
                     }
                 </div>
             </div>
@@ -107,6 +98,17 @@
             </div>
         }
     } @else {
+        <div class="d-flex justify-content-between">
+            <h4 id="exam-finished-title">
+                <span
+                    jhiTranslate="artemisApp.examParticipation.finish"
+                    [translateValues]="{
+                        title: exam.title,
+                    }"
+                ></span>
+            </h4>
+        </div>
+        <hr class="mt-2" />
         <div [innerHTML]="formattedGeneralInformation"></div>
         <br />
         <div class="mb-1">
@@ -118,17 +120,13 @@
                     <fa-icon [icon]="faCircleExclamation" />
                     <span jhiTranslate="artemisApp.examParticipation.handInEarly"> </span>
                 </div>
-                <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeFirstSentence"></span>
-                <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeSecondSentence"></span>
+                <span jhiTranslate="artemisApp.examParticipation.handInEarlyNotice"></span>
                 @if (!isAttendanceChecked) {
                     <div class="mb-1 mt-3 fw-bold text-danger">
                         <fa-icon [icon]="faCircleExclamation" />
                         <span jhiTranslate="artemisApp.examParticipation.attendanceCheck"></span>
                     </div>
-                    <div>
-                        <span jhiTranslate="artemisApp.examParticipation.attendanceNotVerifiedWarningFirstSentence"></span>
-                        <span jhiTranslate="artemisApp.examParticipation.attendanceNotVerifiedWarningSecondSentence"></span>
-                    </div>
+                    <span jhiTranslate="artemisApp.examParticipation.attendanceNotVerifiedWarning"></span>
                 }
             </div>
         }
@@ -175,15 +173,17 @@
             </div>
             <div class="row">
                 <div class="form-group" style="width: 60%">
-                    @if (!confirmed && inserted) {
-                        <div class="alert alert-danger mt-1">
-                            <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
-                        </div>
-                    }
-                    @if (!nameIsCorrect && inserted) {
-                        <div class="alert alert-danger mt-1">
-                            <span jhiTranslate="artemisApp.exam.falseName"></span>
-                        </div>
+                    @if (inserted) {
+                        @if (!confirmed) {
+                            <div class="alert alert-danger mt-1">
+                                <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
+                            </div>
+                        }
+                        @if (!nameIsCorrect) {
+                            <div class="alert alert-danger mt-1">
+                                <span jhiTranslate="artemisApp.exam.falseName"></span>
+                            </div>
+                        }
                     }
                 </div>
             </div>
@@ -204,9 +204,9 @@
             }
             <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
                 @if (submitInProgress) {
-                    <fa-icon [icon]="faSpinner" animation="spin" />
+                    <fa-icon class="me-1" [icon]="faSpinner" animation="spin" />
                 } @else {
-                    <fa-icon [icon]="faDoorClosed" />
+                    <fa-icon class="me-1" [icon]="faDoorClosed" />
                 }
                 <span jhiTranslate="artemisApp.exam.endExam"></span>
             </button>
