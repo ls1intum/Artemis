@@ -1,5 +1,11 @@
 {
     "artemisApp": {
+        "quizWarning": {
+            "title": "Attention!",
+            "question": "Potential Performance Issues",
+            "description": "You are using a very large number of Short-Answer items and/or Drag-and-Drop items in this quiz. This can lead to significant performance issues. Are you sure you want to save the exercise this way?",
+            "confirmButton": "Save anyway"
+        },
         "quizExercise": {
             "home": {
                 "title": "Quiz Exercises",
@@ -228,7 +234,7 @@
                 "proportional_with_penalty": "Each correct answer is awarded with a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. Each wrong answer option subtracts 0.6 points. A student with 3 correct and 2 wrong answers would then receive 0.6 points.",
                 "proportional_without_penalty": "Each correct answer is awarded with a fraction of the total score. No points are deducted for mistakes. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. A student with 3 correct and 2 wrong answers would then receive 1.8 points."
             },
-            "importJSON": "Import Question(s) in JSON Format",
+            "importJSON": "Import Question(s) in JSON/Zip Format",
             "importWarningShort": "Invalid questions found",
             "importWarningLong": "The following questions have an invalid flag set. Are you sure you want to continue? <strong>If so, the invalid flags will be reset</strong>.",
             "confirmImport": "Continue",

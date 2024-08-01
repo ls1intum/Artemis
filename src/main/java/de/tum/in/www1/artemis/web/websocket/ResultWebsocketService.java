@@ -76,13 +76,13 @@ public class ResultWebsocketService {
         final Exercise exercise = studentParticipation.getExercise();
         boolean isWorkingPeriodOver;
         if (exercise.isExamExercise()) {
-            isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
+            isWorkingPeriodOver = examDateService.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
         }
         else {
             isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
         }
         // Don't send students results after the exam ended
-        boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise() && !exercise.getExamViaExerciseGroupOrCourseMember().isTestExam();
+        boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise() && !exercise.getExam().isTestExam();
         // If the assessment due date is not over yet, do not send manual feedback to students!
         boolean isAutomaticAssessmentOrDueDateOver = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
                 || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
