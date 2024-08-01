@@ -458,4 +458,38 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         log.debug("Save quiz exercise to database: {}", quizExercise);
         return quizExerciseRepository.saveAndFlush(quizExercise);
     }
+
+    /**
+     *
+     * @param newQuizExercise the newly created quiz exercise, after importing basis of imported exercise
+     * @param files           the new files to be added to the newQuizExercise which do not have a previous path and need to be saved in the server
+     * @return the new exercise with the updated file paths which have been created and saved
+     * @throws IOException
+     */
+    public QuizExercise uploadNewFilesToNewImportedQuiz(QuizExercise newQuizExercise, List<MultipartFile> files) throws IOException {
+        Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
+        for (var question : newQuizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+                String filePath = dragAndDropQuestion.getBackgroundFilePath();
+                MultipartFile file = fileMap.get(filePath);
+                URI publicPathUri = URI.create(filePath);
+                if (FilePathService.actualPathForPublicPath(publicPathUri) == null) {
+                    dragAndDropQuestion
+                            .setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, dragAndDropQuestion.getId()).toString());
+                }
+                for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
+                    if (dragItem.getPictureFilePath() != null) {
+                        String filePathDrag = dragItem.getPictureFilePath();
+                        MultipartFile dragFile = fileMap.get(filePathDrag);
+                        URI publicPathUriDrag = URI.create(filePathDrag);
+                        if (FilePathService.actualPathForPublicPath(publicPathUriDrag) == null) {
+                            String newFilePath = saveDragAndDropImage(FilePathService.getDragItemFilePath(), dragFile, dragItem.getId()).toString();
+                            dragItem.setPictureFilePath(newFilePath);
+                        }
+                    }
+                }
+            }
+        }
+        return newQuizExercise;
+    }
 }
