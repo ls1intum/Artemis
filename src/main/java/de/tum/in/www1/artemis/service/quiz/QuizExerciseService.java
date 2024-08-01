@@ -380,6 +380,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param dragItem the drag item
      * @param files    all provided files
+     * @param entityId The entity id connected to this file, can be question id for background, or the drag item id for drag item images
      */
     public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long entityId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
@@ -465,7 +466,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param newQuizExercise the newly created quiz exercise, after importing basis of imported exercise
      * @param files           the new files to be added to the newQuizExercise which do not have a previous path and need to be saved in the server
      * @return the new exercise with the updated file paths which have been created and saved
-     * @throws IOException
+     * @throws IOException throws IO exception if corrupted files
      */
     public QuizExercise uploadNewFilesToNewImportedQuiz(QuizExercise newQuizExercise, List<MultipartFile> files) throws IOException {
         Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));

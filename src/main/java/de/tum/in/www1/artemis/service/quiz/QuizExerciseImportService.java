@@ -75,6 +75,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      *
      * @param templateExercise The template exercise which should get imported
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param files            The potential files to be added. Null if no change to files during import. ExamImportService sends null by default
      * @return The newly created exercise
      */
     @NotNull
