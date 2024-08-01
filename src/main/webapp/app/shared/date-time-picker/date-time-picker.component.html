@@ -44,5 +44,8 @@
     <div class="invalid-feedback">{{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: labelName } }}</div>
 }
 @if (warning) {
-    <div class="invalid-feedback warning" jhiTranslate="entity.warningError" ngbTooltip="{{ 'entity.warningToolTip' | artemisTranslate }}"></div>
+    <div class="invalid-feedback">
+        <fa-icon class="text-warning" [icon]="faTriangleExclamation" />
+        <span class="visible-date-warning" jhiTranslate="entity.warningError" ngbTooltip="{{ 'entity.warningToolTip' | artemisTranslate }}"></span>
+    </div>
 }

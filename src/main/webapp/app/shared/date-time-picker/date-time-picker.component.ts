@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
-import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -36,6 +36,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     faClock = faClock;
     faQuestionCircle = faQuestionCircle;
     faCircleXmark = faCircleXmark;
+    readonly faTriangleExclamation = faTriangleExclamation;
 
     private onChange?: (val?: dayjs.Dayjs) => void;
 
