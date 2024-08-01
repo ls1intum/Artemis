@@ -630,6 +630,19 @@ public class ExamService {
     }
 
     /**
+     * Determines whether the student should see the result of the exam.
+     * This is the case if the exam is started and not ended yet or if the results are already published.
+     *
+     * @param studentExam   The student exam
+     * @param participation The participation of the student
+     * @return true if the student should see the result, false otherwise
+     */
+    public static boolean shouldStudentSeeResult(StudentExam studentExam, StudentParticipation participation) {
+        return (studentExam.getExam().isStarted() && !studentExam.isEnded() && participation instanceof ProgrammingExerciseStudentParticipation)
+                || studentExam.areResultsPublishedYet();
+    }
+
+    /**
      * Helper method which attaches the result to its participation.
      * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
      * We also attach the result if the results are already published for the exam.
@@ -642,8 +655,7 @@ public class ExamService {
      */
     private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
         // Only set the result during the exam for programming exercises (for direct automatic feedback) or after publishing the results
-        boolean isStudentAllowedToSeeResult = (studentExam.getExam().isStarted() && !studentExam.isEnded() && participation instanceof ProgrammingExerciseStudentParticipation)
-                || studentExam.areResultsPublishedYet();
+        boolean isStudentAllowedToSeeResult = shouldStudentSeeResult(studentExam, participation);
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
         // To prevent LazyInitializationException.
