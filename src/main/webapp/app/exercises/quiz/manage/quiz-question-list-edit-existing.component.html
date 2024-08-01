@@ -41,7 +41,7 @@
                         <span jhiTranslate="artemisApp.quizExercise.importJSON" class="font-weight-bold colon-suffix no-flex-shrink"></span>
                     </div>
                     <div class="input-group flex-grow-1 col">
-                        <input id="importFileInput" type="file" accept=".json" class="form-control" (change)="setImportFile($event)" placeholder="Upload file..." />
+                        <input id="importFileInput" type="file" accept=".json,.zip" class="form-control" (change)="setImportFile($event)" placeholder="Upload file..." />
                         <button class="btn btn-outline-primary" (click)="importQuiz()" jhiTranslate="entity.action.import" [ngClass]="{ disabled: !importFile }"></button>
                     </div>
                 </div>
