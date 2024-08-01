@@ -49,8 +49,7 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
      * If you inspect the progress bar in the initial state you will see that it is 100% wide and ends at the left end of
      * the minimum range thumb.
      * However, if you move the minimum thumb to the right (as far as possible), you will notice that the progress bar
-     * ends at the right end of the range thumb.
-     * - This is the problem that we address with this factor.</i>
+     * ends at the right end of the range thumb. - This is the problem that we address with this factor.</i>
      */
     SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR = 0.97;
 
