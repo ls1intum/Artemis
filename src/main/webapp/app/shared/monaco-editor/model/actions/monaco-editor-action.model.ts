@@ -107,7 +107,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         const triggerCharacterOffset = triggerCharacter ? 1 : 0;
         return monaco.languages.registerCompletionItemProvider(languageId, {
             // We only want to trigger the completion provider if the trigger character is typed. However, we also allow numbers to trigger the completion, as they would not normally trigger it.
-            triggerCharacters: triggerCharacter ? [triggerCharacter, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'] : undefined,
+            triggerCharacters: triggerCharacter ? [triggerCharacter, ...'0123456789'] : undefined,
             provideCompletionItems: async (model: monaco.editor.ITextModel, position: monaco.Position): Promise<monaco.languages.CompletionList | undefined> => {
                 if (model.id !== modelId) {
                     return undefined;
@@ -130,19 +130,14 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
                 });
 
                 // We only want suggestions if the trigger character is at the beginning of the word.
-                if (triggerCharacter) {
-                    if (sequenceUntilPosition.word !== triggerCharacter) {
-                        if (beforeWord !== triggerCharacter) {
-                            return undefined;
-                        }
-                    }
+                if (triggerCharacter && sequenceUntilPosition.word !== triggerCharacter && beforeWord !== triggerCharacter) {
+                    return undefined;
                 }
-                return searchFn(sequenceUntilPosition.word).then((items) => {
-                    return {
-                        suggestions: items.map((item) => mapToSuggestionFn(item, range)),
-                        incomplete: listIncomplete,
-                    };
-                });
+                const items = await searchFn(sequenceUntilPosition.word);
+                return {
+                    suggestions: items.map((item) => mapToSuggestionFn(item, range)),
+                    incomplete: listIncomplete,
+                };
             },
         });
     }
