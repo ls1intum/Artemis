@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -258,7 +259,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private void handleDndQuizDragItemsCreation(DragAndDropQuestion dragAndDropQuestion, Map<String, MultipartFile> fileMap) throws IOException {
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
             if (dragItem.getPictureFilePath() != null) {
-                saveDndDragItemPicture(dragItem, fileMap);
+                saveDndDragItemPicture(dragItem, fileMap, null);
             }
         }
     }
@@ -323,7 +324,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             String newDragItemPath = dragItem.getPictureFilePath();
             if (dragItem.getPictureFilePath() != null && !oldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
-                saveDndDragItemPicture(dragItem, fileMap);
+                saveDndDragItemPicture(dragItem, fileMap, null);
             }
         }
     }
@@ -380,14 +381,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param dragItem the drag item
      * @param files    all provided files
      */
-    public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files) throws IOException {
+    public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long entityId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
         if (file == null) {
             // Should not be reached as the file is validated before
             throw new BadRequestAlertException("The file " + dragItem.getPictureFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathService.getDragItemFilePath(), file, null).toString());
+        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathService.getDragItemFilePath(), file, entityId).toString());
     }
 
     /**
@@ -467,25 +468,16 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @throws IOException
      */
     public QuizExercise uploadNewFilesToNewImportedQuiz(QuizExercise newQuizExercise, List<MultipartFile> files) throws IOException {
-        Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
+        Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
         for (var question : newQuizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                String filePath = dragAndDropQuestion.getBackgroundFilePath();
-                MultipartFile file = fileMap.get(filePath);
-                URI publicPathUri = URI.create(filePath);
+                URI publicPathUri = URI.create(dragAndDropQuestion.getBackgroundFilePath());
                 if (FilePathService.actualPathForPublicPath(publicPathUri) == null) {
-                    dragAndDropQuestion
-                            .setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, dragAndDropQuestion.getId()).toString());
+                    saveDndQuestionBackground(dragAndDropQuestion, fileMap, dragAndDropQuestion.getId());
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                    if (dragItem.getPictureFilePath() != null) {
-                        String filePathDrag = dragItem.getPictureFilePath();
-                        MultipartFile dragFile = fileMap.get(filePathDrag);
-                        URI publicPathUriDrag = URI.create(filePathDrag);
-                        if (FilePathService.actualPathForPublicPath(publicPathUriDrag) == null) {
-                            String newFilePath = saveDragAndDropImage(FilePathService.getDragItemFilePath(), dragFile, dragItem.getId()).toString();
-                            dragItem.setPictureFilePath(newFilePath);
-                        }
+                    if (dragItem.getPictureFilePath() != null && FilePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath())) == null) {
+                        saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
                     }
                 }
             }
