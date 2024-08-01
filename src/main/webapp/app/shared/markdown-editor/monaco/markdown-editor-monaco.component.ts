@@ -116,7 +116,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new MonacoUnderlineAction(),
         new MonacoQuoteAction(),
         new MonacoCodeAction(),
-        new MonacoCodeBlockAction(),
+        new MonacoCodeBlockAction('java'),
         new MonacoUrlAction(),
         new MonacoAttachmentAction(),
         new MonacoOrderedListAction(),
