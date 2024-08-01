@@ -2,19 +2,23 @@ package de.tum.in.www1.artemis.service.quiz;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
@@ -74,7 +78,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @return The newly created exercise
      */
     @NotNull
-    public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise) {
+    public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise, @Nullable List<MultipartFile> files) throws IOException {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
         copyQuizQuestions(importedExercise, newExercise);
@@ -85,6 +89,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
         channelService.createExerciseChannel(newQuizExercise, Optional.ofNullable(importedExercise.getChannelName()));
 
         competencyProgressService.updateProgressByLearningObjectAsync(newQuizExercise);
+        if (files != null) {
+            newQuizExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newQuizExercise, files));
+        }
 
         return newQuizExercise;
     }

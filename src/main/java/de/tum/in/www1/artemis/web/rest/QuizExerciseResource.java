@@ -792,10 +792,8 @@ public class QuizExerciseResource {
         quizExerciseService.validateQuizExerciseFiles(importedExercise, nullsafeFiles, false);
 
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
-        QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
-        if (files != null) {
-            newQuizExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newQuizExercise, files));
-        }
+        QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
+
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
