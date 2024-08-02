@@ -5,16 +5,16 @@ import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/ent
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { isDateLessThanAWeekAway } from 'app/utils/date.utils';
+import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
@@ -41,7 +41,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     dueDate?: dayjs.Dayjs;
     programmingExercise?: ProgrammingExercise;
     individualComplaintDueDate?: dayjs.Dayjs;
-    achievedPoints?: number;
+    achievedPoints: number = 0;
     numberOfSubmissions: number;
     informationBoxItems: InformationBox[] = [];
 
@@ -73,7 +73,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
 
             const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
             if (latestRatedResult) {
-                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
+                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course) ?? 0;
             }
         }
     }
@@ -91,10 +91,18 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     addPointsItems() {
         const { maxPoints, bonusPoints } = this.exercise;
         if (maxPoints) {
-            this.informationBoxItems.push(this.getPointsItem(maxPoints, 'points'));
-        }
-        if (bonusPoints) {
-            this.informationBoxItems.push(this.getPointsItem(bonusPoints, 'bonus'));
+            if (bonusPoints) {
+                let achievedBonusPoints: number = 0;
+                // If the student has more points than the max points, the bonus points are calculated
+                if (this.achievedPoints > maxPoints) {
+                    achievedBonusPoints = roundValueSpecifiedByCourseSettings(this.achievedPoints - maxPoints, this.course);
+                }
+                const achievedPoints = this.achievedPoints - achievedBonusPoints;
+                this.informationBoxItems.push(this.getPointsItem('points', maxPoints, achievedPoints));
+                this.informationBoxItems.push(this.getPointsItem('bonus', bonusPoints, achievedBonusPoints));
+            } else {
+                this.informationBoxItems.push(this.getPointsItem('points', maxPoints, this.achievedPoints));
+            }
         }
     }
 
@@ -139,7 +147,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             // If the due date is less than a day away, the color change to red
             const dueDateStatusBadge = this.dueDate.isBetween(dayjs().add(1, 'day'), dayjs()) ? 'danger' : 'body-color';
             // If the due date is less than a week away, text is displayed relatively e.g. 'in 2 days'
-            const shouldDisplayDueDateRelative = isDateLessThanAWeekAway(this.dueDate);
+            const shouldDisplayDueDateRelative = isDateLessThanAWeekInTheFuture(this.dueDate);
 
             if (isDueDateInThePast) {
                 return {
@@ -169,7 +177,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     addStartDateItem() {
         if (this.exercise.startDate && dayjs().isBefore(this.exercise.startDate)) {
             // If the start date is less than a week away, text is displayed relatively e.g. 'in 2 days'
-            const shouldDisplayStartDateRelative = isDateLessThanAWeekAway(this.exercise.startDate);
+            const shouldDisplayStartDateRelative = isDateLessThanAWeekInTheFuture(this.exercise.startDate);
             const startDateItem: InformationBox = {
                 title: 'artemisApp.courseOverview.exerciseDetails.startDate',
                 content: {
@@ -245,19 +253,21 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     getSubmissionColor(): string {
+        // default color should be 'body-color', thats why the default submissionsLeft is 2
         const submissionsLeft = this.submissionPolicy?.submissionLimit ? this.submissionPolicy?.submissionLimit - this.numberOfSubmissions : 2;
-        if (submissionsLeft > 1) return 'body-color';
-        else {
-            return submissionsLeft <= 0 ? 'danger' : 'warning';
-        }
+        let submissionColor = 'body-color';
+        if (submissionsLeft === 1) submissionColor = 'warning';
+        // 0 submissions left or limit is already reached
+        else if (submissionsLeft <= 0) submissionColor = 'danger';
+        return submissionColor;
     }
 
-    getPointsItem(points: number | undefined, title: string): InformationBox {
+    getPointsItem(title: string, maxPoints: number, achievedPoints: number): InformationBox {
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.' + title,
             content: {
                 type: 'string',
-                value: this.achievedPoints ? `${this.achievedPoints} / ${points}` : `0 / ${points}`,
+                value: `${achievedPoints} / ${maxPoints}`,
             },
         };
     }

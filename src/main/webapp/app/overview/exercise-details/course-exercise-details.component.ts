@@ -441,8 +441,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
 
-    setIsGeneratingFeedback() {}
-
     // INSTRUCTOR ACTIONS
     createInstructorActions() {
         if (this.exercise?.isAtLeastTutor) {
@@ -508,15 +506,13 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         const editorItems: InstructorActionItem[] = [];
         if (this.exercise?.type === ExerciseType.QUIZ) {
             editorItems.push(this.getStatisticItem('quiz-point-statistic'));
-        }
-        if (this.exercise?.type === ExerciseType.MODELING) {
+            if (this.QUIZ_EDITABLE_STATUS.includes(this.quizExerciseStatus)) {
+                editorItems.push(this.getQuizEditItem());
+            }
+        } else if (this.exercise?.type === ExerciseType.MODELING) {
             editorItems.push(this.getStatisticItem('exercise-statistics'));
-        }
-        if (this.exercise?.type === ExerciseType.PROGRAMMING) {
+        } else if (this.exercise?.type === ExerciseType.PROGRAMMING) {
             editorItems.push(this.getGradingItem());
-        }
-        if (this.QUIZ_EDITABLE_STATUS.includes(this.quizExerciseStatus)) {
-            editorItems.push(this.getQuizEditItem());
         }
         return editorItems;
     }
@@ -554,16 +550,13 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     }
 
     ngOnDestroy() {
-        if (this.participationUpdateListener) {
-            this.participationUpdateListener.unsubscribe();
-            if (this.studentParticipations) {
-                this.studentParticipations.forEach((participation) => {
-                    if (participation.id && this.exercise) {
-                        this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id, this.exercise);
-                    }
-                });
+        this.participationUpdateListener?.unsubscribe();
+        this.studentParticipations?.forEach((participation) => {
+            if (participation.id && this.exercise) {
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id, this.exercise);
             }
-        }
+        });
+
         this.teamAssignmentUpdateListener?.unsubscribe();
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();

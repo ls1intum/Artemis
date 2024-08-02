@@ -1,12 +1,12 @@
 <div class="sidebar-wrap">
-    <div class="d-flex sidebar rounded-3 px-3 sidebar-width hide-on_print" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
+    <div class="d-flex sidebar rounded-3 px-2 sidebar-width hide-on_print" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
         <div class="w-100 bg-module">
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
                 @if (searchFieldEnabled) {
                     <div class="mt-2 mb-1" [ngClass]="{ 'd-flex align-items-center': inCommunication() }">
                         <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-1 flex-grow-1 search-filter" />
                         @if (showFilter) {
-                            <div class="ms-2 mt-1 text-primary">
+                            <div class="ms-2 mt-2 text-primary">
                                 <a (click)="openFilterExercisesDialog()">
                                     @if (isFilterActive) {
                                         <fa-icon [icon]="faFilterCurrentlyApplied" />

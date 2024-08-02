@@ -2,9 +2,9 @@
     <div id="course-exercise-details" class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
         <div class="d-flex align-items-center my-2 justify-content-between">
             <div class="d-flex">
-                <h5 class="my-2" id="exercise-header"><fa-icon class="me-2" [icon]="exerciseIcon"></fa-icon>{{ exercise.title }}</h5>
+                <h5 class="mb-0" id="exercise-header"><fa-icon class="me-2" [icon]="exerciseIcon"></fa-icon>{{ exercise.title }}</h5>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-1">
                 @if (exercise.isAtLeastTutor) {
                     <div ngbDropdown class="d-inline">
                         <button id="instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>
@@ -30,6 +30,8 @@
                     *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"
                     [courseId]="courseId"
                     [exercise]="exercise"
+                    [isGeneratingFeedback]="isGeneratingFeedback"
+                    (generatingFeedback)="this.isGeneratingFeedback = true"
                 />
                 @if (plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="col-auto btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]">

@@ -2,7 +2,7 @@ import {
     convertDateFromClient,
     convertDateFromServer,
     dayOfWeekZeroSundayToZeroMonday,
-    isDateLessThanAWeekAway,
+    isDateLessThanAWeekInTheFuture,
     toISO8601DateString,
     toISO8601DateTimeString,
 } from 'app/utils/date.utils';
@@ -77,20 +77,20 @@ describe('DateUtils', () => {
         });
     });
 
-    describe('isDateLessThanAWeekAway', () => {
+    describe('isDateLessThanAWeekInTheFuture', () => {
         it('should return true if date is less than a week away', () => {
             const date = dayjs().add(6, 'days');
-            expect(isDateLessThanAWeekAway(date)).toBeTrue();
+            expect(isDateLessThanAWeekInTheFuture(date)).toBeTrue();
         });
 
         it('should return false if date is more than a week away', () => {
             const date = dayjs().add(8, 'days');
-            expect(isDateLessThanAWeekAway(date)).toBeFalse();
+            expect(isDateLessThanAWeekInTheFuture(date)).toBeFalse();
         });
 
         it('should return false if date is more than a week ago', () => {
             const date = dayjs().subtract(8, 'days');
-            expect(isDateLessThanAWeekAway(date)).toBeFalse();
+            expect(isDateLessThanAWeekInTheFuture(date)).toBeFalse();
         });
     });
 });

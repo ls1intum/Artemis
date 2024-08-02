@@ -19,19 +19,19 @@
     } @else {
         <div>
             @if (exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.userNotAssignedToTeamShort' | artemisTranslate }}</span>
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userNotAssignedToTeamShort"></span>
             } @else if (uninitialized) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort' | artemisTranslate }}</span>
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort"></span>
             } @else if (exerciseMissedDueDate) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDueDateShort' | artemisTranslate }}</span>
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseMissedDueDateShort"></span>
             } @else if (notSubmitted) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort' | artemisTranslate }}</span>
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort"></span>
             } @else if (!notSubmitted && studentParticipation?.initializationState === InitializationState.FINISHED) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | artemisTranslate }}</span>
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userSubmittedShort"></span>
             } @else if (studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.userParticipatingShort' | artemisTranslate }}</span>
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userParticipatingShort"></span>
             } @else if (quizNotStarted) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | artemisTranslate }}</span>
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.quizNotStartedShort"></span>
             } @else {
                 <span class="text-body-secondary">-</span>
             }
