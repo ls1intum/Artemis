@@ -36,7 +36,7 @@ export class SolutionEntryComponent implements OnInit {
         this.editorHeight = contentHeight;
     }
 
-    private setupEditor(): void {
+    setupEditor(): void {
         const startLine = this.solutionEntry.line ?? 1;
         this.editor.setStartLineNumber(startLine);
         this.editor.changeModel(this.solutionEntry.filePath ?? 'file', this.solutionEntry.code ?? '');
