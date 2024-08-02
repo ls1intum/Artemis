@@ -1,6 +1,13 @@
 <div class="col-6">
     <h6>{{ solutionEntry.filePath }}</h6>
 </div>
-<div [style.height.px]="editorHeight">
-    <jhi-monaco-editor #editor [readOnly]="!enableEditing" (textChanged)="onEditorContentChange($event)" class="jhi-solution-entry-editor" />
+<div [style.height.px]="editorHeight" [style.border]="'1px solid var(--border-color)'">
+    <jhi-monaco-editor
+        #editor
+        [readOnly]="!enableEditing"
+        [shrinkToFit]="false"
+        (contentHeightChanged)="onContentSizeChange($event)"
+        (textChanged)="onEditorContentChange($event)"
+        class="jhi-solution-entry-editor"
+    />
 </div>

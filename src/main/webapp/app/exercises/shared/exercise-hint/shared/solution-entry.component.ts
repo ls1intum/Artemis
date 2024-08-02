@@ -25,7 +25,7 @@ export class SolutionEntryComponent implements OnInit {
 
     constructor() {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.setupEditor();
     }
 
@@ -33,10 +33,16 @@ export class SolutionEntryComponent implements OnInit {
         this.solutionEntry.code = value;
     }
 
+    onContentSizeChange(contentHeight: number) {
+        this.editorHeight = contentHeight;
+    }
+
     private setupEditor() {
         const startLine = this.solutionEntry.line ?? 1;
         this.editor.setStartLineNumber(startLine);
-        this.editor.setText(this.solutionEntry.code ?? '');
+        this.editor.changeModel(this.solutionEntry.filePath ?? 'file', this.solutionEntry.code ?? '');
         this.editor.layout();
+        // We manually fetch the initial content height, as the editor does not provide it immediately
+        this.editorHeight = this.editor.getContentHeight();
     }
 }

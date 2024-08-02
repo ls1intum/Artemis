@@ -163,6 +163,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this._editor.getValue();
     }
 
+    getContentHeight(): number {
+        return this._editor.getContentHeight() + this._editor.getOption(monaco.editor.EditorOption.lineHeight);
+    }
+
     setText(text: string): void {
         if (this.getText() !== text) {
             this._editor.setValue(text);
