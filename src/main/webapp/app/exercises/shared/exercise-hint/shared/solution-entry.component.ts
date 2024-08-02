@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
@@ -24,7 +23,7 @@ export class SolutionEntryComponent implements OnInit {
 
     protected readonly faTimes = faTimes;
 
-    constructor(protected route: ActivatedRoute) {}
+    constructor() {}
 
     ngOnInit() {
         this.setupEditor();
