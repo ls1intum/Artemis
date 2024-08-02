@@ -29,7 +29,6 @@ import { MetisModule } from 'app/shared/metis/metis.module';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
-
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
     generateExampleGroupChatDTO({}),

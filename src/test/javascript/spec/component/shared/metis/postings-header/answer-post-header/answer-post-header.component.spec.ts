@@ -55,7 +55,6 @@ describe('AnswerPostHeaderComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(ConfirmIconComponent),
-                // MockDirective(TranslateDirective),
             ],
         })
             .compileComponents()
