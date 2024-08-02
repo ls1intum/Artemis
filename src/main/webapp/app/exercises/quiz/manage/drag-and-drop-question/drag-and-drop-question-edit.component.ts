@@ -972,7 +972,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * Turns a data url to a blob
+     * Turns a data url into a blob
      * @param dataUrl
      */
     dataUrlToBlob(dataUrl: string): Blob {
