@@ -22,6 +22,7 @@
                     [endDate]="individualStudentEndDate"
                     [exerciseIndex]="exerciseIndex"
                     [exercises]="studentExam.exercises!"
+                    [examStartDate]="exam.startDate!"
                     (examAboutToEnd)="examEnded()"
                     (onExamHandInEarly)="toggleHandInEarly()"
                     (heightChange)="updateHeight($event)"
