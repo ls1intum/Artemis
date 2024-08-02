@@ -20,14 +20,16 @@
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <br />
         @if (nextRelevantExercise) {
-            <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div class="fw-bold text-secondary">Next Unit</div>
                     <a class="fw-bold btn-exercise" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]">
                         {{ nextRelevantExercise.title }}
                     </a>
                 </div>
-                <fa-icon class="next-exercise-icon align-self-center" [style.marginRight.px]="26" [icon]="nextExerciseIcon" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
+                <div class="icon-wrapper d-flex justify-content-center">
+                    <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
+                </div>
             </div>
         } @else {
             <div>
@@ -50,11 +52,12 @@
                     <ngx-charts-pie-chart
                         id="score-chart"
                         class="chart-level"
-                        [view]="[70, 70]"
+                        [view]="[65, 65]"
                         [results]="ngxDoughnutData"
+                        [arcWidth]="0.4"
                         [scheme]="ngxColor"
                         [doughnut]="true"
-                        [animations]="false"
+                        [animations]="true"
                         (select)="onSelect()"
                         (click)="onSelect()"
                     >

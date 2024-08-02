@@ -49,10 +49,13 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        .icon-wrapper {
+            width: 65px;
 
-        .next-exercise-icon {
-            z-index: 1;
-            font-size: large;
+            .next-exercise-icon {
+                z-index: 1;
+                font-size: large;
+            }
         }
 
         .chart-container {
