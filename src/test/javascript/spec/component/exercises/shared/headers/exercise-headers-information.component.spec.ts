@@ -120,13 +120,14 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     it('should add points item to informationBoxItems', () => {
         const maxPoints = 10;
+        const achievedPoints = 5;
         const pointsContent: StringNumberContent = { type: 'string', value: maxPoints };
         const pointsItem: InformationBox = { title: 'Points', content: pointsContent };
 
         jest.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
 
         component.informationBoxItems = [];
-        component.informationBoxItems.push(component.getPointsItem(maxPoints, 'points'));
+        component.informationBoxItems.push(component.getPointsItem('points', maxPoints, achievedPoints));
 
         expect(component.informationBoxItems).toHaveLength(1);
         expect(component.informationBoxItems[0]).toEqual(pointsItem);
@@ -134,13 +135,14 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     it('should add bonus points item to informationBoxItems', () => {
         const bonusPoints = 5;
+        const achievedBonusPoints = 2;
         const pointsContent: StringNumberContent = { type: 'string', value: bonusPoints };
         const pointsItem: InformationBox = { title: 'Bonus Points', content: pointsContent };
 
         jest.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
 
         component.informationBoxItems = [];
-        component.informationBoxItems.push(component.getPointsItem(bonusPoints, 'points'));
+        component.informationBoxItems.push(component.getPointsItem('bonus', bonusPoints, achievedBonusPoints));
 
         expect(component.informationBoxItems).toHaveLength(1);
         expect(component.informationBoxItems[0]).toEqual(pointsItem);

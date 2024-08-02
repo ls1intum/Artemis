@@ -10,6 +10,13 @@
         <span class="badge bg-success">{{ 'artemisApp.courseOverview.exerciseList.live' | artemisTranslate }}</span>
     </span>
 }
+@if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY && showTags.includedInScore) {
+    <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
+        <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
+            <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+        </a>
+    </span>
+}
 @for (category of exercise.categories; track category) {
     @if (category.category) {
         <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
@@ -20,12 +27,5 @@
 @if (exercise.difficulty && showTags.difficulty) {
     <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
         <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="showTags.difficultyIfNoLevel ?? false" />
-    </span>
-}
-@if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY && showTags.includedInScore) {
-    <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
-        <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
-            <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
-        </a>
     </span>
 }

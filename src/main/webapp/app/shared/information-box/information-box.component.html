@@ -8,7 +8,7 @@
         @if (informationBoxData.isContentComponent) {
             <ng-content select="[contentComponent]" />
         } @else {
-            <div id="test-text" [ngClass]="'text-' + informationBoxData.contentColor">
+            <div id="test-text" [ngClass]="informationBoxData.contentColor ? 'text-' + informationBoxData.contentColor : 'text-body'">
                 {{ informationBoxData.content.value }}
             </div>
         }

@@ -45,11 +45,11 @@ export class ExamStartInformationComponent implements OnInit {
         this.prepareInformationBoxData();
     }
 
-    buildInformationBox(boxTitle: string, boxContent: InformationBoxContent, isContentComponent?: boolean): InformationBox {
+    buildInformationBox(boxTitle: string, boxContent: InformationBoxContent, isContentComponent = false): InformationBox {
         const examInformationBoxData: InformationBox = {
             title: boxTitle ?? '',
             content: boxContent,
-            isContentComponent: isContentComponent ?? false,
+            isContentComponent: isContentComponent,
         };
         return examInformationBoxData;
     }
