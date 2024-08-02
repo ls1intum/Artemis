@@ -965,7 +965,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                     );
                 }
                 const dataUrlCanvas = backGroundBlankingCanvas.toDataURL('image/png');
-                this.setBackgroundFileFromFile(this.dataUrlToFile(dataUrlCanvas, 'backgorund'));
+                this.setBackgroundFileFromFile(this.dataUrlToFile(dataUrlCanvas, 'background'));
             }
         };
         image.src = this.backgroundImage.src;
