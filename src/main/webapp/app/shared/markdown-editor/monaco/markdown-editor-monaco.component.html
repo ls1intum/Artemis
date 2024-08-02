@@ -221,3 +221,13 @@
 <ng-template #noItemsAvailable>
     <button class="ps-1 me-1" mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
 </ng-template>
+
+<ng-template #menuButton let-action="action" let-args="args" let-border="border" let-displayText="displayText" let-triggerFor="triggerFor">
+    <button [ngClass]="{ 'ps-1 me-1': true, 'border-bottom': border }" [matMenuTriggerFor]="triggerFor" mat-menu-item [style.border-bottom.px]="border ? 1 : 0" type="button">
+        @if (displayText.translationKey) {
+            <span [jhiTranslate]="displayText.translationKey" [translateValues]="displayText.translateValues"></span>
+        } @else {
+            <span>{{ displayText.text }}</span>
+        }
+    </button>
+</ng-template>
