@@ -137,7 +137,9 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                     this.loadVcsAccessToken(participation);
                 }
             });
-            this.user.vcsAccessToken = this.activeParticipation?.vcsAccessToken;
+            if (this.activeParticipation?.vcsAccessToken) {
+                this.user.vcsAccessToken = this.activeParticipation?.vcsAccessToken;
+            }
         }
     }
 
