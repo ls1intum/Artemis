@@ -24,21 +24,19 @@ export class SolutionEntryComponent implements OnInit {
 
     protected readonly faTimes = faTimes;
 
-    constructor() {}
-
     ngOnInit(): void {
         this.setupEditor();
     }
 
-    onEditorContentChange(value: string) {
+    onEditorContentChange(value: string): void {
         this.solutionEntry.code = value;
     }
 
-    onContentSizeChange(contentHeight: number) {
+    onContentSizeChange(contentHeight: number): void {
         this.editorHeight = contentHeight;
     }
 
-    private setupEditor() {
+    private setupEditor(): void {
         const startLine = this.solutionEntry.line ?? 1;
         this.editor.setStartLineNumber(startLine);
         this.editor.changeModel(this.solutionEntry.filePath ?? 'file', this.solutionEntry.code ?? '');
