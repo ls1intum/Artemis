@@ -1,6 +1,6 @@
 $collapse-container-height: 35px;
-$sidebar-width-open: 275px;
-$sidebar-width-closed: 110px;
+$sidebar-width-open: 235px;
+$sidebar-width-closed: 73px;
 $management-header-height: 230px;
 $exam-test-run-offset: 38px;
 
@@ -25,10 +25,14 @@ $exam-test-run-offset: 38px;
     background-color: var(--module-bg);
     height: calc(100vh - var(--exam-height-offset));
     width: $sidebar-width-open;
-    transition: width 0.2s ease-in-out !important;
+    transition:
+        width 0.2s ease-in-out,
+        padding 0.2s ease-in-out !important;
+    padding: 0 1rem;
 
     &.collapsed {
         width: $sidebar-width-closed !important;
+        padding: 0 0.5rem;
     }
 
     &.sidebar-height-testRun {
@@ -94,12 +98,12 @@ $exam-test-run-offset: 38px;
 }
 
 .double-arrow.menu-closed {
-    transform: translate(40px) rotate(0deg);
+    transform: translate(25px) rotate(0deg);
 }
 
 .double-arrow {
-    transform: translate(235px) rotate(180deg);
-    transition: all ease 0.3s;
+    transform: translate(171px) rotate(180deg);
+    transition: all ease 0.2s;
     cursor: pointer;
     width: 30px;
     align-items: center;
