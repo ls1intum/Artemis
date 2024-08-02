@@ -114,3 +114,7 @@ $exam-test-run-offset: 38px;
 .me-negative {
     margin-right: -5px;
 }
+
+.highlight-card:hover {
+    background-color: var(--sidebar-card-selected-bg);
+}
