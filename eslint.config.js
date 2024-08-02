@@ -85,6 +85,7 @@ module.exports = [
             'no-case-declarations': 'off',
             'prefer-const': 'warn',
             'prefer-spread': 'warn',
+            'no-var': 'error',
             'sort-imports': [
                 'error',
                 {
