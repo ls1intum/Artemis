@@ -6,6 +6,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 @Component({
     selector: 'jhi-solution-entry',
     templateUrl: './solution-entry.component.html',
+    styleUrls: ['./solution-entry.component.scss'],
 })
 export class SolutionEntryComponent implements OnInit {
     @ViewChild('editor', { static: true })
