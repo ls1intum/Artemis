@@ -113,75 +113,67 @@
                             </button>
                             <mat-menu #subMenuLecture="matMenu" type="button">
                                 @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
-                                    <ng-container
-                                        [ngTemplateOutlet]="menuButton"
-                                        [ngTemplateOutletContext]="{ action: displayedActions.lecture, triggerFor: lectureMenuUnits, displayText: { text: lecture.title } }"
-                                    />
+                                    <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
+                                        {{ lecture.title }}
+                                    </button>
                                     <mat-menu #lectureMenuUnits="matMenu" type="button">
-                                        <ng-container
-                                            [ngTemplateOutlet]="menuButton"
-                                            [ngTemplateOutletContext]="{
-                                                action: displayedActions.lecture,
-                                                displayText: { text: lecture.title },
-                                                border: true,
-                                                args: { reference: ReferenceType.LECTURE, lecture },
-                                            }"
-                                        />
+                                        <button
+                                            class="border-bottom ps-1 me-1"
+                                            mat-menu-item
+                                            (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })"
+                                            type="button"
+                                        >
+                                            {{ lecture.title }}
+                                        </button>
                                         @for (unit of lecture.attachmentUnits; track unit.id) {
-                                            <ng-container
-                                                [ngTemplateOutlet]="menuButton"
-                                                [ngTemplateOutletContext]="{
-                                                    action: displayedActions.lecture,
-                                                    triggerFor: lectureMenuUnitsSlide,
-                                                    displayText: { text: unit.name },
-                                                }"
-                                            />
+                                            <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
+                                                <span>{{ unit.name }}</span>
+                                            </button>
                                             <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
-                                                <ng-container
-                                                    [ngTemplateOutlet]="menuButton"
-                                                    [ngTemplateOutletContext]="{
-                                                        action: displayedActions.lecture,
-                                                        triggerFor: lectureMenuUnitsSlide,
-                                                        border: true,
-                                                        displayText: { text: unit.name },
-                                                        args: {
+                                                <button
+                                                    class="border-bottom ps-1 me-1"
+                                                    mat-menu-item
+                                                    (click)="
+                                                        displayedActions.lecture.executeInCurrentEditor({
                                                             reference: ReferenceType.ATTACHMENT_UNITS,
                                                             lecture,
                                                             attachmentUnit: unit,
-                                                        },
-                                                    }"
-                                                />
+                                                        })
+                                                    "
+                                                    type="button"
+                                                >
+                                                    {{ unit.name }}
+                                                </button>
                                                 @for (slide of unit.slides; track slide.id) {
-                                                    <ng-container
-                                                        [ngTemplateOutlet]="menuButton"
-                                                        [ngTemplateOutletContext]="{
-                                                            action: displayedActions.lecture,
-                                                            displayText: {
-                                                                translationKey: 'artemisApp.markdownEditor.slideWithNumber',
-                                                                translateValues: { number: slide.slideNumber },
-                                                            },
-                                                            args: {
+                                                    <button
+                                                        class="ps-1 me-1"
+                                                        mat-menu-item
+                                                        (click)="
+                                                            displayedActions.lecture.executeInCurrentEditor({
                                                                 reference: ReferenceType.SLIDE,
                                                                 lecture,
                                                                 slide,
                                                                 attachmentUnit: unit,
-                                                            },
-                                                        }"
-                                                    />
+                                                            })
+                                                        "
+                                                        type="button"
+                                                    >
+                                                        <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: slide.slideNumber }"></span>
+                                                    </button>
                                                 } @empty {
                                                     <ng-container [ngTemplateOutlet]="noItemsAvailable" />
                                                 }
                                             </mat-menu>
                                         }
                                         @for (attachment of lecture.attachments; track attachment.id) {
-                                            <ng-container
-                                                [ngTemplateOutlet]="menuButton"
-                                                [ngTemplateOutletContext]="{
-                                                    action: displayedActions.lecture,
-                                                    displayText: { text: attachment.name },
-                                                    args: { reference: ReferenceType.ATTACHMENT, lecture, attachment },
-                                                }"
-                                            />
+                                            <button
+                                                class="ps-1 me-1"
+                                                mat-menu-item
+                                                type="button"
+                                                (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture, attachment })"
+                                            >
+                                                <span>{{ attachment.name }}</span>
+                                            </button>
                                         }
                                     </mat-menu>
                                 } @empty {
@@ -231,14 +223,7 @@
 </ng-template>
 
 <ng-template #menuButton let-action="action" let-args="args" let-border="border" let-displayText="displayText" let-triggerFor="triggerFor">
-    <button
-        [ngClass]="{ 'ps-1 me-1': true, 'border-bottom': border }"
-        [matMenuTriggerFor]="triggerFor"
-        mat-menu-item
-        [style.border-bottom.px]="border ? 1 : 0"
-        (click)="args ? action.executeInCurrentEditor(args) : undefined"
-        type="button"
-    >
+    <button [ngClass]="{ 'ps-1 me-1': true, 'border-bottom': border }" [matMenuTriggerFor]="triggerFor" mat-menu-item [style.border-bottom.px]="border ? 1 : 0" type="button">
         @if (displayText.translationKey) {
             <span [jhiTranslate]="displayText.translationKey" [translateValues]="displayText.translateValues"></span>
         } @else {
