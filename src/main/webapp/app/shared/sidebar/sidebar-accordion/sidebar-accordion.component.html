@@ -17,7 +17,7 @@
                 ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
             </div>
             <div class="icon-container pe-3">
-                <jhi-accordion-add-options [hidden]="!showAddOptions || (showAddOption ? !showAddOption[groupKey] : false)" [groupKey]="groupKey" />
+                <jhi-accordion-add-options [hidden]="!showAddOptions || (showAddOption ? !getGroupKey(groupKey) : false)" [groupKey]="groupKey" />
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
             </div>
         </div>

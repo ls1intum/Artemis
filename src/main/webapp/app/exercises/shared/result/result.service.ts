@@ -237,7 +237,7 @@ export class ResultService implements IResultService {
                 const pointsMap = new Map<number, number>();
                 if (resultWithPoints.pointsPerCriterion) {
                     Object.keys(resultWithPoints.pointsPerCriterion).forEach((key) => {
-                        pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion[key]);
+                        pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion.get(Number(key))!);
                     });
                 }
                 resultWithPoints.pointsPerCriterion = pointsMap;
