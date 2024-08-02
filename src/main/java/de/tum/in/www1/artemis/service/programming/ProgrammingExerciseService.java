@@ -269,6 +269,10 @@ public class ProgrammingExerciseService {
         // See https://github.com/ls1intum/Artemis/pull/7451/files#r1459228917
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
+        if (isImportedFromFile) {
+            // We have to set the id to null in order to generate a new id for the build config
+            programmingExercise.getBuildConfig().setId(null);
+        }
 
         // We save once in order to generate an id for the programming exercise
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
