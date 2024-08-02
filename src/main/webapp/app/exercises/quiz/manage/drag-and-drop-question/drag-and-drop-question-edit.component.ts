@@ -532,7 +532,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         return this.createImageDragItemFromFile(dragItemFile);
     }
 
-    createImageDragItemFromFile(dragItemFile: File) : DragItem {
+    createImageDragItemFromFile(dragItemFile: File): DragItem {
         const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool);
         this.addNewFile.emit({ fileName, file: dragItemFile });
         this.filePreviewPaths.set(fileName, URL.createObjectURL(dragItemFile));
