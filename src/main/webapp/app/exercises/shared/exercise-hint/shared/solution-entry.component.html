@@ -1,12 +1,6 @@
 <div class="col-6">
     <h6>{{ solutionEntry.filePath }}</h6>
 </div>
-<jhi-ace-editor
-    #editor
-    [mode]="'java'"
-    [readOnly]="!enableEditing"
-    [hidden]="false"
-    [autoUpdateContent]="true"
-    (textChange)="onEditorContentChange($event)"
-    class="jhi-solution-entry-editor"
-/>
+<div [style.height.px]="editorHeight">
+    <jhi-monaco-editor #editor [readOnly]="!enableEditing" (textChanged)="onEditorContentChange($event)" class="jhi-solution-entry-editor" />
+</div>

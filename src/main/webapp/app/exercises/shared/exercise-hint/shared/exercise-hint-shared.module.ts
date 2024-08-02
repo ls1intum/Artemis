@@ -5,9 +5,10 @@ import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/share
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { CodeHintContainerComponent } from 'app/exercises/shared/exercise-hint/shared/code-hint-container.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, AceEditorModule, ArtemisMarkdownModule],
+    imports: [ArtemisSharedModule, AceEditorModule, ArtemisMarkdownModule, MonacoEditorModule],
     declarations: [SolutionEntryComponent, CodeHintContainerComponent, CastToCodeHintPipe],
     exports: [SolutionEntryComponent, CodeHintContainerComponent, CastToCodeHintPipe],
 })

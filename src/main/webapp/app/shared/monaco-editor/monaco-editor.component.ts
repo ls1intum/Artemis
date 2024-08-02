@@ -364,4 +364,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             wordWrap: value ? 'on' : 'off',
         });
     }
+
+    /**
+     * Sets the line number from which the editor should start counting.
+     * @param startLineNumber The line number to start counting from (>= 1).
+     */
+    setStartLineNumber(startLineNumber: number): void {
+        this._editor.updateOptions({
+            lineNumbers: (number) => `${startLineNumber + number - 1}`,
+        });
+    }
 }
