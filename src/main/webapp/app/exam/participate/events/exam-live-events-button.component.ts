@@ -40,10 +40,8 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.allEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {
             // do not count the problem statements events that are made before the start of the exam
-            const eventsAfterExamStartDate = events.filter(
-                (event) => !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(this.examStartDate)),
-            );
-            this.eventCount = eventsAfterExamStartDate.length;
+            const filteredEvents = events.filter((event) => !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(this.examStartDate)));
+            this.eventCount = filteredEvents.length;
         });
 
         this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate).subscribe(() => {
