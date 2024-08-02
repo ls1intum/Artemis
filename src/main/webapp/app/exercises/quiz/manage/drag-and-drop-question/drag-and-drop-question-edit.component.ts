@@ -889,7 +889,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * Only using the first drop Location right now.
+     * Create new drag items for each drop location in the background image
      * @returns
      */
     getImagesFromDropLocations() {
@@ -933,6 +933,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.blankOutBackgroundImage();
     }
 
+    /**
+     * Takes all drop locations and replaces their location with a white rectangle on the background image
+     */
     blankOutBackgroundImage() {
         const backGroundBlankingCanvas = document.createElement('canvas');
         const backGroundBlankingContext = backGroundBlankingCanvas.getContext('2d');

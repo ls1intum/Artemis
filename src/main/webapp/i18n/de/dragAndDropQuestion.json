@@ -31,6 +31,7 @@
             "addDragItemPicture": "Drag Item mit Bild Hinzufügen",
             "addDragItemText": "Drag Item mit Text Hinzufügen",
             "cutImagesFromDropLocation": "Bilder vom Drop Location ausschneiden",
+            "cutImagesFromDropLocationTip": "Das Hintergrundbild wird manipuliert. Dies kann nicht rückgängig gemacht werden.",
             "studentInstructions": "Drag & Drop: Platziere die passenden Elemente auf die zugehörigen Flächen.",
             "showingYourAnswer": "Deine Abgabe:",
             "showingSampleSolution": "Musterlösung:",
