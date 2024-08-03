@@ -81,7 +81,7 @@ public class TelemetryService {
             log.info("Successfully sent telemetry data: {}", response.getBody());
         }
         catch (JsonProcessingException e) {
-            log.warn("JsonProcessingException in sendTelemetry: {}", e.getMessage());
+            log.warn("JsonProcessingException in sendTelemetry.", e);
         }
         catch (Exception e) {
             log.warn("Exception in sendTelemetry: {}", e.getMessage());
