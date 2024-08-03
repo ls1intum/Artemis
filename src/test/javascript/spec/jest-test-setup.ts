@@ -7,6 +7,7 @@ import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
 import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
+import 'monaco-editor/esm/vs/editor/edcore.main';
 
 /*
  * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
@@ -16,7 +17,6 @@ import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
  * on the document.
  */
 document.queryCommandSupported = () => false;
-import 'monaco-editor/esm/vs/editor/edcore.main';
 
 failOnConsole({
     shouldFailOnWarn: true,
@@ -27,7 +27,8 @@ failOnConsole({
 const noop = () => {};
 
 const mock = () => {
-    let storage = {};
+    let storage: { [key: string]: any } = {};
+
     return {
         getItem: (key: any) => (key in storage ? storage[key] : null),
         setItem: (key: any, value: any) => (storage[key] = value || ''),
