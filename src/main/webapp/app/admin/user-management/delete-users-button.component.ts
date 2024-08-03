@@ -1,8 +1,11 @@
 import { Component, Signal, WritableSignal, computed, signal } from '@angular/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     standalone: true,
@@ -18,14 +21,30 @@ export class DeleteUsersButtonComponent {
     faEraser = faEraser;
     readonly medium = ButtonSize.MEDIUM;
 
-    constructor(private adminUserService: AdminUserService) {}
+    constructor(
+        private adminUserService: AdminUserService,
+        private alertService: AlertService,
+    ) {}
 
     loadUserList() {
-        if (this.users()) {
-            return;
-        }
-
-        // TODO server query to load user list
+        this.adminUserService.queryNotEnrolledUsers().subscribe({
+            next: (res: HttpResponse<string[]>) => {
+                if (res.body == null) {
+                    throw new Error('Unexpected null response body for user list');
+                } else {
+                    this.users.set(res.body);
+                    // TODO lists in the alerts contain items, but does not get to the dialog ...
+                    this.alertService.info('TEST: ' + (this.usersString() ?? 'empty ...'));
+                    if (res.body.length == 0) {
+                        this.alertService.info('artemisApp.userManagement.notEnrolled.delete.cancel');
+                        // TODO Cancel the delete conformation dialog
+                    }
+                }
+            },
+            error: (res: HttpErrorResponse) => {
+                onError(this.alertService, res);
+            },
+        });
     }
 
     onConfirm() {
