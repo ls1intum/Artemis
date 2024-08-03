@@ -243,6 +243,18 @@ public class AdminUserResource {
     }
 
     /**
+     * GET users/not-enrolled : get all logins of not enrolled users (no admins)
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body all logins of not enrolled users
+     */
+    @GetMapping("users/not-enrolled")
+    @EnforceAdmin
+    public ResponseEntity<List<String>> getNotEnrolledUsers() {
+        List<String> logins = userRepository.findAllNotEnrolledUsers();
+        return new ResponseEntity<>(logins, HttpStatus.OK);
+    }
+
+    /**
      * GET /users/authorities : get all authorities of the requesting user.
      *
      * @return the ResponseEntity with status 200 (OK) and with body a string list of the all the roles
