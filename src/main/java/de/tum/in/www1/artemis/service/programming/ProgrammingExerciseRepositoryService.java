@@ -809,8 +809,12 @@ public class ProgrammingExerciseRepositoryService {
                 versionControlService.orElseThrow().deleteRepository(repo.getVcsRepositoryUri());
             }
         });
-
-        versionControlService.orElseThrow().deleteProject(programmingExercise.getProjectKey());
+        try {
+            versionControlService.orElseThrow().deleteProject(programmingExercise.getProjectKey());
+        }
+        catch (Exception ex) {
+            log.error("Could not delete project " + programmingExercise.getProjectKey(), ex);
+        }
     }
 
     /**
