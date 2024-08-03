@@ -29,6 +29,7 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
     @Input() testRunStartTime: dayjs.Dayjs | undefined;
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
+    @Input() examStartDate: dayjs.Dayjs;
 
     readonly faDoorClosed = faDoorClosed;
     criticalTime = dayjs.duration(5, 'minutes');
