@@ -130,3 +130,8 @@ eureka:
 # Theia configuration
 theia:
   portal-url: https://theia-test.k8s.ase.cit.tum.de
+
+artemis:
+  telemetry:
+    enabled: false
+    destination: artemis.cit.tum.de
