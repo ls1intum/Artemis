@@ -87,4 +87,23 @@
             <dropColumn tableName="programming_exercise_details" columnName="branch_regex"/>
         </rollback>
     </changeSet>
+
+    <changeSet id="20240626200000_4_postgres" author="bbesrour">
+        <!-- Reset the sequence to the maximum value in the table -->
+        <!-- This is necessary because postgresql does not automatically update the sequence value when inserting data -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <sql dbms="postgresql" splitStatements="false">
+            DO $$
+                DECLARE max_id BIGINT;
+            BEGIN
+                max_id := (SELECT (MAX(id)) as id FROM programming_exercise_build_config);
+                IF (max_id IS NOT NULL) THEN
+                        EXECUTE 'ALTER SEQUENCE programming_exercise_build_config_id_seq RESTART WITH ' || (max_id + 1);
+            END IF;
+            END $$;
+        </sql>
+    </changeSet>
 </databaseChangeLog>
