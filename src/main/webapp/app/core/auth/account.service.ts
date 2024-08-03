@@ -354,9 +354,6 @@ export class AccountService implements IAccountService {
      * Sends a request to the server to delete the user's current vcsAccessToken
      */
     deleteUserVcsAccessToken(): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = undefined;
-        }
         return this.http.delete<void>('api/users/vcsAccessToken');
     }
 
@@ -364,9 +361,6 @@ export class AccountService implements IAccountService {
      * Sends a request to the server to delete the user's current vcsAccessToken
      */
     addNewVcsAccessToken(): Observable<EntityResponseType> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = undefined;
-        }
         return this.http.put<User>('api/users/vcsAccessToken', null, { observe: 'response' });
     }
 }

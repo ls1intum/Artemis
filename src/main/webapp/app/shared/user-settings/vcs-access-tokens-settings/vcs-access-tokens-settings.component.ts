@@ -29,6 +29,9 @@ export class VcsAccessTokensSettingsComponent implements OnInit {
 
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
+
     constructor(
         private accountService: AccountService,
         private profileService: ProfileService,
@@ -50,9 +53,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit {
             )
             .subscribe();
     }
-
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
 
     deleteVcsAccessToken() {
         this.accountService.deleteUserVcsAccessToken().subscribe({
