@@ -13,6 +13,7 @@ import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { EntityResponseType } from 'app/complaints/complaint.service';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -347,5 +348,25 @@ export class AccountService implements IAccountService {
             this.userIdentity.sshPublicKey = undefined;
         }
         return this.http.delete<void>('api/users/sshpublickey');
+    }
+
+    /**
+     * Sends a request to the server to delete the user's current vcsAccessToken
+     */
+    deleteUserVcsAccessToken(): Observable<void> {
+        if (this.userIdentity) {
+            this.userIdentity.sshPublicKey = undefined;
+        }
+        return this.http.delete<void>('api/users/vcsAccessToken');
+    }
+
+    /**
+     * Sends a request to the server to delete the user's current vcsAccessToken
+     */
+    addNewVcsAccessToken(): Observable<EntityResponseType> {
+        if (this.userIdentity) {
+            this.userIdentity.sshPublicKey = undefined;
+        }
+        return this.http.put<User>('api/users/vcsAccessToken', null, { observe: 'response' });
     }
 }

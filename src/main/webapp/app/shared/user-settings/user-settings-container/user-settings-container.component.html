@@ -13,6 +13,7 @@
                         <span id="login">{{ currentUser.login }}</span>
                     </div>
                 }
+                \
             </div>
             <!-- links to the different settings -->
             <section id="navigation-bar" class="list-group d-block pt-2">
@@ -34,8 +35,12 @@
                 </a>
                 @if (localVCEnabled) {
                     <a class="list-group-item btn btn-outline-primary" routerLink="sshSettings" routerLinkActive="active">
-                        <!--Account Information-->
+                        <!--SSH Settings-->
                         {{ 'artemisApp.userSettings.sshSettings' | artemisTranslate }}
+                    </a>
+                    <a class="list-group-item btn btn-outline-primary" routerLink="vcsAccessTokensSettings" routerLinkActive="active">
+                        <!--VCS Access Token Settings-->
+                        {{ 'artemisApp.userSettings.vcsAccessTokenSettings' | artemisTranslate }}
                     </a>
                 }
             </section>

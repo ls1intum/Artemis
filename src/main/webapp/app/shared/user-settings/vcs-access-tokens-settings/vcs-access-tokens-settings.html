@@ -1,0 +1,82 @@
+<h1 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings">
+    <!--VCS access token Settings-->
+</h1>
+@if (currentUser) {
+<div class="list-group d-block">
+    <div class="list-group-item">
+        <dt>
+            <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.infoText"> </span>
+        </dt>
+    </div>
+    <div class="list-group-item">
+        <dt>
+            @if (this.currentUser?.vcsAccessToken) {
+            <table class="table table-striped flex">
+                <thead class="thead-dark">
+                    <tr>
+                        <th class="col-2">
+                            <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.vcsAccessToken"> </span>
+                        </th>
+                        <th class="col-1"></th>
+                        <th class="col-4">
+                            <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate"> </span>
+                        </th>
+                        <th class="col-4">
+                            <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.actions"> </span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="">
+                    <tr>
+                        <td>***************</td>
+                        <td>
+                            <button
+                                [cdkCopyToClipboard]="currentUser!.vcsAccessToken || ''"
+                                (cdkCopyToClipboardCopied)="onCopyFinished($event)"
+                                [class.btn-success]="wasCopied"
+                                class="btn btn-secondary btn-sm me-2"
+                                type="button"
+                            >
+                                <fa-icon [icon]="faCopy"></fa-icon>
+                            </button>
+                        </td>
+                        <td>{{ this.currentUser?.vcsAccessTokenExpiryDate | artemisDate }}</td>
+                        <td>
+                            <button
+                                class="btn btn-md flex-grow-1 d-flex align-items-center"
+                                jhiDeleteButton
+                                [renderButtonText]="false"
+                                (delete)="deleteVcsAccessToken()"
+                                deleteQuestion="artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteVcsAccessTokenQuestion"
+                                [dialogError]="dialogError$"
+                            >
+                                <fa-icon [icon]="faTrash" />
+                                <div jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteVcsAccessToken" class="ms-2"></div>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            } @else {
+            <div jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.noTokenSet"></div>
+            }
+        </dt>
+    </div>
+    @if (!this.currentUser?.vcsAccessToken) {
+    <div class="list-group-item">
+        <dt>
+            <div class="btn-group" role="group" aria-label="Actions">
+                <jhi-button
+                    class="d-flex"
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.SMALL"
+                    [icon]="faEdit"
+                    [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken'"
+                    (onClick)="addNewVcsAccessToken()"
+                />
+            </div>
+        </dt>
+    </div>
+    }
+</div>
+}
