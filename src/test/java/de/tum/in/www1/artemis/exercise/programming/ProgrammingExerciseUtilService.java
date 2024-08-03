@@ -287,6 +287,29 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
+     * Creates and saves a course with an exam and an exercise group with a programming exercise.
+     *
+     * @param visibleDate       The visible date of the exam.
+     * @param startDate         The start date of the exam.
+     * @param endDate           The end date of the exam.
+     * @param publishResultDate The publish result date of the exam.
+     * @param userLogin         The login of the user for the student exam.
+     * @param workingTime       The working time of the student exam in seconds.
+     * @return The newly created exam programming exercise.
+     */
+    public ProgrammingExercise addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate,
+            ZonedDateTime publishResultDate, String userLogin, int workingTime) {
+        var programmingExercise = this.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        var exam = programmingExercise.getExerciseGroup().getExam();
+        examUtilService.setVisibleStartAndEndDateOfExam(exam, visibleDate, startDate, endDate);
+        exam.setPublishResultsDate(publishResultDate);
+        examRepository.save(exam);
+        var studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, userLogin, workingTime);
+        examUtilService.addExerciseToStudentExam(studentExam, programmingExercise);
+        return programmingExercise;
+    }
+
+    /**
      * Creates and saves an already submitted programming submission done manually.
      *
      * @param participation The exercise participation.
