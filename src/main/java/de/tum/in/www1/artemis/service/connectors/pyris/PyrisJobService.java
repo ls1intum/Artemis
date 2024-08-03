@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.in.www1.artemis.service.connectors.pyris.job.CompetencyExtractionJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
@@ -61,16 +60,16 @@ public class PyrisJobService {
         jobMap = hazelcastInstance.getMap("pyris-job-map");
     }
 
+    /**
+     * Creates a token for an arbitrary job, runs the provided function with the token as an argument,
+     * and stores the job in the job map.
+     *
+     * @param tokenToJobFunction the function to run with the token
+     * @return the generated token
+     */
     public String createTokenForJob(Function<String, PyrisJob> tokenToJobFunction) {
         var token = generateJobIdToken();
         var job = tokenToJobFunction.apply(token);
-        jobMap.put(token, job);
-        return token;
-    }
-
-    public String addCompetencyExtractionJob(Long courseId, Long userId) {
-        var token = generateJobIdToken();
-        var job = new CompetencyExtractionJob(token, courseId, userId);
         jobMap.put(token, job);
         return token;
     }
@@ -128,7 +127,7 @@ public class PyrisJobService {
      * 2. Retrieves the PyrisJob object associated with the provided token.
      * 3. Throws an AccessForbiddenException if the token is invalid or not provided.
      * <p>
-     * The token was previously generated via {@link #addJob(Long, Long, Long)}
+     * The token was previously generated via {@link #createTokenForJob(Function)}
      *
      * @param request the HttpServletRequest object representing the incoming request
      * @return the PyrisJob object associated with the token

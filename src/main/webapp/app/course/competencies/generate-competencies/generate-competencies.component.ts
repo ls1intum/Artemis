@@ -15,6 +15,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -25,6 +27,11 @@ export type CompetencyFormControls = {
     title: FormControl<string | undefined>;
     description: FormControl<string | undefined>;
     taxonomy: FormControl<CompetencyTaxonomy | undefined>;
+};
+
+type CompetencyGenerationStatusUpdate = {
+    stages: IrisStageDTO[];
+    competencies: Competency[];
 };
 
 @Component({
@@ -55,6 +62,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
         private modalService: NgbModal,
         private artemisTranslatePipe: ArtemisTranslatePipe,
         private translateService: TranslateService,
+        private jhiWebsocketService: JhiWebsocketService,
     ) {}
 
     ngOnInit(): void {
@@ -69,24 +77,28 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      */
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
-        this.competencyService
-            .generateCompetenciesFromCourseDescription(courseDescription, this.courseId)
-            .pipe(
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-            )
-            .subscribe({
-                next: (res) => {
-                    if (res.body?.length && res.body.length > 0) {
-                        this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: res.body.length });
-                        res.body?.forEach((competency) => this.addCompetencyToForm(competency));
-                    } else {
-                        this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
-                    }
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+        this.competencyService.generateCompetenciesFromCourseDescription(courseDescription, this.courseId).pipe(
+            finalize(() => {
+                this.isLoading = false;
+            }),
+        );
+        this.jhiWebsocketService.receive('/topic/iris/competencies/' + this.courseId).subscribe({
+            next: (update: CompetencyGenerationStatusUpdate) => {
+                if (update.competencies.length > 0) {
+                    // Receive all the competencies, but we only use the last one
+                    this.addCompetencyToForm(update.competencies.last()!);
+                }
+                if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
+                    this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.competencies?.length });
+                } else if (update.stages.some((stage) => stage.state === IrisStageStateDTO.ERROR)) {
+                    this.alertService.error('artemisApp.competency.generate.courseDescription.error');
+                }
+                if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
+                    this.jhiWebsocketService.unsubscribe('/topic/iris/competencies/' + this.courseId);
+                }
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**

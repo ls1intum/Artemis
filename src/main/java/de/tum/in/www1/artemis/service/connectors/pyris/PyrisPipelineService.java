@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisUserDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.service.metrics.LearningMetricsService;
@@ -139,9 +138,7 @@ public class PyrisPipelineService {
      */
     public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session) {
         executePipeline("tutor-chat", // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
-                variant, pyrisJobService.createTokenForJob(
-                        token -> new ExerciseChatJob(token, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId())),
-                executionDto -> {
+                variant, pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()), executionDto -> {
                     var course = exercise.getCourseViaExerciseGroupOrCourseMember();
                     return new PyrisExerciseChatPipelineExecutionDTO(latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
                             pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise), new PyrisCourseDTO(course), pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),

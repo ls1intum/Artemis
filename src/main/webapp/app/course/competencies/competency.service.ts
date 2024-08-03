@@ -168,8 +168,10 @@ export class CompetencyService {
         });
     }
 
-    generateCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
+    // triggers the generation of competencies from the given course description
+    // the generated competencies are returned asynchronously over the websocket on the topic /topic/iris/competencies/{courseId}
+    generateCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
     }
 
     //relations

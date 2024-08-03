@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.domain.Course;
  *
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyExtractionJob(String jobId, long courseId, long userId) implements PyrisJob {
+public record CompetencyExtractionJob(String jobId, long courseId, String userLogin) implements PyrisJob {
 
     @Override
     public boolean canAccess(Course course) {

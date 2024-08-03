@@ -21,10 +21,6 @@ public record PyrisStageDTO(String name, int weight, PyrisStageState state, Stri
         return new PyrisStageDTO(name, weight, PyrisStageState.DONE, message);
     }
 
-    public PyrisStageDTO withMessage(String message) {
-        return new PyrisStageDTO(name, weight, state, message);
-    }
-
     public PyrisStageDTO with(PyrisStageState state, String message) {
         return new PyrisStageDTO(name, weight, state, message);
     }

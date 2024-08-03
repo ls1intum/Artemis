@@ -38,7 +38,7 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null);
-        super.send(user, topic, payload);
+        super.send(user.getLogin(), topic, payload);
     }
 
     /**
@@ -63,6 +63,6 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, suggestions);
-        super.send(user, topic, payload);
+        super.send(user.getLogin(), topic, payload);
     }
 }

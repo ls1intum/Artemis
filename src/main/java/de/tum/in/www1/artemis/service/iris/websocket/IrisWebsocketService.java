@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.iris.websocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 /**
@@ -21,10 +20,10 @@ public class IrisWebsocketService {
         this.websocketMessagingService = websocketMessagingService;
     }
 
-    public void send(User user, String topicSuffix, Object payload) {
+    public void send(String userLogin, String topicSuffix, Object payload) {
         String topic = TOPIC_PREFIX + topicSuffix;
-        log.debug("Sending message to Iris user {} on topic {}: {}", user.getLogin(), topic, payload);
-        websocketMessagingService.sendMessageToUser(user.getLogin(), topic, payload);
+        log.debug("Sending message to Iris user {} on topic {}: {}", userLogin, topic, payload);
+        websocketMessagingService.sendMessageToUser(userLogin, topic, payload);
     }
 
 }
