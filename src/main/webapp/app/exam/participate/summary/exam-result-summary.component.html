@@ -119,7 +119,10 @@
                                 }
                             </div>
                         } @else {
-                            @if (exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission?.submitted) {
+                            @if (exerciseInfos[exercise.id!]?.participation) {
+                                @if (!exerciseInfos[exercise.id!]?.submission?.submitted) {
+                                    <div class="mb-3" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
+                                }
                                 @switch (exercise.type) {
                                     @case (TEXT) {
                                         <jhi-text-exam-summary
@@ -155,7 +158,12 @@
                                         />
                                     }
                                 }
-                                @if (exerciseInfos[exercise.id!]!.submission! && exercise.type !== QUIZ && isAfterStudentReviewStart) {
+                                @if (
+                                    exerciseInfos[exercise.id!]?.submission &&
+                                    exercise.type !== QUIZ &&
+                                    isAfterStudentReviewStart &&
+                                    exerciseInfos[exercise.id!]?.submission?.submitted
+                                ) {
                                     <jhi-complaint-student-view
                                         class="mb-2 mt-2 ms-3"
                                         [exercise]="exercise"
@@ -165,8 +173,6 @@
                                         [testRun]="isTestRun"
                                     />
                                 }
-                            } @else {
-                                {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
                             }
                         }
                         <!-- Show submission of student - if no submission found -> display that student did not participate -->
@@ -174,7 +180,10 @@
                 }
                 @if (exercise.type === PROGRAMMING) {
                     <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
-                    @if (exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission!) {
+                    @if (!exerciseInfos[exercise.id!]?.submission) {
+                        <div class="mb-3" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
+                    }
+                    @if (exerciseInfos[exercise.id!]?.participation) {
                         <jhi-programming-exam-summary
                             [exercise]="exercise"
                             [participation]="exerciseInfos[exercise.id!]!.participation!"
@@ -186,8 +195,6 @@
                             [isPrinting]="isPrinting"
                             [isAfterResultsArePublished]="resultsArePublished"
                         />
-                    } @else {
-                        {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
                     }
                 }
             </div>

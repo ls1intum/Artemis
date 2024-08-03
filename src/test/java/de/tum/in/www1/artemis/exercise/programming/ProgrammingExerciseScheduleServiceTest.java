@@ -617,7 +617,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testStudentExamIndividualWorkingTimeChangeDuringConduction() {
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
+        Exam exam = examExercise.getExam();
         exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
         exam = examRepository.saveAndFlush(exam);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -638,7 +638,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRescheduleExamDuringConduction() {
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
+        Exam exam = examExercise.getExam();
         exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
         exam = examRepository.saveAndFlush(exam);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
