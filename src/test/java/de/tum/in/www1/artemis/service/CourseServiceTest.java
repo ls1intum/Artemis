@@ -294,10 +294,10 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         };
 
         if (dto1.login() != null) {
-            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(dto1.login());
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByLogin(dto1.login());
         }
         else if (dto1.email() != null) {
-            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByEmail(dto1.email());
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByAnyEmail(dto1.email());
         }
         else {
             doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByRegistrationNumber(dto1.registrationNumber());

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.ldap;
 
-import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_EMAIL;
+import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MAIN_EMAIL;
 import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
 
 import javax.naming.Name;
@@ -18,7 +18,7 @@ public final class LdapUserDto {
     private Name uid;
 
     @Attribute(name = "uid")
-    private String username;
+    private String login;
 
     @Attribute(name = TUM_LDAP_MATRIKEL_NUMBER)
     private String registrationNumber;
@@ -29,19 +29,19 @@ public final class LdapUserDto {
     @Attribute(name = "sn")
     private String lastName;
 
-    @Attribute(name = TUM_LDAP_EMAIL)
+    @Attribute(name = TUM_LDAP_MAIN_EMAIL)
     private String email;
 
-    public String getUsername() {
-        return username;
+    public String getLogin() {
+        return login;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setLogin(String login) {
+        this.login = login;
     }
 
     public LdapUserDto username(String username) {
-        this.username = username;
+        this.login = username;
         return this;
     }
 

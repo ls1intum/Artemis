@@ -219,10 +219,10 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         // setup mocks
         var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).username(student100).registrationNumber("100000").email(student100 + "@tum.de");
-        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(student100);
+        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByLogin(student100);
 
         var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).username(student200).registrationNumber("200000").email(student200 + "@tum.de");
-        doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByEmail(student200 + "@tum.de");
+        doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByAnyEmail(student200 + "@tum.de");
 
         var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).username(student300).registrationNumber("3000000").email(student300 + "@tum.de");
         doReturn(Optional.of(ldapUser3Dto)).when(ldapUserService).findByRegistrationNumber("3000000");

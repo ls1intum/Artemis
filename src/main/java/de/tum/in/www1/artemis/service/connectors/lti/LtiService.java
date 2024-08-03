@@ -112,14 +112,14 @@ public class LtiService {
     }
 
     @NotNull
-    protected Authentication createNewUserFromLaunchRequest(String email, String username, String firstName, String lastName) {
-        final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
+    protected Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
+        final var user = userRepository.findOneByLogin(login).orElseGet(() -> {
             final User newUser;
             final var groups = new HashSet<String>();
             groups.add(LTI_GROUP_NAME);
 
             var password = RandomUtil.generatePassword();
-            newUser = userCreationService.createUser(username, password, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            newUser = userCreationService.createUser(login, password, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
 
@@ -133,7 +133,7 @@ public class LtiService {
 
         log.info("createNewUserFromLaunchRequest: {}", user);
 
-        log.info("Signing in as {}", username);
+        log.info("Signing in as {}", login);
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY);
     }
 
