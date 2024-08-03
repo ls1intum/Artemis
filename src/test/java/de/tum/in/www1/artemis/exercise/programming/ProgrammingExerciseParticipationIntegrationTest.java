@@ -213,7 +213,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationWithLatestResult_duringExam() throws Exception {
+    void testGetParticipationWithLatestResult_showsResultsDuringExam() throws Exception {
         var now = ZonedDateTime.now();
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(2), now.minusHours(1), now.plusHours(1),
                 now.plusHours(10), TEST_PREFIX + "student1", 120 * 60);
@@ -226,7 +226,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationWithLatestResult_afterExam_beforeExamResultsPublished() throws Exception {
+    void testGetParticipationWithLatestResult_afterExam_hidesResultsBeforeExamResultsPublished() throws Exception {
         var now = ZonedDateTime.now();
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(4), now.minusHours(2), now.minusHours(1),
                 now.plusHours(10), TEST_PREFIX + "student1", 60 * 60);
@@ -239,7 +239,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationWithLatestResult_afterExamResultsPublished() throws Exception {
+    void testGetParticipationWithLatestResult_showsResultsAfterExamResultsPublished() throws Exception {
         var now = ZonedDateTime.now();
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), now.minusHours(8), now.minusHours(7),
                 now.minusHours(1), TEST_PREFIX + "student1", 60 * 60);
@@ -368,7 +368,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationAllResults_duringExam() throws Exception {
+    void testGetParticipationAllResults_showsResultsDuringExam() throws Exception {
         var now = ZonedDateTime.now();
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(2), now.minusHours(1), now.plusHours(1),
                 now.plusHours(10), TEST_PREFIX + "student1", 120 * 60);
@@ -382,7 +382,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationAllResults_afterExam_beforeExamResultsPublished() throws Exception {
+    void testGetParticipationAllResults_afterExam_hidesResultsBeforeExamResultsPublished() throws Exception {
         var now = ZonedDateTime.now();
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(4), now.minusHours(2), now.minusHours(1),
                 now.plusHours(10), TEST_PREFIX + "student1", 60 * 60);
@@ -396,7 +396,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationAllResults_afterExamResultsPublished() throws Exception {
+    void testGetParticipationAllResults_showsResultsAfterExamResultsPublished() throws Exception {
         var now = ZonedDateTime.now();
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), now.minusHours(8), now.minusHours(7),
                 now.minusHours(1), TEST_PREFIX + "student1", 60 * 60);
@@ -420,7 +420,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetLatestResultWithFeedbacksAsStudent_duringExam() throws Exception {
+    void testGetLatestResultWithFeedbacksAsStudent_showsResultDuringExam() throws Exception {
         var now = ZonedDateTime.now();
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(2), now.minusHours(1), now.plusHours(1),
                 now.plusHours(10), TEST_PREFIX + "student1", 120 * 60);
@@ -433,7 +433,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetLatestResultWithFeedbacksAsStudent_afterExam_beforeExamResultsPublished() throws Exception {
+    void testGetLatestResultWithFeedbacksAsStudent_afterExam_hidesResultBeforeExamResultsPublished() throws Exception {
         var now = ZonedDateTime.now();
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(4), now.minusHours(2), now.minusHours(1),
                 now.plusHours(10), TEST_PREFIX + "student1", 60 * 60);
@@ -446,7 +446,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetLatestResultWithFeedbacksAsStudent_afterExamResultsPublished() throws Exception {
+    void testGetLatestResultWithFeedbacksAsStudent_showsResultAfterExamResultsPublished() throws Exception {
         var now = ZonedDateTime.now();
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), now.minusHours(8), now.minusHours(7),
                 now.minusHours(1), TEST_PREFIX + "student1", 60 * 60);
