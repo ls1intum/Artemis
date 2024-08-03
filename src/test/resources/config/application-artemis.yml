@@ -62,5 +62,8 @@ artemis:
         restricted-modules: module_text_test_restricted,module_programming_test_restricted
     apollon:
         conversion-service-url: http://localhost:8080
+    telemetry:
+        enabled: true
+        destination: http://localhost:5000
     plagiarism-checks:
         plagiarism-results-limit: 100

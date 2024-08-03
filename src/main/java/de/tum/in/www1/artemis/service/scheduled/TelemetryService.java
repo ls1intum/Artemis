@@ -14,7 +14,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -31,14 +30,16 @@ public class TelemetryService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TelemetryData(String version, String serverUrl, String universityName, String contact, List<String> profiles, String mainAdminName) {
-    };
+    }
 
     private static final Logger log = LoggerFactory.getLogger(TelemetryService.class);
 
     private final Environment env;
 
+    private final RestTemplate restTemplate;
+
     @Value("${artemis.telemetry.enabled}")
-    private boolean useTelemetry;
+    public boolean useTelemetry;
 
     @Value("${artemis.telemetry.destination}")
     private String destination;
@@ -52,8 +53,9 @@ public class TelemetryService {
     @Value("${info.contact}")
     private String contact;
 
-    public TelemetryService(Environment env) {
+    public TelemetryService(Environment env, RestTemplate restTemplate) {
         this.env = env;
+        this.restTemplate = restTemplate;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -70,13 +72,13 @@ public class TelemetryService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        RestTemplate restTemplate = new RestTemplate();
         ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
         try {
             var telemetryJson = objectWriter.writeValueAsString(telemetryData);
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
-            ResponseEntity<String> response = restTemplate.exchange(destination + "/telemetry", HttpMethod.POST, requestEntity, String.class);
-            log.info("TELEMETRY: {}", response.getBody());
+            ResponseEntity<String> response = restTemplate.postForEntity(destination + "/telemetry", requestEntity, String.class); // exchange(destination + "/telemetry",
+                                                                                                                                   // HttpMethod.POST, requestEntity, String.class);
+            log.info("Successfully sent telemetry data: {}", response.getBody());
         }
         catch (JsonProcessingException e) {
             log.warn("JsonProcessingException in sendTelemetry: {}", e.getMessage());
