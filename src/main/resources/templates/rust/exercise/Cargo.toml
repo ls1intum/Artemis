@@ -6,3 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# %static-code-analysis-start%
+
+[lints.rust]
+
+[lints.clippy]
+pedantic = "deny"
+# %static-code-analysis-stop%

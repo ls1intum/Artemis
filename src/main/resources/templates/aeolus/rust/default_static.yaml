@@ -1,0 +1,23 @@
+api: v0.0.1
+metadata:
+  name: Rust
+  id: rust
+  description: Test crate using cargo
+actions:
+  - name: build
+    script: cargo build --verbose
+  - name: run_all_tests
+    script: cargo nextest run --profile ci
+    results:
+      - name: junit_target/nextest/ci/junit.xml
+        path: target/nextest/ci/junit.xml
+        type: junit
+  - name: static_analysis
+    script: |-
+      cd assignment
+      cargo clippy --message-format=json | clippy-sarif --output ../clippy.sarif
+    runAlways: true
+    results:
+      - name: clippy
+        path: clippy.sarif
+        type: sarif

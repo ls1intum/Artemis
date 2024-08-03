@@ -55,10 +55,6 @@ public class ReportParser {
             throw new IllegalArgumentException("File must not be null");
         }
 
-        // The static code analysis parser only supports xml files.
-        if (!FileUtils.getExtension(file).equals("xml")) {
-            throw new IllegalArgumentException("File must be xml format");
-        }
         try {
             // Reject any file larger than the given threshold
             if (FileUtils.isFilesizeGreaterThan(file, STATIC_CODE_ANALYSIS_REPORT_FILESIZE_LIMIT_IN_MB)) {
@@ -81,13 +77,13 @@ public class ReportParser {
      * @throws IOException              if the file could not be read
      */
     public static StaticCodeAnalysisReportDTO getReport(File file) throws IOException {
-        String xmlContent = Files.readString(file.toPath());
-        return getReport(xmlContent, file.getName());
+        String fileContent = Files.readString(file.toPath());
+        return getReport(fileContent, file.getName());
     }
 
-    public static StaticCodeAnalysisReportDTO getReport(String xmlContent, String fileName) {
+    public static StaticCodeAnalysisReportDTO getReport(String fileContent, String fileName) {
         ParserPolicy parserPolicy = new ParserPolicy();
         ParserStrategy parserStrategy = parserPolicy.configure(fileName);
-        return parserStrategy.parse(xmlContent);
+        return parserStrategy.parse(fileContent);
     }
 }
