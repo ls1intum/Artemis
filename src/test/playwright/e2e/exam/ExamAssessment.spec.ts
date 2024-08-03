@@ -270,7 +270,7 @@ test.describe('Exam statistics', () => {
     test.beforeEach('Participate in exam', async ({ login, examParticipation, examNavigation, examAPIRequests }) => {
         for (const student of students) {
             await examParticipation.startParticipation(student, course, exam);
-            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             await examParticipation.handInEarly();
         }
@@ -381,7 +381,7 @@ async function makeExamSubmission(
     examStartEnd: ExamStartEndPage,
 ) {
     await examParticipation.startParticipation(studentOne, course, exam);
-    await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+    await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
     await page.waitForTimeout(2000);
     await examNavigation.handInEarly();

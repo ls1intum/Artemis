@@ -6,13 +6,14 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -569,10 +570,16 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
         programmingExerciseIntegrationTestService.createProgrammingExercise_projectTypeNotExpected_badRequest();
     }
 
+    private static Set<ProgrammingLanguage> generateSupportedLanguagesWithoutHaskell() {
+        Set<ProgrammingLanguage> supportedLanguages = ArgumentSources.generateJenkinsSupportedLanguages();
+        supportedLanguages.remove(ProgrammingLanguage.HASKELL);
+        return supportedLanguages;
+    }
+
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     // It should return a bad request error for all ProgrammingExercises except Haskell
-    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "KOTLIN", "VHDL", "ASSEMBLER", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
+    @MethodSource("generateSupportedLanguagesWithoutHaskell")
     void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(programmingLanguage);
     }
@@ -595,11 +602,17 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
         programmingExerciseIntegrationTestService.createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest();
     }
 
+    private static Set<ProgrammingLanguage> generateSupportedLanguagesWithoutJavaAndKotlin() {
+        Set<ProgrammingLanguage> supportedLanguages = ArgumentSources.generateJenkinsSupportedLanguages();
+        supportedLanguages.remove(ProgrammingLanguage.JAVA);
+        supportedLanguages.remove(ProgrammingLanguage.KOTLIN);
+        return supportedLanguages;
+    }
+
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    // It should return a bad request error for all ProgrammingExercises except Java and Kotlin. VHTL, Assembler and OCAML are not supported for Jenkíns at all so they also return
-    // a bad request.
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "KOTLIN", "VHDL", "ASSEMBLER", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
+    // It should return a bad request error for all ProgrammingExercises except Java and Kotlin.
+    @MethodSource("generateSupportedLanguagesWithoutJavaAndKotlin")
     void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(programmingLanguage);
     }

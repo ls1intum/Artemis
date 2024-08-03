@@ -34,8 +34,8 @@ test.describe('Modeling Exercise Management', () => {
             await expect(courseManagementExercises.getExerciseTitle(modelingExercise.title!)).toBeAttached();
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
             await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
-            await modelingExerciseCreation.save();
             await expect(page.locator(MODELING_EDITOR_CANVAS).locator('g').nth(0)).toBeAttached();
+            await modelingExerciseCreation.save();
 
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
             await modelingExerciseEditor.clickCreateExampleSubmission();
@@ -51,7 +51,7 @@ test.describe('Modeling Exercise Management', () => {
             await modelingExerciseAssessment.clickNextAssessment();
             await modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
             await modelingExerciseAssessment.submitExample();
-            await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
+            await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
             await expect(modelingExerciseEditor.getModelingCanvas()).toBeAttached();
         });
 

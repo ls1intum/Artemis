@@ -8,6 +8,7 @@ import { BASE_API, COURSE_BASE } from '../constants';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { UserCredentials } from '../users';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 /**
  * A class which encapsulates all API requests related to exams.
@@ -160,7 +161,8 @@ export class ExamAPIRequests {
      * @param exam the exam for which the missing exams are generated
      */
     async generateMissingIndividualExams(exam: Exam) {
-        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/generate-missing-student-exams`);
+        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/generate-missing-student-exams`);
+        return await response.json();
     }
 
     /**
@@ -193,8 +195,8 @@ export class ExamAPIRequests {
         await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data });
     }
 
-    async getGradeSummary(exam: Exam) {
-        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/grade-summary`);
+    async getGradeSummary(exam: Exam, studentExam: StudentExam) {
+        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/${studentExam.id}/grade-summary`);
         return await response.json();
     }
 

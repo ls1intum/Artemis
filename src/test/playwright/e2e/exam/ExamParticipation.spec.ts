@@ -77,7 +77,7 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentTwo, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+                await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
                 await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             }
             await examParticipation.handInEarly();
@@ -99,12 +99,12 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentThree, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+                await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
                 // Skip programming exercise this time to save execution time
                 // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
                 if (exercise.type !== ExerciseType.PROGRAMMING) {
                     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-                    await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+                    await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
                 }
             }
             await examParticipation.handInEarly();
@@ -118,7 +118,7 @@ test.describe('Exam participation', () => {
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 // await
-                await examNavigation.openFromOverviewByTitle(exercise.title!);
+                await examNavigation.openFromOverviewByTitle(exercise.exerciseGroup!.title!);
                 await examNavigation.openOverview();
             }
             await examParticipation.handInEarly();
@@ -159,16 +159,16 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentTwo, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examNavigation.handInEarly();
 
             await examStartEnd.clickContinue();
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await textExerciseEditor.clearSubmission(textExercise.id!);
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textFixtureShort);
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
 
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
@@ -191,16 +191,16 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentThree, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
 
             await page.reload();
             await page.goto(`/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.startExam();
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await textExerciseEditor.checkCurrentContent(textExercise.additionalData!.textFixture!);
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
             await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
@@ -214,9 +214,9 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentFour, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
             await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
@@ -253,9 +253,9 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentFour, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examParticipation.makeSubmission(textExercise.id!, textExercise.type!, textExercise.additionalData);
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examParticipation.checkExamFullnameInputExists();
             await examParticipation.checkYourFullname(studentFourName);
             const response = await examStartEnd.finishExam();
