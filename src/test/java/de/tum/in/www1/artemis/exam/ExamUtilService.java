@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.exam;
 
+import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
@@ -887,6 +888,47 @@ public class ExamUtilService {
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ExamFactory.generateExam(course);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
+
+        course = courseRepo.save(course);
+        exam = examRepository.save(exam);
+
+        Optional<Course> optionalCourse = courseRepo.findById(course.getId());
+        assertThat(optionalCourse).as("course can be retrieved").isPresent();
+        Course courseDB = optionalCourse.orElseThrow();
+
+        Optional<Exam> optionalExam = examRepository.findById(exam.getId());
+        assertThat(optionalCourse).as("exam can be retrieved").isPresent();
+        Exam examDB = optionalExam.orElseThrow();
+
+        Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
+        assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
+        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.orElseThrow();
+
+        assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
+        assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
+
+        return exerciseGroup;
+    }
+
+    /**
+     * Creates and saves an Exam with an ExerciseGroup for a newly created, active course with default group names.
+     *
+     * @param mandatory                  True, if the ExerciseGroup should be mandatory
+     * @param startDateBeforeCurrentTime True, if the start date of the created Exam should be before the current time, needed for examLiveEvent tests for already started exams
+     * @return The newly created ExerciseGroup
+     */
+    public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory, boolean startDateBeforeCurrentTime) {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Exam exam;
+        if (startDateBeforeCurrentTime) {
+            // Create an exam that is already started
+            ZonedDateTime currentTime = now();
+            exam = ExamFactory.generateExam(course, currentTime.minusMinutes(10), currentTime.minusMinutes(5), currentTime.plusMinutes(60), false);
+        }
+        else {
+            exam = ExamFactory.generateExam(course);
+        }
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
         course = courseRepo.save(course);
