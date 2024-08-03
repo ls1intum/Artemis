@@ -6,7 +6,7 @@ import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseMode, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { switchMap, tap } from 'rxjs/operators';
@@ -167,7 +167,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                         }
 
                         this.loadCourseExerciseCategories(courseId);
-                        resetDates(this.textExercise);
+                        resetForImport(this.textExercise);
                     }
                 }),
             )

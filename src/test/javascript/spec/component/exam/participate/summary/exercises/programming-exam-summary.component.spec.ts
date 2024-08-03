@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
-import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
@@ -101,7 +101,7 @@ describe('ProgrammingExamSummaryComponent', () => {
         TestBed.configureTestingModule({
             declarations: [
                 ProgrammingExamSummaryComponent,
-                MockComponent(CloneRepoButtonComponent),
+                MockComponent(CodeButtonComponent),
                 MockComponent(FeedbackComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockComponent(ComplaintsStudentViewComponent),
@@ -165,8 +165,8 @@ describe('ProgrammingExamSummaryComponent', () => {
         expect(component.feedbackComponentParameters.result).toEqual(result);
         expect(component.feedbackComponentParameters.exerciseType).toEqual(programmingExercise.type);
 
-        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
-        expect(modelingSubmissionComponent).toBeTruthy();
+        const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
+        expect(feedbackComponent).toBeTruthy();
     });
 
     it('should not show results if not yet published', () => {
@@ -174,12 +174,12 @@ describe('ProgrammingExamSummaryComponent', () => {
 
         fixture.detectChanges();
 
-        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
-        expect(modelingSubmissionComponent).not.toBeTruthy();
+        const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
+        expect(feedbackComponent).not.toBeTruthy();
     });
 
-    it('should display clone button', () => {
-        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(CloneRepoButtonComponent))?.componentInstance;
-        expect(modelingSubmissionComponent).toBeTruthy();
+    it('should display code button', () => {
+        const codeButtonComponent = fixture.debugElement.query(By.directive(CodeButtonComponent))?.componentInstance;
+        expect(codeButtonComponent).toBeTruthy();
     });
 });

@@ -3,10 +3,8 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -16,7 +14,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
@@ -89,19 +86,6 @@ public class LearningObjectService {
         else {
             return participantScoreService.getStudentAndTeamParticipations(user, Set.of(exercise)).anyMatch(score -> score.getLastScore() >= MIN_SCORE_GREEN);
         }
-    }
-
-    /**
-     * Get the completed learning objects for the given user and competencies.
-     *
-     * @param user         the user for which to get the completed learning objects
-     * @param competencies the competencies for which to get the completed learning objects
-     * @return the completed learning objects for the given user and competencies
-     */
-    public Stream<LearningObject> getCompletedLearningObjectsForUserAndCompetencies(User user, Set<CourseCompetency> competencies) {
-        return Stream.concat(competencies.stream().map(CourseCompetency::getLectureUnits), competencies.stream().map(CourseCompetency::getExercises)).flatMap(Set::stream)
-                .filter(learningObject -> learningObject.getCompletionDate(user).isPresent())
-                .sorted(Comparator.comparing(learningObject -> learningObject.getCompletionDate(user).orElseThrow())).map(LearningObject.class::cast);
     }
 
     /**

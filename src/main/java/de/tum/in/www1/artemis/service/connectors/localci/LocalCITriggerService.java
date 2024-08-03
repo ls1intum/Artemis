@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
@@ -24,10 +25,12 @@ import com.hazelcast.map.IMap;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
@@ -51,6 +54,18 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 @Service
 @Profile(PROFILE_LOCALCI)
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
+
+    public static final int PRIORITY_ALL_BUILDS = 4;
+
+    public static final int PRIORITY_OPTIONAL_EXERCISE = 3;
+
+    public static final int PRIORITY_PRACTICE = 3;
+
+    public static final int PRIORITY_NORMAL = 2;
+
+    public static final int PRIORITY_EXAM_CONDUCTION = 1;
+
+    public static final int TESTCOURSE_PRIORITY_PENALTY = 5;
 
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
@@ -108,8 +123,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
-        triggerBuild(participation, null, null);
+    public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws LocalCIException {
+        triggerBuild(participation, null, null, triggerAll);
     }
 
     /**
@@ -122,6 +137,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false);
+    }
+
+    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll)
+            throws LocalCIException {
 
         // Commit hash related to the repository that will be tested
         String assignmentCommitHash;
@@ -135,6 +155,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
         else if (triggeredByPushTo.equals(RepositoryType.TESTS)) {
             assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
+            commitHashToBuild = Objects.requireNonNullElseGet(commitHashToBuild,
+                    () -> gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName());
             testCommitHash = commitHashToBuild;
         }
         else {
@@ -147,7 +169,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
-        int priority = determinePriority(programmingExercise, participation);
+        int priority = determinePriority(programmingExercise, participation, triggerAll);
+        priority = addPenaltyIfTestCourse(programmingExercise, priority);
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
@@ -278,10 +301,49 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
     }
 
-    private int determinePriority(ProgrammingExercise programmingExercise, ProgrammingExerciseParticipation participation) {
-        if (programmingExercise.isExamExercise() && programmingExercise.getExerciseGroup().getExam().isTestExam()) {
-            return 2;
+    /**
+     * Determines the priority of the build job.
+     * Lower values indicate higher priority.
+     */
+    private int determinePriority(ProgrammingExercise programmingExercise, ProgrammingExerciseParticipation participation, boolean triggerAll) {
+        // Use the lowest priority if the build is part of a trigger all action
+        if (triggerAll) {
+            return PRIORITY_ALL_BUILDS;
         }
-        return exerciseDateService.isAfterDueDate(participation) ? 3 : programmingExercise.isExamExercise() ? 1 : 2;
+
+        // Check for test exams and exam test runs
+        if (programmingExercise.isExamExercise()) {
+            if (programmingExercise.getExam().isTestExam()) {
+                return PRIORITY_NORMAL;
+            }
+            if (participation instanceof StudentParticipation sp && sp.isTestRun()) {
+                return PRIORITY_NORMAL;
+            }
+        }
+
+        // Submissions after the due date (e.g. practice mode or finished exams) have lowest priority
+        if (exerciseDateService.isAfterDueDate(participation)) {
+            return PRIORITY_PRACTICE;
+        }
+
+        // If the exercise is now an exam exercise, then the exam is currently ongoing
+        // Here quick feedback is important, so we give it a higher priority
+        if (programmingExercise.isExamExercise()) {
+            return PRIORITY_EXAM_CONDUCTION;
+        }
+
+        // Reduce priority of optional exercises
+        if (programmingExercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
+            return PRIORITY_OPTIONAL_EXERCISE;
+        }
+
+        return PRIORITY_NORMAL;
+    }
+
+    private int addPenaltyIfTestCourse(ProgrammingExercise programmingExercise, int priority) {
+        if (programmingExercise.getCourseViaExerciseGroupOrCourseMember().isTestCourse()) {
+            return priority + TESTCOURSE_PRIORITY_PENALTY;
+        }
+        return priority;
     }
 }

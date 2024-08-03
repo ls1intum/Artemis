@@ -18,7 +18,7 @@ public class JenkinsTriggerService implements ContinuousIntegrationTriggerServic
     }
 
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) {
+    public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
         jenkinsBuildPlanService.triggerBuild(projectKey, planKey);

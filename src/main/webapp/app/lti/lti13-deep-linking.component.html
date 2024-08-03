@@ -75,9 +75,15 @@
     </div>
     <div class="modal-footer">
         <div>
-            <button type="submit" (click)="sendDeepLinkRequest()" class="btn btn-success">
-                <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
-            </button>
+            @if (selectedExercises?.size) {
+                <button type="submit" (click)="sendDeepLinkRequest()" class="btn btn-success">
+                    <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
+                </button>
+            } @else {
+                <button type="submit" class="btn btn-success disabled">
+                    <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.selectToLink"></span>
+                </button>
+            }
         </div>
     </div>
 </div>

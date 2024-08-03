@@ -1,7 +1,7 @@
 @if (exercise) {
     <h3 class="text-align-left fw-normal">
         <span>
-            {{ exercise.title }}
+            {{ exercise.exerciseGroup?.title }}
         </span>
         <!-- prettier-ignore -->
         <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
@@ -15,7 +15,7 @@
     <hr />
     <jhi-resizeable-container [examTimeline]="examTimeline">
         <!--region Left Panel-->
-        <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : exercise?.exerciseGroup?.title ?? '-' }}</span>
+        <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : (exercise?.exerciseGroup?.title ?? '-') }}</span>
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">
                 @if (isActive && !result && exercise && studentSubmission && !readonly) {
