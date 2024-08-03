@@ -91,7 +91,7 @@ public class ProgrammingExercise extends Exercise {
     private Boolean allowOfflineIde;
 
     @Column(name = "allow_online_ide", table = "programming_exercise_details", nullable = false)
-    private Boolean allowOnlineIde = false;
+    private boolean allowOnlineIde = false;
 
     @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
     private Boolean staticCodeAnalysisEnabled;
@@ -111,7 +111,7 @@ public class ProgrammingExercise extends Exercise {
     private String theiaImage;
 
     @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
-    private Boolean showTestNamesToStudents;
+    private boolean showTestNamesToStudents;
 
     @Nullable
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
@@ -165,7 +165,7 @@ public class ProgrammingExercise extends Exercise {
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
-    private Boolean releaseTestsWithExampleSolution = false;
+    private boolean releaseTestsWithExampleSolution = false;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
@@ -173,7 +173,7 @@ public class ProgrammingExercise extends Exercise {
     private ProgrammingExerciseBuildConfig buildConfig;
 
     @Column(name = "allow_branching", table = "programming_exercise_details", columnDefinition = "boolean default false", nullable = false)
-    private Boolean allowBranching = false; // default value
+    private boolean allowBranching = false; // default value
 
     @Column(name = "branch_regex", table = "programming_exercise_details")
     private String branchRegex;
@@ -291,7 +291,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean isAllowOnlineIde() {
-        return Objects.requireNonNullElse(allowOnlineIde, false);
+        return allowOnlineIde;
     }
 
     public void setAllowOnlineIde(boolean allowOnlineIde) {
@@ -332,7 +332,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean isReleaseTestsWithExampleSolution() {
-        return Objects.requireNonNullElse(releaseTestsWithExampleSolution, false);
+        return releaseTestsWithExampleSolution;
     }
 
     /**
@@ -493,7 +493,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean isAllowBranching() {
-        return Objects.requireNonNullElse(allowBranching, false);
+        return allowBranching;
     }
 
     public void setAllowBranching(boolean allowBranching) {
@@ -625,7 +625,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public Boolean getShowTestNamesToStudents() {
-        return Objects.requireNonNullElse(showTestNamesToStudents, false);
+        return showTestNamesToStudents;
     }
 
     public void setShowTestNamesToStudents(Boolean showTestNamesToStudents) {
