@@ -31,27 +31,27 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.route.data.subscribe((data: { attachment: Attachment }) => {
-            this.attachment = data.attachment;
-            if (this.attachment?.id) {
-                this.attachmentService.getAttachmentFile(this.attachment.id).subscribe({
-                    next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
-                    error: (error) => onError(this.alertService, error),
-                });
-            } else {
-                this.alertService.error('artemisApp.attachment.pdfPreview.attachmentIDError');
-            }
-        });
-
-        this.route.data.subscribe((data: { attachmentUnit: AttachmentUnit }) => {
-            this.attachmentUnit = data.attachmentUnit;
-            if (this.attachmentUnit?.id) {
-                this.attachmentUnitService.getAttachmentFile(this.attachmentUnit.id).subscribe({
-                    next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
-                    error: (error) => onError(this.alertService, error),
-                });
-            } else {
-                this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUnitIDError');
+        this.route.data.subscribe((data) => {
+            if ('attachment' in data) {
+                this.attachment = data.attachment;
+                if (this.attachment?.id) {
+                    this.attachmentService.getAttachmentFile(this.attachment.id).subscribe({
+                        next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
+                        error: (error) => onError(this.alertService, error),
+                    });
+                } else {
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentIDError');
+                }
+            } else if ('attachmentUnit' in data) {
+                this.attachmentUnit = data.attachmentUnit;
+                if (this.attachmentUnit?.id) {
+                    this.attachmentUnitService.getAttachmentFile(this.attachmentUnit.id).subscribe({
+                        next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
+                        error: (error) => onError(this.alertService, error),
+                    });
+                } else {
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUnitIDError');
+                }
             }
         });
         document.addEventListener('keydown', this.handleKeyboardEvents);
