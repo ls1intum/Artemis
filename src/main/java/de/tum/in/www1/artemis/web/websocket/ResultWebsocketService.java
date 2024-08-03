@@ -76,7 +76,7 @@ public class ResultWebsocketService {
         final Exercise exercise = studentParticipation.getExercise();
         boolean isWorkingPeriodOver;
         if (exercise.isExamExercise()) {
-            isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
+            isWorkingPeriodOver = examDateService.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
         }
         else {
             isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
