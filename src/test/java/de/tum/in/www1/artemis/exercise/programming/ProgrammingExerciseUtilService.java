@@ -235,12 +235,19 @@ public class ProgrammingExerciseUtilService {
      * Creates and saves a course with an exam and an exercise group with a programming exercise. The provided title and short name are used for the exercise and test cases are
      * added.
      *
-     * @param title     The title of the exercise.
-     * @param shortName The short name of the exercise.
+     * @param title                      The title of the exercise.
+     * @param shortName                  The short name of the exercise.
+     * @param startDateBeforeCurrentTime True, if the start date of the created Exam with a programming exercise should be before the current time, needed for examLiveEvent tests
      * @return The newly created programming exercise with test cases.
      */
-    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise(String title, String shortName) {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise(String title, String shortName, boolean startDateBeforeCurrentTime) {
+        ExerciseGroup exerciseGroup;
+        if (startDateBeforeCurrentTime) {
+            exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, true);
+        }
+        else {
+            exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        }
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setExerciseGroup(exerciseGroup);
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, false);
@@ -259,7 +266,7 @@ public class ProgrammingExerciseUtilService {
      * @return The newly created exam programming exercise.
      */
     public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise() {
-        return addCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM");
+        return addCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM", false);
     }
 
     /**
