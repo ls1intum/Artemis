@@ -214,10 +214,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithLatestResult_showsResultsDuringExam() throws Exception {
-        var now = ZonedDateTime.now();
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(2), now.minusHours(1), now.plusHours(1),
-                now.plusHours(10), TEST_PREFIX + "student1", 120 * 60);
-        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, now.minusMinutes(2));
+        var result = setupExamExerciseWithParticipationAndResult(1, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
@@ -227,10 +224,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithLatestResult_afterExam_hidesResultsBeforeExamResultsPublished() throws Exception {
-        var now = ZonedDateTime.now();
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(4), now.minusHours(2), now.minusHours(1),
-                now.plusHours(10), TEST_PREFIX + "student1", 60 * 60);
-        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, now.minusMinutes(2));
+        var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
@@ -240,10 +234,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithLatestResult_showsResultsAfterExamResultsPublished() throws Exception {
-        var now = ZonedDateTime.now();
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), now.minusHours(8), now.minusHours(7),
-                now.minusHours(1), TEST_PREFIX + "student1", 60 * 60);
-        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, now.minusMinutes(2));
+        var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
@@ -369,12 +360,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationAllResults_showsResultsDuringExam() throws Exception {
-        var now = ZonedDateTime.now();
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(2), now.minusHours(1), now.plusHours(1),
-                now.plusHours(10), TEST_PREFIX + "student1", 120 * 60);
-        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, now.minusMinutes(2));
+        var result = setupExamExerciseWithParticipationAndResult(1, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
-        participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, now.minusMinutes(1), participation);
+        participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), participation);
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).hasSize(2);
@@ -383,12 +371,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationAllResults_afterExam_hidesResultsBeforeExamResultsPublished() throws Exception {
-        var now = ZonedDateTime.now();
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(4), now.minusHours(2), now.minusHours(1),
-                now.plusHours(10), TEST_PREFIX + "student1", 60 * 60);
-        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, now.minusMinutes(2));
+        var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
-        participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, now.minusMinutes(1), participation);
+        participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), participation);
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).isEmpty();
@@ -397,12 +382,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationAllResults_showsResultsAfterExamResultsPublished() throws Exception {
-        var now = ZonedDateTime.now();
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), now.minusHours(8), now.minusHours(7),
-                now.minusHours(1), TEST_PREFIX + "student1", 60 * 60);
-        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, now.minusMinutes(2));
+        var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
-        participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, now.minusMinutes(1), participation);
+        participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), participation);
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).hasSize(2);
@@ -421,10 +403,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksAsStudent_showsResultDuringExam() throws Exception {
-        var now = ZonedDateTime.now();
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(2), now.minusHours(1), now.plusHours(1),
-                now.plusHours(10), TEST_PREFIX + "student1", 120 * 60);
-        var result = addStudentParticipationWithResult(null, null);
+        var result = setupExamExerciseWithParticipationAndResult(1, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
@@ -434,10 +413,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksAsStudent_afterExam_hidesResultBeforeExamResultsPublished() throws Exception {
-        var now = ZonedDateTime.now();
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(4), now.minusHours(2), now.minusHours(1),
-                now.plusHours(10), TEST_PREFIX + "student1", 60 * 60);
-        var result = addStudentParticipationWithResult(null, null);
+        var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
@@ -447,10 +423,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksAsStudent_showsResultAfterExamResultsPublished() throws Exception {
-        var now = ZonedDateTime.now();
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), now.minusHours(8), now.minusHours(7),
-                now.minusHours(1), TEST_PREFIX + "student1", 60 * 60);
-        var result = addStudentParticipationWithResult(null, null);
+        var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
@@ -800,6 +773,26 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
         participationUtilService.addVariousVisibilityFeedbackToResult(result);
         return (SolutionProgrammingExerciseParticipation) programmingExerciseParticipation;
+    }
+
+    /**
+     * Sets up an exam exercise with a participation and a result. The exam duration is two hours and the publishResultsDate is 10 hours after the exam start.
+     *
+     * @param hoursSinceExamStart The hours since the exam start.
+     * @param userLogin           The user login
+     * @return The result attached to the participation
+     */
+    private Result setupExamExerciseWithParticipationAndResult(int hoursSinceExamStart, String userLogin) {
+        var now = ZonedDateTime.now();
+        var startDate = now.minusHours(hoursSinceExamStart);
+        var endDate = startDate.plusHours(1);
+        var visibilityDate = startDate.minusHours(1);
+        var publishResultsDate = startDate.plusHours(10);
+        var workingTime = 120 * 60;
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(visibilityDate, startDate, endDate, publishResultsDate,
+                userLogin, workingTime);
+        programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
+        return addStudentParticipationWithResult(AssessmentType.AUTOMATIC, startDate.plusMinutes(2));
     }
 
 }
