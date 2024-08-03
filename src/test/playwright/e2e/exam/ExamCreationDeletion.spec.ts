@@ -40,7 +40,7 @@ const dateFormat = 'MMM D, YYYY HH:mm';
 test.describe('Exam creation/deletion', () => {
     test.describe.configure({
         mode: 'default',
-        timeout: 60000,
+        timeout: 30000,
     });
 
     let course: Course;

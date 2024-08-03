@@ -18,10 +18,7 @@ const textFixture = 'loremIpsum.txt';
 const textFixtureShort = 'loremIpsum-short.txt';
 
 test.describe('Exam participation', () => {
-    test.describe.configure({
-        mode: 'default',
-        timeout: 120000,
-    });
+    test.describe.configure({ mode: 'default' });
 
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
@@ -49,10 +46,7 @@ test.describe('Exam participation', () => {
     });
 
     test.describe('Early Hand-in', () => {
-        test.describe.configure({
-            mode: 'default',
-            timeout: 180000,
-        });
+        test.describe.configure({ timeout: 120000 });
 
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
@@ -73,7 +67,8 @@ test.describe('Exam participation', () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
-        test('Participates as a student in a registered exam', async ({ login, examParticipation, examNavigation, examStartEnd, examManagement }) => {
+        test('Participates as a student in a registered exam', async ({ login, examParticipation, examNavigation, examStartEnd, examManagement }, testInfo) => {
+            testInfo.setTimeout(180000);
             await examParticipation.startParticipation(studentTwo, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
@@ -129,6 +124,8 @@ test.describe('Exam participation', () => {
     });
 
     test.describe('Early hand-in with continue and reload page', () => {
+        test.describe.configure({ timeout: 60000 });
+
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -249,7 +246,8 @@ test.describe('Exam participation', () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
-        test('Participates as a student in a registered exam', async ({ login, examParticipation, examNavigation, examStartEnd, examManagement }) => {
+        test('Participates as a student in a registered exam', async ({ login, examParticipation, examNavigation, examStartEnd, examManagement }, testInfo) => {
+            testInfo.setTimeout(90000);
             await examParticipation.startParticipation(studentFour, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
@@ -270,6 +268,8 @@ test.describe('Exam participation', () => {
     });
 
     test.describe('Exam announcements', () => {
+        test.describe.configure({ timeout: 60000 });
+
         let exam: Exam;
         const students = [studentOne, studentTwo];
 

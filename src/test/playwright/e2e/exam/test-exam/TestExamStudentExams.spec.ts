@@ -20,7 +20,7 @@ let examExercise: Exercise;
 test.describe('Test Exam - student exams', () => {
     test.describe.configure({
         mode: 'default',
-        timeout: 180000,
+        timeout: 60000,
     });
 
     let course: Course;

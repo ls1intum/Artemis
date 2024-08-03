@@ -18,7 +18,7 @@ const examTitle = 'exam' + generateUUID();
 test.describe('Exam test run', () => {
     test.describe.configure({
         mode: 'default',
-        timeout: 240000,
+        timeout: 60000,
     });
 
     let course: Course;
@@ -104,7 +104,8 @@ test.describe('Exam test run', () => {
             await expect(examTestRun.getSubmitted(testRun.id!).filter({ hasText: 'No' })).toBeVisible();
         });
 
-        test('Conducts a test run', async ({ login, courseManagementAPIRequests, examTestRun, examParticipation, examNavigation }) => {
+        test('Conducts a test run', async ({ login, courseManagementAPIRequests, examTestRun, examParticipation, examNavigation }, testInfo) => {
+            testInfo.setTimeout(90000);
             await login(instructor);
             const testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
 

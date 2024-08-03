@@ -54,10 +54,7 @@ test.beforeAll('Create course', async ({ browser }) => {
 });
 
 test.describe('Exam assessment', () => {
-    test.describe.configure({
-        mode: 'default',
-        timeout: 240000,
-    });
+    test.describe.configure({ mode: 'default' });
 
     let programmingAssessmentSuccessful = false;
     let modelingAssessmentSuccessful = false;
@@ -70,7 +67,15 @@ test.describe('Exam assessment', () => {
             await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page);
         });
 
-        test('Assess a programming exercise submission (MANUAL)', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
+        test('Assess a programming exercise submission (MANUAL)', async ({
+            login,
+            examManagement,
+            examAssessment,
+            examParticipation,
+            courseAssessment,
+            exerciseAssessment,
+        }, testInfo) => {
+            testInfo.setTimeout(180000);
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             await login(tutor);
@@ -82,7 +87,15 @@ test.describe('Exam assessment', () => {
             programmingAssessmentSuccessful = true;
         });
 
-        test('Complaints about programming exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
+        test('Complaints about programming exercises assessment', async ({
+            examAssessment,
+            page,
+            studentAssessment,
+            examManagement,
+            courseAssessment,
+            exerciseAssessment,
+        }, testInfo) => {
+            testInfo.setTimeout(25000);
             if (programmingAssessmentSuccessful) {
                 await handleComplaint(course, exam, false, ExerciseType.PROGRAMMING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
             }
@@ -104,7 +117,8 @@ test.describe('Exam assessment', () => {
             examParticipation,
             courseAssessment,
             exerciseAssessment,
-        }) => {
+        }, testInfo) => {
+            testInfo.setTimeout(60000);
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             await login(tutor);
@@ -123,7 +137,15 @@ test.describe('Exam assessment', () => {
             modelingAssessmentSuccessful = true;
         });
 
-        test('Complaints about modeling exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
+        test('Complaints about modeling exercises assessment', async ({
+            examAssessment,
+            page,
+            studentAssessment,
+            examManagement,
+            courseAssessment,
+            exerciseAssessment,
+        }, testInfo) => {
+            testInfo.setTimeout(25000);
             if (modelingAssessmentSuccessful) {
                 await handleComplaint(course, exam, true, ExerciseType.MODELING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
             }
@@ -137,7 +159,8 @@ test.describe('Exam assessment', () => {
             await prepareExam(course, examEnd, ExerciseType.TEXT, page);
         });
 
-        test('Assess a text exercise submission', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
+        test('Assess a text exercise submission', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }, testInfo) => {
+            testInfo.setTimeout(60000);
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             await login(tutor);
@@ -150,7 +173,8 @@ test.describe('Exam assessment', () => {
             textAssessmentSuccessful = true;
         });
 
-        test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
+        test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }, testInfo) => {
+            testInfo.setTimeout(25000);
             if (textAssessmentSuccessful) {
                 await handleComplaint(course, exam, false, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
             }
@@ -167,7 +191,8 @@ test.describe('Exam assessment', () => {
             await prepareExam(course, examEnd, ExerciseType.QUIZ, page);
         });
 
-        test('Assesses quiz automatically', async ({ page, login, examManagement, courseAssessment, examParticipation }) => {
+        test('Assesses quiz automatically', async ({ page, login, examManagement, courseAssessment, examParticipation }, testInfo) => {
+            testInfo.setTimeout(60000);
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             if (dayjs().isBefore(examEnd)) {
@@ -194,6 +219,8 @@ test.describe('Exam grading', () => {
     });
 
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
+        test.describe.configure({ timeout: 25000 });
+
         let exam: Exam;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
@@ -232,10 +259,7 @@ test.describe('Exam grading', () => {
 });
 
 test.describe('Exam statistics', () => {
-    test.describe.configure({
-        mode: 'default',
-        timeout: 240000,
-    });
+    test.describe.configure({ timeout: 180000 });
 
     let exercise: Exercise;
     const students = [studentOne, studentTwo];

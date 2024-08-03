@@ -14,7 +14,7 @@ const examTitle = 'test-exam' + uid;
 test.describe('Test Exam management', () => {
     test.describe.configure({
         mode: 'default',
-        timeout: 120000,
+        timeout: 60000,
     });
 
     let course: Course;

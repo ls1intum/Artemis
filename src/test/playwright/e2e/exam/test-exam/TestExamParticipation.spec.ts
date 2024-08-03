@@ -17,7 +17,7 @@ const textFixture = 'loremIpsum-short.txt';
 test.describe('Test exam participation', () => {
     test.describe.configure({
         mode: 'default',
-        timeout: 240000,
+        timeout: 90000,
     });
 
     let course: Course;
@@ -135,7 +135,8 @@ test.describe('Test exam participation', () => {
             exerciseArray = [exercise];
         });
 
-        test('Participates as a student in a registered exam', async ({ examParticipation, examNavigation, examStartEnd }) => {
+        test('Participates as a student in a registered exam', async ({ examParticipation, examNavigation, examStartEnd }, testInfo) => {
+            testInfo.setTimeout(60000);
             await examParticipation.startParticipation(studentFour, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
