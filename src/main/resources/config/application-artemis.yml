@@ -100,6 +100,9 @@ artemis:
     restricted-modules: module_text_llm,module_programming_llm
   apollon:
     conversion-service-url: http://localhost:8080
+  telemetry:
+    enabled: true
+    destination: http://localhost:5000
 
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
