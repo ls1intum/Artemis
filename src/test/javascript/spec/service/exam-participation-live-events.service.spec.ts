@@ -176,7 +176,7 @@ describe('ExamParticipationLiveEventsService', () => {
         expect(service['events']).toEqual([mockEvent]);
 
         // Expect emission
-        const userEvents = firstValueFrom(service.observeNewEventsAsUser());
+        const userEvents = firstValueFrom(service.observeNewEventsAsUser([], dayjs()));
         const systemEvents = firstValueFrom(service.observeNewEventsAsSystem());
         const allEvents = firstValueFrom(service.observeAllEvents());
 

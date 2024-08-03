@@ -407,6 +407,33 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidEndDateValue).toBeTrue();
         });
 
+        it('exam visibility check returns false if the dates are not set', () => {
+            examWithoutExercises.testExam = false;
+            examWithoutExercises.visibleDate = dayjs('this is not a date');
+            fixture.detectChanges();
+            const result = component.checkExamVisibilityTime;
+            expect(result).toBeFalse();
+
+            examWithoutExercises.visibleDate = dayjs();
+            examWithoutExercises.startDate = dayjs('this is not a date');
+            const result2 = component.checkExamVisibilityTime;
+            expect(result2).toBeFalse();
+        });
+
+        it('exam visibility check returns true if the difference between dates are more than 4 hours', () => {
+            examWithoutExercises.testExam = false;
+            examWithoutExercises.visibleDate = dayjs();
+            examWithoutExercises.startDate = dayjs().add(240, 'minute');
+            fixture.detectChanges();
+            const result = component.checkExamVisibilityTime;
+            expect(result).toBeFalse();
+
+            examWithoutExercises.startDate = dayjs().add(241, 'minute');
+            fixture.detectChanges();
+            const result2 = component.checkExamVisibilityTime;
+            expect(result2).toBeTrue();
+        });
+
         it('should correctly catch HTTPError when updating the examWithoutExercises', fakeAsync(() => {
             const alertService = TestBed.inject(AlertService);
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });

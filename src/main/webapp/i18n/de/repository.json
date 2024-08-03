@@ -2,6 +2,11 @@
     "artemisApp": {
         "repository": {
             "title": "Repository",
+            "source": "Quellcode",
+            "toggleInlineFeedback": {
+                "show": "Inline-Feedback anzeigen",
+                "hide": "Inline-Feedback verstecken"
+            },
             "commitHistory": {
                 "title": "Commit Historie",
                 "openCommitHistory": "Commit Historie öffnen",
