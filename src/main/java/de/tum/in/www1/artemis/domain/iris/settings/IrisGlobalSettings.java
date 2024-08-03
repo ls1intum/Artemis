@@ -34,6 +34,9 @@ public class IrisGlobalSettings extends IrisSettings {
     @Column(name = "enable_auto_update_lecture_ingestion")
     private boolean enableAutoUpdateLectureIngestion;
 
+    @Column(name = "enable_auto_update_proactivity")
+    private boolean enableAutoUpdateProactivity;
+
     @Column(name = "enable_auto_update_competency_generation")
     private boolean enableAutoUpdateCompetencyGeneration;
 
@@ -44,6 +47,10 @@ public class IrisGlobalSettings extends IrisSettings {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_lecture_ingestion_settings_id")
     private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "iris_proactivity_settings_id")
+    private IrisProactivitySubSettings irisProactivitySettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_hestia_settings_id")
@@ -62,7 +69,9 @@ public class IrisGlobalSettings extends IrisSettings {
         var competencyGenerationSettingsValid = !Hibernate.isInitialized(irisCompetencyGenerationSettings) || irisCompetencyGenerationSettings == null
                 || (irisCompetencyGenerationSettings.getTemplate() != null && irisCompetencyGenerationSettings.getTemplate().getContent() != null
                         && !irisCompetencyGenerationSettings.getTemplate().getContent().isEmpty());
-        return chatSettingsValid && hestiaSettingsValid && competencyGenerationSettingsValid;
+        var proactivitySettingsValid = !Hibernate.isInitialized(irisProactivitySettings) || irisProactivitySettings == null
+                || (irisProactivitySettings.getEventSettings() != null && !irisProactivitySettings.getEventSettings().isEmpty());
+        return chatSettingsValid && hestiaSettingsValid && competencyGenerationSettingsValid && proactivitySettingsValid;
     }
 
     public int getCurrentVersion() {
@@ -103,6 +112,22 @@ public class IrisGlobalSettings extends IrisSettings {
 
     public void setEnableAutoUpdateCompetencyGeneration(boolean enableAutoUpdateCompetencyGeneration) {
         this.enableAutoUpdateCompetencyGeneration = enableAutoUpdateCompetencyGeneration;
+    }
+
+    public boolean isEnableAutoUpdateProactivity() {
+        return enableAutoUpdateProactivity;
+    }
+
+    public void setEnableAutoUpdateProactivity(boolean enableAutoUpdateProactivity) {
+        this.enableAutoUpdateProactivity = enableAutoUpdateProactivity;
+    }
+
+    public IrisProactivitySubSettings getIrisProactivitySettings() {
+        return irisProactivitySettings;
+    }
+
+    public void setIrisProactivitySettings(IrisProactivitySubSettings irisProactivitySettings) {
+        this.irisProactivitySettings = irisProactivitySettings;
     }
 
     @Override

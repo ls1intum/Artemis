@@ -1,11 +1,13 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
+import { IrisEventSettings } from 'app/entities/iris/settings/iris-event-settings.model';
 
 export enum IrisSubSettingsType {
     CHAT = 'chat',
     HESTIA = 'hestia',
     COMPETENCY_GENERATION = 'competency-generation',
     LECTURE_INGESTION = 'lecture-ingestion',
+    PROACTIVITY = 'proactivity',
 }
 
 export abstract class IrisSubSettings implements BaseEntity {
@@ -26,6 +28,11 @@ export class IrisChatSubSettings extends IrisSubSettings {
 export class IrisLectureIngestionSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.LECTURE_INGESTION;
     autoIngestOnLectureAttachmentUpload: boolean;
+}
+
+export class IrisProactivitySubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.PROACTIVITY;
+    eventSettings: IrisEventSettings[];
 }
 
 export class IrisHestiaSubSettings extends IrisSubSettings {
