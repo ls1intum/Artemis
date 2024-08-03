@@ -167,7 +167,7 @@ public class ExamLiveEventsService {
         event.setTextContent(message);
         event.setProblemStatement(exercise.getProblemStatement());
         event.setExerciseId(exercise.getId());
-        event.setExerciseName(exercise.getTitle());
+        event.setExerciseName(exercise.getExerciseGroup().getTitle());
 
         this.storeAndDistributeLiveExamEvent(event);
     }
