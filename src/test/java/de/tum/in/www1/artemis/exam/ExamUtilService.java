@@ -630,6 +630,10 @@ public class ExamUtilService {
         return addStudentExamWithUser(exam, userRepo.findOneByLogin(userLogin).orElseThrow());
     }
 
+    public StudentExam addStudentExamWithUserAndWorkingTime(Exam exam, String userLogin, int workingTime) {
+        return addStudentExamWithUserAndWorkingTime(exam, userRepo.findOneByLogin(userLogin).orElseThrow(), workingTime);
+    }
+
     /**
      * Creates and saves a StudentExam for the given Exam and User.
      *
@@ -638,9 +642,21 @@ public class ExamUtilService {
      * @return The newly created StudentExam
      */
     public StudentExam addStudentExamWithUser(Exam exam, User user) {
+        return addStudentExamWithUserAndWorkingTime(exam, user, exam.getDuration());
+    }
+
+    /**
+     * Creates and saves a StudentExam for the given Exam and User with the given working time.
+     *
+     * @param exam        The Exam for which the StudentExam should be created
+     * @param user        The User for which the StudentExam should be created
+     * @param workingTime The working time for the StudentExam
+     * @return The newly created StudentExam
+     */
+    public StudentExam addStudentExamWithUserAndWorkingTime(Exam exam, User user, int workingTime) {
         StudentExam studentExam = ExamFactory.generateStudentExam(exam);
         studentExam.setUser(user);
-        studentExam.setWorkingTime(exam.getDuration());
+        studentExam.setWorkingTime(workingTime);
         studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }

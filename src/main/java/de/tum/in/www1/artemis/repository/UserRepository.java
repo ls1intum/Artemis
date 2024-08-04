@@ -680,8 +680,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @NotNull
     default User getUser() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
+        return getValueElseThrow(findOneByLogin(currentUserLogin));
     }
 
     /**
@@ -704,8 +703,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     default long getUserIdElseThrow() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<Long> userId = findIdByLogin(currentUserLogin);
-        return userId.orElseThrow(() -> new EntityNotFoundException("User: " + currentUserLogin));
+        return getArbitraryValueElseThrow(findIdByLogin(currentUserLogin), currentUserLogin);
     }
 
     /**
@@ -716,7 +714,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     @NotNull
     default User getUserByLoginElseThrow(String login) {
-        return findOneByLogin(login).orElseThrow(() -> new EntityNotFoundException("User: " + login));
+        return getValueElseThrow(findOneByLogin(login));
     }
 
     /**
@@ -727,8 +725,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @NotNull
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin));
     }
 
     /**
@@ -739,8 +736,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @NotNull
     default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
     }
 
     /**
@@ -752,13 +748,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @NotNull
     default User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
-    }
-
-    @NotNull
-    private User unwrapOptionalUser(Optional<User> optionalUser, String currentUserLogin) {
-        return optionalUser.orElseThrow(() -> new EntityNotFoundException("No user found with login: " + currentUserLogin));
+        return getValueElseThrow(findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin));
     }
 
     private String getCurrentUserLogin() {
@@ -777,8 +767,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     @NotNull
     default User getUserWithGroupsAndAuthorities(@NotNull String username) {
-        Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(username);
-        return unwrapOptionalUser(user, username);
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
     }
 
     /**
@@ -822,7 +811,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     @NotNull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
-        return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId), userId);
     }
 
     /**
@@ -833,7 +822,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     @NotNull
     default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
-        return findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId), userId);
     }
 
     /**
@@ -844,7 +833,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     @NotNull
     default User findWithLearningPathsByIdElseThrow(long userId) {
-        return findWithLearningPathsById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+        return getValueElseThrow(findWithLearningPathsById(userId), userId);
     }
 
     /**
