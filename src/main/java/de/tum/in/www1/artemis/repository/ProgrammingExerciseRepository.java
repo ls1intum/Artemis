@@ -558,7 +558,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
 
     default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
-        return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+        return getValueElseThrow(findByIdWithGradingCriteria(exerciseId), exerciseId);
     }
 
     /**
@@ -570,8 +570,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @NotNull
     default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(programmingExerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -582,7 +581,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @NotNull
     default ProgrammingExercise findByIdWithAuxiliaryRepositoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return findWithAuxiliaryRepositoriesById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithAuxiliaryRepositoriesById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -604,7 +603,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @NotNull
     default ProgrammingExercise findByIdWithSubmissionPolicyElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return findWithSubmissionPolicyById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithSubmissionPolicyById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -619,8 +618,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @NotNull
     // TODO: rename, this method does more than it promises
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -633,8 +631,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -660,8 +657,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @NotNull
     default ProgrammingExercise findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -691,8 +687,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -712,8 +707,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(long programmingExerciseId)
             throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(programmingExerciseId), programmingExerciseId);
     }
 
     @NotNull
@@ -727,9 +721,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(
             long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(
+        return getValueElseThrow(
+                findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(programmingExerciseId),
                 programmingExerciseId);
-        return getValueElseThrow(programmingExercise, programmingExerciseId);
     }
 
     /**
@@ -741,8 +735,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @NotNull
     default ProgrammingExercise findForCreationByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findForCreationById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findForCreationById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -774,20 +767,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         // TODO: This is a dark hack. Move this into a service where we properly load only the solution participation in the second step
-        Optional<ProgrammingExercise> programmingExerciseWithTemplate = findWithTemplateParticipationLatestResultFeedbackTestCasesById(programmingExerciseId);
-        Optional<ProgrammingExercise> programmingExerciseWithSolution = findWithSolutionParticipationLatestResultFeedbackTestCasesById(programmingExerciseId);
+        ProgrammingExercise programmingExerciseWithTemplate = getValueElseThrow(findWithTemplateParticipationLatestResultFeedbackTestCasesById(programmingExerciseId),
+                programmingExerciseId);
+        ProgrammingExercise programmingExerciseWithSolution = getValueElseThrow(findWithSolutionParticipationLatestResultFeedbackTestCasesById(programmingExerciseId),
+                programmingExerciseId);
 
-        var withTemplate = programmingExerciseWithTemplate.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-        var withSolution = programmingExerciseWithSolution.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        programmingExerciseWithTemplate.setSolutionParticipation(programmingExerciseWithSolution.getSolutionParticipation());
 
-        withTemplate.setSolutionParticipation(withSolution.getSolutionParticipation());
-
-        return withTemplate;
+        return programmingExerciseWithTemplate;
     }
 
     @NotNull
     default ProgrammingExercise findWithEagerStudentParticipationsByIdElseThrow(long programmingExerciseId) {
-        return findWithEagerStudentParticipationsById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithEagerStudentParticipationsById(programmingExerciseId), programmingExerciseId);
     }
 
     /**

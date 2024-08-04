@@ -193,7 +193,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      * @return retrieved answer post
      */
     public AnswerPost findAnswerPostOrAnswerMessageById(Long messageId) {
-        return answerPostRepository.findAnswerPostOrAnswerMessageByIdElseThrow(messageId);
+        return answerPostRepository.findByIdElseThrow(messageId);
     }
 
     /**
