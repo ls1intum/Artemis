@@ -30,10 +30,10 @@ export class DeleteDialogData {
     deleteQuestion: string;
 
     // i18n key, that will be translated
-    entitySummaryTitle: string;
+    entitySummaryTitle?: string;
 
     // summary of the deletion. Key is i18n key, value is the value that will be displayed
-    entitySummary: { [key: string]: unknown };
+    entitySummary?: { [key: string]: unknown };
 
     // parameters used for the delete question
     translateValues: { [key: string]: unknown };
