@@ -51,13 +51,16 @@ export interface LearningPathNavigationOverviewDTO {
     learningObjects: LearningPathNavigationObjectDTO[];
 }
 
+export enum CompetencyGraphNodeValueType {
+    MASTERY_PROGRESS = 'MASTERY_PROGRESS',
+}
+
 export interface CompetencyGraphNodeDTO {
     id: string;
     label: string;
     softDueDate: Date;
-    progress: number;
-    confidence: number;
-    masteryProgress: number;
+    value: number;
+    valueType: CompetencyGraphNodeValueType;
     dimension?: NodeDimension;
 }
 

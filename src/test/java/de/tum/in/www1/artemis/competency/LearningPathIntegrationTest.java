@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
@@ -469,9 +468,10 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(response.nodes().stream().map(CompetencyGraphNodeDTO::id))
                 .containsExactlyInAnyOrderElementsOf(Arrays.stream(competencies).map(Competency::getId).map(Object::toString).toList());
         assertThat(response.nodes()).allMatch(nodeDTO -> {
-            CompetencyProgress progress = competencyProgressRepository.findByCompetencyIdAndUserIdOrElseThrow(Long.parseLong(nodeDTO.id()), student.getId());
-            return Objects.equals(nodeDTO.progress(), progress.getProgress()) && Objects.equals(nodeDTO.confidence(), progress.getConfidence())
-                    && nodeDTO.masteryProgress() == CompetencyProgressService.getMasteryProgress(progress);
+            var progress = competencyProgressRepository.findByCompetencyIdAndUserIdOrElseThrow(Long.parseLong(nodeDTO.id()), student.getId());
+            var masteryProgress = CompetencyProgressService.getMasteryProgress(progress);
+            return Objects.equals(nodeDTO.value(), Math.floor(masteryProgress * 100))
+                    && Objects.equals(nodeDTO.valueType(), CompetencyGraphNodeDTO.CompetencyNodeValueType.MASTERY_PROGRESS);
         });
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
