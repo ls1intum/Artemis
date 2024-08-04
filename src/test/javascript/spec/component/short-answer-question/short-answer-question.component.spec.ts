@@ -54,9 +54,9 @@ describe('ShortAnswerQuestionComponent', () => {
 
         expect(component.textParts).toStrictEqual([[`<p>${text}</p>`]]);
         expect(component.shortAnswerQuestion).toStrictEqual(alternativeQuestion);
-        expect(component.renderedQuestion.text['changingThisBreaksApplicationSecurity']).toBe(`<p>${text}</p>`);
-        expect(component.renderedQuestion.hint['changingThisBreaksApplicationSecurity']).toBe(`<p>${hint}</p>`);
-        expect(component.renderedQuestion.explanation['changingThisBreaksApplicationSecurity']).toBe(`<p>${explanation}</p>`);
+        expect((component.renderedQuestion.text as any)['changingThisBreaksApplicationSecurity']).toBe(`<p>${text}</p>`);
+        expect((component.renderedQuestion.hint as any)['changingThisBreaksApplicationSecurity']).toBe(`<p>${hint}</p>`);
+        expect((component.renderedQuestion.explanation as any)['changingThisBreaksApplicationSecurity']).toBe(`<p>${explanation}</p>`);
     });
 
     it('should set submitted texts', () => {
