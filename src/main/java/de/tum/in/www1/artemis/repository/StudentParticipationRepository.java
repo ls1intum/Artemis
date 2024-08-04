@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.domain.participation.IdToPresentationScoreSum;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -849,22 +848,22 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     @NotNull
     default StudentParticipation findByIdWithResultsElseThrow(long participationId) {
-        return findWithEagerResultsById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
+        return getValueElseThrow(findWithEagerResultsById(participationId), participationId);
     }
 
     @NotNull
     default StudentParticipation findByIdWithLegalSubmissionsResultsFeedbackElseThrow(long participationId) {
-        return findWithEagerLegalSubmissionsResultsFeedbacksById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
+        return getValueElseThrow(findWithEagerLegalSubmissionsResultsFeedbacksById(participationId), participationId);
     }
 
     @NotNull
     default StudentParticipation findByIdWithLegalSubmissionsElseThrow(long participationId) {
-        return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        return getValueElseThrow(findWithEagerLegalSubmissionsById(participationId), participationId);
     }
 
     @NotNull
     default StudentParticipation findByIdWithEagerTeamStudentsElseThrow(long participationId) {
-        return findByIdWithEagerTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        return getValueElseThrow(findByIdWithEagerTeamStudents(participationId), participationId);
     }
 
     /**
