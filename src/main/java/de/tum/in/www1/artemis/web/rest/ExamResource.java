@@ -1323,6 +1323,14 @@ public class ExamResource {
         return ResponseEntity.ok(examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, Optional.ofNullable(ipSubnet)));
     }
 
+    /**
+     * GET /courses/{courseId}/exams/{examId}/deletion-summary : Get a summary of the deletion of an exam.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body a summary of the deletion of the exam
+     */
     @GetMapping("courses/{courseId}/exams/{examId}/deletion-summary")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId, @PathVariable long examId) {
