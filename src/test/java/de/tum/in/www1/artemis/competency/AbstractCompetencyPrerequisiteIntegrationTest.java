@@ -463,7 +463,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
         CourseCompetency head = createCourseCompetencyForCourse.apply(course3);
         CourseCompetency tail = createCourseCompetencyForCourse.apply(course3);
-        createRelation(tail, head, RelationType.RELATES);
+        createRelation(tail, head, RelationType.ASSUMES);
 
         competencyDTOList = importAllCall(course.getId(), course3.getId(), true, HttpStatus.CREATED);
 
@@ -540,7 +540,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
         CourseCompetency head = createCourseCompetencyForCourse.apply(course2);
         CourseCompetency tail = createCourseCompetencyForCourse.apply(course2);
-        createRelation(tail, head, RelationType.RELATES);
+        createRelation(tail, head, RelationType.ASSUMES);
         Set<Long> competencyIds = Set.of(head.getId(), tail.getId());
 
         competencyDTOList = importBulkCall(course.getId(), competencyIds, true, HttpStatus.CREATED);

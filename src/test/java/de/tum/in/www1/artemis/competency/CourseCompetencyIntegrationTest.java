@@ -508,7 +508,7 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
             CourseCompetency head = competencyUtilService.createCompetency(course3);
             CourseCompetency tail = prerequisiteUtilService.createPrerequisite(course3);
-            createRelation(tail, head, RelationType.RELATES);
+            createRelation(tail, head, RelationType.ASSUMES);
 
             competencyDTOList = importAllCall(course.getId(), course3.getId(), true, HttpStatus.CREATED);
 
