@@ -39,7 +39,6 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     service: CompetencyService | PrerequisiteService;
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
-    pluralCompetencyType: 'competencies' | 'prerequisites';
 
     // Injected services
     private readonly competencyService: CompetencyService = inject(CompetencyService);
@@ -57,10 +56,8 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         if (this.competencyType === CourseCompetencyType.COMPETENCY) {
             this.service = this.competencyService;
-            this.pluralCompetencyType = 'competencies';
         } else {
             this.service = this.prerequisiteService;
-            this.pluralCompetencyType = 'prerequisites';
         }
     }
 

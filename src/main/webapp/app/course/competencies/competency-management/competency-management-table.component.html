@@ -35,9 +35,6 @@
             <thead>
                 <tr>
                     <th class="col">
-                        <span jhiTranslate="global.field.id"></span>
-                    </th>
-                    <th class="col">
                         <span jhiTranslate="artemisApp.competency.title"></span>
                     </th>
                     <th class="col">
@@ -62,10 +59,7 @@
                 @for (competency of courseCompetencies; track competency.id; let i = $index) {
                     <tr>
                         <td class="col">
-                            <a [routerLink]="['/courses', courseId, pluralCompetencyType, competency.id]">{{ competency.id }}</a>
-                        </td>
-                        <td class="col">
-                            <a [routerLink]="['/courses', courseId, pluralCompetencyType, competency.id]">{{ competency.title }}</a>
+                            <a [routerLink]="['/courses', courseId, 'competencies', competency.id]">{{ competency.title }}</a>
                         </td>
                         <td class="col markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></td>
                         <td class="col">

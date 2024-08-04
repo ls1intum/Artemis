@@ -45,12 +45,10 @@ describe('CompetencyManagementTableComponent', () => {
         component.competencyType = CourseCompetencyType.COMPETENCY;
         component.ngOnInit();
         expect(component.service).toEqual(competencyService);
-        expect(component.pluralCompetencyType).toBe('competencies');
 
         component.competencyType = CourseCompetencyType.PREREQUISITE;
         component.ngOnInit();
         expect(component.service).toEqual(prerequisiteService);
-        expect(component.pluralCompetencyType).toBe('prerequisites');
     });
 
     it('should handle import all data', () => {
