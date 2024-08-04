@@ -113,10 +113,12 @@ info:
             - programming_exercise_fail_tour: 'test'
             - programming_exercise_success_tour: 'test'
             - tutor_assessment_tour: 'Patterns in Software Engineering'
-    contact: artemis@xcit.tum.de  #default value, can be overridden if needed
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for development environment
     text-assessment-analytics-enabled: true
+    universityName: Some University # Must be set before starting the application in production
+    universityAdminName: Some Universities Admin # Must be set before starting the application in production
+    contact: someUniversityAdminEmail@xcit.tum.de  #default value, can be overridden if needed
 
 # Eureka configuration
 eureka:
@@ -131,7 +133,8 @@ eureka:
 theia:
   portal-url: https://theia-test.k8s.ase.cit.tum.de
 
+# Telemetry service: disabled for development
 artemis:
   telemetry:
     enabled: false
-    destination: artemis.cit.tum.de
+    destination: telemetry.artemis.cit.tum.de

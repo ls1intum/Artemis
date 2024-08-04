@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -9,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
@@ -25,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
 public class TelemetryService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -50,6 +46,12 @@ public class TelemetryService {
     @Value("${server.url}")
     private String serverUrl;
 
+    @Value("${info.universityAdminName}")
+    private String universityName;
+
+    @Value("${info.universityAdminName}")
+    private String universityAdminName;
+
     @Value("${info.contact}")
     private String contact;
 
@@ -60,14 +62,14 @@ public class TelemetryService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
-        if (!useTelemetry) {
+        if (!useTelemetry && !Arrays.asList(env.getActiveProfiles()).contains("dev") && false) {
             return;
         }
 
         log.info("Sending telemetry information");
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
-        TelemetryData telemetryData = new TelemetryData(version, serverUrl, "??", contact, activeProfiles, "??");
+        TelemetryData telemetryData = new TelemetryData(version, serverUrl, universityName, contact, activeProfiles, universityAdminName);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -76,15 +78,15 @@ public class TelemetryService {
         try {
             var telemetryJson = objectWriter.writeValueAsString(telemetryData);
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(destination + "/telemetry", requestEntity, String.class); // exchange(destination + "/telemetry",
-                                                                                                                                   // HttpMethod.POST, requestEntity, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(destination + "/telemetry", requestEntity, String.class);
+            // HttpMethod.POST, requestEntity, String.class);
             log.info("Successfully sent telemetry data: {}", response.getBody());
         }
         catch (JsonProcessingException e) {
             log.warn("JsonProcessingException in sendTelemetry.", e);
         }
         catch (Exception e) {
-            log.warn("Exception in sendTelemetry: {}", e.getMessage());
+            log.warn("Exception in sendTelemetry.", e);
         }
     }
 }

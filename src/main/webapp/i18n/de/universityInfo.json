@@ -1,0 +1,10 @@
+{
+    "artemisApp": {
+        "universityInfo": {
+            "title": "Universität",
+            "name": "Name",
+            "adminName": "Administrator",
+            "adminEmail": "Kontakt Email-Adresse"
+        }
+    }
+}

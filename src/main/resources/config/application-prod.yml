@@ -15,6 +15,11 @@
 
 artemis:
     push-notification-relay: https://hermes.artemis.cit.tum.de
+    # Artemis sends the artemis version, the university name, the universities main admin contact, (email + name), the server url,
+    # and used profiles (gitlab, localVC, ...) to a telemetry collection service.
+    telemetry:
+        enabled: true  # setting this to false will disable sending any information to the telemetry service
+        destination: telemetry.artemis.cit.tum.de
 
 spring:
     devtools:
@@ -119,8 +124,10 @@ info:
             - programming_exercise_fail_tour: 'tutorial'
             - programming_exercise_success_tour: 'tutorial'
             - tutor_assessment_tour: 'Patterns in Software Engineering'
-    contact: artemis@xcit.tum.de                                                                  #default value, can be overridden on the server
     test-server: false  # false --> production, true --> test server, --> empty == local
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false in production
     text-assessment-analytics-enabled: false
+    universityName: # Must be set before starting the application in production
+    universityAdminName: # Must be set before starting the application in production
+    contact: artemis@xcit.tum.de  #default value, can be overridden on the server
