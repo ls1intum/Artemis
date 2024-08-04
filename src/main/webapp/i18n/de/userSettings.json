@@ -29,7 +29,7 @@
                 "key": "SSH Schlüssel"
             },
             "vcsAccessTokensSettingsPage": {
-                "infoText": "Du kannst ein persönliches Zugriffstoken generieren, um mit der Artemis Local Version Control System zu interagieren. Verwende es um dich über HTTP bei Git zu authentifizieren.",
+                "infoText": "Du kannst ein persönliches Zugriffstoken generieren, um mit dem Artemis Local Version Control System zu interagieren. Verwende es um dich über HTTP bei Git zu authentifizieren.",
                 "deleteVcsAccessTokenQuestion": "Möchtest du dein Zugriffstoken für das Versionskontrollsystem wirklich löschen? Du kannst dich nicht mehr bei Repositories authentifizieren, die mit diesem Token geklont wurden.",
                 "deleteVcsAccessToken": "Löschen",
                 "noTokenSet": "Eu hast kein Zugriffstoken",
