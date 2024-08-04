@@ -894,41 +894,45 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     getImagesFromDropLocations() {
         for (const someLocation of this.question.dropLocations!) {
-            const image = new Image();
-            let dataUrl: string = '';
-            let bgWidth;
-            let bgHeight;
-            image.onload = () => {
-                bgHeight = image.height;
-                bgWidth = image.width;
+            // only crop if there is not mapping to this drop location
+            if (this.getMappingsForDropLocation(someLocation).length == 0) {
+                const image = new Image();
+                let dataUrl: string = '';
+                let bgWidth;
+                let bgHeight;
+                image.onload = () => {
+                    bgHeight = image.height;
+                    bgWidth = image.width;
 
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
 
-                if (context) {
-                    const scalarHeight = bgHeight / 200;
-                    const scalarWidth = bgWidth / 200;
-                    canvas.width = someLocation.width! * scalarWidth;
-                    canvas.height = someLocation.height! * scalarHeight;
-                    context.drawImage(
-                        image,
-                        someLocation.posX! * scalarWidth,
-                        someLocation.posY! * scalarHeight,
-                        someLocation.width! * scalarWidth,
-                        someLocation.height! * scalarHeight,
-                        0,
-                        0,
-                        someLocation.width! * scalarWidth,
-                        someLocation.height! * scalarHeight,
-                    );
+                    if (context) {
+                        // The click layer is 200x200 so it need to be rescaled to the image
+                        const scalarHeight = bgHeight / 200;
+                        const scalarWidth = bgWidth / 200;
+                        canvas.width = someLocation.width! * scalarWidth;
+                        canvas.height = someLocation.height! * scalarHeight;
+                        context.drawImage(
+                            image,
+                            someLocation.posX! * scalarWidth,
+                            someLocation.posY! * scalarHeight,
+                            someLocation.width! * scalarWidth,
+                            someLocation.height! * scalarHeight,
+                            0,
+                            0,
+                            someLocation.width! * scalarWidth,
+                            someLocation.height! * scalarHeight,
+                        );
 
-                    dataUrl = canvas.toDataURL('image/png');
-                    const dragItemCreated = this.createImageDragItemFromFile(this.dataUrlToFile(dataUrl, 'placeholder' + someLocation.posX!))!;
-                    const dndMapping = new DragAndDropMapping(dragItemCreated, someLocation);
-                    this.question.correctMappings!.push(dndMapping);
-                }
-            };
-            image.src = this.backgroundImage.src;
+                        dataUrl = canvas.toDataURL('image/png');
+                        const dragItemCreated = this.createImageDragItemFromFile(this.dataUrlToFile(dataUrl, 'placeholder' + someLocation.posX!))!;
+                        const dndMapping = new DragAndDropMapping(dragItemCreated, someLocation);
+                        this.question.correctMappings!.push(dndMapping);
+                    }
+                };
+                image.src = this.backgroundImage.src;
+            }
         }
         this.blankOutBackgroundImage();
     }
