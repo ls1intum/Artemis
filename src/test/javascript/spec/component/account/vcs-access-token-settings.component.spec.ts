@@ -45,23 +45,21 @@ describe('VcsAccessTokensSettingsComponent', () => {
         comp = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
         translateService.currentLang = 'en';
-    });
 
-    beforeEach(() => {
         profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [PROFILE_LOCALVC] }));
         accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 1, vcsAccessToken: token, vcsAccessTokenExpiryDate: '11:20' } as User));
         accountServiceMock.addNewVcsAccessToken.mockReturnValue(of({ id: 1, vcsAccessToken: token, vcsAccessTokenExpiryDate: '11:20' } as User));
         accountServiceMock.deleteUserVcsAccessToken.mockReturnValue(of({}));
     });
 
-    it('should initialize with localVC profile', async () => {
+    it('should initialize with localVC profile', () => {
         comp.ngOnInit();
         expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
         expect(accountServiceMock.getAuthenticationState).toHaveBeenCalled();
         expect(comp.localVCEnabled).toBeTrue();
     });
 
-    it('should initialize with no localVC profile set', async () => {
+    it('should initialize with no localVC profile set', () => {
         profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [] }));
         comp.ngOnInit();
         expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
@@ -73,19 +71,19 @@ describe('VcsAccessTokensSettingsComponent', () => {
         const newToken = 'new-token';
         accountServiceMock.addNewVcsAccessToken.mockReturnValue(of({ id: 1, vcsAccessToken: newToken, vcsAccessTokenExpiryDate: '11:20' } as User));
         comp.ngOnInit();
-        expect(comp.currentUser.vcsAccessToken).toEqual(token);
+        expect(comp.currentUser!.vcsAccessToken).toEqual(token);
         comp.addNewVcsAccessToken();
         expect(accountServiceMock.addNewVcsAccessToken).toHaveBeenCalled();
-        expect(comp.currentUser.vcsAccessToken).toEqual(token);
+        expect(comp.currentUser!.vcsAccessToken).toEqual(token);
     });
 
     it('should delete vcs access token', () => {
         const newToken = 'new-token';
         accountServiceMock.addNewVcsAccessToken.mockReturnValue(of({ id: 1, vcsAccessToken: newToken, vcsAccessTokenExpiryDate: '11:20' } as User));
         comp.ngOnInit();
-        expect(comp.currentUser.vcsAccessToken).toEqual(token);
+        expect(comp.currentUser!.vcsAccessToken).toEqual(token);
         comp.deleteVcsAccessToken();
         expect(accountServiceMock.deleteUserVcsAccessToken).toHaveBeenCalled();
-        expect(comp.currentUser.vcsAccessToken).toBeUndefined();
+        expect(comp.currentUser!.vcsAccessToken).toBeUndefined();
     });
 });

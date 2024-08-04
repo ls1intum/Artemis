@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
@@ -13,10 +13,9 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './vcs-access-tokens-settings.html',
     styleUrls: ['../user-settings.scss'],
 })
-export class VcsAccessTokensSettingsComponent implements OnInit {
+export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     currentUser?: User;
     localVCEnabled = false;
-    editSshKey = false;
 
     readonly faEdit = faEdit;
     readonly faSave = faSave;
@@ -54,6 +53,10 @@ export class VcsAccessTokensSettingsComponent implements OnInit {
             .subscribe();
     }
 
+    ngOnDestroy(): void {
+        this.authStateSubscription.unsubscribe();
+    }
+
     deleteVcsAccessToken() {
         this.accountService.deleteUserVcsAccessToken().subscribe({
             next: () => {
@@ -88,7 +91,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit {
     /**
      * set wasCopied for 3 seconds on success
      */
-    onCopyFinished(successful: any) {
+    onCopyFinished(successful: boolean) {
         if (successful) {
             this.wasCopied = true;
             setTimeout(() => {

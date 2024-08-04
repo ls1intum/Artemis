@@ -33,13 +33,16 @@
                     {{ 'artemisApp.userSettings.scienceSettings' | artemisTranslate }}
                 </a>
                 @if (localVCEnabled) {
-                    <a class="list-group-item btn btn-outline-primary" routerLink="sshSettings" routerLinkActive="active">
+                    <a class="list-group-item btn btn-outline-primary" routerLink="sshSettings" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.sshSettings">
                         <!--SSH Settings-->
-                        {{ 'artemisApp.userSettings.sshSettings' | artemisTranslate }}
                     </a>
-                    <a class="list-group-item btn btn-outline-primary" routerLink="vcsAccessTokensSettings" routerLinkActive="active">
+                    <a
+                        class="list-group-item btn btn-outline-primary"
+                        routerLink="vcsAccessTokensSettings"
+                        routerLinkActive="active"
+                        jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"
+                    >
                         <!--VCS Access Token Settings-->
-                        {{ 'artemisApp.userSettings.vcsAccessTokenSettings' | artemisTranslate }}
                     </a>
                 }
             </section>
