@@ -33,12 +33,16 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
     let component: CourseCompetenciesDetailsComponent;
 
     let courseCompetencyService: CourseCompetencyService;
+
+    let setCompletionSpy: jest.SpyInstance;
+    let getProgressSpy: jest.SpyInstance;
 
     const parentParams = { courseId: 1 };
     const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
@@ -83,8 +87,11 @@ describe('CourseCompetenciesDetails', () => {
                 fixture = TestBed.createComponent(CourseCompetenciesDetailsComponent);
                 component = fixture.componentInstance;
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
+                const lectureUnitService = TestBed.inject(LectureUnitService);
                 const featureToggleService = TestBed.inject(FeatureToggleService);
                 jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+                setCompletionSpy = jest.spyOn(lectureUnitService, 'setCompletion');
+                getProgressSpy = jest.spyOn(courseCompetencyService, 'getProgress');
             });
     });
 
@@ -176,5 +183,17 @@ describe('CourseCompetenciesDetails', () => {
         fixture.detectChanges();
         const badge = fixture.debugElement.query(By.css('#date-badge')).nativeElement;
         expect(badge.classList).toContain('bg-' + expectedBadge);
+    });
+
+    it('should update progress after lecture unit completion', () => {
+        component.competencyId = 42;
+        component.courseId = 21;
+
+        setCompletionSpy.mockReturnValue(of(new HttpResponse({ body: null })));
+        const lectureUnitCompletionEvent = { lectureUnit: { id: 1, lecture: { id: 2 }, visibleToStudents: true, completed: false }, completed: true } as LectureUnitCompletionEvent;
+        component.completeLectureUnit(lectureUnitCompletionEvent);
+
+        expect(setCompletionSpy).toHaveBeenCalledOnce();
+        expect(getProgressSpy).toHaveBeenCalledWith(42, 21, true);
     });
 });

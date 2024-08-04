@@ -50,6 +50,7 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
@@ -135,6 +136,12 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private PrerequisiteUtilService prerequisiteUtilService;
+
+    @Autowired
+    protected CompetencyProgressUtilService competencyProgressUtilService;
+
+    @Autowired
+    protected LectureUtilService lectureUtilService;
 
     private Course course;
 
@@ -705,6 +712,49 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
         assertThat(relations).isEmpty();
+    }
+
+    @Nested
+    class GetCourseCompetency {
+
+        CourseCompetency getCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception {
+            return request.get("/api/courses/" + courseId + "/course-competencies/" + competencyId, expectedStatus, CourseCompetency.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnCompetencyForStudent() throws Exception {
+            CourseCompetency response = getCall(course.getId(), competency.getId(), HttpStatus.OK);
+            assertThat(response.getId()).isEqualTo(competency.getId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testShouldOnlySendUserSpecificData() throws Exception {
+            User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 1);
+
+            User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+            competencyProgressUtilService.createCompetencyProgress(competency, student2, 10, 1);
+
+            final var textUnit = textUnitRepository.findById(idOfTextUnitOfLectureOne).get();
+            lectureUtilService.completeLectureUnitForUser(textUnit, student2);
+
+            CourseCompetency response = getCall(course.getId(), competency.getId(), HttpStatus.OK);
+            assertThat(response.getId()).isEqualTo(competency.getId());
+
+            // only progress of student1 is fetched
+            assertThat(response.getUserProgress()).hasSize(1);
+
+            // only student2 has completed the textUnit
+            assertThat(response.getLectureUnits().stream().findFirst().get().getCompletedUsers()).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+        void shouldReturnForbiddenForUserNotInCourse() throws Exception {
+            getCall(course.getId(), competency.getId(), HttpStatus.FORBIDDEN);
+        }
     }
 
     @Nested

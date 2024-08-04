@@ -182,14 +182,4 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     get judgementOfLearningEnabled() {
         return (this.course?.studentCourseAnalyticsDashboardEnabled ?? false) && this.dashboardFeatureActive;
     }
-
-    onRatingChange(newRating: number) {
-        this.judgementOfLearning = {
-            competencyId: this.competencyId!,
-            jolValue: newRating,
-            judgementTime: dayjs().toString(),
-            competencyProgress: this.progress,
-            competencyConfidence: this.confidence,
-        } satisfies CompetencyJol;
-    }
 }
