@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the QuizQuestion entity.
@@ -32,6 +31,6 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
     Optional<DragAndDropQuestion> findDnDQuestionById(@Param("questionId") long questionId);
 
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {
-        return findDnDQuestionById(questionId).orElseThrow(() -> new EntityNotFoundException("DragAndDropQuestion", questionId));
+        return getValueElseThrow(findDnDQuestionById(questionId), questionId);
     }
 }
