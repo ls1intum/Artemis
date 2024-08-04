@@ -36,7 +36,7 @@
         @if (entitySummary) {
             <ul>
                 @for (summaryKey of objectKeys(entitySummary); track summaryKey; let i = $index) {
-                    @if (entitySummary[summaryKey]) {
+                    @if (entitySummary[summaryKey] !== null) {
                         <li>
                             <span [jhiTranslate]="summaryKey">{{ summaryKey }}</span
                             >: <span>{{ entitySummary[summaryKey] }}</span>
