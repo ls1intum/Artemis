@@ -30,15 +30,15 @@
     <div class="modal-body">
         <p [jhiTranslate]="deleteQuestion" [translateValues]="translateValues">Are you sure you want to delete?</p>
 
+        @if (entitySummaryTitle) {
+            <b [jhiTranslate]="entitySummaryTitle">Summary</b>
+        }
         @if (entitySummary) {
-            @if (entitySummaryTitle) {
-                <b [jhiTranslate]="entitySummaryTitle">Summary</b>
-            }
             <ul>
                 @for (summaryKey of objectKeys(entitySummary); track summaryKey; let i = $index) {
                     @if (entitySummary[summaryKey]) {
                         <li>
-                            <span>{{ summaryKey | artemisTranslate }}</span
+                            <span [jhiTranslate]="summaryKey">{{ summaryKey }}</span
                             >: <span>{{ entitySummary[summaryKey] }}</span>
                         </li>
                     }
