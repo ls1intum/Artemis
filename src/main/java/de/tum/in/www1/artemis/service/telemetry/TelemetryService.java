@@ -12,7 +12,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -67,26 +66,30 @@ public class TelemetryService {
         }
 
         log.info("Sending telemetry information");
+        try {
+            sendTelemetryByPostRequest();
+        }
+        catch (JsonProcessingException e) {
+            log.warn("JsonProcessingException in sendTelemetry.", e);
+        }
+        catch (Exception e) {
+            log.warn("Exception in sendTelemetry, with dst URI: {}", destination, e);
+        }
+
+    }
+
+    public void sendTelemetryByPostRequest() throws Exception {
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
         TelemetryData telemetryData = new TelemetryData(version, serverUrl, universityName, contact, activeProfiles, universityAdminName);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-
         ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        try {
-            var telemetryJson = objectWriter.writeValueAsString(telemetryData);
-            HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(destination + "/telemetry", requestEntity, String.class);
 
-            log.info("Successfully sent telemetry data. {}", response.getBody());
-        }
-        catch (JsonProcessingException e) {
-            log.warn("JsonProcessingException in sendTelemetry.", e);
-        }
-        catch (Exception e) {
-            log.warn("Exception in sendTelemetry.", e);
-        }
+        var telemetryJson = objectWriter.writeValueAsString(telemetryData);
+        HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
+        var response = restTemplate.postForEntity(destination + "/telemetry", requestEntity, String.class);
+        log.info("Successfully sent telemetry data. {}", response.getBody());
     }
 }

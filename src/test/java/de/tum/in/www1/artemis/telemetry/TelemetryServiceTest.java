@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.telemetry;
 
+import static org.mockito.Mockito.spy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
@@ -45,8 +46,11 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private TelemetryService telemetryService;
 
+    private TelemetryService telemetryServiceSpy;
+
     @BeforeEach
     public void init() {
+        telemetryServiceSpy = spy(telemetryService);
         mockServer = MockRestServiceServer.createServer(restTemplate);
     }
 
@@ -54,8 +58,8 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
     public void testSendTelemetry_TelemetryEnabled() throws Exception {
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
-        telemetryService.useTelemetry = true;
-        telemetryService.sendTelemetry();
+        telemetryServiceSpy.useTelemetry = true;
+        telemetryServiceSpy.sendTelemetry();
         mockServer.verify();
     }
 
@@ -63,8 +67,8 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
     public void testSendTelemetry_TelemetryDisabled() throws Exception {
         mockServer.expect(ExpectedCount.never(), requestTo(new URI(destination + "/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
-        telemetryService.useTelemetry = false;
-        telemetryService.sendTelemetry();
+        telemetryServiceSpy.useTelemetry = false;
+        telemetryServiceSpy.sendTelemetry();
         mockServer.verify();
     }
 
@@ -72,8 +76,8 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
     public void testSendTelemetry_ExceptionHandling() throws Exception {
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withServerError().body(mapper.writeValueAsString("Failure!")));
-        telemetryService.useTelemetry = true;
-        telemetryService.sendTelemetry();
+        telemetryServiceSpy.useTelemetry = true;
+        telemetryServiceSpy.sendTelemetry();
         mockServer.verify();
     }
 }
