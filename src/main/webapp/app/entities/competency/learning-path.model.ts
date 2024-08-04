@@ -42,7 +42,7 @@ export interface LearningPathNavigationObjectDTO {
 
 export interface LearningPathNavigationDTO {
     predecessorLearningObject?: LearningPathNavigationObjectDTO;
-    currentLearningObject: LearningPathNavigationObjectDTO;
+    currentLearningObject?: LearningPathNavigationObjectDTO;
     successorLearningObject?: LearningPathNavigationObjectDTO;
     progress: number;
 }
