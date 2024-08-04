@@ -407,7 +407,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @NotNull
     default Exam findByIdWithExerciseGroupsElseThrow(long examId) {
-        return findWithExerciseGroupsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        return getValueElseThrow(findWithExerciseGroupsById(examId), examId);
     }
 
     /**
@@ -430,7 +430,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @NotNull
     default Exam findByIdWithExamUsersElseThrow(long examId) {
-        return findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        return getValueElseThrow(findWithExamUsersById(examId), examId);
     }
 
     /**
@@ -441,7 +441,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @NotNull
     default Exam findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(long examId) {
-        return findWithExamUsersAndExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        return getValueElseThrow(findWithExamUsersAndExerciseGroupsAndExercisesById(examId), examId);
     }
 
     /**
@@ -455,12 +455,12 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     }
 
     default Exam findWithExerciseGroupsAndExercisesByIdOrElseThrow(long examId) throws EntityNotFoundException {
-        return findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        return getValueElseThrow(findWithExerciseGroupsAndExercisesById(examId), examId);
     }
 
     @NotNull
     default Exam findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(long examId) {
-        return findWithExerciseGroupsAndExercisesAndDetailsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        return getValueElseThrow(findWithExerciseGroupsAndExercisesAndDetailsById(examId), examId);
     }
 
     /**

@@ -35,7 +35,7 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
 
     @NotNull
     default IrisSession findByIdWithMessagesElseThrow(long sessionId) throws EntityNotFoundException {
-        return findByIdWithMessages(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Session", sessionId));
+        return getValueElseThrow(findByIdWithMessages(sessionId), sessionId);
     }
 
 }
