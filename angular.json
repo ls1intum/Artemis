@@ -117,7 +117,12 @@
                 "glob": "**/*",
                 "input": "./node_modules/monaco-editor/min/vs",
                 "output": "vs"
-              }
+              },
+                {
+                    "glob": "pdf.worker.min.mjs",
+                    "input": "./node_modules/pdfjs-dist/build",
+                    "output": "pdfjs"
+                }
             ],
             "styles": [
               "src/main/webapp/content/scss/themes/theme-default.scss",
