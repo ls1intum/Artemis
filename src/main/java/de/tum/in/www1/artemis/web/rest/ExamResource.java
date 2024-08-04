@@ -95,6 +95,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseWithIdDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamDeletionSummaryDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
@@ -1320,5 +1321,15 @@ public class ExamResource {
                 analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses, analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
                 analyzeSessionsIpOutsideOfRange);
         return ResponseEntity.ok(examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, Optional.ofNullable(ipSubnet)));
+    }
+
+    @GetMapping("courses/{courseId}/exams/{examId}/deletion-summary")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<ExamDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get deletion summary for exam : {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        return ResponseEntity.ok(examDeletionService.getExamDeletionSummary(examId));
     }
 }

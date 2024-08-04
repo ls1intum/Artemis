@@ -22,11 +22,14 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
+import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
@@ -34,10 +37,13 @@ import de.tum.in.www1.artemis.repository.QuizPoolRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamDeletionSummaryDTO;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -71,10 +77,17 @@ public class ExamDeletionService {
 
     private final QuizPoolRepository quizPoolRepository;
 
+    private final BuildJobRepository buildJobRepository;
+
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationService participationService, CacheManager cacheManager, UserRepository userRepository,
             ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, GradingScaleRepository gradingScaleRepository,
             StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ChannelService channelService,
-            ExamLiveEventRepository examLiveEventRepository, QuizPoolRepository quizPoolRepository) {
+            ExamLiveEventRepository examLiveEventRepository, QuizPoolRepository quizPoolRepository, BuildJobRepository buildJobRepository, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.cacheManager = cacheManager;
@@ -88,6 +101,9 @@ public class ExamDeletionService {
         this.channelService = channelService;
         this.examLiveEventRepository = examLiveEventRepository;
         this.quizPoolRepository = quizPoolRepository;
+        this.buildJobRepository = buildJobRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
     }
 
     /**
@@ -239,5 +255,38 @@ public class ExamDeletionService {
         // Delete the test run student exam
         log.info("Request to delete Test Run {}", testRunId);
         studentExamRepository.deleteById(testRunId);
+    }
+
+    /**
+     * Get the exam deletion summary for the given exam.
+     *
+     * @param examId the ID of the exam for which the deletion summary should be fetched
+     * @return the exam deletion summary
+     */
+    public ExamDeletionSummaryDTO getExamDeletionSummary(@NotNull long examId) {
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        long numberOfBuilds = 0;
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            var programmingExercises = exerciseGroup.getExercises().stream().filter(exercise -> ExerciseType.PROGRAMMING.equals(exercise.getExerciseType())).toList();
+
+            for (Exercise exercise : programmingExercises) {
+                numberOfBuilds += buildJobRepository.countBuildJobsByExerciseId(exercise.getId());
+            }
+        }
+        Channel channel = channelRepository.findChannelByExamId(examId);
+        Long conversationId = channel.getId();
+
+        List<Post> posts = postRepository.findAllByConversationId(conversationId);
+        long numberOfCommunicationPosts = posts.size();
+        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByPostIdIn(posts.stream().map(Post::getId).toList());
+
+        List<StudentExam> studentExams = studentExamRepository.findAllByExamId(examId);
+        long numberRegisteredStudents = studentExams.size();
+
+        long notStartedExams = studentExams.stream().filter(studentExam -> !studentExam.isStarted()).count();
+        long startedExams = studentExams.stream().filter(studentExam -> studentExam.isStarted() && !studentExam.isSubmitted()).count();
+        long submittedExams = studentExams.stream().filter(StudentExam::isSubmitted).count();
+
+        return new ExamDeletionSummaryDTO(numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts, numberRegisteredStudents, notStartedExams, startedExams, submittedExams);
     }
 }
