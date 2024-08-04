@@ -23,7 +23,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
         }
         this.detail = this.detail as ShownDetail;
 
-        const detailTypeToComponent: { [key in DetailType]?: Type<TextDetailComponent | DateDetailComponent> } = {
+        const detailTypeToComponent: { [key in DetailType]?: Type<TextDetailComponent | DateDetailComponent | LinkDetailComponent | BooleanDetailComponent> } = {
             [DetailType.Text]: TextDetailComponent,
             [DetailType.Date]: DateDetailComponent,
             [DetailType.Link]: LinkDetailComponent,
