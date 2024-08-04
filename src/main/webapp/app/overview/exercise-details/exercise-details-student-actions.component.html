@@ -227,6 +227,9 @@
                         ></button>
                     }
                 </span>
+                <!-- SPECIALTODO : Fix this so that it actually work conditionally rendering-->
+                <!-- @if (athenaEnabled) {  NOTE: exercise.allowFeedbackRequests &&  -->
+
                 @if (
                     (gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
                     gradedParticipation?.initializationState === InitializationState.FINISHED
@@ -250,6 +253,30 @@
                         [hideLabelMobile]="false"
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
+                    @if (exercise.allowFeedbackRequests) {
+                        <a
+                            class="btn btn-primary"
+                            (click)="requestFeedback()"
+                            [class.btn-sm]="smallButtons"
+                            [id]="'request-feedback-' + exercise.id"
+                            [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback">Send automatic feedback request</span>
+                        </a>
+                    }
+                    @if (athenaEnabled) {
+                        <a
+                            class="btn btn-primary"
+                            (click)="requestFeedback()"
+                            [class.btn-sm]="smallButtons"
+                            [id]="'request-feedback-' + exercise.id"
+                            [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback">Send automatic feedback request</span>
+                        </a>
+                    }
                 }
             </div>
         }

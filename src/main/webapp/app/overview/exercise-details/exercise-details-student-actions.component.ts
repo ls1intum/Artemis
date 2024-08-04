@@ -240,13 +240,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     requestFeedback() {
-        if (!this.assureConditionsSatisfied()) return;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            if (!this.assureConditionsSatisfied()) return;
 
-        const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
-        if (!window.confirm(confirmLockRepository)) {
-            return;
+            const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
+            if (!window.confirm(confirmLockRepository)) {
+                return;
+            }
         }
-
         this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {

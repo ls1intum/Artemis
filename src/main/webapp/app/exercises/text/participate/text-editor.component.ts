@@ -186,13 +186,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.isAlwaysActive = !!isAlwaysActive;
     }
 
+    get isAutomaticResult(): boolean {
+        const isAutomatic = this.result?.assessmentType === 'AUTOMATIC_ATHENA';
+        return !!isAutomatic;
+    }
     /**
      * True, if the due date is after the current date, or there is no due date, or the exercise is always active
      */
     get isActive(): boolean {
         const isActive =
             !this.examMode &&
-            !this.result &&
+            (!this.result || this.isAutomaticResult) &&
             (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
         return !!isActive;
     }
