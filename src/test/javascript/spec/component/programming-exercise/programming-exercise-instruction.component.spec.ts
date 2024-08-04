@@ -376,6 +376,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
+        // TODO: make sure to exclude random numbers here that change after updates of dependencies
         const expectedHtml = problemStatementBubbleSortNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
 
@@ -456,6 +457,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
 
         const expectedHtml = problemStatementEmptySecondTaskNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
+        // TODO: make sure to exclude random numbers here that change after updates of dependencies
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--success'));

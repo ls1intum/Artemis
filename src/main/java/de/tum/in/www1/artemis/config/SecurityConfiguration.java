@@ -56,14 +56,18 @@ public class SecurityConfiguration {
 
     private final ProfileService profileService;
 
+    private final Optional<CustomLti13Configurer> customLti13Configurer;
+
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
-    public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService) {
+    public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
+            Optional<CustomLti13Configurer> customLti13Configurer) {
         this.tokenProvider = tokenProvider;
         this.passwordService = passwordService;
         this.corsFilter = corsFilter;
         this.profileService = profileService;
+        this.customLti13Configurer = customLti13Configurer;
     }
 
     /**
@@ -224,7 +228,8 @@ public class SecurityConfiguration {
 
         // Conditionally adds configuration for LTI if it is active.
         if (profileService.isLtiActive()) {
-            http.with(new CustomLti13Configurer(), configurer -> configurer.configure(http));
+            // Activates the LTI endpoints and filters.
+            http.with(customLti13Configurer.orElseThrow(), configurer -> configurer.configure(http));
         }
 
         // Builds and returns the SecurityFilterChain.

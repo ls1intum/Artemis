@@ -1,7 +1,7 @@
 @if (!startView && !studentFailedToSubmit) {
     <div class="w-100 d-flex">
         <div class="col-md-3">
-            <jhi-exam-live-events-button />
+            <jhi-exam-live-events-button [examStartDate]="exam.startDate!" />
         </div>
         <h2 class="col-md-6" style="text-align: center; font-weight: normal" id="exam-finished-title">
             <span
@@ -39,7 +39,7 @@
             <div class="d-flex justify-content-between">
                 <h3 class="mt-3">{{ exam.title }}</h3>
                 <div class="mt-3">
-                    <jhi-exam-live-events-button />
+                    <jhi-exam-live-events-button [examStartDate]="exam.startDate!" />
                 </div>
             </div>
             <hr />
@@ -103,7 +103,7 @@
                 </div>
             </div>
             <ng-container #startButton>
-                <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
+                <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart || isFetching" type="submit" (click)="startExam()" class="btn btn-primary">
                     <span jhiTranslate="artemisApp.exam.startExam"></span>
                 </button>
                 @if (!startButtonEnabled) {

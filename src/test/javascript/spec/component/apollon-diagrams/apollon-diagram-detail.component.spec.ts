@@ -7,8 +7,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ApollonDiagramDetailComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-detail.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,6 +19,7 @@ import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -44,9 +44,10 @@ describe('ApollonDiagramDetail Component', () => {
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(testClassDiagram);
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
             declarations: [ApollonDiagramDetailComponent],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 AlertService,
                 JhiLanguageHelper,
                 ApollonDiagramService,

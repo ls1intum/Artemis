@@ -57,6 +57,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     @Input() inputExercise?: ModelingExercise;
     @Input() inputSubmission?: ModelingSubmission;
     @Input() inputParticipation?: StudentParticipation;
+    @Input() isExamSummary = false;
 
     private subscription: Subscription;
     private resultUpdateListener: Subscription;

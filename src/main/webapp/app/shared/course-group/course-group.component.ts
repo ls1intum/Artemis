@@ -120,10 +120,14 @@ export class CourseGroupComponent implements OnDestroy {
             tap((users) => {
                 setTimeout(() => {
                     for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
+                        const button = this.dataTable.typeaheadButtons[i];
                         const isAlreadyInGroup = this.allGroupUsers.map((user) => user.id).includes(users[i].id);
-                        this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInGroup ? 'users' : 'users-plus']);
+                        const hasIcon = button.querySelector('fa-icon');
+                        if (!hasIcon) {
+                            button.insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInGroup ? 'users' : 'users-plus']);
+                        }
                         if (isAlreadyInGroup) {
-                            this.dataTable.typeaheadButtons[i].classList.add(cssClasses.alreadyMember);
+                            button.classList.add(cssClasses.alreadyMember);
                         }
                     }
                 });

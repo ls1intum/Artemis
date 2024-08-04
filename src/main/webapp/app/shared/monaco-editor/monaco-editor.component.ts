@@ -202,6 +202,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.setModel(model);
     }
 
+    /**
+     * Updates the indentation size of the editor in the current model.
+     * @param indentSize The size of the indentation in spaces.
+     */
+    updateModelIndentationSize(indentSize: number): void {
+        this._editor.getModel()?.updateOptions({ indentSize });
+    }
+
     disposeModels() {
         this._editor.setModel(null);
         this.models.forEach((m) => m.dispose());
