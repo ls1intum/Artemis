@@ -56,10 +56,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             }
         });
         document.addEventListener('keydown', this.handleKeyboardEvents);
+        window.addEventListener('resize', this.resizeCanvasBasedOnContainer);
     }
 
     ngOnDestroy() {
         document.removeEventListener('keydown', this.handleKeyboardEvents);
+        window.removeEventListener('resize', this.resizeCanvasBasedOnContainer);
     }
 
     private async loadPdf(fileUrl: string) {
@@ -122,6 +124,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         return overlay;
     }
 
+    private resizeCanvasBasedOnContainer = () => {
+        if (this.isEnlargedView && this.enlargedCanvas) {
+            this.updateEnlargedCanvas(this.pdfContainer.nativeElement.querySelectorAll('.pdf-page-container canvas')[this.currentPage - 1]);
+        }
+    };
+
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement, pageIndex: number) {
         this.isEnlargedView = true;
         this.currentPage = pageIndex;
@@ -130,23 +138,29 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     private updateEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             if (this.isEnlargedView) {
                 const enlargedCanvas = this.enlargedCanvas.nativeElement;
                 const context = enlargedCanvas.getContext('2d');
+
                 const containerWidth = this.pdfContainer.nativeElement.clientWidth;
                 const containerHeight = this.pdfContainer.nativeElement.clientHeight;
 
-                const scaleFactor = Math.min(1, containerWidth / originalCanvas.width, containerHeight / originalCanvas.height);
+                const scaleX = containerWidth / originalCanvas.width;
+                const scaleY = containerHeight / originalCanvas.height;
+                const scaleFactor = Math.min(scaleX, scaleY);
+
                 enlargedCanvas.width = originalCanvas.width * scaleFactor;
                 enlargedCanvas.height = originalCanvas.height * scaleFactor;
 
                 context.clearRect(0, 0, enlargedCanvas.width, enlargedCanvas.height);
                 context.drawImage(originalCanvas, 0, 0, enlargedCanvas.width, enlargedCanvas.height);
 
-                enlargedCanvas.parentElement.style.top = `${this.pdfContainer.nativeElement.scrollTop}px`;
+                enlargedCanvas.style.position = 'absolute';
+                enlargedCanvas.style.left = `${(containerWidth - enlargedCanvas.width) / 2}px`;
+                enlargedCanvas.style.top = `${(containerHeight - enlargedCanvas.height) / 2}px`;
             }
-        }, 50);
+        });
     }
 
     handleKeyboardEvents = (event: KeyboardEvent) => {
