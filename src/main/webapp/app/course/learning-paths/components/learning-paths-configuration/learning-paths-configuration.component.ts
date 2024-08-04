@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCircleQuestion, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathApiService } from '../../services/learning-path-api.service';
 import { LearningPathsConfigurationDTO } from 'app/entities/competency/learning-path.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -16,7 +16,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     styleUrls: ['../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsConfigurationComponent {
-    protected readonly faCircleQuestion = faCircleQuestion;
     protected readonly faSpinner = faSpinner;
 
     private readonly learningPathApiService = inject(LearningPathApiService);
@@ -61,7 +60,6 @@ export class LearningPathsConfigurationComponent {
             try {
                 this.isSaving.set(true);
                 await this.learningPathApiService.updateLearningPathsConfiguration(this.courseId(), this.learningPathsConfiguration()!);
-                // TODO: Maybe add alert service success
                 this.isEditMode.set(false);
             } catch (error) {
                 onError(this.alertService, error);

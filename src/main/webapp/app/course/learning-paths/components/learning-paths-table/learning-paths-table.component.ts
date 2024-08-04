@@ -5,7 +5,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { onError } from 'app/shared/util/global.utils';
-import { faMaximize, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyGraphModalComponent } from 'app/course/learning-paths/components/competency-graph-modal/competency-graph-modal.component';
 
@@ -25,7 +25,6 @@ enum TableColumn {
 })
 export class LearningPathsTableComponent {
     protected readonly faSpinner = faSpinner;
-    protected readonly faMaximize = faMaximize;
 
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
@@ -82,11 +81,6 @@ export class LearningPathsTableComponent {
     }
 
     openCompetencyGraph(learningPathId: number): void {
-        const modalRef = this.modalService.open(CompetencyGraphModalComponent, {
-            size: 'xl',
-            backdrop: 'static',
-            windowClass: 'competency-graph-modal',
-        });
-        modalRef.componentInstance.learningPathId = signal<number>(learningPathId);
+        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, learningPathId);
     }
 }
