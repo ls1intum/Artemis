@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -48,7 +50,6 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -85,9 +86,6 @@ public class ProgrammingExerciseResultTestService {
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
-    private BuildLogEntryRepository buildLogEntryRepository;
 
     @Autowired
     private ProgrammingExerciseGradingService gradingService;
@@ -156,6 +154,18 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         programmingExerciseStudentParticipationStaticCodeAnalysis = participationUtilService
                 .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
+    }
+
+    public void setupProgrammingExerciseForExam(boolean isExamOver) {
+        var now = ZonedDateTime.now();
+        // We are either in the middle of the 2h exam or at the end of the exam
+        var startDate = now.minusHours(isExamOver ? 2 : 1);
+        var endDate = now.plusHours(isExamOver ? 0 : 1);
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), startDate, endDate,
+                now.plusHours(10), userPrefix + "student1", 120 * 60);
+        course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
     }
 
     public void tearDown() {
@@ -444,6 +454,21 @@ public class ProgrammingExerciseResultTestService {
             var feedback = resultDTO.feedbacks().getFirst();
             return feedback.id() != null && feedback.positive();
         }));
+    }
+
+    // Test
+    public void shouldNotNotifyStudentsAboutNewResults(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
+            throws Exception {
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+
+        var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
+        programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+
+        postResult(resultNotification);
+
+        // Verify that the websocket service does not send a message to the user within 2 seconds
+        verify(websocketMessagingService, after(2000).never()).sendMessageToUser(eq(userPrefix + "student1"), any(), any());
     }
 
     // Test
