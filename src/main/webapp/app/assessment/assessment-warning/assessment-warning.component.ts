@@ -17,10 +17,10 @@ import { Submission } from 'app/entities/submission.model';
                 <div class="card-header">
                     <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto" />
                     @if (isBeforeExerciseDueDate) {
-                        <span>{{ 'artemisApp.assessment.dashboard.warning' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.assessment.dashboard.warning"></span>
                     }
                     @if (!isBeforeExerciseDueDate) {
-                        <span>{{ 'artemisApp.assessment.dashboard.warningIndividual' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.assessment.dashboard.warningIndividual"></span>
                     }
                 </div>
             }

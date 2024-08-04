@@ -1,63 +1,65 @@
 <div class="table-responsive tutorial-groups-table">
     <div class="col-12 mb-2">
-        <div class="alert alert-info">
-            {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: timeZoneUsedForDisplay } }}
-        </div>
+        <div
+            class="alert alert-info"
+            jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation"
+            [translateValues]="{ timeZone: timeZoneUsedForDisplay }"
+        ></div>
     </div>
     <table class="table table-sm table-hover">
         <thead>
             <tr jhiSort [(predicate)]="sortingPredicate" [(ascending)]="ascending" (sortChange)="sortRows()">
                 @if (showIdColumn) {
                     <th jhiSortBy="id">
-                        <a class="th-link">{{ 'global.field.id' | artemisTranslate }}</a>
+                        <a class="th-link" jhiTranslate="global.field.id"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }
                 <th jhiSortBy="title">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.title' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.title"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 <th>
-                    <span>{{ 'artemisApp.entities.tutorialGroup.utilization' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.entities.tutorialGroup.utilization"></span>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelp' | artemisTranslate }}" />
                 </th>
                 <th jhiSortBy="capacityAndRegistrations">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.registrationsWithCapacity' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.registrationsWithCapacity"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 <th jhiSortBy="teachingAssistantName">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.teachingAssistant"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 <th jhiSortBy="dayAndTime">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.locationTime' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.locationTime"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 @if (mixOfOfflineAndOfflineTutorialGroups) {
                     <th jhiSortBy="isOnline" id="online-column">
-                        <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.isOnline' | artemisTranslate }}</a>
+                        <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.isOnline"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }
                 @if (mifOfDifferentLanguages) {
                     <th jhiSortBy="language" id="language-column">
-                        <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</a>
+                        <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.language"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }
                 @if (tutorialGroupsSplitAcrossMultipleCampuses) {
                     <th jhiSortBy="campus" id="campus-column">
-                        <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.campus' | artemisTranslate }}</a>
+                        <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.campus"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }
                 <th jhiSortBy="nextSession">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.nextSession' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.nextSession"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 @if (showChannelColumn) {
                     <th>
-                        <a class="th-link" [routerLink]="['/courses', course.id!, 'communication']">{{ 'artemisApp.entities.tutorialGroup.channel' | artemisTranslate }}</a>
+                        <a class="th-link" [routerLink]="['/courses', course.id!, 'communication']" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></a>
                     </th>
                 }
                 @if (extraColumn) {

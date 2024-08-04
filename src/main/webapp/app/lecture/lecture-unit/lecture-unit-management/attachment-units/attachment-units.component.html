@@ -77,12 +77,12 @@
         </table>
     </div>
     <div class="mt-3 mb-3">
-        <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlides' | artemisTranslate }}</span>
+        <span class="px-1" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.removeSlides"></span>
         <div>
             <div class="alert alert-warning mt-3 ml-3">
                 <ul>
-                    <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.firstLine' | artemisTranslate }}</li>
-                    <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.secondLine' | artemisTranslate }}</li>
+                    <li jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.firstLine"></li>
+                    <li jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.secondLine"></li>
                     <li>
                         {{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.thirdLine' | artemisTranslate }}
                         {{ removedSlidesNumbers.length > 0 ? removedSlidesNumbers : '-' }}
@@ -112,7 +112,7 @@
         [disabled]="units.length < 1"
         class="btn btn-primary"
     >
-        <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+        <span jhiTranslate="entity.action.submit"></span>
     </button>
     <button (click)="cancelSplit()" class="btn btn-default"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
     @if (invalidUnitTableMessage) {

@@ -1,6 +1,6 @@
 <div class="wrapper">
     <div class="header">
-        <h1>{{ 'featureOverview.title' | artemisTranslate }}</h1>
+        <h1 jhiTranslate="featureOverview.title"></h1>
     </div>
     <div class="content mx-auto">
         <div class="features-overview">
@@ -17,7 +17,7 @@
                 </div>
             }
         </div>
-        <h2>{{ 'featureOverview.featureDetails' | artemisTranslate }}</h2>
+        <h2 jhiTranslate="featureOverview.featureDetails"></h2>
         @for (feature of features; track feature) {
             <div id="feature{{ feature.id }}" class="feature-content">
                 <h3>{{ feature.title | artemisTranslate }}</h3>

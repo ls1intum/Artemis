@@ -2,39 +2,33 @@
     @if (course) {
         <div class="row">
             <div class="col-12">
-                <h1>{{ 'artemisApp.pages.checklist.title' | artemisTranslate }}</h1>
-                <p>
-                    {{ 'artemisApp.pages.checklist.explanation' | artemisTranslate }}
-                </p>
+                <h1 jhiTranslate="artemisApp.pages.checklist.title"></h1>
+                <p jhiTranslate="artemisApp.pages.checklist.explanation"></p>
             </div>
             <hr />
             <div class="col-12">
-                <p>{{ 'artemisApp.pages.checklist.timeZoneExplanation' | artemisTranslate }}</p>
+                <p jhiTranslate="artemisApp.pages.checklist.timeZoneExplanation"></p>
                 <div>
                     <jhi-checklist-check id="timeZone" [checkAttribute]="isTimeZoneConfigured" />
-                    <label class="form-check-label pe-4" for="timeZone">
-                        {{ 'artemisApp.pages.checklist.timeZone' | artemisTranslate }}
-                    </label>
+                    <label class="form-check-label pe-4" for="timeZone" jhiTranslate="artemisApp.pages.checklist.timeZone"></label>
                     <a [routerLink]="['/course-management', course.id!, 'edit']" class="btn btn-warning btn-md my-2">
-                        <fa-icon [icon]="faWrench" />&nbsp;<span>{{ 'artemisApp.pages.checklist.editCourse' | artemisTranslate }}</span>
+                        <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="artemisApp.pages.checklist.editCourse"></span>
                     </a>
                 </div>
             </div>
             <hr />
             <div class="col-12">
-                <p>{{ 'artemisApp.pages.checklist.configurationExplanation' | artemisTranslate }}</p>
+                <p jhiTranslate="artemisApp.pages.checklist.configurationExplanation"></p>
                 <table>
                     <jhi-checklist-check id="configuration" [checkAttribute]="isTutorialGroupConfigurationCreated" />
-                    <label class="form-check-label pe-4" for="configuration">
-                        {{ 'artemisApp.pages.checklist.configuration' | artemisTranslate }}
-                    </label>
+                    <label class="form-check-label pe-4" for="configuration" jhiTranslate="artemisApp.pages.checklist.configuration"></label>
                     @if (isTutorialGroupConfigurationCreated) {
                         <a
                             [routerLink]="['/course-management', course.id!, 'tutorial-groups', 'configuration', course.tutorialGroupsConfiguration!.id!, 'edit']"
                             class="btn btn-primary btn-md my-2"
                             [class.disabled]="!isTimeZoneConfigured"
                         >
-                            <fa-icon [icon]="faPlus" />&nbsp;<span>{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
+                            <fa-icon [icon]="faPlus" />&nbsp;<span jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
                         </a>
                     }
                     @if (!isTutorialGroupConfigurationCreated) {
@@ -43,7 +37,7 @@
                             class="btn btn-primary btn-md my-2"
                             [class.disabled]="!isTimeZoneConfigured"
                         >
-                            <fa-icon [icon]="faPlus" />&nbsp;<span>{{ 'artemisApp.pages.checklist.createConfiguration' | artemisTranslate }}</span>
+                            <fa-icon [icon]="faPlus" />&nbsp;<span jhiTranslate="artemisApp.pages.checklist.createConfiguration"></span>
                         </a>
                     }
                 </table>
@@ -51,7 +45,7 @@
             <hr />
             <div class="col-12">
                 <button [routerLink]="['/course-management', course.id!, 'tutorial-groups']" class="btn btn-primary btn-md my-2" [disabled]="!isFullyConfigured">
-                    <span>{{ 'artemisApp.pages.checklist.continueToManagement' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.pages.checklist.continueToManagement"></span>
                 </button>
             </div>
         </div>

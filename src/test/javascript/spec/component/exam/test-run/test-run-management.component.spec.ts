@@ -58,6 +58,7 @@ describe('Test Run Management Component', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

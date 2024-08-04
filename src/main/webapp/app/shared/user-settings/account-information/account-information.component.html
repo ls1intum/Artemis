@@ -1,51 +1,33 @@
-<h1>
-    <!--Account Information-->
-    {{ 'artemisApp.userSettings.accountInformation' | artemisTranslate }}
-</h1>
+<h1 jhiTranslate="artemisApp.userSettings.accountInformation"></h1>
 @if (currentUser) {
     <div class="list-group d-block">
         @if (currentUser.name) {
             <div class="list-group-item">
-                <dt>
-                    <!--Full Name-->
-                    {{ 'artemisApp.userSettings.accountInformationPage.fullName' | artemisTranslate }}
-                </dt>
+                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.fullName"></dt>
                 <dd>{{ currentUser.name }}</dd>
             </div>
         }
         @if (currentUser.login) {
             <div class="list-group-item">
-                <dt>
-                    <!--Login-->
-                    {{ 'artemisApp.userSettings.accountInformationPage.login' | artemisTranslate }}
-                </dt>
+                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.login"></dt>
                 <dd>{{ currentUser.login }}</dd>
             </div>
         }
         @if (currentUser.email) {
             <div class="list-group-item">
-                <dt>
-                    <!--Email-->
-                    {{ 'artemisApp.userSettings.accountInformationPage.email' | artemisTranslate }}
-                </dt>
+                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.email"></dt>
                 <dd>{{ currentUser.email }}</dd>
             </div>
         }
         @if (currentUser.visibleRegistrationNumber) {
             <div class="list-group-item">
-                <dt>
-                    <!--Registration Number-->
-                    {{ 'artemisApp.userSettings.accountInformationPage.registrationNumber' | artemisTranslate }}
-                </dt>
+                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.registrationNumber"></dt>
                 <dd>{{ currentUser.visibleRegistrationNumber }}</dd>
             </div>
         }
         @if (currentUser.createdDate) {
             <div class="list-group-item">
-                <dt>
-                    <!--Joined Artemis on-->
-                    {{ 'artemisApp.userSettings.accountInformationPage.joinedArtemis' | artemisTranslate }}
-                </dt>
+                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.joinedArtemis"></dt>
                 <dd>{{ currentUser.createdDate | artemisDate }}</dd>
             </div>
         }

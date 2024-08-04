@@ -1,32 +1,24 @@
 <div class="card">
     <div class="card-header">
-        <h5 class="mb-0">{{ 'artemisApp.competency.import.search.title' | artemisTranslate }}</h5>
+        <h5 class="mb-0" jhiTranslate="artemisApp.competency.import.search.title"></h5>
     </div>
     <div class="card-body pb-1">
         <div class="form-group">
-            <label for="competency-title-input">
-                {{ 'artemisApp.competency.import.search.labelCompetencyTitle' | artemisTranslate }}
-            </label>
+            <label for="competency-title-input" jhiTranslate="artemisApp.competency.import.search.labelCompetencyTitle"></label>
             <input id="competency-title-input" class="form-control" [(ngModel)]="search.title" (keydown.enter)="performSearch()" />
         </div>
         <div [ngbCollapse]="!advancedSearchEnabled">
             <div class="form-group">
-                <label for="competency-description-input">
-                    {{ 'artemisApp.competency.import.search.labelCompetencyDescription' | artemisTranslate }}
-                </label>
+                <label for="competency-description-input" jhiTranslate="artemisApp.competency.import.search.labelCompetencyDescription"></label>
                 <textarea id="competency-description-input" rows="3" class="form-control" [(ngModel)]="search.description" (keydown.enter)="performSearch()"></textarea>
             </div>
             <div class="row">
                 <div class="form-group col">
-                    <label for="course-title-input">
-                        {{ 'artemisApp.competency.import.search.labelCourseTitle' | artemisTranslate }}
-                    </label>
+                    <label for="course-title-input" jhiTranslate="artemisApp.competency.import.search.labelCourseTitle"></label>
                     <input id="course-title-input" class="form-control" [(ngModel)]="search.courseTitle" (keydown.enter)="performSearch()" />
                 </div>
                 <div class="form-group col">
-                    <label for="course-semester-select">
-                        {{ 'artemisApp.competency.import.search.labelCourseSemester' | artemisTranslate }}
-                    </label>
+                    <label for="course-semester-select" jhiTranslate="artemisApp.competency.import.search.labelCourseSemester"></label>
                     <select id="course-semester-select" class="form-select" [(ngModel)]="search.semester" (keydown.enter)="performSearch()">
                         @for (semester of semesters; track semester) {
                             <option [value]="semester">{{ semester }}</option>
@@ -42,9 +34,9 @@
         <div class="d-flex flex-row justify-content-center">
             <div id="toggleAdvancedSearch" class="clickable" (click)="toggleAdvancedSearch()">
                 <fa-icon [icon]="advancedSearchEnabled ? faChevronUp : faChevronDown" />
-                <span>{{
-                    (advancedSearchEnabled ? 'artemisApp.competency.import.search.hideAdvancedSearch' : 'artemisApp.competency.import.search.showAdvancedSearch') | artemisTranslate
-                }}</span>
+                <span
+                    jhiTranslate="{{ advancedSearchEnabled ? 'artemisApp.competency.import.search.hideAdvancedSearch' : 'artemisApp.competency.import.search.showAdvancedSearch' }}"
+                ></span>
             </div>
         </div>
     </div>

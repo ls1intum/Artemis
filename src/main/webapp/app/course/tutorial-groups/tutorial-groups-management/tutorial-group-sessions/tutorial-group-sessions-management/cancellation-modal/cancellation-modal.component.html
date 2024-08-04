@@ -21,16 +21,15 @@
     @if (tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE) {
         <form [formGroup]="form">
             <div class="form-group">
-                <label for="reason">{{ 'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.explanation' | artemisTranslate }}</label>
+                <label for="reason" jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.explanation"></label>
                 <textarea class="form-control" id="reason" rows="2" formControlName="reason"></textarea>
                 @if (reasonControl?.invalid && (reasonControl?.dirty || reasonControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (reasonControl?.errors?.maxlength) {
-                            <div>
-                                {{
-                                    'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.maxLengthValidationError' | artemisTranslate: { max: '256' }
-                                }}
-                            </div>
+                            <div
+                                jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.maxLengthValidationError"
+                                [translateValues]="{ max: '256' }"
+                            ></div>
                         }
                     </div>
                 }
@@ -39,8 +38,13 @@
     }
 </div>
 <div class="modal-footer">
-    <button id="dismiss-button" type="button" class="btn btn-outline-secondary" (click)="activeModal.dismiss()">{{ 'global.form.cancel' | artemisTranslate }}</button>
-    <button id="cancel-activate-button" type="button" class="btn btn-success" (click)="cancelOrActivate()" [disabled]="!isSubmitPossible">
-        {{ 'global.form.confirm' | artemisTranslate }}
-    </button>
+    <button id="dismiss-button" type="button" class="btn btn-outline-secondary" (click)="activeModal.dismiss()" jhiTranslate="global.form.cancel"></button>
+    <button
+        id="cancel-activate-button"
+        type="button"
+        class="btn btn-success"
+        (click)="cancelOrActivate()"
+        [disabled]="!isSubmitPossible"
+        jhiTranslate="global.form.confirm"
+    ></button>
 </div>

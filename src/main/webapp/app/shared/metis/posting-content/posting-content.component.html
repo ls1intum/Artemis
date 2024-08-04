@@ -5,9 +5,7 @@
             <span class="clickable p-0">
                 <fa-icon [icon]="showContent ? faAngleUp : faAngleDown" [size]="'xs'" [ngStyle]="{ color: '#6a737d' }" (click)="showContent = !showContent" />
             </span>
-            <span class="toggle-content">
-                {{ showContent ? ('artemisApp.metis.post.collapseContent' | artemisTranslate) : ('artemisApp.metis.post.showContent' | artemisTranslate) }}
-            </span>
+            <span class="toggle-content" jhiTranslate="{{ showContent ? 'artemisApp.metis.post.collapseContent' : 'artemisApp.metis.post.showContent' }}"></span>
             @if (showContent) {
                 <div>
                     @for (postingContentPart of postingContentParts; track postingContentPart) {
@@ -18,7 +16,7 @@
                         />
                     }
                     @if (isEdited) {
-                        <span class="edited-text">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>
+                        <span class="edited-text" jhiTranslate="artemisApp.metis.edited"></span>
                     }
                 </div>
             }
@@ -35,7 +33,7 @@
                 />
             }
             @if (isEdited) {
-                <span class="edited-text">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>
+                <span class="edited-text" jhiTranslate="artemisApp.metis.edited"></span>
             }
             <jhi-link-preview-container [data]="content" [author]="author" [posting]="posting" [isEdited]="isEdited" [isReply]="isReply" />
         </div>

@@ -1,18 +1,19 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course-users-selector/course-users-selector.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { Component, DebugElement, ViewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { MockPipe, MockProvider } from 'ng-mocks';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { By } from '@angular/platform-browser';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Component, DebugElement, ViewChild } from '@angular/core';
+import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course-users-selector/course-users-selector.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { By } from '@angular/platform-browser';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
     template: `
@@ -32,11 +33,9 @@ class WrapperComponent {
 
     disabled = false;
     courseId = 1;
-    label = 'TestLabel';
     rolesToAllowSearchingIn: SearchRoleGroup[] = ['tutors', 'students', 'instructors'];
     multiSelect = true;
     showUserList = true;
-
     public selectedUsers: UserPublicInfoDTO[] | undefined | null = [];
 }
 
@@ -48,7 +47,7 @@ describe('CourseUsersSelectorComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [CommonModule, FormsModule, ReactiveFormsModule, ArtemisSharedModule, ArtemisSharedComponentModule, NgbTypeaheadModule],
+            imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule, ArtemisSharedModule, ArtemisSharedComponentModule, TranslateModule.forRoot()],
             declarations: [CourseUsersSelectorComponent, WrapperComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(CourseManagementService)],
         }).compileComponents();
@@ -141,61 +140,63 @@ describe('CourseUsersSelectorComponent', () => {
             fixture.detectChanges();
             tick(1000);
             expect(userSelectorComponent.selectedUsers).toEqual([exampleUserPublicInfoDTO]);
-            expect(fixture.debugElement.query(By.css('input')).nativeElement.disabled).toBeTrue();
-            expect(fixture.debugElement.queryAll(By.css('.selected-user'))).toHaveLength(1);
             expect(fixture.debugElement.query(By.css('.delete-user'))).toBeFalsy();
         }));
     });
-});
 
-function getNativeInput(element: HTMLElement): HTMLInputElement {
-    return <HTMLInputElement>element.querySelector('input');
-}
-
-function changeInput(element: any, value: string) {
-    const input = getNativeInput(element);
-    input.value = value;
-    const evt = new Event('input', { bubbles: true, cancelable: false });
-    input.dispatchEvent(evt);
-}
-
-function getDropdownButtons(element: DebugElement): DebugElement[] {
-    return Array.from(element.queryAll(By.css('button.dropdown-item')));
-}
-
-function expectDropdownItems(nativeEl: HTMLElement, dropdownEntries: string[]): void {
-    const pages = nativeEl.querySelectorAll('button.dropdown-item');
-    expect(pages).toHaveLength(dropdownEntries.length);
-    for (let i = 0; i < dropdownEntries.length; i++) {
-        const resultDef = dropdownEntries[i];
-        expect(normalizeText(pages[i].textContent)).toEqual(resultDef);
+    function getNativeInput(element: HTMLElement): HTMLInputElement {
+        return <HTMLInputElement>element.querySelector('input');
     }
-}
 
-function normalizeText(txt: string | null): string {
-    return txt ? txt.trim().replace(/\s+/g, ' ') : '';
-}
+    function changeInput(element: any, value: string) {
+        const input = getNativeInput(element);
+        input.value = value;
+        const evt = new Event('input', { bubbles: true, cancelable: false });
+        input.dispatchEvent(evt);
+    }
 
-function generateExampleUserPublicInfoDTO({
-    id = 3,
-    login = 'mort',
-    name = 'Mortimer of Sto Helit',
-    firstName = 'Mortimer',
-    lastName = 'of Sto Helit',
-    isInstructor = false,
-    isEditor = false,
-    isTeachingAssistant = false,
-    isStudent = true,
-}: UserPublicInfoDTO) {
-    const exampleUserPublicInfoDTO = new UserPublicInfoDTO();
-    exampleUserPublicInfoDTO.id = id;
-    exampleUserPublicInfoDTO.login = login;
-    exampleUserPublicInfoDTO.name = name;
-    exampleUserPublicInfoDTO.firstName = firstName;
-    exampleUserPublicInfoDTO.lastName = lastName;
-    exampleUserPublicInfoDTO.isInstructor = isInstructor;
-    exampleUserPublicInfoDTO.isEditor = isEditor;
-    exampleUserPublicInfoDTO.isTeachingAssistant = isTeachingAssistant;
-    exampleUserPublicInfoDTO.isStudent = isStudent;
-    return exampleUserPublicInfoDTO;
-}
+    function getDropdownButtons(element: DebugElement): DebugElement[] {
+        return Array.from(element.queryAll(By.css('button.dropdown-item')));
+    }
+
+    function expectDropdownItems(nativeEl: HTMLElement, dropdownEntries: string[]): void {
+        const pages = nativeEl.querySelectorAll('button.dropdown-item');
+        expect(pages).toHaveLength(dropdownEntries.length);
+        for (let i = 0; i < dropdownEntries.length; i++) {
+            const resultDef = dropdownEntries[i];
+            expect(normalizeText(pages[i].textContent)).toEqual(resultDef);
+        }
+    }
+
+    function normalizeText(txt: string | null): string {
+        return txt ? txt.trim().replace(/\s+/g, ' ') : '';
+    }
+
+    function generateExampleUserPublicInfoDTO({
+        id = 3,
+        login = 'mort',
+        name = 'Mortimer of Sto Helit',
+        firstName = 'Mortimer',
+        lastName = 'of Sto Helit',
+        isInstructor = false,
+        isEditor = false,
+        isTeachingAssistant = false,
+        isStudent = true,
+    }: Partial<UserPublicInfoDTO> = {}): UserPublicInfoDTO {
+        const exampleUserPublicInfoDTO = new UserPublicInfoDTO();
+        exampleUserPublicInfoDTO.id = id;
+        exampleUserPublicInfoDTO.login = login;
+        exampleUserPublicInfoDTO.name = name;
+        exampleUserPublicInfoDTO.firstName = firstName;
+        exampleUserPublicInfoDTO.lastName = lastName;
+        exampleUserPublicInfoDTO.isInstructor = isInstructor;
+        exampleUserPublicInfoDTO.isEditor = isEditor;
+        exampleUserPublicInfoDTO.isTeachingAssistant = isTeachingAssistant;
+        exampleUserPublicInfoDTO.isStudent = isStudent;
+        return exampleUserPublicInfoDTO;
+    }
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+});

@@ -30,9 +30,8 @@
                                 ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate)
                                 : ''
                         }}"
-                    >
-                        {{ 'artemisApp.complaint.moreInfo' | artemisTranslate }}
-                    </button>
+                        jhiTranslate="artemisApp.complaint.moreInfo"
+                    ></button>
                 }
                 @if (!isExamMode && course?.requestMoreFeedbackEnabled) {
                     <button
@@ -41,9 +40,8 @@
                         (click)="formComplaintType = ComplaintType.MORE_FEEDBACK"
                         [disabled]="!timeOfFeedbackRequestValid"
                         title="{{ !timeOfFeedbackRequestValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | artemisTranslate) : '' }}"
-                    >
-                        {{ 'artemisApp.moreFeedback.button' | artemisTranslate }}
-                    </button>
+                        jhiTranslate="artemisApp.moreFeedback.button"
+                    ></button>
                 }
             </div>
         }

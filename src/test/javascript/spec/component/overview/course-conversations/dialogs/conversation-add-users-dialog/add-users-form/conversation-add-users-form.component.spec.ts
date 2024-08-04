@@ -5,7 +5,7 @@ import {
 } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../helpers/conversationExampleModels';
@@ -13,6 +13,7 @@ import { Course } from 'app/entities/course.model';
 import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { By } from '@angular/platform-browser';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 examples.forEach((activeConversation) => {
@@ -24,7 +25,7 @@ examples.forEach((activeConversation) => {
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
                 imports: [ReactiveFormsModule, FormsModule],
-                declarations: [ConversationAddUsersFormComponent, MockComponent(CourseUsersSelectorComponent), MockPipe(ArtemisTranslatePipe)],
+                declarations: [ConversationAddUsersFormComponent, MockComponent(CourseUsersSelectorComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             }).compileComponents();
         }));
 

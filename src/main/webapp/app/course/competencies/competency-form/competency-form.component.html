@@ -15,19 +15,16 @@
                         @if (titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)) {
                             <div class="alert alert-danger">
                                 @if (titleControl?.errors?.required) {
-                                    <div>
-                                        {{ 'artemisApp.competency.createCompetency.titleRequiredValidationError' | artemisTranslate }}
-                                    </div>
+                                    <div jhiTranslate="artemisApp.competency.createCompetency.titleRequiredValidationError"></div>
                                 }
                                 @if (titleControl?.errors?.maxlength) {
-                                    <div>
-                                        {{ 'artemisApp.competency.createCompetency.titleMaxLengthValidationError' | artemisTranslate: { max: competencyValidators.TITLE_MAX } }}
-                                    </div>
+                                    <div
+                                        jhiTranslate="artemisApp.competency.createCompetency.titleMaxLengthValidationError"
+                                        [translateValues]="{ max: competencyValidators.TITLE_MAX }"
+                                    ></div>
                                 }
                                 @if (titleControl?.errors?.titleUnique) {
-                                    <div>
-                                        {{ 'artemisApp.competency.createCompetency.titleUniqueValidationError' | artemisTranslate }}
-                                    </div>
+                                    <div jhiTranslate="artemisApp.competency.createCompetency.titleUniqueValidationError"></div>
                                 }
                             </div>
                         }
@@ -35,7 +32,7 @@
                 }
                 @if (!isInConnectMode) {
                     <div class="form-group">
-                        <label for="description">{{ 'artemisApp.competency.description' | artemisTranslate }}</label>
+                        <label for="description" jhiTranslate="artemisApp.competency.description"></label>
                         <jhi-markdown-editor
                             [markdown]="descriptionControl?.value"
                             (markdownChange)="updateDescriptionControl($event)"
@@ -46,12 +43,10 @@
                         @if (descriptionControl?.invalid && descriptionControl?.dirty) {
                             <div class="alert alert-danger">
                                 @if (descriptionControl?.errors?.maxlength) {
-                                    <div>
-                                        {{
-                                            'artemisApp.competency.createCompetency.descriptionMaxLengthValidationError'
-                                                | artemisTranslate: { max: competencyValidators.DESCRIPTION_MAX }
-                                        }}
-                                    </div>
+                                    <div
+                                        jhiTranslate="artemisApp.competency.createCompetency.descriptionMaxLengthValidationError"
+                                        [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
+                                    ></div>
                                 }
                             </div>
                         }
@@ -93,7 +88,7 @@
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.competency.optionalDescription' | artemisTranslate }}" />
                 </div>
                 <div>
-                    <label>{{ 'artemisApp.competency.createCompetency.connectWithLectureUnits' | artemisTranslate }}</label>
+                    <label jhiTranslate="artemisApp.competency.createCompetency.connectWithLectureUnits"></label>
                     @if (lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0) {
                         <div [hidden]="isInSingleLectureMode" ngbDropdown class="mb-2">
                             <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
@@ -112,14 +107,10 @@
                             </div>
                         </div>
                     } @else {
-                        <div class="alert alert-info">
-                            {{ 'artemisApp.competency.createCompetency.noLectures' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-info" jhiTranslate="artemisApp.competency.createCompetency.noLectures"></div>
                     }
                     <ng-template #noLectures>
-                        <div class="alert alert-info">
-                            {{ 'artemisApp.competency.createCompetency.noLectures' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-info" jhiTranslate="artemisApp.competency.createCompetency.noLectures"></div>
                     </ng-template>
                     @if (selectedLectureInDropdown) {
                         <div class="table-responsive">
@@ -127,15 +118,9 @@
                                 <thead class="thead-dark">
                                     <tr>
                                         <th>id</th>
-                                        <th>
-                                            {{ 'artemisApp.competency.createCompetency.lectureUnitTable.type' | artemisTranslate }}
-                                        </th>
-                                        <th>
-                                            {{ 'artemisApp.competency.createCompetency.lectureUnitTable.name' | artemisTranslate }}
-                                        </th>
-                                        <th>
-                                            {{ 'artemisApp.competency.createCompetency.lectureUnitTable.releaseDate' | artemisTranslate }}
-                                        </th>
+                                        <th jhiTranslate="artemisApp.competency.createCompetency.lectureUnitTable.type"></th>
+                                        <th jhiTranslate="artemisApp.competency.createCompetency.lectureUnitTable.name"></th>
+                                        <th jhiTranslate="artemisApp.competency.createCompetency.lectureUnitTable.releaseDate"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -164,7 +149,7 @@
                 </div>
                 <div>
                     <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">
-                        <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                        <span jhiTranslate="entity.action.submit"></span>
                     </button>
                     @if (hasCancelButton) {
                         <button type="button" (click)="cancelForm()" class="btn btn-default">

@@ -11,9 +11,7 @@
 </div>
 @if (studentExam && !studentExam.submitted) {
     <div class="alert alert-danger text-center">
-        <strong>
-            {{ 'artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam' | artemisTranslate }}
-        </strong>
+        <strong jhiTranslate="artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam"></strong>
     </div>
 }
 @if (studentExam?.exam) {
@@ -42,9 +40,7 @@
         {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
     </div>
 }
-<h3>
-    {{ 'artemisApp.exam.exercises' | artemisTranslate }}
-</h3>
+<h3 jhiTranslate="artemisApp.exam.exercises"></h3>
 @for (exercise of studentExam?.exercises; track exercise; let i = $index) {
     <div [id]="'exercise-' + exercise.id">
         <jhi-collapsible-card [isCardContentCollapsed]="exerciseInfos[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos[exercise.id!])">

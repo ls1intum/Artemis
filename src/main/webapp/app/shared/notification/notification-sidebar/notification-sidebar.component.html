@@ -22,9 +22,7 @@
                         <fa-icon class="ng-fa-icon" [icon]="faCog" />
                     </a>
                 </div>
-                <h5 class="mb-3 text-center fw-medium">
-                    {{ 'artemisApp.notification.notifications' | artemisTranslate }}
-                </h5>
+                <h5 class="mb-3 text-center fw-medium" jhiTranslate="artemisApp.notification.notifications"></h5>
                 <button class="close header-icon border-0 bg-transparent pe-2" (click)="toggleSidebar()">
                     <fa-icon class="ng-fa-icon" [icon]="faTimes" />
                 </button>
@@ -37,16 +35,16 @@
                         <fa-icon class="ng-fa-icon" [icon]="faEye" [ngbTooltip]="'artemisApp.notification.showAllSavedNotifications' | artemisTranslate" />
                     }
                 </button>
-                <small class="text-body-secondary">
-                    {{ 'artemisApp.notification.loadedNotificationCount' | artemisTranslate: { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
-                </small>
+                <small
+                    class="text-body-secondary"
+                    jhiTranslate="artemisApp.notification.loadedNotificationCount"
+                    [translateValues]="{ loaded: sortedNotifications?.length || '0', total: totalNotifications }"
+                ></small>
             </div>
         </div>
         <div id="notification-sidebar-container" (scroll)="onScroll()">
             @if (error) {
-                <div class="alert alert-danger mx-3" role="alert">
-                    {{ 'artemisApp.notification.unexpectedError' | artemisTranslate }}
-                </div>
+                <div class="alert alert-danger mx-3" role="alert" jhiTranslate="artemisApp.notification.unexpectedError"></div>
             }
             @for (notification of sortedNotifications; track notification) {
                 <div class="notification-item p-3" (click)="startNotification(notification)">
@@ -76,14 +74,10 @@
                 </div>
             }
             @if (sortedNotifications.length > 0 && sortedNotifications.length >= totalNotifications) {
-                <small class="all-loaded text-center d-block mx-3 my-2">
-                    {{ 'artemisApp.notification.allLoaded' | artemisTranslate }}
-                </small>
+                <small class="all-loaded text-center d-block mx-3 my-2" jhiTranslate="artemisApp.notification.allLoaded"></small>
             }
             @if (sortedNotifications && sortedNotifications.length === 0) {
-                <span class="no-notifications">
-                    {{ 'artemisApp.notification.noNotifications' | artemisTranslate }}
-                </span>
+                <span class="no-notifications" jhiTranslate="artemisApp.notification.noNotifications"></span>
             }
         </div>
     </div>

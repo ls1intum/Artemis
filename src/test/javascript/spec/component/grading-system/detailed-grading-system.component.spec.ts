@@ -22,6 +22,7 @@ import { MockCourseManagementService } from '../../helpers/mocks/service/mock-co
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PresentationType } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 jest.mock('export-to-csv', () => {
     return {
@@ -86,6 +87,7 @@ describe('Detailed Grading System Component', () => {
                 MockComponent(HelpIconComponent),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

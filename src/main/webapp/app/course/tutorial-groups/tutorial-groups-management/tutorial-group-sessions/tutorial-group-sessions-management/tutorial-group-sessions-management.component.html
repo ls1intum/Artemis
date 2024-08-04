@@ -9,7 +9,7 @@
                 <div class="col-12" class="modal-body">
                     <!-- Schedule -->
                     <dt>
-                        <span>{{ 'artemisApp.entities.tutorialGroup.schedule' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.entities.tutorialGroup.schedule"></span>
                     </dt>
                     <dd>
                         @if (tutorialGroup.tutorialGroupSchedule) {
@@ -22,10 +22,10 @@
                             }}</span>
                             <br />
                             @if (tutorialGroup.isOnline) {
-                                <span>{{ 'artemisApp.forms.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.forms.scheduleForm.locationInput.labelOnline"></span>
                             }
                             @if (!tutorialGroup.isOnline) {
-                                <span>{{ 'artemisApp.forms.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.forms.scheduleForm.locationInput.labelOffline"></span>
                             }
                             : {{ tutorialGroup.tutorialGroupSchedule?.location }}
                             <br />
@@ -38,7 +38,7 @@
                                 }}
                             </span>
                         } @else {
-                            <span>{{ 'artemisApp.pages.tutorialGroupDetail.scheduleNotSet' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.scheduleNotSet"></span>
                         }
                         <br />
                     </dd>
@@ -47,7 +47,7 @@
             <div class="my-2">
                 <button type="button" id="create-session-button" class="btn btn-primary" (click)="openCreateSessionDialog($event)">
                     <fa-icon [icon]="faPlus" />
-                    <span>{{ 'artemisApp.pages.tutorialGroupSessionManagement.createSessionButton' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.createSessionButton"></span>
                 </button>
             </div>
             <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3 modal-body">

@@ -20,12 +20,8 @@
         <div left-body class="text-editor-grid mt-4 ps-2 pb-2 w-100">
             <div class="grid-area-main">
                 <div>
-                    <span class="badge bg-primary mb-2">
-                        {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
-                    </span>
-                    <span class="badge bg-primary mb-2">
-                        {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
-                    </span>
+                    <span class="badge bg-primary mb-2" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
+                    <span class="badge bg-primary mb-2" jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount }"></span>
                 </div>
                 <ng-container>
                     <textarea

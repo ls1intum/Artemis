@@ -1,8 +1,8 @@
 @if (complaint) {
     @if (complaint?.complaintType === ComplaintType.COMPLAINT) {
-        <div class="alert alert-info">{{ 'artemisApp.complaint.hint' | artemisTranslate }}</div>
+        <div class="alert alert-info" jhiTranslate="artemisApp.complaint.hint"></div>
     }
     @if (complaint?.complaintType === ComplaintType.MORE_FEEDBACK) {
-        <div class="alert alert-info">{{ 'artemisApp.moreFeedback.hint' | artemisTranslate }}</div>
+        <div class="alert alert-info" jhiTranslate="artemisApp.moreFeedback.hint"></div>
     }
 }

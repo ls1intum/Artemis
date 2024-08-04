@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -46,6 +46,7 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena-service';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -160,6 +161,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },

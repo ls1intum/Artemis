@@ -7,11 +7,11 @@
                 <div class="ms-auto text-truncate justify-content-end">
                     <a class="btn btn-primary me-1" (click)="openImportModal()">
                         <fa-icon [icon]="faFileImport" />
-                        <span>{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.examManagement.importExam"></span>
                     </a>
                     <a class="btn btn-primary jh-create-entity create-exam" id="create-exam" [routerLink]="['new']">
                         <fa-icon [icon]="faPlus" />
-                        <span>{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.examManagement.createExam"></span>
                     </a>
                 </div>
             }
@@ -24,15 +24,15 @@
                     <thead>
                         <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
                             <th class="d-md-table-cell" jhiSortBy="id">
-                                <span>{{ 'global.field.id' | artemisTranslate }}</span>
+                                <span jhiTranslate="global.field.id"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="title">
-                                <span>{{ 'artemisApp.exam.title' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.exam.title"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th class="d-md-table-cell">
-                                <span>{{ 'artemisApp.examStatus.columnTitle' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.examStatus.columnTitle"></span>
                             </th>
                             <th></th>
                         </tr>
@@ -61,10 +61,10 @@
                                             </span>
                                         }
                                         @if (!exam.testExam) {
-                                            <div class="badge bg-success">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</div>
+                                            <div class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></div>
                                         }
                                         @if (exam.testExam) {
-                                            <div class="badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</div>
+                                            <div class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></div>
                                         }
                                     </ng-container>
                                 </td>
@@ -82,7 +82,7 @@
                                                 >
                                                     <div>
                                                         <fa-icon [icon]="faListAlt" />
-                                                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
+                                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.exerciseGroups"></span>
                                                     </div>
                                                 </a>
                                             }
@@ -94,7 +94,7 @@
                                                 >
                                                     <div>
                                                         <fa-icon [icon]="faEye" />
-                                                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
+                                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
                                                     </div>
                                                 </a>
                                             }
@@ -106,7 +106,7 @@
                                                 >
                                                     <div>
                                                         <fa-icon [icon]="faThList" />
-                                                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
+                                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
                                                     </div>
                                                 </a>
                                             }
@@ -114,7 +114,7 @@
                                                 <a [routerLink]="[exam.id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1 d-flex align-items-center justify-content-center">
                                                     <div>
                                                         <fa-icon [icon]="faWrench" />
-                                                        <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                                     </div>
                                                 </a>
                                             }
@@ -123,7 +123,7 @@
                                             @if (course.isAtLeastInstructor) {
                                                 <a [routerLink]="[exam.id, 'test-runs']" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
                                                     <fa-icon [icon]="faUser" />
-                                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
+                                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
                                                 </a>
                                             }
                                             @if (!exam.testExam && course.isAtLeastInstructor) {
@@ -133,19 +133,19 @@
                                                     id="student-button-{{ exam.id }}"
                                                 >
                                                     <fa-icon [icon]="faUser" />
-                                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
+                                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.students"></span>
                                                 </a>
                                             }
                                             @if (course.isAtLeastInstructor) {
                                                 <a [routerLink]="['/course-management', course.id, 'exams', exam.id, 'scores']" class="btn btn-info btn-sm me-1 mb-1">
                                                     <fa-icon [icon]="faEye" />
-                                                    <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
+                                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores"></span>
                                                 </a>
                                             }
                                             @if (course.isAtLeastInstructor) {
                                                 <a [routerLink]="[exam.id]" class="btn btn-info btn-sm me-1 mb-1" id="checklist-button-{{ exam.id }}">
                                                     <fa-icon [icon]="faThList" />
-                                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examChecklist' | artemisTranslate }}</span>
+                                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.examChecklist"></span>
                                                 </a>
                                             }
                                         </div>

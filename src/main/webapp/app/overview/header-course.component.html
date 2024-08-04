@@ -17,9 +17,7 @@
                     }
                 </div>
                 <div class="d-flex align-items-center justify-content-center manage-button-container" id="student-view-button">
-                    <a class="btn btn-secondary manage-button" [routerLink]="['/courses', course.id]">
-                        {{ 'artemisApp.courseOverview.studentView' | artemisTranslate }}
-                    </a>
+                    <a class="btn btn-secondary manage-button" [routerLink]="['/courses', course.id]" jhiTranslate="artemisApp.courseOverview.studentView"></a>
                 </div>
             </div>
         </div>

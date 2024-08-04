@@ -6,10 +6,7 @@
         </h1>
         <div class="d-inline-flex userSettings-info">
             <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-            <span class="ps-1">
-                <!-- Info text explaining that these settings also filter the notification sidebar -->
-                {{ 'artemisApp.userSettings.notificationSettingsFilterInfo' | artemisTranslate }}
-            </span>
+            <span class="ps-1" jhiTranslate="artemisApp.userSettings.notificationSettingsFilterInfo"></span>
         </div>
     </div>
     @if (settingsChanged) {

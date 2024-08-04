@@ -5,7 +5,7 @@
                 Example Modeling Submission for Exercise {{ exercise?.title }}
             </h2>
             @if (toComplete) {
-                <h5 class="fw-light">{{ 'artemisApp.exampleSubmission.home.assessmentTraining' | artemisTranslate }}</h5>
+                <h5 class="fw-light" jhiTranslate="artemisApp.exampleSubmission.home.assessmentTraining"></h5>
             }
             @if (assessmentMode) {
                 <p jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction"></p>
@@ -17,7 +17,7 @@
                     <div class="d-flex justify-content-end flex-wrap align-items-center">
                         <div>
                             <div class="text-start">
-                                <span>{{ 'artemisApp.exampleSubmission.assessmentTraining' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.exampleSubmission.assessmentTraining"></span>
                                 <jhi-help-icon [text]="'artemisApp.exampleSubmission.selectModelExplanation'" />
                             </div>
                             <div class="btn-group" role="group">
@@ -30,9 +30,7 @@
                                     [value]="ExampleSubmissionMode.READ_AND_CONFIRM"
                                     [(ngModel)]="selectedMode"
                                 />
-                                <label class="btn btn-outline-secondary" for="read-and-confirm-button">{{
-                                    'artemisApp.exampleSubmission.readAndConfirm' | artemisTranslate
-                                }}</label>
+                                <label class="btn btn-outline-secondary" for="read-and-confirm-button" jhiTranslate="artemisApp.exampleSubmission.readAndConfirm"></label>
                                 <input
                                     type="radio"
                                     class="btn-check"
@@ -42,7 +40,7 @@
                                     [value]="ExampleSubmissionMode.ASSESS_CORRECTLY"
                                     [(ngModel)]="selectedMode"
                                 />
-                                <label class="btn btn-outline-secondary" for="only-not-imported">{{ 'artemisApp.exampleSubmission.assessCorrectly' | artemisTranslate }}</label>
+                                <label class="btn btn-outline-secondary" for="only-not-imported" jhiTranslate="artemisApp.exampleSubmission.assessCorrectly"></label>
                             </div>
                         </div>
                         <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ms-2 button-resize">
@@ -134,7 +132,7 @@
                     @if (highlightedElements && highlightedElements.size > 0) {
                         <div class="col">
                             <div [style.background-color]="highlightColor" class="my-2 text-center">
-                                <span>{{ 'artemisApp.exampleSubmission.modelElementHint' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.exampleSubmission.modelElementHint"></span>
                             </div>
                         </div>
                     }
