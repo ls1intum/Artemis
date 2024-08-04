@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240804144500" author="entholzer">
+        <!--
+            Change Set for creating a new table for storing the JOL values of the competencies
+        -->
+        <createTable tableName="vcs_access_log">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="vcs_access_logPK"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="participation_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operation" type="varchar(5)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mechanism" type="varchar(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ip_address" type="varchar(45)">
+                <constraints nullable="true"/>
+            </column>
+            <column defaultValueComputed="CURRENT_TIMESTAMP" name="timestamp" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="user_id"
+                                 baseTableName="vcs_access_log"
+                                 constraintName="FK_vcs_access_log_user"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="participation_id"
+                                 baseTableName="vcs_access_log"
+                                 constraintName="FK_vcs_access_log_participation"
+                                 referencedColumnNames="id"
+                                 referencedTableName="participation"/>
+        <createIndex indexName="idx_vcs_access_log_user_participation" tableName="vcs_access_log">
+            <column name="user_id"/>
+            <column name="participation_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

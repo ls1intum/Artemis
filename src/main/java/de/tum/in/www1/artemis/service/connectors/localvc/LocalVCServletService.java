@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.VcsAccessLogService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.programming.AuxiliaryRepositoryService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
@@ -93,6 +94,8 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
+    private final VcsAccessLogService vcsAccessLogService;
+
     private static URL localVCBaseUrl;
 
     @Value("${artemis.version-control.url}")
@@ -122,7 +125,7 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService) {
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService, VcsAccessLogService vcsAccessLogService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -134,6 +137,7 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
+        this.vcsAccessLogService = vcsAccessLogService;
     }
 
     /**
@@ -204,7 +208,7 @@ public class LocalVCServletService {
                 return;
             }
         }
-
+        String authenticationMechanism = ""; // todo get actual authentication mechanism here: Password / Participation Token / User token
         User user = authenticateUser(authorizationHeader);
 
         // Optimization.
@@ -231,6 +235,10 @@ public class LocalVCServletService {
         authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri.isPracticeRepository());
 
         request.setAttribute("user", user);
+
+        // Storing the access to the repository in the VCS access log
+        ProgrammingExerciseParticipation participation = null; // Todo get actual participation
+        vcsAccessLogService.storeOperation(user, participation, request.getRequestURI(), authenticationMechanism, request);
 
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
