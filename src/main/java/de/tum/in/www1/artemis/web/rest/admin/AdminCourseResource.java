@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseDeletionSummaryDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -181,6 +182,21 @@ public class AdminCourseResource {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
+    }
+
+    /**
+     * GET /courses/:courseId/deletion-summary : get the deletion summary for the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the deletion summary in the body
+     */
+    @GetMapping("courses/{courseId}/deletion-summary")
+    @EnforceAdmin
+    public ResponseEntity<CourseDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId) {
+        log.debug("REST request to get deletion summary course: {}", courseId);
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+
+        return ResponseEntity.ok().body(courseService.getDeletionSummary(course));
     }
 
     /**
