@@ -24,8 +24,8 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     @ViewChild('deleteForm', { static: true }) deleteForm: NgForm;
 
     deleteQuestion: string;
-    entitySummaryTitle: string;
-    entitySummary: { [key: string]: unknown } = {};
+    entitySummaryTitle?: string;
+    entitySummary?: { [key: string]: unknown } = {};
     translateValues: { [key: string]: unknown } = {};
     deleteConfirmationText: string;
     requireConfirmationOnlyForAdditionalChecks: boolean;
