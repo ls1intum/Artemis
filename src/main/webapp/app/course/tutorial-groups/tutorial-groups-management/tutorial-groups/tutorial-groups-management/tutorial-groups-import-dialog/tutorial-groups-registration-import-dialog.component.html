@@ -450,7 +450,7 @@
             @if (!isImportDone) {
                 <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="import()">
                     <fa-icon [icon]="faFileImport" class="me-2" />
-                    <span>{{ 'entity.action.to-import' | artemisTranslate }}</span>
+                    <span jhiTranslate="entity.action.to-import"></span>
                     <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
                 </button>
             } @else {
