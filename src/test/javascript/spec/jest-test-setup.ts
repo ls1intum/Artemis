@@ -7,7 +7,6 @@ import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
 import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
-import 'monaco-editor/esm/vs/editor/edcore.main';
 
 /*
  * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
@@ -17,6 +16,7 @@ import 'monaco-editor/esm/vs/editor/edcore.main';
  * on the document.
  */
 document.queryCommandSupported = () => false;
+import 'monaco-editor/esm/vs/editor/edcore.main'; // Do not move this import.
 
 failOnConsole({
     shouldFailOnWarn: true,
