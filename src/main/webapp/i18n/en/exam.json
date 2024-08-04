@@ -610,7 +610,7 @@
                     "numberTextExercises": "Number of Text Exercises",
                     "numberFileUploadExercises": "Number of File Upload Exercises",
                     "numberQuizExercises": "Number of Quiz Exercises",
-                    "numberRepositories": "Number of Repositories (Participations of programming exercises)",
+                    "numberRepositories": "Number of Repositories",
                     "numberBuilds": "Number of Builds",
                     "numberRegisteredStudents": "Number of Registered Students",
                     "numberNotStartedExams": "Number of Exams (not started)",
