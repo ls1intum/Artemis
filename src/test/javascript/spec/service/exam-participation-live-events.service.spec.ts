@@ -30,7 +30,7 @@ describe('ExamParticipationLiveEventsService', () => {
         } as unknown as LocalStorageService;
 
         mockWebsocketService = new MockWebsocketService() as any as JhiWebsocketService;
-        mockWebsocketService['state'] = websocketConnectionStateSubject.asObservable();
+        (mockWebsocketService as MockWebsocketService).state = websocketConnectionStateSubject.asObservable();
 
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
