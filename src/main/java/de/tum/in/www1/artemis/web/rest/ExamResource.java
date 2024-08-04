@@ -74,6 +74,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.SubmissionService;
@@ -1332,12 +1333,9 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with body a summary of the deletion of the exam
      */
     @GetMapping("courses/{courseId}/exams/{examId}/deletion-summary")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<ExamDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get deletion summary for exam : {}", examId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
         return ResponseEntity.ok(examDeletionService.getExamDeletionSummary(examId));
     }
 }
