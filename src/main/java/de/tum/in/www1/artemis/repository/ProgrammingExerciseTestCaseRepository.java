@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the ProgrammingExerciseTestCase entity.
@@ -26,7 +25,7 @@ public interface ProgrammingExerciseTestCaseRepository extends ArtemisJpaReposit
     Optional<ProgrammingExerciseTestCase> findByExerciseIdAndTestName(long exerciseId, String testName);
 
     default ProgrammingExerciseTestCase findByIdWithExerciseElseThrow(long testCaseId) {
-        return findByIdWithExercise(testCaseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Test Case", testCaseId));
+        return getValueElseThrow(findByIdWithExercise(testCaseId), testCaseId);
     }
 
     /**

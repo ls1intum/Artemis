@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public interface ExerciseHintActivationRepository extends ArtemisJpaRepository<ExerciseHintActivation, Long> {
 
@@ -31,7 +30,6 @@ public interface ExerciseHintActivationRepository extends ArtemisJpaRepository<E
     Optional<ExerciseHintActivation> findByExerciseHintAndUser(@Param("exerciseHintId") long exerciseHintId, @Param("userId") long userId);
 
     default ExerciseHintActivation findByExerciseHintAndUserElseThrow(long exerciseHintId, long userId) {
-        var optionalReport = findByExerciseHintAndUser(exerciseHintId, userId);
-        return optionalReport.orElseThrow(() -> new EntityNotFoundException("ExerciseHintActivation", exerciseHintId + "-" + userId));
+        return getValueElseThrow(findByExerciseHintAndUser(exerciseHintId, userId));
     }
 }
