@@ -45,7 +45,7 @@ public interface TemplateProgrammingExerciseParticipationRepository
     Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndSubmissionsByProgrammingExerciseId(long exerciseId);
 
     default TemplateProgrammingExerciseParticipation findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(long exerciseId) {
-        return findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).orElseThrow(() -> new EntityNotFoundException("ProgrammingExerciseParticipation", exerciseId));
+        return getValueElseThrow(findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "submissions" })
@@ -55,7 +55,7 @@ public interface TemplateProgrammingExerciseParticipationRepository
     default TemplateProgrammingExerciseParticipation findByExerciseIdElseThrow(final Specification<TemplateProgrammingExerciseParticipation> specification, long exerciseId) {
         final Specification<TemplateProgrammingExerciseParticipation> hasExerciseIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder
                 .equal(root.get(TemplateProgrammingExerciseParticipation_.PROGRAMMING_EXERCISE).get(DomainObject_.ID), exerciseId);
-        return findOne(specification.and(hasExerciseIdSpec)).orElseThrow(() -> new EntityNotFoundException("Template Programming Exercise Participation --> Exercise", exerciseId));
+        return getValueElseThrow(findOne(specification.and(hasExerciseIdSpec)));
     }
 
     /**
@@ -80,8 +80,7 @@ public interface TemplateProgrammingExerciseParticipationRepository
     Optional<TemplateProgrammingExerciseParticipation> findByProgrammingExerciseId(long programmingExerciseId);
 
     default TemplateProgrammingExerciseParticipation findByProgrammingExerciseIdElseThrow(long programmingExerciseId) {
-        var optional = findByProgrammingExerciseId(programmingExerciseId);
-        return optional.orElseThrow(() -> new EntityNotFoundException("Template Programming Exercise Participation", programmingExerciseId));
+        return getValueElseThrow(findByProgrammingExerciseId(programmingExerciseId));
     }
 
     /**

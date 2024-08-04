@@ -10,5 +10,7 @@ import de.tum.in.www1.artemis.domain.User;
 @Profile(PROFILE_LOCALVC)
 public class SshConstants {
 
+    public static final AttributeRepository.AttributeKey<Boolean> IS_BUILD_AGENT_KEY = new AttributeRepository.AttributeKey<>();
+
     public static final AttributeRepository.AttributeKey<User> USER_KEY = new AttributeRepository.AttributeKey<>();
 }
