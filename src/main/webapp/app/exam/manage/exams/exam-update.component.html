@@ -82,6 +82,7 @@
                         labelTooltip="{{ 'artemisApp.examManagement.visibleDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.visibleDate"
                         [error]="!isVisibleDateSet"
+                        [warning]="checkExamVisibilityTime"
                         [startAt]="exam.visibleDate"
                         [requiredField]="true"
                         name="visibleDate"

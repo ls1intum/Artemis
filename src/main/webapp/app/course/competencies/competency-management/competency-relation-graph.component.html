@@ -37,7 +37,10 @@
                                         (change)="validate()"
                                     >
                                         @for (relationType of competencyRelationType | keyvalue: keepOrder; track relationType) {
-                                            <option [ngValue]="relationType.key">{{ 'artemisApp.competency.relation.type.' + relationType.value | artemisTranslate }}</option>
+                                            <option
+                                                [jhiTranslate]="'artemisApp.competency.relation.type.' + relationType.value"
+                                                [title]="'artemisApp.competency.relation.typeExplanation.' + relationType.value | artemisTranslate"
+                                            ></option>
                                         }
                                     </select>
                                 </div>

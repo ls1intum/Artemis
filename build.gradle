@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.4.5"
+version = "7.5.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -331,7 +331,7 @@ dependencies {
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.micrometer:micrometer-registry-prometheus:1.12.6"
-    implementation "net.logstash.logback:logstash-logback-encoder:7.4"
+    implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
     implementation "com.fasterxml.jackson.core:jackson-core:${fasterxml_version}"
