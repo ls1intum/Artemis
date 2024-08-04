@@ -43,7 +43,7 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
     private ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
-    private TelemetryService telemetryService; // = new TelemetryService(env, restTemplate);
+    private TelemetryService telemetryService;
 
     private AutoCloseable closeable;
 
