@@ -76,7 +76,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit {
                 if (this.currentUser) {
                     const user = res.body as User;
                     this.currentUser.vcsAccessToken = user.vcsAccessToken;
-                    this.currentUser!.vcsAccessTokenExpiryDate = user.vcsAccessTokenExpiryDate;
+                    this.currentUser.vcsAccessTokenExpiryDate = user.vcsAccessTokenExpiryDate;
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.addSuccess');
             },
