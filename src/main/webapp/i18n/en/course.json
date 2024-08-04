@@ -13,7 +13,26 @@
             "delete": {
                 "question": "Are you sure you want to permanently delete the course <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the course to confirm.",
-                "icon": "Remove Icon"
+                "icon": "Remove Icon",
+                "summary": {
+                    "title": "Course Summary",
+                    "numberExams": "Number Exams",
+                    "numberLectures": "Number Lectures",
+                    "numberStudents": "Number Students",
+                    "numberTutors": "Number Tutors",
+                    "numberEditors": "Number Editors",
+                    "numberInstructors": "Number Instructors",
+                    "numberProgrammingExercises": "Number Programming Exercises",
+                    "numberModelingExercises": "Number Modeling Exercises",
+                    "numberTextExercises": "Number Text Exercises",
+                    "numberFileUploadExercises": "Number File Upload Exercises",
+                    "numberQuizExercises": "Number Quiz Exercises",
+                    "numberRepositories": "Number Repositories",
+                    "numberBuilds": "Number Builds",
+                    "numberCommunicationPosts": "Number Communication Posts",
+                    "numberAnswerPosts": "Number Answer Posts",
+                    "isTestCourse": "Test Course"
+                }
             },
             "showActive": "Show only active courses",
             "totalScore": "Total Score:",

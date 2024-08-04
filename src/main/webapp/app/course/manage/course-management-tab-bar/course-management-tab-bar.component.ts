@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -33,6 +33,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { CourseDeletionSummaryDTO } from 'app/entities/course-deletion-summary.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
@@ -78,6 +80,8 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
 
     irisEnabled = false;
     ltiEnabled = false;
+
+    courseSummary: { [key: string]: unknown } = {};
 
     constructor(
         private eventManager: EventManager,
@@ -136,6 +140,9 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
         this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
             this.isCommunicationEnabled = isCommunicationEnabled(this.course);
+
+            this.setExistingSummaryEntries();
+            this.fetchAndSetCourseDeletionSummary();
         });
     }
 
@@ -197,5 +204,67 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     shouldShowControlButtons(): boolean {
         const courseManagementRegex = /course-management\/[0-9]+(\/edit)?$/;
         return courseManagementRegex.test(this.router.url);
+    }
+
+    private setExistingSummaryEntries() {
+        const numberRepositories =
+            this.course?.exercises
+                ?.filter((exercise) => exercise.type === 'programming')
+                .map((exercise) => exercise?.numberOfParticipations ?? 0)
+                .reduce((a, b) => a + b, 0) ?? 0;
+
+        const numberOfExercisesPerType = new Map<ExerciseType, number>();
+        this.course?.exercises?.forEach((exercise) => {
+            if (exercise.type === undefined) {
+                return;
+            }
+            const oldValue = numberOfExercisesPerType.get(exercise.type) ?? 0;
+            numberOfExercisesPerType.set(exercise.type, oldValue + 1);
+        });
+
+        const numberExams = this.course?.numberOfExams ?? 0;
+        const numberLectures = this.course?.lectures?.length ?? 0;
+        const numberStudents = this.course?.numberOfStudents ?? 0;
+        const numberTutors = this.course?.numberOfTeachingAssistants ?? 0;
+        const numberEditors = this.course?.numberOfEditors ?? 0;
+        const numberInstructors = this.course?.numberOfInstructors ?? 0;
+        const isTestCourse = this.course?.testCourse;
+
+        this.courseSummary = {
+            ...this.courseSummary,
+            'artemisApp.course.delete.summary.numberRepositories': numberRepositories,
+            'artemisApp.course.delete.summary.numberProgrammingExercises': numberOfExercisesPerType.get(ExerciseType.PROGRAMMING) ?? 0,
+            'artemisApp.course.delete.summary.numberModelingExercises': numberOfExercisesPerType.get(ExerciseType.MODELING) ?? 0,
+            'artemisApp.course.delete.summary.numberTextExercises': numberOfExercisesPerType.get(ExerciseType.TEXT) ?? 0,
+            'artemisApp.course.delete.summary.numberFileUploadExercises': numberOfExercisesPerType.get(ExerciseType.FILE_UPLOAD) ?? 0,
+            'artemisApp.course.delete.summary.numberQuizExercises': numberOfExercisesPerType.get(ExerciseType.QUIZ) ?? 0,
+            'artemisApp.course.delete.summary.numberExams': numberExams,
+            'artemisApp.course.delete.summary.numberLectures': numberLectures,
+            'artemisApp.course.delete.summary.numberStudents': numberStudents,
+            'artemisApp.course.delete.summary.numberTutors': numberTutors,
+            'artemisApp.course.delete.summary.numberEditors': numberEditors,
+            'artemisApp.course.delete.summary.numberInstructors': numberInstructors,
+            'artemisApp.course.delete.summary.isTestCourse': isTestCourse,
+        };
+    }
+
+    private fetchAndSetCourseDeletionSummary() {
+        this.courseAdminService.getDeletionSummary(this.course?.id!).subscribe({
+            next: (res: HttpResponse<CourseDeletionSummaryDTO>) => {
+                const summary = res.body;
+
+                if (summary === null) {
+                    return;
+                }
+
+                this.courseSummary = {
+                    ...this.courseSummary,
+                    'artemisApp.course.delete.summary.numberBuilds': summary.numberOfBuilds,
+                    'artemisApp.course.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
+                    'artemisApp.course.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
+                };
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }
