@@ -3,7 +3,7 @@ import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learnin
 import { CommonModule } from '@angular/common';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faCheckCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle, faChevronDown, faFlag } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-nav-overview/learning-path-nav-overview.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
@@ -18,6 +18,7 @@ import { LearningPathNavigationService } from 'app/course/learning-paths/service
 export class LearningPathNavComponent implements OnInit {
     protected readonly faChevronDown: IconDefinition = faChevronDown;
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
+    protected readonly faFlag: IconDefinition = faFlag;
 
     private learningPathNavigationService: LearningPathNavigationService = inject(LearningPathNavigationService);
 
@@ -42,6 +43,10 @@ export class LearningPathNavComponent implements OnInit {
 
     selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO): void {
         this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), selectedLearningObject);
+    }
+
+    completeLearningPath(): void {
+        this.learningPathNavigationService.completeLearningPath();
     }
 
     setIsDropdownOpen(isOpen: boolean): void {

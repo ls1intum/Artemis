@@ -1,7 +1,11 @@
 <div class="d-inline-block competency-node">
-    <div class="progress-container d-inline-block" [ngClass]="{ 'green-competency': isMastered(), 'yellow-competency': isStarted(), 'gray-competency': isNotStarted() }">
+    <div class="progress-container d-inline-block" [ngClass]="{ 'green-competency': isGreen(), 'yellow-competency': isYellow(), 'gray-competency': isGray() }">
         <small class="font-bold"
-            ><strong>{{ masteryProgress() }} %</strong></small
+            ><strong>
+                @if (valueType() === CompetencyGraphNodeValueType.MASTERY_PROGRESS) {
+                    {{ value() }} %
+                }
+            </strong></small
         >
     </div>
     <span class="d-inline-block ms-1"

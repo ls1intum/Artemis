@@ -221,7 +221,6 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         component.notImportedRegistrations = [exampleOne];
         component.importedRegistrations = [exampleTwo, exampleThree];
         component.selectedFilter = 'all';
-
         component.onFilterChange('onlyNotImported');
         expect(component.registrationsDisplayedInTable).toEqual([exampleOne]);
         component.onFilterChange('onlyImported');
@@ -296,6 +295,33 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(component.numberOfNotImportedRegistration).toBe(1);
     });
 
+    it('should read registrations from csv string with additional headers', async () => {
+        // given
+        const exampleDTO = generateImportDTO('Tutorial Group 1', generateStudentDTO('123456', 'John', 'Doe', 'john-doe'), 'Main Campus', 'German', '', 25, '');
+        mockParserWithDTOs([exampleDTO], []);
+
+        // when
+        await component.onParseClicked();
+        // then
+        expect(component.registrationsDisplayedInTable).toEqual([exampleDTO]);
+        expect(component.validationErrors).toEqual([]);
+        expect(component.isCSVParsing).toBeFalse();
+        expect(component.registrationsDisplayedInTable[0].campus).toBe('Main Campus');
+        expect(component.registrationsDisplayedInTable[0].language).toBe('German');
+        expect(component.registrationsDisplayedInTable[0].additionalInformation).toBe('');
+        expect(component.registrationsDisplayedInTable[0].capacity).toBe(25);
+        expect(component.registrationsDisplayedInTable[0].isOnline).toBe('');
+    });
+    it('should remove spaces from header names correctly', () => {
+        const headerWithSpaces = ' Header Name ';
+        const headerWithUnderscores = 'Header_Name';
+        const headerWithMixed = ' Header_Name With  Spaces ';
+
+        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithSpaces)).toBe('headername');
+        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithUnderscores)).toBe('header-name');
+        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithMixed)).toBe('header-namewithspaces');
+    });
+
     it('should generate and download CSV when generateCSV is called', () => {
         const createElementSpy = jest.spyOn(document, 'createElement').mockReturnValue(document.createElement('a'));
         const appendChildSpy = jest.spyOn(document.body, 'appendChild');
@@ -351,12 +377,27 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         component.numberOfImportedRegistrations = 1;
     }
 
-    const generateImportDTO = (title?: string, student?: StudentDTO, importSuccessful?: boolean, error?: string) => {
+    const generateImportDTO = (
+        title?: string,
+        student?: StudentDTO,
+        campus?: string,
+        language?: string,
+        additionalInformation?: string,
+        capacity?: number,
+        isOnline?: string,
+        importSuccessful?: boolean,
+        error?: string,
+    ) => {
         const dto = new TutorialGroupRegistrationImportDTO();
         dto.title = title ?? 'Mo 12-13';
         dto.student = student ?? generateStudentDTO();
         dto.importSuccessful = importSuccessful ?? undefined;
         dto.error = error ?? undefined;
+        dto.campus = campus ?? 'Campus';
+        dto.language = language ?? 'English';
+        dto.additionalInformation = additionalInformation ?? '';
+        dto.capacity = capacity ?? 20;
+        dto.isOnline = isOnline ?? '';
         return dto;
     };
 
@@ -393,6 +434,11 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         login: string;
         firstname: string;
         lastname: string;
+        campus?: string;
+        language?: string;
+        additionalInformation?: string;
+        capacity?: number;
+        isOnline?: boolean;
         status?: string;
     }
 
@@ -403,6 +449,11 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
             login: dto.student.login,
             firstname: dto.student.firstName,
             lastname: dto.student.lastName,
+            campus: dto.campus,
+            language: dto.language,
+            additionalInformation: dto.additionalInformation,
+            capacity: dto.capacity,
+            isOnline: dto.isOnline,
             status: status ?? '',
         } as ExampleRawCSVRow;
     };
