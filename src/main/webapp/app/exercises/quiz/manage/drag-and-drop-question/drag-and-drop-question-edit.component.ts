@@ -532,7 +532,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         return this.createImageDragItemFromFile(dragItemFile);
     }
 
-    createImageDragItemFromFile(dragItemFile: File) {
+    createImageDragItemFromFile(dragItemFile: File): DragItem {
         const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool);
         this.addNewFile.emit({ fileName, file: dragItemFile });
         this.filePreviewPaths.set(fileName, URL.createObjectURL(dragItemFile));
@@ -890,7 +890,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * Create new drag items for each drop location in the background image
-     * @returns
      */
     getImagesFromDropLocations() {
         for (const someLocation of this.question.dropLocations!) {
@@ -941,8 +940,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Takes all drop locations and replaces their location with a white rectangle on the background image
      */
     blankOutBackgroundImage() {
-        const backGroundBlankingCanvas = document.createElement('canvas');
-        const backGroundBlankingContext = backGroundBlankingCanvas.getContext('2d');
+        const backgroundBlankingCanvas = document.createElement('canvas');
+        const backgroundBlankingContext = backgroundBlankingCanvas.getContext('2d');
         const image = new Image();
         let bgWidth;
         let bgHeight;
@@ -950,34 +949,35 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             bgHeight = image.height;
             bgWidth = image.width;
 
-            backGroundBlankingCanvas.width = bgWidth;
-            backGroundBlankingCanvas.height = bgHeight;
-            if (backGroundBlankingContext) {
+            backgroundBlankingCanvas.width = bgWidth;
+            backgroundBlankingCanvas.height = bgHeight;
+            if (backgroundBlankingContext) {
                 const scalarHeight = bgHeight / 200;
                 const scalarWidth = bgWidth / 200;
 
-                backGroundBlankingContext.drawImage(image, 0, 0);
-                backGroundBlankingContext.fillStyle = 'white';
+                backgroundBlankingContext.drawImage(image, 0, 0);
+                backgroundBlankingContext.fillStyle = 'white';
 
                 for (const someLocation of this.question.dropLocations!) {
                     // Draw a white rectangle over the specified box location
-                    backGroundBlankingContext.fillRect(
+                    backgroundBlankingContext.fillRect(
                         someLocation.posX! * scalarWidth,
                         someLocation.posY! * scalarHeight,
                         someLocation.width! * scalarWidth,
                         someLocation.height! * scalarHeight,
                     );
                 }
-                const dataUrlCanvas = backGroundBlankingCanvas.toDataURL('image/png');
-                this.setBackgroundFileFromFile(this.dataUrlToFile(dataUrlCanvas, 'backgorund'));
+                const dataUrlCanvas = backgroundBlankingCanvas.toDataURL('image/png');
+                this.setBackgroundFileFromFile(this.dataUrlToFile(dataUrlCanvas, 'background'));
             }
         };
         image.src = this.backgroundImage.src;
     }
 
     /**
-     * Turns a data url to a blob
-     * @param dataUrl
+     * Turns a data url into a blob
+     * @param dataUrl the data url string for which the file should be created
+     * @returns returns a blob created from the data url
      */
     dataUrlToBlob(dataUrl: string): Blob {
         const byteString = atob(dataUrl.split(',')[1]);
@@ -992,8 +992,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * Creates a File object from  a blob given through a dataUrl
-     * @param dataUrl
-     * @param fileName
+     * @param dataUrl the data url string for which the file should be created
+     * @param fileName the name of the file to be created
+     * @returns returns a new file created from the data url
      */
     dataUrlToFile(dataUrl: string, fileName: string): File {
         const blob = this.dataUrlToBlob(dataUrl);
