@@ -14,8 +14,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the TextSubmission entity.
@@ -60,21 +58,20 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
 
     @NotNull
     default TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(long resultId) {
-        return findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId) // TODO should be EntityNotFoundException
-                .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound"));
+        return getValueElseThrow(findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId));
     }
 
     @NotNull
     default TextSubmission findByIdWithParticipationExerciseResultAssessorElseThrow(long submissionId) {
-        return findWithEagerParticipationExerciseResultAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
+        return getValueElseThrow(findWithEagerParticipationExerciseResultAssessorById(submissionId), submissionId);
     }
 
     @NotNull
     default TextSubmission findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(long submissionId) {
-        return findWithEagerParticipationExerciseResultAssessorAssessmentNoteById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
+        return getValueElseThrow(findWithEagerParticipationExerciseResultAssessorAssessmentNoteById(submissionId), submissionId);
     }
 
     default TextSubmission findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(long submissionId) {
-        return findWithEagerResultsAndFeedbackAndTextBlocksById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
+        return getValueElseThrow(findWithEagerResultsAndFeedbackAndTextBlocksById(submissionId), submissionId);
     }
 }
