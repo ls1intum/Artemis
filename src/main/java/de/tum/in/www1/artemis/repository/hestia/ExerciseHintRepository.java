@@ -33,7 +33,7 @@ public interface ExerciseHintRepository extends ArtemisJpaRepository<ExerciseHin
 
     @NotNull
     default ExerciseHint findByIdWithRelationsElseThrow(long hintId) throws EntityNotFoundException {
-        return findByIdWithRelations(hintId).orElseThrow(() -> new EntityNotFoundException("Exercise Hint", hintId));
+        return getValueElseThrow(findByIdWithRelations(hintId), hintId);
     }
 
     Set<ExerciseHint> findByExerciseId(Long exerciseId);

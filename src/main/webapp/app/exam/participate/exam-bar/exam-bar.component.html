@@ -6,7 +6,7 @@
         @if (!examTimeLineView) {
             <div class="d-flex justify-content-between align-items-center">
                 <jhi-exam-timer class="me-3" [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()" />
-                <jhi-exam-live-events-button />
+                <jhi-exam-live-events-button [examStartDate]="examStartDate" />
                 <button id="hand-in-early" class="btn btn-danger ms-2" aria-label="Hand In Early" (click)="handInEarly()">
                     <div class="d-flex justify-content-between">
                         <span>

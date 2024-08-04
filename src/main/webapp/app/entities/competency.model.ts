@@ -20,7 +20,6 @@ export enum CompetencyTaxonomy {
 }
 
 export enum CompetencyRelationType {
-    RELATES = 'RELATES',
     ASSUMES = 'ASSUMES',
     EXTENDS = 'EXTENDS',
     MATCHES = 'MATCHES',

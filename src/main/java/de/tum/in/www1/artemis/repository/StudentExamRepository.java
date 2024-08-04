@@ -323,7 +323,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     default Optional<StudentExam> findStudentExam(Exercise exercise, StudentParticipation participation) {
         if (exercise.isExamExercise()) {
-            var examUser = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Exam Participation with " + participation.getId() + " has no student!"));
+            var examUser = getArbitraryValueElseThrow(participation.getStudent());
             return findByExerciseIdAndUserId(exercise.getId(), examUser.getId());
         }
         return Optional.empty();
@@ -337,7 +337,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     @NotNull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
-        return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+        return getValueElseThrow(findWithExercisesById(studentExamId), studentExamId);
     }
 
     /**
@@ -348,7 +348,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     @NotNull
     default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
-        return findWithExercisesSubmissionPolicyAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+        return getValueElseThrow(findWithExercisesSubmissionPolicyAndSessionsById(studentExamId), studentExamId);
     }
 
     /**
@@ -360,7 +360,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     @NotNull
     default Integer findMaxWorkingTimeByExamIdElseThrow(Long examId) {
-        return findMaxWorkingTimeByExamId(examId).orElseThrow(() -> new EntityNotFoundException("No student exams found for exam id " + examId));
+        return getArbitraryValueElseThrow(findMaxWorkingTimeByExamId(examId), Long.toString(examId));
     }
 
     /**
