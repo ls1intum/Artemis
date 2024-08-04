@@ -1,9 +1,9 @@
-export class ExamDeletionSummaryDTO {
-    public numberOfBuilds: number;
-    public numberOfCommunicationPosts: number;
-    public numberOfAnswerPosts: number;
-    public numberRegisteredStudents: number;
-    public numberNotStartedExams: number;
-    public numberStartedExams: number;
-    public numberSubmittedExams: number;
+export interface ExamDeletionSummaryDTO {
+    numberOfBuilds: number;
+    numberOfCommunicationPosts: number;
+    numberOfAnswerPosts: number;
+    numberRegisteredStudents: number;
+    numberNotStartedExams: number;
+    numberStartedExams: number;
+    numberSubmittedExams: number;
 }
