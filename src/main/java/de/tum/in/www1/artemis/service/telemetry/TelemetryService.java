@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.scheduled;
+package de.tum.in.www1.artemis.service.telemetry;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +46,7 @@ public class TelemetryService {
     @Value("${server.url}")
     private String serverUrl;
 
-    @Value("${info.universityAdminName}")
+    @Value("${info.universityName}")
     private String universityName;
 
     @Value("${info.universityAdminName}")
@@ -62,7 +62,7 @@ public class TelemetryService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
-        if (!useTelemetry && !Arrays.asList(env.getActiveProfiles()).contains("dev") && false) {
+        if (!useTelemetry) {
             return;
         }
 

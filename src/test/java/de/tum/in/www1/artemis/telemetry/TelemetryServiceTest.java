@@ -25,7 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.service.scheduled.TelemetryService;
+import de.tum.in.www1.artemis.service.telemetry.TelemetryService;
 
 @ExtendWith(MockitoExtension.class)
 public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
