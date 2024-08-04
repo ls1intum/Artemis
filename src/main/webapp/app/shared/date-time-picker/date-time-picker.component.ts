@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
-import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -22,6 +22,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
+    @Input() warning: boolean;
     @Input() requiredField: boolean = false;
     @Input() startAt?: dayjs.Dayjs; // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
     @Input() min?: dayjs.Dayjs; // Dates before this date are not selectable.
@@ -34,6 +35,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     readonly faClock = faClock;
     readonly faQuestionCircle = faQuestionCircle;
     readonly faCircleXmark = faCircleXmark;
+    readonly faTriangleExclamation = faTriangleExclamation;
 
     private onChange?: (val?: dayjs.Dayjs) => void;
 

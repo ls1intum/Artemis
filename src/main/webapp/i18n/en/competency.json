@@ -188,10 +188,14 @@
                 "selfRelation": "You can not create a relation between a competency and itself.",
                 "relationAlreadyExists": "This relation already exists.",
                 "type": {
-                    "RELATES": "Relates",
                     "ASSUMES": "Assumes",
                     "EXTENDS": "Extends",
                     "MATCHES": "Matches"
+                },
+                "typeExplanation": {
+                    "ASSUMES": "The head competency assumes that the student mastered the tail competency and teaches new knowledge that builds upon the tail competency.",
+                    "EXTENDS": "The head competency assumes that the student mastered the tail competency and deepens that knowledge further.",
+                    "MATCHES": "The head and tail competency match and cover the same knowledge."
                 }
             }
         },
