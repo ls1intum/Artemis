@@ -171,7 +171,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
     private updateGroupChat(groupChat: GroupChatDTO, propertyName: string, updateValue: string) {
         const updateDTO = new GroupChatDTO();
-        updateDTO[propertyName] = updateValue;
+        (updateDTO as any)[propertyName] = updateValue;
 
         this.groupChatService
             .update(this.course.id!, groupChat.id!, updateDTO)
@@ -181,7 +181,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (updatedGroupChat: GroupChatDTO) => {
-                    groupChat[propertyName] = updatedGroupChat[propertyName];
+                    (groupChat as any)[propertyName] = updatedGroupChat[propertyName as keyof GroupChatDTO];
                     this.onChangePerformed();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -190,7 +190,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
     private updateChannel(channel: ChannelDTO, propertyName: string, updateValue: string) {
         const updateDTO = new ChannelDTO();
-        updateDTO[propertyName] = updateValue;
+        (updateDTO as any)[propertyName] = updateValue;
         this.channelService
             .update(this.course.id!, channel.id!, updateDTO)
             .pipe(
@@ -199,7 +199,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (updatedChannel: ChannelDTO) => {
-                    channel[propertyName] = updatedChannel[propertyName as keyof ChannelDTO];
+                    (channel as any)[propertyName] = updatedChannel[propertyName as keyof ChannelDTO];
                     this.onChangePerformed();
                 },
                 error: (errorResponse: HttpErrorResponse) => {
