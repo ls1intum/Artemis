@@ -27,6 +27,8 @@ export class DeleteDialogService {
         this.modalRef.componentInstance.translateValues = { ...deleteDialogData.translateValues, title: deleteDialogData.entityTitle };
         this.modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
         this.modalRef.componentInstance.additionalChecks = deleteDialogData.additionalChecks;
+        this.modalRef.componentInstance.entitySummaryTitle = deleteDialogData.entitySummaryTitle;
+        this.modalRef.componentInstance.entitySummary = deleteDialogData.entitySummary;
         this.modalRef.componentInstance.actionType = deleteDialogData.actionType;
         this.modalRef.componentInstance.buttonType = deleteDialogData.buttonType;
         this.modalRef.componentInstance.delete = deleteDialogData.delete;

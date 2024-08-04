@@ -9,6 +9,8 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 export class DeleteButtonDirective implements OnInit {
     @Input() entityTitle?: string;
     @Input() deleteQuestion: string;
+    @Input() entitySummaryTitle: string;
+    @Input() entitySummary: { [key: string]: unknown } = {};
     @Input() translateValues: { [key: string]: unknown } = {};
     @Input() deleteConfirmationText: string;
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
@@ -73,6 +75,8 @@ export class DeleteButtonDirective implements OnInit {
             translateValues: this.translateValues,
             deleteConfirmationText: this.deleteConfirmationText,
             additionalChecks: this.additionalChecks,
+            entitySummaryTitle: this.entitySummaryTitle,
+            entitySummary: this.entitySummary,
             actionType: this.actionType,
             buttonType: this.buttonType,
             delete: this.delete,
