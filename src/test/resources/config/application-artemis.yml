@@ -67,3 +67,8 @@ artemis:
         destination: http://localhost:5000
     plagiarism-checks:
         plagiarism-results-limit: 100
+
+info:
+    universityName: Some University # Must be set before starting the application in production
+    universityAdminName: Some Universities Admin # Must be set before starting the application in production
+    contact: someUniversityAdminEmail@xcit.tum.de  #default value, can be overridden if needed

@@ -79,8 +79,8 @@ public class TelemetryService {
             var telemetryJson = objectWriter.writeValueAsString(telemetryData);
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
             ResponseEntity<String> response = restTemplate.postForEntity(destination + "/telemetry", requestEntity, String.class);
-            // HttpMethod.POST, requestEntity, String.class);
-            log.info("Successfully sent telemetry data: {}", response.getBody());
+
+            log.info("Successfully sent telemetry data. {}", response.getBody());
         }
         catch (JsonProcessingException e) {
             log.warn("JsonProcessingException in sendTelemetry.", e);

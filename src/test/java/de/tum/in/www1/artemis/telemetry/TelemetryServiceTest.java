@@ -40,12 +40,10 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
 
     private MockRestServiceServer mockServer;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
     private TelemetryService telemetryService;
-
-    private AutoCloseable closeable;
 
     @BeforeEach
     public void init() {
@@ -54,10 +52,9 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     public void testSendTelemetry_TelemetryEnabled() throws Exception {
-
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
-
+        telemetryService.useTelemetry = true;
         telemetryService.sendTelemetry();
         mockServer.verify();
     }
