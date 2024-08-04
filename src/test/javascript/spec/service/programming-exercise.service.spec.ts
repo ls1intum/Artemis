@@ -427,7 +427,7 @@ describe('ProgrammingExercise Service', () => {
     ])('should call correct exercise endpoint', (test) =>
         fakeAsync(() => {
             const exerciseId = 1;
-            service[test.method](exerciseId).subscribe();
+            (service as any)[test.method](exerciseId).subscribe();
             const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
             const req = httpMock.expectOne({ method: 'GET', url });
             req.flush({});
