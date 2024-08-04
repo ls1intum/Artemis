@@ -600,7 +600,26 @@
             "quizPool": "Quiz Pool",
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein.",
+                "summary": {
+                    "title": "Klausur Zusammenfassung",
+                    "numberExerciseGroups": "Anzahl Aufgabengruppen",
+                    "numberProgrammingExercises": "Anzahl Programmieraufgaben",
+                    "numberModelingExercises": "Anzahl Modellierungsaufgaben",
+                    "numberTextExercises": "Anzahl Textaufgaben",
+                    "numberFileUploadExercises": "Anzahl Datei-Upload-Aufgaben",
+                    "numberQuizExercises": "Anzahl Quiz-Aufgaben",
+                    "numberRepositories": "Anzahl Repositories",
+                    "numberBuilds": "Anzahl Builds",
+                    "numberRegisteredStudents": "Anzahl angemeldeter Studierender",
+                    "numberNotStartedExams": "Anzahl Klausuren (nicht gestartet)",
+                    "numberStartedExams": "Anzahl Klausuren (gestartet, aber nicht abgegeben)",
+                    "numberSubmittedExams": "Anzahl Klausuren (abgegeben)",
+                    "numberCommunicationPosts": "Anzahl Kommunikationsbeiträge",
+                    "numberAnswerPosts": "Anzahl Antwortbeiträge",
+                    "isTestExam": "Testklausur",
+                    "isTestCourse": "Testkurs"
+                }
             },
             "reset": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft zurückgesetzt werden? Alle Klausuren der Studierenden werden gelöscht. Teilnehmende an der Klausur und die Konfigurationen der Aufgaben bleiben erhalten. Diese Aktion kann NICHT rückgängig gemacht werden!",

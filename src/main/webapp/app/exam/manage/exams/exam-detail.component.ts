@@ -17,6 +17,8 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -52,6 +54,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
 
     examDetailSections: DetailOverviewSection[];
 
+    examSummary: { [key: string]: unknown } = {};
+
     constructor(
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
@@ -83,6 +87,9 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     this.canHaveBonus = gradingSystemResponse.body.gradeType === GradeType.GRADE;
                 }
             });
+
+            this.setExistingSummaryEntries();
+            this.fetchAndSetExamDeletionSummary();
         });
     }
 
@@ -156,6 +163,67 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             next: () => {
                 this.dialogErrorSource.next('');
                 this.router.navigate(['/course-management', this.exam.course!.id!, 'exams']);
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    private setExistingSummaryEntries() {
+        const numberOfProgrammingExerciseParticipations =
+            this.exam.exerciseGroups
+                ?.flatMap((e) => e.exercises)
+                .filter((e) => e?.type === ExerciseType.PROGRAMMING)
+                .map((e) => e?.numberOfParticipations ?? 0)
+                .reduce((a, b) => a + b, 0) ?? 0;
+
+        const numberOfExercisesPerType = new Map<ExerciseType, number>();
+        this.exam.exerciseGroups?.forEach((exerciseGroup) => {
+            exerciseGroup.exercises?.forEach((exercise) => {
+                if (exercise.type === undefined) {
+                    return;
+                }
+                const oldValue = numberOfExercisesPerType.get(exercise.type) ?? 0;
+                numberOfExercisesPerType.set(exercise.type, oldValue + 1);
+            });
+        });
+
+        const numberOfExerciseGroups = this.exam.exerciseGroups?.length ?? 0;
+        const isTestExam = this.exam.testExam ?? false;
+        const isTestCourse = this.exam.course?.testCourse ?? false;
+
+        this.examSummary = {
+            ...this.examSummary,
+            'artemisApp.examManagement.delete.summary.numberExerciseGroups': numberOfExerciseGroups,
+            'artemisApp.examManagement.delete.summary.numberProgrammingExercises': numberOfExercisesPerType.get(ExerciseType.PROGRAMMING),
+            'artemisApp.examManagement.delete.summary.numberModelingExercises': numberOfExercisesPerType.get(ExerciseType.MODELING),
+            'artemisApp.examManagement.delete.summary.numberTextExercises': numberOfExercisesPerType.get(ExerciseType.TEXT),
+            'artemisApp.examManagement.delete.summary.numberFileUploadExercises': numberOfExercisesPerType.get(ExerciseType.FILE_UPLOAD),
+            'artemisApp.examManagement.delete.summary.numberQuizExercises': numberOfExercisesPerType.get(ExerciseType.QUIZ),
+            'artemisApp.examManagement.delete.summary.numberRepositories': numberOfProgrammingExerciseParticipations,
+            'artemisApp.examManagement.delete.summary.isTestExam': isTestExam,
+            'artemisApp.examManagement.delete.summary.isTestCourse': isTestCourse,
+        };
+    }
+
+    fetchAndSetExamDeletionSummary() {
+        this.examManagementService.getDeletionSummary(this.exam.course!.id!, this.exam.id!).subscribe({
+            next: (res: HttpResponse<ExamDeletionSummaryDTO>) => {
+                const summary = res.body;
+
+                if (summary === null) {
+                    return;
+                }
+
+                this.examSummary = {
+                    ...this.examSummary,
+                    'artemisApp.examManagement.delete.summary.numberBuilds': summary.numberOfBuilds,
+                    'artemisApp.examManagement.delete.summary.numberRegisteredStudents': summary.numberRegisteredStudents,
+                    'artemisApp.examManagement.delete.summary.numberNotStartedExams': summary.numberNotStartedExams,
+                    'artemisApp.examManagement.delete.summary.numberStartedExams': summary.numberStartedExams,
+                    'artemisApp.examManagement.delete.summary.numberSubmittedExams': summary.numberSubmittedExams,
+                    'artemisApp.examManagement.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
+                    'artemisApp.examManagement.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
+                };
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
