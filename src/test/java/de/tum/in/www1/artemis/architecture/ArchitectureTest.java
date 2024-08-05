@@ -112,6 +112,30 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testUseKebabCaseForRestEndpoints() {
+        var abcd = allClasses;
+        var li = abcd.stream().toList();
+        for (var clazz : li) {
+            var m = clazz.getMethods();
+            for (var method : m) {
+                var ans = method.getAnnotations();
+                ans.size();
+                for (var annotation : ans) {
+                    var xyz = annotation;
+                    if (((JavaClass) annotation.getType()).getSimpleName().equals("PostMapping")) {
+                        var dd = annotation.tryGetExplicitlyDeclaredProperty("value");
+                        if (dd.isPresent()) {
+                            String[] bo = (String[]) dd.get();
+
+                            var bdo = bo[0].equals("abbc");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
     void testCorrectStringUtils() {
         ArchRule stringUtils = noClasses().should()
                 .dependOnClassesThat(have(simpleName("StringUtils")).and(not(resideInAnyPackage("org.apache.commons.lang3", "org.springframework.util"))));
@@ -394,5 +418,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
             }
         }
         return false;
+    }
+
+    private boolean checkIfKebapCase(String pathChunk) {
+        return true;
     }
 }
