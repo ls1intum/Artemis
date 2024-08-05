@@ -41,7 +41,7 @@ export class Postprocessor {
     static filesWithRestCalls: { filePath: string, restCalls: RestCall[] }[] = [];
     private restCalls: RestCall[] = [];
     private readonly filePath: string;
-    private ast: TSESTree.Program;
+    private readonly ast: TSESTree.Program;
 
     constructor(filePath: string) {
         this.filePath = filePath;
