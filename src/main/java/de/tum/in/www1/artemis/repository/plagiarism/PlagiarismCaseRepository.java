@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the PlagiarismCase entity.
@@ -151,11 +150,11 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     List<PlagiarismCase> findAllCreatedByContinuousPlagiarismControlByExerciseIdWithPlagiarismSubmissions(@Param("exerciseId") long exerciseId);
 
     default PlagiarismCase findByIdWithPlagiarismSubmissionsElseThrow(long plagiarismCaseId) {
-        return findByIdWithPlagiarismSubmissions(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
+        return getValueElseThrow(findByIdWithPlagiarismSubmissions(plagiarismCaseId), plagiarismCaseId);
     }
 
     default PlagiarismCase findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfigElseThrow(long plagiarismCaseId) {
-        return findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfig(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
+        return getValueElseThrow(findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfig(plagiarismCaseId), plagiarismCaseId);
     }
 
     /**
