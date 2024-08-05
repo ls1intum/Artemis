@@ -19,7 +19,7 @@ export interface CropperOptions {
     onlyScaleDown: boolean;
     imageQuality: number;
     autoCrop: boolean;
-    backgroundColor: string;
+    backgroundColor?: string;
     containWithinAspectRatio: boolean;
     hideResizeSquares: boolean;
     alignImage: 'left' | 'center';
