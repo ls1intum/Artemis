@@ -68,7 +68,14 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
     @PostConstruct
     public void initialize() {
         localVCRepositoriesBaseUrl = localVCBaseUrl + "/git/";
-        String baseUrl = internalVcsUrl.orElseGet(() -> sourceVCSBaseUrl);
+        String baseUrl;
+        // The default for internalVcsUrl is an empty string
+        if (internalVcsUrl.orElse("").isEmpty()) {
+            baseUrl = sourceVCSBaseUrl;
+        }
+        else {
+            baseUrl = internalVcsUrl.get();
+        }
         sourceVCSRepositoriesBaseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
     }
 
