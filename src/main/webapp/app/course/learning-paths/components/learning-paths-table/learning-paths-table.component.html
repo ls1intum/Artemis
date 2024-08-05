@@ -6,6 +6,7 @@
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
             <input
+                id="learning-path-search"
                 type="search"
                 class="ms-2 form-control rounded"
                 [placeholder]="'artemisApp.learningPathManagement.learningPathsTable.searchPlaceholder' | artemisTranslate"
@@ -37,7 +38,7 @@
                                 <ngb-highlight [result]="learningPath.user.login" [term]="searchTerm()" />
                             </td>
                             <td>
-                                <span class="clickable link-primary" (click)="openCompetencyGraph(learningPath.id)"
+                                <span [id]="'open-competency-graph-button-' + learningPath.id" class="clickable link-primary" (click)="openCompetencyGraph(learningPath.id)"
                                     ><u>{{ learningPath.progress }} %</u></span
                                 >
                             </td>
