@@ -294,7 +294,7 @@ describe('CompetencyService', () => {
     it('should get competency relations', fakeAsync(() => {
         const relation: CompetencyRelation = {
             id: 1,
-            type: CompetencyRelationType.RELATES,
+            type: CompetencyRelationType.ASSUMES,
         };
         const returnedFromService = [relation];
         const expected = [...returnedFromService];
