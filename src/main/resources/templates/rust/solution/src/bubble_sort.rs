@@ -11,6 +11,13 @@ impl<T: Ord> SortStrategy<T> for BubbleSort {
     ///
     /// * `input`: slice of items to be sorted
     fn perform_sort(&self, input: &mut [T]) {
-        input.sort();
+        let len = input.len();
+        for i in (0..len).rev() {
+            for j in 0..i {
+                if input[j] > input[j + 1] {
+                    input.swap(j, j + 1);
+                }
+            }
+        }
     }
 }
