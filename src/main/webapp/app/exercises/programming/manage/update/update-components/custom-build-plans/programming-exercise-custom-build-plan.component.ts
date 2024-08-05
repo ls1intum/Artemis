@@ -22,6 +22,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     staticCodeAnalysisEnabled?: boolean;
     sequentialTestRuns?: boolean;
     testwiseCoverageEnabled?: boolean;
+    isImportFromFile: boolean = false;
 
     constructor(private aeolusService: AeolusService) {}
 
@@ -32,7 +33,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this._editor = value;
         if (this._editor) {
             this.setupEditor();
-            if (this.programmingExercise.id) {
+            if (this.programmingExercise.id || this.isImportFromFile) {
                 this.code = this.programmingExercise.buildScript || '';
             }
             this._editor.setText(this.code);
@@ -42,7 +43,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges) {
         if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
             if (this.shouldReloadTemplate()) {
-                this.loadAeolusTemplate();
+                this.loadAeolusTemplate(changes.programmingExerciseCreationConfig.currentValue.isImportFromFile);
             }
         }
     }
@@ -63,7 +64,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
      * @private
      */
     resetCustomBuildPlan() {
-        this.programmingExercise.windFile = undefined;
+        this.programmingExercise.windfile = undefined;
         this.programmingExercise.buildPlanConfiguration = undefined;
         this.programmingExercise.buildScript = undefined;
     }
@@ -73,7 +74,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
      * if there is one available.
      * @private
      */
-    loadAeolusTemplate() {
+    loadAeolusTemplate(isImportFromFile: boolean = false) {
         if (!this.programmingExercise.programmingLanguage) {
             return;
         }
@@ -82,31 +83,36 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
         this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
-        this.aeolusService
-            .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-            .subscribe({
-                next: (file) => {
-                    this.programmingExercise.windFile = this.aeolusService.parseWindFile(file);
-                },
-                error: () => {
-                    this.programmingExercise.windFile = undefined;
-                },
-            });
+        this.isImportFromFile = isImportFromFile;
+        if (!isImportFromFile || !this.programmingExercise.windfile) {
+            this.aeolusService
+                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+                .subscribe({
+                    next: (file) => {
+                        this.programmingExercise.windfile = this.aeolusService.parseWindFile(file);
+                    },
+                    error: () => {
+                        this.programmingExercise.windfile = undefined;
+                    },
+                });
+        }
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-        if (!this.programmingExercise.windFile) {
+        if (!this.programmingExercise.windfile) {
             this.resetCustomBuildPlan();
         }
-        this.aeolusService
-            .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-            .subscribe({
-                next: (file: string) => {
-                    this.codeChanged(file);
-                    this.editor?.setText(file);
-                },
-                error: () => {
-                    this.programmingExercise.buildScript = undefined;
-                },
-            });
+        if (!isImportFromFile || !this.programmingExercise.buildScript) {
+            this.aeolusService
+                .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+                .subscribe({
+                    next: (file: string) => {
+                        this.codeChanged(file);
+                        this.editor?.setText(file);
+                    },
+                    error: () => {
+                        this.programmingExercise.buildScript = undefined;
+                    },
+                });
+        }
         if (!this.programmingExercise.buildScript) {
             this.resetCustomBuildPlan();
         }
@@ -134,9 +140,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     }
 
     setDockerImage(dockerImage: string) {
-        if (!this.programmingExercise.windFile || !this.programmingExercise.windFile.metadata.docker) {
+        if (!this.programmingExercise.windfile || !this.programmingExercise.windfile.metadata.docker) {
             return;
         }
-        this.programmingExercise.windFile.metadata.docker.image = dockerImage.trim();
+        this.programmingExercise.windfile.metadata.docker.image = dockerImage.trim();
     }
 }

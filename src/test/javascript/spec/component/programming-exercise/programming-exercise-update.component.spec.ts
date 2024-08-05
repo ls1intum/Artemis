@@ -438,14 +438,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // WHEN
             fixture.detectChanges();
             comp.programmingExercise.buildPlanConfiguration = 'some custom build definition';
-            comp.programmingExercise.windFile = new WindFile();
+            comp.programmingExercise.windfile = new WindFile();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
             comp.onProjectTypeChange(ProjectType.FACT);
 
             // THEN
             expect(comp.programmingExercise.buildPlanConfiguration).toBeUndefined();
-            expect(comp.programmingExercise.windFile).toBeUndefined();
+            expect(comp.programmingExercise.windfile).toBeUndefined();
         }));
     });
 

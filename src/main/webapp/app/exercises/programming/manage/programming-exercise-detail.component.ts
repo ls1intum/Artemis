@@ -453,13 +453,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     },
                 },
                 !!exercise.buildScript &&
-                    !!exercise.windFile?.metadata?.docker?.image && {
+                    !!exercise.windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.dockerImage',
-                        data: { text: exercise.windFile?.metadata?.docker?.image },
+                        data: { text: exercise.windfile?.metadata?.docker?.image },
                     },
                 !!exercise.buildScript &&
-                    !!exercise.windFile?.metadata?.docker?.image && {
+                    !!exercise.windfile?.metadata?.docker?.image && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
@@ -749,8 +749,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkAndSetWindFile(exercise: ProgrammingExercise) {
-        if (exercise.buildPlanConfiguration && !exercise.windFile) {
-            exercise.windFile = this.aeolusService.parseWindFile(exercise.buildPlanConfiguration);
+        if (exercise.buildPlanConfiguration && !exercise.windfile) {
+            exercise.windfile = this.aeolusService.parseWindFile(exercise.buildPlanConfiguration);
         }
     }
 
