@@ -17,14 +17,14 @@
                 </div>
             </div>
         } @else {
-            @for (learningPathHealthItem of learningPathHealthItems(); let first = $first; track learningPathHealthItem) {
-                <div class="px-2 py-1 learning-paths-state-container" [class.mt-3]="!first" [ngClass]="learningPathHealthItem.statusClass">
-                    <span><strong [jhiTranslate]="learningPathHealthItem.translationKey + '.title'"></strong></span>
-                    <p class="m-0"><small [jhiTranslate]="learningPathHealthItem.translationKey + '.description'"></small></p>
+            @for (healthStatus of learningPathHealthStatus(); let first = $first; track healthStatus) {
+                <div class="px-2 py-1 learning-paths-state-container" [class.mt-3]="!first" [ngClass]="statusClasses[healthStatus]">
+                    <span><strong [jhiTranslate]="translationKeys[healthStatus] + '.title'"></strong></span>
+                    <p class="m-0"><small [jhiTranslate]="translationKeys[healthStatus] + '.description'"></small></p>
                     <button
                         class="mt-2 btn btn-outline-secondary btn-sm align-self-end"
-                        (click)="handleHealthStatusAction(learningPathHealthItem.healthStatus)"
-                        [jhiTranslate]="learningPathHealthItem.translationKey + '.actionButton'"
+                        (click)="handleHealthStatusAction(healthStatus)"
+                        [jhiTranslate]="translationKeys[healthStatus] + '.actionButton'"
                     ></button>
                 </div>
             } @empty {

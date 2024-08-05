@@ -7,12 +7,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
-interface LearningPathHealthStatusItem {
-    translationKey: string;
-    statusClass: string;
-    healthStatus: HealthStatus;
-}
-
 @Component({
     selector: 'jhi-learning-paths-state',
     standalone: true,
@@ -23,6 +17,19 @@ interface LearningPathHealthStatusItem {
 export class LearningPathsStateComponent {
     protected readonly faSpinner = faSpinner;
 
+    private readonly baseTranslationKey = 'artemisApp.learningPathManagement.learningPathsState.type';
+    readonly translationKeys: Record<HealthStatus, string> = {
+        [HealthStatus.MISSING]: `${this.baseTranslationKey}.missing`,
+        [HealthStatus.NO_COMPETENCIES]: `${this.baseTranslationKey}.noCompetencies`,
+        [HealthStatus.NO_RELATIONS]: `${this.baseTranslationKey}.noRelations`,
+    };
+
+    readonly statusClasses: Record<HealthStatus, string> = {
+        [HealthStatus.MISSING]: 'warning-state',
+        [HealthStatus.NO_COMPETENCIES]: 'danger-state',
+        [HealthStatus.NO_RELATIONS]: 'warning-state',
+    };
+
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
     private readonly router = inject(Router);
@@ -31,17 +38,8 @@ export class LearningPathsStateComponent {
     readonly courseId = input.required<number>();
 
     readonly isLoading = signal<boolean>(false);
-    private readonly learningPathHealthStatus = signal<LearningPathHealthDTO | undefined>(undefined);
-
-    readonly learningPathHealthItems = computed(() => {
-        return (this.learningPathHealthStatus()?.status ?? []).map((status) => {
-            return <LearningPathHealthStatusItem>{
-                translationKey: this.getHealthStatusTranslationKey(status),
-                statusClass: this.getHealthStatusClass(status),
-                healthStatus: status,
-            };
-        });
-    });
+    private readonly learningPathHealth = signal<LearningPathHealthDTO | undefined>(undefined);
+    readonly learningPathHealthStatus = computed(() => this.learningPathHealth()?.status ?? []);
 
     constructor() {
         effect(() => this.loadLearningPathHealthStatus(this.courseId()), { allowSignalWrites: true });
@@ -51,7 +49,7 @@ export class LearningPathsStateComponent {
         try {
             this.isLoading.set(true);
             const learningPathHealthStatus = await this.learningPathApiService.getLearningPathHealthStatus(courseId);
-            this.learningPathHealthStatus.set(learningPathHealthStatus);
+            this.learningPathHealth.set(learningPathHealthStatus);
         } catch (error) {
             onError(this.alertService, error);
         } finally {
@@ -59,34 +57,7 @@ export class LearningPathsStateComponent {
         }
     }
 
-    private getHealthStatusTranslationKey(healthStatus: HealthStatus): string {
-        const baseKey = 'artemisApp.learningPathManagement.learningPathsState.type';
-        switch (healthStatus) {
-            case HealthStatus.MISSING:
-                return `${baseKey}.missing`;
-            case HealthStatus.NO_COMPETENCIES:
-                return `${baseKey}.noCompetencies`;
-            case HealthStatus.NO_RELATIONS:
-                return `${baseKey}.noRelations`;
-            default:
-                throw Error('Unknown health status');
-        }
-    }
-
-    private getHealthStatusClass(healthStatus: HealthStatus) {
-        switch (healthStatus) {
-            case HealthStatus.MISSING:
-                return 'warning-state';
-            case HealthStatus.NO_COMPETENCIES:
-                return 'danger-state';
-            case HealthStatus.NO_RELATIONS:
-                return 'danger-state';
-            default:
-                return 'info-state';
-        }
-    }
-
-    protected async handleHealthStatusAction(healthStatus: HealthStatus) {
+    protected async handleHealthStatusAction(healthStatus: HealthStatus): Promise<void> {
         switch (healthStatus) {
             case HealthStatus.MISSING:
                 await this.generateMissingLearningPaths();
