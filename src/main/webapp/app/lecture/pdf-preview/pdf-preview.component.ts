@@ -156,6 +156,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 context.clearRect(0, 0, enlargedCanvas.width, enlargedCanvas.height);
                 context.drawImage(originalCanvas, 0, 0, enlargedCanvas.width, enlargedCanvas.height);
 
+                enlargedCanvas.parentElement.style.top = `${this.pdfContainer.nativeElement.scrollTop}px`;
                 enlargedCanvas.style.position = 'absolute';
                 enlargedCanvas.style.left = `${(containerWidth - enlargedCanvas.width) / 2}px`;
                 enlargedCanvas.style.top = `${(containerHeight - enlargedCanvas.height) / 2}px`;
