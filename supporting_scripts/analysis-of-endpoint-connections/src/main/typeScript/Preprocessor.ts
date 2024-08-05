@@ -85,7 +85,7 @@ export class Preprocessor {
      * @param binaryExpression - The binary expression to be evaluated.
      * @returns The evaluated value of the binary expression as a string.
      */
-    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression) {
+    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression): string {
         const left = binaryExpression.left;
         const right = binaryExpression.right;
         let result = '';
@@ -174,8 +174,8 @@ export class Preprocessor {
      * @param superClassName - The name of the superclass to identify constructor calls for.
      * @returns An array of objects, each containing an `arguments` array with the evaluated values of the super constructor call arguments.
      */
-    identifySuperConstructorCalls(classDeclaration: TSESTree.ClassDeclaration, superClassName: string) {
-        const result: {arguments: string[]}[]= [];
+    identifySuperConstructorCalls(classDeclaration: TSESTree.ClassDeclaration, superClassName: string): { arguments: string[] }[] {
+        const result: { arguments: string[] }[]= [];
         classDeclaration.body.body.forEach((node) => {
             if (node.type === 'MethodDefinition' && node.kind === 'constructor' && node.value.type === 'FunctionExpression') {
                 node.value.body.body.forEach((statement) => {
@@ -206,7 +206,7 @@ export class Preprocessor {
      * @param callExpressionArgument - The call expression argument to be evaluated.
      * @returns The evaluated value of the call expression argument as a string, or an empty string if no value is found.
      */
-    evaluateCallExpressionArgument(callExpressionArgument: TSESTree.CallExpressionArgument) {
+    evaluateCallExpressionArgument(callExpressionArgument: TSESTree.CallExpressionArgument): string {
         let result = '';
         if (callExpressionArgument.type === 'Identifier') {
             result = this.evaluateIdentifierArgument(callExpressionArgument) ?? '';
@@ -215,7 +215,7 @@ export class Preprocessor {
         } else if (callExpressionArgument.type === 'Literal' && callExpressionArgument.value) {
             result = callExpressionArgument.value.toString();
         }
-        return result? result : '';
+        return result ?? '';
     }
 
     /**
@@ -227,12 +227,8 @@ export class Preprocessor {
      * @param identifier - The identifier whose value is to be evaluated.
      * @returns The value of the identifier if found; otherwise, an empty string.
      */
-    evaluateIdentifierArgument(identifier: TSESTree.Identifier) {
-        if (this.memberVariables.has(identifier.name)) {
-            return this.memberVariables.get(identifier.name)?.value;
-        } else {
-            return '';
-        }
+    evaluateIdentifierArgument(identifier: TSESTree.Identifier): string {
+        return this.memberVariables.get(identifier.name)?.value ?? '';
     }
 
     /**
@@ -243,7 +239,7 @@ export class Preprocessor {
      * @param className - The name of the class to find the import path for.
      * @returns The path of the imported class, or an empty string if the class is not found.
      */
-    identifyImportedClassByName(className: string) {
+    identifyImportedClassByName(className: string): string {
         for (const node of this.ast.body) {
             if (node.type === 'ImportDeclaration' && node.specifiers[0].local.name === className) {
                 return node.source.value;
@@ -263,7 +259,7 @@ export class Preprocessor {
      * @param filePath - The path to the TypeScript file (relative to the base directory set in `pathPrefix` and `directoryPrefix`) where the parameter value is to be searched.
      * @returns The value of the parameter if found; otherwise, an empty string.
      */
-    findParameterValueByParameterNameAndFilePath (parameterName: string, filePath: string) {
+    findParameterValueByParameterNameAndFilePath (parameterName: string, filePath: string): string {
         const targetAST = Preprocessor.parseTypeScriptFile(`${Preprocessor.pathPrefix}${this.directoryPrefix}${filePath}.ts`);
 
         for (const node of targetAST.body) {
@@ -288,7 +284,7 @@ export class Preprocessor {
      * @param ast - The AST of the class body to search within.
      * @returns The value of the parameter if found; otherwise, an empty string.
      */
-    private static findParameterValueByParameterNameAndAST(parameterName: string, ast: TSESTree.ClassBody) {
+    private static findParameterValueByParameterNameAndAST(parameterName: string, ast: TSESTree.ClassBody): string {
         for (const classBodyNode of ast.body) {
             if (classBodyNode.type === 'PropertyDefinition' && classBodyNode.key.type === 'Identifier' && classBodyNode.key.name === parameterName) {
                 if (classBodyNode.value?.type === 'Literal' && classBodyNode.value.value) {
@@ -306,7 +302,7 @@ export class Preprocessor {
      * @param filePath - The path to the TypeScript file to be parsed.
      * @returns The AST of the parsed TypeScript file.
      */
-    static parseTypeScriptFile(filePath: string) {
+    static parseTypeScriptFile(filePath: string): TSESTree.Program {
         const code = readFileSync(filePath, 'utf8');
         return parse(code, {
             loc: true,

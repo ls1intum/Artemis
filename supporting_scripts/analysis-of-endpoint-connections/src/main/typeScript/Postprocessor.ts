@@ -24,7 +24,7 @@ enum ParsingResultType {
     GET_URL_FROM_GETTER_SUCCESS,
     GET_URL_FROM_GETTER_FAILURE,
 
-    UNABLE_TO_EVALUATE, // TODO, Incorporate this Type when no matching URL Parser is found
+    UNABLE_TO_EVALUATE, // no matching URL Parser is found
 }
 
 class ParsingResult {
@@ -38,7 +38,7 @@ class ParsingResult {
 }
 
 export class Postprocessor {
-    static filesWithRestCalls: { filePath: string, restCalls: RestCall[]}[] = [];
+    static filesWithRestCalls: { filePath: string, restCalls: RestCall[] }[] = [];
     private restCalls: RestCall[] = [];
     private readonly filePath: string;
     private ast: TSESTree.Program;
@@ -108,107 +108,100 @@ export class Postprocessor {
         });
     }
 
-    evaluateUrl(node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
-        let resultType = ParsingResultType.EVALUATE_URL_FAILURE;
-        let result: string[] = [];
-
-        if (node.type === 'Literal' && node.value) {
-            result.push(node.value.toString());
-            resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-        } else if (node.type === 'TemplateLiteral') {
-            const tempResult = this.evaluateTemplateLiteralExpression(node, methodDefinition, restCall, classBody);
-            if (tempResult.resultType === ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS) {
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                result = tempResult.result;
-            } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
-                resultType = ParsingResultType.UNABLE_TO_EVALUATE;
-            }
-        } else if (node.type === 'MemberExpression') {
-            if (node.object.type === 'ThisExpression' && node.property.type === 'Identifier') {
-                let tempResult = this.getMemberExpressionValueFromNameAndClassBody(node.property.name, classBody);
-
-                if (tempResult.resultType === ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE) {
-                    // If the member expression value is not found in the class body, try to evaluate it from the Child Classes
-                    tempResult = this.evaluateMemberVariableFromChildClasses(classBody, node.property.name);
-                    if (tempResult.resultType === ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE) {
-                        // if the member expression value is not found in the child classes, the value is defined dynamically and a placeholder is returned.
-                        result.push('${' + `this.${node.property.name}` + '}');
-                        resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                    } else  {
-                        // else, the values found in the child classes are returned.
-                        result = tempResult.result;
-                        resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                    }
-                } else {
-                    // if the member expression value is found in the class body, the value is returned.
-                    resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                    result = tempResult.result;
-                }
-            } else if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
-                result.push('${' + `${node.object.name}.${node.property.name}` + '}');
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-            }
-        } else if (node.type === 'Identifier') {
-            let tempResult = this.getMethodVariableValueFromNameAndMethod(node.name, node, methodDefinition, restCall, classBody);
-            if (tempResult.resultType === ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS) {
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                result = tempResult.result;
-            } else {
-                // If the value is not found in the method, try to find method calls from the method name and return the parameter value. If there are method calls that pass on the URL, it is the complete URL that is passed on.
-                tempResult = new ParsingResult(ParsingResultType.GET_URLS_FROM_CALLING_METHODS_FAILURE, []);
-
-                if (methodDefinition.key.type === 'Identifier') {
-                    tempResult = this.findMethodCallsFromMethodNameAndClassBody(methodDefinition.key.name, classBody, restCall);
-                }
-
-                if (tempResult.resultType === ParsingResultType.GET_URLS_FROM_CALLING_METHODS_SUCCESS) {
-                    result = tempResult.result;
-                    resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                } else {
-                    // If the value is not found in the method calls, the value is defined dynamically and a placeholder is returned.
-                    result.push('${' + node.name + '}');
-                    resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                }
-            }
-        } else if (node.type === 'BinaryExpression') {
-            let tempResult = this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
-            if (tempResult.resultType === ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS) {
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                result = tempResult.result;
-            } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
-                resultType = ParsingResultType.UNABLE_TO_EVALUATE;
-            } else {
-                result.push('Unknown URL');
-                resultType = ParsingResultType.EVALUATE_URL_FAILURE;
-            }
-        } else if (node.type === 'CallExpression') {
-            // Sometimes, The ResourceURL is built and fetched using a getterMethod
-            let tempResult= this.getUrlFromGetterMethodCall(node, classBody);
-            if (tempResult.resultType === ParsingResultType.GET_URL_FROM_GETTER_SUCCESS) {
-                result = tempResult.result;
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-            } else {
-                resultType = ParsingResultType.UNABLE_TO_EVALUATE;
-            }
-        } else {
-            resultType = ParsingResultType.UNABLE_TO_EVALUATE;
+    evaluateUrl(node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        switch (node.type) {
+            case 'Literal':
+                return this.evaluateLiteralHelper(node);
+            case 'TemplateLiteral':
+                return this.evaluateTemplateLiteralHelper(node, methodDefinition, restCall, classBody);
+            case 'MemberExpression':
+                return this.evaluateMemberExpressionHelper(node, classBody);
+            case 'Identifier':
+                return this.evaluateIdentifierHelper(node, methodDefinition, restCall, classBody);
+            case 'BinaryExpression':
+                return this.evaluateBinaryExpressionHelper(node, methodDefinition, restCall, classBody);
+            case 'CallExpression':
+                return this.evaluateCallExpressionHelper(node, classBody);
+            default:
+                return new ParsingResult(ParsingResultType.UNABLE_TO_EVALUATE, ['FAILED_TO_EVALUATE_URL']);
         }
-
-        if (resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
-            result = ['FAILED_TO_EVALUATE_URL']
-        }
-
-        return new ParsingResult(resultType, result);
     }
 
-    isCalleeHttpClient(callee: TSESTree.MemberExpression) {
+    evaluateLiteralHelper(node: TSESTree.Literal): ParsingResult {
+        if (node.value) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, [node.value.toString()]);
+        }
+        return new ParsingResult(ParsingResultType.EVALUATE_URL_FAILURE, []);
+    }
+
+    evaluateTemplateLiteralHelper(node: TSESTree.TemplateLiteral, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        const tempResult = this.evaluateTemplateLiteralExpression(node, methodDefinition, restCall, classBody);
+        if (tempResult.resultType === ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+            return new ParsingResult(ParsingResultType.UNABLE_TO_EVALUATE, []);
+        }
+        return new ParsingResult(ParsingResultType.EVALUATE_URL_FAILURE, []);
+    }
+
+    evaluateMemberExpressionHelper(node: TSESTree.MemberExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        if (node.object.type === 'ThisExpression' && node.property.type === 'Identifier') {
+            let tempResult = this.getMemberExpressionValueFromNameAndClassBody(node.property.name, classBody);
+            if (tempResult.resultType === ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE) {
+                tempResult = this.evaluateMemberVariableFromChildClasses(classBody, node.property.name);
+                if (tempResult.resultType === ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE) {
+                    return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, [`\${this.${node.property.name}}`]);
+                }
+            }
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        } else if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, [`\${${node.object.name}.${node.property.name}}`]);
+        }
+        return new ParsingResult(ParsingResultType.EVALUATE_URL_FAILURE, []);
+    }
+
+    evaluateIdentifierHelper(node: TSESTree.Identifier, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        let tempResult = this.getMethodVariableValueFromNameAndMethod(node.name, node, methodDefinition, restCall, classBody);
+        if (tempResult.resultType === ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        }
+
+        if (methodDefinition.key.type === 'Identifier') {
+            tempResult = this.findMethodCallsFromMethodNameAndClassBody(methodDefinition.key.name, classBody, restCall);
+        }
+
+        if (tempResult.resultType === ParsingResultType.GET_URLS_FROM_CALLING_METHODS_SUCCESS) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        }
+        return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, [`\${${node.name}}`]);
+    }
+
+    evaluateBinaryExpressionHelper(node: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        const tempResult = this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
+        if (tempResult.resultType === ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+            return new ParsingResult(ParsingResultType.UNABLE_TO_EVALUATE, []);
+        }
+        return new ParsingResult(ParsingResultType.EVALUATE_URL_FAILURE, ['Unknown URL']);
+    }
+
+    evaluateCallExpressionHelper(node: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        const tempResult = this.getUrlFromGetterMethodCall(node, classBody);
+        if (tempResult.resultType === ParsingResultType.GET_URL_FROM_GETTER_SUCCESS) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        }
+        return new ParsingResult(ParsingResultType.UNABLE_TO_EVALUATE, []);
+    }
+
+    isCalleeHttpClient(callee: TSESTree.MemberExpression): boolean {
         if (callee.object.type === 'MemberExpression' && callee.object.property.type === 'Identifier') {
             return this.getMemberExpressionTypeFromName(callee.object.property.name) === 'HttpClient';
         }
         return false;
     }
 
-    evaluateTemplateLiteralExpression(templateLiteral: TSESTree.TemplateLiteral, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+    evaluateTemplateLiteralExpression(templateLiteral: TSESTree.TemplateLiteral, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
         let resultType = ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS;
 
         let evaluatedURL = '';
@@ -238,7 +231,7 @@ export class Postprocessor {
         return new ParsingResult(resultType, [evaluatedURL]);
     }
 
-    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
         const left = binaryExpression.left;
         const right = binaryExpression.right;
         let leftParsingResult = this.evaluateUrl(left, methodDefinition, restCall, classBody);
@@ -272,7 +265,7 @@ export class Postprocessor {
      *          `callExpression` is the AST node representing the found call expression,
      *          and `parameterValue` is the value of the first argument passed to the call expression.
      */
-    findMethodCallsFromMethodNameAndClassBody(methodName: string, classBody: TSESTree.ClassDeclaration, restCall: TSESTree.CallExpression) {
+    findMethodCallsFromMethodNameAndClassBody(methodName: string, classBody: TSESTree.ClassDeclaration, restCall: TSESTree.CallExpression): ParsingResult {
         let methodCalls: { callExpression: TSESTree.CallExpression, parameterValue: string }[] = [];
         let parsingResultType = ParsingResultType.GET_URLS_FROM_CALLING_METHODS_FAILURE;
 
@@ -305,7 +298,7 @@ export class Postprocessor {
         return new ParsingResult(parsingResultType, result);
     }
 
-    getMemberExpressionValueFromNameAndClassBody(name: string, classBody: TSESTree.ClassDeclaration) {
+    getMemberExpressionValueFromNameAndClassBody(name: string, classBody: TSESTree.ClassDeclaration): ParsingResult {
         let memberExpressionResult: string[] = [];
         let resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE;
         simpleTraverse(classBody, {
@@ -322,7 +315,7 @@ export class Postprocessor {
         return new ParsingResult(resultType, memberExpressionResult);
     }
 
-    getMemberExpressionTypeFromName(name: string) {
+    getMemberExpressionTypeFromName(name: string): string {
         let memberExpressionType = 'Unknown Type';
         simpleTraverse(this.ast, {
             enter: (node) => {
@@ -338,7 +331,7 @@ export class Postprocessor {
         return memberExpressionType;
     }
 
-    getUrlFromGetterMethodCall(callExpression: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+    getUrlFromGetterMethodCall(callExpression: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
         let parsingResultType = ParsingResultType.GET_URL_FROM_GETTER_FAILURE;
         let parsingResult: string[] = [];
 
@@ -365,7 +358,7 @@ export class Postprocessor {
         return new ParsingResult(parsingResultType, parsingResult);
     }
 
-    getMethodVariableValueFromNameAndMethod(name: string, node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+    getMethodVariableValueFromNameAndMethod(name: string, node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
         let result: string[] = [];
         let resultType = ParsingResultType.GET_VARIABLE_FROM_METHOD_FAILURE;
         simpleTraverse(methodDefinition, {
@@ -389,14 +382,14 @@ export class Postprocessor {
         return new ParsingResult(resultType, result);
     }
 
-    getClassNameFromClassBody(classBody: TSESTree.ClassDeclaration) {
+    getClassNameFromClassBody(classBody: TSESTree.ClassDeclaration): string {
         if (classBody.id?.type === 'Identifier') {
             return classBody.id.name;
         }
         return 'Unknown URL';
     }
 
-    getConstructorArgumentsFromClassBody(classBody: TSESTree.ClassBody) {
+    getConstructorArgumentsFromClassBody(classBody: TSESTree.ClassBody): TSESTree.Parameter[] {
         for (let node of classBody.body) {
             if (node.type === 'MethodDefinition' && node.key.type === 'Identifier' && node.key.name === 'constructor') {
                 return node.value.params;
@@ -406,7 +399,7 @@ export class Postprocessor {
         return [];
     }
 
-    evaluateMemberVariableFromChildClasses(classBody: TSESTree.ClassDeclaration, memberExprKey: string) {
+    evaluateMemberVariableFromChildClasses(classBody: TSESTree.ClassDeclaration, memberExprKey: string): ParsingResult {
         let memberExpressionResult: string[] = [];
         let resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE;
 

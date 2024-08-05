@@ -11,12 +11,12 @@ import { writeFileSync } from 'node:fs';
  * @param files - An array to store the collected TypeScript file paths.
  * @returns An array of TypeScript file paths relative to 'src/main/webapp/app'.
  */
-function collectTypeScriptFiles(dir: string, files: string[] = []) {
+function collectTypeScriptFiles(dir: string, files: string[] = []) : string[] {
     const entries = readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
         const fullPath = join(dir, entry.name);
 
-        const filePathFromSrcFolder = fullPath.substring(fullPath.indexOf('src/main/webapp/app') - 'src/main/webapp/app'.length + 'src/main/webapp/app'.length);
+        const filePathFromSrcFolder = fullPath.substring(fullPath.indexOf('src/main/webapp/app'));
         if (entry.isDirectory()) {
             collectTypeScriptFiles(fullPath, files);
         } else if (entry.isFile() && entry.name.endsWith('.ts')) {
