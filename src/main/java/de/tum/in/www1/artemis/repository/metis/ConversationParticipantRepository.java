@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the ConversationParticipant entity.
@@ -66,8 +65,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     Optional<ConversationParticipant> findConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 
     default ConversationParticipant findConversationParticipantByConversationIdAndUserIdElseThrow(Long conversationId, Long userId) {
-        return this.findConversationParticipantByConversationIdAndUserId(conversationId, userId)
-                .orElseThrow(() -> new EntityNotFoundException("Conversation participant not found!"));
+        return getValueElseThrow(findConversationParticipantByConversationIdAndUserId(conversationId, userId));
     }
 
     @Query("""
