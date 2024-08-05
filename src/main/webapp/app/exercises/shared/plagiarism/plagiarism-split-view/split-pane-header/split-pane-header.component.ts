@@ -27,12 +27,12 @@ export class SplitPaneHeaderComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.files) {
-            const fileWithHasMatch: FileWithHasMatch = changes.files.currentValue;
+            const fileWithHasMatch: FileWithHasMatch[] = changes.files.currentValue;
 
             this.activeFileIndex = 0;
 
             if (this.hasFiles()) {
-                this.selectFile.emit(fileWithHasMatch.file);
+                this.selectFile.emit(fileWithHasMatch[0].file);
             }
         }
     }
