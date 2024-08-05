@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -31,6 +33,7 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
@@ -38,6 +41,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.programming.RepositoryService;
@@ -73,10 +77,13 @@ public class ProgrammingExerciseParticipationResource {
 
     private final RepositoryService repositoryService;
 
+    private final StudentExamRepository studentExamRepository;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService) {
+            ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
+            StudentExamRepository studentExamRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -87,6 +94,7 @@ public class ProgrammingExerciseParticipationResource {
         this.resultService = resultService;
         this.participationAuthCheckService = participationAuthCheckService;
         this.repositoryService = repositoryService;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -103,6 +111,9 @@ public class ProgrammingExerciseParticipationResource {
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         hasAccessToParticipationElseThrow(participation);
+        if (shouldHideExamExerciseResults(participation)) {
+            participation.setResults(Set.of());
+        }
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
@@ -123,6 +134,9 @@ public class ProgrammingExerciseParticipationResource {
 
         // TODO: improve access checks to avoid fetching the user multiple times
         hasAccessToParticipationElseThrow(participation);
+        if (shouldHideExamExerciseResults(participation)) {
+            participation.setResults(Set.of());
+        }
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
@@ -143,6 +157,12 @@ public class ProgrammingExerciseParticipationResource {
             @RequestParam(defaultValue = "false") boolean withSubmission) {
         var participation = participationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
+                && shouldHideExamExerciseResults(programmingExerciseStudentParticipation)) {
+            return ResponseEntity.ok(null);
+        }
+
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
 
@@ -383,6 +403,23 @@ public class ProgrammingExerciseParticipationResource {
                 throw new AccessForbiddenException("Participation not yet started");
             }
         }
+    }
+
+    /**
+     * Checks if the results should be hidden for the given participation.
+     *
+     * @param participation the participation to check
+     * @return true if the results should be hidden, false otherwise
+     */
+    private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
+        if (participation.getProgrammingExercise().isExamExercise()) {
+            User student = participation.getStudent()
+                    .orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
+            var studentExam = studentExamRepository.findByExerciseIdAndUserId(participation.getExercise().getId(), student.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Participation " + participation.getId() + " does not have a student exam!"));
+            return !ExamService.shouldStudentSeeResult(studentExam, participation);
+        }
+        return false;
     }
 
 }

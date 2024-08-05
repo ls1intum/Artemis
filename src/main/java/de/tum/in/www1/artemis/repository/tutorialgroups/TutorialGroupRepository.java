@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -143,19 +142,19 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
 
     default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
-        return findByIdWithSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+        return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);
     }
 
     default TutorialGroup findByIdWithTeachingAssistantAndCourseElseThrow(long tutorialGroupId) {
-        return this.findByIdWithTeachingAssistantAndCourse(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+        return getValueElseThrow(findByIdWithTeachingAssistantAndCourse(tutorialGroupId), tutorialGroupId);
     }
 
     default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsElseThrow(long tutorialGroupId) {
-        return this.findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+        return getValueElseThrow(findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId), tutorialGroupId);
     }
 
     default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(long tutorialGroupId) {
-        return this.findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+        return getValueElseThrow(findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId), tutorialGroupId);
     }
 
     default Optional<Channel> getTutorialGroupChannel(Long tutorialGroupId) {

@@ -164,6 +164,6 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
     }
 
     default Team findWithStudentsByIdElseThrow(long teamId) throws EntityNotFoundException {
-        return findWithStudentsById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
+        return getValueElseThrow(findWithStudentsById(teamId), teamId);
     }
 }

@@ -192,6 +192,16 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testQuizExerciseForExamBadRequestOtherOperations() throws Exception {
+        QuizExercise quizExercise = createQuizOnServerForExam();
+
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, BAD_REQUEST);
+        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
     private QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz-exercises/import/" + id);
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))

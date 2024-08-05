@@ -253,7 +253,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExerciseForExam_asInstructor() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, true);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExerciseRepository.save(modelingExercise);
 
@@ -266,7 +266,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
         verify(examLiveEventsService, times(1)).createAndSendProblemStatementUpdateEvent(eq(returnedModelingExercise), eq(Optional.of(notificationText)), any());
-
     }
 
     @Test
