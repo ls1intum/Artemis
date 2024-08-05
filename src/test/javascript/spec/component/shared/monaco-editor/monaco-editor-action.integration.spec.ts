@@ -226,13 +226,14 @@ describe('MonacoEditorActionIntegration', () => {
             textWithoutDelimiters: 'Here is some red.',
             textWithDelimiters: '<span class="red">Here is some red.</span>', // No argument -> default color is red
         },
-        { action: new MonacoCodeBlockAction(), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```java\npublic void main() { }\n```' },
+        { action: new MonacoCodeBlockAction(), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```\npublic void main() { }\n```' },
+        { action: new MonacoCodeBlockAction('java'), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```java\npublic void main() { }\n```' },
         {
             action: new MonacoQuoteAction(),
-            initialText: '> Quote',
-            textToType: ' some other text',
-            textWithDelimiters: '> Quote some other text',
-            textWithoutDelimiters: 'Quote some other text',
+            initialText: '> ',
+            textToType: 'some quoted text',
+            textWithDelimiters: '> some quoted text',
+            textWithoutDelimiters: 'some quoted text',
         },
         {
             action: new MonacoFormulaAction(),

@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -43,7 +42,7 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
     Optional<CompetencyProgress> findByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
     default CompetencyProgress findByCompetencyIdAndUserIdOrElseThrow(long competencyId, long userId) {
-        return findByCompetencyIdAndUserId(competencyId, userId).orElseThrow(() -> new EntityNotFoundException("CompetencyProgress"));
+        return getValueElseThrow(findByCompetencyIdAndUserId(competencyId, userId));
     }
 
     @Query("""

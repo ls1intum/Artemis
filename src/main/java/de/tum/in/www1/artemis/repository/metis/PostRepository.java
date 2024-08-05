@@ -55,10 +55,10 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
     List<Post> findPostsByPlagiarismCaseId(@Param("plagiarismCaseId") Long plagiarismCaseId);
 
     default Post findPostByIdElseThrow(Long postId) throws EntityNotFoundException {
-        return findById(postId).filter(post -> post.getConversation() == null).orElseThrow(() -> new EntityNotFoundException("Post", postId));
+        return getValueElseThrow(findById(postId).filter(post -> post.getConversation() == null), postId);
     }
 
     default Post findPostOrMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
-        return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));
+        return getValueElseThrow(findById(postId), postId);
     }
 }
