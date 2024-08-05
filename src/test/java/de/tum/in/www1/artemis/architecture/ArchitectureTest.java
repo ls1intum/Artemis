@@ -305,7 +305,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
             public void check(final JavaMethod method, final ConditionEvents events) {
 
                 // We only care about the case where required is false and the Parameter is not an Optional, any other combination is fine.
-
                 final var violated = method.getParameters().stream().filter(not(HasType.Predicates.rawType(Optional.class))).flatMap(param -> param.getAnnotations().stream())
                         .filter(HasType.Predicates.rawType(RequestParam.class)).filter(annotation -> {
                             final String value = (String) annotation.get("defaultValue").orElse(ValueConstants.DEFAULT_NONE);
