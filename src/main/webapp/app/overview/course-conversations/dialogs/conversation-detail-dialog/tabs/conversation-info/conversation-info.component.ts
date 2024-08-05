@@ -162,16 +162,16 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                     updateValue = '';
                 }
                 if (isChannelDTO(channelOrGroupChat)) {
-                    this.updateChannel(channelOrGroupChat, propertyName, updateValue);
+                    this.updateChannel(channelOrGroupChat, propertyName as keyof ChannelDTO, updateValue);
                 } else {
-                    this.updateGroupChat(channelOrGroupChat, propertyName, updateValue);
+                    this.updateGroupChat(channelOrGroupChat, propertyName as keyof GroupChatDTO, updateValue);
                 }
             });
     }
 
-    private updateGroupChat(groupChat: GroupChatDTO, propertyName: string, updateValue: string) {
+    private updateGroupChat<K extends keyof GroupChatDTO>(groupChat: GroupChatDTO, propertyName: K, updateValue: GroupChatDTO[K]) {
         const updateDTO = new GroupChatDTO();
-        (updateDTO as any)[propertyName] = updateValue;
+        updateDTO[propertyName] = updateValue;
 
         this.groupChatService
             .update(this.course.id!, groupChat.id!, updateDTO)
@@ -181,16 +181,16 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (updatedGroupChat: GroupChatDTO) => {
-                    (groupChat as any)[propertyName] = updatedGroupChat[propertyName as keyof GroupChatDTO];
+                    groupChat[propertyName] = updatedGroupChat[propertyName];
                     this.onChangePerformed();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
 
-    private updateChannel(channel: ChannelDTO, propertyName: string, updateValue: string) {
+    private updateChannel<K extends keyof ChannelDTO>(channel: ChannelDTO, propertyName: K, updateValue: ChannelDTO[K]) {
         const updateDTO = new ChannelDTO();
-        (updateDTO as any)[propertyName] = updateValue;
+        updateDTO[propertyName] = updateValue;
         this.channelService
             .update(this.course.id!, channel.id!, updateDTO)
             .pipe(
@@ -199,7 +199,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (updatedChannel: ChannelDTO) => {
-                    (channel as any)[propertyName] = updatedChannel[propertyName as keyof ChannelDTO];
+                    channel[propertyName] = updatedChannel[propertyName];
                     this.onChangePerformed();
                 },
                 error: (errorResponse: HttpErrorResponse) => {

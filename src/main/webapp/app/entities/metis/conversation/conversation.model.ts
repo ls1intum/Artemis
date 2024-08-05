@@ -47,7 +47,6 @@ export abstract class ConversationDTO {
     public isHidden?: boolean;
     public isMuted?: boolean;
     public hasUnreadMessage?: boolean;
-    // [key: string]: string | number | boolean | undefined | ConversationUserDTO | dayjs.Dayjs;
 
     protected constructor(type: ConversationType) {
         this.type = type;
