@@ -31,15 +31,14 @@
         <p [jhiTranslate]="deleteQuestion" [translateValues]="translateValues">Are you sure you want to delete?</p>
 
         @if (entitySummaryTitle) {
-            <b [jhiTranslate]="entitySummaryTitle">Summary</b>
+            <b [jhiTranslate]="entitySummaryTitle"></b>
         }
         @if (entitySummary) {
             <ul>
                 @for (summaryKey of objectKeys(entitySummary); track summaryKey; let i = $index) {
-                    @if (entitySummary[summaryKey] !== null) {
+                    @if (entitySummary[summaryKey] !== undefined) {
                         <li>
-                            <span [jhiTranslate]="summaryKey">{{ summaryKey }}</span
-                            >: <span>{{ entitySummary[summaryKey] }}</span>
+                            <span [jhiTranslate]="summaryKey"></span>: <span>{{ entitySummary[summaryKey] }}</span>
                         </li>
                     }
                 }
