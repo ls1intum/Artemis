@@ -4,6 +4,8 @@ import { studentOne } from '../support/users';
 import { BASE_API } from '../support/constants';
 
 test.describe('Login page tests', () => {
+    test.describe.configure({ timeout: 10000 });
+
     test('Logs in via the UI', async ({ page, loginPage }) => {
         await page.goto('/');
         await loginPage.login(studentOne);

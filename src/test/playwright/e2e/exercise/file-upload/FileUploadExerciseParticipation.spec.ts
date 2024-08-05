@@ -7,6 +7,8 @@ import { expect } from '@playwright/test';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
 test.describe('File upload exercise participation', () => {
+    test.describe.configure({ timeout: 20000 });
+
     let course: Course;
     let exercise: FileUploadExercise;
 

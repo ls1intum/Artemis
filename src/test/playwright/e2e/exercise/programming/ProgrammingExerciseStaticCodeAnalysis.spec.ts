@@ -9,7 +9,7 @@ import { expect } from '@playwright/test';
 test.describe('Static code analysis tests', () => {
     test.describe.configure({
         mode: 'default',
-        timeout: 240000,
+        timeout: 120000,
     });
 
     let course: Course;

@@ -9,6 +9,8 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
 test.describe('Text exercise management', () => {
+    test.describe.configure({ timeout: 30000 });
+
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

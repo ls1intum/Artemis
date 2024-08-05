@@ -17,6 +17,8 @@ const tutorFeedbackPoints = 4;
 const complaint = "That feedback wasn't very useful!";
 
 test.describe('File upload exercise assessment', () => {
+    test.describe.configure({ timeout: 30000 });
+
     let course: Course;
     let exercise: FileUploadExercise;
 

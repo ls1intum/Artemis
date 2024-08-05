@@ -9,6 +9,8 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 
 test.describe('File upload exercise management', () => {
+    test.describe.configure({ timeout: 25000 });
+
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

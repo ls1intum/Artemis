@@ -5,6 +5,8 @@ import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 
 test.describe('Modeling Exercise Participation', () => {
+    test.describe.configure({ timeout: 150000 });
+
     let course: Course;
     let modelingExercise: ModelingExercise;
 

@@ -15,6 +15,8 @@ const healthChecks = [
 ];
 
 test.describe('Check artemis system health', () => {
+    test.describe.configure({ timeout: 5000 });
+
     let page: Page;
 
     test.beforeAll('Login as admin and visit system health page', async ({ browser }) => {

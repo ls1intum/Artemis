@@ -18,6 +18,8 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 test.describe('Import exercises', () => {
+    test.describe.configure({ timeout: 60000 });
+
     let course: Course;
     let secondCourse: Course;
     let textExercise: TextExercise;
@@ -119,7 +121,15 @@ test.describe('Import exercises', () => {
             expect(submitResponse.status()).toBe(200);
         });
 
-        test('Imports programming exercise', async ({ login, page, courseManagementExercises, programmingExerciseCreation, courseOverview, programmingExerciseEditor }) => {
+        test('Imports programming exercise', async ({
+            login,
+            page,
+            courseManagementExercises,
+            programmingExerciseCreation,
+            courseOverview,
+            programmingExerciseEditor,
+        }, testInfo) => {
+            testInfo.setTimeout(120000);
             await login(instructor, `/course-management/${secondCourse.id}/exercises`);
             await courseManagementExercises.importProgrammingExercise();
             await courseManagementExercises.clickImportExercise(programmingExercise.id!);

@@ -8,10 +8,7 @@ import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode } from '../../../support/constants';
 
 test.describe('Programming Exercise Management', () => {
-    test.describe.configure({
-        mode: 'default',
-        timeout: 180000,
-    });
+    test.describe.configure({ timeout: 60000 });
 
     let course: Course;
 

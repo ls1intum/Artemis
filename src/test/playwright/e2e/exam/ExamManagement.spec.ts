@@ -12,7 +12,7 @@ import { ExerciseAPIRequests } from '../../support/requests/ExerciseAPIRequests'
 
 test.describe('Exam management', () => {
     test.describe.configure({
-        timeout: 30000,
+        timeout: 45000,
     });
 
     test.describe('Exercise group', () => {

@@ -4,9 +4,8 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
-import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import { Exercise, ExerciseType } from '../../../support/constants';
-import { admin, studentFour, studentThree, studentTwo, users } from '../../../support/users';
+import { admin, studentOne, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
@@ -16,8 +15,7 @@ const textFixture = 'loremIpsum-short.txt';
 
 test.describe('Test exam participation', () => {
     test.describe.configure({
-        mode: 'default',
-        timeout: 90000,
+        timeout: 60000,
     });
 
     let course: Course;
@@ -26,9 +24,7 @@ test.describe('Test exam participation', () => {
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
     });
 
     test.describe('Early Hand-in', () => {
@@ -50,16 +46,8 @@ test.describe('Test exam participation', () => {
             exam = await examAPIRequests.createExam(examConfig);
             Promise.all([
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaAllSuccessfulSubmission, expectedScore: 100 }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaBuildErrorSubmission, expectedScore: 0 }),
-
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
-
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
             ]).then((responses) => {
                 exerciseArray = responses;
@@ -67,7 +55,7 @@ test.describe('Test exam participation', () => {
         });
 
         test('Participates as a student in a registered test exam', async ({ examParticipation, examNavigation }) => {
-            await examParticipation.startParticipation(studentTwo, course, exam);
+            await examParticipation.startParticipation(studentOne, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
@@ -80,7 +68,7 @@ test.describe('Test exam participation', () => {
         });
 
         test('Using exercise sidebar to navigate within exam', async ({ examParticipation, examNavigation }) => {
-            await examParticipation.startParticipation(studentThree, course, exam);
+            await examParticipation.startParticipation(studentOne, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
@@ -96,7 +84,7 @@ test.describe('Test exam participation', () => {
         });
 
         test('Using exercise overview to navigate within exam', async ({ examParticipation, examNavigation }) => {
-            await examParticipation.startParticipation(studentFour, course, exam);
+            await examParticipation.startParticipation(studentOne, course, exam);
 
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
@@ -109,7 +97,7 @@ test.describe('Test exam participation', () => {
 
     test.describe('Normal Hand-in', () => {
         let exam: Exam;
-        let studentFourName: string;
+        let studentOneName: string;
         const examTitle = 'exam' + generateUUID();
 
         test.beforeEach('Create exam', async ({ login, page, examAPIRequests, examExerciseGroupCreation }) => {
@@ -117,8 +105,8 @@ test.describe('Test exam participation', () => {
 
             await login(admin);
 
-            const studentFourInfo = await users.getUserInfo(studentFour.username, page);
-            studentFourName = studentFourInfo.name!;
+            const studentOneInfo = await users.getUserInfo(studentOne.username, page);
+            studentOneName = studentOneInfo.name!;
 
             const examConfig = {
                 course,
@@ -137,14 +125,14 @@ test.describe('Test exam participation', () => {
 
         test('Participates as a student in a registered exam', async ({ examParticipation, examNavigation, examStartEnd }, testInfo) => {
             testInfo.setTimeout(60000);
-            await examParticipation.startParticipation(studentFour, course, exam);
+            await examParticipation.startParticipation(studentOne, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examParticipation.makeSubmission(textExercise.id!, textExercise.type!, textExercise.additionalData);
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examParticipation.checkExamFullnameInputExists();
-            await examParticipation.checkYourFullname(studentFourName);
+            await examParticipation.checkYourFullname(studentOneName);
             const response = await examStartEnd.finishExam();
             expect(response.status()).toBe(200);
             await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);

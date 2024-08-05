@@ -5,6 +5,8 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { admin, studentOne, studentTwo } from '../support/users';
 
 test.describe('Logout tests', () => {
+    test.describe.configure({ timeout: 10000 });
+
     let course: Course;
     let modelingExercise: ModelingExercise;
 

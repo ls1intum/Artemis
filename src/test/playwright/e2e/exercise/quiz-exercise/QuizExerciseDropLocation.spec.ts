@@ -8,6 +8,8 @@ import { expect } from '@playwright/test';
 let course: Course;
 
 test.describe('Quiz Exercise Drop Location Spec', () => {
+    test.describe.configure({ timeout: 25000 });
+
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse();

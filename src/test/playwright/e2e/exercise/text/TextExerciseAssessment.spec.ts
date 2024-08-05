@@ -17,6 +17,8 @@ const tutorTextFeedbackPoints = 2;
 const complaint = "That feedback wasn't very useful!";
 
 test.describe('Text exercise assessment', () => {
+    test.describe.configure({ timeout: 30000 });
+
     let course: Course;
     let exercise: TextExercise;
 
