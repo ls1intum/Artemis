@@ -39,7 +39,7 @@ class ParsingResult {
 
 export class Postprocessor {
     static filesWithRestCalls: { filePath: string, restCalls: RestCall[] }[] = [];
-    private restCalls: RestCall[] = [];
+    private readonly restCalls: RestCall[] = [];
     private readonly filePath: string;
     private readonly ast: TSESTree.Program;
 
