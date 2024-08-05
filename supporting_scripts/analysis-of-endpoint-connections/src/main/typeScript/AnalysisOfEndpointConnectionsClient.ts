@@ -42,4 +42,8 @@ tsFiles.forEach((filePath) => {
     postProcessor.extractRestCalls();
 });
 
-writeFileSync('supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
+try {
+    writeFileSync('supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
+} catch (error) {
+    console.error('Failed to write REST calls to file:', error);
+}
