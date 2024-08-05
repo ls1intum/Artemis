@@ -249,7 +249,11 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     }
 
     private fetchAndSetCourseDeletionSummary() {
-        this.courseAdminService.getDeletionSummary(this.course?.id!).subscribe({
+        if (this.course?.id === undefined) {
+            return;
+        }
+
+        this.courseAdminService.getDeletionSummary(this.course.id).subscribe({
             next: (res: HttpResponse<CourseDeletionSummaryDTO>) => {
                 const summary = res.body;
 

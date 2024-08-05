@@ -55,7 +55,7 @@ export class CourseAdminService {
 
     /**
      * Returns a summary for the course providing information potentially relevant for the deletion.
-     * @param courseId
+     * @param courseId - the id of the course to get the deletion summary for
      */
     getDeletionSummary(courseId: number): Observable<HttpResponse<CourseDeletionSummaryDTO>> {
         return this.http.get<CourseDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/deletion-summary`, { observe: 'response' });
