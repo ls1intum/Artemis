@@ -24,6 +24,8 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
     proportionString: string;
     editorHeight: number = 20;
 
+    static readonly COVERED_LINE_HIGHLIGHT_CLASS = 'covered-line-highlight';
+
     ngOnInit(): void {
         this.renderFile();
         this.editorHeight = this.editor.getContentHeight();
