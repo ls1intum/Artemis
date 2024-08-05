@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseDeletionSummaryDTO } from 'app/entities/course-deletion-summary.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -50,5 +51,13 @@ export class CourseAdminService {
      */
     delete(courseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
+    }
+
+    /**
+     * Returns a summary for the course providing information potentially relevant for the deletion.
+     * @param courseId - the id of the course to get the deletion summary for
+     */
+    getDeletionSummary(courseId: number): Observable<HttpResponse<CourseDeletionSummaryDTO>> {
+        return this.http.get<CourseDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/deletion-summary`, { observe: 'response' });
     }
 }

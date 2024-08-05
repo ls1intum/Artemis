@@ -13,7 +13,26 @@
             "delete": {
                 "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
-                "icon": "Kursicon löschen"
+                "icon": "Kursicon löschen",
+                "summary": {
+                    "title": "Kurszusammenfassung",
+                    "numberExams": "Anzahl der Klausuren",
+                    "numberLectures": "Anzahl der Vorlesungen",
+                    "numberStudents": "Anzahl der Studierenden",
+                    "numberTutors": "Anzahl der Tutor:innen",
+                    "numberEditors": "Anzahl der Editor:innen",
+                    "numberInstructors": "Anzahl der Lehrenden",
+                    "numberProgrammingExercises": "Anzahl der Programmieraufgaben",
+                    "numberModelingExercises": "Anzahl der Modellierungsaufgaben",
+                    "numberTextExercises": "Anzahl der Textaufgaben",
+                    "numberFileUploadExercises": "Anzahl der Dateiupload-Aufgaben",
+                    "numberQuizExercises": "Anzahl der Quizaufgaben",
+                    "numberRepositories": "Anzahl der Repositories",
+                    "numberBuilds": "Anzahl der Builds",
+                    "numberCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
+                    "numberAnswerPosts": "Anzahl der Antwortbeiträge",
+                    "isTestCourse": "Testkurs"
+                }
             },
             "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",
