@@ -3,16 +3,15 @@ package de.tum.in.www1.artemis.repository;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the {@link Prerequisite} entity.
  */
-public interface PrerequisiteRepository extends JpaRepository<Prerequisite, Long> {
+public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisite, Long> {
 
     List<Prerequisite> findAllByCourseIdOrderById(long courseId);
 
@@ -26,7 +25,7 @@ public interface PrerequisiteRepository extends JpaRepository<Prerequisite, Long
      * @return the prerequisite
      */
     default Prerequisite findByIdAndCourseIdElseThrow(long prerequisiteId, long courseId) {
-        return findByIdAndCourseId(prerequisiteId, courseId).orElseThrow(() -> new EntityNotFoundException("Prerequisite", prerequisiteId));
+        return getValueElseThrow(findByIdAndCourseId(prerequisiteId, courseId), prerequisiteId);
     }
 
     long countByCourse(Course course);

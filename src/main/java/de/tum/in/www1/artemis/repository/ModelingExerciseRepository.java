@@ -18,7 +18,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the ModelingExercise entity.
@@ -97,23 +96,22 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
 
     @NotNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
-        return findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+        return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId), exerciseId);
     }
 
     @NotNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(long exerciseId) {
-        return findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+        return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId), exerciseId);
     }
 
     @NotNull
     default ModelingExercise findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(long exerciseId) {
-        return findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(exerciseId), exerciseId);
     }
 
     @NotNull
     default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
-        return findWithStudentParticipationsSubmissionsResultsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+        return getValueElseThrow(findWithStudentParticipationsSubmissionsResultsById(exerciseId), exerciseId);
     }
 
     @NotNull

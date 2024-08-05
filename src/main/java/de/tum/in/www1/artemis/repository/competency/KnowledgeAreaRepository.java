@@ -33,7 +33,7 @@ public interface KnowledgeAreaRepository extends ArtemisJpaRepository<KnowledgeA
 
     @NotNull
     default KnowledgeArea findWithChildrenAndCompetenciesByIdElseThrow(long knowledgeAreaId) throws EntityNotFoundException {
-        return findWithChildrenAndCompetenciesById(knowledgeAreaId).orElseThrow(() -> new EntityNotFoundException("KnowledgeArea", knowledgeAreaId));
+        return getValueElseThrow(findWithChildrenAndCompetenciesById(knowledgeAreaId), knowledgeAreaId);
     }
 
     // this method is needed as native MySQL queries do not get automatically cast to boolean

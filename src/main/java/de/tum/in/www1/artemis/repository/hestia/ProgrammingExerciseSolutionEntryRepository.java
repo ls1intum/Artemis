@@ -26,7 +26,7 @@ public interface ProgrammingExerciseSolutionEntryRepository extends ArtemisJpaRe
      */
     @NotNull
     default ProgrammingExerciseSolutionEntry findByIdWithTestCaseAndProgrammingExerciseElseThrow(long entryId) throws EntityNotFoundException {
-        return findByIdWithTestCaseAndProgrammingExercise(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Solution Entry", entryId));
+        return getValueElseThrow(findByIdWithTestCaseAndProgrammingExercise(entryId), entryId);
     }
 
     @Query("""
