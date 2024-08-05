@@ -192,7 +192,7 @@ export class Preprocessor {
             }
         });
 
-        return result; //test
+        return result;
     }
 
     /**
