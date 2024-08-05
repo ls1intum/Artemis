@@ -168,7 +168,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                 ?.flatMap((exerciseGroup) => exerciseGroup.exercises)
                 .filter((exercise) => exercise?.type === ExerciseType.PROGRAMMING)
                 .map((exercise) => exercise?.numberOfParticipations ?? 0)
-                .reduce((repositorySum, b) => repositorySum + b, 0) ?? 0;
+                .reduce((repositorySum, numberOfParticipationsForRepository) => repositorySum + numberOfParticipationsForRepository, 0) ?? 0;
 
         const numberOfExercisesPerType = new Map<ExerciseType, number>();
         this.exam.exerciseGroups?.forEach((exerciseGroup) => {
