@@ -15,3 +15,7 @@
     margin-right: 2px !important;
     margin-left: 2px !important;
 }
+
+.covered-line-highlight {
+    background-color: var(--monaco-editor-test-coverage-highlight);
+}
