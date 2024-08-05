@@ -456,11 +456,8 @@ public class CourseService {
      * @return the course deletion summary
      */
     public CourseDeletionSummaryDTO getDeletionSummary(Course course) {
-        long numberOfBuilds = 0;
-        var programmingExercises = programmingExerciseRepository.findAllByCourseId(course.getId());
-        for (Exercise exercise : programmingExercises) {
-            numberOfBuilds += buildJobRepository.countBuildJobsByExerciseId(exercise.getId());
-        }
+        List<Long> programmingExerciseIds = course.getExercises().stream().map(Exercise::getId).toList();
+        long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(programmingExerciseIds);
 
         List<Post> posts = postRepository.findAllByCourseId(course.getId());
         long numberOfCommunicationPosts = posts.size();

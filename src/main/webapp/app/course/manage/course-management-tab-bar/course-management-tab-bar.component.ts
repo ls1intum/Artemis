@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, Subscription } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, Subject, Subscription, map, of } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -33,8 +33,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
-import { CourseDeletionSummaryDTO } from 'app/entities/course-deletion-summary.model';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
@@ -80,8 +80,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
 
     irisEnabled = false;
     ltiEnabled = false;
-
-    courseSummary: { [key: string]: unknown } = {};
 
     constructor(
         private eventManager: EventManager,
@@ -140,9 +138,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
         this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
             this.isCommunicationEnabled = isCommunicationEnabled(this.course);
-
-            this.setExistingSummaryEntries();
-            this.fetchAndSetCourseDeletionSummary();
         });
     }
 
@@ -206,12 +201,12 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
         return courseManagementRegex.test(this.router.url);
     }
 
-    private setExistingSummaryEntries() {
+    private getExistingSummaryEntries(): EntitySummary {
         const numberRepositories =
             this.course?.exercises
                 ?.filter((exercise) => exercise.type === 'programming')
                 .map((exercise) => exercise?.numberOfParticipations ?? 0)
-                .reduce((a, b) => a + b, 0) ?? 0;
+                .reduce((repositorySum, numberOfParticipationsForRepository) => repositorySum + numberOfParticipationsForRepository, 0) ?? 0;
 
         const numberOfExercisesPerType = new Map<ExerciseType, number>();
         this.course?.exercises?.forEach((exercise) => {
@@ -230,8 +225,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
         const numberInstructors = this.course?.numberOfInstructors ?? 0;
         const isTestCourse = this.course?.testCourse;
 
-        this.courseSummary = {
-            ...this.courseSummary,
+        return {
             'artemisApp.course.delete.summary.numberRepositories': numberRepositories,
             'artemisApp.course.delete.summary.numberProgrammingExercises': numberOfExercisesPerType.get(ExerciseType.PROGRAMMING) ?? 0,
             'artemisApp.course.delete.summary.numberModelingExercises': numberOfExercisesPerType.get(ExerciseType.MODELING) ?? 0,
@@ -248,27 +242,26 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
         };
     }
 
-    private fetchAndSetCourseDeletionSummary() {
+    fetchCourseDeletionSummary(): Observable<EntitySummary> {
         if (this.course?.id === undefined) {
-            return;
+            return of({});
         }
 
-        this.courseAdminService.getDeletionSummary(this.course.id).subscribe({
-            next: (res: HttpResponse<CourseDeletionSummaryDTO>) => {
-                const summary = res.body;
+        return this.courseAdminService.getDeletionSummary(this.course.id).pipe(
+            map((response) => {
+                const summary = response.body;
 
                 if (summary === null) {
-                    return;
+                    return {};
                 }
 
-                this.courseSummary = {
-                    ...this.courseSummary,
+                return {
+                    ...this.getExistingSummaryEntries(),
                     'artemisApp.course.delete.summary.numberBuilds': summary.numberOfBuilds,
                     'artemisApp.course.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
                     'artemisApp.course.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
                 };
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+            }),
+        );
     }
 }

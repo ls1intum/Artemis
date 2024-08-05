@@ -194,7 +194,7 @@ public class AdminCourseResource {
     @EnforceAdmin
     public ResponseEntity<CourseDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId) {
         log.debug("REST request to get deletion summary course: {}", courseId);
-        final Course course = courseRepository.findByIdElseThrow(courseId);
+        final Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
 
         return ResponseEntity.ok().body(courseService.getDeletionSummary(course));
     }
