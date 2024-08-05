@@ -65,6 +65,9 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
     }
 
+    /**
+     * Performs initialization for this migration entry.
+     */
     @PostConstruct
     public void initialize() {
         localVCRepositoriesBaseUrl = localVCBaseUrl + "/git/";
