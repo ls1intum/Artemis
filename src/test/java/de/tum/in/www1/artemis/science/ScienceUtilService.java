@@ -36,8 +36,7 @@ public class ScienceUtilService {
 
     /**
      * Comparator for comparing two science events.
-     * Allows for a 500ns difference between the timestamps due to the reimport from
-     * the csv export.
+     * Allows for a 500ns difference between the timestamps due to the reimport from the csv export.
      */
     public static Comparator<ScienceEvent> scienceEventComparator = Comparator.comparing(ScienceEvent::getResourceId).thenComparing(ScienceEvent::getType)
             .thenComparing((ScienceEvent e1, ScienceEvent e2) -> {

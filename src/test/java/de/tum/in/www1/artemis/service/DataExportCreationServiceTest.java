@@ -230,14 +230,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     /**
      * Asserts the content of the science events CSV file.
-     * Allows for a 500ns difference between the timestamps due to the reimport from
-     * the csv export.
-     * Might cause the test to be flaky if multiple events are created overlapping
-     * and matched wrongly.
+     * Allows for a 500ns difference between the timestamps due to the reimport from the csv export.
      *
      * @param extractedZipDirPath The path to the extracted zip directory
-     * @param events              The set of science events to compare with the
-     *                                content of the CSV file
+     * @param events              The set of science events to compare with the content of the CSV file
      */
     private void assertScienceEventsCSVFile(Path extractedZipDirPath, Set<ScienceEvent> events) {
         assertThat(extractedZipDirPath).isDirectoryContaining(path -> "science_events.csv".equals(path.getFileName().toString()));
@@ -410,8 +406,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
                         .isDirectoryContaining(path -> path.getFileName().toString().contains("plagiarism_case") && path.getFileName().toString().endsWith(FILE_FORMAT_CSV));
             }
         }
-        // only include automatic test feedback if the assessment due date is in the
-        // future
+        // only include automatic test feedback if the assessment due date is in the future
         if (exerciseDirPath.toString().contains("Programming") && assessmentDueDateInTheFuture && courseExercise) {
             var fileContentResult1 = Files.readString(getProgrammingResultsFilePath(exerciseDirPath, true));
             // automatic feedback
@@ -644,7 +639,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
         conversationUtilService.addOneMessageForUserInCourse(TEST_PREFIX + "student1", course, "only one post");
         var dataExport = initDataExport();
-        // by setting the course groups to a different value we simulate unenrollment
+        // by setting the course groups to a different value, we simulate unenrollment
         // because the user is no longer part of the user group and hence, the course.
         courseUtilService.updateCourseGroups("abc", course, "");
         dataExportCreationService.createDataExport(dataExport);
