@@ -31,7 +31,7 @@ describe('ExamParticipationLiveEventsService', () => {
 
         const tmpMockWebsocketService = new MockWebsocketService();
         tmpMockWebsocketService.state = websocketConnectionStateSubject.asObservable();
-        mockWebsocketService = tmpMockWebsocketService as any as JhiWebsocketService;
+        mockWebsocketService = tmpMockWebsocketService as unknown as JhiWebsocketService;
 
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
