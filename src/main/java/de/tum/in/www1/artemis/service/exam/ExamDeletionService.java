@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.User;
@@ -266,21 +267,18 @@ public class ExamDeletionService {
     public ExamDeletionSummaryDTO getExamDeletionSummary(@NotNull long examId) {
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         long numberOfBuilds = 0;
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            var programmingExercises = exerciseGroup.getExercises().stream().filter(exercise -> ExerciseType.PROGRAMMING.equals(exercise.getExerciseType())).toList();
+        List<Long> programmingExerciseIds = exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
+                .filter(exercise -> ExerciseType.PROGRAMMING.equals(exercise.getExerciseType())).map(DomainObject::getId).toList();
+        numberOfBuilds += buildJobRepository.countBuildJobsByExerciseIds(programmingExerciseIds);
 
-            for (Exercise exercise : programmingExercises) {
-                numberOfBuilds += buildJobRepository.countBuildJobsByExerciseId(exercise.getId());
-            }
-        }
         Channel channel = channelRepository.findChannelByExamId(examId);
         Long conversationId = channel.getId();
 
-        List<Post> posts = postRepository.findAllByConversationId(conversationId);
-        long numberOfCommunicationPosts = posts.size();
-        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByPostIdIn(posts.stream().map(Post::getId).toList());
+        List<Long> postIds = postRepository.findAllByConversationId(conversationId).stream().map(Post::getId).toList();
+        long numberOfCommunicationPosts = postIds.size();
+        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByPostIdIn(postIds);
 
-        List<StudentExam> studentExams = studentExamRepository.findAllByExamId(examId);
+        Set<StudentExam> studentExams = exam.getStudentExams();
         long numberRegisteredStudents = studentExams.size();
 
         long notStartedExams = studentExams.stream().filter(studentExam -> !studentExam.isStarted()).count();

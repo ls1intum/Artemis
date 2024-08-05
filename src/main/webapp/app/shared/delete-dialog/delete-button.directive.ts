@@ -1,7 +1,7 @@
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, Renderer2 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType, DeleteDialogData, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
@@ -10,7 +10,7 @@ export class DeleteButtonDirective implements OnInit {
     @Input() entityTitle?: string;
     @Input() deleteQuestion: string;
     @Input() entitySummaryTitle?: string;
-    @Input() entitySummary?: { [key: string]: unknown } = {};
+    @Input() fetchEntitySummary?: Observable<EntitySummary>;
     @Input() translateValues: { [key: string]: unknown } = {};
     @Input() deleteConfirmationText: string;
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
@@ -76,7 +76,7 @@ export class DeleteButtonDirective implements OnInit {
             deleteConfirmationText: this.deleteConfirmationText,
             additionalChecks: this.additionalChecks,
             entitySummaryTitle: this.entitySummaryTitle,
-            entitySummary: this.entitySummary,
+            fetchEntitySummary: this.fetchEntitySummary,
             actionType: this.actionType,
             buttonType: this.buttonType,
             delete: this.delete,
