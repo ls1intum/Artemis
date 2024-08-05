@@ -97,7 +97,6 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
     Optional<CoverageReport> findCoverageReportByIdWithEagerFileReportsAndEntries(@Param("coverageReportId") Long coverageReportId);
 
     default CoverageReport findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(Long coverageReportId) {
-        var optionalReport = findCoverageReportByIdWithEagerFileReportsAndEntries(coverageReportId);
-        return optionalReport.orElseThrow(() -> new EntityNotFoundException("Coverage Report", coverageReportId));
+        return getValueElseThrow(findCoverageReportByIdWithEagerFileReportsAndEntries(coverageReportId), coverageReportId);
     }
 }

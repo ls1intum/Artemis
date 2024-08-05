@@ -152,11 +152,11 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      */
     @NotNull
     default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
-        return findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Programming Submission", submissionId));
+        return getValueElseThrow(findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId), submissionId);
     }
 
     @NotNull
     default ProgrammingSubmission findByResultIdElseThrow(long resultId) {
-        return findByResultId(resultId).orElseThrow(() -> new EntityNotFoundException("Programming Submission for Result", resultId));
+        return getValueElseThrow(findByResultId(resultId));
     }
 }

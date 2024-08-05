@@ -55,24 +55,50 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
     /**
      * Get the entity if it exists or throw an EntityNotFoundException.
      *
+     * @param <U>      the type or a subclass of the entity
      * @param optional the optional to get the entity from
      * @return the entity if it exists
      */
     @NotNull
-    public T getValueElseThrow(Optional<T> optional) {
+    public <U extends T> U getValueElseThrow(Optional<U> optional) {
         return optional.orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName()));
     }
 
     /**
      * Get the entity if it exists or throw an EntityNotFoundException.
      *
+     * @param <U>      the type or a subclass of the entity
      * @param optional the optional to get the entity from
      * @param id       the id of the entity to find
      * @return the entity if it exists
      */
     @NotNull
-    public T getValueElseThrow(Optional<T> optional, ID id) {
+    public <U extends T> U getValueElseThrow(Optional<U> optional, ID id) {
         return optional.orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName(), String.valueOf(id)));
+    }
+
+    /**
+     * Get the entity if it exists or throw an EntityNotFoundException.
+     *
+     * @param <U>      the type of the entity
+     * @param optional the optional to get the entity from
+     * @return the entity if it exists
+     */
+    @NotNull
+    public <U> U getArbitraryValueElseThrow(Optional<U> optional) {
+        return optional.orElseThrow(EntityNotFoundException::new);
+    }
+
+    /**
+     * Get an arbitrary value if it exists or throw an EntityNotFoundException.
+     *
+     * @param <U>      the type of the entity
+     * @param optional the optional to get the entity from
+     * @param id       the id of the entity to find in string representation
+     * @return the entity if it exists
+     */
+    public <U> U getArbitraryValueElseThrow(Optional<U> optional, String id) {
+        return optional.orElseThrow(() -> new EntityNotFoundException("Entity with id " + id + " does not exist"));
     }
 
     /**

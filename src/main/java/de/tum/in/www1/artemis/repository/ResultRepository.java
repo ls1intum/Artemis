@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Result entity.
@@ -807,13 +806,11 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
-        return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
+        return getValueElseThrow(findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId));
     }
 
     default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(long resultId) {
-        return findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(resultId)
-                .orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        return getValueElseThrow(findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(resultId), resultId);
     }
 
     /**
@@ -823,11 +820,11 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return the result with submission and feedback list
      */
     default Result findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(long resultId) {
-        return findWithSubmissionAndFeedbackAndTeamStudentsById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        return getValueElseThrow(findWithSubmissionAndFeedbackAndTeamStudentsById(resultId), resultId);
     }
 
     default Result findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(long resultId) {
-        return findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        return getValueElseThrow(findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(resultId), resultId);
     }
 
     /**
@@ -838,7 +835,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return the result with the given id
      */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
-        return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Submission", resultId));
+        return getValueElseThrow(findByIdWithEagerFeedbacks(resultId), resultId);
     }
 
     /**
