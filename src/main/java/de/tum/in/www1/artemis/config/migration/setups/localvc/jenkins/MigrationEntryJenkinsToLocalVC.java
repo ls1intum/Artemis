@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanService;
 
 /**
@@ -58,8 +57,8 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
     public MigrationEntryJenkinsToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, UriService uriService,
-            JenkinsBuildPlanService jenkinsBuildPlanService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, JenkinsBuildPlanService jenkinsBuildPlanService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         super(programmingExerciseRepository, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
                 programmingExerciseStudentParticipationRepository, auxiliaryRepositoryRepository);
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
