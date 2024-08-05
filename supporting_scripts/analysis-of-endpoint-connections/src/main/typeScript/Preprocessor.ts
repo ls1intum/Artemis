@@ -145,11 +145,9 @@ export class Preprocessor {
      * @param classDeclaration - The class declaration node to process.
      */
     identifySuperClass(classDeclaration: TSESTree.ClassDeclaration) {
-        let superClassName: string;
-        let superClassPath: string;
         if (classDeclaration.superClass && classDeclaration.superClass.type === 'Identifier') {
-            superClassName = classDeclaration.superClass.name;
-            superClassPath = this.identifyImportedClassByName(superClassName);
+            const superClassName = classDeclaration.superClass.name;
+            const superClassPath = this.identifyImportedClassByName(superClassName);
             const childClassName = classDeclaration.id?.name ?? '';
             const childClass = { superClass: superClassName, name: childClassName, memberVariables: this.memberVariables, parentMethodCalls: [] };
 
