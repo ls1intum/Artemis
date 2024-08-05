@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.User;
@@ -266,10 +265,9 @@ public class ExamDeletionService {
      */
     public ExamDeletionSummaryDTO getExamDeletionSummary(@NotNull long examId) {
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        long numberOfBuilds = 0;
-        List<Long> programmingExerciseIds = exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
-                .filter(exercise -> ExerciseType.PROGRAMMING.equals(exercise.getExerciseType())).map(DomainObject::getId).toList();
-        numberOfBuilds += buildJobRepository.countBuildJobsByExerciseIds(programmingExerciseIds);
+        long numberOfBuilds = exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                .filter(exercise -> ExerciseType.PROGRAMMING.equals(exercise.getExerciseType()))
+                .mapToLong(exercise -> buildJobRepository.countBuildJobsByExerciseIds(List.of(exercise.getId()))).sum();
 
         Channel channel = channelRepository.findChannelByExamId(examId);
         Long conversationId = channel.getId();

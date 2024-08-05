@@ -105,6 +105,9 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     /**
      * Get the number of build jobs for a list of exercise ids.
+     *
+     * @param exerciseIds the list of exercise ids
+     * @return the number of build jobs
      */
     @Query("""
             SELECT COUNT(b)
