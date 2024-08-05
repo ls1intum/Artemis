@@ -10,6 +10,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { By } from '@angular/platform-browser';
 
 describe('LearningPathsTableComponent', () => {
     let component: LearningPathsTableComponent;
@@ -21,29 +22,8 @@ describe('LearningPathsTableComponent', () => {
     const courseId = 1;
 
     const searchResults = <SearchResult<LearningPathInformationDTO>>{
-        numberOfPages: 1,
-        resultsOnPage: [
-            {
-                id: 1,
-                user: { name: 'User 1', login: 'user1' },
-                progress: 30,
-            },
-            {
-                id: 2,
-                user: { name: 'User 2', login: 'user2' },
-                progress: 50,
-            },
-            {
-                id: 3,
-                user: { name: 'User 3', login: 'user3' },
-                progress: 70,
-            },
-            {
-                id: 4,
-                user: { name: 'User 4', login: 'user4' },
-                progress: 100,
-            },
-        ],
+        numberOfPages: 2,
+        resultsOnPage: generateResults(0, 50),
     };
 
     const pageable = <SearchTermPageableSearch>{
@@ -86,15 +66,45 @@ describe('LearningPathsTableComponent', () => {
     it('should load learning paths', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
+        fixture.detectChanges();
+
+        const learningPathRows = fixture.nativeElement.querySelectorAll('tr');
 
         expect(getLearningPathInformationSpy).toHaveBeenCalledWith(courseId, pageable);
 
         expect(component.learningPaths()).toEqual(searchResults.resultsOnPage);
+        expect(learningPathRows).toHaveLength(searchResults.resultsOnPage.length + 1);
         expect(component.collectionSize()).toBe(searchResults.resultsOnPage.length);
     });
 
+    it('should open competency graph modal', async () => {
+        const learningPathId = 1;
+        const openCompetencyGraphSpy = jest.spyOn(component, 'openCompetencyGraph');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const learningPathIdButton = fixture.debugElement.query(By.css(`#open-competency-graph-button-${learningPathId}`));
+        learningPathIdButton.nativeElement.click();
+        expect(openCompetencyGraphSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should change page', async () => {
+        const onPageChangeSpy = jest.spyOn(component, 'onPageChange');
+
+        component.onPageChange(2);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(onPageChangeSpy).toHaveBeenCalledWith(2);
+        expect(getLearningPathInformationSpy).toHaveBeenCalledWith(courseId, { ...pageable, page: 2 });
+    });
+
     it('should show error message when loading learning paths fails', async () => {
-        getLearningPathInformationSpy.mockRejectedValue(new Error());
+        getLearningPathInformationSpy.mockRejectedValue(new Error('Error loading learning paths'));
         const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
 
         fixture.detectChanges();
@@ -112,4 +122,25 @@ describe('LearningPathsTableComponent', () => {
         expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
         expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
     });
+
+    it('should search for learning paths when the search term changes', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const searchField = fixture.debugElement.query(By.css('#learning-path-search'));
+        const searchPageable = { ...pageable, searchTerm: 'Search Term' };
+        searchField.nativeElement.value = 'Search Term';
+        searchField.nativeElement.dispatchEvent(new Event('input'));
+
+        expect(getLearningPathInformationSpy).toHaveBeenCalledWith(courseId, searchPageable);
+    });
+
+    function generateResults(start: number = 0, end: number): LearningPathInformationDTO[] {
+        return Array.from({ length: end - start }, (_, i) => ({
+            id: i + start,
+            user: { name: `User ${i + start}`, login: `user${i + start}` },
+            progress: i + start,
+        }));
+    }
 });
