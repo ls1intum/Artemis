@@ -265,22 +265,18 @@ public class ExamDeletionService {
      */
     public ExamDeletionSummaryDTO getExamDeletionSummary(@NotNull long examId) {
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        long numberOfBuilds = 0;
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            var programmingExercises = exerciseGroup.getExercises().stream().filter(exercise -> ExerciseType.PROGRAMMING.equals(exercise.getExerciseType())).toList();
+        long numberOfBuilds = exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                .filter(exercise -> ExerciseType.PROGRAMMING.equals(exercise.getExerciseType()))
+                .mapToLong(exercise -> buildJobRepository.countBuildJobsByExerciseIds(List.of(exercise.getId()))).sum();
 
-            for (Exercise exercise : programmingExercises) {
-                numberOfBuilds += buildJobRepository.countBuildJobsByExerciseId(exercise.getId());
-            }
-        }
         Channel channel = channelRepository.findChannelByExamId(examId);
         Long conversationId = channel.getId();
 
-        List<Post> posts = postRepository.findAllByConversationId(conversationId);
-        long numberOfCommunicationPosts = posts.size();
-        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByPostIdIn(posts.stream().map(Post::getId).toList());
+        List<Long> postIds = postRepository.findAllByConversationId(conversationId).stream().map(Post::getId).toList();
+        long numberOfCommunicationPosts = postIds.size();
+        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByPostIdIn(postIds);
 
-        List<StudentExam> studentExams = studentExamRepository.findAllByExamId(examId);
+        Set<StudentExam> studentExams = exam.getStudentExams();
         long numberRegisteredStudents = studentExams.size();
 
         long notStartedExams = studentExams.stream().filter(studentExam -> !studentExam.isStarted()).count();

@@ -104,7 +104,10 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime, @Param("courseId") Long courseId);
 
     /**
-     * Get the number of build jobs for exercise id.
+     * Get the number of build jobs for a list of exercise ids.
+     *
+     * @param exerciseIds the list of exercise ids
+     * @return the number of build jobs
      */
     @Query("""
             SELECT COUNT(b)
@@ -112,7 +115,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 LEFT JOIN Result r ON b.result.id = r.id
                 LEFT JOIN Participation p ON r.participation.id = p.id
                 LEFT JOIN Exercise e ON p.exercise.id = e.id
-            WHERE e.id = :exerciseId
+            WHERE e.id IN :exerciseIds
             """)
-    long countBuildJobsByExerciseId(@Param("exerciseId") Long exerciseId);
+    long countBuildJobsByExerciseIds(@Param("exerciseIds") List<Long> exerciseIds);
 }

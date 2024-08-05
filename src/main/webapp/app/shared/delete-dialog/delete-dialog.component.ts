@@ -1,7 +1,7 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash-es';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { faBan, faCheck, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
@@ -25,7 +25,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
 
     deleteQuestion: string;
     entitySummaryTitle?: string;
-    entitySummary?: { [key: string]: unknown } = {};
+    entitySummary?: EntitySummary = {};
     translateValues: { [key: string]: unknown } = {};
     deleteConfirmationText: string;
     requireConfirmationOnlyForAdditionalChecks: boolean;

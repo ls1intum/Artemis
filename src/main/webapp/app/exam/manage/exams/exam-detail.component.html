@@ -88,7 +88,7 @@
                             [buttonSize]="buttonSize"
                             [entityTitle]="exam.title || ''"
                             entitySummaryTitle="artemisApp.examManagement.delete.summary.title"
-                            [entitySummary]="examSummary"
+                            [fetchEntitySummary]="fetchExamDeletionSummary()"
                             deleteQuestion="artemisApp.examManagement.delete.question"
                             deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
                             (delete)="deleteExam(exam.id!)"

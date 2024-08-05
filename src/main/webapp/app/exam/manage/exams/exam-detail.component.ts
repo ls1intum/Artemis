@@ -2,9 +2,9 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
+import { Observable, Subject, map } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,7 +18,6 @@ import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/deta
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -54,8 +53,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
 
     examDetailSections: DetailOverviewSection[];
 
-    examSummary: { [key: string]: unknown } = {};
-
     constructor(
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
@@ -87,9 +84,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     this.canHaveBonus = gradingSystemResponse.body.gradeType === GradeType.GRADE;
                 }
             });
-
-            this.setExistingSummaryEntries();
-            this.fetchAndSetExamDeletionSummary();
         });
     }
 
@@ -168,13 +162,13 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    private setExistingSummaryEntries() {
+    private getExistingSummaryEntries(): EntitySummary {
         const numberOfProgrammingExerciseParticipations =
             this.exam.exerciseGroups
-                ?.flatMap((e) => e.exercises)
-                .filter((e) => e?.type === ExerciseType.PROGRAMMING)
-                .map((e) => e?.numberOfParticipations ?? 0)
-                .reduce((a, b) => a + b, 0) ?? 0;
+                ?.flatMap((exerciseGroup) => exerciseGroup.exercises)
+                .filter((exercise) => exercise?.type === ExerciseType.PROGRAMMING)
+                .map((exercise) => exercise?.numberOfParticipations ?? 0)
+                .reduce((repositorySum, numberOfParticipationsForRepository) => repositorySum + numberOfParticipationsForRepository, 0) ?? 0;
 
         const numberOfExercisesPerType = new Map<ExerciseType, number>();
         this.exam.exerciseGroups?.forEach((exerciseGroup) => {
@@ -191,8 +185,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         const isTestExam = this.exam.testExam ?? false;
         const isTestCourse = this.exam.course?.testCourse ?? false;
 
-        this.examSummary = {
-            ...this.examSummary,
+        return {
             'artemisApp.examManagement.delete.summary.numberExerciseGroups': numberOfExerciseGroups,
             'artemisApp.examManagement.delete.summary.numberProgrammingExercises': numberOfExercisesPerType.get(ExerciseType.PROGRAMMING),
             'artemisApp.examManagement.delete.summary.numberModelingExercises': numberOfExercisesPerType.get(ExerciseType.MODELING),
@@ -205,17 +198,17 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         };
     }
 
-    fetchAndSetExamDeletionSummary() {
-        this.examManagementService.getDeletionSummary(this.exam.course!.id!, this.exam.id!).subscribe({
-            next: (res: HttpResponse<ExamDeletionSummaryDTO>) => {
-                const summary = res.body;
+    fetchExamDeletionSummary(): Observable<EntitySummary> {
+        return this.examManagementService.getDeletionSummary(this.exam.course!.id!, this.exam.id!).pipe(
+            map((response) => {
+                const summary = response.body;
 
                 if (summary === null) {
-                    return;
+                    return {};
                 }
 
-                this.examSummary = {
-                    ...this.examSummary,
+                return {
+                    ...this.getExistingSummaryEntries(),
                     'artemisApp.examManagement.delete.summary.numberBuilds': summary.numberOfBuilds,
                     'artemisApp.examManagement.delete.summary.numberRegisteredStudents': summary.numberRegisteredStudents,
                     'artemisApp.examManagement.delete.summary.numberNotStartedExams': summary.numberNotStartedExams,
@@ -224,8 +217,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     'artemisApp.examManagement.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
                     'artemisApp.examManagement.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
                 };
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+            }),
+        );
     }
 }
