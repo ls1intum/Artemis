@@ -1,4 +1,17 @@
-import { AfterContentInit, AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, Signal, ViewChild, computed } from '@angular/core';
+import {
+    AfterContentInit,
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnDestroy,
+    Output,
+    Signal,
+    ViewChild,
+    computed,
+} from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
@@ -13,7 +26,7 @@ import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-u
 import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
 import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
 import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
-import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -25,6 +38,9 @@ import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector
 import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
+import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-lecture-attachment-reference.action';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { ReferenceType } from 'app/shared/metis/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
 interface MarkdownActionsByGroup {
@@ -35,6 +51,8 @@ interface MarkdownActionsByGroup {
         withoutOptions: MonacoEditorDomainAction[];
         withOptions: MonacoEditorDomainActionWithOptions[];
     };
+    // Special case due to the complex structure of lectures, attachments, and their slides
+    lecture?: MonacoLectureAttachmentReferenceAction;
     meta: MonacoEditorAction[];
 }
 
@@ -52,6 +70,7 @@ const BORDER_WIDTH_OFFSET = 3;
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
     styleUrls: ['./markdown-editor-monaco.component.scss', '../markdown-editor.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
@@ -82,6 +101,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     showEditButton = true;
 
+    @Input()
+    linkEditorHeightToContentHeight = false;
+
     /**
      * The initial height the editor should have. If set to 'external', the editor will try to grow to the available space.
      */
@@ -101,7 +123,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new MonacoUnderlineAction(),
         new MonacoQuoteAction(),
         new MonacoCodeAction(),
-        new MonacoCodeBlockAction(),
+        new MonacoCodeBlockAction('java'),
         new MonacoUrlAction(),
         new MonacoAttachmentAction(),
         new MonacoOrderedListAction(),
@@ -109,11 +131,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ];
 
     @Input()
-    headerActions: MonacoEditorActionGroup<MonacoHeadingAction> = new MonacoEditorActionGroup<MonacoHeadingAction>(
+    headerActions?: MonacoEditorActionGroup<MonacoHeadingAction> = new MonacoEditorActionGroup<MonacoHeadingAction>(
         'artemisApp.multipleChoiceQuestion.editor.style',
         [1, 2, 3].map((level) => new MonacoHeadingAction(level)),
         undefined,
     );
+
+    @Input()
+    lectureReferenceAction?: MonacoLectureAttachmentReferenceAction = undefined;
 
     @Input()
     colorAction?: MonacoColorAction = new MonacoColorAction();
@@ -128,12 +153,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     markdownChange = new EventEmitter<string>();
 
     @Output()
-    onPreviewSelect = new EventEmitter();
+    onPreviewSelect = new EventEmitter<void>();
+
+    @Output()
+    onEditSelect = new EventEmitter<void>();
 
     inPreviewMode = false;
     uniqueMarkdownEditorId: string;
-    faQuestionCircle = faQuestionCircle;
-    faGripLines = faGripLines;
     resizeObserver?: ResizeObserver;
     targetWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -143,6 +169,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         header: [],
         color: undefined,
         domain: { withoutOptions: [], withOptions: [] },
+        lecture: undefined,
         meta: [],
     };
 
@@ -161,6 +188,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     readonly colorPickerMarginTop = 35;
     readonly colorPickerHeight = 110;
+    // Icons
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faGripLines = faGripLines;
+    protected readonly faAngleDown = faAngleDown;
+    // Types exposed to the template
+    protected readonly LectureUnitType = LectureUnitType;
+    protected readonly ReferenceType = ReferenceType;
 
     constructor(
         private alertService: AlertService,
@@ -175,12 +209,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
             standard: this.defaultActions,
-            header: this.headerActions.actions,
+            header: this.headerActions?.actions ?? [],
             color: this.colorAction,
             domain: {
                 withoutOptions: this.domainActions.filter((action) => !(action instanceof MonacoEditorDomainActionWithOptions)),
                 withOptions: <MonacoEditorDomainActionWithOptions[]>this.domainActions.filter((action) => action instanceof MonacoEditorDomainActionWithOptions),
             },
+            lecture: this.lectureReferenceAction,
             meta: this.metaActions,
         };
     }
@@ -197,13 +232,22 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.fileUploadFooter?.nativeElement) {
             this.resizeObserver.observe(this.fileUploadFooter.nativeElement);
         }
-        [this.defaultActions, this.headerActions.actions, this.domainActions, ...(this.colorAction ? [this.colorAction] : []), this.metaActions].flat().forEach((action) => {
-            if (action instanceof MonacoFullscreenAction) {
-                // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
-                action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
-            }
-            this.monacoEditor.registerAction(action);
-        });
+        [
+            this.defaultActions,
+            this.headerActions?.actions ?? [],
+            this.domainActions,
+            ...(this.colorAction ? [this.colorAction] : []),
+            ...(this.lectureReferenceAction ? [this.lectureReferenceAction] : []),
+            this.metaActions,
+        ]
+            .flat()
+            .forEach((action) => {
+                if (action instanceof MonacoFullscreenAction) {
+                    // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
+                    action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
+                }
+                this.monacoEditor.registerAction(action);
+            });
     }
 
     /**
@@ -239,6 +283,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         event.source.reset();
         // The editor's bottom edge becomes the top edge of the handle.
         this.targetWrapperHeight = event.pointerPosition.y - this.wrapper.nativeElement.getBoundingClientRect().top - this.getElementClientHeight(this.resizePlaceholder) / 2;
+    }
+
+    /**
+     * Adjusts the height of the element when the content height changes.
+     * @param newContentHeight The new height of the content in the editor.
+     */
+    onContentHeightChanged(newContentHeight: number): void {
+        if (this.linkEditorHeightToContentHeight) {
+            const totalHeight = newContentHeight + this.getElementClientHeight(this.fileUploadFooter) + this.getElementClientHeight(this.actionPalette);
+            // Clamp the height so it is between the minimum and maximum height.
+            this.targetWrapperHeight = Math.max(this.resizableMinHeight, Math.min(this.resizableMaxHeight, totalHeight));
+        }
     }
 
     /**
@@ -372,6 +428,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     private isInitialHeightExternal(): boolean {
         return this.initialEditorHeight === EXTERNAL_HEIGHT;
+    }
+
+    /**
+     * Enable the text field mode of the editor. This makes the editor look and behave like a normal text field.
+     */
+    enableTextFieldMode(): void {
+        this.monacoEditor.enableTextFieldMode();
     }
 
     /**
