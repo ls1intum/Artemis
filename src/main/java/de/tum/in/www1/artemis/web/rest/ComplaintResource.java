@@ -226,21 +226,15 @@ public class ComplaintResource {
         if (!isAtLeastInstructor) {
             tutorId = Optional.of(user.getId());
         }
-        List<Complaint> complaints;
 
-        if (tutorId.isEmpty()) {
-            complaints = complaintService.getAllComplaintsByCourseId(courseId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
-        }
-        else if (allComplaintsForTutor) {
-            complaints = complaintService.getAllComplaintsByCourseId(courseId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+        List<Complaint> complaints = tutorId.map(id -> complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, id))
+                .orElseGet(() -> complaintService.getAllComplaintsByCourseId(courseId));
+
+        filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+
+        if (allComplaintsForTutor) {
             // For a tutor, all foreign reviewers are filtered out
             complaints.forEach(complaint -> complaint.filterForeignReviewer(user));
-        }
-        else {
-            complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId.get());
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
         }
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));

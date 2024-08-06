@@ -119,7 +119,7 @@ public class RepositoryService {
     public Map<String, String> getFilesContentAtCommit(ProgrammingExercise programmingExercise, String commitId, Optional<RepositoryType> repositoryType,
             ProgrammingExerciseParticipation participation) throws IOException, GitAPIException {
 
-        boolean isTestRepository = repositoryType.equals(Optional.of(RepositoryType.TESTS));
+        boolean isTestRepository = repositoryType.isPresent() && repositoryType.get() == RepositoryType.TESTS;
         var repoUri = isTestRepository ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
 
         // Check if local VCS is active
