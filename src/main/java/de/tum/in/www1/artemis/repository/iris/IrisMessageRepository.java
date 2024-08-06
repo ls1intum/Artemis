@@ -42,10 +42,6 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
             """)
     int countLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
-    @NotNull
-    default IrisMessage findByIdElseThrow(long messageId) throws EntityNotFoundException {
-        return getValueElseThrow(findById(messageId));
-    }
 
     Optional<IrisMessage> findFirstBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
 
