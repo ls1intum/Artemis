@@ -212,15 +212,18 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * GET /repository/{participationId}/files/{commitId} : Gets the files of the repository with the given participationId at the given commitId.
      * This enforces at least instructor access rights.
      *
-     * @param participationId the participationId of the repository we want to get the files from
-     * @param commitId        the commitId of the repository we want to get the files from
-     * @param repositoryType  the type of the repository (template, solution, tests)
+     * @param participationIdOpt the (optional) participationId of the repository we want to get the files from
+     * @param commitId           the commitId of the repository we want to get the files from
+     * @param repositoryType     the type of the repository (template, solution, tests)
      * @return a map with the file path as key and the file content as value
      */
     @GetMapping(value = "repository-files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable String commitId, @RequestParam(defaultValue = "0") long participationId,
+    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable String commitId, @RequestParam Optional<Long> participationIdOpt,
             @RequestParam Optional<RepositoryType> repositoryType) {
+
+        var participationId = participationIdOpt.orElseThrow(EntityNotFoundException::new);
+
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);

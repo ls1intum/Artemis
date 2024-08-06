@@ -314,7 +314,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                         .anyMatch(required -> !required);
 
                 if (violated) {
-                    final String message = String.format("Method %s uses 'required = false' without a default value set, use Optional<T> instead!", method.getFullName());
+                    final String message = String.format("Method %s uses 'required = false' without a default value set, use Optional<T> instead or add a default value!",
+                            method.getFullName());
                     events.add(SimpleConditionEvent.violated(method, message));
                 }
             }
