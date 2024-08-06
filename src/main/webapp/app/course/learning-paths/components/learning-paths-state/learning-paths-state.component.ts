@@ -24,7 +24,7 @@ export class LearningPathsStateComponent {
         [HealthStatus.NO_RELATIONS]: `${this.baseTranslationKey}.noRelations`,
     };
 
-    readonly statusClasses: Record<HealthStatus, string> = {
+    readonly stateCssClasses: Record<HealthStatus, string> = {
         [HealthStatus.MISSING]: 'warning-state',
         [HealthStatus.NO_COMPETENCIES]: 'danger-state',
         [HealthStatus.NO_RELATIONS]: 'warning-state',
@@ -39,17 +39,17 @@ export class LearningPathsStateComponent {
 
     readonly isLoading = signal<boolean>(false);
     private readonly learningPathHealth = signal<LearningPathHealthDTO | undefined>(undefined);
-    readonly learningPathHealthStatus = computed(() => this.learningPathHealth()?.status ?? []);
+    readonly learningPathHealthState = computed(() => this.learningPathHealth()?.status ?? []);
 
     constructor() {
-        effect(() => this.loadLearningPathHealthStatus(this.courseId()), { allowSignalWrites: true });
+        effect(() => this.loadLearningPathHealthState(this.courseId()), { allowSignalWrites: true });
     }
 
-    protected async loadLearningPathHealthStatus(courseId: number): Promise<void> {
+    protected async loadLearningPathHealthState(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const learningPathHealthStatus = await this.learningPathApiService.getLearningPathHealthStatus(courseId);
-            this.learningPathHealth.set(learningPathHealthStatus);
+            const learningPathHealthState = await this.learningPathApiService.getLearningPathHealthStatus(courseId);
+            this.learningPathHealth.set(learningPathHealthState);
         } catch (error) {
             onError(this.alertService, error);
         } finally {
@@ -57,27 +57,27 @@ export class LearningPathsStateComponent {
         }
     }
 
-    protected async handleHealthStatusAction(healthStatus: HealthStatus): Promise<void> {
-        switch (healthStatus) {
+    protected async handleHealthStateAction(healthState: HealthStatus): Promise<void> {
+        switch (healthState) {
             case HealthStatus.MISSING:
                 await this.generateMissingLearningPaths();
                 break;
             case HealthStatus.NO_COMPETENCIES:
             case HealthStatus.NO_RELATIONS:
-                this.navigateToManageCompetencyPage();
+                await this.navigateToManageCompetencyPage();
                 break;
         }
     }
 
-    private navigateToManageCompetencyPage(): void {
-        this.router.navigate(['../competency-management'], { relativeTo: this.activatedRoute });
+    private async navigateToManageCompetencyPage(): Promise<void> {
+        await this.router.navigate(['../competency-management'], { relativeTo: this.activatedRoute });
     }
 
     private async generateMissingLearningPaths(): Promise<void> {
         try {
             await this.learningPathApiService.generateMissingLearningPaths(this.courseId());
-            await this.loadLearningPathHealthStatus(this.courseId());
-            this.alertService.success('artemisApp.learningPathManagement.learningPathsState.type.missing.successAlert');
+            this.alertService.success(`${this.baseTranslationKey}.missing.successAlert`);
+            await this.loadLearningPathHealthState(this.courseId());
         } catch (error) {
             onError(this.alertService, error);
         }
