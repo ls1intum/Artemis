@@ -43,7 +43,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges) {
         if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
             if (this.shouldReloadTemplate()) {
-                this.loadAeolusTemplate(changes.programmingExerciseCreationConfig.currentValue.isImportFromFile);
+                const isImportFromFile = changes.programmingExerciseCreationConfig?.currentValue?.isImportFromFile ?? false;
+                this.loadAeolusTemplate(isImportFromFile);
             }
         }
     }
