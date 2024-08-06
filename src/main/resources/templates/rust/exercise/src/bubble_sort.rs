@@ -8,7 +8,7 @@ impl BubbleSort {
     /// Arguments:
     ///
     /// * `input`: slice of items to be sorted
-    fn perform_sort(&self, input: &mut [NaiveDate]) {
+    pub fn perform_sort(&self, input: &mut [NaiveDate]) {
         todo!("implement");
     }
 }
