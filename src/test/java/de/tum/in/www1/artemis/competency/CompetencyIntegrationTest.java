@@ -954,7 +954,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
             Competency head = createCompetency(course3);
             Competency tail = createCompetency(course3);
-            createRelation(tail, head, RelationType.RELATES);
+            createRelation(tail, head, RelationType.ASSUMES);
 
             competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course3.getId() + "?importRelations=true", null,
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
@@ -1046,7 +1046,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
             Competency head = createCompetency(course2);
             Competency tail = createCompetency(course2);
-            createRelation(tail, head, RelationType.RELATES);
+            createRelation(tail, head, RelationType.ASSUMES);
             List<CourseCompetency> competencyList = List.of(head, tail);
 
             competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import/bulk?importRelations=true", competencyList,
