@@ -42,7 +42,7 @@ export interface LearningPathNavigationObjectDTO {
 
 export interface LearningPathNavigationDTO {
     predecessorLearningObject?: LearningPathNavigationObjectDTO;
-    currentLearningObject: LearningPathNavigationObjectDTO;
+    currentLearningObject?: LearningPathNavigationObjectDTO;
     successorLearningObject?: LearningPathNavigationObjectDTO;
     progress: number;
 }
@@ -58,7 +58,6 @@ export interface LearningPathsConfigurationDTO {
 export enum CompetencyGraphNodeValueType {
     MASTERY_PROGRESS = 'MASTERY_PROGRESS',
     AVERAGE_MASTERY_PROGRESS = 'AVERAGE_MASTERY_PROGRESS',
-}
 
 export interface CompetencyGraphNodeDTO {
     id: string;

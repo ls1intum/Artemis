@@ -371,25 +371,24 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     Page<Course> findByTitleInCoursesWhereInstructorOrEditor(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
-        return Optional.ofNullable(findWithEagerExercisesById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
     }
 
     default Course findByIdWithEagerOnlineCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
-        return Optional.ofNullable(findWithEagerOnlineCourseConfigurationById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationById(courseId)), courseId);
     }
 
     default Course findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(long courseId) throws EntityNotFoundException {
-        return Optional.ofNullable(findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(courseId))
-                .orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(courseId)), courseId);
     }
 
     default Course findByIdWithEagerTutorialGroupConfigurationElseThrow(long courseId) throws EntityNotFoundException {
-        return Optional.ofNullable(findWithEagerTutorialGroupConfigurationsById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(Optional.ofNullable(findWithEagerTutorialGroupConfigurationsById(courseId)), courseId);
     }
 
     @NotNull
     default Course findWithEagerOrganizationsElseThrow(long courseId) throws EntityNotFoundException {
-        return findWithEagerOrganizations(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(findWithEagerOrganizations(courseId), courseId);
     }
 
     @NotNull
@@ -426,7 +425,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @return the course entity
      */
     default Course findSingleWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
-        return findSingleWithOrganizationsAndPrerequisites(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(findSingleWithOrganizationsAndPrerequisites(courseId), courseId);
     }
 
     /**
@@ -466,27 +465,27 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      */
     @NotNull
     default Course findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(long courseId) {
-        return findWithEagerExercisesAndExerciseDetailsAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(findWithEagerExercisesAndExerciseDetailsAndLecturesById(courseId), courseId);
     }
 
     @NotNull
     default Course findByIdWithLecturesElseThrow(long courseId) {
-        return findWithEagerLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(findWithEagerLecturesById(courseId), courseId);
     }
 
     @NotNull
     default Course findByIdWithLecturesAndLectureUnitsElseThrow(long courseId) {
-        return findWithEagerLecturesAndLectureUnitsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(findWithEagerLecturesAndLectureUnitsById(courseId), courseId);
     }
 
     @NotNull
     default Course findByIdForUpdateElseThrow(long courseId) {
-        return findForUpdateById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(findForUpdateById(courseId), courseId);
     }
 
     @NotNull
     default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(long courseId) {
-        return findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId), courseId);
     }
 
     @NotNull
@@ -501,7 +500,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     @NotNull
     default Course findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
-        return findWithEagerLearningPathsAndCompetenciesAndPrerequisitesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return getValueElseThrow(findWithEagerLearningPathsAndCompetenciesAndPrerequisitesById(courseId), courseId);
     }
 
     Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
