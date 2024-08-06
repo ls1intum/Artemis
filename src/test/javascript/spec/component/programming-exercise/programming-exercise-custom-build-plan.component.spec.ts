@@ -33,7 +33,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
     let programmingExercise = new ProgrammingExercise(course, undefined);
-    let windFile: WindFile = new WindFile();
+    let windfile: WindFile = new WindFile();
     let actions: BuildAction[] = [];
     let gradleBuildAction: ScriptAction = new ScriptAction();
     let cleanBuildAction: ScriptAction = new ScriptAction();
@@ -45,11 +45,11 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
         programmingExercise.customizeBuildPlanWithAeolus = true;
-        windFile = new WindFile();
+        windfile = new WindFile();
         const metadata = new WindMetadata();
         metadata.docker = new DockerConfiguration();
         metadata.docker.image = 'testImage';
-        windFile.metadata = metadata;
+        windfile.metadata = metadata;
         actions = [];
         gradleBuildAction = new ScriptAction();
         gradleBuildAction.name = 'gradle';
@@ -63,8 +63,8 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         actions.push(gradleBuildAction);
         actions.push(cleanBuildAction);
         actions.push(platformAction);
-        windFile.actions = actions;
-        programmingExercise.windfile = windFile;
+        windfile.actions = actions;
+        programmingExercise.windfile = windfile;
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -127,7 +127,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     });
 
     it('should reset buildplan', () => {
-        programmingExercise.windfile = windFile;
+        programmingExercise.windfile = windfile;
         programmingExercise.buildPlanConfiguration = 'some build plan';
         expect(programmingExercise.windfile).toBeDefined();
         expect(programmingExercise.buildPlanConfiguration).toBeDefined();
@@ -188,7 +188,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExercise.windfile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windfile))));
         jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.next("echo 'test'")));
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.windfile).toBeDefined();
@@ -211,7 +211,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExercise.id = 1;
         jest.spyOn(comp, 'resetCustomBuildPlan');
         jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.next("echo 'test'")));
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windfile))));
         comp.loadAeolusTemplate();
         expect(comp.resetCustomBuildPlan).not.toHaveBeenCalled();
         expect(comp.programmingExercise.buildScript).toBe("echo 'test'");
@@ -243,7 +243,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     });
 
     it('should set docker image correctly', () => {
-        comp.programmingExercise.windfile = windFile;
+        comp.programmingExercise.windfile = windfile;
         comp.programmingExercise.windfile.metadata.docker.image = 'old';
         comp.setDockerImage('testImage');
         expect(comp.programmingExercise.windfile?.metadata.docker.image).toBe('testImage');

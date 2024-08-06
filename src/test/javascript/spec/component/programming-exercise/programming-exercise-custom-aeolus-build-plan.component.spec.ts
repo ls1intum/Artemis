@@ -33,7 +33,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
     let programmingExercise = new ProgrammingExercise(course, undefined);
-    let windFile: WindFile = new WindFile();
+    let windfile: WindFile = new WindFile();
     let actions: BuildAction[] = [];
     let gradleBuildAction: ScriptAction = new ScriptAction();
     let cleanBuildAction: ScriptAction = new ScriptAction();
@@ -45,11 +45,11 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
         programmingExercise.customizeBuildPlanWithAeolus = true;
-        windFile = new WindFile();
+        windfile = new WindFile();
         const metadata = new WindMetadata();
         metadata.docker = new DockerConfiguration();
         metadata.docker.image = 'testImage';
-        windFile.metadata = metadata;
+        windfile.metadata = metadata;
         actions = [];
         gradleBuildAction = new ScriptAction();
         gradleBuildAction.name = 'gradle';
@@ -65,8 +65,8 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         actions.push(gradleBuildAction);
         actions.push(cleanBuildAction);
         actions.push(platformAction);
-        windFile.actions = actions;
-        programmingExercise.windfile = windFile;
+        windfile.actions = actions;
+        programmingExercise.windfile = windfile;
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -206,7 +206,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should reset buildplan', () => {
-        programmingExercise.windfile = windFile;
+        programmingExercise.windfile = windfile;
         programmingExercise.buildPlanConfiguration = 'some build plan';
         expect(programmingExercise.windfile).toBeDefined();
         expect(programmingExercise.buildPlanConfiguration).toBeDefined();
@@ -267,10 +267,10 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.programmingExercise.windfile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windfile))));
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.windfile).toBeDefined();
-        expect(comp.programmingExercise.windfile).toEqual(windFile);
+        expect(comp.programmingExercise.windfile).toEqual(windfile);
     });
 
     it('should call this.resetCustomBuildPlan', () => {
@@ -285,7 +285,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should parse windfile correctly', () => {
-        const parsedWindFile = mockAeolusService.parseWindFile(mockAeolusService.serializeWindFile(windFile));
+        const parsedWindFile = mockAeolusService.parseWindFile(mockAeolusService.serializeWindFile(windfile));
         expect(parsedWindFile).toBeDefined();
         expect(parsedWindFile?.actions.length).toBe(3);
         expect(parsedWindFile?.actions[0]).toBeInstanceOf(ScriptAction);
@@ -341,7 +341,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should set docker image correctly', () => {
-        comp.programmingExercise.windfile = windFile;
+        comp.programmingExercise.windfile = windfile;
         comp.programmingExercise.windfile.metadata.docker.image = 'old';
         comp.setDockerImage('testImage');
         expect(comp.programmingExercise.windfile?.metadata.docker.image).toBe('testImage');
