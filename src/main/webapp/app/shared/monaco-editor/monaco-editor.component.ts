@@ -109,7 +109,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
         resizeObserver.observe(this.monacoEditorContainerElement);
 
-        this._editor.onDidChangeModelContent(() => {
+        this.textChangedListener = this._editor.onDidChangeModelContent(() => {
             this.emitTextChangeEvent();
         }, this);
 
