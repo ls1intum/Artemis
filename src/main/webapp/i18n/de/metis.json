@@ -44,7 +44,9 @@
             "editor": {
                 "reference": "Referenz",
                 "exercise": "Aufgabe",
-                "lecture": "Vortrag"
+                "lecture": "Vortrag",
+                "channel": "Kanal",
+                "user": "Benutzer"
             },
             "channel": {
                 "noChannel": "Es ist kein Kanal verfügbar.",
