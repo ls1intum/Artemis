@@ -258,12 +258,16 @@ export class QuizExerciseService {
         questions.forEach((question, questionIndex) => {
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 if ((question as DragAndDropQuestion).backgroundFilePath) {
-                    filePromises.push(this.fetchFilePromise(`q${questionIndex}_background.png`, zip, (question as DragAndDropQuestion).backgroundFilePath!));
+                    const filePath = (question as DragAndDropQuestion).backgroundFilePath!;
+                    const fileNameExtension = filePath.split('.').last();
+                    filePromises.push(this.fetchFilePromise(`q${questionIndex}_background.${fileNameExtension}`, zip, filePath));
                 }
                 if ((question as DragAndDropQuestion).dragItems) {
                     (question as DragAndDropQuestion).dragItems?.forEach((dragItem, drag_index) => {
                         if (dragItem.pictureFilePath) {
-                            filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.png`, zip, dragItem.pictureFilePath));
+                            const filePath = dragItem.pictureFilePath!;
+                            const fileNameExtension = filePath.split('.').last();
+                            filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.${fileNameExtension}`, zip, filePath));
                         }
                     });
                 }

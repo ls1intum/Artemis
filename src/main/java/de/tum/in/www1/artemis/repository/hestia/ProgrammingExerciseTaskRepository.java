@@ -28,7 +28,7 @@ public interface ProgrammingExerciseTaskRepository extends ArtemisJpaRepository<
      */
     @NotNull
     default ProgrammingExerciseTask findByIdWithTestCaseAndSolutionEntriesElseThrow(long entryId) throws EntityNotFoundException {
-        return findByIdWithTestCaseAndSolutionEntries(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", entryId));
+        return getValueElseThrow(findByIdWithTestCaseAndSolutionEntries(entryId), entryId);
     }
 
     /**
@@ -55,7 +55,7 @@ public interface ProgrammingExerciseTaskRepository extends ArtemisJpaRepository<
      */
     @NotNull
     default Set<ProgrammingExerciseTask> findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(long exerciseId) throws EntityNotFoundException {
-        return findByExerciseIdWithTestCaseAndSolutionEntries(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", exerciseId));
+        return getArbitraryValueElseThrow(findByExerciseIdWithTestCaseAndSolutionEntries(exerciseId), Long.toString(exerciseId));
     }
 
     /**
