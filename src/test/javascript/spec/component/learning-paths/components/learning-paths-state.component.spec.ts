@@ -83,7 +83,7 @@ describe('LearningPathsStateComponent', () => {
         const learningPathsStateContainer = fixture.nativeElement.querySelectorAll('.learning-paths-state-container');
 
         expect(learningPathsStateContainer).toHaveLength(learningPathHealth.status.length);
-        expect(getLearningPathHealthStatusSpy).toHaveBeenCalledWith(courseId);
+        expect(getLearningPathHealthStatusSpy).toHaveBeenCalledExactlyOnceWith(courseId);
         expect(component.learningPathHealthState()).toEqual(learningPathHealth.status);
     });
 
@@ -104,24 +104,50 @@ describe('LearningPathsStateComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(onErrorSpy).toHaveBeenCalled();
+        expect(onErrorSpy).toHaveBeenCalledOnce();
     });
 
     it.each([HealthStatus.NO_COMPETENCIES, HealthStatus.NO_RELATIONS])('should navigate to competencies page on %s status', async (status) => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         getLearningPathHealthStatusSpy.mockResolvedValue({ ...learningPathHealth, status: [status] });
 
+        await clickHealthStateButton(`#health-state-button-${status}`);
+
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['../competency-management'], { relativeTo: TestBed.inject(ActivatedRoute) });
+    });
+
+    it('should generate missing learning paths', async () => {
+        const generateMissingLearningPathsSpy = jest.spyOn(learningPathApiService, 'generateMissingLearningPaths').mockResolvedValue();
+        const successSpy = jest.spyOn(alertService, 'success');
+        getLearningPathHealthStatusSpy.mockResolvedValue({ ...learningPathHealth, status: [HealthStatus.MISSING] });
+
+        await clickHealthStateButton(`#health-state-button-${HealthStatus.MISSING}`);
+
+        expect(generateMissingLearningPathsSpy).toHaveBeenCalledExactlyOnceWith(courseId);
+        expect(successSpy).toHaveBeenCalled();
+        expect(getLearningPathHealthStatusSpy).toHaveBeenNthCalledWith(2, courseId);
+    });
+
+    it('should show error when generating missing learning paths fails', async () => {
+        jest.spyOn(learningPathApiService, 'generateMissingLearningPaths').mockRejectedValue(new Error('Error generating missing learning paths'));
+        const onErrorSpy = jest.spyOn(alertService, 'addAlert');
+        getLearningPathHealthStatusSpy.mockResolvedValue({ ...learningPathHealth, status: [HealthStatus.MISSING] });
+
+        await clickHealthStateButton(`#health-state-button-${HealthStatus.MISSING}`);
+
+        expect(onErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    async function clickHealthStateButton(selector: string) {
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const healthStateButton = fixture.nativeElement.querySelector(`#health-state-button-${status}`);
+        const healthStateButton = fixture.nativeElement.querySelector(selector);
         healthStateButton.click();
 
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
-
-        expect(navigateSpy).toHaveBeenCalledWith(['../competency-management'], { relativeTo: TestBed.inject(ActivatedRoute) });
-    });
+    }
 });
