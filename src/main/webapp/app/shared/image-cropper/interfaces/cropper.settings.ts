@@ -55,11 +55,8 @@ export class CropperSettings implements CropperOptions {
      * // cropperSettings.imageQuality is now 90
      */
     private updateProperties<T extends CropperOptions>(source: Partial<T>, target: Partial<T>) {
-        for (const key in source) {
-            if (key in source && key in target) {
-                target[key] = source[key];
-            }
-        }
+        Object.assign(target, source);
+        this.validateOptions();
     }
 
     /**
@@ -86,7 +83,6 @@ export class CropperSettings implements CropperOptions {
      */
     setOptions(options: Partial<CropperOptions>): void {
         this.updateProperties(options, this);
-        this.validateOptions();
     }
 
     /**
@@ -117,7 +113,6 @@ export class CropperSettings implements CropperOptions {
         const entries = Object.entries(changes).map(([key, change]) => [key, change.currentValue]);
         const changedValues = Object.fromEntries(entries) as Partial<CropperOptions>;
         this.updateProperties(changedValues, this);
-        this.validateOptions();
     }
 
     private validateOptions(): void {
