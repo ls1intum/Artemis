@@ -219,10 +219,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      */
     @GetMapping(value = "repository-files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable String commitId, @RequestParam Optional<Long> participationIdOpt,
+    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable String commitId, @RequestParam(name = "participationId") Optional<Long> participationIdOpt,
             @RequestParam Optional<RepositoryType> repositoryType) {
 
-        var participationId = participationIdOpt.orElseThrow(EntityNotFoundException::new);
+        var participationId = participationIdOpt.orElseThrow(NullPointerException::new);
 
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
