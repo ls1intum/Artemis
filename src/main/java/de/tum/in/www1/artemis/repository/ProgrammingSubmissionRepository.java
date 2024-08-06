@@ -20,7 +20,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity.

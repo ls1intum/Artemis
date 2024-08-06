@@ -44,7 +44,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
 
     @NotNull
     default IrisMessage findByIdElseThrow(long messageId) throws EntityNotFoundException {
-        return findById(messageId).orElseThrow(() -> new EntityNotFoundException("Iris Message", messageId));
+        return getValueElseThrow(findById(messageId));
     }
 
     Optional<IrisMessage> findFirstBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
