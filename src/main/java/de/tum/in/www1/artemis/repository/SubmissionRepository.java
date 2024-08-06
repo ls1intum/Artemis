@@ -496,8 +496,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * @throws EntityNotFoundException if no submission could be found for the given id
      */
     default Submission findOneWithEagerResultAndFeedbackAndAssessmentNote(long submissionId) {
-        return this.findWithEagerResultAndFeedbackAndAssessmentNoteById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+        return getValueElseThrow(this.findWithEagerResultAndFeedbackAndAssessmentNoteById(submissionId), submissionId);
     }
 
     /**
@@ -509,8 +508,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * @throws EntityNotFoundException if no submission could be found for the given id
      */
     default Submission findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(long submissionId) {
-        return findWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudentsById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+        return getValueElseThrow(findWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudentsById(submissionId), submissionId);
     }
 
     /**
@@ -521,7 +519,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * @throws EntityNotFoundException if no submission could be found for the given id
      */
     default Submission findByIdWithResultsElseThrow(long submissionId) {
-        return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));
+        return getValueElseThrow(findWithEagerResultsAndAssessorById(submissionId), submissionId);
     }
 
     /**

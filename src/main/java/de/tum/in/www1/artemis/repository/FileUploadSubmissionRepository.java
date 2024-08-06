@@ -15,7 +15,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the FileUploadSubmission entity.
@@ -69,7 +68,7 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      */
     @NotNull
     default FileUploadSubmission findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(long submissionId) {
-        return findByIdWithEagerResultAndAssessorAndFeedback(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
+        return getValueElseThrow(findByIdWithEagerResultAndAssessorAndFeedback(submissionId), submissionId);
     }
 
     /**
@@ -82,8 +81,7 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      */
     @NotNull
     default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(long submissionId) {
-        return findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
+        return getValueElseThrow(findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId), submissionId);
     }
 
     /**
@@ -96,7 +94,6 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      */
     @NotNull
     default FileUploadSubmission findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(long submissionId, long exerciseId) {
-        return findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submissionId, exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
+        return getValueElseThrow(findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submissionId, exerciseId), submissionId);
     }
 }

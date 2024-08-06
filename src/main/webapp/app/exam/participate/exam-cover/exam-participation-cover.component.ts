@@ -12,7 +12,8 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCircleExclamation, faDoorClosed, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -51,17 +52,18 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
 
     interval: number;
     waitingForExamStart = false;
+    isFetching = false;
+    loadExamSubscription?: Subscription;
     timeUntilStart = '0';
 
     accountName = '';
     enteredName = '';
 
-    graceEndDate: dayjs.Dayjs;
-    criticalTime = dayjs.duration(30, 'seconds');
-
     // Icons
     faSpinner = faSpinner;
     faArrowLeft = faArrowLeft;
+    faCircleExclamation = faCircleExclamation;
+    faDoorClosed = faDoorClosed;
 
     constructor(
         private courseService: CourseManagementService,
@@ -95,14 +97,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
             this.examParticipationService.setEndView(true);
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
-            // this should be the individual working end + the grace period
-            if (this.testRun) {
-                this.graceEndDate = dayjs(this.testRunStartTime!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            } else if (this.testExam) {
-                this.graceEndDate = dayjs(this.studentExam.startedDate!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            } else {
-                this.graceEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            }
         }
 
         this.accountService.identity().then((user) => {
@@ -116,6 +110,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
         if (this.interval) {
             clearInterval(this.interval);
         }
+        this.loadExamSubscription?.unsubscribe();
     }
 
     /**
@@ -149,9 +144,11 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
             this.onExamStarted.emit(this.studentExam);
         } else {
-            this.examParticipationService
+            this.isFetching = true;
+            this.loadExamSubscription = this.examParticipationService
                 .loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!, this.studentExam.id!)
                 .subscribe((studentExam: StudentExam) => {
+                    this.isFetching = false;
                     this.studentExam = studentExam;
                     this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
                     if (this.hasStarted()) {
@@ -214,6 +211,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * Notify the parent component that the user wants to continue after hand in early
      */
     continueAfterHandInEarly() {
+        this.examParticipationService.setEndView(false);
         this.onExamContinueAfterHandInEarly.emit();
     }
 
@@ -242,25 +240,5 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
 
     get inserted(): boolean {
         return this.enteredName.trim() !== '';
-    }
-
-    /**
-     * Returns whether the student failed to submit on time. In this case the end page is adapted.
-     */
-    get studentFailedToSubmit(): boolean {
-        if (this.testRun) {
-            return false;
-        }
-        let individualStudentEndDate;
-        if (this.exam.testExam) {
-            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
-                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
-            } else {
-                return false;
-            }
-        } else {
-            individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
-        }
-        return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 }

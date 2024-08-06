@@ -96,6 +96,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Output()
     textChanged = new EventEmitter<string>();
 
+    @Output()
+    contentHeightChanged = new EventEmitter<number>();
+
+    private contentHeightListener?: monaco.IDisposable;
+    private textChangedListener?: monaco.IDisposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
@@ -104,9 +109,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
         resizeObserver.observe(this.monacoEditorContainerElement);
 
-        this._editor.onDidChangeModelContent(() => {
+        this.textChangedListener = this._editor.onDidChangeModelContent(() => {
             this.emitTextChangeEvent();
         }, this);
+
+        this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
+            if (event.contentHeightChanged) {
+                this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight));
+            }
+        });
 
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
@@ -115,6 +126,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.reset();
         this._editor.dispose();
         this.themeSubscription?.unsubscribe();
+        this.textChangedListener?.dispose();
+        this.contentHeightListener?.dispose();
     }
 
     private emitTextChangeEvent() {
@@ -200,6 +213,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         monaco.editor.setModelLanguage(model, languageId !== undefined ? languageId : model.getLanguageId());
         model.setEOL(monaco.editor.EndOfLineSequence.LF);
         this._editor.setModel(model);
+    }
+
+    /**
+     * Updates the indentation size of the editor in the current model.
+     * @param indentSize The size of the indentation in spaces.
+     */
+    updateModelIndentationSize(indentSize: number): void {
+        this._editor.getModel()?.updateOptions({ indentSize });
     }
 
     disposeModels() {
@@ -355,5 +376,42 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.updateOptions({
             wordWrap: value ? 'on' : 'off',
         });
+    }
+
+    /**
+     * Enables a text field mode for the editor. This will make the editor look more like a text field and less like a code editor.
+     * In particular, line numbers, margins, and highlights will be disabled.
+     */
+    enableTextFieldMode(): void {
+        this._editor.updateOptions({
+            // Sets up the layout to make the editor look more like a text field (no line numbers, margin, or highlights).
+            lineNumbers: 'off',
+            glyphMargin: false,
+            folding: false,
+            lineDecorationsWidth: '1ch',
+            lineNumbersMinChars: 0,
+            padding: {
+                top: 5,
+            },
+            renderLineHighlight: 'none',
+            selectionHighlight: false,
+            occurrencesHighlight: 'off',
+            // Only show scrollbars if required.
+            scrollbar: {
+                vertical: 'auto',
+                horizontal: 'auto',
+            },
+            overviewRulerLanes: 0,
+            hideCursorInOverviewRuler: true,
+            // The suggestions from showWords are shared between editors of the same language.
+            suggest: {
+                showWords: false,
+            },
+            // Separates the editor suggest widget from the editor's layout. It will stick to the page, but it won't interfere with other elements.
+            fixedOverflowWidgets: true,
+            // We use the 'simple' strategy for word wraps to prevent performance issues. This prevents us from switching to a different font as the lines would no longer break correctly.
+            wrappingStrategy: 'simple',
+        });
+        this.setWordWrap(true);
     }
 }

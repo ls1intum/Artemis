@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,8 +10,7 @@ import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { PageType, SortDirection } from 'app/shared/metis/metis.util';
-import { faBan, faComment, faComments, faFile, faGraduationCap, faHeart, faList, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { faFilter, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faComment, faComments, faFile, faFilter, faGraduationCap, faHeart, faList, faMessage, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
@@ -98,6 +97,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     @ViewChild(CourseWideSearchComponent)
     courseWideSearch: CourseWideSearchComponent;
+    @ViewChild('courseWideSearchInput')
+    searchElement: ElementRef;
 
     courseWideSearchConfig: CourseWideSearchConfig;
     courseWideSearchTerm = '';
@@ -377,5 +378,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     toggleChannelSearch() {
         this.channelSearchCollapsed = !this.channelSearchCollapsed;
+    }
+
+    @HostListener('document:keydown', ['$event'])
+    handleSearchShortcut(event: KeyboardEvent) {
+        if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+            event.preventDefault();
+            this.searchElement.nativeElement.focus();
+        }
     }
 }

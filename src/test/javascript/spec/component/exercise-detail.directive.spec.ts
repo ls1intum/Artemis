@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
 import { Component, ViewChild } from '@angular/core';
-import type { DateDetail, Detail, NotShownDetail, ShownDetail, TextDetail } from 'app/detail-overview-list/detail.model';
+import type { BooleanDetail, DateDetail, Detail, LinkDetail, NotShownDetail, ShownDetail, TextDetail } from 'app/detail-overview-list/detail.model';
 import { TextDetailComponent } from 'app/detail-overview-list/components/text-detail.component';
 import { MockComponent } from 'ng-mocks';
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { DateDetailComponent } from 'app/detail-overview-list/components/date-detail.component';
+import { LinkDetailComponent } from 'app/detail-overview-list/components/link-detail.component';
+import { BooleanDetailComponent } from 'app/detail-overview-list/components/boolean-detail.component';
 
 @Component({
     template: `<div jhiExerciseDetail [detail]="detail"></div>`,
@@ -33,6 +35,7 @@ describe('ExerciseDetailDirective', () => {
         jest.resetAllMocks();
     });
 
+    /** tests directive for {@link NotShownDetail}s */
     describe('should not create component for NotShownDetails', () => {
         it('detail "false"', () => {
             checkComponentForDetailWasNotCreated(false as NotShownDetail);
@@ -43,13 +46,22 @@ describe('ExerciseDetailDirective', () => {
         });
     });
 
-    describe('should create component for supported details', () => {
+    /** tests directive for {@link ShownDetail}s */
+    describe('should create component for ShownDetails', () => {
         it('should create TextDetail component', () => {
             checkComponentForDetailWasCreated({ type: DetailType.Text } as TextDetail, TextDetailComponent);
         });
 
         it('should create DateDetail component', () => {
             checkComponentForDetailWasCreated({ type: DetailType.Date } as DateDetail, DateDetailComponent);
+        });
+
+        it('should create LinkDetail component', () => {
+            checkComponentForDetailWasCreated({ type: DetailType.Link } as LinkDetail, LinkDetailComponent);
+        });
+
+        it('should create BooleanDetail component', () => {
+            checkComponentForDetailWasCreated({ type: DetailType.Boolean } as BooleanDetail, BooleanDetailComponent);
         });
     });
 

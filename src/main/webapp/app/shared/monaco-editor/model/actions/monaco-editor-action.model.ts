@@ -80,6 +80,101 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     }
 
     /**
+     * Registers a completion provider for the current model of the given editor. This is useful to provide completion items for a specific editor, which is not supported by the monaco API.
+     * @param editor The editor whose model to register the completion provider for.
+     * @param searchFn Function that returns all relevant items for the current search term. Note that Monaco also filters the items based on the user input.
+     * @param mapToSuggestionFn Function that maps an item to a Monaco completion suggestion.
+     * @param triggerCharacter The character that triggers the completion provider.
+     * @param listIncomplete Whether the list of suggestions is incomplete. If true, Monaco will keep searching for more suggestions.
+     */
+    registerCompletionProviderForCurrentModel<ItemType>(
+        editor: monaco.editor.IStandaloneCodeEditor,
+        searchFn: (searchTerm?: string) => Promise<ItemType[]>,
+        mapToSuggestionFn: (item: ItemType, range: monaco.IRange) => monaco.languages.CompletionItem,
+        triggerCharacter?: string,
+        listIncomplete?: boolean,
+    ): monaco.IDisposable {
+        const model = editor.getModel();
+        if (!model) {
+            throw new Error(`A model must be attached to the editor to register a completion provider.`);
+        }
+        if (triggerCharacter !== undefined && triggerCharacter.length !== 1) {
+            throw new Error(`The trigger character must be a single character.`);
+        }
+        const languageId = model.getLanguageId();
+        const modelId = model.id;
+        // We have to subtract an offset of 1 from the start column to include the trigger character in the range that will be replaced.
+        const triggerCharacterOffset = triggerCharacter ? 1 : 0;
+        return monaco.languages.registerCompletionItemProvider(languageId, {
+            // We only want to trigger the completion provider if the trigger character is typed. However, we also allow numbers to trigger the completion, as they would not normally trigger it.
+            triggerCharacters: triggerCharacter ? [triggerCharacter, ...'0123456789'] : undefined,
+            provideCompletionItems: async (model: monaco.editor.ITextModel, position: monaco.Position): Promise<monaco.languages.CompletionList | undefined> => {
+                if (model.id !== modelId) {
+                    return undefined;
+                }
+                const sequenceUntilPosition = this.findTypedSequenceUntilPosition(model, position, triggerCharacter);
+                if (!sequenceUntilPosition) {
+                    return undefined;
+                }
+                const range = {
+                    startLineNumber: position.lineNumber,
+                    startColumn: sequenceUntilPosition.startColumn - triggerCharacterOffset,
+                    endLineNumber: position.lineNumber,
+                    endColumn: sequenceUntilPosition.endColumn,
+                };
+                const beforeWord = model.getValueInRange({
+                    startLineNumber: position.lineNumber,
+                    startColumn: sequenceUntilPosition.startColumn - triggerCharacterOffset,
+                    endLineNumber: position.lineNumber,
+                    endColumn: sequenceUntilPosition.startColumn,
+                });
+
+                // We only want suggestions if the trigger character is at the beginning of the word.
+                if (triggerCharacter && sequenceUntilPosition.word !== triggerCharacter && beforeWord !== triggerCharacter) {
+                    return undefined;
+                }
+                const items = await searchFn(sequenceUntilPosition.word);
+                return {
+                    suggestions: items.map((item) => mapToSuggestionFn(item, range)),
+                    incomplete: listIncomplete,
+                };
+            },
+        });
+    }
+
+    /**
+     * Finds the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word (default Monaco behavior).
+     * @param model The model to find the typed sequence in.
+     * @param position The position until which to find the typed sequence.
+     * @param triggerCharacter The character that triggers the sequence. If not provided, the sequence is assumed to start at the beginning of the word.
+     * @param lengthLimit The maximum length of the sequence to find. Defaults to 25.
+     */
+    findTypedSequenceUntilPosition(
+        model: monaco.editor.ITextModel,
+        position: monaco.Position,
+        triggerCharacter?: string,
+        lengthLimit = 25,
+    ): monaco.editor.IWordAtPosition | undefined {
+        // Find the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word.
+        if (!triggerCharacter) {
+            return model.getWordUntilPosition(position);
+        }
+        const scanColumn = Math.max(1, position.column - lengthLimit);
+        const scanRange = new monaco.Range(position.lineNumber, scanColumn, position.lineNumber, position.column);
+        const text = model.getValueInRange(scanRange);
+        const triggerIndex = text.lastIndexOf(triggerCharacter);
+        if (triggerIndex === -1) {
+            return undefined;
+        }
+        // The word not including the trigger character.
+        return {
+            word: text.slice(triggerIndex + 1),
+            startColumn: scanRange.startColumn + triggerIndex + 1,
+            endColumn: position.column,
+        };
+    }
+
+    /**
      * Toggles the given delimiter around the current selection or inserts it at the current cursor position if there is no selection.
      * In the latter case, textToInsert is inserted between the delimiters.
      * @param editor The editor to toggle the delimiter in.
@@ -116,6 +211,15 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      */
     isTextSurroundedByDelimiters(text: string, openDelimiter: string, closeDelimiter: string): boolean {
         return text.startsWith(openDelimiter) && text.endsWith(closeDelimiter) && text.length >= openDelimiter.length + closeDelimiter.length;
+    }
+
+    /**
+     * Types the given text in the editor at the current cursor position. You can use this e.g. to trigger a suggestion.
+     * @param editor The editor to type the text in.
+     * @param text The text to type.
+     */
+    typeText(editor: monaco.editor.ICodeEditor, text: string): void {
+        editor.trigger('keyboard', 'type', { text });
     }
 
     /**

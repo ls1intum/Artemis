@@ -443,6 +443,9 @@ public class QuizExerciseResource {
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new AccessForbiddenException();
         }
+        if (quizExercise.isExamExercise()) {
+            throw new BadRequestAlertException("Students cannot join quiz batches for exam exercises", ENTITY_NAME, "notAllowedInExam");
+        }
 
         try {
             var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password());
@@ -466,6 +469,10 @@ public class QuizExerciseResource {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
+        if (quizExercise.isExamExercise()) {
+            throw new BadRequestAlertException("Batches cannot be created for exam exercises", ENTITY_NAME, "notAllowedInExam");
+        }
+
         // TODO: quiz cleanup: it should be possible to limit the number of batches a tutor can create
 
         var quizBatch = quizBatchService.createBatch(quizExercise, user);
@@ -488,10 +495,15 @@ public class QuizExerciseResource {
         QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(batch.getQuizExercise().getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
 
         if (!user.getId().equals(batch.getCreator())) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
+        }
+        else {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
+        }
+        if (quizExercise.isExamExercise()) {
+            throw new BadRequestAlertException("Batches cannot be started for exam exercises", ENTITY_NAME, "");
         }
 
         batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, ZonedDateTime.now()));
@@ -519,6 +531,10 @@ public class QuizExerciseResource {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        if (quizExercise.isExamExercise()) {
+            throw new BadRequestAlertException("These actions are not allowed for exam exercises", ENTITY_NAME, "notAllowedInExam");
+        }
 
         switch (action) {
             case START_NOW -> {
@@ -750,7 +766,7 @@ public class QuizExerciseResource {
     @PostMapping(value = "quiz-exercises/import/{sourceExerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestPart("exercise") QuizExercise importedExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException {
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
         log.info("REST request to import from quiz exercise : {}", sourceExerciseId);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
@@ -776,7 +792,7 @@ public class QuizExerciseResource {
         quizExerciseService.validateQuizExerciseFiles(importedExercise, nullsafeFiles, false);
 
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
-        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
+        QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);

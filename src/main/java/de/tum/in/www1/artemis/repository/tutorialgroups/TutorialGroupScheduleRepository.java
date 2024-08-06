@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -32,6 +31,6 @@ public interface TutorialGroupScheduleRepository extends ArtemisJpaRepository<Tu
     Optional<TutorialGroupSchedule> findByTutorialGroupId(Long tutorialGroupId);
 
     default TutorialGroupSchedule findByIdWithSessionsElseThrow(long tutorialGroupScheduleId) {
-        return findByIdWithSessions(tutorialGroupScheduleId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupSchedule", tutorialGroupScheduleId));
+        return getValueElseThrow(findByIdWithSessions(tutorialGroupScheduleId), tutorialGroupScheduleId);
     }
 }

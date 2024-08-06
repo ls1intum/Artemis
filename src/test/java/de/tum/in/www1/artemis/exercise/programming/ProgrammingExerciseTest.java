@@ -145,8 +145,8 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement_examExercise() throws Exception {
-        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        var exam = programmingExercise.getExamViaExerciseGroupOrCourseMember();
+        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM", true);
+        var exam = programmingExercise.getExam();
         StudentExam studentExam = examUtilService.addStudentExam(exam);
         examUtilService.addExerciseToStudentExam(studentExam, programmingExercise);
 

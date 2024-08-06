@@ -331,7 +331,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         TextExercise examExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
 
-        Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
+        Exam exam = examExercise.getExam();
         exam.setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
         exam.setExamStudentReviewEnd(ZonedDateTime.now().plusHours(1));
         examRepository.save(exam);
@@ -947,12 +947,12 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     private Submission createComplaintForExamExercise(TextExercise examExercise, String complaintText, HttpStatus expectedStatus) throws Exception {
-        examExercise.getExamViaExerciseGroupOrCourseMember().setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
-        examExercise.getExamViaExerciseGroupOrCourseMember().setExamStudentReviewEnd(ZonedDateTime.now().plusHours(1));
-        examRepository.save(examExercise.getExamViaExerciseGroupOrCourseMember());
+        examExercise.getExam().setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
+        examExercise.getExam().setExamStudentReviewEnd(ZonedDateTime.now().plusHours(1));
+        examRepository.save(examExercise.getExam());
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        var examId = examExercise.getExamViaExerciseGroupOrCourseMember().getId();
+        var examId = examExercise.getExam().getId();
         final var examExerciseComplaint = new ComplaintRequestDTO(textSubmission.getLatestResult().getId(), complaintText, ComplaintType.COMPLAINT, Optional.of(examId));
 
         String url = "/api/complaints";
