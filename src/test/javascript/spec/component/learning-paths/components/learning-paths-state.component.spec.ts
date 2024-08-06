@@ -148,6 +148,5 @@ describe('LearningPathsStateComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
     }
 });

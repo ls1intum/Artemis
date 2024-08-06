@@ -36,7 +36,8 @@
                 "configuration": {
                     "includeAllGradedExercises": "Include all graded exercises",
                     "includeAllGradedExercisesToolTip": "The learning paths will include all exercises that are included in the course score. This way, students cannot miss important exercises in the learning path."
-                }
+                },
+                "saveSuccess": "The configuration has been saved successfully."
             },
             "learningPathsTable": {
                 "title": "Individual learning paths",

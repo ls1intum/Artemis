@@ -47,7 +47,7 @@ export class LearningPathsConfigurationComponent {
         }
     }
 
-    toggleIncludeAllGradedExercises(): void {
+    protected toggleIncludeAllGradedExercises(): void {
         this.configHasBeenChanged.set(true);
         this.learningPathsConfiguration.set({
             ...this.learningPathsConfiguration(),
@@ -55,11 +55,12 @@ export class LearningPathsConfigurationComponent {
         });
     }
 
-    async saveLearningPathsConfiguration(): Promise<void> {
+    protected async saveLearningPathsConfiguration(): Promise<void> {
         if (this.configHasBeenChanged()) {
             try {
                 this.isSaving.set(true);
                 await this.learningPathApiService.updateLearningPathsConfiguration(this.courseId(), this.learningPathsConfiguration()!);
+                this.alertService.success('artemisApp.learningPathManagement.learningPathsConfiguration.saveSuccess');
                 this.isEditMode.set(false);
             } catch (error) {
                 onError(this.alertService, error);
@@ -71,7 +72,7 @@ export class LearningPathsConfigurationComponent {
         }
     }
 
-    enableEditMode(): void {
+    protected enableEditMode(): void {
         this.isEditMode.set(true);
     }
 }

@@ -2,7 +2,7 @@
     <div class="row m-0 align-items-center justify-content-between">
         <h5 class="m-0 col-md-auto p-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.title"></h5>
         @if (isEditMode()) {
-            <button class="btn btn-primary btn-sm col-md-auto" (click)="saveLearningPathsConfiguration()">
+            <button id="save-learning-paths-configuration-button" class="btn btn-primary btn-sm col-md-auto" (click)="saveLearningPathsConfiguration()">
                 @if (isSaving()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 }
@@ -10,6 +10,7 @@
             </button>
         } @else {
             <button
+                id="edit-learning-paths-configuration-button"
                 class="btn btn-secondary btn-sm col-md-auto"
                 (click)="enableEditMode()"
                 jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.editButtonLabel"
@@ -25,7 +26,14 @@
                 </div>
             </div>
         } @else {
-            <input type="checkbox" class="col-md-auto" (change)="toggleIncludeAllGradedExercises()" [checked]="includeAllGradedExercisesEnabled()" [disabled]="!isEditMode()" />
+            <input
+                id="include-all-graded-exercises-checkbox"
+                type="checkbox"
+                class="col-md-auto"
+                (change)="toggleIncludeAllGradedExercises()"
+                [checked]="includeAllGradedExercisesEnabled()"
+                [disabled]="!isEditMode()"
+            />
             <label class="col-md-auto" jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.configuration.includeAllGradedExercises"></label>
             <jhi-help-icon class="col-md-auto p-0" text="artemisApp.learningPathManagement.learningPathsConfiguration.configuration.includeAllGradedExercisesToolTip" />
         }

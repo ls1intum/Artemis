@@ -4,6 +4,7 @@ import { CompetencyGraphDTO, CompetencyGraphNodeValueType } from 'app/entities/c
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-learning-paths-analytics',
@@ -35,7 +36,7 @@ export class LearningPathsAnalyticsComponent {
             const instructorCompetencyGraph = await this.learningPathApiService.getLearningPathInstructorCompetencyGraph(courseId);
             this.instructorCompetencyGraph.set(instructorCompetencyGraph);
         } catch (error) {
-            this.alertService.error(error);
+            onError(this.alertService, error);
         } finally {
             this.isLoading.set(false);
         }

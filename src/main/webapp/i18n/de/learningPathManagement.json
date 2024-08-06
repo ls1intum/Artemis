@@ -36,7 +36,8 @@
                 "configuration": {
                     "includeAllGradedExercises": "Alle bewerteten Aufgaben einbeziehen",
                     "includeAllGradedExercisesToolTip": "Die Lernpfade werden alle Aufgaben enthalten, die in die Kursbewertung einfließen. Dadurch können Studierende keine wichtigen Aufgaben im Lernpfad übersehen."
-                }
+                },
+                "saveSuccess": "Die Konfiguration wurde erfolgreich gespeichert."
             },
             "learningPathsTable": {
                 "title": "Individuelle Lernpfade",
