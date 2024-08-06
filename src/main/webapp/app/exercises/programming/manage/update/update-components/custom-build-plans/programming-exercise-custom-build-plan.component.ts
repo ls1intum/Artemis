@@ -73,6 +73,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     /**
      * Loads the predefined template for the selected programming language and project type
      * if there is one available.
+     * @param isImportFromFile whether the exercise is imported from a file
      * @private
      */
     loadAeolusTemplate(isImportFromFile: boolean = false) {

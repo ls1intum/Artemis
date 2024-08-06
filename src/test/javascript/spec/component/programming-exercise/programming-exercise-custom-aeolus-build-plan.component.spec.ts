@@ -349,4 +349,33 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.setDockerImage('testImage');
         expect(comp.programmingExercise.windfile).toBeUndefined();
     });
+
+    it('should not call getAeolusTemplateScript when import from file if script present', () => {
+        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+        comp.programmingExerciseCreationConfig.isImportFromFile = true;
+        programmingExercise.buildScript = 'echo "test"';
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windfile))));
+        comp.ngOnChanges({
+            programmingExercise: {
+                currentValue: programmingExercise,
+                previousValue: undefined,
+                firstChange: false,
+                isFirstChange: function (): boolean {
+                    throw new Error('Function not implemented.');
+                },
+            },
+            programmingExerciseCreationConfig: {
+                currentValue: JSON.parse(JSON.stringify(comp.programmingExerciseCreationConfig)),
+                previousValue: undefined,
+                firstChange: false,
+                isFirstChange: function (): boolean {
+                    throw new Error('Function not implemented.');
+                },
+            },
+        });
+        expect(mockAeolusService.getAeolusTemplateScript).not.toHaveBeenCalled();
+        expect(mockAeolusService.getAeolusTemplateFile).not.toHaveBeenCalled();
+        expect(comp.programmingExercise.buildScript).toBe('echo "test"');
+    });
 });

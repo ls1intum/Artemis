@@ -22,7 +22,6 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     staticCodeAnalysisEnabled?: boolean;
     sequentialTestRuns?: boolean;
     testwiseCoverageEnabled?: boolean;
-    isImportFromFile: boolean = false;
 
     constructor(private aeolusService: AeolusService) {}
 
@@ -71,10 +70,11 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     /**
      * Loads the predefined template for the selected programming language and project type
      * if there is one available.
+     * @param isImportFromFile whether the exercise is imported from a file
      * @private
      */
     loadAeolusTemplate(isImportFromFile: boolean = false) {
-        if (this.programmingExercise?.id) {
+        if (this.programmingExercise?.id || isImportFromFile) {
             if (!this.programmingExerciseCreationConfig.buildPlanLoaded && !this.programmingExercise.windfile) {
                 if (this.programmingExercise.buildPlanConfiguration) {
                     this.programmingExercise.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
@@ -92,7 +92,6 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
         this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
-        this.isImportFromFile = isImportFromFile;
         if (!isImportFromFile || !this.programmingExercise.windfile) {
             this.aeolusService
                 .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
