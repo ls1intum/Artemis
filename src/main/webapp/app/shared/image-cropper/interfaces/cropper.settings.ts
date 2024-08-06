@@ -46,6 +46,8 @@ export class CropperSettings implements CropperOptions {
      * This method is used to update an instance of an object with new values from a partial object,
      * such as updating configuration settings or applying changes. It ensures that only properties
      * common to both the source and target are updated, preserving other properties of the target.
+     * After applying the new options, it validates the updated configuration to ensure
+     * all constraints and rules are maintained.
      *
      * @example
      * const sourceOptions = { resizeToWidth: 200, imageQuality: 90 };
@@ -71,8 +73,6 @@ export class CropperSettings implements CropperOptions {
      *
      * @remarks
      * This method is intended to be used for updating the cropper settings dynamically.
-     * After applying the new options, it validates the updated configuration to ensure
-     * all constraints and rules are maintained.
      *
      * @example
      * const newOptions = { format: 'jpeg', aspectRatio: 16/9 };
@@ -99,9 +99,6 @@ export class CropperSettings implements CropperOptions {
      * This method is particularly useful when using Angular's two-way data binding and input properties.
      * It efficiently updates the cropper settings based on changes to input properties, ensuring
      * that the cropper configuration remains consistent with the external state.
-     *
-     * After applying the changes, the method validates the updated configuration to ensure that
-     * all rules and constraints are maintained.
      *
      * @example
      * ngOnChanges(changes: SimpleChanges) {
