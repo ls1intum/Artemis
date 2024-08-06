@@ -610,7 +610,7 @@ public class TextExerciseResource {
     @PutMapping("text-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody TextExercise textExercise,
-            @RequestParam(value = "deleteFeedback", required = false, defaultValue = "false") boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
+            @RequestParam(value = "deleteFeedback", defaultValue = "false") boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
 
         // check that the exercise exists for given id

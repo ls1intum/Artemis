@@ -151,6 +151,7 @@ public class ExamLiveEventsService {
 
     /**
      * Send a problem statement update to the specified student.
+     * If the provided message is {@link Optional::empty}, the text content of the update will be set to {@link null}
      *
      * @param studentExam The student exam containing the exercise with updated problem statement
      * @param exercise    The updated exercise

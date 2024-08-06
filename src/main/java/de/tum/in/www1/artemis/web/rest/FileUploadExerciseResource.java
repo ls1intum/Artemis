@@ -403,7 +403,7 @@ public class FileUploadExerciseResource {
     @PutMapping("file-upload-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
-            @RequestParam(value = "deleteFeedback", required = false, defaultValue = "false") boolean deleteFeedbackAfterGradingInstructionUpdate) {
+            @RequestParam(value = "deleteFeedback", defaultValue = "false") boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
 
         // check that the exercise exists for given id

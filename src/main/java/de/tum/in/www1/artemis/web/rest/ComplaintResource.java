@@ -215,7 +215,7 @@ public class ComplaintResource {
     @GetMapping(value = "complaints", params = { "courseId", "complaintType" })
     @EnforceAtLeastTutor
     public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType, @RequestParam Optional<Long> tutorId,
-            @RequestParam(required = false, defaultValue = "false") boolean allComplaintsForTutor) {
+            @RequestParam(defaultValue = "false") boolean allComplaintsForTutor) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
 

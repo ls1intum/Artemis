@@ -170,7 +170,7 @@ public class ProgrammingExerciseGitDiffReportResource {
     @GetMapping("programming-exercises/{exerciseId}/commits/{commitHash1}/diff-report/{commitHash2}")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseGitDiffReportDTO> getGitDiffReportForCommits(@PathVariable long exerciseId, @PathVariable String commitHash1,
-            @PathVariable String commitHash2, @RequestParam(required = false) Optional<Long> participationId, @RequestParam Optional<RepositoryType> repositoryType)
+            @PathVariable String commitHash2, @RequestParam Optional<Long> participationId, @RequestParam Optional<RepositoryType> repositoryType)
             throws GitAPIException, IOException {
         log.debug("REST request to get a diff report for two commits for commit {} and commit {} of participation {}", commitHash1, commitHash2, participationId);
 
