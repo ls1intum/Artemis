@@ -52,7 +52,7 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
 
         // set the covered line ratio accordingly
         this.proportionCoveredLines = orderedLines.length / this.fileReport!.lineCount!;
-        this.proportionString = (this.proportionCoveredLines * 100).toFixed(1) + ' %';
+        this.proportionString = `${(this.proportionCoveredLines * 100).toFixed(1)} %`;
 
         let index = 0;
         while (index < orderedLines.length) {
