@@ -1,5 +1,6 @@
 jest.mock('pdfjs-dist', () => {
     return {
+        GlobalWorkerOptions: { workerSrc: '' },
         getDocument: jest.fn(() => ({
             promise: Promise.resolve({
                 numPages: 1,
