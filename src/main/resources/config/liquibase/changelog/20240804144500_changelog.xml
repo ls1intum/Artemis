@@ -4,11 +4,11 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20240804144500" author="entholzer">
         <!--
-            Change Set for creating a new table for storing the JOL values of the competencies
+            Change Set for creating a new table for storing the LocalVC access logs
         -->
         <createTable tableName="vcs_access_log">
             <column autoIncrement="true" name="id" type="bigint">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="vcs_access_logPK"/>
+                <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="user_id" type="bigint">
                 <constraints nullable="false"/>
@@ -16,10 +16,16 @@
             <column name="participation_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="operation" type="varchar(5)">
+            <column name="name" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
-            <column name="mechanism" type="varchar(3)">
+            <column name="email" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repository_action_type" type="tinyint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="authentication_mechanism" type="tinyint">
                 <constraints nullable="false"/>
             </column>
             <column name="ip_address" type="varchar(45)">
@@ -29,16 +35,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="user_id"
-                                 baseTableName="vcs_access_log"
-                                 constraintName="FK_vcs_access_log_user"
-                                 referencedColumnNames="id"
-                                 referencedTableName="jhi_user"/>
-        <addForeignKeyConstraint baseColumnNames="participation_id"
-                                 baseTableName="vcs_access_log"
-                                 constraintName="FK_vcs_access_log_participation"
-                                 referencedColumnNames="id"
-                                 referencedTableName="participation"/>
         <createIndex indexName="idx_vcs_access_log_user_participation" tableName="vcs_access_log">
             <column name="user_id"/>
             <column name="participation_id"/>
