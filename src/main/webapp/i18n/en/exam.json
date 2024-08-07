@@ -783,7 +783,8 @@
         "studentExam": {
             "alreadySubmitted": "You have already submitted.",
             "submissionNotInTime": "You have not submitted your exam on time. It will not be graded!",
-            "handInFailed": "Submission of your exam failed. Please try again!"
+            "handInFailed": "Submission of your exam failed. Please try again!",
+            "deleted": "Deleted test run"
         },
         "examTimeline": {
             "title": "Exam timeline of {{ username }}",
