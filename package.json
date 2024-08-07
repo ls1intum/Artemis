@@ -164,11 +164,6 @@
         "typescript": "5.5.2",
         "weak-napi": "2.0.2"
     },
-    "comments": {
-        "devDependencies": {
-            "typescript": "Cannot be updated to a newer version than 5.5.2 until https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/70224 is resolved"
-        }
-    },
     "engines": {
         "node": ">=20.14.0"
     },
