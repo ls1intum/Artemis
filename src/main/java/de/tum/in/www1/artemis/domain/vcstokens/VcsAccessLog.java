@@ -48,20 +48,24 @@ public class VcsAccessLog extends DomainObject {
     @Enumerated(EnumType.ORDINAL)
     private AuthenticationMechanism authenticationMechanism;
 
-    @Column(name = "ipAddress")
+    @Column(name = "commit_hash")
+    private String commitHash;
+
+    @Column(name = "ip_address")
     private String ipAddress;
 
     @Column(name = "timestamp")
     private ZonedDateTime timestamp;
 
     public VcsAccessLog(User user, Participation participation, String name, String email, RepositoryActionType repositoryActionType,
-            AuthenticationMechanism authenticationMechanism, String ipAddress) {
+            AuthenticationMechanism authenticationMechanism, String commitHash, String ipAddress) {
         this.user = user;
         this.participation = participation;
         this.name = name;
         this.email = email;
         this.repositoryActionType = repositoryActionType;
         this.authenticationMechanism = authenticationMechanism;
+        this.commitHash = commitHash;
         this.ipAddress = ipAddress;
         this.timestamp = ZonedDateTime.now();
     }

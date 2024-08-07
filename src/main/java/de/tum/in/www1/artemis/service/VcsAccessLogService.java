@@ -38,7 +38,7 @@ public class VcsAccessLogService {
     public void storeAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism) {
         log.debug("Storing access operation for user {}", user);
 
-        VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism,
+        VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, null,
                 "not sure how i ge tip yet");
         vcsAccessLogRepository.save(accessLogEntry);
     }

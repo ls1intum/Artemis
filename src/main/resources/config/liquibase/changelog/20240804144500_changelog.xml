@@ -28,6 +28,9 @@
             <column name="authentication_mechanism" type="tinyint">
                 <constraints nullable="false"/>
             </column>
+            <column name="commit_hash" type="varchar(40)">
+                <constraints nullable="true"/>
+            </column>
             <column name="ip_address" type="varchar(45)">
                 <constraints nullable="true"/>
             </column>
