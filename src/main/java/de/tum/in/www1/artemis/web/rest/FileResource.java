@@ -374,7 +374,7 @@ public class FileResource {
     }
 
     /**
-     * GET /attachments/{id}/file : Returns the file associated with the
+     * GET /attachments/{attachmentId}/file : Returns the file associated with the
      * given attachment ID as a downloadable resource
      *
      * @param attachmentId the ID of the attachment to retrieve
@@ -450,7 +450,7 @@ public class FileResource {
     }
 
     /**
-     * GET /attachments/{id}/file : Returns the file associated with the
+     * GET /attachments/{attachmenUnitId}/file : Returns the file associated with the
      * given attachmentUnit ID as a downloadable resource
      *
      * @param attachmentUnitId the ID of the attachment to retrieve
