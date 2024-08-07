@@ -3,7 +3,7 @@
         <mat-panel-title>
             {{ fileName }}
         </mat-panel-title>
-        <mat-panel-description class="text-nowrap"> {{ proportionCoveredLines }} </mat-panel-description>
+        <mat-panel-description class="text-nowrap"> {{ proportionString }} </mat-panel-description>
     </mat-expansion-panel-header>
     <div [style.height.px]="editorHeight">
         <jhi-monaco-editor #editor [readOnly]="true" (contentHeightChanged)="editorHeight = $event" />

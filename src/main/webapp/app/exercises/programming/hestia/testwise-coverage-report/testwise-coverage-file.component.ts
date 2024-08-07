@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
@@ -6,6 +6,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
     selector: 'jhi-testwise-coverage-file',
     templateUrl: './testwise-coverage-file.component.html',
     styleUrls: ['./testwise-coverage-file.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
     @Input()
@@ -81,7 +82,7 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
     }
 
     private renderFile() {
-        this.editor.setText(this.fileContent ?? '');
+        this.editor.changeModel(this.fileName, this.fileContent ?? '');
         this.editor.disposeLineHighlights();
         this.aggregateCoveredLinesBlocks(this.fileReport).forEach((blockLength, lineNumber) => {
             this.editor.highlightLines(lineNumber + 1, lineNumber + blockLength, 'covered-line-highlight', 'covered-line-highlight');
