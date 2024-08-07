@@ -212,4 +212,9 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
             this.attachmentToBeCreated!.name = this.attachmentFile.name.replace(/\.[^/.]+$/, '');
         }
     }
+
+    viewButtonAvailable(attachment: Attachment) {
+        const pdfPattern = /\.pdf$/i;
+        return pdfPattern.test(attachment.link!);
+    }
 }
