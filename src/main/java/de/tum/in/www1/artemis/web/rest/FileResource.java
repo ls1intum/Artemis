@@ -380,8 +380,9 @@ public class FileResource {
      * @param attachmentId the ID of the attachment to retrieve
      * @return ResponseEntity containing the file as a resource
      */
+    @EnforceAtLeastStudent
     @GetMapping("attachments/{attachmentId}/file")
-    public ResponseEntity<byte[]> getLectureAttachmentById(@PathVariable Long attachmentId) {
+    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found with id: " + attachmentId));
 
@@ -458,7 +459,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-units/{attachmentUnitId}/file")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getLectureUnitFile(@PathVariable Long attachmentUnitId) {
+    public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findById(attachmentUnitId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment unit not found with id: " + attachmentUnitId));
