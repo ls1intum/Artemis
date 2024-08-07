@@ -6,7 +6,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ScienceSettingsComponent } from 'app/shared/user-settings/science-settings/science-settings.component';
 import { SshUserSettingsComponent } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.component';
-import { IdeSettingsComponent } from 'app/shared/user-settings/default-ide/ide-settings.component';
+import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
 
 export const userSettingsState: Routes = [
     {

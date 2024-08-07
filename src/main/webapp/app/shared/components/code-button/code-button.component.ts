@@ -12,6 +12,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 
 @Component({
     selector: 'jhi-code-button',
@@ -55,6 +56,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     // Icons
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
+    ideName: string;
 
     constructor(
         private translateService: TranslateService,
@@ -63,6 +65,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         private profileService: ProfileService,
         private localStorage: LocalStorageService,
         private participationService: ParticipationService,
+        private ideSettingsService: IdeSettingsService,
     ) {}
 
     ngOnInit() {
@@ -92,6 +95,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+        this.ideName = this.getIDEName();
     }
 
     public setUseSSH(useSsh: boolean) {
@@ -201,12 +205,15 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         return this.externalCloningService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUri(false));
     }
 
-    buildJetbrainsUrl(): string | undefined {
-        return this.externalCloningService.buildJetbrainsUrl(this.getHttpOrSshRepositoryUri(false));
+    buildIDEUrl(): string | undefined {
+        return this.externalCloningService.buildIDEUrl(
+            this.getHttpOrSshRepositoryUri(false),
+            this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY)!,
+        );
     }
 
-    buildVSCodeUrl(): string | undefined {
-        return this.externalCloningService.buildVSCodeUrl(this.getHttpOrSshRepositoryUri(false));
+    getIDEName(): string {
+        return 'Open in ' + (this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY)?.name ?? 'IDE');
     }
 
     switchPracticeMode() {

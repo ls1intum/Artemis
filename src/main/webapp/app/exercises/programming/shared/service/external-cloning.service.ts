@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExternalCloningService {
@@ -12,26 +13,16 @@ export class ExternalCloningService {
     }
 
     /**
-     * Builds an url to clone a Repository in IntelliJ
-     * Structure: jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo=:RepoUrl
+     * Builds an url to clone a Repository in the corresponding ide
      * @param cloneUrl the url of the repository to clone
+     * @param ide the ide with the deeplink to build the url for
      */
-    buildJetbrainsUrl(cloneUrl: string | undefined): string | undefined {
+    // TODO shift exercise Programming Language Logic here
+    buildIDEUrl(cloneUrl: string | undefined, ide: Ide): string | undefined {
         if (!cloneUrl) {
             return undefined;
         }
-        return `jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo=${encodeURIComponent(cloneUrl)}`;
-    }
 
-    /**
-     * Builds an url to clone a Repository in VSCode
-     * Structure: vscode://vscode.git/clone?url=:RepoUrl
-     * @param cloneUrl the url of the repository to clone
-     */
-    buildVSCodeUrl(cloneUrl: string | undefined): string | undefined {
-        if (!cloneUrl) {
-            return undefined;
-        }
-        return `vscode://vscode.git/clone?url=${encodeURIComponent(cloneUrl)}`;
+        return ide.deepLink.replace('{cloneUrl}', encodeURIComponent(cloneUrl));
     }
 }

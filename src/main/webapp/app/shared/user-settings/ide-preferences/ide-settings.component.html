@@ -15,8 +15,8 @@
                 <div
                     class="btn btn-default"
                     [ngClass]="{
-                        'btn-primary selected': programmingLanguageToDeepLink[ProgrammingLanguage.EMPTY] === ide,
-                        'btn-default': programmingLanguageToDeepLink[ProgrammingLanguage.EMPTY] !== ide,
+                        'btn-primary selected': isIdeOfProgrammingLanguage(ProgrammingLanguage.EMPTY, ide),
+                        'btn-default': !isIdeOfProgrammingLanguage(ProgrammingLanguage.EMPTY, ide),
                     }"
                     (click)="changeIde(ProgrammingLanguage.EMPTY, ide)"
                 >
@@ -28,16 +28,21 @@
     <!-- Display each customized Programming Language -->
     @for (programmingLanguage of getCustomizedProgrammingLanguages(); track programmingLanguage) {
         <div class="list-group-item">
-            <dt>
-                {{ programmingLanguage }}
-            </dt>
+            <div class="item-container d-flex flex-row gap-3">
+                <dt>
+                    {{ programmingLanguage }}
+                </dt>
+                <div class="re-evaluate-button delete-button" id="delete-button" (click)="removeProgrammingLanguage(programmingLanguage)">
+                    <fa-icon [icon]="faTrash" size="1x"></fa-icon>
+                </div>
+            </div>
             <div class="btn-group">
                 @for (ide of PREDEFINED_IDE; track ide) {
                     <div
                         class="btn btn-default"
                         [ngClass]="{
-                            'btn-primary selected': programmingLanguageToDeepLink[programmingLanguage] === ide,
-                            'btn-default': programmingLanguageToDeepLink[programmingLanguage] !== ide,
+                            'btn-primary selected': isIdeOfProgrammingLanguage(programmingLanguage, ide),
+                            'btn-default': !isIdeOfProgrammingLanguage(programmingLanguage, ide),
                         }"
                         (click)="changeIde(programmingLanguage, ide)"
                     >
@@ -49,19 +54,21 @@
         </div>
     }
     <!-- Display plus button to add Programming Language with drop down menu -->
-    <div class="list-group-item">
-        <div ngbDropdown class="d-inline-block">
-            <button type="button" class="btn btn-outline-primary" id="dropdown" ngbDropdownToggle>
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <!-- Plus icon button -->
-            </button>
-            <div ngbDropdownMenu aria-labelledby="dropdown">
-                @for (programmingLanguage of getRemainingProgrammingLanguages(); track programmingLanguage) {
-                    <button ngbDropdownItem (click)="addProgrammingLanguage(programmingLanguage)">
-                        {{ programmingLanguage }}
-                    </button>
-                }
+    @if (getRemainingProgrammingLanguages().length != 0) {
+        <div class="list-group-item">
+            <div ngbDropdown class="d-inline-block">
+                <button type="button" class="btn btn-outline-primary" id="dropdown" ngbDropdownToggle>
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <!-- Plus icon button -->
+                </button>
+                <div ngbDropdownMenu aria-labelledby="dropdown">
+                    @for (programmingLanguage of getRemainingProgrammingLanguages(); track programmingLanguage) {
+                        <button ngbDropdownItem (click)="addProgrammingLanguage(programmingLanguage)">
+                            {{ programmingLanguage }}
+                        </button>
+                    }
+                </div>
             </div>
         </div>
-    </div>
+    }
 </div>
