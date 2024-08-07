@@ -6,6 +6,6 @@
         <mat-panel-description class="text-nowrap flex-grow-0"> {{ proportionString }} </mat-panel-description>
     </mat-expansion-panel-header>
     <div [style.height.px]="editorHeight">
-        <jhi-monaco-editor #editor [readOnly]="true" (contentHeightChanged)="editorHeight = $event" />
+        <jhi-monaco-editor #editor [shrinkToFit]="false" [readOnly]="true" (contentHeightChanged)="editorHeight = $event" />
     </div>
 </mat-expansion-panel>
