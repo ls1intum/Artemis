@@ -2,7 +2,6 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import { ActivatedRoute } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import * as PDFJS from 'pdfjs-dist';
-PDFJS.GlobalWorkerOptions.workerSrc = './pdfjs/pdf.worker.min.mjs';
 import { Attachment } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
@@ -28,7 +27,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         private attachmentService: AttachmentService,
         private attachmentUnitService: AttachmentUnitService,
         private alertService: AlertService,
-    ) {}
+    ) {
+        PDFJS.GlobalWorkerOptions.workerSrc = './pdfjs/pdf.worker.min.mjs';
+    }
 
     ngOnInit() {
         this.route.data.subscribe((data) => {
