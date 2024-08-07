@@ -38,11 +38,6 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
 
     &.exam-wrapper {
         height: 100vh !important;
-
-        &.exam-end-view {
-            overflow-y: auto !important;
-            height: 85vh !important;
-        }
     }
 
     .mat-drawer {
@@ -74,11 +69,6 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
 
         &.exam-wrapper {
             height: 100vh !important;
-
-            &.exam-end-view {
-                overflow-y: auto !important;
-                height: 85vh !important;
-            }
         }
 
         &.sidenav-height-dev {
