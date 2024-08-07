@@ -16,10 +16,6 @@
     margin-left: 2px !important;
 }
 
-.mat-expansion-panel .mat-expansion-indicator:not([transform='rotate(180deg)'])::after {
-    margin-bottom: 2px !important;
-}
-
 .covered-line-highlight {
     background-color: var(--monaco-editor-test-coverage-highlight);
 }
