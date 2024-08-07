@@ -446,12 +446,10 @@ export class Postprocessor {
         let resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE;
         simpleTraverse(classBody, {
             enter(node) {
-                if (node.type === 'PropertyDefinition' && node.value?.type === 'Literal' && node.key.type === 'Identifier' && node.value.value) {
-                    if (node.key.name === name) {
-                        memberExpressionResult.push(node.value.value.toString());
-                        resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_SUCCESS;
-                        return;
-                    }
+                if (node.type === 'PropertyDefinition' && node.value?.type === 'Literal' && node.key.type === 'Identifier' && node.value.value && node.key.name === name) {
+                    memberExpressionResult.push(node.value.value.toString());
+                    resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_SUCCESS;
+                    return;
                 }
             }
         });
