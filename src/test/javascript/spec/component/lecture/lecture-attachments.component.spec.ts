@@ -20,6 +20,7 @@ import { of, take, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LectureService } from 'app/lecture/lecture.service';
+import { RouterModule } from '@angular/router';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
@@ -84,7 +85,7 @@ describe('LectureAttachmentsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), RouterModule],
             declarations: [
                 LectureAttachmentsComponent,
                 MockComponent(FormDateTimePickerComponent),
