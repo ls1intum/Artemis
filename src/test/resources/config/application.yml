@@ -66,6 +66,8 @@ artemis:
                     default: "~~invalid~~"
                 ocaml:
                     default: "~~invalid~~"
+                rust:
+                    default: "~~invalid~~"
 
 spring:
     application:

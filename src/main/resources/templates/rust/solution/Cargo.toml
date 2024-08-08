@@ -1,0 +1,8 @@
+[package]
+name = "rust-template-exercise"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chrono = { version = "0.4.38", default-features = false }
+rand = "0.8.5"
