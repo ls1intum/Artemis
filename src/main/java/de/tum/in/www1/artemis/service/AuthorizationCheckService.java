@@ -903,8 +903,8 @@ public class AuthorizationCheckService {
      * @return true if caller is allowed to assess submissions
      */
     @CheckReturnValue
-    public boolean isAllowedToAssessExercise(Exercise exercise, User user, Long resultId) {
-        return this.isAtLeastTeachingAssistantForExercise(exercise, user) && (resultId == null || isAtLeastInstructorForExercise(exercise, user));
+    public boolean isAllowedToAssessExercise(Exercise exercise, User user, Optional<Long> resultId) {
+        return this.isAtLeastTeachingAssistantForExercise(exercise, user) && (resultId.isEmpty() || isAtLeastInstructorForExercise(exercise, user));
     }
 
     public void checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(Long exerciseId, Exercise exerciseInRequestBody) {
@@ -913,7 +913,7 @@ public class AuthorizationCheckService {
         }
     }
 
-    public void checkIsAllowedToAssessExerciseElseThrow(Exercise exercise, User user, Long resultId) {
+    public void checkIsAllowedToAssessExerciseElseThrow(Exercise exercise, User user, Optional<Long> resultId) {
         if (!isAllowedToAssessExercise(exercise, user, resultId)) {
             throw new AccessForbiddenException("You are not allowed to assess this exercise!");
         }

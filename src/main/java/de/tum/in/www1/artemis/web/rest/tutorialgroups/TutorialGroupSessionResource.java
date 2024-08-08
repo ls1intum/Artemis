@@ -13,12 +13,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.BadRequestException;
 
+import org.hibernate.validator.constraints.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -172,12 +171,13 @@ public class TutorialGroupSessionResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> updateAttendanceCount(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
-            @RequestParam(required = false) @Min(0) @Max(3000) Integer attendanceCount) {
+            @RequestParam Optional<@Range(min = 0, max = 3000) Integer> attendanceCount) { // @Range is [from; to]
+
         log.debug("REST request to update attendance count of session: {} of tutorial group: {} of course {} to {}", sessionId, tutorialGroupId, courseId, attendanceCount);
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), null);
-        sessionToUpdate.setAttendanceCount(attendanceCount);
+        sessionToUpdate.setAttendanceCount(attendanceCount.orElse(null));
         var result = tutorialGroupSessionRepository.save(sessionToUpdate);
         return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
     }

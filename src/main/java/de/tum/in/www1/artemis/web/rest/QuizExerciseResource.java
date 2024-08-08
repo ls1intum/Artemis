@@ -260,7 +260,7 @@ public class QuizExerciseResource {
     @PutMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<QuizExercise> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExercise quizExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
+            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText") Optional<String> notificationText)
             throws IOException {
         log.info("REST request to update quiz exercise : {}", quizExercise);
         quizExercise.setId(exerciseId);

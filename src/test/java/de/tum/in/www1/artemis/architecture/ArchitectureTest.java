@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,7 +53,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ValueConstants;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hazelcast.core.HazelcastInstance;
@@ -64,6 +67,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
+import com.tngtech.archunit.core.domain.properties.HasType;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
@@ -284,6 +288,35 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 JavaEnumConstant value = (JavaEnumConstant) valueProperty.get();
                 if (!value.name().equals("NON_EMPTY")) {
                     events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
+                }
+            }
+        };
+    }
+
+    @Test
+    void testNoRequiredFalseOnMethodParams() {
+        methods().should(notHaveRequestParamWithRequiredFalse()).check(allClasses);
+    }
+
+    private ArchCondition<JavaMethod> notHaveRequestParamWithRequiredFalse() {
+        return new ArchCondition<>("Do not use 'required = false' with @RequestParam") {
+
+            @Override
+            public void check(final JavaMethod method, final ConditionEvents events) {
+
+                // We only care about the case where required is false and the Parameter is not an Optional, any other combination is fine.
+                final var violated = method.getParameters().stream().filter(not(HasType.Predicates.rawType(Optional.class))).flatMap(param -> param.getAnnotations().stream())
+                        .filter(HasType.Predicates.rawType(RequestParam.class)).filter(annotation -> {
+                            final String value = (String) annotation.get("defaultValue").orElse(ValueConstants.DEFAULT_NONE);
+                            return ValueConstants.DEFAULT_NONE.equals(value);
+                        }).map(annotation -> annotation.get("required").orElse(true)) // if not set, the default is true
+                        .map(Boolean.class::cast) // since we filter for the annotation and field we know this cast is safe!
+                        .anyMatch(required -> !required);
+
+                if (violated) {
+                    final String message = String.format("Method %s uses 'required = false' without a default value set, use Optional<T> instead or add a default value!",
+                            method.getFullName());
+                    events.add(SimpleConditionEvent.violated(method, message));
                 }
             }
         };

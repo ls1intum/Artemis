@@ -116,26 +116,22 @@ public class RepositoryService {
      * @throws IOException     If an I/O error occurs during the file content retrieval process. This could be due to issues with file access, network problems, etc.
      * @throws GitAPIException If an error occurs while interacting with the Git repository. This could be due to issues with repository access, invalid commit ids, etc.
      */
-    public Map<String, String> getFilesContentAtCommit(ProgrammingExercise programmingExercise, String commitId, RepositoryType repositoryType,
+    public Map<String, String> getFilesContentAtCommit(ProgrammingExercise programmingExercise, String commitId, Optional<RepositoryType> repositoryType,
             ProgrammingExerciseParticipation participation) throws IOException, GitAPIException {
+
+        boolean isTestRepository = repositoryType.isPresent() && repositoryType.get() == RepositoryType.TESTS;
+        var repoUri = isTestRepository ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
+
         // Check if local VCS is active
         if (profileService.isLocalVcsActive()) {
             log.debug("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
             // If local VCS is active, operate directly on the bare repository
-            var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
             Repository repository = gitService.getBareRepository(repoUri);
             return getFilesContentFromBareRepository(repository, commitId);
         }
         else {
             log.debug("Checking out repo to get files at commit {} for participation {}", commitId, participation.getId());
-            Repository repository;
-            if (repositoryType == RepositoryType.TESTS) {
-                repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
-            }
-            else {
-                // For other repository types, check out the repository at the commit
-                repository = gitService.checkoutRepositoryAtCommit(participation.getVcsRepositoryUri(), commitId, true);
-            }
+            Repository repository = gitService.checkoutRepositoryAtCommit(repoUri, commitId, true);
             // Get the files content from the working copy of the repository
             Map<String, String> filesWithContent = getFilesContentFromWorkingCopy(repository);
             // Switch back to the default branch head

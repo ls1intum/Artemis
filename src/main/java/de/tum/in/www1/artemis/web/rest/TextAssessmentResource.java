@@ -356,7 +356,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("text-submissions/{submissionId}/for-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId") Optional<Long> resultId) {
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
         final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
@@ -369,9 +369,9 @@ public class TextAssessmentResource extends AssessmentResource {
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(exercise, user, resultId);
 
         Result result;
-        if (resultId != null) {
+        if (resultId.isPresent()) {
             // in case resultId is set we get result by id
-            result = textSubmission.getManualResultsById(resultId);
+            result = textSubmission.getManualResultsById(resultId.get());
 
             if (result == null) {
                 return ResponseEntity.badRequest()
@@ -408,8 +408,8 @@ public class TextAssessmentResource extends AssessmentResource {
         textSubmission.getResults().forEach(res -> res.setSubmission(null));
 
         // set result again as it was changed
-        if (resultId != null) {
-            result = textSubmission.getManualResultsById(resultId);
+        if (resultId.isPresent()) {
+            result = textSubmission.getManualResultsById(resultId.get());
             textSubmission.setResults(Collections.singletonList(result));
         }
         else {

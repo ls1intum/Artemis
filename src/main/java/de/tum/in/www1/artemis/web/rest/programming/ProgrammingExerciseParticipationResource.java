@@ -242,8 +242,7 @@ public class ProgrammingExerciseParticipationResource {
      */
     @PutMapping("programming-exercise-participations/{participationId}/reset-repository")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> resetRepository(@PathVariable Long participationId, @RequestParam(required = false) Long gradedParticipationId)
-            throws GitAPIException, IOException {
+    public ResponseEntity<Void> resetRepository(@PathVariable Long participationId, @RequestParam Optional<Long> gradedParticipationId) throws GitAPIException, IOException {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByStudentParticipationIdWithTemplateParticipation(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise for Participation", participationId));
@@ -257,16 +256,12 @@ public class ProgrammingExerciseParticipationResource {
             throw new BadRequestAlertException("Cannot reset repository in an exam", ENTITY_NAME, "noRepoResetInExam");
         }
 
-        VcsRepositoryUri sourceURL;
-        if (gradedParticipationId != null) {
-            ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
+        VcsRepositoryUri sourceURL = gradedParticipationId.map(id -> {
+            ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(id);
             participationAuthCheckService.checkCanAccessParticipationElseThrow(gradedParticipation);
 
-            sourceURL = gradedParticipation.getVcsRepositoryUri();
-        }
-        else {
-            sourceURL = exercise.getVcsTemplateRepositoryUri();
-        }
+            return gradedParticipation.getVcsRepositoryUri();
+        }).orElseGet(exercise::getVcsTemplateRepositoryUri);
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
 
@@ -354,7 +349,7 @@ public class ProgrammingExerciseParticipationResource {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, null, participation));
+        return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, Optional.empty(), participation));
     }
 
     /**
@@ -371,20 +366,20 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise/{exerciseId}/files-content-commit-details/{commitId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @PathVariable String commitId,
-            @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) throws GitAPIException, IOException {
-        if (participationId != null) {
-            Participation participation = participationRepository.findByIdElseThrow(participationId);
+            @RequestParam Optional<Long> participationId, @RequestParam Optional<RepositoryType> repositoryType) throws GitAPIException, IOException {
+        if (participationId.isPresent()) {
+            Participation participation = participationRepository.findByIdElseThrow(participationId.get());
             ProgrammingExerciseParticipation programmingExerciseParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId,
                     participation, ENTITY_NAME);
             ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
             participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
             // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
-            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation));
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, Optional.empty(), programmingExerciseParticipation));
         }
-        else if (repositoryType != null) {
+        else if (repositoryType.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-            var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
+            var participation = repositoryType.get() == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
             return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation));
         }
         else {

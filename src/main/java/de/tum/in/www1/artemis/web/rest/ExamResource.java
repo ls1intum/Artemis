@@ -1306,19 +1306,16 @@ public class ExamResource {
             @RequestParam("differentStudentExamsSameBrowserFingerprint") boolean analyzeSessionsWithTheSameBrowserFingerprint,
             @RequestParam("sameStudentExamDifferentIPAddresses") boolean analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses,
             @RequestParam("sameStudentExamDifferentBrowserFingerprints") boolean analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
-            @RequestParam("ipOutsideOfRange") boolean analyzeSessionsIpOutsideOfRange, @RequestParam(required = false) String ipSubnet) {
+            @RequestParam("ipOutsideOfRange") boolean analyzeSessionsIpOutsideOfRange, @RequestParam Optional<String> ipSubnet) {
         log.debug("REST request to get all exam sessions that are suspicious for exam : {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        if (analyzeSessionsIpOutsideOfRange) {
-            if (ipSubnet == null) {
-                throw new BadRequestAlertException("If you want to analyze sessions with IP outside of range, you need to provide a subnet", ENTITY_NAME,
-                        "missingLowerOrUpperBoundIp");
-            }
+        if (analyzeSessionsIpOutsideOfRange && ipSubnet.isEmpty()) {
+            throw new BadRequestAlertException("If you want to analyze sessions with IP outside of range, you need to provide a subnet", ENTITY_NAME, "missingLowerOrUpperBoundIp");
         }
         SuspiciousSessionsAnalysisOptions options = new SuspiciousSessionsAnalysisOptions(analyzeSessionsWithTheSameIp, analyzeSessionsWithTheSameBrowserFingerprint,
                 analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses, analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
                 analyzeSessionsIpOutsideOfRange);
-        return ResponseEntity.ok(examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, Optional.ofNullable(ipSubnet)));
+        return ResponseEntity.ok(examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, ipSubnet));
     }
 }

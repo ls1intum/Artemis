@@ -999,12 +999,12 @@ public class ProgrammingExerciseTestService {
         assertThat(exerciseToBeImported.getMode()).isEqualTo(TEAM);
         assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
         assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, Optional.empty())).isEmpty();
 
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(sourceExercise.getTeamAssignmentConfig()).isNull();
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, Optional.empty())).isEmpty();
     }
 
     // TEST
@@ -1042,11 +1042,11 @@ public class ProgrammingExerciseTestService {
 
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, Optional.empty())).isEmpty();
 
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         assertThat(sourceExercise.getMode()).isEqualTo(TEAM);
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).hasSize(1);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, Optional.empty())).hasSize(1);
     }
 
     // TEST

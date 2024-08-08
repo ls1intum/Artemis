@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -346,8 +347,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * @param correctionRound for which not to remove results
      * @param resultId        specific resultId
      */
-    public void removeNotNeededResults(int correctionRound, Long resultId) {
-        if (correctionRound == 0 && resultId == null && getResults().size() >= 2) {
+    public void removeNotNeededResults(int correctionRound, Optional<Long> resultId) {
+        if (correctionRound == 0 && resultId.isEmpty() && getResults().size() >= 2) {
             var resultList = new ArrayList<Result>();
             resultList.add(getFirstManualResult());
             setResults(resultList);
