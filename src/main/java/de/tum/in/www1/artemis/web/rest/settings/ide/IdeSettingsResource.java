@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.repository.settings.UserIdeMappingRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 
 /**
- * REST controller for managing NotificationSettings (NotificationSettings).
+ * REST controller for managing Ide Settings (IdeSettings).
  */
 @Profile(PROFILE_CORE)
 @RestController
