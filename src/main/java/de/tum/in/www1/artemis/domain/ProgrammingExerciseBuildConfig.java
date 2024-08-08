@@ -247,6 +247,11 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         buildPlanAccessSecret = UUID.randomUUID().toString();
     }
 
+    /**
+     * Copy the build config from the originalBuildConfig to this build config
+     *
+     * @param originalBuildConfig the original build config
+     */
     public void copyBuildConfig(ProgrammingExerciseBuildConfig originalBuildConfig) {
         this.setBranch(originalBuildConfig.getBranch());
         this.setBuildPlanConfiguration(originalBuildConfig.getBuildPlanConfiguration());
