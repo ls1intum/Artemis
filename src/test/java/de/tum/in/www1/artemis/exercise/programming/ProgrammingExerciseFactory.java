@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -116,12 +117,15 @@ public class ProgrammingExerciseFactory {
     private static void populateUnreleasedProgrammingExercise(ProgrammingExercise programmingExercise, ProgrammingLanguage programmingLanguage) {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
+        if (programmingExercise.getBuildConfig() == null) {
+            programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        }
         programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.setTestwiseCoverageEnabled(false);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.setBuildScript("Some script");
-        programmingExercise.setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[]}");
+        programmingExercise.getBuildConfig().setBuildScript("Some script");
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[]}");
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
@@ -135,7 +139,7 @@ public class ProgrammingExerciseFactory {
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUri = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUri(testRepoUri);
-        programmingExercise.setBranch(DEFAULT_BRANCH);
+        programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }
 
     /**
@@ -149,6 +153,7 @@ public class ProgrammingExerciseFactory {
      */
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
         ProgrammingExercise toBeImported = new ProgrammingExercise();
+        var buildConfig = new ProgrammingExerciseBuildConfig();
         toBeImported.setCourse(targetCourse);
         toBeImported.setTitle(title);
         toBeImported.setShortName(shortName);
@@ -161,7 +166,7 @@ public class ProgrammingExerciseFactory {
         toBeImported.setExerciseHints(null);
         toBeImported.setSolutionParticipation(null);
         toBeImported.setTemplateParticipation(null);
-        toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
+        buildConfig.setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
         toBeImported.setProblemStatement(template.getProblemStatement());
         toBeImported.setMaxPoints(template.getMaxPoints());
         toBeImported.setBonusPoints(template.getBonusPoints());
@@ -174,7 +179,7 @@ public class ProgrammingExerciseFactory {
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
-        toBeImported.setTestwiseCoverageEnabled(template.isTestwiseCoverageEnabled());
+        buildConfig.setTestwiseCoverageEnabled(template.getBuildConfig().isTestwiseCoverageEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
@@ -188,11 +193,12 @@ public class ProgrammingExerciseFactory {
         toBeImported.setDueDate(template.getDueDate());
         toBeImported.setReleaseDate(template.getReleaseDate());
         toBeImported.setExampleSolutionPublicationDate(null);
-        toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
+        buildConfig.setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
         toBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(template.getBuildAndTestStudentSubmissionsAfterDueDate());
         toBeImported.generateAndSetProjectKey();
         toBeImported.setPlagiarismDetectionConfig(template.getPlagiarismDetectionConfig());
 
+        toBeImported.setBuildConfig(buildConfig);
         return toBeImported;
     }
 
@@ -406,6 +412,9 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
+        if (programmingExercise.getBuildConfig() == null) {
+            programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        }
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
@@ -423,7 +432,7 @@ public class ProgrammingExerciseFactory {
         if (enableStaticCodeAnalysis) {
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
         }
-        programmingExercise.setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
         // Note: no separators are allowed for Swift package names
         if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setPackageName("swiftTest");
@@ -434,6 +443,6 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUri("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
         programmingExercise.setShowTestNamesToStudents(false);
-        programmingExercise.setBranch(DEFAULT_BRANCH);
+        programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }
 }

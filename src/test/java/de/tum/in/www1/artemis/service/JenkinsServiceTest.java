@@ -35,12 +35,14 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.exercise.programming.ContinuousIntegrationTestService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
@@ -54,6 +56,9 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ProgrammingExerciseImportService programmingExerciseImportService;
@@ -308,6 +313,8 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         ProgrammingExercise sourceExercise = new ProgrammingExercise();
         course.addExercises(sourceExercise);
         sourceExercise.generateAndSetProjectKey();
+        var buildConfig = new ProgrammingExerciseBuildConfig();
+        sourceExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfig));
         sourceExercise = programmingExerciseRepository.save(sourceExercise);
         String buildPlanContent = "sample text";
         buildPlanRepository.setBuildPlanForExercise(buildPlanContent, sourceExercise);
@@ -315,6 +322,8 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         ProgrammingExercise targetExercise = new ProgrammingExercise();
         course.addExercises(targetExercise);
         targetExercise.generateAndSetProjectKey();
+        var buildConfigTarget = new ProgrammingExerciseBuildConfig();
+        targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
 
         jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey());
@@ -335,6 +344,8 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         ProgrammingExercise sourceExercise = new ProgrammingExercise();
         course.addExercises(sourceExercise);
+        var buildConfig = new ProgrammingExerciseBuildConfig();
+        sourceExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfig));
         sourceExercise = programmingExerciseRepository.save(sourceExercise);
 
         Optional<BuildPlan> sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(sourceExercise.getId());
@@ -343,8 +354,9 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         ProgrammingExercise targetExercise = new ProgrammingExercise();
         course.addExercises(targetExercise);
         targetExercise.generateAndSetProjectKey();
+        var buildConfigTarget = new ProgrammingExerciseBuildConfig();
+        targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
-
         jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey());
 
         continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);

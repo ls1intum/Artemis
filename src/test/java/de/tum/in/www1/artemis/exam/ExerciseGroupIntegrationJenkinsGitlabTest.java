@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -46,6 +47,9 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
 
     @Autowired
     private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ExamRepository examRepository;
@@ -275,6 +279,7 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
         exam = examRepository.save(exam);
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
+        programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
         exerciseRepository.save(programming);
 
         doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());

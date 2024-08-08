@@ -355,7 +355,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         setupProgrammingExerciseDates(now, DELAY_MS, null);
         var login = TEST_PREFIX + "student3";
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2 + SCHEDULER_TASK_TRIGGER_DELAY_MS, login);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -383,7 +383,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         setupProgrammingExerciseDates(now, DELAY_MS, 2 * SCHEDULER_TASK_TRIGGER_DELAY_MS);
         // individual due date between regular due date and build and test date
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2 + SCHEDULER_TASK_TRIGGER_DELAY_MS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -411,7 +411,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         setupProgrammingExerciseDates(now, DELAY_MS, DELAY_MS);
         // individual due date after build and test date
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -433,7 +433,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         programmingExerciseTestCaseRepository.saveAllAndFlush(testCases);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -456,7 +456,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         programmingExerciseTestCaseRepository.saveAll(testCases);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -493,7 +493,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         setupProgrammingExerciseDates(now, DELAY_MS, null);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * DELAY_MS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -521,7 +521,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         setupProgrammingExerciseDates(now, DELAY_MS, null);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * DELAY_MS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -551,7 +551,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         programmingExerciseTestCaseRepository.saveAllAndFlush(testCases);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2000L, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -584,7 +584,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 

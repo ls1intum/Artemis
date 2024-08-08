@@ -18,7 +18,7 @@
         [ngbTooltip]="'artemisApp.codeHint.management.step3.structuralEntriesButton.tooltip' | artemisTranslate"
         (click)="onGenerateStructuralSolutionEntries()"
     ></button>
-    @if (!!exercise?.testwiseCoverageEnabled) {
+    @if (!!exercise?.buildConfig?.testwiseCoverageEnabled) {
         <button
             type="button"
             class="btn btn-primary"

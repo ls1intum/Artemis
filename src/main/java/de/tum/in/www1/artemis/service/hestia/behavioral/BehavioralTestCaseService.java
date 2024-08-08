@@ -82,7 +82,7 @@ public class BehavioralTestCaseService {
      * @throws BehavioralSolutionEntryGenerationException If there was an error while generating the solution entries
      */
     public List<ProgrammingExerciseSolutionEntry> generateBehavioralSolutionEntries(ProgrammingExercise programmingExercise) throws BehavioralSolutionEntryGenerationException {
-        if (!programmingExercise.isTestwiseCoverageEnabled()) {
+        if (!programmingExercise.getBuildConfig().isTestwiseCoverageEnabled()) {
             throw new BehavioralSolutionEntryGenerationException("This feature is only supported for Java Exercises with active Testwise Coverage");
         }
         var testCases = testCaseRepository.findByExerciseIdWithSolutionEntriesAndActive(programmingExercise.getId(), true);

@@ -34,7 +34,7 @@ export class CodeHintGenerationOverviewComponent implements OnInit {
             this.isPerformedByStep = new Map<CodeHintGenerationStep, boolean>();
             this.isPerformedByStep.set(CodeHintGenerationStep.SOLUTION_ENTRIES, false);
             this.isPerformedByStep.set(CodeHintGenerationStep.CODE_HINTS, false);
-            if (exercise.testwiseCoverageEnabled) {
+            if (exercise.buildConfig?.testwiseCoverageEnabled) {
                 this.currentStep = CodeHintGenerationStep.GIT_DIFF;
                 this.allowBehavioralEntryGeneration = true;
                 this.isPerformedByStep.set(CodeHintGenerationStep.GIT_DIFF, false);

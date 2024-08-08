@@ -179,7 +179,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().plusHours(1));
         StudentParticipation studentParticipationReceived = participationService.startExercise(programmingExercise, participant, true);
 
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         assertThat(studentParticipationReceived.getId()).isNotEqualTo(practiceParticipation.getId());
         assertThat(programmingExercise.getStudentParticipations()).hasSize(2);

@@ -83,7 +83,7 @@ class BehavioralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise.setTestwiseCoverageEnabled(true);
+        exercise.getBuildConfig().setTestwiseCoverageEnabled(true);
     }
 
     @AfterEach

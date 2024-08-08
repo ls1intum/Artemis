@@ -147,7 +147,7 @@ export class ExerciseAPIRequests {
         }
 
         exercise.programmingLanguage = programmingLanguage;
-        exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
+        exercise.buildConfig!.testwiseCoverageEnabled = recordTestwiseCoverage;
         exercise.mode = mode;
         exercise.teamAssignmentConfig = teamAssignmentConfig;
 

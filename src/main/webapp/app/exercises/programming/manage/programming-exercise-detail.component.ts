@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { Subject, Subscription } from 'rxjs';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingExerciseBuildConfig, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
@@ -75,6 +75,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'Programming';
 
     programmingExercise: ProgrammingExercise;
+    programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
     competencies: Competency[];
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;
@@ -158,6 +159,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.activatedRouteSubscription = this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.programmingExerciseBuildConfig = programmingExercise.buildConfig;
             this.competencies = programmingExercise.competencies;
             const exerciseId = this.programmingExercise.id!;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
@@ -265,6 +267,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     getExerciseDetails(): DetailOverviewSection[] {
         const exercise = this.programmingExercise;
+        exercise.buildConfig = this.programmingExerciseBuildConfig;
         return [
             this.getExerciseDetailsGeneralSection(exercise),
             this.getExerciseDetailsModeSection(exercise),
@@ -353,7 +356,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.sequentialTestRuns.title',
-                    data: { boolean: exercise.sequentialTestRuns },
+                    data: { boolean: exercise.buildConfig?.sequentialTestRuns },
                 },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
@@ -452,26 +455,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         gitDiffReport: exercise.gitDiffReport,
                     },
                 },
-                !!exercise.buildScript &&
-                    !!exercise.windFile?.metadata?.docker?.image && {
+                !!exercise.buildConfig?.buildScript &&
+                    !!exercise.buildConfig?.windFile?.metadata?.docker?.image && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.dockerImage',
-                        data: { text: exercise.windFile?.metadata?.docker?.image },
+                        data: { text: exercise.buildConfig?.windFile?.metadata?.docker?.image },
                     },
-                !!exercise.buildScript &&
-                    !!exercise.windFile?.metadata?.docker?.image && {
+                !!exercise.buildConfig?.buildScript &&
+                    !!exercise.buildConfig?.windFile?.metadata?.docker?.image && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
-                        data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildScript + '\n```') },
+                        data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
                     },
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.recordTestwiseCoverage',
-                    data: { boolean: exercise.testwiseCoverageEnabled },
+                    data: { boolean: exercise.buildConfig?.testwiseCoverageEnabled },
                 },
                 exercise.isAtLeastTutor &&
-                    exercise?.testwiseCoverageEnabled && {
+                    exercise?.buildConfig?.testwiseCoverageEnabled && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.coveredLineRatio',
                         data: { text: exercise?.coveredLinesRatio ? (exercise.coveredLinesRatio * 100).toFixed(1) + ' %' : undefined },
@@ -749,8 +752,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkAndSetWindFile(exercise: ProgrammingExercise) {
-        if (exercise.buildPlanConfiguration && !exercise.windFile) {
-            exercise.windFile = this.aeolusService.parseWindFile(exercise.buildPlanConfiguration);
+        if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windFile) {
+            exercise.buildConfig!.windFile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
         }
     }
 
@@ -834,7 +837,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
 
         const latestSolutionSubmissionSuccessful = this.programmingExerciseService.getLatestResult(this.programmingExercise.solutionParticipation)?.successful;
-        if (this.programmingExercise.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
+        if (this.programmingExercise.buildConfig?.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
             this.programmingExerciseService.getLatestFullTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
                 this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio;
             });

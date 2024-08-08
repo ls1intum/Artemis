@@ -43,12 +43,12 @@ public class PublicBuildPlanResource {
     public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
 
-        final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
+        final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesWithBuildConfigElseThrow(exerciseId);
         // orElseThrow is safe here since the query above ensures that we find a build plan that is attached to that exercise
         final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
 
-        if (!programmingExercise.hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
+        if (!programmingExercise.getBuildConfig().hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildConfig().getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();
         }
 

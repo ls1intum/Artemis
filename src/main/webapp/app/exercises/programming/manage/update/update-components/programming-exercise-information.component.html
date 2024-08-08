@@ -55,7 +55,7 @@
                 [programmingExercise]="programmingExercise"
                 [programmingLanguage]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
                 [isLocal]="isLocal"
-                [checkoutSolutionRepository]="programmingExercise.checkoutSolutionRepository"
+                [checkoutSolutionRepository]="programmingExercise.buildConfig?.checkoutSolutionRepository"
             />
             @if (!programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExerciseCreationConfig.auxiliaryRepositoriesSupported) {
                 <div class="form-group">

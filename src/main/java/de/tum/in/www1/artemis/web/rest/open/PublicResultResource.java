@@ -127,7 +127,7 @@ public class PublicResultResource {
                 triggerTemplateBuildIfTestCasesChanged(participation.getProgrammingExercise().getId(), programmingSubmission);
 
                 // the test cases and the submission have been saved to the database previously, therefore we can add the reference to the coverage reports
-                if (Boolean.TRUE.equals(participation.getProgrammingExercise().isTestwiseCoverageEnabled()) && Boolean.TRUE.equals(result.isSuccessful())) {
+                if (Boolean.TRUE.equals(participation.getProgrammingExercise().getBuildConfig().isTestwiseCoverageEnabled()) && Boolean.TRUE.equals(result.isSuccessful())) {
                     testwiseCoverageService.createTestwiseCoverageReport(result.getCoverageFileReportsByTestCaseName(), participation.getProgrammingExercise(),
                             programmingSubmission);
                 }

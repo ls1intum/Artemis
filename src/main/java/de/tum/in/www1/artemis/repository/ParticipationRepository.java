@@ -110,6 +110,15 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
             """)
     Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") long exerciseId);
 
+    @Query("""
+                SELECT p
+                FROM Participation p
+                    LEFT JOIN FETCH p.exercise e
+                    LEFT JOIN FETCH e.buildConfig
+                WHERE p.id = :participationId
+            """)
+    Optional<Participation> findWithProgrammingExerciseWithBuildConfigById(@Param("participationId") long participationId);
+
     Set<Participation> findByExerciseId(long exerciseId);
 
     /**

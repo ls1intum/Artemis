@@ -58,6 +58,41 @@ export class WindFile {
     actions: BuildAction[];
 }
 
+export class ProgrammingExerciseBuildConfig {
+    public sequentialTestRuns?: boolean;
+    public buildPlanConfiguration?: string;
+    public buildScript?: string;
+    public checkoutSolutionRepository?: boolean;
+    public checkoutPath?: string;
+    public timeoutSeconds?: number;
+    public dockerFlags?: string;
+    public windFile?: WindFile;
+    public testwiseCoverageEnabled?: boolean;
+
+    constructor() {
+        this.checkoutSolutionRepository = false; // default value
+        this.testwiseCoverageEnabled = false; // default value
+    }
+
+    /**
+     * Copy the build configuration from the given exerciseJson to this build configuration.
+     */
+    public copyBuildConfig(exerciseJson: Exercise) {
+        if (exerciseJson.type !== ExerciseType.PROGRAMMING) {
+            return;
+        }
+        this.sequentialTestRuns = exerciseJson['sequentialTestRuns'];
+        this.checkoutPath = exerciseJson['checkoutPath'];
+        this.buildPlanConfiguration = exerciseJson['buildPlanConfiguration'];
+        this.checkoutSolutionRepository = exerciseJson['checkoutSolutionRepository'];
+        this.timeoutSeconds = exerciseJson['timeoutSeconds'];
+        this.windFile = exerciseJson['windFile'];
+        this.buildScript = exerciseJson['buildScript'];
+        this.testwiseCoverageEnabled = exerciseJson['testwiseCoverageEnabled'];
+        this.dockerFlags = exerciseJson['dockerFlags'];
+    }
+}
+
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
     PYTHON = 'PYTHON',
@@ -98,25 +133,19 @@ export class ProgrammingExercise extends Exercise {
     public allowOfflineIde?: boolean;
     public programmingLanguage?: ProgrammingLanguage;
     public packageName?: string;
-    public sequentialTestRuns?: boolean;
     public showTestNamesToStudents?: boolean;
-    public checkoutSolutionRepository?: boolean;
     public auxiliaryRepositories?: AuxiliaryRepository[];
     public submissionPolicy?: SubmissionPolicy;
     public exerciseHints?: ExerciseHint[];
     public gitDiffReport?: ProgrammingExerciseGitDiffReport;
     public buildLogStatistics?: BuildLogStatisticsDTO;
+    public buildConfig?: ProgrammingExerciseBuildConfig;
     public releaseTestsWithExampleSolution?: boolean;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     public testCasesChanged?: boolean;
 
     public projectType?: ProjectType;
-    public windFile?: WindFile;
-    public buildScript?: string;
-    public buildPlanConfiguration?: string;
-
-    public testwiseCoverageEnabled?: boolean;
 
     // helper attributes
 
@@ -140,10 +169,9 @@ export class ProgrammingExercise extends Exercise {
         this.allowOfflineIde = true; // default value
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
-        this.checkoutSolutionRepository = false; // default value
         this.projectType = ProjectType.PLAIN_GRADLE; // default value
         this.showTestNamesToStudents = false; // default value
-        this.testwiseCoverageEnabled = false; // default value
+        this.buildConfig = new ProgrammingExerciseBuildConfig();
     }
 }
 

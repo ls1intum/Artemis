@@ -192,7 +192,8 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getTasksWithoutInactiveFiltersOutInactive() {
         programmingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
+                .orElseThrow();
         programmingExerciseTestCaseRepository.deleteAll(programmingExercise.getTestCases());
 
         String[] testCaseNames = { "testClass[BubbleSort]", "testParametrized(Parameter1, 2)[1]" };
@@ -211,7 +212,8 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
         programmingExerciseTestCaseRepository.save(testCase);
 
         programmingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
+                .orElseThrow();
 
         updateProblemStatement("""
                 [task][Task 1](testClass[BubbleSort],testWithBraces(),testParametrized(Parameter1, 2)[1])
@@ -228,7 +230,8 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testParseTestCaseNames() {
         programmingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
+                .orElseThrow();
         programmingExerciseTestCaseRepository.deleteAll(programmingExercise.getTestCases());
 
         String[] testCaseNames = new String[] { "testClass[BubbleSort]", "testWithBraces()", "testParametrized(Parameter1, 2)[1]" };
@@ -240,7 +243,8 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
             programmingExerciseTestCaseRepository.save(testCase);
         }
         programmingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
+                .orElseThrow();
 
         updateProblemStatement("""
                 [task][Task 1](testClass[BubbleSort],testWithBraces(),testParametrized(Parameter1, 2)[1])
