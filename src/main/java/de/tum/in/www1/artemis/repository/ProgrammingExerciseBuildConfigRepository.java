@@ -24,4 +24,11 @@ public interface ProgrammingExerciseBuildConfigRepository extends ArtemisJpaRepo
         }
         return programmingExercise.getBuildConfig();
     }
+
+    default void generateBuildPlanAccessSecretIfNotExists(ProgrammingExerciseBuildConfig buildConfig) {
+        if (!buildConfig.hasBuildPlanAccessSecretSet()) {
+            buildConfig.generateAndSetBuildPlanAccessSecret();
+            save(buildConfig);
+        }
+    }
 }

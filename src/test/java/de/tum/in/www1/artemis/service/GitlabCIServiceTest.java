@@ -226,8 +226,9 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testConfigureBuildPlanFails() throws GitLabApiException {
         mockAddBuildPlanToGitLabRepositoryConfiguration(true);
-
+        final ProgrammingExercise exercise = programmingExerciseRepository.findWithBuildConfigById(programmingExerciseId).orElseThrow();
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setProgrammingExercise(exercise);
         participation.setRepositoryUri("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
         assertThatThrownBy(() -> continuousIntegrationService.configureBuildPlan(participation, "main")).isInstanceOf(GitLabCIException.class);
     }

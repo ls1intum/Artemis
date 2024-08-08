@@ -70,7 +70,7 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     private void testReadAccess() throws Exception {
         programmingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
     }

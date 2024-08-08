@@ -7,20 +7,20 @@ import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 
 public abstract class AbstractBuildPlanCreator {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Value("${server.url}")
     private URL artemisServerUrl;
 
-    protected AbstractBuildPlanCreator(final BuildPlanRepository buildPlanRepository, final ProgrammingExerciseRepository programmingExerciseRepository) {
+    protected AbstractBuildPlanCreator(final BuildPlanRepository buildPlanRepository, final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.buildPlanRepository = buildPlanRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -38,7 +38,7 @@ public abstract class AbstractBuildPlanCreator {
      * @return The build plan URL.
      */
     public String generateBuildPlanURL(final ProgrammingExercise exercise) {
-        programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
+        programmingExerciseBuildConfigRepository.generateBuildPlanAccessSecretIfNotExists(exercise.getBuildConfig());
         return String.format("%s/api/public/programming-exercises/%d/build-plan?secret=%s", artemisServerUrl, exercise.getId(),
                 exercise.getBuildConfig().getBuildPlanAccessSecret());
     }

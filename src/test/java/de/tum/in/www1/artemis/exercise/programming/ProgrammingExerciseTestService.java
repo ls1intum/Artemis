@@ -895,6 +895,7 @@ public class ProgrammingExerciseTestService {
             sourceExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
             programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
             programmingExerciseUtilService.addHintsToExercise(sourceExercise);
+            programmingExerciseBuildConfigRepository.save(sourceExercise.getBuildConfig());
             sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
             ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
                     courseUtilService.addEmptyCourse());

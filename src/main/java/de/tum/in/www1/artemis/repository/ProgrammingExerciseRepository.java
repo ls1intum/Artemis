@@ -952,13 +952,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         validateCourseAndExerciseShortName(programmingExercise, course);
     }
 
-    default void generateBuildPlanAccessSecretIfNotExists(ProgrammingExercise exercise) {
-        if (!exercise.getBuildConfig().hasBuildPlanAccessSecretSet()) {
-            exercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
-            save(exercise);
-        }
-    }
-
     /**
      * Fetch options for the {@link ProgrammingExercise} entity.
      * Each option specifies an entity or a collection of entities to fetch eagerly when using a dynamic fetching query.

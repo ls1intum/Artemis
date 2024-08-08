@@ -15,7 +15,7 @@ import org.springframework.util.StreamUtils;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractBuildPlanCreator;
 
@@ -29,9 +29,9 @@ public class GitLabCIBuildPlanService extends AbstractBuildPlanCreator {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public GitLabCIBuildPlanService(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+    public GitLabCIBuildPlanService(BuildPlanRepository buildPlanRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             ResourceLoaderService resourceLoaderService) {
-        super(buildPlanRepository, programmingExerciseRepository);
+        super(buildPlanRepository, programmingExerciseBuildConfigRepository);
 
         this.resourceLoaderService = resourceLoaderService;
     }

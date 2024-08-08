@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractBuildPlanCreator;
 
@@ -42,9 +42,9 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    public JenkinsPipelineScriptCreator(final BuildPlanRepository buildPlanRepository, final ProgrammingExerciseRepository programmingExerciseRepository,
+    public JenkinsPipelineScriptCreator(final BuildPlanRepository buildPlanRepository, final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             final ResourceLoaderService resourceLoaderService, final ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
-        super(buildPlanRepository, programmingExerciseRepository);
+        super(buildPlanRepository, programmingExerciseBuildConfigRepository);
 
         this.resourceLoaderService = resourceLoaderService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
