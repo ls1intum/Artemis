@@ -94,7 +94,11 @@ export class CourseManagementCardComponent implements OnChanges {
         // Only sort one time once loaded
         if (!this.statisticsSorted && this.courseStatistics && this.courseStatistics.exerciseDTOS?.length > 0) {
             this.statisticsSorted = true;
-            this.courseStatistics.exerciseDTOS.forEach((dto) => this.statisticsPerExercise.set(dto.exerciseId!, dto));
+            this.courseStatistics.exerciseDTOS.forEach((dto) => {
+                if (dto.exerciseId !== undefined) {
+                    this.statisticsPerExercise.set(dto.exerciseId, dto);
+                }
+            });
         }
 
         // Only sort one time once loaded
