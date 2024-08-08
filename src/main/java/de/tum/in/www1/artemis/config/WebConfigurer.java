@@ -82,9 +82,6 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
             mappings.add("html", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
             // CloudFoundry issue, see https://github.com/cloudfoundry/gorouter/issues/64
             mappings.add("json", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
-            // JSPDF issue, see https://github.com/mozilla/pdf.js/issues/17296
-            mappings.add("mjs", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
-            mappings.add("text/javascript", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
             servletWebServer.setMimeMappings(mappings);
         }
     }
