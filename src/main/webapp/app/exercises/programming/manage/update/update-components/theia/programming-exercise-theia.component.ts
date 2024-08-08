@@ -7,6 +7,7 @@ import { TheiaService } from 'app/exercises/programming/shared/service/theia.ser
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    standalone: true,
 })
 export class ProgrammingExerciseTheiaComponent implements OnChanges {
     @Input() programmingExercise: ProgrammingExercise;
