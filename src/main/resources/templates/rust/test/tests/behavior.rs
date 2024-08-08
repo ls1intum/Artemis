@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use rust_template_exercise::{bubble_sort::BubbleSort, merge_sort::MergeSort};
-use rust_template_test_macros::{require_struct, require_trait};
+
+use rust_template_test_macros::{require_struct_or_fail, require_trait};
 
 #[require_trait(sort_strategy::SortStrategy)]
 use rust_template_exercise::sort_strategy::SortStrategy;
@@ -37,9 +38,9 @@ fn test_merge_sort() {
     assert_eq!(dates, DATES_ORDERED, "MergeSort does not sort correctly");
 }
 
-#[require_struct(context::Context)]
-#[require_struct(policy::Policy)]
 #[test]
+#[require_struct_or_fail(context::Context)]
+#[require_struct_or_fail(policy::Policy)]
 fn test_use_merge_sort_for_big_list() {
     let context = rust_template_exercise::context::Context::new();
     let mut policy = rust_template_exercise::policy::Policy::new(&context);
@@ -57,9 +58,9 @@ fn test_use_merge_sort_for_big_list() {
     );
 }
 
-#[require_struct(context::Context)]
-#[require_struct(policy::Policy)]
 #[test]
+#[require_struct_or_fail(context::Context)]
+#[require_struct_or_fail(policy::Policy)]
 fn test_use_bubble_sort_for_small_list() {
     let context = rust_template_exercise::context::Context::new();
     let mut policy = rust_template_exercise::policy::Policy::new(&context);
