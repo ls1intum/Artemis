@@ -106,10 +106,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "package_name")
     private String packageName;
 
-    @Nullable
-    @Column(name = "theia_image", table = "programming_exercise_details")
-    private String theiaImage;
-
     @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
     private boolean showTestNamesToStudents;
 
@@ -171,12 +167,6 @@ public class ProgrammingExercise extends Exercise {
     @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
     @JsonIgnoreProperties("programmingExercise")
     private ProgrammingExerciseBuildConfig buildConfig;
-
-    @Column(name = "allow_branching", table = "programming_exercise_details", columnDefinition = "boolean default false", nullable = false)
-    private boolean allowBranching = false; // default value
-
-    @Column(name = "branch_regex", table = "programming_exercise_details")
-    private String branchRegex;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -296,15 +286,6 @@ public class ProgrammingExercise extends Exercise {
 
     public void setAllowOnlineIde(boolean allowOnlineIde) {
         this.allowOnlineIde = allowOnlineIde;
-    }
-
-    @Nullable
-    public String getTheiaImage() {
-        return theiaImage;
-    }
-
-    public void setTheiaImage(@Nullable String theiaImage) {
-        this.theiaImage = theiaImage;
     }
 
     public String getProjectKey() {
@@ -482,22 +463,6 @@ public class ProgrammingExercise extends Exercise {
 
     public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
         this.buildConfig = buildConfig;
-    }
-
-    public String getBranchRegex() {
-        return branchRegex;
-    }
-
-    public void setBranchRegex(String branchRegex) {
-        this.branchRegex = branchRegex;
-    }
-
-    public boolean isAllowBranching() {
-        return allowBranching;
-    }
-
-    public void setAllowBranching(boolean allowBranching) {
-        this.allowBranching = allowBranching;
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
@@ -764,7 +729,7 @@ public class ProgrammingExercise extends Exercise {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", allowOnlineEditor='"
                 + isAllowOnlineEditor() + "'" + ", allowOnlineIde='" + isAllowOnlineIde() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='"
-                + getPackageName() + "'" + ", theiaImage='" + getTheiaImage() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+                + getPackageName() + "'" + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     /**

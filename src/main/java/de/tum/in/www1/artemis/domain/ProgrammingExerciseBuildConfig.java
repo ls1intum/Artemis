@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.util.Objects;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
@@ -59,6 +60,16 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     @Column(name = "testwise_coverage_enabled")
     private boolean testwiseCoverageEnabled;
+
+    @Nullable
+    @Column(name = "theia_image")
+    private String theiaImage;
+
+    @Column(name = "allow_branching", columnDefinition = "boolean default false", nullable = false)
+    private boolean allowBranching = false; // default value
+
+    @Column(name = "branch_regex")
+    private String branchRegex;
 
     @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
@@ -151,6 +162,31 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.dockerFlags = dockerFlags;
     }
 
+    @Nullable
+    public String getTheiaImage() {
+        return theiaImage;
+    }
+
+    public void setTheiaImage(@Nullable String theiaImage) {
+        this.theiaImage = theiaImage;
+    }
+
+    public String getBranchRegex() {
+        return branchRegex;
+    }
+
+    public void setBranchRegex(String branchRegex) {
+        this.branchRegex = branchRegex;
+    }
+
+    public boolean isAllowBranching() {
+        return allowBranching;
+    }
+
+    public void setAllowBranching(boolean allowBranching) {
+        this.allowBranching = allowBranching;
+    }
+
     /**
      * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
      * This method parses the JSON string and returns a {@link Windfile} object.
@@ -195,6 +231,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     public String toString() {
         return "BuildJobConfig{" + "id=" + getId() + ", sequentialTestRuns=" + sequentialTestRuns + ", branch='" + branch + '\'' + ", buildPlanConfiguration='"
                 + buildPlanConfiguration + '\'' + ", buildScript='" + buildScript + '\'' + ", checkoutSolutionRepository=" + checkoutSolutionRepository + ", checkoutPath='"
-                + checkoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + '}';
+                + checkoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + ", testwiseCoverageEnabled=" + testwiseCoverageEnabled
+                + ", theiaImage='" + theiaImage + '\'' + ", allowBranching=" + allowBranching + ", branchRegex='" + branchRegex + '\'' + '}';
     }
 }
