@@ -573,6 +573,11 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(programmingExerciseId), programmingExerciseId);
     }
 
+    @NotNull
+    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithBuildConfigById(programmingExerciseId), programmingExerciseId);
+    }
+
     /**
      * Find a programming exercise with auxiliary repositories by its id and throw an EntityNotFoundException if it cannot be found
      *
