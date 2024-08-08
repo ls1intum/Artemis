@@ -265,4 +265,15 @@ describe('MonacoEditorComponent', () => {
         expect(modelDisposeSpy).toHaveBeenCalledOnce();
         expect(model.isDisposed()).toBeTrue();
     });
+
+    it('should correctly set the start line number', () => {
+        fixture.detectChanges();
+        comp.changeModel('file', multiLineText);
+        comp.setStartLineNumber(5);
+        // Ensure that the editor is large enough to display all lines.
+        comp.layoutWithFixedSize(400, 400);
+        const lineNumbers = fixture.debugElement.nativeElement.querySelectorAll('.line-numbers');
+        expect(lineNumbers).toHaveLength(5);
+        expect([...lineNumbers].map((elem: HTMLElement) => elem.textContent)).toContainAllValues(['5', '6', '7', '8', '9']);
+    });
 });

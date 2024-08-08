@@ -7,6 +7,8 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { of } from 'rxjs';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/shared/solution-entry.component';
+import { MockComponent } from 'ng-mocks';
 
 describe('ManualSolutionEntryCreationModal Component', () => {
     let comp: ManualSolutionEntryCreationModalComponent;
@@ -25,6 +27,7 @@ describe('ManualSolutionEntryCreationModal Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
+            declarations: [ManualSolutionEntryCreationModalComponent, MockComponent(SolutionEntryComponent)],
         }).compileComponents();
         fixture = TestBed.createComponent(ManualSolutionEntryCreationModalComponent);
         comp = fixture.componentInstance;
@@ -84,5 +87,11 @@ describe('ManualSolutionEntryCreationModal Component', () => {
         const closedSpy = jest.spyOn(modalService, 'close');
         comp.clear();
         expect(closedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should setup editor when file path changes', () => {
+        comp.solutionEntryComponent = { setupEditor: jest.fn() } as unknown as SolutionEntryComponent;
+        comp.onUpdateFilePath();
+        expect(comp.solutionEntryComponent.setupEditor).toHaveBeenCalledOnce();
     });
 });
