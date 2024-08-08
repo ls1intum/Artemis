@@ -4,7 +4,6 @@
 
 .mat-expansion-panel .mat-expansion-panel-body {
     padding: 0 !important;
-    text-align: center;
 }
 
 .mat-expansion-panel-header-description {
@@ -14,4 +13,8 @@
 .mat-expansion-panel .mat-expansion-indicator::after {
     margin-right: 2px !important;
     margin-left: 2px !important;
+}
+
+.covered-line-highlight {
+    background-color: var(--monaco-editor-test-coverage-highlight);
 }
