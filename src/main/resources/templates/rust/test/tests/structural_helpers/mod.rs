@@ -1,3 +1,6 @@
+//! Run-time source code reflection
+//!
+//! Use this for flexible parsing and computed names.
 #![allow(dead_code)]
 
 use std::io::Read;
@@ -8,10 +11,14 @@ use syn::{
     ItemImpl, ItemStruct, ItemTrait, TraitItem, TraitItemFn,
 };
 
-pub fn check_struct_names<'a, I: IntoIterator<Item = &'a str>>(items: &[Item], names: I) {
+pub fn check_struct_names<'a, I: IntoIterator<Item = &'a str>>(
+    items: &[Item],
+    names: I,
+) -> Result<(), &'a str> {
     for name in names {
-        find_struct(items, name).unwrap();
+        find_struct(items, name).ok_or(name)?;
     }
+    Ok(())
 }
 
 pub fn find_struct<'a>(items: &'a [Item], name: &str) -> Option<&'a ItemStruct> {
@@ -26,10 +33,13 @@ pub fn find_struct<'a>(items: &'a [Item], name: &str) -> Option<&'a ItemStruct> 
     )
 }
 
-pub fn check_struct_field_names<'a, I: IntoIterator<Item = &'a str>>(fields: &Fields, names: I) {
+pub fn check_struct_field_names<'a, I: IntoIterator<Item = &'a str>>(
+    fields: &Fields,
+    names: I,
+) -> Result<(), &'a str> {
     let p = match fields {
         Fields::Named(f) => &f.named,
-        _ => panic!("the struct should have named fields"),
+        _ => panic!("The struct should have named fields"),
     };
 
     let field_names: Vec<_> = p.iter().map(|f| f.ident.as_ref().unwrap()).collect();
@@ -39,8 +49,9 @@ pub fn check_struct_field_names<'a, I: IntoIterator<Item = &'a str>>(fields: &Fi
             .iter()
             .copied()
             .find(|&n| n == name)
-            .unwrap_or_else(|| panic!("a field named \"{name}\" should be inside the struct"));
+            .ok_or(name)?;
     }
+    Ok(())
 }
 
 pub fn find_impl<'a>(items: &'a [Item], name: &str) -> Option<&'a ItemImpl> {
@@ -88,10 +99,11 @@ pub fn find_impl_for<'a>(items: &'a [Item], name: &str, for_trait: &str) -> Opti
 pub fn check_impl_function_names<'a, I: IntoIterator<Item = &'a str>>(
     items: &[ImplItem],
     names: I,
-) {
+) -> Result<(), &'a str> {
     for name in names {
-        find_impl_function(items, name).unwrap();
+        find_impl_function(items, name).ok_or(name)?;
     }
+    Ok(())
 }
 
 pub fn find_impl_function<'a>(items: &'a [ImplItem], name: &str) -> Option<&'a ImplItemFn> {
@@ -106,10 +118,14 @@ pub fn find_impl_function<'a>(items: &'a [ImplItem], name: &str) -> Option<&'a I
     )
 }
 
-pub fn check_trait_names<'a, I: IntoIterator<Item = &'a str>>(items: &[Item], names: I) {
+pub fn check_trait_names<'a, I: IntoIterator<Item = &'a str>>(
+    items: &[Item],
+    names: I,
+) -> Result<(), &'a str> {
     for name in names {
-        find_trait(items, name).unwrap();
+        find_trait(items, name).ok_or(name)?;
     }
+    Ok(())
 }
 
 pub fn find_trait<'a>(items: &'a [Item], name: &str) -> Option<&'a ItemTrait> {
@@ -127,10 +143,11 @@ pub fn find_trait<'a>(items: &'a [Item], name: &str) -> Option<&'a ItemTrait> {
 pub fn check_trait_function_names<'a, I: IntoIterator<Item = &'a str>>(
     items: &[TraitItem],
     names: I,
-) {
+) -> Result<(), &'a str> {
     for name in names {
-        find_trait_function(items, name).unwrap();
+        find_trait_function(items, name).ok_or(name)?;
     }
+    Ok(())
 }
 
 pub fn find_trait_function<'a>(items: &'a [TraitItem], name: &str) -> Option<&'a TraitItemFn> {
