@@ -1305,7 +1305,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldGetCorrectLatestAutomaticResults() {
         createTestParticipationsWithResults();
-        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
     }
 
@@ -1314,7 +1314,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query
-        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(programmingExerciseSCAEnabled.getId());
         var allResults = resultRepository.findAllByParticipationExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
         assertThat(allResults).hasSize(6);
