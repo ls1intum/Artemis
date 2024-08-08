@@ -126,6 +126,15 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "rust-template-exercise",
+ "rust_template_test_macros",
+ "syn",
+]
+
+[[package]]
+name = "rust_template_test_macros"
+version = "0.1.0"
+dependencies = [
+ "quote",
  "syn",
 ]
 

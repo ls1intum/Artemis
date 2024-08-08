@@ -1,10 +1,9 @@
-use std::any::TypeId;
-
 use chrono::NaiveDate;
-use rust_template_exercise::{
-    bubble_sort::BubbleSort, context::Context, merge_sort::MergeSort, policy::Policy,
-    sort_strategy::SortStrategy,
-};
+use rust_template_exercise::{bubble_sort::BubbleSort, merge_sort::MergeSort};
+use rust_template_test_macros::{require_struct, require_trait};
+
+#[require_trait(sort_strategy::SortStrategy)]
+use rust_template_exercise::sort_strategy::SortStrategy;
 
 // We can't use the opt variants because the Option methods aren't const yet
 #[allow(deprecated)]
@@ -38,10 +37,12 @@ fn test_merge_sort() {
     assert_eq!(dates, DATES_ORDERED, "MergeSort does not sort correctly");
 }
 
+#[require_struct(context::Context)]
+#[require_struct(policy::Policy)]
 #[test]
 fn test_use_merge_sort_for_big_list() {
-    let context = Context::new();
-    let mut policy = Policy::new(&context);
+    let context = rust_template_exercise::context::Context::new();
+    let mut policy = rust_template_exercise::policy::Policy::new(&context);
 
     let data = [NaiveDate::default(); 20];
     policy.configure(&data);
@@ -51,15 +52,17 @@ fn test_use_merge_sort_for_big_list() {
 
     assert_eq!(
         sort_strategy.type_id(),
-        TypeId::of::<MergeSort>(),
+        std::any::TypeId::of::<MergeSort>(),
         "The sort algorithm of Context was not MergeSort for a list with more than 10 dates."
     );
 }
 
+#[require_struct(context::Context)]
+#[require_struct(policy::Policy)]
 #[test]
 fn test_use_bubble_sort_for_small_list() {
-    let context = Context::new();
-    let mut policy = Policy::new(&context);
+    let context = rust_template_exercise::context::Context::new();
+    let mut policy = rust_template_exercise::policy::Policy::new(&context);
 
     let data = [NaiveDate::default(); 10];
     policy.configure(&data);
@@ -69,7 +72,7 @@ fn test_use_bubble_sort_for_small_list() {
 
     assert_eq!(
         sort_strategy.type_id(),
-        TypeId::of::<BubbleSort>(),
+        std::any::TypeId::of::<BubbleSort>(),
         "The sort algorithm of Context was not BubbleSort for a list with less or equal than 10 dates."
     );
 }
