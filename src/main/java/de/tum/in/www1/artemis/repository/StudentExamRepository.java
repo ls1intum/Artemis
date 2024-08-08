@@ -270,6 +270,8 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(@Param("examId") Long examId);
 
+    List<StudentExam> findAllByExamId(Long examId);
+
     List<StudentExam> findAllByExamId_AndTestRunIsTrue(Long examId);
 
     @Query("""

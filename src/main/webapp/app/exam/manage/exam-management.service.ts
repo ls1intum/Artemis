@@ -21,6 +21,7 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -206,6 +207,15 @@ export class ExamManagementService {
                 return res;
             }),
         );
+    }
+
+    /**
+     * Returns a summary for the exam providing information potentially relevant for the deletion.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     */
+    getDeletionSummary(courseId: number, examId: number): Observable<HttpResponse<ExamDeletionSummaryDTO>> {
+        return this.http.get<ExamDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/deletion-summary`, { observe: 'response' });
     }
 
     /**
