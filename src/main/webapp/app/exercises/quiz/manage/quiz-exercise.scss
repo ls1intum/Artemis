@@ -88,6 +88,10 @@
 
     .markupEditorArea {
         margin-bottom: 14px;
+
+        .markdown-editor {
+            border: 1px solid var(--border-color);
+        }
     }
 
     .mapping-numbers-wrapper {

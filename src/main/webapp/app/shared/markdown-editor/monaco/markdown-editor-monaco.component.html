@@ -2,14 +2,15 @@
     <div
         #wrapper
         class="markdown-editor-wrapper"
-        [style.overflow]="inPreviewMode ? 'auto' : initialEditorHeight === 'external' ? 'hidden' : 'visible'"
+        [style.overflow]="inPreviewMode ? 'auto' : 'visible'"
         [style.height.px]="inPreviewMode ? undefined : targetWrapperHeight"
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
     >
         <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
-            <!-- TODO if show edit -->
             <ng-container ngbNavItem="editor_edit">
-                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
+                @if (showEditButton) {
+                    <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
+                }
                 <ng-template ngbNavContent>
                     <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': !inPreviewMode, 'd-none': inPreviewMode }">
                         <jhi-monaco-editor
@@ -48,7 +49,9 @@
                 </ng-template>
             </ng-container>
             <ng-container ngbNavItem="editor_preview">
-                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
+                @if (showPreviewButton) {
+                    <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
+                }
                 <ng-template ngbNavContent>
                     <ng-content class="overflow-auto" select="[#previewMonaco]" />
                     <!-- TODO preview handling for other exercise types -->

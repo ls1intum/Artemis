@@ -41,6 +41,7 @@ import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/mo
 import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/shared/metis/metis.util';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
 interface MarkdownActionsByGroup {
     standard: MonacoEditorAction[];
@@ -93,6 +94,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Input()
     enableResize = true;
+
+    @Input()
+    showPreviewButton = true;
+
+    @Input()
+    showEditButton = true;
 
     @Input()
     linkEditorHeightToContentHeight = false;
@@ -428,5 +435,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     enableTextFieldMode(): void {
         this.monacoEditor.enableTextFieldMode();
+    }
+
+    /**
+     * Applies the given option preset to the Monaco editor.
+     * @param preset The preset to apply.
+     */
+    applyOptionPreset(preset: MonacoEditorOptionPreset): void {
+        this.monacoEditor.applyOptionPreset(preset);
     }
 }

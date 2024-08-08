@@ -7,7 +7,6 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SimpleChange } from '@angular/core';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
@@ -18,6 +17,9 @@ import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { firstValueFrom } from 'rxjs';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -49,7 +51,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), AceEditorModule, MockModule(DragDropModule), MockDirective(NgbCollapse)],
+            imports: [ArtemisTestModule, MockModule(FormsModule), ArtemisMarkdownEditorModule, MockModule(DragDropModule), MockDirective(NgbCollapse)],
             declarations: [
                 ShortAnswerQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -58,6 +60,9 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ],
             providers: [MockProvider(NgbModal)],
         }).compileComponents();
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
         fixture = TestBed.createComponent(ShortAnswerQuestionEditComponent);
         component = fixture.componentInstance;
     });
@@ -294,34 +299,43 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(modalSpy).toHaveBeenCalledOnce();
     });
 
-    it('should add spot to cursor', () => {
-        component.numberOfSpot = 2;
-
+    it('should add spot to cursor and increase the spot number', async () => {
         component.addSpotAtCursor();
-        expect(component.numberOfSpot).toBe(3);
-        expect(component.firstPressed).toBe(2);
+        await firstValueFrom(component.questionUpdated);
+        const text: string = component.questionEditorText;
+        const firstLine = text.split('\n')[0];
+        expect(firstLine).toInclude('[-spot 1]');
+        expect(component.numberOfSpot).toBe(2);
     });
 
-    it('should add option', () => {
+    it('should add option', async () => {
         component.addOption();
-
-        expect(component.firstPressed).toBe(2);
+        await firstValueFrom(component.questionUpdated);
+        const text: string = component.questionEditorText;
+        const lastLine = text.split('\n').last();
+        expect(lastLine).toInclude(lastLine!);
     });
 
-    it('should add and delete text solution', () => {
+    it('should add text solution', () => {
+        // Setup text
+        component.questionEditorText = '';
+        component.addOptionToSpot(1, shortAnswerSolution1.text!);
+        component.addOptionToSpot(2, shortAnswerSolution2.text!);
+
         expect(component.shortAnswerQuestion.solutions).toHaveLength(2);
         component.shortAnswerQuestion.spots = [spot1, spot2];
         const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
         component.shortAnswerQuestion.correctMappings = [mapping1, mapping2];
 
-        const solution1 = component.shortAnswerQuestion.solutions![0];
-
         component.addTextSolution();
         expect(component.shortAnswerQuestion.solutions).toHaveLength(3);
+    });
 
-        component.deleteSolution(solution1);
-        expect(component.shortAnswerQuestion.solutions).toHaveLength(2);
+    it('should delete text solution', () => {
+        component.shortAnswerQuestion.solutions = [shortAnswerSolution1, shortAnswerSolution2];
+        component.deleteSolution(shortAnswerSolution1);
+        expect(component.shortAnswerQuestion.solutions).toEqual([shortAnswerSolution2]);
     });
 
     it('should add spot at cursor visual mode', () => {
@@ -401,7 +415,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.addSpotAtCursorVisualMode();
 
         expect(component.numberOfSpot).toBe(2);
-        expect(component.firstPressed).toBe(2);
         expect(questionUpdated).toHaveBeenCalledTimes(3);
     });
 

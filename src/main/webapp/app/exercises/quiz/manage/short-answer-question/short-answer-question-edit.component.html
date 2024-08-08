@@ -278,23 +278,17 @@
         }
         <div class="markupEditorArea" [hidden]="showVisualMode">
             @if (!reEvaluationInProgress) {
-                <div class="toolbar">
-                    <div class="btn-group">
-                        <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursor()"></div>
-                        <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addOption" (click)="addOption()"></div>
-                    </div>
-                </div>
-            }
-            @if (!reEvaluationInProgress) {
                 <div class="question-content">
-                    <jhi-ace-editor
+                    <jhi-markdown-editor-monaco
                         #questionEditor
-                        [(text)]="questionEditorText"
-                        [mode]="questionEditorMode"
-                        [autoUpdateContent]="questionEditorAutoUpdate"
-                        (textChange)="onTextChange($event)"
-                        style="min-height: 200px; width: 100%; overflow: auto"
-                        class="form-control"
+                        [enableResize]="false"
+                        [enableFileUpload]="false"
+                        [showPreviewButton]="false"
+                        [defaultActions]="markdownActions"
+                        [colorAction]="undefined"
+                        [initialEditorHeight]="'external'"
+                        [(markdown)]="questionEditorText"
+                        (markdownChange)="onTextChange($event)"
                     />
                 </div>
             }
