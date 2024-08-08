@@ -892,7 +892,7 @@ public class ProgrammingExerciseTestService {
             // Setup exercises for import
             ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(JAVA);
             sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-            sourceExercise.generateAndSetBuildPlanAccessSecret();
+            sourceExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
             programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
             programmingExerciseUtilService.addHintsToExercise(sourceExercise);
             sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
@@ -918,11 +918,11 @@ public class ProgrammingExerciseTestService {
             List<String> toBeReplacedURLs = toBeReplacedCaptor.getAllValues().subList(0, 2);
             List<String> replacementURLs = replacementCaptor.getAllValues().subList(0, 2);
 
-            assertThat(sourceExercise.getBuildPlanAccessSecret()).isNotEqualTo(importedExercise.getBuildPlanAccessSecret());
-            assertThat(toBeReplacedURLs.getFirst()).contains(sourceExercise.getBuildPlanAccessSecret());
-            assertThat(toBeReplacedURLs.get(1)).contains(sourceExercise.getBuildPlanAccessSecret());
-            assertThat(replacementURLs.getFirst()).contains(importedExercise.getBuildPlanAccessSecret());
-            assertThat(replacementURLs.get(1)).contains(importedExercise.getBuildPlanAccessSecret());
+            assertThat(sourceExercise.getBuildConfig().getBuildPlanAccessSecret()).isNotEqualTo(importedExercise.getBuildConfig().getBuildPlanAccessSecret());
+            assertThat(toBeReplacedURLs.getFirst()).contains(sourceExercise.getBuildConfig().getBuildPlanAccessSecret());
+            assertThat(toBeReplacedURLs.get(1)).contains(sourceExercise.getBuildConfig().getBuildPlanAccessSecret());
+            assertThat(replacementURLs.getFirst()).contains(importedExercise.getBuildConfig().getBuildPlanAccessSecret());
+            assertThat(replacementURLs.get(1)).contains(importedExercise.getBuildConfig().getBuildPlanAccessSecret());
         }
     }
 

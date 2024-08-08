@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -129,6 +130,13 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
+        // Make sure the build config is loaded
+        if (sourceExercise.getBuildConfig() == null || !Hibernate.isInitialized(sourceExercise.getBuildConfig())) {
+            sourceExercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(sourceExercise));
+        }
+        if (targetExercise.getBuildConfig() == null || !Hibernate.isInitialized(targetExercise.getBuildConfig())) {
+            targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(targetExercise));
+        }
         return jenkinsBuildPlanService.copyBuildPlan(sourceExercise, sourcePlanName, targetExercise, targetPlanName);
     }
 

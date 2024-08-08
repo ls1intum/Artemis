@@ -682,13 +682,13 @@ public class ProgrammingExerciseUtilService {
      */
     public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
         buildPlanRepository.setBuildPlanForExercise(buildPlan, programmingExercise);
-        programmingExercise.generateAndSetBuildPlanAccessSecret();
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
 
         var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
         assertThat(buildPlanOptional).isPresent();
         assertThat(buildPlanOptional.get().getBuildPlan()).as("build plan is set").isNotNull();
-        assertThat(programmingExercise.getBuildPlanAccessSecret()).as("build plan access secret is set").isNotNull();
+        assertThat(programmingExercise.getBuildConfig().getBuildPlanAccessSecret()).as("build plan access secret is set").isNotNull();
     }
 
     /**

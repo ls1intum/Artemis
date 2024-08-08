@@ -128,6 +128,11 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private void setupGitLabCIConfiguration(VcsRepositoryUri repositoryUri, ProgrammingExercise exercise, String buildPlanId) {
         final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         ProjectApi projectApi = gitlab.getProjectApi();
+
+        if (exercise.getBuildConfig() == null || !Hibernate.isInitialized(exercise.getBuildConfig())) {
+            exercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise));
+        }
+
         try {
             Project project = projectApi.getProject(repositoryPath);
 
@@ -146,9 +151,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
         try {
             // TODO: Reduce the number of API calls
-            if (exercise.getBuildConfig() == null || !Hibernate.isInitialized(exercise.getBuildConfig())) {
-                exercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise));
-            }
             ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             updateVariable(repositoryPath, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
                     programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())));

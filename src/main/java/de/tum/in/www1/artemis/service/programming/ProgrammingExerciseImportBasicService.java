@@ -133,7 +133,6 @@ public class ProgrammingExerciseImportBasicService {
         setupTestRepository(newProgrammingExercise);
         programmingExerciseService.initParticipations(newProgrammingExercise);
 
-        setupBuildConfig(newProgrammingExercise, originalProgrammingExercise);
         newProgrammingExercise.getBuildConfig().setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
         if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
@@ -201,9 +200,10 @@ public class ProgrammingExerciseImportBasicService {
     private void prepareBasicExerciseInformation(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newProgrammingExercise);
+        setupBuildConfig(newProgrammingExercise, originalProgrammingExercise);
 
-        if (originalProgrammingExercise.hasBuildPlanAccessSecretSet()) {
-            newProgrammingExercise.generateAndSetBuildPlanAccessSecret();
+        if (originalProgrammingExercise.getBuildConfig().hasBuildPlanAccessSecretSet()) {
+            newProgrammingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
         }
     }
 
@@ -227,15 +227,7 @@ public class ProgrammingExerciseImportBasicService {
         }
         else if (originalExercise.getBuildConfig() != null) {
             var buildConfig = new ProgrammingExerciseBuildConfig();
-            buildConfig.setBranch(originalExercise.getBuildConfig().getBranch());
-            buildConfig.setBuildPlanConfiguration(originalExercise.getBuildConfig().getBuildPlanConfiguration());
-            buildConfig.setCheckoutPath(originalExercise.getBuildConfig().getCheckoutPath());
-            buildConfig.setCheckoutSolutionRepository(originalExercise.getBuildConfig().getCheckoutSolutionRepository());
-            buildConfig.setDockerFlags(originalExercise.getBuildConfig().getDockerFlags());
-            buildConfig.setSequentialTestRuns(originalExercise.getBuildConfig().hasSequentialTestRuns());
-            buildConfig.setBuildScript(originalExercise.getBuildConfig().getBuildScript());
-            buildConfig.setTestwiseCoverageEnabled(originalExercise.getBuildConfig().isTestwiseCoverageEnabled());
-            buildConfig.setTimeoutSeconds(originalExercise.getBuildConfig().getTimeoutSeconds());
+            buildConfig.copyBuildConfig(originalExercise.getBuildConfig());
             newExercise.setBuildConfig(buildConfig);
         }
         else {

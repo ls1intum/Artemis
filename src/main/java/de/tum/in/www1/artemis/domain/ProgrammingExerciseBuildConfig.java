@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Size;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +72,11 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     @Column(name = "branch_regex")
     private String branchRegex;
+
+    @Size(max = 36)
+    @Nullable
+    @Column(name = "build_plan_access_secret", length = 36)
+    private String buildPlanAccessSecret;
 
     @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
@@ -225,6 +232,34 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public void setProgrammingExercise(ProgrammingExercise programmingExercise) {
         this.programmingExercise = programmingExercise;
+    }
+
+    public boolean hasBuildPlanAccessSecretSet() {
+        return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
+    }
+
+    @Nullable
+    public String getBuildPlanAccessSecret() {
+        return buildPlanAccessSecret;
+    }
+
+    public void generateAndSetBuildPlanAccessSecret() {
+        buildPlanAccessSecret = UUID.randomUUID().toString();
+    }
+
+    public void copyBuildConfig(ProgrammingExerciseBuildConfig originalBuildConfig) {
+        this.setBranch(originalBuildConfig.getBranch());
+        this.setBuildPlanConfiguration(originalBuildConfig.getBuildPlanConfiguration());
+        this.setCheckoutPath(originalBuildConfig.getCheckoutPath());
+        this.setCheckoutSolutionRepository(originalBuildConfig.getCheckoutSolutionRepository());
+        this.setDockerFlags(originalBuildConfig.getDockerFlags());
+        this.setSequentialTestRuns(originalBuildConfig.hasSequentialTestRuns());
+        this.setBuildScript(originalBuildConfig.getBuildScript());
+        this.setTestwiseCoverageEnabled(originalBuildConfig.isTestwiseCoverageEnabled());
+        this.setTimeoutSeconds(originalBuildConfig.getTimeoutSeconds());
+        this.setTheiaImage(originalBuildConfig.getTheiaImage());
+        this.setAllowBranching(originalBuildConfig.isAllowBranching());
+        this.setBranchRegex(originalBuildConfig.getBranchRegex());
     }
 
     @Override

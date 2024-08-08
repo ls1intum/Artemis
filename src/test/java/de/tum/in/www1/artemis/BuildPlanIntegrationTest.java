@@ -69,7 +69,7 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     private void testReadAccess() throws Exception {
-        programmingExercise.generateAndSetBuildPlanAccessSecret();
+        programmingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
@@ -90,8 +90,8 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @Test
     void testPublicReadAccessWithSecret() throws Exception {
         final String buildPlan = request.get(
-                "/api/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.OK,
-                String.class);
+                "/api/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildConfig().getBuildPlanAccessSecret(),
+                HttpStatus.OK, String.class);
         assertThat(buildPlan).isNotEmpty();
     }
 

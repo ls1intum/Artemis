@@ -240,9 +240,9 @@ public class JenkinsBuildPlanService {
      */
     private void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, Document jobConfig) {
         final Long previousExerciseId = templateExercise.getId();
-        final String previousBuildPlanAccessSecret = templateExercise.getBuildPlanAccessSecret();
+        final String previousBuildPlanAccessSecret = templateExercise.getBuildConfig().getBuildPlanAccessSecret();
         final Long newExerciseId = newExercise.getId();
-        final String newBuildPlanAccessSecret = newExercise.getBuildPlanAccessSecret();
+        final String newBuildPlanAccessSecret = newExercise.getBuildConfig().getBuildPlanAccessSecret();
 
         String toBeReplaced = String.format("/%d/build-plan?secret=%s", previousExerciseId, previousBuildPlanAccessSecret);
         String replacement = String.format("/%d/build-plan?secret=%s", newExerciseId, newBuildPlanAccessSecret);

@@ -48,7 +48,7 @@ class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCI
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(exercise, BUILD_PLAN);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("secret", exercise.getBuildPlanAccessSecret());
+        params.add("secret", exercise.getBuildConfig().getBuildPlanAccessSecret());
 
         String actualBuildPlan = request.get("/api/public/programming-exercises/" + exercise.getId() + "/build-plan", HttpStatus.OK, String.class, params);
 

@@ -948,8 +948,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     default void generateBuildPlanAccessSecretIfNotExists(ProgrammingExercise exercise) {
-        if (!exercise.hasBuildPlanAccessSecretSet()) {
-            exercise.generateAndSetBuildPlanAccessSecret();
+        if (!exercise.getBuildConfig().hasBuildPlanAccessSecretSet()) {
+            exercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
             save(exercise);
         }
     }
