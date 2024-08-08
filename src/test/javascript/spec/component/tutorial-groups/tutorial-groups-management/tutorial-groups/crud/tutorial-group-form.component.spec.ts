@@ -181,7 +181,7 @@ describe('TutorialGroupFormComponent', () => {
 
             const groupFormControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
             for (const controlName of groupFormControlNames) {
-                expect(component.form.get(controlName)!.value).toEqual(formData[controlName]);
+                expect(component.form.get(controlName)?.value).toEqual(formData[controlName]);
             }
             expect(component.additionalInformation).toEqual(formData.additionalInformation);
 
