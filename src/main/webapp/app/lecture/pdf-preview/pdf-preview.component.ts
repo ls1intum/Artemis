@@ -28,7 +28,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         private attachmentUnitService: AttachmentUnitService,
         private alertService: AlertService,
     ) {
-        PDFJS.GlobalWorkerOptions.workerSrc = './pdfjs/pdf.worker.min.mjs';
+        PDFJS.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.mjs', import.meta.url).toString();
     }
 
     ngOnInit() {
