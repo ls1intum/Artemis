@@ -10,7 +10,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { Router } from '@angular/router';
-import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
+import { faPenAlt, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { sortCourses } from 'app/shared/util/course.util';
@@ -31,9 +31,12 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
     courseForGuidedTour?: Course;
     quizExercisesChannels: string[] = [];
+    searchCourseText = '';
+    searchText = '';
 
     // Icons
     faPenAlt = faPenAlt;
+    faSearch = faSearch;
 
     coursesLoaded = false;
 
@@ -124,5 +127,13 @@ export class CoursesComponent implements OnInit, OnDestroy {
      */
     openExam(): void {
         this.router.navigate(['courses', this.nextRelevantCourseForExam?.id, 'exams', this.nextRelevantExam!.id]);
+    }
+
+    onSearch(): void {
+        this.searchCourseText = this.searchText;
+    }
+
+    setSearchValue(searchValue: string): void {
+        this.searchCourseText = searchValue;
     }
 }
