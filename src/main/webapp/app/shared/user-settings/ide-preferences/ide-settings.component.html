@@ -3,11 +3,11 @@
     {{ 'artemisApp.userSettings.idePreferences' | artemisTranslate }}
 </h1>
 <div class="list-group d-block">
-    <div class="list-group-item">
+    <div class="list-group-item pb-3">
         <dt>
             <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.description"> </span>
         </dt>
-        <dt>
+        <dt class="py-2">
             {{ 'artemisApp.userSettings.idePreferencesPage.default' | artemisTranslate }}
         </dt>
         <div class="btn-group">
@@ -27,14 +27,14 @@
     </div>
     <!-- Display each customized Programming Language -->
     @for (programmingLanguage of getCustomizedProgrammingLanguages(); track programmingLanguage) {
-        <div class="list-group-item">
-            <div class="item-container d-flex flex-row gap-3">
+        <div class="list-group-item pb-3">
+            <div class="item-container d-flex flex-row justify-content-between align-items-center pb-2">
                 <dt>
                     {{ programmingLanguage }}
                 </dt>
-                <div class="re-evaluate-button delete-button" id="delete-button" (click)="removeProgrammingLanguage(programmingLanguage)">
-                    <fa-icon [icon]="faTrash" size="1x"></fa-icon>
-                </div>
+                <button class="btn btn-sm btn-outline-danger" (click)="removeProgrammingLanguage(programmingLanguage)">
+                    <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
             </div>
             <div class="btn-group">
                 @for (ide of PREDEFINED_IDE; track ide) {
