@@ -12,7 +12,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
-import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
+import { IdeSettingsService, PREDEFINED_IDE } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 
 @Component({
     selector: 'jhi-code-button',
@@ -208,12 +208,12 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     buildIDEUrl(): string | undefined {
         return this.externalCloningService.buildIDEUrl(
             this.getHttpOrSshRepositoryUri(false),
-            this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY)!,
+            this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ?? PREDEFINED_IDE[0],
         );
     }
 
     getIDEName(): string {
-        return 'Open in ' + (this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY)?.name ?? 'IDE');
+        return `Open in ${this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY)?.name ?? 'IDE'}`;
     }
 
     switchPracticeMode() {

@@ -20,7 +20,7 @@ export class IdeSettingsService {
      */
     public loadIdePreferences(): void {
         this.http.get<IdeMappingDTO[]>(this.ideSettingsUrl, { observe: 'response' }).subscribe((res) => {
-            this.programmingLanguageToIde = new Map(res.body!.map((x) => [x.programmingLanguage, x.ide]));
+            this.programmingLanguageToIde = new Map(res.body?.map((x) => [x.programmingLanguage, x.ide]));
             if (this.programmingLanguageToIde.size === 0) {
                 this.programmingLanguageToIde = new Map([[ProgrammingLanguage.EMPTY, PREDEFINED_IDE[0]]]);
             }
@@ -34,7 +34,7 @@ export class IdeSettingsService {
     public saveIdePreference(programmingLanguage: ProgrammingLanguage, ide: Ide): void {
         const params = new HttpParams().set('programmingLanguage', programmingLanguage);
         this.http.put<IdeMappingDTO>(this.ideSettingsUrl, ide, { params, observe: 'response' }).subscribe((res) => {
-            this.programmingLanguageToIde.set(res.body!.programmingLanguage, res.body!.ide);
+            if (res.body) this.programmingLanguageToIde.set(res.body.programmingLanguage, res.body.ide);
         });
     }
 

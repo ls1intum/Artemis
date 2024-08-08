@@ -47,9 +47,9 @@ public class IdeSettingsResource {
     }
 
     /**
-     * GET users/ides: get the predefined IDEs
+     * GET ide-settings: get the predefined IDEs
      *
-     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     * @return the ide preferences of the user as IdeMappingDTO
      */
     @GetMapping("ide-settings")
     @EnforceAtLeastStudent
@@ -65,15 +65,23 @@ public class IdeSettingsResource {
     }
 
     /**
-     * PUT users/ides: set the IDE for a programming Language of the user
+     * PUT ide-settings: set the IDE for a programming Language of the user
      *
-     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     * @return returns the changed ide preferences of the user as IdeMappingDTO
      */
     @PutMapping("ide-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<?> setIde(@RequestParam ProgrammingLanguage programmingLanguage, @RequestBody IdeDTO ide) {
         User user = userRepository.getUser();
         log.debug("REST request to set IDE of user {}", user.getLogin());
+        if (ide == null || ide.deepLink() == null || ide.name() == null) {
+            log.error("Invalid request body for IDE setting of user {}", user.getLogin());
+            return ResponseEntity.badRequest().build();
+        }
+        if (!ide.deepLink().contains("://") || !ide.deepLink().contains("{cloneUrl}")) {
+            log.error("Invalid deep link for IDE {} of user {}", ide.deepLink(), user.getLogin());
+            return ResponseEntity.badRequest().build();
+        }
 
         // find or create the ide
         var savedIde = ideRepository.findByDeepLink(ide.deepLink()).orElse(null);
@@ -91,9 +99,9 @@ public class IdeSettingsResource {
     }
 
     /**
-     * DELETE users/ides: delete a programming language from a users ide preferences
+     * DELETE ide-settings: delete a programming language from a users ide preferences
      *
-     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request)
      */
     @DeleteMapping("ide-settings")
     @EnforceAtLeastStudent

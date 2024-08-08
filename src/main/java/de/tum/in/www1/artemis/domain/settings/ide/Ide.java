@@ -13,7 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 @Entity
-@Table(name = "ide")
+@Table(name = "ides")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class Ide extends DomainObject {
 

@@ -20,6 +20,11 @@ export class ExternalCloningService {
     // TODO shift exercise Programming Language Logic here
     buildIDEUrl(cloneUrl: string | undefined, ide: Ide): string | undefined {
         if (!cloneUrl) {
+            console.log('cloneUrl is undefined');
+            return undefined;
+        }
+        if (!ide.deepLink.includes('{cloneUrl}')) {
+            console.log('ide deepLink does not contain {cloneUrl}');
             return undefined;
         }
 
