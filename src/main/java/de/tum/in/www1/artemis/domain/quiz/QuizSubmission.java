@@ -35,4 +35,15 @@ public class QuizSubmission extends AbstractQuizSubmission {
     public String toString() {
         return "QuizSubmission{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + "'" + "}";
     }
+
+    /**
+     * Remove details that should not be sent to the client from the quiz questions.
+     */
+    public void filterForStudentsDuringQuiz() {
+        for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
+            if (submittedAnswer.getQuizQuestion() != null) {
+                submittedAnswer.getQuizQuestion().filterForStudentsDuringQuiz();
+            }
+        }
+    }
 }

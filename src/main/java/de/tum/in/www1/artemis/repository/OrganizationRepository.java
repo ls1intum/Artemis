@@ -137,6 +137,6 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
      */
     @NotNull
     default Organization findByIdWithEagerUsersAndCoursesElseThrow(long organizationId) throws EntityNotFoundException {
-        return findByIdWithEagerUsersAndCourses(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization", organizationId));
+        return getValueElseThrow(findByIdWithEagerUsersAndCourses(organizationId), organizationId);
     }
 }
