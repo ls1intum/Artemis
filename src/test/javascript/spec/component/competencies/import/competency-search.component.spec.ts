@@ -83,7 +83,7 @@ describe('CompetencySearchComponent', () => {
         expect(component.advancedSearchEnabled).toBeFalse();
     });
 
-    function initializeSearch() {
+    function initializeSearch(): void {
         for (const key in component.search) {
             component.search[key as keyof CourseCompetencyFilter] = 'any value';
         }
