@@ -3,12 +3,12 @@ import { MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { programmingExerciseCreationConfigMock } from '../programming-exercise-creation-config-mock';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
+import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 
 describe('ProgrammingExerciseTheiaComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseTheiaComponent>;
@@ -21,17 +21,8 @@ describe('ProgrammingExerciseTheiaComponent', () => {
             getTheiaImages: jest.fn(),
         };
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [
-                ProgrammingExerciseTheiaComponent,
-                CheckboxControlValueAccessor,
-                DefaultValueAccessor,
-                SelectControlValueAccessor,
-                NumberValueAccessor,
-                NgModel,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(RemoveKeysPipe),
-            ],
+            imports: [ProgrammingExerciseTheiaComponent, ArtemisSharedLibsModule],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockPipe(RemoveKeysPipe)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -43,15 +34,13 @@ describe('ProgrammingExerciseTheiaComponent', () => {
                 },
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseTheiaComponent);
-                comp = fixture.componentInstance;
-                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-                comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
-                comp.programmingExercise.allowOnlineIde = true;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ProgrammingExerciseTheiaComponent);
+        comp = fixture.componentInstance;
+        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        comp.programmingExercise.allowOnlineIde = true;
     });
 
     afterEach(() => {

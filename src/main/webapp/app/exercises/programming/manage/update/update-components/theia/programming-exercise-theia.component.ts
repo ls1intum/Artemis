@@ -2,12 +2,14 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
+import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 
 @Component({
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
     standalone: true,
+    imports: [ArtemisSharedLibsModule],
 })
 export class ProgrammingExerciseTheiaComponent implements OnChanges {
     @Input() programmingExercise: ProgrammingExercise;

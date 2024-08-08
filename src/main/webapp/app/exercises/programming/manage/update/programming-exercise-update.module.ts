@@ -60,6 +60,7 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
         ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         MonacoEditorModule,
+        ProgrammingExerciseTheiaComponent,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,
@@ -73,7 +74,6 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
         ProgrammingExerciseProblemComponent,
         AddAuxiliaryRepositoryButtonComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
-        ProgrammingExerciseTheiaComponent,
     ],
     exports: [ProgrammingExerciseUpdateComponent],
 })
