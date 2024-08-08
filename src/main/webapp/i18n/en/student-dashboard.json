@@ -12,6 +12,9 @@
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
+            "cardNextUnit": "Next Unit",
+            "cardScore": "Score",
+            "cardManageCourse": "Manage Course",
             "enroll": {
                 "title": "Course Enrollment",
                 "enrollSuccessful": "Enrollment successful",

@@ -12,6 +12,9 @@
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
+            "cardNextUnit": "Nächste Einheit",
+            "cardScore": "Punktzahl",
+            "cardManageCourse": "Kurs Verwalten",
             "enroll": {
                 "title": "Kurseinschreibung",
                 "enrollSuccessful": "Einschreibung erfolgreich",

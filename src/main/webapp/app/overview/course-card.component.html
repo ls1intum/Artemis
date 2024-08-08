@@ -22,28 +22,28 @@
         @if (nextRelevantExercise) {
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="fw-bold text-secondary">Next Unit</div>
+                    <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardNextUnit"></div>
                     <a class="fw-bold btn-exercise" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]">
                         {{ nextRelevantExercise.title }}
                     </a>
                 </div>
                 <div class="icon-wrapper d-flex justify-content-center">
-                    <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
+                    <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" [size]="iconSize" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
                 </div>
             </div>
         } @else {
             <div>
-                <div class="fw-bold text-secondary">Next Unit</div>
+                <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardNextUnit"></div>
                 <div class="fw-bold">
                     <span jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></span>
                 </div>
             </div>
         }
-        <hr />
+        <hr class="mb-0 mt-4" />
         @if (exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0)) {
             <div class="d-flex justify-content-between">
                 <div class="align-self-center">
-                    <div class="fw-bold text-secondary">Score</div>
+                    <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
                     <div class="fw-bold">
                         <div>{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points ({{ totalRelativeScore }}%)</div>
                     </div>
@@ -52,9 +52,9 @@
                     <ngx-charts-pie-chart
                         id="score-chart"
                         class="chart-level"
-                        [view]="[65, 65]"
+                        [view]="[90, 90]"
                         [results]="ngxDoughnutData"
-                        [arcWidth]="0.4"
+                        [arcWidth]="0.3"
                         [scheme]="ngxColor"
                         [doughnut]="true"
                         [animations]="true"
@@ -69,16 +69,18 @@
                 </div>
             </div>
         } @else {
-            <div class="no-score">
-                <div class="fw-bold text-secondary">Score</div>
+            <div class="my-4">
+                <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
                 <div class="fw-bold">
                     <span jhiTranslate="artemisApp.studentDashboard.noStatistics"></span>
                 </div>
             </div>
         }
-        <hr />
-        <div *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']" class="d-flex justify-content-start">
-            <a class="btn btn-outline-primary btn-management" [routerLink]="['/course-management', course.id!]">Manage Course</a>
-        </div>
+        @if (course.isAtLeastTutor || course.isAtLeastEditor || course.isAtLeastInstructor) {
+            <hr class="mt-0 mb-4" />
+            <div class="d-flex justify-content-start">
+                <a class="btn btn-outline-primary btn-management" [routerLink]="['/course-management', course.id!]" jhiTranslate="artemisApp.studentDashboard.cardManageCourse"></a>
+            </div>
+        }
     </div>
 </div>

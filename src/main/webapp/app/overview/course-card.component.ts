@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { IconProp, SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/entities/course.model';
@@ -40,6 +40,7 @@ export class CourseCardComponent implements OnChanges {
     totalAbsoluteScore: number;
 
     courseColor: string;
+    readonly iconSize: SizeProp = 'lg';
 
     // ngx
     ngxDoughnutData: any[] = [
