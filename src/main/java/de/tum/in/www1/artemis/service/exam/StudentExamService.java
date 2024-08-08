@@ -797,7 +797,7 @@ public class StudentExamService {
     }
 
     /**
-     * Generates an individual StudentExam
+     * Generates a new individual StudentExam for the student and stores it in the database
      *
      * @param exam    with eagerly loaded users, exerciseGroups and exercises loaded
      * @param student the student for which the StudentExam should be created
@@ -817,7 +817,6 @@ public class StudentExamService {
 
         return studentExam;
     }
-
 
     /**
      * Generates the student exams randomly based on the exam configuration and the exercise groups

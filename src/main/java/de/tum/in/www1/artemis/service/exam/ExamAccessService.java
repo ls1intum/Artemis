@@ -1,9 +1,13 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -20,7 +24,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 /**
  * Service implementation to check exam access.
@@ -46,7 +49,7 @@ public class ExamAccessService {
     private final StudentExamService studentExamService;
 
     public ExamAccessService(ExamRepository examRepository, StudentExamRepository studentExamRepository, AuthorizationCheckService authorizationCheckService,
-                             UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService) {
+            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -79,7 +82,8 @@ public class ExamAccessService {
         // If an studentExam can be fund, we can proceed
         if (optionalStudentExam.isPresent()) {
             studentExam = optionalStudentExam.get();
-        } else {
+        }
+        else {
             Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
             // Generate a student exam if exam is a test exam or of student is registered for a normal exam
             if (examWithExerciseGroupsAndExercises.isTestExam() || examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId())) {
@@ -87,10 +91,11 @@ public class ExamAccessService {
                 // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
                 studentExam.setExercises(null);
 
-            } else {
+            }
+            else {
                 // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
                 throw new BadRequestAlertException("Cannot generate student exam. Student is not registered for the exam", ENTITY_NAME,
-                    "StudentExamGenerationOnlyForRegisteredStudents", true);
+                        "StudentExamGenerationOnlyForRegisteredStudents", true);
             }
         }
 
@@ -213,7 +218,8 @@ public class ExamAccessService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
         if (authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
             checkExamBelongsToCourseElseThrow(courseId, examId);
-        } else if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(courseId, examId, currentUser.getId())) {
+        }
+        else if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(courseId, examId, currentUser.getId())) {
             throw new AccessForbiddenException("You are not allowed to access this exam!");
         }
     }
@@ -242,7 +248,8 @@ public class ExamAccessService {
         Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {
             throw new EntityNotFoundException(ENTITY_NAME, examId);
-        } else {
+        }
+        else {
             checkExamBelongsToCourseElseThrow(courseId, exam.get());
         }
     }
