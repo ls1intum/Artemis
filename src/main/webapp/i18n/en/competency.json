@@ -93,7 +93,7 @@
                 "saveModalTitle": "Confirm Save",
                 "saveModalText": "You have not viewed all recommendations, do you still want to continue?",
                 "errorWarning": "You may not save because some competencies are invalid",
-                "loading": "Generating competency recommendations... This might take a while.",
+                "loading": "Generating competency recommendations...",
                 "courseDescription": {
                     "title": "Enter a Course Description",
                     "placeholder": "Please enter a course description",

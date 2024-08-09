@@ -81,6 +81,8 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      * @param courseDescription
      */
     getCompetencyRecommendations(courseDescription: string) {
+        // Reset form and start loading
+        this.form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
         this.isLoading = true;
         const websocketTopic = '/user/topic/iris/competencies/' + this.courseId;
         this.competencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription).subscribe({
@@ -88,9 +90,8 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
                 this.jhiWebsocketService.subscribe(websocketTopic);
                 this.jhiWebsocketService.receive(websocketTopic).subscribe({
                     next: (update: CompetencyGenerationStatusUpdate) => {
-                        if (update.result.length > 0) {
-                            // Receive all the competencies, but we only use the last one
-                            this.addCompetencyToForm(update.result[update.result.length - 1]);
+                        for (let i = 0; i < update.result.length - 1; i++) {
+                            this.addCompetencyToForm(update.result[i]);
                         }
                         if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
                             this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });

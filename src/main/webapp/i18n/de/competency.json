@@ -93,7 +93,7 @@
                 "saveModalTitle": "Speichern bestätigen",
                 "saveModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
                 "errorWarning": "Speichern nicht möglich, weil fehlerhafte Kompetenzen vorliegen",
-                "loading": "Generiere Kompetenzvorschläge... Das kann eine Weile dauern.",
+                "loading": "Generiere Kompetenzvorschläge...",
                 "courseDescription": {
                     "title": "Kursbeschreibung eingeben",
                     "placeholder": "Bitte gib eine Kursbeschreibung ein",
