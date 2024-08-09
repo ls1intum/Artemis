@@ -170,7 +170,7 @@ export class CompetencyService {
 
     // triggers the generation of competencies from the given course description
     // the generated competencies are returned asynchronously over the websocket on the topic /topic/iris/competencies/{courseId}
-    generateCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<HttpResponse<void>> {
+    generateCompetenciesFromCourseDescription(courseId: number, courseDescription: string): Observable<HttpResponse<void>> {
         return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
     }
 

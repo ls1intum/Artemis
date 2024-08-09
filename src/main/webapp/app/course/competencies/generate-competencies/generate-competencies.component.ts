@@ -28,7 +28,7 @@ export type CompetencyFormControls = {
     taxonomy: FormControl<CompetencyTaxonomy | undefined>;
 };
 
-type GeneratedCompetency = {
+type CompetencyRecommendation = {
     title: string;
     description: string;
     taxonomy: CompetencyTaxonomy;
@@ -36,7 +36,7 @@ type GeneratedCompetency = {
 
 type CompetencyGenerationStatusUpdate = {
     stages: IrisStageDTO[];
-    result: GeneratedCompetency[];
+    result: CompetencyRecommendation[];
 };
 
 @Component({
@@ -83,7 +83,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
         const websocketTopic = '/topic/iris/competencies/' + this.courseId;
-        this.competencyService.generateCompetenciesFromCourseDescription(courseDescription, this.courseId).subscribe({
+        this.competencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription).subscribe({
             next: () => {
                 this.jhiWebsocketService.subscribe(websocketTopic);
                 this.jhiWebsocketService.receive(websocketTopic).subscribe({
@@ -121,7 +121,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      * @param competency
      * @private
      */
-    private addCompetencyToForm(competency: GeneratedCompetency) {
+    private addCompetencyToForm(competency: CompetencyRecommendation) {
         // @ts-ignore
         const formGroup: FormGroup<CompetencyFormControlsWithViewed> = this.formBuilder.nonNullable.group({
             competency: this.formBuilder.nonNullable.group({

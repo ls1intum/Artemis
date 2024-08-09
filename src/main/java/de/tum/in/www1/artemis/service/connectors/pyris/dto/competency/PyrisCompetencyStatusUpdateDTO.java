@@ -11,5 +11,5 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
  * @param stages List of stages of the generation process
  * @param result List of competencies that have been generated so far
  */
-public record PyrisCompetencyStatusUpdateDTO(List<PyrisStageDTO> stages, List<PyrisGeneratedCompetencyDTO> result) {
+public record PyrisCompetencyStatusUpdateDTO(List<PyrisStageDTO> stages, List<PyrisCompetencyRecommendationDTO> result) {
 }
