@@ -83,6 +83,7 @@ export class ProfileService {
                         profileInfo.git = data.git;
 
                         profileInfo.theiaPortalURL = data.theiaPortalURL ?? '';
+                        profileInfo.allowedSelfLearningFeedbackAttempts = data.allowedSelfLearningFeedbackAttempts ?? 0;
 
                         return profileInfo;
                     }),

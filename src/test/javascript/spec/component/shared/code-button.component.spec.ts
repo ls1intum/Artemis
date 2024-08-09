@@ -77,6 +77,7 @@ describe('CodeButtonComponent', () => {
             },
         },
         theiaPortalURL: 'https://theia-test.k8s.ase.cit.tum.de',
+        allowedSelfLearningFeedbackAttempts: 3,
     };
 
     let participation: ProgrammingExerciseStudentParticipation = {};

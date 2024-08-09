@@ -338,6 +338,7 @@ public class ExerciseResource {
             quizExercise.setQuizBatches(null);
             quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
         }
+
         // TODO: we should also check that the submissions do not contain sensitive data
 
         // remove sensitive information for students
