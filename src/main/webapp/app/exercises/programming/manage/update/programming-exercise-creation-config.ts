@@ -44,6 +44,7 @@ export type ProgrammingExerciseCreationConfig = {
     hasUnsavedChanges: boolean;
     rerenderSubject: Observable<void>;
     validIdeSelection: () => boolean | undefined;
+    validOnlineIdeSelection: () => boolean | undefined;
     inProductionEnvironment: boolean;
     recreateBuildPlans: boolean;
     onRecreateBuildPlanOrUpdateTemplateChange: () => void;

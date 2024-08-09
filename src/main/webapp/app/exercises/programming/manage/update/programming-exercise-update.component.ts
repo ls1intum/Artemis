@@ -498,13 +498,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
-                valid: this.exerciseLanguageComponent?.formValid ?? false,
+                valid: (this.exerciseLanguageComponent?.formValid && this.validOnlineIdeSelection()) ?? false,
             },
-            {
-                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
-                valid: true,
-                empty: !this.programmingExercise.problemStatement,
-            },
+            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle', valid: true, empty: !this.programmingExercise.problemStatement },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(this.exerciseGradingComponent?.formValid && (this.isExamMode || this.exercisePlagiarismComponent?.formValid)),
@@ -674,8 +670,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe({
-            next: (response: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(response.body!),
-            error: (error: HttpErrorResponse) => this.onSaveError(error),
+            next: (response: HttpResponse<ProgrammingExercise>) => {
+                this.onSaveSuccess(response.body!);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.onSaveError(error);
+            },
         });
     }
 
@@ -819,10 +819,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * checking if at least one of Online Editor or Offline Ide is selected
+     * checking if at least one of Online Editor, Offline Ide, or Online Ide is selected
      */
     validIdeSelection = () => {
-        return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde;
+        return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde || this.programmingExercise?.allowOnlineIde;
+    };
+
+    /**
+     * Checking if the online IDE is selected and a valid image is selected
+     */
+    validOnlineIdeSelection = () => {
+        return !this.programmingExercise?.allowOnlineIde || this.programmingExercise?.theiaImage !== undefined;
     };
 
     isEventInsideTextArea(event: Event): boolean {
@@ -844,6 +851,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExerciseAuxiliaryRepositories(validationErrorReasons);
         this.validateExercisePackageName(validationErrorReasons);
         this.validateExerciseIdeSelection(validationErrorReasons);
+        this.validateExerciseOnlineIdeSelection(validationErrorReasons);
         this.validateExercisePoints(validationErrorReasons);
         this.validateExerciseBonusPoints(validationErrorReasons);
         this.validateExerciseSCAMaxPenalty(validationErrorReasons);
@@ -1049,6 +1057,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
+    private validateExerciseOnlineIdeSelection(validationErrorReasons: ValidationReason[]): void {
+        if (!this.validOnlineIdeSelection()) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.theiaImage.alert',
+                translateValues: {},
+            });
+        }
+    }
+
     private createProgrammingExerciseForImportFromFile() {
         this.programmingExercise = cloneDeep(history.state.programmingExerciseForImportFromFile);
         this.programmingExercise.id = undefined;
@@ -1108,6 +1125,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             hasUnsavedChanges: this.hasUnsavedChanges,
             rerenderSubject: this.rerenderSubject.asObservable(),
             validIdeSelection: this.validIdeSelection,
+            validOnlineIdeSelection: this.validOnlineIdeSelection,
             inProductionEnvironment: this.inProductionEnvironment,
             recreateBuildPlans: this.importOptions.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,

@@ -607,17 +607,49 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     it.each([
         [
-            'start theia button should be visible when profile is active and url is set',
+            'start theia button should be visible when profile is active and theia is configured',
             {
                 activeProfiles: [PROFILE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
+            {
+                allowOnlineIde: true,
+                theiaImage: 'this-is-a-theia-image',
+            },
             true,
+        ],
+        [
+            'start theia button should not be visible when profile is active but theia is ill-configured',
+            {
+                activeProfiles: [PROFILE_THEIA],
+                theiaPortalURL: 'https://theia.test',
+            },
+            {
+                allowOnlineIde: true,
+                theiaImage: undefined,
+            },
+            false,
+        ],
+        [
+            'start theia button should not be visible when profile is active but onlineIde is not activated',
+            {
+                activeProfiles: [PROFILE_THEIA],
+                theiaPortalURL: 'https://theia.test',
+            },
+            {
+                allowOnlineIde: false,
+                theiaImage: 'this-is-an-old-image',
+            },
+            false,
         ],
         [
             'start theia button should not be visible when profile is active but url is not set',
             {
                 activeProfiles: [PROFILE_THEIA],
+            },
+            {
+                allowOnlineIde: true,
+                theiaImage: 'this-is-a-theia-image',
             },
             false,
         ],
@@ -626,12 +658,18 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             {
                 theiaPortalURL: 'https://theia.test',
             },
+            {
+                allowOnlineIde: true,
+                theiaImage: 'this-is-a-theia-image',
+            },
             false,
         ],
-    ])('%s', (description, profileInfo, expectedVisibility) => {
+    ])('%s', (description, profileInfo, programmingExercise, expectedVisibility) => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
-        comp.exercise = exercise;
+
+        // Expand the programmingExercise by given properties
+        comp.exercise = { ...exercise, ...programmingExercise } as ProgrammingExercise;
 
         fixture.detectChanges();
 

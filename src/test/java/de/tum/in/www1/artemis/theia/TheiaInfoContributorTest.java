@@ -23,14 +23,9 @@ class TheiaInfoContributorTest {
     void testContribute() {
         Info.Builder builder = new Info.Builder();
         theiaInfoContributor = new TheiaInfoContributor();
-        try {
-            theiaInfoContributor.contribute(builder);
-        }
-        catch (NullPointerException e) {
-        }
+        theiaInfoContributor.contribute(builder);
 
         Info info = builder.build();
         assertThat(info.getDetails().get(Constants.THEIA_PORTAL_URL)).isEqualTo(expectedValue);
-
     }
 }

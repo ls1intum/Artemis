@@ -94,6 +94,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
 
+    @Column(name = "allow_online_ide", table = "programming_exercise_details", nullable = false)
+    private boolean allowOnlineIde = false;
+
     @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
     private Boolean staticCodeAnalysisEnabled;
 
@@ -106,6 +109,10 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "package_name")
     private String packageName;
+
+    @Nullable
+    @Column(name = "theia_image", table = "programming_exercise_details")
+    private String theiaImage;
 
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
@@ -296,6 +303,23 @@ public class ProgrammingExercise extends Exercise {
 
     public void setAllowOfflineIde(Boolean allowOfflineIde) {
         this.allowOfflineIde = allowOfflineIde;
+    }
+
+    public boolean isAllowOnlineIde() {
+        return allowOnlineIde;
+    }
+
+    public void setAllowOnlineIde(boolean allowOnlineIde) {
+        this.allowOnlineIde = allowOnlineIde;
+    }
+
+    @Nullable
+    public String getTheiaImage() {
+        return theiaImage;
+    }
+
+    public void setTheiaImage(@Nullable String theiaImage) {
+        this.theiaImage = theiaImage;
     }
 
     public Boolean isStaticCodeAnalysisEnabled() {
@@ -761,8 +785,8 @@ public class ProgrammingExercise extends Exercise {
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", allowOnlineEditor='"
-                + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='"
-                + testCasesChanged + "'" + "}";
+                + isAllowOnlineEditor() + "'" + ", allowOnlineIde='" + isAllowOnlineIde() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='"
+                + getPackageName() + "'" + ", theiaImage='" + getTheiaImage() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     public boolean getCheckoutSolutionRepository() {
@@ -780,8 +804,9 @@ public class ProgrammingExercise extends Exercise {
     public void validateProgrammingSettings() {
 
         // Check if a participation mode was selected
-        if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde())) {
-            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
+        if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !isAllowOnlineIde()) {
+            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", "Exercise",
+                    "noParticipationModeAllowed");
         }
 
         // Check if Xcode has no online code editor enabled
@@ -792,6 +817,11 @@ public class ProgrammingExercise extends Exercise {
         // Check if programming language is set
         if (getProgrammingLanguage() == null) {
             throw new BadRequestAlertException("No programming language was specified", "Exercise", "programmingLanguageNotSet");
+        }
+
+        // Check if theia image was selected if the online IDE is enabled
+        if (isAllowOnlineIde() && getTheiaImage() == null) {
+            throw new BadRequestAlertException("The Theia image must be selected if the online IDE is enabled", "Exercise", "theiaImageNotSet");
         }
     }
 

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_THEIA;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Set;
@@ -34,7 +35,7 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleSer
  */
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_SCHEDULING, "athena", "apollon", "lti", "aeolus", PROFILE_CORE })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_SCHEDULING, "athena", "apollon", "lti", "aeolus", PROFILE_THEIA, PROFILE_CORE })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 

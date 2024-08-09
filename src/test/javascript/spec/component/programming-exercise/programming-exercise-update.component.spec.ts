@@ -795,8 +795,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         it('find validation errors for invalid ide selection', () => {
             comp.programmingExercise.allowOnlineEditor = false;
             comp.programmingExercise.allowOfflineIde = false;
+            comp.programmingExercise.allowOnlineIde = false;
             expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for invalid online IDE image', () => {
+            comp.programmingExercise.allowOnlineIde = true;
+            comp.programmingExercise.theiaImage = undefined;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.theiaImage.alert',
                 translateValues: {},
             });
         });
@@ -832,6 +842,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.maxStaticCodeAnalysisPenalty = 60;
             comp.programmingExercise.allowOfflineIde = true;
             comp.programmingExercise.allowOnlineEditor = false;
+            comp.programmingExercise.allowOnlineIde = false;
             comp.programmingExercise.packageName = 'de.tum.in';
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
 
@@ -1017,6 +1028,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         comp.programmingExercise.allowOfflineIde = false;
         comp.programmingExercise.allowOnlineEditor = false;
+        comp.programmingExercise.allowOnlineIde = false;
         comp.calculateFormStatusSections();
         expect(comp.formStatusSections[1].valid).toBeFalse();
         comp.programmingExercise.allowOnlineEditor = true;
