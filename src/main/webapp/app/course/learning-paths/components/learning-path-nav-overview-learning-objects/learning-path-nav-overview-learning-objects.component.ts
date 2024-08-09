@@ -4,7 +4,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
-import { IconDefinition, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle, faLock } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -17,6 +17,7 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 })
 export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
+    protected readonly faLock: IconDefinition = faLock;
 
     private readonly alertService: AlertService = inject(AlertService);
     private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
@@ -57,7 +58,9 @@ export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     }
 
     selectLearningObject(learningObject: LearningPathNavigationObjectDTO): void {
-        this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
-        this.onLearningObjectSelected.emit();
+        if (!learningObject.unreleased) {
+            this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
+            this.onLearningObjectSelected.emit();
+        }
     }
 }

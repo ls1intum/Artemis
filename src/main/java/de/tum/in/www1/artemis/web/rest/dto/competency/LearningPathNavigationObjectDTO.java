@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
  * @param type      the type of the learning object
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LearningPathNavigationObjectDTO(long id, boolean completed, String name, long competencyId, LearningObjectType type) {
+public record LearningPathNavigationObjectDTO(long id, boolean completed, String name, long competencyId, LearningObjectType type, boolean unreleased) {
 
     /**
      * Create a navigation object DTO from a learning object.
@@ -25,11 +25,26 @@ public record LearningPathNavigationObjectDTO(long id, boolean completed, String
      * @return the navigation object DTO
      */
     public static LearningPathNavigationObjectDTO of(LearningObject learningObject, boolean completed, long competencyId) {
-        return switch (learningObject) {
-            case LectureUnit lectureUnit -> new LearningPathNavigationObjectDTO(lectureUnit.getId(), completed, lectureUnit.getName(), competencyId, LearningObjectType.LECTURE);
-            case Exercise exercise -> new LearningPathNavigationObjectDTO(learningObject.getId(), completed, exercise.getTitle(), competencyId, LearningObjectType.EXERCISE);
+        long id = learningObject.getId();
+        String name;
+        LearningObjectType type;
+        boolean unreleased = !learningObject.isVisibleToStudents();
+
+        switch (learningObject) {
+            case LectureUnit lectureUnit -> {
+                name = lectureUnit.getName();
+                type = LearningObjectType.LECTURE;
+            }
+            case Exercise exercise -> {
+                name = exercise.getTitle();
+                type = LearningObjectType.EXERCISE;
+            }
             default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
-        };
+        }
+
+        name = unreleased ? "" : name;
+
+        return new LearningPathNavigationObjectDTO(id, completed, name, competencyId, type, unreleased);
     }
 
     public enum LearningObjectType {

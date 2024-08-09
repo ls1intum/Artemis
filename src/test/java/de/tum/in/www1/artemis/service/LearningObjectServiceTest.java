@@ -112,6 +112,11 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
             public Set<CourseCompetency> getCompetencies() {
                 return Set.of();
             }
+
+            @Override
+            public boolean isVisibleToStudents() {
+                return false;
+            }
         };
         assertThatThrownBy(() -> learningObjectService.isCompletedByUser(unexpectedSubclass, student)).isInstanceOf(IllegalArgumentException.class);
     }

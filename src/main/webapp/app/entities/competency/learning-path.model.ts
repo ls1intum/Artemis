@@ -35,9 +35,10 @@ export interface LearningPathCompetencyDTO {
 export interface LearningPathNavigationObjectDTO {
     id: number;
     completed: boolean;
-    name: string;
+    name?: string;
     competencyId: number;
     type: LearningObjectType;
+    unreleased: boolean;
 }
 
 export interface LearningPathNavigationDTO {

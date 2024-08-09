@@ -135,8 +135,18 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         this.completedUsers = completedUsers;
     }
 
+    /**
+     * Checks if the lecture unit is visible to the students.
+     * A lecture unit is visible to the students if the lecture is visible to the students and the release date is null or in the past.
+     *
+     * @return true if the lecture unit is visible to the students, false otherwise
+     */
     @JsonProperty("visibleToStudents")
     public boolean isVisibleToStudents() {
+        if (lecture == null || !lecture.isVisibleToStudents()) {
+            return false;
+        }
+
         if (releaseDate == null) {
             return true;
         }
