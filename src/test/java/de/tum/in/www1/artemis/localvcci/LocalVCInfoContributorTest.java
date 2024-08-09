@@ -1,18 +1,21 @@
 package de.tum.in.www1.artemis.localvcci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.info.Info;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCInfoContributor;
 
-@Profile(PROFILE_LOCALVC)
+@ActiveProfiles({ "artemis", PROFILE_LOCALVC, PROFILE_BUILDAGENT })
 class LocalVCInfoContributorTest {
 
-    LocalVCInfoContributor localVCInfoContributor;
+    @SpyBean
+    private LocalVCInfoContributor localVCInfoContributor;
 
     @Test
     void testContribute() {
@@ -25,7 +28,6 @@ class LocalVCInfoContributorTest {
         }
 
         Info info = builder.build();
-        assertThat((Boolean) info.getDetails().get("versionControlAccessToken")).isFalse();
-
+        assertThat((Boolean) info.getDetails().get("useVersionControlAccessToken")).isFalse();
     }
 }

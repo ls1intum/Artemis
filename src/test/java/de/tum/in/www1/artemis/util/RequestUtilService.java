@@ -479,22 +479,32 @@ public class RequestUtilService {
     }
 
     public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, Map<String, String> expectedResponseHeaders) throws Exception {
-        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), expectedResponseHeaders);
+        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), expectedResponseHeaders, false);
+    }
+
+    public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, boolean bodyIsString) throws Exception {
+        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), new HashMap<>(), bodyIsString);
     }
 
     public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
-        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), new HashMap<>());
+        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), new HashMap<>(), false);
     }
 
     public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
-        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, params, new HashMap<>());
+        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, params, new HashMap<>(), false);
     }
 
     public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable MultiValueMap<String, String> params,
-            Map<String, String> expectedResponseHeaders) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
+            Map<String, String> expectedResponseHeaders, boolean isString) throws Exception {
+        String stringBody;
+        if (isString) {
+            stringBody = (String) body;
+        }
+        else {
+            stringBody = mapper.writeValueAsString(body);
+        }
         MvcResult res = mvc
-                .perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params)))
+                .perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(stringBody).params(params)))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 

@@ -4,6 +4,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -41,7 +42,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     sshTemplateUrl?: string;
     repositoryPassword?: string;
     versionControlUrl: string;
-    versionControlAccessTokenRequired?: boolean;
+    useVersionControlAccessToken?: boolean;
     localVCEnabled = false;
     gitlabVCEnabled = false;
 
@@ -66,9 +67,12 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     ) {}
 
     ngOnInit() {
-        this.accountService.identity().then((user) => {
-            this.user = user!;
-        });
+        this.accountService
+            .identity()
+            .then((user) => {
+                this.user = user!;
+            })
+            .then(() => this.loadVcsAccessTokens());
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -79,8 +83,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
-
-            this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken;
+            this.useVersionControlAccessToken = profileInfo.useVersionControlAccessToken ?? false;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
             if (this.localVCEnabled) {
@@ -110,6 +113,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         } else if (this.repositoryUri) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
+        this.loadVcsAccessTokens();
     }
 
     private getRepositoryUri() {
@@ -120,12 +124,61 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         if (this.useSsh && this.sshEnabled && this.sshTemplateUrl) {
             return this.getSshCloneUrl(this.getRepositoryUri()) || this.getRepositoryUri();
         }
-
         if (this.isTeamParticipation) {
             return this.addCredentialsToHttpUrl(this.repositoryUriForTeam(this.getRepositoryUri()), insertPlaceholder);
         }
-
         return this.addCredentialsToHttpUrl(this.getRepositoryUri(), insertPlaceholder);
+    }
+
+    loadVcsAccessTokens() {
+        if (this.useVersionControlAccessToken && this.localVCEnabled) {
+            this.participations?.forEach((participation) => {
+                if (participation?.id && !participation.vcsAccessToken) {
+                    this.loadVcsAccessToken(participation);
+                }
+            });
+            if (this.activeParticipation?.vcsAccessToken) {
+                this.user.vcsAccessToken = this.activeParticipation?.vcsAccessToken;
+            }
+        }
+    }
+
+    /**
+     * Loads the vcsAccessToken for a participation from the server. If none exists, sens a request to create one
+     */
+    loadVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
+        this.accountService.getVcsAccessToken(participation!.id!).subscribe({
+            next: (res: HttpResponse<string>) => {
+                if (res.body) {
+                    participation.vcsAccessToken = res.body;
+                    if (this.activeParticipation?.id == participation.id) {
+                        this.user.vcsAccessToken = res.body;
+                    }
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (error.status == 404) {
+                    this.createNewVcsAccessToken(participation);
+                }
+            },
+        });
+    }
+
+    /**
+     * Sends the request to create a new
+     */
+    createNewVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
+        this.accountService.createVcsAccessToken(participation!.id!).subscribe({
+            next: (res: HttpResponse<string>) => {
+                if (res.body) {
+                    participation.vcsAccessToken = res.body;
+                    if (this.activeParticipation?.id == participation.id) {
+                        this.user.vcsAccessToken = res.body;
+                    }
+                }
+            },
+            error: () => {},
+        });
     }
 
     /**
@@ -138,7 +191,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
     private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
-        const includeToken = this.versionControlAccessTokenRequired && this.user.vcsAccessToken;
+        const includeToken = this.useVersionControlAccessToken && this.user.vcsAccessToken;
         const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
         const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
@@ -213,5 +266,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.isPracticeMode = !this.isPracticeMode;
         this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, this.isPracticeMode)!;
         this.cloneHeadline = this.isPracticeMode ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
+        if (this.activeParticipation.vcsAccessToken) {
+            this.user.vcsAccessToken = this.activeParticipation.vcsAccessToken;
+        }
     }
 }

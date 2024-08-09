@@ -70,7 +70,7 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.versionControlName = data.versionControlName;
-                        profileInfo.versionControlAccessToken = data.versionControlAccessToken;
+                        profileInfo.useVersionControlAccessToken = data.useVersionControlAccessToken;
                         profileInfo.continuousIntegrationName = data.continuousIntegrationName;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];

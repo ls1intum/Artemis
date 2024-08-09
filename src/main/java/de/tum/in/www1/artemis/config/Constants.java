@@ -225,7 +225,7 @@ public final class Constants {
 
     public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
-    public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "versionControlAccessToken";
+    public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "useVersionControlAccessToken";
 
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 

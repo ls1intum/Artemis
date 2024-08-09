@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import javax.naming.InvalidNameException;
@@ -91,6 +92,37 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Cleanup
         someRepository.resetLocalRepo();
+    }
+
+    @Test
+    void testFetchPush_usingVcsAccessToken() {
+        var programmingParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var participationVcsAccessToken = localVCLocalCITestService.getParticipationVcsAccessToken(student.getId(), programmingParticipation.getId());
+        var token = participationVcsAccessToken.getVcsAccessToken();
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Fetch from and push to the remote repository with participation VCS access token
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
+
+        // Fetch from and push to the remote repository with user VCS access token
+        var studentWithToken = userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, token, ZonedDateTime.now().plusDays(1));
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
+
+        // Try to fetch and push, when token is removed and re-added, which makes the previous token invalid
+        userUtilService.deleteUserVcsAccessToken(studentWithToken);
+        localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
+        localVCLocalCITestService.createParticipationVcsAccessToken(student, programmingParticipation.getId());
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+
+        // Try to fetch and push with removed participation
+        localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
+        localVCLocalCITestService.deleteParticipation(programmingParticipation);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
     }
 
     @Test
