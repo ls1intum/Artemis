@@ -62,5 +62,13 @@ artemis:
         restricted-modules: module_text_test_restricted,module_programming_test_restricted
     apollon:
         conversion-service-url: http://localhost:8080
+    telemetry:
+        enabled: true
+        destination: http://localhost:5000
     plagiarism-checks:
         plagiarism-results-limit: 100
+
+info:
+    universityName: Some University # Must be set before starting the application in production
+    universityAdminName: Some Universities Admin # Must be set before starting the application in production
+    contact: someUniversityAdminEmail@xcit.tum.de  #default value, can be overridden if needed
