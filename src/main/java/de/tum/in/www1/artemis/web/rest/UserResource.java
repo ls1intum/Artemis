@@ -225,4 +225,41 @@ public class UserResource {
         log.debug("Successfully deleted SSH key of user {}", user.getLogin());
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * PUT users/vcsAccessToken : creates a vcsAccessToken for a user
+     *
+     * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     */
+    @PutMapping("users/vcsAccessToken")
+    @EnforceAtLeastStudent
+    public ResponseEntity<UserDTO> createVcsAccessToken() {
+        User user = userRepository.getUser();
+        log.debug("REST request to create a new VCS access token for user {}", user.getLogin());
+
+        // TODO add token generation here -> depends on https://github.com/ls1intum/Artemis/pull/8929
+        userRepository.updateUserVcsAccessToken(user.getId(), "vcpat-nsevT9FJUOK4uTbLFqC6DZMtWv9OZzVAU2Wbtzbt4WYO", ZonedDateTime.now().plusMonths(3));
+        log.debug("Successfully created a VCS access token for user {}", user.getLogin());
+        user = userRepository.getUser();
+        UserDTO userDTO = new UserDTO();
+        userDTO.setLogin(user.getLogin());
+        userDTO.setVcsAccessToken(user.getVcsAccessToken() + "abcde");
+        userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
+        return ResponseEntity.ok(userDTO);
+    }
+
+    /**
+     * DELETE users/vcsAccessToken : deletes the vcsAccessToken of a user
+     *
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     */
+    @DeleteMapping("users/vcsAccessToken")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> deleteVcsAccessToken() {
+        User user = userRepository.getUser();
+        log.debug("REST request to remove VCS access token key of user {}", user.getLogin());
+        userRepository.updateUserVcsAccessToken(user.getId(), null, null);
+        log.debug("Successfully deleted VCS access token of user {}", user.getLogin());
+        return ResponseEntity.ok().build();
+    }
 }
