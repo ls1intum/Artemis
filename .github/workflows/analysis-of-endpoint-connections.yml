@@ -1,36 +1,62 @@
-# As this GitHub Workflow currently fails for many valid pull requests, it is currently disabled.
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - 'src/main/java/**'
+      - 'src/main/webapp/**'
 
-#name: Analysis-of-Endpoint-Connections
-#
-#on:
-#  pull_request:
-#    types:
-#      - opened
-#      - synchronize
-#    paths:
-#      - 'src/main/java/**'
-#      - 'src/main/webapp/**'
-#
-#jobs:
-#  analysis-of-endpoint-connections:
-#    timeout-minutes: 10
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0
-#
-#      - name: Get list of modified files
-#        run: |
-#          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
-#
-#      - name: Set up JDK 21
-#        uses: actions/setup-java@v2
-#        with:
-#          java-version: '21'
-#          distribution: 'adopt'
-#
-#      - name: Run analysis-of-endpoint-connections
-#        run: |
-#          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
+# Keep in sync with build.yml and test.yml and codeql-analysis.yml
+env:
+  CI: true
+  node: 20
+  java: 21
+
+jobs:
+  analysis-of-endpoint-connections:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get list of modified files
+        run: |
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
+
+      # Analyze the client sided REST-API calls
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.node }}'
+
+      - name: Install and compile TypeScript
+        run: |
+          cd supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/
+          npm install
+          tsc -p tsconfig.analysisOfEndpointConnections.json
+
+      - name: Run analysis-of-endpoint-connections-client
+        run: |
+          node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
+
+      - name: Upload JSON file
+        uses: actions/upload-artifact@v4
+        with:
+          name: rest-calls-json
+          path: supporting_scripts/analysis-of-endpoint-connections/restCalls.json
+
+      # Analyze the server sided endpoints
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+
+      - name: Run analysis-of-endpoint-connections
+        run: |
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
