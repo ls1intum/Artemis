@@ -9,10 +9,10 @@ First, we need to implement two sorting algorithms, in this case `MergeSort` and
 **You have the following tasks:**
 
 1. [task][Implement Bubble Sort](test_bubble_sort)
-Implement the method `performSort(&mut [NaiveDate])` in the struct `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
+Implement the method `perform_sort(&mut [NaiveDate])` in the struct `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
 
 2. [task][Implement Merge Sort](test_merge_sort)
-Implement the method `performSort(&mut [NaiveDate])` in the struct `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
+Implement the method `perform_sort(&mut [NaiveDate])` in the struct `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
 
 ### Part 2: Strategy Pattern
 
@@ -53,15 +53,15 @@ interface Any {
 }
 
 interface SortStrategy {
-  <color:testsColor(test_sort_strategy_methods)>+performSort(&mut [NaiveDate])</color>
+  <color:testsColor(test_sort_strategy_methods)>+perform_sort(&mut [NaiveDate])</color>
 }
 
 class BubbleSort {
-  <color:testsColor(test_bubble_sort)>+performSort(&mut [NaiveDate])</color>
+  <color:testsColor(test_bubble_sort)>+perform_sort(&mut [NaiveDate])</color>
 }
 
 class MergeSort {
-  <color:testsColor(test_merge_sort)>+performSort(&mut [NaiveDate])</color>
+  <color:testsColor(test_merge_sort)>+perform_sort(&mut [NaiveDate])</color>
 }
 
 MergeSort -up-|> SortStrategy #testsColor(test_merge_sort_struct)
@@ -82,7 +82,7 @@ hide empty methods
 
 1. Create a new struct `QuickSort` that implements `SortStrategy` and implement the Quick Sort algorithm.
 
-2. Make the method `performSort(&mut [NaiveDate])` generic, so that other types can also be sorted by the same method.
+2. Make the method `perform_sort(&mut [NaiveDate])` generic, so that other types can also be sorted by the same method.
 **Hint:** Have a look at Rust Generics and the trait `Ord`.
 
 3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.
