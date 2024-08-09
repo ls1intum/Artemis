@@ -1,7 +1,8 @@
+use std::error::Error;
 use std::ffi::OsStr;
+use std::fs;
 use std::fs::read_to_string;
 use std::path::{Component, Path};
-use std::{fs, io};
 
 use syn::{parse_file, ImplItem, Item, TraitItem, Type, TypeParamBound};
 
@@ -9,40 +10,44 @@ const SRC_DIR: &str = "assignment/src";
 
 fn main() {
     println!("cargo::rerun-if-changed={SRC_DIR}");
-    visit_dirs(Path::new(SRC_DIR), &process_file).unwrap();
+    if let Err(err) = visit_dirs(Path::new(SRC_DIR), &process_file) {
+        eprintln!("Failed to analyze submission: {err}");
+    }
 }
 
-fn visit_dirs<F: Fn(&Path)>(dir: &Path, cb: &F) -> io::Result<()> {
+fn visit_dirs<F: Fn(&Path) -> Result<(), Box<dyn Error>>>(
+    dir: &Path,
+    cb: &F,
+) -> Result<(), Box<dyn Error>> {
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         let path = entry.path();
         if path.is_dir() {
             visit_dirs(&path, cb)?;
         } else {
-            cb(&entry.path());
+            cb(&entry.path())?;
         }
     }
     Ok(())
 }
 
-fn process_file(path: &Path) {
+fn process_file(path: &Path) -> Result<(), Box<dyn Error>> {
     if path.extension() != Some(OsStr::new("rs")) {
-        return;
+        return Ok(());
     }
 
-    let file_content = read_to_string(path).unwrap();
+    let file_content = read_to_string(path)?;
 
-    let ast = parse_file(&file_content).unwrap();
+    let ast = parse_file(&file_content)?;
 
     let module = path
-        .strip_prefix(SRC_DIR)
-        .unwrap()
+        .strip_prefix(SRC_DIR)?
         .with_extension("")
         .components()
         .map(Component::as_os_str)
         .collect::<Vec<_>>()
         .join(OsStr::new("_"));
-    let module = module.to_str().unwrap();
+    let module = module.to_str().ok_or("invalid UTF-8 in path")?;
 
     for item in ast.items {
         match item {
@@ -164,4 +169,6 @@ fn process_file(path: &Path) {
             _ => continue,
         }
     }
+
+    Ok(())
 }
