@@ -1,0 +1,87 @@
+<div>
+    <div class="row m-0 align-items-center justify-content-between">
+        <!--       TODO: Translations-->
+        <h5 class="m-0 col-md-auto p-0">Prerequisites ({{ courseCompetencies().length }})</h5>
+        <div class="col-md-auto p-0 d-flex">
+            <a class="btn btn-sm btn-secondary" [routerLink]="['/course-management', courseId(), 'competency-management', 'import-prerequisites']">
+                <fa-icon [icon]="faFileImport" />
+                <span jhiTranslate="artemisApp.prerequisite.manage.importButton"></span>
+            </a>
+            <a class="ms-3 btn btn-sm btn-secondary" [routerLink]="['/course-management', courseId(), 'competency-management', 'prerequisites', 'create']">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.prerequisite.manage.createButton"></span>
+            </a>
+        </div>
+    </div>
+    <hr class="my-2" />
+    <div class="course-competency-table-container">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="col-1">#</th>
+                    <th class="col">
+                        <span jhiTranslate="artemisApp.courseCompetency.title"></span>
+                    </th>
+                    <th class="col-4">
+                        <span jhiTranslate="artemisApp.courseCompetency.description"></span>
+                    </th>
+                    <th class="col">
+                        <span jhiTranslate="artemisApp.courseCompetency.softDueDate"></span>
+                    </th>
+                    <th class="col">
+                        <span jhiTranslate="artemisApp.courseCompetency.course"></span>
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (prerequisite of courseCompetencies(); track prerequisite.id) {
+                    <tr>
+                        <td class="col-1">{{ prerequisite.id }}</td>
+                        <td class="col">{{ prerequisite.title }}</td>
+                        <td class="col markdown-preview" [innerHTML]="prerequisite.description | htmlForMarkdown"></td>
+                        <td class="col">{{ prerequisite.softDueDate | artemisDate }}</td>
+                        <td class="col">
+                            @if (prerequisite.linkedCourseCompetency?.course?.id) {
+                                <div>
+                                    <a [routerLink]="['/course-management', prerequisite.linkedCourseCompetency!.course!.id!, 'competency-management']">{{
+                                        prerequisite.linkedCourseCompetency!.course!.title ?? ('artemisApp.competency.course' | artemisTranslate)
+                                    }}</a>
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-end">
+                                <a [routerLink]="['/course-management', courseId(), 'competency-management', prerequisite.id, 'edit']" class="btn btn-sm btn-outline-secondary">
+                                    <fa-icon [icon]="faEdit" />
+                                    <span jhiTranslate="entity.action.edit"></span>
+                                </a>
+                                <button
+                                    jhiDeleteButton
+                                    [entityTitle]="prerequisite.title ?? ''"
+                                    [deleteQuestion]="'artemisApp.prerequisite.manage.delete.question'"
+                                    [deleteConfirmationText]="'artemisApp.prerequisite.manage.delete.typeNameToConfirm'"
+                                    (delete)="deletePrerequisite(prerequisite.id!)"
+                                    [dialogError]="dialogError"
+                                    class="ms-3 btn btn-sm"
+                                >
+                                    <fa-icon [icon]="faTrash" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td colspan="6">
+                            <div class="text-center text-secondary">
+                                <small
+                                    ><em><span jhiTranslate="artemisApp.prerequisite.empty"></span></em
+                                ></small>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
