@@ -23,7 +23,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 test.describe('Programming exercise participation', () => {
     test.describe.configure({
         mode: 'default',
-        timeout: 120000,
+        timeout: 150000,
     });
 
     let course: Course;

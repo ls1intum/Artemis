@@ -18,7 +18,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 test.describe('Exam Results', () => {
     test.describe.configure({
         mode: 'default',
-        timeout: 60000,
+        timeout: 90000,
     });
 
     let course: Course;

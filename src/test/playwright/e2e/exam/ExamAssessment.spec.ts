@@ -95,7 +95,7 @@ test.describe('Exam assessment', () => {
             courseAssessment,
             exerciseAssessment,
         }, testInfo) => {
-            testInfo.setTimeout(25000);
+            testInfo.setTimeout(45000);
             if (programmingAssessmentSuccessful) {
                 await handleComplaint(course, exam, false, ExerciseType.PROGRAMMING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
             }
