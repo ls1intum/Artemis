@@ -144,9 +144,9 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.translationKeys = translationKeys;
         modalRef.componentInstance.isRequired = isRequired;
         modalRef.componentInstance.regexPattern = regexPattern;
-
-        if (get(channelOrGroupChat, propertyName) && get(channelOrGroupChat, propertyName).length > 0) {
-            modalRef.componentInstance.initialValue = get(channelOrGroupChat, propertyName);
+        const property = get(channelOrGroupChat, propertyName);
+        if (property && typeof property === 'string' && property.length > 0) {
+            modalRef.componentInstance.initialValue = property;
         }
         modalRef.componentInstance.initialize();
         from(modalRef.result)
@@ -162,14 +162,14 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                     updateValue = '';
                 }
                 if (isChannelDTO(channelOrGroupChat)) {
-                    this.updateChannel(channelOrGroupChat, propertyName, updateValue);
+                    this.updateChannel(channelOrGroupChat, propertyName as keyof ChannelDTO, updateValue);
                 } else {
-                    this.updateGroupChat(channelOrGroupChat, propertyName, updateValue);
+                    this.updateGroupChat(channelOrGroupChat, propertyName as keyof GroupChatDTO, updateValue);
                 }
             });
     }
 
-    private updateGroupChat(groupChat: GroupChatDTO, propertyName: string, updateValue: string) {
+    private updateGroupChat<K extends keyof GroupChatDTO>(groupChat: GroupChatDTO, propertyName: K, updateValue: GroupChatDTO[K]) {
         const updateDTO = new GroupChatDTO();
         updateDTO[propertyName] = updateValue;
 
@@ -188,7 +188,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             });
     }
 
-    private updateChannel(channel: ChannelDTO, propertyName: string, updateValue: string) {
+    private updateChannel<K extends keyof ChannelDTO>(channel: ChannelDTO, propertyName: K, updateValue: ChannelDTO[K]) {
         const updateDTO = new ChannelDTO();
         updateDTO[propertyName] = updateValue;
         this.channelService

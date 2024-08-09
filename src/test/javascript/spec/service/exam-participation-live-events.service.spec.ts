@@ -29,8 +29,9 @@ describe('ExamParticipationLiveEventsService', () => {
             retrieve: jest.fn(),
         } as unknown as LocalStorageService;
 
-        mockWebsocketService = new MockWebsocketService() as any as JhiWebsocketService;
-        mockWebsocketService['state'] = websocketConnectionStateSubject.asObservable();
+        const tmpMockWebsocketService = new MockWebsocketService();
+        tmpMockWebsocketService.state = websocketConnectionStateSubject.asObservable();
+        mockWebsocketService = tmpMockWebsocketService as unknown as JhiWebsocketService;
 
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],

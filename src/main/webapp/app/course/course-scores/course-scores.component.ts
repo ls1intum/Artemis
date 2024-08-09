@@ -577,7 +577,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     private createStudentPlagiarismMap(plagiarismCases?: PlagiarismCase[]): { [id: number]: boolean } {
-        const plagiarismMap = {};
+        const plagiarismMap: { [id: number]: boolean } = {};
         plagiarismCases?.forEach((plagiarismCase) => {
             if (plagiarismCase.verdict === PlagiarismVerdict.PLAGIARISM && plagiarismCase.student?.id) {
                 plagiarismMap[plagiarismCase.student.id] = true;

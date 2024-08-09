@@ -157,7 +157,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
-                delete this.exerciseGroupToExerciseTypesDict[exerciseGroupId];
+                this.exerciseGroupToExerciseTypesDict.delete(exerciseGroupId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

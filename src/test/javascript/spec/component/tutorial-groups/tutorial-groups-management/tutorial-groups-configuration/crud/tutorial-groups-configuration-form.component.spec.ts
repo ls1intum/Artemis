@@ -68,7 +68,7 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
 
         const formControlNames = ['period', 'usePublicTutorialGroupChannels', 'useTutorialGroupChannels'];
         formControlNames.forEach((control) => {
-            expect(component.form.get(control)!.value).toEqual(formData[control]);
+            expect(component.form.get(control)?.value).toEqual(formData[control as keyof TutorialGroupsConfigurationFormData]);
         });
     });
 

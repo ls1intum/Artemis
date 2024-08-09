@@ -11,7 +11,7 @@ import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/p
 import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 
-describe('Plagiarism Split Pane Header Component', () => {
+describe('SplitPaneHeaderComponent', () => {
     let comp: SplitPaneHeaderComponent;
     let fixture: ComponentFixture<SplitPaneHeaderComponent>;
 

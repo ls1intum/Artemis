@@ -45,7 +45,9 @@ describe('BuildQueueComponent', () => {
     const mockLocalStorageService = new MockLocalStorageService();
     mockLocalStorageService.clear = (key?: string) => {
         if (key) {
-            delete mockLocalStorageService.storage[key];
+            if (key in mockLocalStorageService.storage) {
+                delete mockLocalStorageService.storage[key];
+            }
         } else {
             mockLocalStorageService.storage = {};
         }

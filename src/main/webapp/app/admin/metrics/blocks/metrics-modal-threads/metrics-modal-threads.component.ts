@@ -84,7 +84,7 @@ export class MetricsModalThreadsComponent implements OnInit {
         const filteredAttributes = ['threadName', 'threadId', 'blockedTime', 'blockedCount', 'waitedTime', 'waitedCount', 'lockName'];
         return Object.keys(thread)
             .filter((key) => filteredAttributes.includes(key))
-            .some((key) => thread[key]?.toString().toLowerCase().includes(this.threadFilter!.toLowerCase()));
+            .some((key) => thread[key as keyof Thread]?.toString().toLowerCase().includes(this.threadFilter!.toLowerCase()));
     }
 
     private isMatchingSelectedThreadState(thread: Thread): boolean {

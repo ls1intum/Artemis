@@ -10,7 +10,7 @@ import { IrisLogoSize } from '../iris-logo/iris-logo.component';
 export class AboutIrisComponent {
     faRobot = faRobot;
     // How many bullet points each heading has
-    bulletPoints = { '1': 2, '2': 5, '3': 3, '4': 5 };
+    bulletPoints: { [key: string]: number } = { '1': 2, '2': 5, '3': 3, '4': 5 };
 
     objectKeys = Object.keys;
     array = Array;

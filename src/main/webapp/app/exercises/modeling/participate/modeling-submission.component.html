@@ -106,10 +106,10 @@
                                                             <tr [hidden]="!shouldBeDisplayed(feedback)">
                                                                 <td>
                                                                     @if (feedback.reference) {
-                                                                        <span>{{ assessmentsNames[feedback.referenceId!]['type'] }} </span>
+                                                                        <span>{{ assessmentsNames[feedback.referenceId!]?.type }} </span>
                                                                     }
                                                                     @if (feedback.reference) {
-                                                                        <code class="text-primary">{{ assessmentsNames[feedback.referenceId!]['name'] }}</code>
+                                                                        <code class="text-primary">{{ assessmentsNames[feedback.referenceId!]?.name }}</code>
                                                                     }
                                                                     @if (feedback.reference) {
                                                                         <br />

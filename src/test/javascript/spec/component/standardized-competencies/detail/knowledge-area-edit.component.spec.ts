@@ -173,7 +173,7 @@ describe('KnowledgeAreaEditComponent', () => {
     function compareFormValues(formValues: any, knowledgeArea: KnowledgeAreaDTO) {
         for (const key in formValues) {
             //needed to ensure null becomes undefined
-            expect(formValues[key] ?? undefined).toEqual(knowledgeArea[key]);
+            expect(formValues[key] ?? undefined).toEqual(knowledgeArea[key as keyof KnowledgeAreaDTO]);
         }
     }
 });

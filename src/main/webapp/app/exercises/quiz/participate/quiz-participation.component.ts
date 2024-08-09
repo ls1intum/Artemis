@@ -94,7 +94,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     result: Result;
-    questionScores = {};
+    questionScores: { [id: number]: number } = {};
     quizId: number;
     courseId: number;
     interval?: number;

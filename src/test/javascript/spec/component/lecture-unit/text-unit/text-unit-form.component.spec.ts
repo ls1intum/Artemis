@@ -19,8 +19,12 @@ class MarkdownEditorStubComponent {
     @Output() markdownChange = new EventEmitter<string>();
 }
 
+type Store = {
+    [key: string]: any;
+};
+
 describe('TextUnitFormComponent', () => {
-    let store = {};
+    let store: Store = {};
 
     let textUnitFormComponentFixture: ComponentFixture<TextUnitFormComponent>;
     let textUnitFormComponent: TextUnitFormComponent;

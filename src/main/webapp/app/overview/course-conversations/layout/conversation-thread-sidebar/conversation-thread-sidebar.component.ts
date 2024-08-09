@@ -3,7 +3,7 @@ import interact from 'interactjs';
 import { Post } from 'app/entities/metis/post.model';
 import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
@@ -17,8 +17,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     @Input()
     readOnlyMode = false;
     @Input()
-    set activeConversation(conversation: ConversationDTO) {
-        this.conversation = conversation;
+    set activeConversation(conversation: ConversationDTO | Conversation) {
+        this.conversation = conversation as ConversationDTO;
         this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
     }
     @Input()

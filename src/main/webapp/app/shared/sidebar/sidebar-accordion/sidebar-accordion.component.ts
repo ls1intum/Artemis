@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
+import { AccordionGroups, ChannelAccordionShowAdd, ChannelGroupCategory, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Params } from '@angular/router';
 
 @Component({
@@ -71,5 +71,12 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
         this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
         sessionStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
+    }
+
+    getGroupKey(groupKey: string): boolean {
+        if (!this.showAddOption) {
+            return false;
+        }
+        return this.showAddOption[groupKey as ChannelGroupCategory];
     }
 }

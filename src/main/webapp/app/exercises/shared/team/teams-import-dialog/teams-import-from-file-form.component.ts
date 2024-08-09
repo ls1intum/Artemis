@@ -27,7 +27,7 @@ const csvColumns = Object.freeze({
     gruppe: 'gruppe',
 });
 
-type CsvEntry = object;
+type CsvEntry = { [column: string]: string };
 
 @Component({
     selector: 'jhi-teams-import-from-file-form',

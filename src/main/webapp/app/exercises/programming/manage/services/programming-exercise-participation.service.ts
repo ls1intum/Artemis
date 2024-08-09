@@ -121,7 +121,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         commitId: string,
         repositoryType?: string,
     ): Observable<Map<string, string> | undefined> {
-        const params = {};
+        const params: { [key: string]: number | string } = {};
         if (repositoryType) {
             params['repositoryType'] = repositoryType;
         }

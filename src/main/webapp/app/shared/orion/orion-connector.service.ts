@@ -112,9 +112,9 @@ export class OrionConnectorService {
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
      * @param opened The ID of the exercise that was opened by the user.
-     * @param viewString ExerciseView which is currently open in the IDE as string
+     * @param viewString ExerciseView which is currently open in the IDE as string. Must be one of the keys of ExerciseView
      */
-    onExerciseOpened(opened: number, viewString: string): void {
+    onExerciseOpened(opened: number, viewString: keyof typeof ExerciseView): void {
         const view = ExerciseView[viewString];
         this.setIDEStateParameter({ view });
         this.setIDEStateParameter({ opened });
@@ -146,7 +146,7 @@ export class OrionConnectorService {
             JSON.stringify({
                 errors: buildErrors.reduce(
                     // Group annotations by filename
-                    (buildLogErrors, { fileName, timestamp, ...rest }) => ({
+                    (buildLogErrors: Record<string, Annotation[]>, { fileName, timestamp, ...rest }) => ({
                         ...buildLogErrors,
                         [fileName]: [...(buildLogErrors[fileName] || []), { ...rest, ts: timestamp }],
                     }),

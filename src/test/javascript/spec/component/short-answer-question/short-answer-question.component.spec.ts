@@ -9,6 +9,7 @@ import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SafeHtml } from '@angular/platform-browser';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -41,6 +42,9 @@ describe('ShortAnswerQuestionComponent', () => {
     });
 
     it('should initialize', () => {
+        const extractSafeHtmlText = (safeHtml: SafeHtml) => {
+            return 'changingThisBreaksApplicationSecurity' in safeHtml ? safeHtml.changingThisBreaksApplicationSecurity : '';
+        };
         const alternativeQuestion = new ShortAnswerQuestion();
         alternativeQuestion.id = 10;
         const text = 'Please explain this question about stuff';
@@ -54,9 +58,9 @@ describe('ShortAnswerQuestionComponent', () => {
 
         expect(component.textParts).toStrictEqual([[`<p>${text}</p>`]]);
         expect(component.shortAnswerQuestion).toStrictEqual(alternativeQuestion);
-        expect(component.renderedQuestion.text['changingThisBreaksApplicationSecurity']).toBe(`<p>${text}</p>`);
-        expect(component.renderedQuestion.hint['changingThisBreaksApplicationSecurity']).toBe(`<p>${hint}</p>`);
-        expect(component.renderedQuestion.explanation['changingThisBreaksApplicationSecurity']).toBe(`<p>${explanation}</p>`);
+        expect(extractSafeHtmlText(component.renderedQuestion.text)).toBe(`<p>${text}</p>`);
+        expect(extractSafeHtmlText(component.renderedQuestion.hint)).toBe(`<p>${hint}</p>`);
+        expect(extractSafeHtmlText(component.renderedQuestion.explanation)).toBe(`<p>${explanation}</p>`);
     });
 
     it('should set submitted texts', () => {
