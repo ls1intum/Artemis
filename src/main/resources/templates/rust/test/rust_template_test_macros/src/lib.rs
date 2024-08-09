@@ -4,8 +4,20 @@
 
 use proc_macro::TokenStream;
 
-use quote::{format_ident, quote, ToTokens};
-use syn::{parse_macro_input, Ident, Item, ItemFn, Path};
+use quote::{format_ident, quote};
+use syn::parse::Parse;
+use syn::{parse_macro_input, Ident, Item, ItemFn, Path, Token};
+
+trait ToStringLocal {
+    fn to_string(&self) -> String;
+}
+
+impl ToStringLocal for Path {
+    fn to_string(&self) -> String {
+        let segments: Vec<_> = self.segments.iter().map(|s| s.ident.to_string()).collect();
+        segments.join("::")
+    }
+}
 
 #[proc_macro_attribute]
 pub fn require_struct(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -117,15 +129,57 @@ pub fn require_trait_type_or_fail(attr: TokenStream, item: TokenStream) -> Token
     require_for_function(attr, item, make_cfg_trait_type)
 }
 
-fn require_for_item<F: FnOnce(Path) -> Ident>(
+#[proc_macro_attribute]
+pub fn require_trait_supertrait(attr: TokenStream, item: TokenStream) -> TokenStream {
+    require_for_item(attr, item, make_cfg_trait_supertrait)
+}
+
+#[proc_macro_attribute]
+pub fn require_trait_supertrait_or_fail(attr: TokenStream, item: TokenStream) -> TokenStream {
+    require_for_function(attr, item, make_cfg_trait_supertrait)
+}
+
+struct SuperTraitSpec {
+    module_path: String,
+    trait_name: String,
+    supertrait: String,
+}
+
+impl Parse for SuperTraitSpec {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let path: Path = input.parse()?;
+        input.parse::<Token![:]>()?;
+        let supertrait: Path = input.parse()?;
+
+        let (module_path, trait_name) = split_path(path);
+        let supertrait = supertrait.segments.last().unwrap().ident.to_string();
+
+        Ok(SuperTraitSpec {
+            module_path,
+            trait_name,
+            supertrait,
+        })
+    }
+}
+
+impl ToStringLocal for SuperTraitSpec {
+    fn to_string(&self) -> String {
+        format!(
+            "supertrait {} of {}::{}",
+            self.supertrait, self.module_path, self.trait_name
+        )
+    }
+}
+
+fn require_for_item<A: Parse, F: FnOnce(A) -> Ident>(
     attr: TokenStream,
     item: TokenStream,
     make_cfg: F,
 ) -> TokenStream {
-    let path = parse_macro_input!(attr as Path);
+    let attribute = parse_macro_input!(attr as A);
     let original_item = parse_macro_input!(item as Item);
 
-    let cfg = make_cfg(path);
+    let cfg = make_cfg(attribute);
 
     quote! (
         #[cfg(#cfg)]
@@ -134,17 +188,17 @@ fn require_for_item<F: FnOnce(Path) -> Ident>(
     .into()
 }
 
-fn require_for_function<F: FnOnce(Path) -> Ident>(
+fn require_for_function<A: Parse + ToStringLocal, F: FnOnce(A) -> Ident>(
     attr: TokenStream,
     item: TokenStream,
     make_cfg: F,
 ) -> TokenStream {
-    let path = parse_macro_input!(attr as Path);
+    let attribute = parse_macro_input!(attr as A);
     let original_fn = parse_macro_input!(item as ItemFn);
 
-    let failure_message = format!("missing {}", path.to_token_stream());
+    let failure_message = format!("missing {}", attribute.to_string());
 
-    let cfg = make_cfg(path);
+    let cfg = make_cfg(attribute);
 
     let ItemFn {
         attrs,
@@ -218,6 +272,15 @@ fn make_cfg_trait_const(path: Path) -> Ident {
 fn make_cfg_trait_type(path: Path) -> Ident {
     let (module_path, trait_type, type_name) = split_path2(path);
     format_ident!("structure_{module_path}_trait_{trait_type}_type_{type_name}")
+}
+
+fn make_cfg_trait_supertrait(spec: SuperTraitSpec) -> Ident {
+    format_ident!(
+        "structure_{}_trait_{}_supertrait_{}",
+        spec.module_path,
+        spec.trait_name,
+        spec.supertrait
+    )
 }
 
 fn split_path(path: Path) -> (String, String) {

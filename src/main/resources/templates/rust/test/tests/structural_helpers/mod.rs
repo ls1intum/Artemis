@@ -8,7 +8,7 @@ use std::io::Read;
 use syn::{
     Fields, ImplItem, ImplItemFn,
     Item::{self, Impl, Struct, Trait},
-    ItemImpl, ItemStruct, ItemTrait, TraitItem, TraitItemFn,
+    ItemImpl, ItemStruct, ItemTrait, TraitItem, TraitItemFn, TypeParamBound,
 };
 
 pub fn check_struct_names<'a, I: IntoIterator<Item = &'a str>>(
@@ -160,6 +160,20 @@ pub fn find_trait_function<'a>(items: &'a [TraitItem], name: &str) -> Option<&'a
         },
         |f| &f.sig.ident,
     )
+}
+
+pub fn check_trait_supertrait(trait_: &ItemTrait, supertrait_name: &str) -> Result<(), ()> {
+    find_by_name(
+        &trait_.supertraits,
+        supertrait_name,
+        |s| match s {
+            TypeParamBound::Trait(t) => Some(t),
+            _ => None,
+        },
+        |t| &t.path.segments.last().unwrap().ident,
+    )
+    .ok_or(())?;
+    Ok(())
 }
 
 fn find_by_name<

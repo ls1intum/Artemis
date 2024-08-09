@@ -3,7 +3,7 @@ use std::fs::read_to_string;
 use std::path::{Component, Path};
 use std::{fs, io};
 
-use syn::{parse_file, ImplItem, Item, TraitItem, Type};
+use syn::{parse_file, ImplItem, Item, TraitItem, Type, TypeParamBound};
 
 const SRC_DIR: &str = "assignment/src";
 
@@ -118,6 +118,18 @@ fn process_file(path: &Path) {
             }
             Item::Trait(trait_) => {
                 println!("cargo::rustc-cfg=structure_{module}_trait_{}", trait_.ident);
+
+                for supertrait in trait_.supertraits {
+                    let supertrait = match supertrait {
+                        TypeParamBound::Trait(supertrait) => supertrait,
+                        _ => continue,
+                    };
+                    let supertrait = &supertrait.path.segments.last().unwrap().ident;
+                    println!(
+                        "cargo::rustc-cfg=structure_{module}_trait_{}_supertrait_{supertrait}",
+                        trait_.ident
+                    );
+                }
 
                 for item in trait_.items {
                     match item {

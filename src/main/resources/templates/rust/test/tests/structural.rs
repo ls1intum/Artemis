@@ -10,10 +10,19 @@ fn test_sort_strategy_trait() {
 }
 
 #[test]
+fn test_sort_strategy_supertrait() {
+    let ast = parse_file("./assignment/src/sort_strategy.rs");
+    let sort_strategy = find_trait(&ast.items, "SortStrategy")
+        .expect("A trait named \"SortStrategy\" should be defined");
+    check_trait_supertrait(sort_strategy, "Any")
+        .unwrap_or_else(|_| panic!("SortStrategy should have \"Any\" as a supertrait"));
+}
+
+#[test]
 fn test_sort_strategy_methods() {
     let ast = parse_file("./assignment/src/sort_strategy.rs");
     let sort_strategy = find_trait(&ast.items, "SortStrategy")
-        .expect("A struct named \"SortStrategy\" should be defined");
+        .expect("A trait named \"SortStrategy\" should be defined");
     check_trait_function_names(&sort_strategy.items, ["perform_sort"])
         .unwrap_or_else(|name| panic!("SortStrategy should define the function \"{name}\""));
 }

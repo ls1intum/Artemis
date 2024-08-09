@@ -21,7 +21,7 @@ Use the strategy pattern to select the right sorting algorithm at runtime.
 
 **You have the following tasks:**
 
-1. [task][SortStrategy Interface](test_sort_strategy_trait,test_sort_strategy_methods)
+1. [task][SortStrategy Interface](test_sort_strategy_trait,test_sort_strategy_methods,test_sort_strategy_supertrait)
 Create a `SortStrategy` trait and adjust the sorting algorithms so that they implement this interface.
 Also make sure to declare `std::any::Any` as a supertrait.
 
@@ -66,7 +66,7 @@ class MergeSort {
 
 MergeSort -up-|> SortStrategy #testsColor(test_merge_sort_struct)
 BubbleSort -up-|> SortStrategy #testsColor(test_bubble_sort_struct)
-SortStrategy -up-|> Any
+SortStrategy -up-|> Any #testsColor(test_sort_strategy_supertrait)
 Policy -right-> Context #testsColor(test_policy_fields): context
 Context -right-> SortStrategy #testsColor(test_context_fields): sortAlgorithm
 
