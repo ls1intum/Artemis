@@ -1,0 +1,5 @@
+<div id="difficulty-level" class="d-inline-flex gap-1" [ngbTooltip]="coloredDifficultyLevel.label">
+    <div class="skill-bar rounded-end rounded-5" [ngClass]="'bg-' + coloredDifficultyLevel.color[0]"></div>
+    <div class="skill-bar" [ngClass]="'bg-' + coloredDifficultyLevel.color[1]"></div>
+    <div class="skill-bar rounded-start rounded-5" [ngClass]="'bg-' + coloredDifficultyLevel.color[2]"></div>
+</div>

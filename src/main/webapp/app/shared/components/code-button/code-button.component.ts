@@ -34,6 +34,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     participations?: ProgrammingExerciseStudentParticipation[];
     @Input()
     exercise?: ProgrammingExercise;
+    @Input()
+    hideLabelMobile = false;
 
     useSsh = false;
     setupSshKeysUrl?: string;

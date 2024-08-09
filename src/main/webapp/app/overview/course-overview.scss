@@ -1,16 +1,6 @@
 /* ==========================================================================
 Course Info Bar
 ========================================================================== */
-.tab-bar-exercise-details {
-    flex-wrap: wrap;
-
-    // move instructor actions onto their own line for small/medium devices
-    .instructor-actions {
-        width: 100%;
-        justify-content: flex-end;
-    }
-}
-
 .course-body-container {
     position: relative;
 }

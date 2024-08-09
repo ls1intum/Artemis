@@ -18,6 +18,7 @@ import {
     IconDefinition,
     faChalkboardUser,
     faChartBar,
+    faChartColumn,
     faChevronRight,
     faCircleNotch,
     faClipboard,
@@ -28,7 +29,6 @@ import {
     faFlag,
     faGraduationCap,
     faListAlt,
-    faListCheck,
     faNetworkWired,
     faPersonChalkboard,
     faSync,
@@ -171,6 +171,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faChevronRight = faChevronRight;
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
+    faChartColumn = faChartColumn;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -445,7 +446,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
-            icon: faListCheck,
+            icon: faListAlt,
             title: 'Exercises',
             translation: 'artemisApp.courseOverview.menu.exercises',
             hidden: false,
@@ -453,7 +454,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         const statisticsItem: SidebarItem = {
             routerLink: 'statistics',
-            icon: faListAlt,
+            icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
             hasInOrionProperty: true,
