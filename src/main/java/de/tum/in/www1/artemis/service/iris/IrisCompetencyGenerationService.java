@@ -39,7 +39,7 @@ public class IrisCompetencyGenerationService {
                 "competency-extraction",
                 "default",
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getLogin())),
-                executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, CompetencyTaxonomy.values()),
+                executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, CompetencyTaxonomy.values(), 10),
                 stages -> websocketService.sendCompetencies(user.getLogin(), course.getId(), new PyrisCompetencyStatusUpdateDTO(stages, null))
         );
         // @formatter:on

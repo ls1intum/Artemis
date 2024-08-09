@@ -8,7 +8,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormArray, FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { ButtonType } from 'app/shared/components/button.component';
-import { finalize } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -29,9 +28,15 @@ export type CompetencyFormControls = {
     taxonomy: FormControl<CompetencyTaxonomy | undefined>;
 };
 
+type GeneratedCompetency = {
+    title: string;
+    description: string;
+    taxonomy: CompetencyTaxonomy;
+};
+
 type CompetencyGenerationStatusUpdate = {
     stages: IrisStageDTO[];
-    competencies: Competency[];
+    result: GeneratedCompetency[];
 };
 
 @Component({
@@ -77,27 +82,37 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      */
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
-        this.competencyService.generateCompetenciesFromCourseDescription(courseDescription, this.courseId).pipe(
-            finalize(() => {
-                this.isLoading = false;
-            }),
-        );
-        this.jhiWebsocketService.receive('/topic/iris/competencies/' + this.courseId).subscribe({
-            next: (update: CompetencyGenerationStatusUpdate) => {
-                if (update.competencies.length > 0) {
-                    // Receive all the competencies, but we only use the last one
-                    this.addCompetencyToForm(update.competencies.last()!);
-                }
-                if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
-                    this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.competencies?.length });
-                } else if (update.stages.some((stage) => stage.state === IrisStageStateDTO.ERROR)) {
-                    this.alertService.error('artemisApp.competency.generate.courseDescription.error');
-                }
-                if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
-                    this.jhiWebsocketService.unsubscribe('/topic/iris/competencies/' + this.courseId);
-                }
+        const websocketTopic = '/topic/iris/competencies/' + this.courseId;
+        this.competencyService.generateCompetenciesFromCourseDescription(courseDescription, this.courseId).subscribe({
+            next: () => {
+                this.jhiWebsocketService.subscribe(websocketTopic);
+                this.jhiWebsocketService.receive(websocketTopic).subscribe({
+                    next: (update: CompetencyGenerationStatusUpdate) => {
+                        if (update.result.length > 0) {
+                            // Receive all the competencies, but we only use the last one
+                            this.addCompetencyToForm(update.result[update.result.length - 1]);
+                        }
+                        if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
+                            this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
+                        } else if (update.stages.some((stage) => stage.state === IrisStageStateDTO.ERROR)) {
+                            this.alertService.error('artemisApp.competency.generate.courseDescription.error');
+                        }
+                        if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
+                            this.jhiWebsocketService.unsubscribe(websocketTopic);
+                            this.isLoading = false;
+                        }
+                    },
+                    error: (res: HttpErrorResponse) => {
+                        onError(this.alertService, res);
+                        this.jhiWebsocketService.unsubscribe(websocketTopic);
+                        this.isLoading = false;
+                    },
+                });
             },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            error: (res: HttpErrorResponse) => {
+                onError(this.alertService, res);
+                this.isLoading = false;
+            },
         });
     }
 
@@ -106,7 +121,8 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      * @param competency
      * @private
      */
-    private addCompetencyToForm(competency: Competency) {
+    private addCompetencyToForm(competency: GeneratedCompetency) {
+        // @ts-ignore
         const formGroup: FormGroup<CompetencyFormControlsWithViewed> = this.formBuilder.nonNullable.group({
             competency: this.formBuilder.nonNullable.group({
                 title: [competency.title],

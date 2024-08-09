@@ -9,5 +9,5 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutio
  * DTO to execute the Pyris competency extraction pipeline on Pyris
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisCompetencyExtractionPipelineExecutionDTO(PyrisPipelineExecutionDTO execution, String courseDescription, CompetencyTaxonomy[] taxonomyOptions) {
+public record PyrisCompetencyExtractionPipelineExecutionDTO(PyrisPipelineExecutionDTO execution, String courseDescription, CompetencyTaxonomy[] taxonomyOptions, int maxN) {
 }
