@@ -12,7 +12,7 @@ import { SidebarEventService } from './sidebar-event.service';
     styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
-    @Output() onSelectConversation = new EventEmitter<number>();
+    @Output() onSelectItemId = new EventEmitter<number>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
     @Output() onPlusPressed = new EventEmitter<string>();
     @Input() searchFieldEnabled: boolean = true;
@@ -60,10 +60,8 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             .subscribe((itemId) => {
                 if (itemId) {
                     this.storeLastSelectedItem(itemId);
-                    if (this.sidebarData.sidebarType == 'conversation') {
-                        this.onSelectConversation.emit(+itemId);
-                        this.onUpdateSidebar.emit();
-                    }
+                    this.onSelectItemId.emit(+itemId);
+                    this.onUpdateSidebar.emit();
                 }
             });
 
