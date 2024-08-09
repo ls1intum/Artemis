@@ -37,15 +37,7 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
     }
 
     &.exam-wrapper {
-        height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height);
-
-        &.exam-height-dev {
-            height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
-        }
-
-        @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height) !important;
-        }
+        height: 100vh !important;
     }
 
     .mat-drawer {
@@ -76,15 +68,7 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
             margin-left 0.2s ease-in-out !important;
 
         &.exam-wrapper {
-            height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height);
-
-            &.exam-height-dev {
-                height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
-            }
-
-            @media (max-width: 768px) {
-                height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height) !important;
-            }
+            height: 100vh !important;
         }
 
         &.sidenav-height-dev {
@@ -124,10 +108,6 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
             margin-left: $menu-width-closed !important;
         }
     }
-}
-
-.exam-end-view {
-    overflow-y: auto !important;
 }
 
 a:not(.btn):not(.tab-link):hover {

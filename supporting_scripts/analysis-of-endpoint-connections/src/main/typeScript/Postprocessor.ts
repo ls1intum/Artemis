@@ -24,7 +24,7 @@ enum ParsingResultType {
     GET_URL_FROM_GETTER_SUCCESS,
     GET_URL_FROM_GETTER_FAILURE,
 
-    UNABLE_TO_EVALUATE,
+    UNABLE_TO_EVALUATE, // no matching URL Parser is found
 }
 
 class ParsingResult {
@@ -38,13 +38,13 @@ class ParsingResult {
 }
 
 export class Postprocessor {
-    static filesWithRestCalls: { fileName: string, restCalls: RestCall[]}[] = [];
-    private restCalls: RestCall[] = [];
+    static filesWithRestCalls: { fileName: string, restCalls: RestCall[] }[] = [];
+    private readonly restCalls: RestCall[] = [];
     private readonly fileName: string;
-    private ast: TSESTree.Program;
+    private readonly ast: TSESTree.Program;
 
-    constructor(filePath: string) {
-        this.fileName = filePath;
+    constructor(fileName: string) {
+        this.fileName = fileName;
         this.ast = Preprocessor.parseTypeScriptFile(Preprocessor.pathPrefix + filePath)
     }
 
@@ -65,6 +65,13 @@ export class Postprocessor {
         }
     }
 
+    /**
+     * Extracts REST calls from the program's AST.
+     *
+     * This method iterates over the top-level nodes in the AST and checks if they are class declarations.
+     * If a class declaration is found, it calls `extractRestCallsFromClassDeclaration` to process it.
+     * After processing all nodes, if any REST calls were found, it adds them to the static `filesWithRestCalls` array.
+     */
     extractRestCallsFromClassDeclaration(classBody: TSESTree.ClassDeclaration) {
         for (const propertyDefinition of classBody.body.body) {
             if (propertyDefinition.type === 'MethodDefinition' && propertyDefinition.key.type === 'Identifier') {
@@ -73,6 +80,16 @@ export class Postprocessor {
         }
     }
 
+    /**
+     * Extracts REST calls from a method definition within a class declaration.
+     *
+     * This method traverses the AST of the provided method definition to identify HTTP client calls.
+     * It checks if the call expression is a member of an HTTP client and if the method name is one of the HTTP methods (GET, POST, PUT, DELETE, PATCH).
+     * If a valid HTTP call is found, it evaluates the URL and adds the REST call details to the `restCalls` array.
+     *
+     * @param methodDefinition - The AST node representing the method definition to extract REST calls from.
+     * @param classBody - The AST node representing the class declaration containing the method.
+     */
     extractRestCallsFromMethodDefinition(methodDefinition: TSESTree.MethodDefinition, classBody: TSESTree.ClassDeclaration) {
         simpleTraverse(methodDefinition, {
             enter: (node) => {
@@ -108,107 +125,201 @@ export class Postprocessor {
         });
     }
 
-    evaluateUrl(node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
-        let resultType = ParsingResultType.EVALUATE_URL_FAILURE;
-        let result: string[] = [];
-
-        if (node.type === 'Literal' && node.value) {
-            result.push(node.value.toString());
-            resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-        } else if (node.type === 'TemplateLiteral') {
-            const tempResult = this.evaluateTemplateLiteralExpression(node, methodDefinition, restCall, classBody);
-            if (tempResult.resultType === ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS) {
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                result = tempResult.result;
-            } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
-                resultType = ParsingResultType.UNABLE_TO_EVALUATE;
-            }
-        } else if (node.type === 'MemberExpression') {
-            if (node.object.type === 'ThisExpression' && node.property.type === 'Identifier') {
-                let tempResult = this.getMemberExpressionValueFromNameAndClassBody(node.property.name, classBody);
-
-                if (tempResult.resultType === ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE) {
-                    // If the member expression value is not found in the class body, try to evaluate it from the Child Classes
-                    tempResult = this.evaluateMemberVariableFromChildClasses(classBody, node.property.name);
-                    if (tempResult.resultType === ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE) {
-                        // if the member expression value is not found in the child classes, the value is defined dynamically and a placeholder is returned.
-                        result.push('${' + `this.${node.property.name}` + '}');
-                        resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                    } else  {
-                        // else, the values found in the child classes are returned.
-                        result = tempResult.result;
-                        resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                    }
-                } else {
-                    // if the member expression value is found in the class body, the value is returned.
-                    resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                    result = tempResult.result;
-                }
-            } else if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
-                result.push('${' + `${node.object.name}.${node.property.name}` + '}');
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-            }
-        } else if (node.type === 'Identifier') {
-            let tempResult = this.getMethodVariableValueFromNameAndMethod(node.name, node, methodDefinition, restCall, classBody);
-            if (tempResult.resultType === ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS) {
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                result = tempResult.result;
-            } else {
-                // If the value is not found in the method, try to find method calls from the method name and return the parameter value. If there are method calls that pass on the URL, it is the complete URL that is passed on.
-                tempResult = new ParsingResult(ParsingResultType.GET_URLS_FROM_CALLING_METHODS_FAILURE, []);
-
-                if (methodDefinition.key.type === 'Identifier') {
-                    tempResult = this.findMethodCallsFromMethodNameAndClassBody(methodDefinition.key.name, classBody, restCall);
-                }
-
-                if (tempResult.resultType === ParsingResultType.GET_URLS_FROM_CALLING_METHODS_SUCCESS) {
-                    result = tempResult.result;
-                    resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                } else {
-                    // If the value is not found in the method calls, the value is defined dynamically and a placeholder is returned.
-                    result.push('${' + node.name + '}');
-                    resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                }
-            }
-        } else if (node.type === 'BinaryExpression') {
-            let tempResult = this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
-            if (tempResult.resultType === ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS) {
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-                result = tempResult.result;
-            } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
-                resultType = ParsingResultType.UNABLE_TO_EVALUATE;
-            } else {
-                result.push('Unknown URL');
-                resultType = ParsingResultType.EVALUATE_URL_FAILURE;
-            }
-        } else if (node.type === 'CallExpression') {
-            // Sometimes, The ResourceURL is built and fetched using a getterMethod
-            let tempResult= this.getUrlFromGetterMethodCall(node, classBody);
-            if (tempResult.resultType === ParsingResultType.GET_URL_FROM_GETTER_SUCCESS) {
-                result = tempResult.result;
-                resultType = ParsingResultType.EVALUATE_URL_SUCCESS;
-            } else {
-                resultType = ParsingResultType.UNABLE_TO_EVALUATE;
-            }
-        } else {
-            resultType = ParsingResultType.UNABLE_TO_EVALUATE;
+    /**
+     * Evaluates a given AST node to determine its URL value.
+     *
+     * This method takes an AST node and determines its URL value by delegating to helper methods
+     * based on the node type. It supports various node types such as Literal, TemplateLiteral,
+     * MemberExpression, Identifier, BinaryExpression, and CallExpression.
+     *
+     * @param node - The AST node to evaluate.
+     * @param methodDefinition - The AST node representing the method definition containing the node.
+     * @param restCall - The AST node representing the REST call expression.
+     * @param classBody - The AST node representing the class declaration containing the method.
+     * @returns A ParsingResult object containing the evaluation result and the URL(s) if successful.
+     */
+    evaluateUrl(node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        switch (node.type) {
+            case 'Literal':
+                return this.evaluateLiteralHelper(node);
+            case 'TemplateLiteral':
+                return this.evaluateTemplateLiteralHelper(node, methodDefinition, restCall, classBody);
+            case 'MemberExpression':
+                return this.evaluateMemberExpressionHelper(node, classBody);
+            case 'Identifier':
+                return this.evaluateIdentifierHelper(node, methodDefinition, restCall, classBody);
+            case 'BinaryExpression':
+                return this.evaluateBinaryExpressionHelper(node, methodDefinition, restCall, classBody);
+            case 'CallExpression':
+                return this.evaluateCallExpressionHelper(node, classBody);
+            default:
+                return new ParsingResult(ParsingResultType.UNABLE_TO_EVALUATE, ['FAILED_TO_EVALUATE_URL']);
         }
-
-        if (resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
-            result = ['FAILED_TO_EVALUATE_URL']
-        }
-
-        return new ParsingResult(resultType, result);
     }
 
-    isCalleeHttpClient(callee: TSESTree.MemberExpression) {
+    /**
+     * Evaluates a literal AST node to determine its URL value.
+     *
+     * This method checks if the provided literal node has a value. If it does, it converts the value to a string
+     * and returns a ParsingResult indicating success. If the node does not have a value, it returns a ParsingResult
+     * indicating failure.
+     *
+     * @param node - The AST node representing the literal to evaluate.
+     * @returns A ParsingResult object containing the evaluation result and the URL if successful.
+     */
+    evaluateLiteralHelper(node: TSESTree.Literal): ParsingResult {
+        if (node.value) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, [node.value.toString()]);
+        }
+        return new ParsingResult(ParsingResultType.EVALUATE_URL_FAILURE, []);
+    }
+
+    /**
+     * Evaluates a template literal AST node to determine its URL value.
+     *
+     * This method evaluates the provided template literal node by calling `evaluateTemplateLiteralExpression`.
+     * If the evaluation is successful, it returns a ParsingResult indicating success.
+     * If the evaluation is unable to determine the URL, it returns a ParsingResult indicating that.
+     * Otherwise, it returns a ParsingResult indicating failure.
+     *
+     * @param node - The AST node representing the template literal to evaluate.
+     * @param methodDefinition - The AST node representing the method definition containing the node.
+     * @param restCall - The AST node representing the REST call expression.
+     * @param classBody - The AST node representing the class declaration containing the method.
+     * @returns A ParsingResult object containing the evaluation result and the URL(s) if successful.
+     */
+    evaluateTemplateLiteralHelper(node: TSESTree.TemplateLiteral, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        const tempResult = this.evaluateTemplateLiteralExpression(node, methodDefinition, restCall, classBody);
+        if (tempResult.resultType === ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+            return new ParsingResult(ParsingResultType.UNABLE_TO_EVALUATE, []);
+        }
+        return new ParsingResult(ParsingResultType.EVALUATE_URL_FAILURE, []);
+    }
+
+    /**
+     * Evaluates a member expression AST node to determine its URL value.
+     *
+     * This method checks if the provided member expression node is a `this` expression or an identifier.
+     * If it is a `this` expression, it attempts to get the member expression value from the class body.
+     * If the evaluation fails, it tries to evaluate the member variable from child classes.
+     * If both evaluations fail, it returns a URL template string.
+     * If it is an identifier, it returns a URL template string directly.
+     *
+     * @param node - The AST node representing the member expression to evaluate.
+     * @param classBody - The AST node representing the class declaration containing the member expression.
+     * @returns A ParsingResult object containing the evaluation result and the URL if successful.
+     */
+    evaluateMemberExpressionHelper(node: TSESTree.MemberExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        if (node.object.type === 'ThisExpression' && node.property.type === 'Identifier') {
+            let tempResult = this.getMemberExpressionValueFromNameAndClassBody(node.property.name, classBody);
+            if (tempResult.resultType === ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE) {
+                tempResult = this.evaluateMemberVariableFromChildClasses(classBody, node.property.name);
+                if (tempResult.resultType === ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE) {
+                    return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, [`\${this.${node.property.name}}`]);
+                }
+            }
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        } else if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, [`\${${node.object.name}.${node.property.name}}`]);
+        }
+        return new ParsingResult(ParsingResultType.EVALUATE_URL_FAILURE, []);
+    }
+
+    /**
+     * Evaluates an identifier AST node to determine its URL value.
+     *
+     * This method attempts to find the value of the identifier by checking the method's variables.
+     * If successful, it returns a ParsingResult indicating success. If not, it searches for method calls
+     * within the class body that match the method name and evaluates their URLs.
+     * If successful, it returns a ParsingResult indicating success. Otherwise, it returns a string in the format ${variableName}.
+     *
+     * @param node - The AST node representing the identifier to evaluate.
+     * @param methodDefinition - The AST node representing the method definition containing the identifier.
+     * @param restCall - The AST node representing the REST call expression.
+     * @param classBody - The AST node representing the class declaration containing the method.
+     * @returns A ParsingResult object containing the evaluation result and the URL(s) if successful.
+     */
+    evaluateIdentifierHelper(node: TSESTree.Identifier, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        let tempResult = this.getMethodVariableValueFromNameAndMethod(node.name, node, methodDefinition, restCall, classBody);
+        if (tempResult.resultType === ParsingResultType.GET_VARIABLE_FROM_METHOD_SUCCESS) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        }
+
+        if (methodDefinition.key.type === 'Identifier') {
+            tempResult = this.findMethodCallsFromMethodNameAndClassBody(methodDefinition.key.name, classBody, restCall);
+        }
+
+        if (tempResult.resultType === ParsingResultType.GET_URLS_FROM_CALLING_METHODS_SUCCESS) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        }
+        return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, [`\${${node.name}}`]);
+    }
+
+    evaluateBinaryExpressionHelper(node: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        const tempResult = this.evaluateBinaryExpression(node, methodDefinition, restCall, classBody);
+        if (tempResult.resultType === ParsingResultType.EVALUATE_BINARY_EXPRESSION_SUCCESS) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        } else if (tempResult.resultType === ParsingResultType.UNABLE_TO_EVALUATE) {
+            return new ParsingResult(ParsingResultType.UNABLE_TO_EVALUATE, []);
+        }
+        return new ParsingResult(ParsingResultType.EVALUATE_URL_FAILURE, ['Unknown URL']);
+    }
+
+    /**
+     * Evaluates a binary expression AST node to determine its URL value.
+     *
+     * This method evaluates the provided binary expression node by calling `evaluateBinaryExpression`.
+     * If the evaluation is successful, it returns a ParsingResult indicating success.
+     * If the evaluation is unable to determine the URL, it returns a ParsingResult indicating that.
+     * Otherwise, it returns a ParsingResult indicating failure.
+     *
+     * @param node - The AST node representing the binary expression to evaluate.
+     * @param methodDefinition - The AST node representing the method definition containing the node.
+     * @param restCall - The AST node representing the REST call expression.
+     * @param classBody - The AST node representing the class declaration containing the method.
+     * @returns A ParsingResult object containing the evaluation result and the URL(s) if successful.
+     */
+    evaluateCallExpressionHelper(node: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
+        const tempResult = this.getUrlFromGetterMethodCall(node, classBody);
+        if (tempResult.resultType === ParsingResultType.GET_URL_FROM_GETTER_SUCCESS) {
+            return new ParsingResult(ParsingResultType.EVALUATE_URL_SUCCESS, tempResult.result);
+        }
+        return new ParsingResult(ParsingResultType.UNABLE_TO_EVALUATE, []);
+    }
+
+    /**
+     * Checks if the callee is an HTTP client.
+     *
+     * This method determines if the provided member expression represents an HTTP client.
+     * It checks if the object of the member expression is another member expression and if its property is an identifier.
+     * If these conditions are met, it further checks if the type of the member expression is 'HttpClient'.
+     *
+     * @param callee - The AST node representing the member expression to check.
+     * @returns A boolean indicating whether the callee is an HTTP client.
+     */
+    isCalleeHttpClient(callee: TSESTree.MemberExpression): boolean {
         if (callee.object.type === 'MemberExpression' && callee.object.property.type === 'Identifier') {
             return this.getMemberExpressionTypeFromName(callee.object.property.name) === 'HttpClient';
         }
         return false;
     }
 
-    evaluateTemplateLiteralExpression(templateLiteral: TSESTree.TemplateLiteral, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+    /**
+     * Evaluates a template literal AST node to determine its URL value.
+     *
+     * This method evaluates the provided template literal node by iterating over its quasis and expressions.
+     * It calls `evaluateUrl` on each expression and concatenates the results with the quasi values.
+     * If the evaluation of any expression fails, it updates the result type accordingly.
+     *
+     * @param templateLiteral - The AST node representing the template literal to evaluate.
+     * @param methodDefinition - The AST node representing the method definition containing the template literal.
+     * @param restCall - The AST node representing the REST call expression.
+     * @param classBody - The AST node representing the class declaration containing the method.
+     * @returns A ParsingResult object containing the evaluation result and the URL(s) if successful.
+     */
+    evaluateTemplateLiteralExpression(templateLiteral: TSESTree.TemplateLiteral, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
         let resultType = ParsingResultType.EVALUATE_TEMPLATE_LITERAL_SUCCESS;
 
         let evaluatedURL = '';
@@ -238,7 +349,21 @@ export class Postprocessor {
         return new ParsingResult(resultType, [evaluatedURL]);
     }
 
-    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+    /**
+     * Evaluates a binary expression AST node to determine its URL value.
+     *
+     * This method evaluates the left and right sides of the provided binary expression node by calling `evaluateUrl`.
+     * If both evaluations are successful, it concatenates the results and returns a ParsingResult indicating success.
+     * If either evaluation is unable to determine the URL, it returns a ParsingResult indicating that.
+     * Otherwise, it returns a ParsingResult indicating failure.
+     *
+     * @param binaryExpression - The AST node representing the binary expression to evaluate.
+     * @param methodDefinition - The AST node representing the method definition containing the binary expression.
+     * @param restCall - The AST node representing the REST call expression.
+     * @param classBody - The AST node representing the class declaration containing the method.
+     * @returns A ParsingResult object containing the evaluation result and the URL(s) if successful.
+     */
+    evaluateBinaryExpression(binaryExpression: TSESTree.BinaryExpression, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
         const left = binaryExpression.left;
         const right = binaryExpression.right;
         let leftParsingResult = this.evaluateUrl(left, methodDefinition, restCall, classBody);
@@ -272,7 +397,7 @@ export class Postprocessor {
      *          `callExpression` is the AST node representing the found call expression,
      *          and `parameterValue` is the value of the first argument passed to the call expression.
      */
-    findMethodCallsFromMethodNameAndClassBody(methodName: string, classBody: TSESTree.ClassDeclaration, restCall: TSESTree.CallExpression) {
+    findMethodCallsFromMethodNameAndClassBody(methodName: string, classBody: TSESTree.ClassDeclaration, restCall: TSESTree.CallExpression): ParsingResult {
         let methodCalls: { callExpression: TSESTree.CallExpression, parameterValue: string }[] = [];
         let parsingResultType = ParsingResultType.GET_URLS_FROM_CALLING_METHODS_FAILURE;
 
@@ -305,24 +430,44 @@ export class Postprocessor {
         return new ParsingResult(parsingResultType, result);
     }
 
-    getMemberExpressionValueFromNameAndClassBody(name: string, classBody: TSESTree.ClassDeclaration) {
+    /**
+     * Retrieves the value of a member expression from a class body by its name.
+     *
+     * This method traverses the class body to find a property definition that matches the provided name.
+     * If a matching property definition is found and its value is a literal, the value is added to the result array.
+     * The result type is updated to indicate success if a matching property is found.
+     *
+     * @param name - The name of the member expression to find.
+     * @param classBody - The AST node representing the class declaration containing the member expression.
+     * @returns A ParsingResult object containing the evaluation result and the member expression value(s) if successful.
+     */
+    getMemberExpressionValueFromNameAndClassBody(name: string, classBody: TSESTree.ClassDeclaration): ParsingResult {
         let memberExpressionResult: string[] = [];
         let resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE;
         simpleTraverse(classBody, {
             enter(node) {
-                if (node.type === 'PropertyDefinition' && node.value?.type === 'Literal' && node.key.type === 'Identifier' && node.value.value) {
-                    if (node.key.name === name) {
-                        memberExpressionResult.push(node.value.value.toString());
-                        resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_SUCCESS;
-                        return;
-                    }
+                if (node.type === 'PropertyDefinition' && node.value?.type === 'Literal' && node.key.type === 'Identifier' && node.value.value && node.key.name === name) {
+                    memberExpressionResult.push(node.value.value.toString());
+                    resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_SUCCESS;
+                    return;
                 }
             }
         });
         return new ParsingResult(resultType, memberExpressionResult);
     }
 
-    getMemberExpressionTypeFromName(name: string) {
+    /**
+     * Retrieves the type of a member expression by its name.
+     *
+     * This method traverses the AST to find a property definition or parameter property that matches the provided name.
+     * If a matching property definition is found, it returns the type of the property.
+     * If a matching parameter property is found, it returns the type of the parameter.
+     * If no match is found, it returns 'Unknown Type'.
+     *
+     * @param name - The name of the member expression to find the type for.
+     * @returns A string representing the type of the member expression.
+     */
+    getMemberExpressionTypeFromName(name: string): string {
         let memberExpressionType = 'Unknown Type';
         simpleTraverse(this.ast, {
             enter: (node) => {
@@ -338,7 +483,18 @@ export class Postprocessor {
         return memberExpressionType;
     }
 
-    getUrlFromGetterMethodCall(callExpression: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+    /**
+     * Retrieves the URL from a getter method call.
+     *
+     * This method evaluates a call expression to determine if it is a call to a getter method.
+     * If it is, it traverses the class body to find the corresponding method definition.
+     * It then evaluates the return statement of the getter method to extract the URL.
+     *
+     * @param callExpression - The AST node representing the call expression to evaluate.
+     * @param classBody - The AST node representing the class declaration containing the method.
+     * @returns A ParsingResult object containing the evaluation result and the URL(s) if successful.
+     */
+    getUrlFromGetterMethodCall(callExpression: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
         let parsingResultType = ParsingResultType.GET_URL_FROM_GETTER_FAILURE;
         let parsingResult: string[] = [];
 
@@ -365,7 +521,21 @@ export class Postprocessor {
         return new ParsingResult(parsingResultType, parsingResult);
     }
 
-    getMethodVariableValueFromNameAndMethod(name: string, node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration) {
+    /**
+     * Retrieves the value of a variable from a method by its name.
+     *
+     * This method traverses the provided method definition to find a variable declaration that matches the provided name.
+     * If a matching variable declaration is found and its initializer can be evaluated to a URL, the value is added to the result array.
+     * The result type is updated to indicate success if a matching variable is found.
+     *
+     * @param name - The name of the variable to find.
+     * @param node - The AST node representing the current node in the traversal.
+     * @param methodDefinition - The AST node representing the method definition containing the variable.
+     * @param restCall - The AST node representing the REST call expression.
+     * @param classBody - The AST node representing the class declaration containing the method.
+     * @returns A ParsingResult object containing the evaluation result and the variable value(s) if successful.
+     */
+    getMethodVariableValueFromNameAndMethod(name: string, node: TSESTree.Node, methodDefinition: TSESTree.MethodDefinition, restCall: TSESTree.CallExpression, classBody: TSESTree.ClassDeclaration): ParsingResult {
         let result: string[] = [];
         let resultType = ParsingResultType.GET_VARIABLE_FROM_METHOD_FAILURE;
         simpleTraverse(methodDefinition, {
@@ -389,14 +559,34 @@ export class Postprocessor {
         return new ParsingResult(resultType, result);
     }
 
-    getClassNameFromClassBody(classBody: TSESTree.ClassDeclaration) {
+    /**
+     * Retrieves the class name from a class declaration AST node.
+     *
+     * This method checks if the provided class declaration node has an identifier.
+     * If it does, it returns the name of the class. If the class declaration does not have an identifier,
+     * it returns 'Unknown URL'.
+     *
+     * @param classBody - The AST node representing the class declaration to extract the name from.
+     * @returns A string representing the name of the class, or 'Unknown URL' if the class has no identifier.
+     */
+    getClassNameFromClassBody(classBody: TSESTree.ClassDeclaration): string {
         if (classBody.id?.type === 'Identifier') {
             return classBody.id.name;
         }
         return 'Unknown URL';
     }
 
-    getConstructorArgumentsFromClassBody(classBody: TSESTree.ClassBody) {
+    /**
+     * Retrieves the constructor arguments from a class body.
+     *
+     * This method iterates over the nodes in the class body to find the constructor method definition.
+     * If the constructor is found, it returns the parameters of the constructor.
+     * If no constructor is found, it returns an empty array.
+     *
+     * @param classBody - The AST node representing the class body to extract constructor arguments from.
+     * @returns An array of AST nodes representing the parameters of the constructor.
+     */
+    getConstructorArgumentsFromClassBody(classBody: TSESTree.ClassBody): TSESTree.Parameter[] {
         for (let node of classBody.body) {
             if (node.type === 'MethodDefinition' && node.key.type === 'Identifier' && node.key.name === 'constructor') {
                 return node.value.params;
@@ -406,7 +596,19 @@ export class Postprocessor {
         return [];
     }
 
-    evaluateMemberVariableFromChildClasses(classBody: TSESTree.ClassDeclaration, memberExprKey: string) {
+    /**
+     * Evaluates the value of a member variable from child classes.
+     *
+     * This method attempts to find the value of a member variable by traversing the class hierarchy.
+     * It first retrieves the superclass information from the preprocessing results.
+     * Then, it iterates over the constructor arguments of the superclass to find a match for the member variable.
+     * If a match is found, the value is added to the result array and the result type is updated to indicate success.
+     *
+     * @param classBody - The AST node representing the class declaration containing the member variable.
+     * @param memberExprKey - The name of the member variable to evaluate.
+     * @returns A ParsingResult object containing the evaluation result and the member variable value(s) if successful.
+     */
+    evaluateMemberVariableFromChildClasses(classBody: TSESTree.ClassDeclaration, memberExprKey: string): ParsingResult {
         let memberExpressionResult: string[] = [];
         let resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_FAILURE;
 

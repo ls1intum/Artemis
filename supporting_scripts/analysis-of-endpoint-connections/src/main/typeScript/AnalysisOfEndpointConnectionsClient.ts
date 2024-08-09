@@ -11,12 +11,12 @@ import { writeFileSync } from 'node:fs';
  * @param files - An array to store the collected TypeScript file paths.
  * @returns An array of TypeScript file paths relative to 'src/main/webapp/app'.
  */
-function collectTypeScriptFiles(dir: string, files: string[] = []) {
+function collectTypeScriptFiles(dir: string, files: string[] = []) : string[] {
     const entries = readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
         const fullPath = join(dir, entry.name);
 
-        const filePathFromSrcFolder = fullPath.substring(fullPath.indexOf('src/main/webapp/app') - 'src/main/webapp/app'.length + 'src/main/webapp/app'.length);
+        const filePathFromSrcFolder = fullPath.substring(fullPath.indexOf('src/main/webapp/app'));
         if (entry.isDirectory()) {
             collectTypeScriptFiles(fullPath, files);
         } else if (entry.isFile() && entry.name.endsWith('.ts')) {
@@ -26,7 +26,7 @@ function collectTypeScriptFiles(dir: string, files: string[] = []) {
     return files;
 }
 
-const clientDirPath = resolve('../../../../../src/main/webapp/app');
+const clientDirPath = resolve('src/main/webapp/app');
 
 const tsFiles = collectTypeScriptFiles(clientDirPath);
 
@@ -42,4 +42,8 @@ tsFiles.forEach((filePath) => {
     postProcessor.extractRestCalls();
 });
 
-writeFileSync('../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
+try {
+    writeFileSync('supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
+} catch (error) {
+    console.error('Failed to write REST calls to file:', error);
+}

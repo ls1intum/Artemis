@@ -53,12 +53,14 @@ public class LearningPathNavigationService {
         if (currentLearningObject == null) {
             currentLearningObject = learningPathRecommendationService.getLastLearningObject(learningPath.getUser(), recommendationStateWithAllCompetencies);
 
-            // If we still didn't find any learning object, there exists no learning object in the learning path and we can return an empty navigation
             if (currentLearningObject == null) {
+                // If we still didn't find any learning object, there exists no learning object in the learning path and we can return an empty navigation
                 return new LearningPathNavigationDTO(null, null, null, learningPath.getProgress());
             }
             else {
                 competencyOfCurrentLearningObject = findCorrespondingCompetencyForLearningObject(recommendationStateWithAllCompetencies, currentLearningObject, false);
+                return new LearningPathNavigationDTO(LearningPathNavigationObjectDTO.of(currentLearningObject, true, competencyOfCurrentLearningObject.getId()), null, null,
+                        learningPath.getProgress());
             }
         }
         else {

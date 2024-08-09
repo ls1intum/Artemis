@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the CoverageReport entity.
@@ -67,7 +66,6 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
     Optional<CoverageReport> findCoverageReportByIdWithEagerFileReportsAndEntries(@Param("coverageReportId") Long coverageReportId);
 
     default CoverageReport findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(Long coverageReportId) {
-        var optionalReport = findCoverageReportByIdWithEagerFileReportsAndEntries(coverageReportId);
-        return optionalReport.orElseThrow(() -> new EntityNotFoundException("Coverage Report", coverageReportId));
+        return getValueElseThrow(findCoverageReportByIdWithEagerFileReportsAndEntries(coverageReportId), coverageReportId);
     }
 }
