@@ -28,7 +28,7 @@ import { Competency } from 'app/entities/competency.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
@@ -183,5 +183,23 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.getActionType(new TextUnit())).toEqual(ActionType.Delete);
         expect(lectureUnitManagementComponent.getActionType(new VideoUnit())).toEqual(ActionType.Delete);
         expect(lectureUnitManagementComponent.getActionType(new OnlineUnit())).toEqual(ActionType.Delete);
+    });
+
+    describe('viewButtonAvailable', () => {
+        it('should return true for an attachment unit with a PDF link', () => {
+            const lectureUnit = {
+                type: LectureUnitType.ATTACHMENT,
+                attachment: { link: 'file.pdf' },
+            } as LectureUnit;
+            expect(lectureUnitManagementComponent.viewButtonAvailable(lectureUnit)).toBeTrue();
+        });
+
+        it('should return false for an attachment unit with a non-PDF link', () => {
+            const lectureUnit = {
+                type: LectureUnitType.ATTACHMENT,
+                attachment: { link: 'file.txt' },
+            };
+            expect(lectureUnitManagementComponent.viewButtonAvailable(lectureUnit)).toBeFalse();
+        });
     });
 });

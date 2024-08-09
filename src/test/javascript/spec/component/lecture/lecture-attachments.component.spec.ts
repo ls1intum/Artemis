@@ -20,6 +20,7 @@ import { of, take, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LectureService } from 'app/lecture/lecture.service';
+import { RouterModule } from '@angular/router';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
@@ -84,7 +85,7 @@ describe('LectureAttachmentsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), RouterModule],
             declarations: [
                 LectureAttachmentsComponent,
                 MockComponent(FormDateTimePickerComponent),
@@ -381,4 +382,23 @@ describe('LectureAttachmentsComponent', () => {
         expect(comp.attachmentToBeCreated.link).toBe(myBlob1.name);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
+
+    describe('viewButtonAvailable', () => {
+        it('should return true if the attachment link ends with .pdf', () => {
+            const attachment = { id: 1, link: 'example.pdf', attachmentType: 'FILE' } as Attachment;
+            expect(comp.viewButtonAvailable(attachment)).toBeTrue();
+        });
+
+        it('should return false if the attachment link does not end with .pdf', () => {
+            const attachment = { id: 2, link: 'example.txt', attachmentType: 'FILE' } as Attachment;
+            expect(comp.viewButtonAvailable(attachment)).toBeFalse();
+        });
+
+        it('should return false for other common file extensions', () => {
+            const attachments = [{ link: 'document.docx' }, { link: 'spreadsheet.xlsx' }, { link: 'presentation.pptx' }, { link: 'image.jpeg' }];
+            attachments.forEach((att) => {
+                expect(comp.viewButtonAvailable(att)).toBeFalse();
+            });
+        });
+    });
 });
