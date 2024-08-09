@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.ASSE
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.HASKELL;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVASCRIPT;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.KOTLIN;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.OCAML;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.PYTHON;
@@ -46,5 +47,6 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, true, false, false, false, true, List.of(), false, true));
         programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, true, List.of(), false, true));
         programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, false, true, true, false, List.of(PLAIN), false, true));
+        programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, false, false, false, false, false, List.of(), false, true));
     }
 }
