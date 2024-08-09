@@ -33,7 +33,8 @@
             "manage": "Verwalten",
             "studentView": "Studentenansicht",
             "general": {
-                "noDataFound": "Keine Einträge gefunden."
+                "noDataFound": "Keine Einträge gefunden.",
+                "noElementFoundWithAppliedFilter": "Keine Einträge für die angewendeten Filtereinstellungen gefunden."
             },
             "sidebar": {
                 "past": "Vorangegangen",
@@ -88,6 +89,17 @@
                 "communication": "Kommunikation",
                 "plagiarismCases": "Plagiatsfälle",
                 "gradingSystem": "Notenschlüssel"
+            },
+            "exerciseFilter": {
+                "filter": "Filter",
+                "modalTitle": "Aufgaben Filtern",
+                "dueDateRange": "Zeitraum der Einreichungsfrist",
+                "achievedScore": "Erreichtes Ergebnis",
+                "achievablePoints": "Erreichbare Punktzahl",
+                "applyFilter": "Filter anwenden",
+                "resetFilter": "Filter zurücksetzen",
+                "noFilterAvailable": "Für die bisherigen Aufgaben gibt es keine unterscheidenden Filteroptionen",
+                "noMoreOptions": "Keine weiteren Auswahlmöglichkeiten"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",

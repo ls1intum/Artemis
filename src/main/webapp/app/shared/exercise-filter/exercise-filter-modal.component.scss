@@ -1,0 +1,14 @@
+::ng-deep ngb-typeahead-window.dropdown-menu {
+    max-height: 25rem !important;
+    overflow-y: auto !important;
+}
+
+.no-left-margin-padding:first-child {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}
+
+.form-control:disabled,
+.form-control[disabled] {
+    pointer-events: none;
+}

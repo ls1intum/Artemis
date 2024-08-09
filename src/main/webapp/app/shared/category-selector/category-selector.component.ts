@@ -1,13 +1,12 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormControl } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { Observable, map, startWith } from 'rxjs';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
@@ -44,8 +43,7 @@ export class CategorySelectorComponent implements OnChanges {
     separatorKeysCodes = [ENTER, COMMA, TAB];
     categoryCtrl = new FormControl<string | undefined>(undefined);
 
-    // Icons
-    faTimes = faTimes;
+    readonly faTimes = faTimes;
 
     ngOnChanges() {
         this.uniqueCategoriesForAutocomplete = this.categoryCtrl.valueChanges.pipe(
@@ -134,10 +132,7 @@ export class CategorySelectorComponent implements OnChanges {
     }
 
     private createCategory(categoryString: string): ExerciseCategory {
-        const category = new ExerciseCategory();
-        category.category = categoryString;
-        category.color = this.chooseRandomColor();
-        return category;
+        return new ExerciseCategory(categoryString, this.chooseRandomColor());
     }
 
     private chooseRandomColor(): string {

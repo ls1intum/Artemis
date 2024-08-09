@@ -24,10 +24,10 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
+    @Input() isFilterActive: boolean = false;
 
-    //icon
-    faChevronRight = faChevronRight;
-    faFile = faFile;
+    readonly faChevronRight = faChevronRight;
+    readonly faFile = faFile;
 
     ngOnInit() {
         this.expandGroupWithSelectedItem();
@@ -35,7 +35,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     }
 
     ngOnChanges() {
-        if (this.searchValue) {
+        if (this.searchValue || this.isFilterActive) {
             this.expandAll();
         } else {
             this.setStoredCollapseState();

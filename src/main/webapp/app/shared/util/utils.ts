@@ -156,3 +156,18 @@ export function scrollToTopOfPage() {
 export function isExamExercise(exercise: Exercise) {
     return exercise.course === undefined;
 }
+
+/**
+ * Rounds a value up to the nearest multiple
+ *
+ * @param value    that shall be rounded
+ * @param multiple to which we round up
+ * @param roundUp  if true, we round up, otherwise we round down
+ */
+export function roundToNextMultiple(value: number, multiple: number, roundUp: boolean) {
+    if (roundUp) {
+        return Math.ceil(value / multiple) * multiple;
+    }
+
+    return Math.floor(value / multiple) * multiple;
+}

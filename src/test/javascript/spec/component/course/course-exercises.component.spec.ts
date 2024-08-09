@@ -29,6 +29,7 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { By } from '@angular/platform-browser';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -44,7 +45,7 @@ describe('CourseExercisesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, RouterTestingModule.withRoutes([]), MockModule(ReactiveFormsModule)],
+            imports: [ArtemisTestModule, FormsModule, RouterTestingModule.withRoutes([]), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
             declarations: [
                 CourseExercisesComponent,
                 SidebarComponent,

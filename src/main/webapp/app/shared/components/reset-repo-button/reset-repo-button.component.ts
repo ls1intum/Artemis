@@ -29,8 +29,7 @@ export class ResetRepoButtonComponent implements OnInit {
 
     beforeIndividualDueDate: boolean;
 
-    // Icons
-    faBackward = faBackward;
+    readonly faBackward = faBackward;
 
     constructor(
         private participationService: ParticipationService,

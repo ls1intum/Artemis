@@ -4,25 +4,39 @@ import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medi
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
 import { ArtemisTestModule } from '../../../test.module';
-import { DebugElement } from '@angular/core';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
 import { By } from '@angular/platform-browser';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterModule } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
+import { ExerciseFilterResults } from 'app/types/exercise-filter';
+import { EventEmitter } from '@angular/core';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 describe('SidebarComponent', () => {
     let component: SidebarComponent;
     let fixture: ComponentFixture<SidebarComponent>;
-    let debugElement: DebugElement;
+    let modalService: NgbModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(RouterModule)],
+            imports: [
+                ArtemisTestModule,
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(RouterModule),
+                MockDirective(TranslateDirective),
+                MockComponent(ExerciseFilterModalComponent),
+            ],
             declarations: [
                 SidebarComponent,
                 SidebarCardMediumComponent,
@@ -33,18 +47,19 @@ describe('SidebarComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockRouterLinkDirective,
             ],
+            providers: [MockProvider(NgbModal)],
         }).compileComponents();
     });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarComponent);
         component = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        fixture.detectChanges();
-    });
+        modalService = TestBed.inject(NgbModal);
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
+        component.sidebarData = {
+            sidebarType: 'default',
+        } as SidebarData;
+        fixture.detectChanges();
     });
 
     it('should filter sidebar items based on search criteria', () => {
@@ -71,11 +86,16 @@ describe('SidebarComponent', () => {
             groupByCategory: true,
             ungroupedData: [],
         };
-        fixture.detectChanges();
+        component.sidebarDataBeforeFiltering = {
+            groupByCategory: true,
+            ungroupedData: [] as SidebarCardElement[],
+        };
 
-        const noDataMessageElement = debugElement.query(By.css('[jhiTranslate$=noDataFound]'));
+        const noDataMessageElement = fixture.debugElement.query(By.css('.scrollable-item-content')).nativeElement;
+
         expect(noDataMessageElement).toBeTruthy();
-        expect(noDataMessageElement.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.courseOverview.general.noDataFound');
+        // unfortunately the translation key is cut off in debug mode that seems to be used for testing
+        expect(noDataMessageElement.getAttribute('ng-reflect-jhi-translate')).toBe('artemisApp.courseOverview.gene');
     });
 
     it('should give the correct size for exercises', () => {
@@ -108,5 +128,119 @@ describe('SidebarComponent', () => {
 
         const size = component.getSize();
         expect(size).toBe('M');
+    });
+
+    describe('openFilterExercisesLink', () => {
+        const FILTER_LINK_SELECTOR = '.text-primary a';
+
+        it('should display the filter link', () => {
+            component.showFilter = true;
+            fixture.detectChanges();
+
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
+
+            expect(filterLink).toBeTruthy();
+        });
+
+        it('should NOT display the filter link when sidebarType is NOT exercise', () => {
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
+
+            expect(filterLink).toBeFalsy();
+        });
+
+        it('should open modal on click with initialized filters', () => {
+            component.showFilter = true;
+            fixture.detectChanges();
+            const filterAppliedMock = new EventEmitter<ExerciseFilterResults>();
+            const mockReturnValue = {
+                result: Promise.resolve({}),
+                componentInstance: {
+                    sidebarData: {},
+                    exerciseFilters: {},
+                    filterApplied: filterAppliedMock,
+                },
+            } as NgbModalRef;
+            const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+            const openFilterExercisesDialogSpy = jest.spyOn(component, 'openFilterExercisesDialog');
+            const initFilterOptionsSpy = jest.spyOn(component, 'initializeFilterOptions');
+
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR)).nativeElement;
+            filterLink.click();
+
+            expect(initFilterOptionsSpy).toHaveBeenCalledOnce();
+            expect(openFilterExercisesDialogSpy).toHaveBeenCalledOnce();
+            expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, { animation: true, backdrop: 'static', size: 'lg' });
+        });
+    });
+
+    describe('openFilterExercisesDialog', () => {
+        it('should subscribe to filterApplied from modal', () => {
+            const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
+            const mockModalRef: Partial<NgbModalRef> = {
+                componentInstance: {
+                    filterApplied: filterAppliedEmitter,
+                },
+            };
+            const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            const subscribeSpy = jest.spyOn(filterAppliedEmitter, 'subscribe');
+
+            component.openFilterExercisesDialog();
+
+            expect(openSpy).toHaveBeenCalledOnce();
+            expect(subscribeSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should update variables correctly when filterApplied is emitted', () => {
+            const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
+            const mockModalRef: Partial<NgbModalRef> = {
+                componentInstance: {
+                    filterApplied: filterAppliedEmitter,
+                },
+            };
+            jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+
+            const mockFilterResults: ExerciseFilterResults = {
+                filteredSidebarData: {
+                    sidebarType: 'exercise',
+                    groupByCategory: true,
+                    ungroupedData: [{ title: 'test sidebar card element' } as SidebarCardElement],
+                    groupedData: {
+                        testGroup: {
+                            entityData: [{ title: 'test group element' } as SidebarCardElement],
+                        },
+                    },
+                },
+                appliedExerciseFilters: {
+                    categoryFilter: {
+                        isDisplayed: true,
+                        options: [
+                            {
+                                category: new ExerciseCategory('test', undefined),
+                                searched: true,
+                            },
+                        ],
+                    },
+                    exerciseTypesFilter: {
+                        isDisplayed: true,
+                        options: [
+                            {
+                                name: 'testType',
+                                value: ExerciseType.PROGRAMMING,
+                                checked: true,
+                                icon: 'testIcon' as unknown as IconProp,
+                            },
+                        ],
+                    },
+                },
+                isFilterActive: true,
+            };
+
+            component.openFilterExercisesDialog();
+            filterAppliedEmitter.emit(mockFilterResults);
+
+            expect(component.sidebarData).toEqual(mockFilterResults.filteredSidebarData);
+            expect(component.exerciseFilters).toEqual(mockFilterResults.appliedExerciseFilters);
+            expect(component.isFilterActive).toBeTrue();
+        });
     });
 });
