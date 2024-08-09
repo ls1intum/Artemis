@@ -112,7 +112,7 @@ export class ProgrammingExercise extends Exercise {
     public testCasesChanged?: boolean;
 
     public projectType?: ProjectType;
-    public windFile?: WindFile;
+    public windfile?: WindFile;
     public buildScript?: string;
     public buildPlanConfiguration?: string;
 

@@ -33,7 +33,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
     let programmingExercise = new ProgrammingExercise(course, undefined);
-    let windFile: WindFile = new WindFile();
+    let windfile: WindFile = new WindFile();
     let actions: BuildAction[] = [];
     let gradleBuildAction: ScriptAction = new ScriptAction();
     let cleanBuildAction: ScriptAction = new ScriptAction();
@@ -45,11 +45,11 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
         programmingExercise.customizeBuildPlanWithAeolus = true;
-        windFile = new WindFile();
+        windfile = new WindFile();
         const metadata = new WindMetadata();
         metadata.docker = new DockerConfiguration();
         metadata.docker.image = 'testImage';
-        windFile.metadata = metadata;
+        windfile.metadata = metadata;
         actions = [];
         gradleBuildAction = new ScriptAction();
         gradleBuildAction.name = 'gradle';
@@ -63,8 +63,8 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         actions.push(gradleBuildAction);
         actions.push(cleanBuildAction);
         actions.push(platformAction);
-        windFile.actions = actions;
-        programmingExercise.windFile = windFile;
+        windfile.actions = actions;
+        programmingExercise.windfile = windfile;
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -127,12 +127,12 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     });
 
     it('should reset buildplan', () => {
-        programmingExercise.windFile = windFile;
+        programmingExercise.windfile = windfile;
         programmingExercise.buildPlanConfiguration = 'some build plan';
-        expect(programmingExercise.windFile).toBeDefined();
+        expect(programmingExercise.windfile).toBeDefined();
         expect(programmingExercise.buildPlanConfiguration).toBeDefined();
         comp.resetCustomBuildPlan();
-        expect(programmingExercise.windFile).toBeUndefined();
+        expect(programmingExercise.windfile).toBeUndefined();
         expect(programmingExercise.buildPlanConfiguration).toBeUndefined();
     });
 
@@ -185,23 +185,23 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     });
 
     it('should update windfile', () => {
-        comp.programmingExercise.windFile = undefined;
+        comp.programmingExercise.windfile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windfile))));
         jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.next("echo 'test'")));
         comp.loadAeolusTemplate();
-        expect(comp.programmingExercise.windFile).toBeDefined();
+        expect(comp.programmingExercise.windfile).toBeDefined();
     });
 
     it('should call this.resetCustomBuildPlan', () => {
-        comp.programmingExercise.windFile = undefined;
+        comp.programmingExercise.windfile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         const resetSpy = jest.spyOn(comp, 'resetCustomBuildPlan');
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
         comp.loadAeolusTemplate();
-        expect(comp.programmingExercise.windFile).toBeUndefined();
+        expect(comp.programmingExercise.windfile).toBeUndefined();
         expect(resetSpy).toHaveBeenCalled();
     });
 
@@ -211,7 +211,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExercise.id = 1;
         jest.spyOn(comp, 'resetCustomBuildPlan');
         jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.next("echo 'test'")));
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windfile))));
         comp.loadAeolusTemplate();
         expect(comp.resetCustomBuildPlan).not.toHaveBeenCalled();
         expect(comp.programmingExercise.buildScript).toBe("echo 'test'");
@@ -243,12 +243,41 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     });
 
     it('should set docker image correctly', () => {
-        comp.programmingExercise.windFile = windFile;
-        comp.programmingExercise.windFile.metadata.docker.image = 'old';
+        comp.programmingExercise.windfile = windfile;
+        comp.programmingExercise.windfile.metadata.docker.image = 'old';
         comp.setDockerImage('testImage');
-        expect(comp.programmingExercise.windFile?.metadata.docker.image).toBe('testImage');
-        comp.programmingExercise.windFile = undefined;
+        expect(comp.programmingExercise.windfile?.metadata.docker.image).toBe('testImage');
+        comp.programmingExercise.windfile = undefined;
         comp.setDockerImage('testImage');
-        expect(comp.programmingExercise.windFile).toBeUndefined();
+        expect(comp.programmingExercise.windfile).toBeUndefined();
+    });
+
+    it('should not call getAeolusTemplateScript when import from file if script present', () => {
+        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+        comp.programmingExerciseCreationConfig.isImportFromFile = true;
+        programmingExercise.buildScript = 'echo "test"';
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windfile))));
+        comp.ngOnChanges({
+            programmingExercise: {
+                currentValue: programmingExercise,
+                previousValue: undefined,
+                firstChange: false,
+                isFirstChange: function (): boolean {
+                    throw new Error('Function not implemented.');
+                },
+            },
+            programmingExerciseCreationConfig: {
+                currentValue: JSON.parse(JSON.stringify(comp.programmingExerciseCreationConfig)),
+                previousValue: undefined,
+                firstChange: false,
+                isFirstChange: function (): boolean {
+                    throw new Error('Function not implemented.');
+                },
+            },
+        });
+        expect(mockAeolusService.getAeolusTemplateScript).not.toHaveBeenCalled();
+        expect(mockAeolusService.getAeolusTemplateFile).not.toHaveBeenCalled();
+        expect(comp.programmingExercise.buildScript).toBe('echo "test"');
     });
 });

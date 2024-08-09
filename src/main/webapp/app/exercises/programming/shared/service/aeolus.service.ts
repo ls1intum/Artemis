@@ -51,7 +51,7 @@ export class AeolusService {
     parseWindFile(file: string): WindFile | undefined {
         try {
             const templateFile: WindFile = JSON.parse(file);
-            const windFile: WindFile = Object.assign(new WindFile(), templateFile);
+            const windfile: WindFile = Object.assign(new WindFile(), templateFile);
             const actions: BuildAction[] = [];
             templateFile.actions.forEach((anyAction: any) => {
                 let action: BuildAction | undefined;
@@ -71,9 +71,9 @@ export class AeolusService {
                 }
             });
             // somehow, the returned content has a scriptActions field, which is not defined in the WindFile class
-            delete windFile['scriptActions'];
-            windFile.actions = actions;
-            return windFile;
+            delete windfile['scriptActions'];
+            windfile.actions = actions;
+            return windfile;
         } catch (SyntaxError) {
             return undefined;
         }
@@ -98,8 +98,8 @@ export class AeolusService {
         };
     }
 
-    serializeWindFile(windFile: WindFile): string {
-        return JSON.stringify(windFile, this.replacer);
+    serializeWindFile(windfile: WindFile): string {
+        return JSON.stringify(windfile, this.replacer);
     }
 
     /**

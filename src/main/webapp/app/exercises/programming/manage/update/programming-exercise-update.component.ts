@@ -264,7 +264,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.selectedProjectTypeValue = this.projectTypes?.[0];
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
-            this.programmingExercise.windFile = undefined;
+            this.programmingExercise.windfile = undefined;
             this.programmingExercise.buildPlanConfiguration = undefined;
         }
 
@@ -386,7 +386,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
             if (this.programmingExercise.buildPlanConfiguration) {
-                this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+                this.programmingExercise.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
             }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
@@ -611,15 +611,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     saveExercise() {
         // trim potential whitespaces that can lead to issues
-        if (this.programmingExercise.windFile?.metadata?.docker?.image) {
-            this.programmingExercise.windFile.metadata.docker.image = this.programmingExercise.windFile.metadata.docker.image.trim();
+        if (this.programmingExercise.windfile?.metadata?.docker?.image) {
+            this.programmingExercise.windfile.metadata.docker.image = this.programmingExercise.windfile.metadata.docker.image.trim();
         }
 
         if (this.programmingExercise.customizeBuildPlanWithAeolus) {
-            this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windFile!);
+            this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windfile!);
         } else {
             this.programmingExercise.buildPlanConfiguration = undefined;
-            this.programmingExercise.windFile = undefined;
+            this.programmingExercise.windfile = undefined;
         }
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
