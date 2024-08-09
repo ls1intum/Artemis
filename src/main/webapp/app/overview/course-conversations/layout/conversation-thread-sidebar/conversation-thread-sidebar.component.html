@@ -6,13 +6,18 @@
         </div>
         <div class="card">
             <!-- header -->
-            <div class="card-header d-flex" [ngbTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate" (click)="closePostThread.emit()">
+            <div class="card-header cursor-default d-flex">
                 <div class="row flex-grow-1">
                     <div class="col">
                         <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.label"></h5>
                     </div>
                     <div class="col-auto">
-                        <fa-icon [icon]="faXmark" />
+                        <fa-icon
+                            class="pointer"
+                            [ngbTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate"
+                            [icon]="faXmark"
+                            (click)="closePostThread.emit()"
+                        />
                     </div>
                 </div>
             </div>
@@ -20,7 +25,7 @@
             <div #scrollBody class="pt-0 scrollbar wrapper-scroll-y mx-1">
                 @if (post !== undefined) {
                     <div class="my-2">
-                        <div class="card-body body-bg">
+                        <div class="card-body">
                             <jhi-post
                                 [readOnlyMode]="readOnlyMode"
                                 [posting]="post"
@@ -31,7 +36,7 @@
                                 [hasChannelModerationRights]="hasChannelModerationRights"
                             />
                         </div>
-                        <div class="message-input">
+                        <div class="message-input mx-3">
                             @if (!readOnlyMode) {
                                 <jhi-message-reply-inline-input
                                     [posting]="createdAnswerPost"
