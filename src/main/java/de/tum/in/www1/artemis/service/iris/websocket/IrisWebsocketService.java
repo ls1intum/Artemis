@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 /**
  * A service to send a message over the websocket to a specific user
  */
-public class IrisWebsocketService {
+public abstract class IrisWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisWebsocketService.class);
 

@@ -82,7 +82,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      */
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
-        const websocketTopic = '/topic/iris/competencies/' + this.courseId;
+        const websocketTopic = '/user/topic/iris/competencies/' + this.courseId;
         this.competencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription).subscribe({
             next: () => {
                 this.jhiWebsocketService.subscribe(websocketTopic);

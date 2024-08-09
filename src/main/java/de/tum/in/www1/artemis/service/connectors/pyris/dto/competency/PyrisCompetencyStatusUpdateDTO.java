@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.pyris.dto.competency;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 
 /**
@@ -11,5 +13,6 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
  * @param stages List of stages of the generation process
  * @param result List of competencies that have been generated so far
  */
+@JsonInclude
 public record PyrisCompetencyStatusUpdateDTO(List<PyrisStageDTO> stages, List<PyrisCompetencyRecommendationDTO> result) {
 }
