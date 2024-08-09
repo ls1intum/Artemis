@@ -1,6 +1,6 @@
-use std::cell::{Ref, RefCell};
-use chrono::NaiveDate;
 use crate::sort_strategy::SortStrategy;
+use chrono::NaiveDate;
+use std::cell::{Ref, RefCell};
 
 pub struct Context {
     sort_algorithm: RefCell<Option<Box<dyn SortStrategy<NaiveDate>>>>,

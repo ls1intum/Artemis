@@ -15,7 +15,7 @@ impl<T: Ord + Copy> SortStrategy<T> for MergeSort {
     }
 }
 
-fn mergesort<T: Ord + Copy>(input: &mut[T]) {
+fn mergesort<T: Ord + Copy>(input: &mut [T]) {
     if input.len() < 2 {
         return;
     }
@@ -29,10 +29,10 @@ fn mergesort<T: Ord + Copy>(input: &mut[T]) {
 
 fn merge<T: Ord + Copy>(input: &mut [T], middle: usize) {
     let mut result = Vec::with_capacity(input.len());
-    
+
     let mut left_index = 0;
     let mut right_index = middle;
-    
+
     while left_index < middle && right_index < input.len() {
         if input[left_index] <= input[right_index] {
             result.push(input[left_index]);
@@ -42,7 +42,7 @@ fn merge<T: Ord + Copy>(input: &mut [T], middle: usize) {
             right_index += 1;
         }
     }
-    
+
     if left_index < middle {
         while left_index < middle {
             result.push(input[left_index]);
@@ -54,6 +54,6 @@ fn merge<T: Ord + Copy>(input: &mut [T], middle: usize) {
             right_index += 1;
         }
     }
-    
+
     input.copy_from_slice(&result);
 }

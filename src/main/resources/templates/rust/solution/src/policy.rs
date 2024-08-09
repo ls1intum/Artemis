@@ -1,7 +1,7 @@
-use chrono::NaiveDate;
 use crate::{
     bubble_sort::BubbleSort, context::Context, merge_sort::MergeSort, sort_strategy::SortStrategy,
 };
+use chrono::NaiveDate;
 
 const SIZE_THRESHOLD: usize = 10;
 

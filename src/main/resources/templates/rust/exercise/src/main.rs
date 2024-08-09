@@ -18,9 +18,9 @@ fn main() {
         let mut dates = create_random_dates();
         todo!("Configure context");
         println!("Unsorted Array of course dates = {dates:#?}");
-        
+
         todo!("Sort dates");
-        
+
         println!("Sorted Array of course dates = {dates:#?}");
     }
 }

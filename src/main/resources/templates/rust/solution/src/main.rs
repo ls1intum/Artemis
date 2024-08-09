@@ -22,9 +22,9 @@ fn main() {
         let mut dates = create_random_dates();
         policy.configure(&dates);
         println!("Unsorted Array of course dates = {dates:#?}");
-        
+
         context.sort(&mut dates);
-        
+
         println!("Sorted Array of course dates = {dates:#?}");
     }
 }
