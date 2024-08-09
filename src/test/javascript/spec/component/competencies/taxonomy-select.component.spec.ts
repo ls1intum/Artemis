@@ -1,11 +1,11 @@
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TaxonomySelectComponent', () => {
     let componentFixture: ComponentFixture<TaxonomySelectComponent>;
@@ -14,7 +14,7 @@ describe('TaxonomySelectComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule],
-            declarations: [TaxonomySelectComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [TaxonomySelectComponent, MockDirective(TranslateDirective)],
             providers: [],
         })
             .compileComponents()

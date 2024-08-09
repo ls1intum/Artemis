@@ -2,7 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { Competency } from 'app/entities/competency.model';
-import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { faLink, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +12,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-competencies',
@@ -32,7 +32,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
 
     currentlyProcessedCompetency: Competency;
     competencies: Competency[] = [];
-    competencyFormData: CompetencyFormData;
+    competencyFormData: CourseCompetencyFormData;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -44,6 +44,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
         protected alertService: AlertService,
         protected lectureService: LectureService,
         protected competencyService: CompetencyService,
+        protected courseCompetencyService: CompetencyService,
         protected translateService: TranslateService,
     ) {}
 
@@ -110,7 +111,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
         onError(this.alertService, error);
     }
 
-    onCompetencyFormSubmitted(formData: CompetencyFormData) {
+    onCompetencyFormSubmitted(formData: CourseCompetencyFormData) {
         if (this.isEditingCompetency) {
             this.editCompetency(formData);
         } else {
@@ -118,7 +119,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
         }
     }
 
-    createCompetency(formData: CompetencyFormData) {
+    createCompetency(formData: CourseCompetencyFormData) {
         if (!formData?.title) {
             return;
         }
@@ -159,7 +160,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
             });
     }
 
-    editCompetency(formData: CompetencyFormData) {
+    editCompetency(formData: CourseCompetencyFormData) {
         const { title, description, taxonomy, connectedLectureUnits } = formData;
 
         this.currentlyProcessedCompetency.title = title;
@@ -212,7 +213,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
         this.isLoadingCompetencies = true;
         this.isLoadingCompetencyForm = true;
 
-        this.subscribeToLoadCompetenciesResponse(this.competencyService.getAllForCourse(this.lecture.course!.id!));
+        this.subscribeToLoadCompetenciesResponse(this.courseCompetencyService.getAllForCourse(this.lecture.course!.id!));
         this.subscribeToLoadUnitResponse(this.lectureService.findWithDetails(this.lecture.id!));
     }
 

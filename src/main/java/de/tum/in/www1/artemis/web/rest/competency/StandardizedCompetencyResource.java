@@ -65,7 +65,7 @@ public class StandardizedCompetencyResource {
 
         var competency = standardizedCompetencyRepository.findByIdElseThrow(competencyId);
 
-        return ResponseEntity.ok().body(competency);
+        return ResponseEntity.ok(competency);
     }
 
     /**

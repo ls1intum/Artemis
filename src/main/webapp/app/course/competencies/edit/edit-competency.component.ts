@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { Competency } from 'app/entities/competency.model';
-import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -9,31 +8,34 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
 import { combineLatest, forkJoin } from 'rxjs';
-import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { EditCourseCompetencyComponent } from 'app/course/competencies/edit/edit-course-competency.component';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
 @Component({
     selector: 'jhi-edit-competency',
     templateUrl: './edit-competency.component.html',
-    styles: [],
+    standalone: true,
+    imports: [ArtemisSharedModule, CompetencyFormComponent],
 })
-export class EditCompetencyComponent implements OnInit {
-    isLoading = false;
+export class EditCompetencyComponent extends EditCourseCompetencyComponent implements OnInit {
     competency: Competency;
-    lecturesWithLectureUnits: Lecture[] = [];
-    formData: CompetencyFormData;
-    courseId: number;
+    formData: CourseCompetencyFormData;
 
     constructor(
-        private activatedRoute: ActivatedRoute,
-        private lectureService: LectureService,
-        private router: Router,
+        activatedRoute: ActivatedRoute,
+        lectureService: LectureService,
+        router: Router,
+        alertService: AlertService,
         private competencyService: CompetencyService,
-        private alertService: AlertService,
-    ) {}
+    ) {
+        super(activatedRoute, lectureService, router, alertService);
+    }
 
     ngOnInit(): void {
-        this.isLoading = true;
+        super.ngOnInit();
+
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
             .pipe(
                 take(1),
@@ -43,13 +45,12 @@ export class EditCompetencyComponent implements OnInit {
 
                     const competencyObservable = this.competencyService.findById(competencyId, this.courseId);
                     const competencyCourseProgressObservable = this.competencyService.getCourseProgress(competencyId, this.courseId);
-                    const lecturesObservable = this.lectureService.findAllByCourseId(this.courseId, true);
-                    return forkJoin([competencyObservable, competencyCourseProgressObservable, lecturesObservable]);
+                    return forkJoin([competencyObservable, competencyCourseProgressObservable]);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
             .subscribe({
-                next: ([competencyResult, courseProgressResult, lecturesResult]) => {
+                next: ([competencyResult, courseProgressResult]) => {
                     if (competencyResult.body) {
                         this.competency = competencyResult.body;
                         if (courseProgressResult.body) {
@@ -58,19 +59,6 @@ export class EditCompetencyComponent implements OnInit {
                         // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
                         if (!this.competency.lectureUnits) {
                             this.competency.lectureUnits = [];
-                        }
-                    }
-                    if (lecturesResult.body) {
-                        this.lecturesWithLectureUnits = lecturesResult.body;
-                        for (const lecture of this.lecturesWithLectureUnits) {
-                            // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                            if (!lecture.lectureUnits) {
-                                lecture.lectureUnits = [];
-                            } else {
-                                // Filter out exercise units, they should be added via the exercise management for now
-                                // TODO: User experience improvements for linking learning objects when editing a competency
-                                lecture.lectureUnits = lecture.lectureUnits.filter((lectureUnit) => lectureUnit.type !== LectureUnitType.EXERCISE);
-                            }
                         }
                     }
 
@@ -89,7 +77,7 @@ export class EditCompetencyComponent implements OnInit {
             });
     }
 
-    updateCompetency(formData: CompetencyFormData) {
+    updateCompetency(formData: CourseCompetencyFormData) {
         const { title, description, softDueDate, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
 
         this.competency.title = title;

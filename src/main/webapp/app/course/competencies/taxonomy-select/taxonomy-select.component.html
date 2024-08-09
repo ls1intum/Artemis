@@ -3,8 +3,8 @@
     @for (taxonomy of competencyTaxonomy | keyvalue: keepOrder; track taxonomy; let i = $index) {
         <option [ngValue]="taxonomy.key">
             {{ indent[i] }}&boxur;
-            {{ 'artemisApp.competency.taxonomies.' + taxonomy.value | artemisTranslate }}
-            ({{ 'artemisApp.competency.keywords.' + taxonomy.value | artemisTranslate }})
+            <span [jhiTranslate]="'artemisApp.courseCompetency.taxonomies.' + taxonomy.value"></span>
+            (<span [jhiTranslate]="'artemisApp.courseCompetency.keywords.' + taxonomy.value"></span>)
         </option>
     }
 </select>

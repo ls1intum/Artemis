@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CreateCompetencyComponent } from 'app/course/competencies/create-competency/create-competency.component';
-import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
+import { CreateCompetencyComponent } from 'app/course/competencies/create/create-competency.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -13,10 +12,14 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { Competency } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
-import { CompetencyFormStubComponent } from './competency-form-stub.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CreateCompetency', () => {
     let createCompetencyComponentFixture: ComponentFixture<CreateCompetencyComponent>;
@@ -24,8 +27,8 @@ describe('CreateCompetency', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [CompetencyFormStubComponent, CreateCompetencyComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent)],
+            imports: [CreateCompetencyComponent, ArtemisSharedModule, CompetencyFormComponent, ArtemisSharedComponentModule],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent), MockComponent(CompetencyFormComponent), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(CompetencyService),
                 MockProvider(LectureService),
@@ -99,13 +102,13 @@ describe('CreateCompetency', () => {
         expect(createCompetencyComponent.lecturesWithLectureUnits).toEqual([expectedLecture]);
     });
 
-    it('should send POST request upon form submission and navigate', () => {
+    it('should send POST request upon form submission and navigate', async () => {
         const router: Router = TestBed.inject(Router);
         const competencyService = TestBed.inject(CompetencyService);
 
         const textUnit: TextUnit = new TextUnit();
         textUnit.id = 1;
-        const formData: CompetencyFormData = {
+        const formData: CourseCompetencyFormData = {
             title: 'Test',
             description: 'Lorem Ipsum',
             optional: true,
@@ -122,7 +125,7 @@ describe('CreateCompetency', () => {
 
         createCompetencyComponentFixture.detectChanges();
 
-        const competencyForm: CompetencyFormStubComponent = createCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormStubComponent)).componentInstance;
+        const competencyForm = createCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormComponent)).componentInstance;
         competencyForm.formSubmitted.emit(formData);
 
         return createCompetencyComponentFixture.whenStable().then(() => {
@@ -141,7 +144,7 @@ describe('CreateCompetency', () => {
     it('should not create competency if title is missing', () => {
         const competencyService = TestBed.inject(CompetencyService);
 
-        const formData: CompetencyFormData = {
+        const formData: CourseCompetencyFormData = {
             title: undefined,
             description: 'Lorem Ipsum',
             optional: true,

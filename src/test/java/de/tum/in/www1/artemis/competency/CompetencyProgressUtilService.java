@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 
 /**
@@ -26,7 +26,7 @@ public class CompetencyProgressUtilService {
      * @param confidence the confidence level that should be stored
      * @return the persisted competency progress entity
      */
-    public CompetencyProgress createCompetencyProgress(Competency competency, User user, double progress, double confidence) {
+    public CompetencyProgress createCompetencyProgress(CourseCompetency competency, User user, double progress, double confidence) {
         CompetencyProgress competencyProgress = new CompetencyProgress();
         competencyProgress.setCompetency(competency);
         competencyProgress.setUser(user);

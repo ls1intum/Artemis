@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
@@ -35,7 +36,7 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
  */
 @Service
 @Profile("iris")
-public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFeatureInterface<IrisCompetencyGenerationSession, List<Competency>> {
+public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFeatureInterface<IrisCompetencyGenerationSession, List<CourseCompetency>> {
 
     private static final Logger log = LoggerFactory.getLogger(IrisCompetencyGenerationSessionService.class);
 
@@ -112,7 +113,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
     // @formatter:on
 
     @Override
-    public List<Competency> executeRequest(IrisCompetencyGenerationSession session) {
+    public List<CourseCompetency> executeRequest(IrisCompetencyGenerationSession session) {
         // TODO: Re-add in a future PR. Remember to reenable the test cases!
         return null;
     }

@@ -1,10 +1,13 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { KnowledgeAreaDTO } from 'app/entities/competency/standardized-competency.model';
 import { Subject, debounceTime } from 'rxjs';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-standardized-competency-filter',
     templateUrl: './standardized-competency-filter.component.html',
+    standalone: true,
+    imports: [ArtemisSharedCommonModule],
 })
 export class StandardizedCompetencyFilterComponent implements OnInit, OnDestroy {
     @Input() competencyTitleFilter: string;

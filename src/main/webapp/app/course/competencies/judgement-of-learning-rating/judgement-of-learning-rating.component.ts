@@ -3,8 +3,8 @@ import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { AlertService } from 'app/core/util/alert.service';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 @Component({
     selector: 'jhi-judgement-of-learning-rating',
@@ -21,7 +21,7 @@ export class JudgementOfLearningRatingComponent {
     @Output() ratingChange = new EventEmitter<number>();
 
     constructor(
-        private competencyService: CompetencyService,
+        private courseCompetencyService: CourseCompetencyService,
         private alertService: AlertService,
     ) {}
 
@@ -36,7 +36,7 @@ export class JudgementOfLearningRatingComponent {
 
         const newRating = event.newValue;
 
-        this.competencyService.setJudgementOfLearning(this.courseId, this.competencyId, newRating).subscribe(
+        this.courseCompetencyService.setJudgementOfLearning(this.courseId, this.competencyId, newRating).subscribe(
             () => {
                 this.rating = newRating;
                 this.ratingChange.emit(newRating);

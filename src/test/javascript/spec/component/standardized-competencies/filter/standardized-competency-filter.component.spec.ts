@@ -9,8 +9,8 @@ describe('StandardizedCompetencyFilterComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
-            declarations: [StandardizedCompetencyFilterComponent],
+            imports: [StandardizedCompetencyFilterComponent, ArtemisTestModule, FormsModule],
+            declarations: [],
             providers: [],
         })
             .compileComponents()

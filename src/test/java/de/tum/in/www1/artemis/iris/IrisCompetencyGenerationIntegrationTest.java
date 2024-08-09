@@ -53,7 +53,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
          */
         fail("This test is not yet implemented. Implement it and remove the fail call.");
 
-        List<Competency> competencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/generate-from-description", courseDescription,
+        List<Competency> competencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/course-competencies/generate-from-description", courseDescription,
                 Competency.class, HttpStatus.OK);
         Competency actualCompetency = competencies.getFirst();
 
@@ -74,6 +74,6 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     void testAllPreAuthorize() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/competencies/generate-from-description", "a", HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/course-competencies/generate-from-description", "a", HttpStatus.FORBIDDEN);
     }
 }

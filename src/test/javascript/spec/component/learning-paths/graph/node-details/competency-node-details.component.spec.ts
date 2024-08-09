@@ -5,16 +5,16 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CompetencyNodeDetailsComponent } from 'app/course/learning-paths/learning-path-graph/node-details/competency-node-details.component';
 import { Competency, CompetencyProgress, CompetencyTaxonomy } from 'app/entities/competency.model';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 describe('CompetencyNodeDetailsComponent', () => {
     let fixture: ComponentFixture<CompetencyNodeDetailsComponent>;
     let comp: CompetencyNodeDetailsComponent;
-    let competencyService: CompetencyService;
+    let courseCompetencyService: CourseCompetencyService;
     let findByIdStub: jest.SpyInstance;
     let competency: Competency;
     let competencyProgress: CompetencyProgress;
@@ -38,8 +38,8 @@ describe('CompetencyNodeDetailsComponent', () => {
                 competencyProgress.progress = 80;
                 competencyProgress.confidence = 70;
 
-                competencyService = TestBed.inject(CompetencyService);
-                findByIdStub = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+                courseCompetencyService = TestBed.inject(CourseCompetencyService);
+                findByIdStub = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
                 comp.courseId = 1;
                 comp.competencyId = competency.id;
             });
