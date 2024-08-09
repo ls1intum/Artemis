@@ -84,17 +84,19 @@ public class ExamAccessService {
             studentExam = optionalStudentExam.get();
         }
         else {
-            // Only Test Exams can be self-created by the user.
             Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+            // Generate a student exam if exam is a test exam or of student is registered for a normal exam
+            if (examWithExerciseGroupsAndExercises.isTestExam() || examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId())) {
+                studentExam = studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, currentUser);
+                // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
+                studentExam.setExercises(null);
 
-            if (!examWithExerciseGroupsAndExercises.isTestExam()) {
-                // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
-                throw new BadRequestAlertException("The requested Exam is no test exam and thus no student exam can be created", ENTITY_NAME,
-                        "StudentExamGenerationOnlyForTestExams", true);
             }
-            studentExam = studentExamService.generateTestExam(examWithExerciseGroupsAndExercises, currentUser);
-            // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
-            studentExam.setExercises(null);
+            else {
+                // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
+                throw new BadRequestAlertException("Cannot generate student exam. Student is not registered for the exam", ENTITY_NAME,
+                        "StudentExamGenerationOnlyForRegisteredStudents", true);
+            }
         }
 
         Exam exam = studentExam.getExam();
