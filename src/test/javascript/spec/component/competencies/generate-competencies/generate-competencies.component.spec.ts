@@ -84,7 +84,7 @@ describe('GenerateCompetenciesComponent', () => {
         generateCompetenciesComponentFixture.detectChanges();
         const courseDescription = 'Course Description';
         const response = new HttpResponse({
-            body: [{}, {}],
+            body: null,
             status: 200,
         });
         const competencyService = TestBed.inject(CompetencyService);
@@ -188,12 +188,12 @@ describe('GenerateCompetenciesComponent', () => {
         const competencyService = TestBed.inject(CompetencyService);
         const generateCompetenciesMock = jest.spyOn(competencyService, 'generateCompetenciesFromCourseDescription');
 
-        generateCompetenciesMock.mockReturnValue(of({ body: [{ id: 1 }] } as HttpResponse<Competency[]>));
+        generateCompetenciesMock.mockReturnValue(of({ body: null } as HttpResponse<void>));
         const successMock = jest.spyOn(alertService, 'success');
         generateCompetenciesComponent.getCompetencyRecommendations('');
         expect(successMock).toHaveBeenCalledOnce();
 
-        generateCompetenciesMock.mockReturnValue(of({} as HttpResponse<Competency[]>));
+        generateCompetenciesMock.mockReturnValue(of({} as HttpResponse<void>));
         const warnMock = jest.spyOn(alertService, 'warning');
         generateCompetenciesComponent.getCompetencyRecommendations('');
         expect(warnMock).toHaveBeenCalled();

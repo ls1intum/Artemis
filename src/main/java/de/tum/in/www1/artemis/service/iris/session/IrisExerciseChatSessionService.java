@@ -119,8 +119,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     @Override
-    public void sendOverWebsocket(IrisMessage message) {
-        irisChatWebsocketService.sendMessage(message);
+    public void sendOverWebsocket(IrisExerciseChatSession session, IrisMessage message) {
+        irisChatWebsocketService.sendMessage(session, message, null);
     }
 
     @Override
@@ -170,7 +170,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.stages());
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions());

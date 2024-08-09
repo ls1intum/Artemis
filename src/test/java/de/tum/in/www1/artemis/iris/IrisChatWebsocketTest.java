@@ -18,9 +18,9 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
+import de.tum.in.www1.artemis.service.iris.dto.IrisChatWebsocketDTO;
 import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
-import de.tum.in.www1.artemis.service.iris.websocket.IrisWebsocketDTO;
 
 @ActiveProfiles("iris")
 class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
@@ -53,9 +53,9 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
         var message = irisSession.newMessage();
         message.addContent(createMockContent(), createMockContent());
         message.setMessageDifferentiator(101010);
-        irisChatWebsocketService.sendMessage(message, List.of());
+        irisChatWebsocketService.sendMessage(irisSession, message, List.of());
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()),
-                eq(new IrisWebsocketDTO(message, new IrisRateLimitService.IrisRateLimitInformation(0, -1, 0), List.of(), List.of())));
+                eq(new IrisChatWebsocketDTO(message, new IrisRateLimitService.IrisRateLimitInformation(0, -1, 0), List.of(), List.of())));
     }
 
     private IrisTextMessageContent createMockContent() {

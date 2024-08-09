@@ -59,7 +59,7 @@ import de.tum.in.www1.artemis.service.competency.CompetencyService;
 import de.tum.in.www1.artemis.service.competency.CourseCompetencyService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
+import de.tum.in.www1.artemis.service.iris.IrisCompetencyGenerationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -101,7 +101,7 @@ public class CompetencyResource {
 
     private final ExerciseService exerciseService;
 
-    private final Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService;
+    private final Optional<IrisCompetencyGenerationService> irisCompetencyGenerationService;
 
     private final LectureUnitService lectureUnitService;
 
@@ -116,9 +116,8 @@ public class CompetencyResource {
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
-            LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
-            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CourseCompetencyRepository courseCompetencyRepository,
-            CompetencyJolService competencyJolService, CourseCompetencyService courseCompetencyService) {
+            LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService, Optional<IrisCompetencyGenerationService> irisCompetencyGenerationService,
+            CourseCompetencyRepository courseCompetencyRepository, CompetencyJolService competencyJolService, CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -130,7 +129,7 @@ public class CompetencyResource {
         this.exerciseService = exerciseService;
         this.lectureUnitService = lectureUnitService;
         this.competencyRelationService = competencyRelationService;
-        this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
+        this.irisCompetencyGenerationService = irisCompetencyGenerationService;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyJolService = competencyJolService;
         this.courseCompetencyService = courseCompetencyService;
@@ -525,24 +524,25 @@ public class CompetencyResource {
     }
 
     /**
-     * POST courses/:courseId/competencies/:competencyId/competencies/generate-from-description : Generates a list of competencies from a given course description by using IRIS.
+     * POST courses/:courseId/competencies/:competencyId/competencies/generate-from-description
+     * Generates a list of competencies from a given course description by using IRIS.
      *
      * @param courseId          the id of the current course
      * @param courseDescription the text description of the course
-     * @return the ResponseEntity with status 200 (OK) and body the genrated competencies
+     * @return the ResponseEntity with status 202 (Accepted)
      */
     @PostMapping("courses/{courseId}/competencies/generate-from-description")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<List<Competency>> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
-        var irisService = irisCompetencyGenerationSessionService.orElseThrow();
+    public ResponseEntity<Void> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
+        var competencyGenerationService = irisCompetencyGenerationService.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        var session = irisService.getOrCreateSession(course, user);
-        irisService.addUserTextMessageToSession(session, courseDescription);
-        var competencies = irisService.executeRequest(session);
+        // Start the Iris competency generation pipeline for the given course.
+        // The generated competencies will be sent async over the websocket on the topic /topic/iris/competencies/{courseId}
+        competencyGenerationService.executeCompetencyExtractionPipeline(user, course, courseDescription);
 
-        return ResponseEntity.ok().body(competencies);
+        return ResponseEntity.accepted().build();
     }
 
     /**

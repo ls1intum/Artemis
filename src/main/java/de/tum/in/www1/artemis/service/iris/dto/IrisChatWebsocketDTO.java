@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.iris.websocket;
+package de.tum.in.www1.artemis.service.iris.dto;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
  * @param stages        the stages of the Pyris pipeline
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages,
+public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages,
         List<String> suggestions) {
 
     /**
@@ -31,7 +31,7 @@ public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage messag
      * @param rateLimitInfo the rate limit information
      * @param stages        the stages of the Pyris pipeline
      */
-    public IrisWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, List<String> suggestions) {
+    public IrisChatWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, List<String> suggestions) {
         this(determineType(message), message, rateLimitInfo, stages, suggestions);
     }
 
@@ -62,7 +62,7 @@ public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage messag
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        IrisWebsocketDTO that = (IrisWebsocketDTO) o;
+        IrisChatWebsocketDTO that = (IrisChatWebsocketDTO) o;
         return type == that.type && Objects.equals(message, that.message) && Objects.equals(rateLimitInfo, that.rateLimitInfo) && Objects.equals(stages, that.stages);
     }
 
