@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.icl.ssh.SshConstants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.vcstokens.AuthenticationMechanism;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -78,7 +79,8 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         else {
             final var user = session.getAttribute(SshConstants.USER_KEY);
             try {
-                localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri.isPracticeRepository());
+                localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, AuthenticationMechanism.SSH,
+                        localVCRepositoryUri.isPracticeRepository());
             }
             catch (LocalVCForbiddenException e) {
                 log.error("User {} does not have access to the repository {}", user.getLogin(), repositoryPath);
