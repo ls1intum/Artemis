@@ -1,0 +1,11 @@
+artemis:
+    continuous-integration:
+        url: "http://localhost:8081"
+        artemis-authentication-token-value:
+        hades:
+            username: "hades"
+            password: "hades"
+
+            images:
+                clone-image: ghcr.io/mtze/hades/hades-clone-container:latest
+                result-image: ghcr.io/mtze/hades-junit-result-parser:latest

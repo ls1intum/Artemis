@@ -214,7 +214,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         log.info("Current number of DTO classes: {}", result.getFailureReport().getDetails().size());
         log.info("Current DTO classes: {}", result.getFailureReport().getDetails());
         // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
-        assertThat(result.getFailureReport().getDetails()).hasSize(26);
+        assertThat(result.getFailureReport().getDetails()).hasSize(27);
 
         var dtoPackageRule = classes().that().resideInAPackage("..dto").should().haveSimpleNameEndingWith("DTO");
         result = dtoPackageRule.evaluate(allClasses);

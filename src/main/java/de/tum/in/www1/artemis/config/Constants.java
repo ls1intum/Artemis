@@ -301,6 +301,11 @@ public final class Constants {
     public static final String PROFILE_AEOLUS = "aeolus";
 
     /**
+     * The name of the Spring profile used for the external CI system Hades.
+     */
+    public static final String PROFILE_HADES = "hades";
+
+    /**
      * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.in.www1.artemis.web.rest.LtiResource}.
      */
     public static final String PROFILE_LTI = "lti";

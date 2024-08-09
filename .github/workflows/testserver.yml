@@ -138,19 +138,19 @@ jobs:
             folder: /opt/artemis
             host_keys: |
 
-          #- environment: artemis-test7.artemis.cit.tum.de
-          #  label-identifier: artemis-test7
-          #  url: https://artemis-test7.artemis.cit.tum.de
-          #  user: deployment
-          #  hosts: artemis-test7.artemis.cit.tum.de
-          #  folder: /opt/artemis
+          - environment: artemis-test7.artemis.cit.tum.de
+            label-identifier: artemis-test7
+            url: https://artemis-test7.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test7.artemis.cit.tum.de
+            folder: /opt/artemis
 
-          #- environment: artemis-test8.artemis.cit.tum.de
-          #  label-identifier: artemis-test8
-          #  url: https://artemis-test8.artemis.cit.tum.de
-          #  user: deployment
-          #  hosts: artemis-test8.artemis.cit.tum.de
-          #  folder: /opt/artemis
+          - environment: artemis-test8.artemis.cit.tum.de
+            label-identifier: artemis-test8
+            url: https://artemis-test8.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test8.artemis.cit.tum.de
+            folder: /opt/artemis
 
           - environment: artemis-test9.artemis.cit.tum.de
             label-identifier: artemis-test9
@@ -173,8 +173,8 @@ jobs:
       TS4: ${{ steps.filter.outputs.artemis-test4 || '' }}
       TS5: ${{ steps.filter.outputs.artemis-test5 || '' }}
       TS6: ${{ steps.filter.outputs.artemis-test6 || '' }}
-      #TS7: ${{ steps.filter.outputs.artemis-test7 || '' }}
-      #TS8: ${{ steps.filter.outputs.artemis-test8 || '' }}
+      TS7: ${{ steps.filter.outputs.artemis-test7 || '' }}
+      TS8: ${{ steps.filter.outputs.artemis-test8 || '' }}
       TS9: ${{ steps.filter.outputs.artemis-test9 || '' }}
       #TS10: ${{ steps.filter.outputs.artemis-test10 || '' }}
     steps:

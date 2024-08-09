@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_HADES;
 
 import java.util.ArrayList;
 
@@ -96,6 +97,12 @@ public class RestTemplateConfiguration {
     @Autowired // ok
     public RestTemplate shortTimeoutJenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    @Bean
+    @Profile(PROFILE_HADES)
+    public RestTemplate shortTimeoutHadesRestTemplate() {
+        return createShortTimeoutRestTemplate();
     }
 
     @Bean

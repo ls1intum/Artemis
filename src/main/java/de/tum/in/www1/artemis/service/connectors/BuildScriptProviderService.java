@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
  * The scripts are loaded from the resources/templates/aeolus directory
  */
 @Service
-@Profile("aeolus | localci")
+@Profile("aeolus | localci | hades")
 public class BuildScriptProviderService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildScriptProviderService.class);
