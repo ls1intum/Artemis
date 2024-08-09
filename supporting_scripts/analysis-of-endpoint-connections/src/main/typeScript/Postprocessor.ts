@@ -45,7 +45,7 @@ export class Postprocessor {
 
     constructor(fileName: string) {
         this.fileName = fileName;
-        this.ast = Preprocessor.parseTypeScriptFile(Preprocessor.pathPrefix + filePath)
+        this.ast = Preprocessor.parseTypeScriptFile(Preprocessor.pathPrefix + fileName)
     }
 
     extractRestCalls() {
