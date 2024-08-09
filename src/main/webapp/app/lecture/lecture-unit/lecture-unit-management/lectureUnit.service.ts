@@ -167,4 +167,16 @@ export class LectureUnitService {
     getLectureUnitById(lectureUnitId: number): Observable<LectureUnit> {
         return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
     }
+    /**
+     * Triggers the ingestion of one lecture unit.
+     *
+     * @param lectureUnitId - The ID of the lecture unit to be ingested.
+     * @param lectureId - The ID of the lecture to which the unit belongs.
+     * @returns An Observable with an HttpResponse 200 if the request was successful .
+     */
+    ingestLectureUnitInPyris(lectureUnitId: number, lectureId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`, null, {
+            observe: 'response',
+        });
+    }
 }

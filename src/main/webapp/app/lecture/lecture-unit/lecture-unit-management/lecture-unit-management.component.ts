@@ -10,10 +10,13 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { PROFILE_IRIS } from 'app/app.constants';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -41,6 +44,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    private profileInfoSubscription: Subscription;
+    irisEnabled = false;
+    lectureIngestionEnabled = false;
+
     routerEditLinksBase = {
         [LectureUnitType.ATTACHMENT]: 'attachment-units',
         [LectureUnitType.VIDEO]: 'video-units',
@@ -51,6 +58,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     // Icons
     faTrash = faTrash;
     faPencilAlt = faPencilAlt;
+    sendToIris = faFileExport;
+    resendToIris = faRepeat;
+    done = faCheckCircle;
+    loading = faSpinner;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -58,6 +69,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         private lectureService: LectureService,
         private alertService: AlertService,
         public lectureUnitService: LectureUnitService,
+        private profileService: ProfileService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnDestroy(): void {
@@ -65,6 +78,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.updateOrderSubjectSubscription.unsubscribe();
         this.dialogErrorSource.unsubscribe();
         this.navigationEndSubscription.unsubscribe();
+        this.profileInfoSubscription?.unsubscribe();
     }
 
     ngOnInit(): void {
@@ -104,6 +118,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     this.lecture = lecture;
                     if (lecture?.lectureUnits) {
                         this.lectureUnits = lecture?.lectureUnits;
+                        this.initializeProfileInfo();
                     } else {
                         this.lectureUnits = [];
                     }
@@ -123,6 +138,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             .subscribe({
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+    }
+
+    initializeProfileInfo() {
+        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+            if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {
+                this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((settings) => {
+                    this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+                });
+            }
+        });
     }
 
     drop(event: CdkDragDrop<LectureUnit[]>) {
@@ -219,6 +245,26 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return (<AttachmentUnit>lectureUnit)?.attachment?.version || undefined;
             default:
                 return undefined;
+        }
+    }
+    onIngestButtonClicked(lectureUnitId: number) {
+        this.lectureUnitService.ingestLectureUnitInPyris(lectureUnitId, this.lecture.id!).subscribe({
+            error: (error) => console.error('Failed to send Ingestion request', error),
+        });
+    }
+
+    getIcon(attachmentUnit: AttachmentUnit): IconDefinition {
+        switch (attachmentUnit.pyrisIngestionState) {
+            case IngestionState.NOT_STARTED:
+                return this.sendToIris;
+            case IngestionState.IN_PROGRESS:
+                return this.loading;
+            case IngestionState.DONE:
+                return this.done;
+            case IngestionState.ERROR:
+                return this.resendToIris;
+            default:
+                return this.sendToIris;
         }
     }
 }

@@ -241,4 +241,15 @@ public class LectureUnitService {
             throw new BadRequestException();
         }
     }
+
+    /**
+     * Ingest the lectureUnit when triggered by the ingest lectureUnit button
+     *
+     * @param lectureUnit lectureUnit to be ingested
+     */
+    public void ingestLectureUnitInPyris(LectureUnit lectureUnit) {
+        if (lectureUnit instanceof AttachmentUnit && pyrisWebhookService.isPresent()) {
+            pyrisWebhookService.get().addLectureUnitToPyrisDB((AttachmentUnit) lectureUnit);
+        }
+    }
 }

@@ -46,7 +46,14 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     @MethodSource("irisExceptions")
     void testExceptionIngestionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockIngestionWebhookRunError(httpStatus);
-        assertThatThrownBy(() -> pyrisConnectorService.executeLectureWebhook("fullIngestion", null)).isInstanceOf(exceptionClass);
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureAddtionWebhook("fullIngestion", null)).isInstanceOf(exceptionClass);
+    }
+
+    @ParameterizedTest
+    @MethodSource("irisExceptions")
+    void testExceptionLectureDeletionV2(int httpStatus, Class<?> exceptionClass) {
+        irisRequestMockProvider.mockDeletionWebhookRunError(httpStatus);
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureDeletionWebhook(null)).isInstanceOf(exceptionClass);
     }
 
     @Test

@@ -118,6 +118,10 @@
                             <span jhiTranslate="artemisApp.lecture.endDate"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
+                        <th jhiSortBy="ingested">
+                            <span jhiTranslate="artemisApp.lecture.ingestionState"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
                         <th></th>
                     </tr>
                 </thead>
@@ -134,6 +138,7 @@
                             <td>{{ lecture.visibleDate | artemisDate }}</td>
                             <td>{{ lecture.startDate | artemisDate }}</td>
                             <td>{{ lecture.endDate | artemisDate }}</td>
+                            <td>{{ lecture.ingested?.toString() }}</td>
                             <td class="text-end">
                                 <div class="btn-group flex-btn-group-container">
                                     <div class="btn-group-vertical me-1 mb-1">
