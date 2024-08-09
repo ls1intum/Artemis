@@ -116,7 +116,9 @@ class TestResultXmlParser {
 
         @JacksonXmlText
         public void setDetailedMessage(String detailedMessage) {
-            this.detailedMessage = detailedMessage;
+            // empty text nodes are deserialized as null instead of a string, see: https://github.com/FasterXML/jackson-dataformat-xml/issues/565
+            // note that this workaround does not fix the issue entirely, as strings of only whitespace become the empty string
+            this.detailedMessage = detailedMessage != null ? detailedMessage : "";
         }
     }
 }
