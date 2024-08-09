@@ -135,10 +135,8 @@ export class LearningPathManagementComponent implements OnInit {
             .subscribe({
                 next: (res) => {
                     this.health = res.body!;
-                    if (!this.health.status?.includes(HealthStatus.DISABLED)) {
-                        this.performSearch(this.sort, 0);
-                        this.performSearch(this.search, 300);
-                    }
+                    this.performSearch(this.sort, 0);
+                    this.performSearch(this.search, 300);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

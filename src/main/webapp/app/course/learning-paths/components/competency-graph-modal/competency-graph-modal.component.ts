@@ -1,7 +1,7 @@
 import { Component, effect, inject, input, signal } from '@angular/core';
 import { FontAwesomeModule, IconDefinition } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
@@ -45,5 +45,14 @@ export class CompetencyGraphModalComponent {
 
     closeModal(): void {
         this.activeModal.close();
+    }
+
+    static openCompetencyGraphModal(modalService: NgbModal, learningPathId: number): void {
+        const modalRef = modalService.open(CompetencyGraphModalComponent, {
+            size: 'xl',
+            backdrop: 'static',
+            windowClass: 'competency-graph-modal',
+        });
+        modalRef.componentInstance.learningPathId = signal<number>(learningPathId);
     }
 }

@@ -1,0 +1,27 @@
+<div class="learning-paths-analytics-container">
+    <h5 class="m-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsAnalytics.title"></h5>
+    <hr class="my-2" />
+    <div class="row h-100 m-0 gap-3">
+        <div class="col-2 p-0 learning-paths-analytics-graph-selection-container">
+            <ng-container [ngTemplateOutlet]="radioTemplate" [ngTemplateOutletContext]="{ $implicit: CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS }"></ng-container>
+        </div>
+        <div class="col p-0">
+            @if (isLoading()) {
+                <div class="row justify-content-center p-2">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only" jhiTranslate="loading"></span>
+                    </div>
+                </div>
+            } @else if (instructorCompetencyGraph()) {
+                <jhi-competency-graph [competencyGraph]="instructorCompetencyGraph()!" />
+            }
+        </div>
+    </div>
+</div>
+
+<ng-template #radioTemplate let-competencyNodeValueType>
+    <div class="row m-0 align-items-center">
+        <input type="radio" class="col-md-auto" [checked]="valueSelection() === competencyNodeValueType" />
+        <label class="col-md-auto pe-0 text-break" [jhiTranslate]="'artemisApp.learningPathManagement.learningPathsAnalytics.graphSelection.' + competencyNodeValueType"></label>
+    </div>
+</ng-template>
