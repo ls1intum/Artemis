@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.security;
 
 import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
 import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MIN_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.SIMPLE_EMAIL_REGEX;
 import static de.tum.in.www1.artemis.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
 
@@ -30,6 +31,10 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 public final class SecurityUtils {
 
     private SecurityUtils() {
+    }
+
+    public static boolean isEmail(String input) {
+        return input.matches(SIMPLE_EMAIL_REGEX);
     }
 
     /**

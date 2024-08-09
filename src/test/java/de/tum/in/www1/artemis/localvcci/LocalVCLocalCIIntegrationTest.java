@@ -128,10 +128,10 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         var fakeUser = new LdapUserDto().username(localVCBaseUsername);
         fakeUser.setUid(new LdapName("cn=" + localVCBaseUsername + ",ou=test,o=lab"));
 
-        doReturn(Optional.of(instructor1)).when(ldapUserService).findByUsername(instructor1.getUsername());
-        doReturn(Optional.of(tutor1)).when(ldapUserService).findByUsername(tutor1.getUsername());
-        doReturn(Optional.of(student1)).when(ldapUserService).findByUsername(student1.getUsername());
-        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByUsername(localVCBaseUsername);
+        doReturn(Optional.of(instructor1)).when(ldapUserService).findByLogin(instructor1.getLogin());
+        doReturn(Optional.of(tutor1)).when(ldapUserService).findByLogin(tutor1.getLogin());
+        doReturn(Optional.of(student1)).when(ldapUserService).findByLogin(student1.getLogin());
+        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByLogin(localVCBaseUsername);
 
         doReturn(true).when(ldapTemplate).compare(anyString(), anyString(), any());
 

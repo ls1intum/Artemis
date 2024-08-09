@@ -365,7 +365,7 @@ public class UserService {
      * @return a new user or null if the LDAP user was not found
      */
     public Optional<User> createUserFromLdapWithLogin(String login) {
-        return findUserInLdap(login, () -> ldapUserService.orElseThrow().findByUsername(login));
+        return findUserInLdap(login, () -> ldapUserService.orElseThrow().findByLogin(login));
     }
 
     /**
@@ -375,7 +375,7 @@ public class UserService {
      * @return a new user or null if the LDAP user was not found
      */
     public Optional<User> createUserFromLdapWithEmail(String email) {
-        return findUserInLdap(email, () -> ldapUserService.orElseThrow().findByEmail(email));
+        return findUserInLdap(email, () -> ldapUserService.orElseThrow().findByAnyEmail(email));
     }
 
     /**
@@ -394,7 +394,7 @@ public class UserService {
      * Note: this method should only be used if the user does not yet exist in the database
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
-     * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByUsername(email)"
+     * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByLogin(email)"
      * @return a new user or null if the LDAP user was not found
      */
     private Optional<User> findUserInLdap(String userIdentifier, Supplier<Optional<LdapUserDto>> userSupplierFunction) {
@@ -405,11 +405,11 @@ public class UserService {
             Optional<LdapUserDto> ldapUserOptional = userSupplierFunction.get();
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
-                log.info("Ldap User {} has login: {}", ldapUser.getFirstName() + " " + ldapUser.getFirstName(), ldapUser.getUsername());
+                log.info("Ldap User {} has login: {}", ldapUser.getFirstName() + " " + ldapUser.getFirstName(), ldapUser.getLogin());
 
                 // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number, or it is wrong
-                if (StringUtils.hasText(ldapUser.getUsername())) {
-                    var existingUser = userRepository.findOneByLogin(ldapUser.getUsername());
+                if (StringUtils.hasText(ldapUser.getLogin())) {
+                    var existingUser = userRepository.findOneByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
                         existingUser.get().setRegistrationNumber(ldapUser.getRegistrationNumber());
                         saveUser(existingUser.get());
@@ -418,7 +418,7 @@ public class UserService {
                 }
 
                 // Use empty password, so that we don't store the credentials of external users in the Artemis DB
-                User user = userCreationService.createUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
+                User user = userCreationService.createUser(ldapUser.getLogin(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
                 return Optional.of(user);
             }
