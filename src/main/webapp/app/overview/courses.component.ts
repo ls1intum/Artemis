@@ -10,10 +10,10 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { Router } from '@angular/router';
-import { faPenAlt, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDownAZ, faArrowUpAZ, faPenAlt, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { sortCourses } from 'app/shared/util/course.util';
+import { sortCourses, sortCoursesDescending } from 'app/shared/util/course.util';
 
 @Component({
     selector: 'jhi-overview',
@@ -37,8 +37,11 @@ export class CoursesComponent implements OnInit, OnDestroy {
     // Icons
     faPenAlt = faPenAlt;
     faSearch = faSearch;
+    faArrowDownAZ = faArrowDownAZ;
+    faArrowUpAZ = faArrowUpAZ;
 
     coursesLoaded = false;
+    isSortAscending = true;
 
     constructor(
         private courseService: CourseManagementService,
@@ -78,6 +81,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
                         courses.push(courseDto.course);
                     });
                     this.courses = sortCourses(courses);
+                    this.courses.forEach((a) => console.log(a.title!));
                     this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
 
                     this.nextRelevantExams = res.body.activeExams ?? [];
@@ -135,5 +139,13 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
     setSearchValue(searchValue: string): void {
         this.searchCourseText = searchValue;
+    }
+
+    onSort(isAscending: boolean): void {
+        if (this.regularCourses) {
+            const sortFunction = isAscending ? sortCourses : sortCoursesDescending;
+            this.regularCourses = [...sortFunction(this.regularCourses)];
+            this.isSortAscending = isAscending;
+        }
     }
 }
