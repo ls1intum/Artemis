@@ -90,8 +90,8 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
                 this.jhiWebsocketService.subscribe(websocketTopic);
                 this.jhiWebsocketService.receive(websocketTopic).subscribe({
                     next: (update: CompetencyGenerationStatusUpdate) => {
-                        for (let i = 0; i < update.result.length - 1; i++) {
-                            this.addCompetencyToForm(update.result[i]);
+                        for (const competency of update.result) {
+                            this.addCompetencyToForm(competency);
                         }
                         if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
                             this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
