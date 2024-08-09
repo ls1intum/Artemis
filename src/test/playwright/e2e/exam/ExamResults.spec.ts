@@ -16,6 +16,11 @@ import { Page } from '@playwright/test';
 import { StudentExam } from 'app/entities/student-exam.model';
 
 test.describe('Exam Results', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 60000,
+    });
+
     let course: Course;
 
     test.beforeEach('Create course', async ({ browser }) => {
@@ -126,7 +131,10 @@ test.describe('Exam Results', () => {
                     },
                 );
 
-                test(`Check exam ${exerciseTypeString} exercise results`, async ({ page, login, examParticipation, examResultsPage }) => {
+                test(`Check exam ${exerciseTypeString} exercise results`, async ({ page, login, examParticipation, examResultsPage }, testInfo) => {
+                    if (exerciseTypeString === 'programming') {
+                        testInfo.setTimeout(180000);
+                    }
                     await login(studentOne);
                     await waitForExamEnd(examEndDate, page);
                     await page.goto(`/courses/${course.id}/exams/${exam.id}`);

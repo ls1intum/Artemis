@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 import { QuizMode } from '../../../support/constants';
 
 test.describe('Quiz Exercise Participation', () => {
+    test.describe.configure({ timeout: 40000 });
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

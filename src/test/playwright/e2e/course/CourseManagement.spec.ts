@@ -53,7 +53,8 @@ test.describe('Course management', () => {
             course = await courseManagementAPIRequests.createCourse({ courseName: courseData.title, courseShortName: courseData.shortName });
         });
 
-        test('Manually adds and removes a student', async ({ navigationBar, courseManagement }) => {
+        test('Manually adds and removes a student', async ({ navigationBar, courseManagement }, testInfo) => {
+            testInfo.setTimeout(25000);
             const username = studentOne.username;
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
@@ -88,7 +89,8 @@ test.describe('Course management', () => {
             courseData.shortName = 'playwright' + uid;
         });
 
-        test('Creates a new course', async ({ navigationBar, courseManagement, courseCreation }) => {
+        test('Creates a new course', async ({ navigationBar, courseManagement, courseCreation }, testInfo) => {
+            testInfo.setTimeout(15000);
             await navigationBar.openCourseManagement();
             await courseManagement.openCourseCreation();
             await courseCreation.setTitle(courseData.title);
@@ -150,7 +152,8 @@ test.describe('Course management', () => {
         });
 
         if (allowGroupCustomization) {
-            test('Creates a new course with custom groups', async ({ navigationBar, courseManagement, courseCreation }) => {
+            test('Creates a new course with custom groups', async ({ navigationBar, courseManagement, courseCreation }, testInfo) => {
+                testInfo.setTimeout(25000);
                 await navigationBar.openCourseManagement();
                 await courseManagement.openCourseCreation();
                 await courseCreation.setTitle(courseData.title);
@@ -201,7 +204,8 @@ test.describe('Course management', () => {
             course = await courseManagementAPIRequests.createCourse({ courseName: courseData.title, courseShortName: courseData.shortName });
         });
 
-        test('Edits a existing course', async ({ navigationBar, courseManagement, courseCreation }) => {
+        test('Edits an existing course', async ({ navigationBar, courseManagement, courseCreation }, testInfo) => {
+            testInfo.setTimeout(20000);
             const uid = generateUUID();
             editedCourseData.title = 'Course ' + uid;
 
@@ -236,7 +240,8 @@ test.describe('Course management', () => {
             course = await courseManagementAPIRequests.createCourse();
         });
 
-        test('Deletes an existing course', async ({ navigationBar, courseManagement }) => {
+        test('Deletes an existing course', async ({ navigationBar, courseManagement }, testInfo) => {
+            testInfo.setTimeout(15000);
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
             await courseManagement.deleteCourse(course);
@@ -245,6 +250,8 @@ test.describe('Course management', () => {
     });
 
     test.describe('Course icon deletion', () => {
+        test.describe.configure({ timeout: 15000 });
+
         test.describe('Course within icon', () => {
             let course: Course;
 

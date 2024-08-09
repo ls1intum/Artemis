@@ -14,6 +14,11 @@ const textFixture = 'loremIpsum.txt';
 const examTitle = 'exam' + generateUUID();
 
 test.describe('Test exam test run', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 120000,
+    });
+
     let course: Course;
     let exam: Exam;
     let exerciseArray: Array<Exercise> = [];
@@ -40,7 +45,8 @@ test.describe('Test exam test run', () => {
         });
     });
 
-    test('Creates a test run', async ({ login, page, examManagement, examTestRun }) => {
+    test('Creates a test run', async ({ login, page, examManagement, examTestRun }, testInfo) => {
+        testInfo.setTimeout(60000);
         await login(instructor);
 
         const minutes = 40;

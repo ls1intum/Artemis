@@ -8,6 +8,8 @@ import { expect } from '@playwright/test';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
 test.describe('Text exercise participation', () => {
+    test.describe.configure({ timeout: 20000 });
+
     let course: Course;
     let exercise: TextExercise;
 

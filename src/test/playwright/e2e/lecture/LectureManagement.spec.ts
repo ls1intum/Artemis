@@ -20,6 +20,8 @@ const lectureData = {
 };
 
 test.describe('Lecture management', () => {
+    test.describe.configure({ timeout: 20000 });
+
     let course: Course;
 
     test.beforeEach(async ({ login, courseManagementAPIRequests }) => {

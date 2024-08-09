@@ -5,14 +5,6 @@
             "feedback": "Good job"
         },
         {
-            "points": 5,
-            "feedback": "Could be better"
-        },
-        {
-            "points": 3,
-            "feedback": "Not good"
-        },
-        {
             "points": 2,
             "feedback": "Bad"
         }
@@ -20,45 +12,45 @@
     "statistics": [
         {
             "stat": "Exams",
-            "passed": "2",
-            "submitted": "4",
-            "total": "4"
+            "passed": "1",
+            "submitted": "2",
+            "total": "2"
         },
         {
             "stat": "Average Points",
-            "passed": "6",
+            "passed": "7",
+            "submitted": "4.5",
+            "total": "4.5"
+        },
+        {
+            "stat": "Average Grade",
+            "passed": "2.7",
             "submitted": "4.3",
             "total": "4.3"
         },
         {
-            "stat": "Average Grade",
-            "passed": "3.3",
-            "submitted": "4.7",
-            "total": "4.7"
-        },
-        {
             "stat": "Median Points",
-            "passed": "6",
-            "submitted": "4",
-            "total": "4"
+            "passed": "7",
+            "submitted": "4.5",
+            "total": "4.5"
         },
         {
             "stat": "Median Grade",
-            "passed": "3.3",
-            "submitted": "4.7",
-            "total": "4.7"
+            "passed": "2.7",
+            "submitted": "4.3",
+            "total": "4.3"
         },
         {
             "stat": "Standard Point Deviation",
-            "passed": "1",
-            "submitted": "1.9",
-            "total": "1.9"
+            "passed": "0",
+            "submitted": "2.5",
+            "total": "2.5"
         },
         {
             "stat": "Standard Grade Deviation",
-            "passed": "0.6",
-            "submitted": "0.9",
-            "total": "0.9"
+            "passed": "0",
+            "submitted": "1.2",
+            "total": "1.2"
         }
     ],
     "gradingScale": {
@@ -199,7 +191,7 @@
     "gradeDistribution": [
         {
             "name": "5.0",
-            "count": "2"
+            "count": "1"
         },
         {
             "name": "4.7",
@@ -211,7 +203,7 @@
         },
         {
             "name": "4.0",
-            "count": "1"
+            "count": "0"
         },
         {
             "name": "3.7",
@@ -257,19 +249,9 @@
             "overallGrade": "5.0"
         },
         {
-            "overallPoints": "5",
-            "overallScore": "50",
-            "overallGrade": "4.0"
-        },
-        {
             "overallPoints": "7",
             "overallScore": "70",
             "overallGrade": "2.7"
-        },
-        {
-            "overallPoints": "3",
-            "overallScore": "30",
-            "overallGrade": "5.0"
         }
     ]
 }

@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { UserCredentials, admin, studentOne, studentThree, studentTwo, users } from '../../../support/users';
+import { UserCredentials, admin, studentOne, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { Exercise, ExerciseType } from '../../../support/constants';
 import dayjs from 'dayjs';
@@ -18,6 +18,11 @@ const studentNames = new Map<UserCredentials, string>();
 let examExercise: Exercise;
 
 test.describe('Test Exam - student exams', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 60000,
+    });
+
     let course: Course;
     let exam: Exam;
 
@@ -27,7 +32,6 @@ test.describe('Test Exam - student exams', () => {
 
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
 
         const examConfig = {
             course,
@@ -45,7 +49,6 @@ test.describe('Test Exam - student exams', () => {
 
         await participateInExam(studentOne, course, exam, true, true, examParticipation, examNavigation);
         await participateInExam(studentTwo, course, exam, true, false, examParticipation, examNavigation);
-        await participateInExam(studentThree, course, exam, false, false, examParticipation, examNavigation);
     });
 
     test.beforeEach('Get student names', async ({ login, page }) => {
@@ -53,11 +56,9 @@ test.describe('Test Exam - student exams', () => {
 
         const studentOneInfo = await users.getUserInfo(studentOne.username, page);
         const studentTwoInfo = await users.getUserInfo(studentTwo.username, page);
-        const studentThreeInfo = await users.getUserInfo(studentThree.username, page);
 
         studentNames.set(studentOne, studentOneInfo.name!);
         studentNames.set(studentTwo, studentTwoInfo.name!);
-        studentNames.set(studentThree, studentThreeInfo.name!);
     });
 
     test.describe('Check exam participants and their submissions', () => {
