@@ -6,6 +6,6 @@
   ${AnsiColor.RED}██║  ██║██║  ██║${AnsiColor.BLUE}   ██║   ███████╗██║ ╚═╝ ██║${AnsiColor.RED}██║███████║
   ${AnsiColor.RED}╚═╝  ╚═╝╚═╝  ╚═╝${AnsiColor.BLUE}   ╚═╝   ╚══════╝╚═╝     ╚═╝${AnsiColor.RED}╚═╝╚══════╝
 
-${AnsiColor.BLACK}:: Interactive Learning with Individual Feedback ::
+${AnsiColor.DEFAULT}:: Interactive Learning with Individual Feedback ::
 
-${AnsiColor.BLACK}:: Powered by Spring Boot ${spring-boot.version} ::
+${AnsiColor.DEFAULT}:: Powered by Spring Boot ${spring-boot.version} ::
