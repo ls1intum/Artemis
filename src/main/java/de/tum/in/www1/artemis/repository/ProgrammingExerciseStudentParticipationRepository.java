@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -185,6 +187,14 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             WHERE p.id = :participationId
             """)
     void updateLockedById(@Param("participationId") long participationId, @Param("locked") boolean locked);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.repositoryUri IS NOT NULL
+            ORDER BY p.id DESC
+            """)
+    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUri(Pageable pageable);
 
     /**
      * Remove the build plan id from all participations of the given exercise.

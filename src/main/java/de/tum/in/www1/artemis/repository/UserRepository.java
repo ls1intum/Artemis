@@ -774,6 +774,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     void updateIrisAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
 
+    /**
+     * Clears all vcs token data for the users.
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.vcsAccessToken = NULL,
+                user.vcsAccessTokenExpiryDate = NULL
+            """)
+    void clearVCSTokens();
+
     @Query("""
             SELECT DISTINCT user
             FROM User user
