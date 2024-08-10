@@ -77,7 +77,7 @@ export class ProgrammingExerciseBuildConfig {
     /**
      * Copy the build configuration from the given exerciseJson to this build configuration.
      */
-    public copyBuildConfig(exerciseJson: Exercise) {
+    public copyBuildConfig(exerciseJson: ProgrammingExercise) {
         if (exerciseJson.type !== ExerciseType.PROGRAMMING) {
             return;
         }

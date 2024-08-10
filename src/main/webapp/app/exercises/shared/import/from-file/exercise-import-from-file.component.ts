@@ -52,7 +52,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 // This is needed to make sure that old exported programming exercises can be imported
                 if (!(this.exercise as ProgrammingExercise).buildConfig) {
                     const buildConfig = new ProgrammingExerciseBuildConfig();
-                    buildConfig.copyBuildConfig(exerciseJson);
+                    buildConfig.copyBuildConfig(exerciseJson as ProgrammingExercise);
                     (this.exercise as ProgrammingExercise).buildConfig = buildConfig;
                 }
                 break;
