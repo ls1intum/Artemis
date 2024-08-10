@@ -138,8 +138,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().until(pipelineDone::get);
 
-        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
-                messageDTO("Hello World"));
+        verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), "" + irisSession.getId(), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
+                statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
     }
 
     @Test
@@ -163,8 +163,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().until(pipelineDone::get);
 
-        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
-                suggestionsDTO("suggestion1", "suggestion2", "suggestion3"));
+        verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), "" + irisSession.getId(), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
+                statusDTO(DONE, IN_PROGRESS), suggestionsDTO("suggestion1", "suggestion2", "suggestion3"));
     }
 
     @Test
@@ -305,7 +305,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.OK);
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
-        verifyWebsocketActivityWasExactly(irisSession, statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+        verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), "" + irisSession.getId(), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
+                messageDTO("Hello World"));
     }
 
     // User needs to be Admin to change settings
@@ -336,8 +337,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
             var irisMessage = irisMessageService.saveMessage(messageToSend2, irisSession, IrisMessageSender.USER);
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.TOO_MANY_REQUESTS);
 
-            verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend1.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
-                    messageDTO("Hello World"));
+            verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), "" + irisSession.getId(), messageDTO(messageToSend1.getContent()),
+                    statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
         }
         finally {
             // Reset to not interfere with other tests

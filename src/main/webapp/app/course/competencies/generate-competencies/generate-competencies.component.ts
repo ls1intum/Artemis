@@ -81,8 +81,8 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      * @param courseDescription
      */
     getCompetencyRecommendations(courseDescription: string) {
-        // Reset form and start loading
-        this.form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
+        // Keep only viewed competencies
+        this.form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>(this.competencies.controls.filter((c) => c.getRawValue().viewed)) });
         this.isLoading = true;
         const websocketTopic = '/user/topic/iris/competencies/' + this.courseId;
         this.competencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription).subscribe({

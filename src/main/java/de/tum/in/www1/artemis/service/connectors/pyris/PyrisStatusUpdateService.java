@@ -106,8 +106,7 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(IngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
         statusUpdate.stages().forEach(stage -> log.info(stage.name() + ":" + stage.message()));
-        boolean isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
-                .allMatch(state -> state == PyrisStageState.DONE || state == PyrisStageState.ERROR || state == PyrisStageState.SKIPPED);
+        boolean isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
         if (isDone) {
             pyrisJobService.removeJob(job.jobId());
         }
