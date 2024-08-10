@@ -4,7 +4,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise, ProgrammingExerciseBuildConfig } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingExerciseBuildConfig, copyBuildConfigFromExerciseJson } from 'app/entities/programming-exercise.model';
 import JSZip from 'jszip';
 
 @Component({
@@ -52,7 +52,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 // This is needed to make sure that old exported programming exercises can be imported
                 if (!(this.exercise as ProgrammingExercise).buildConfig) {
                     const buildConfig = new ProgrammingExerciseBuildConfig();
-                    buildConfig.copyBuildConfig(exerciseJson as ProgrammingExercise);
+                    copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
                     (this.exercise as ProgrammingExercise).buildConfig = buildConfig;
                 }
                 break;

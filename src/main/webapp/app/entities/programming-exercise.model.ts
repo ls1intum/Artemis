@@ -73,24 +73,6 @@ export class ProgrammingExerciseBuildConfig {
         this.checkoutSolutionRepository = false; // default value
         this.testwiseCoverageEnabled = false; // default value
     }
-
-    /**
-     * Copy the build configuration from the given exerciseJson to this build configuration.
-     */
-    public copyBuildConfig(exerciseJson: ProgrammingExercise) {
-        if (exerciseJson.type !== ExerciseType.PROGRAMMING) {
-            return;
-        }
-        this.sequentialTestRuns = exerciseJson['sequentialTestRuns'] ?? false;
-        this.checkoutPath = exerciseJson['checkoutPath'] ?? '';
-        this.buildPlanConfiguration = exerciseJson['buildPlanConfiguration'] ?? '';
-        this.checkoutSolutionRepository = exerciseJson['checkoutSolutionRepository'] ?? false;
-        this.timeoutSeconds = exerciseJson['timeoutSeconds'] ?? 0;
-        this.windFile = exerciseJson['windFile'] ?? undefined;
-        this.buildScript = exerciseJson['buildScript'] ?? '';
-        this.testwiseCoverageEnabled = exerciseJson['testwiseCoverageEnabled'] ?? false;
-        this.dockerFlags = exerciseJson['dockerFlags'] ?? '';
-    }
 }
 
 export enum ProgrammingLanguage {
@@ -182,4 +164,22 @@ export function resetProgrammingForImport(exercise: ProgrammingExercise) {
     exercise.releaseTestsWithExampleSolution = false;
     exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
     exercise.assessmentType = AssessmentType.AUTOMATIC;
+}
+
+/**
+ * Copy the build configuration from the given exerciseJson to this build configuration. This is to ensure compatibility with old exported programming exercises.
+ */
+export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExerciseBuildConfig): ProgrammingExerciseBuildConfig {
+    const buildConfig = new ProgrammingExerciseBuildConfig();
+    buildConfig.sequentialTestRuns = exerciseJson.sequentialTestRuns ?? false;
+    buildConfig.checkoutPath = exerciseJson.checkoutPath ?? '';
+    buildConfig.buildPlanConfiguration = exerciseJson.buildPlanConfiguration ?? '';
+    buildConfig.checkoutSolutionRepository = exerciseJson.checkoutSolutionRepository ?? false;
+    buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;
+    buildConfig.windFile = exerciseJson.windFile ?? undefined;
+    buildConfig.buildScript = exerciseJson.buildScript ?? '';
+    buildConfig.testwiseCoverageEnabled = exerciseJson.testwiseCoverageEnabled ?? false;
+    buildConfig.dockerFlags = exerciseJson.dockerFlags ?? '';
+
+    return buildConfig;
 }
