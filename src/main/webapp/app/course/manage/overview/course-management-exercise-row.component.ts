@@ -23,7 +23,7 @@ export enum ExerciseRowType {
 export class CourseManagementExerciseRowComponent implements OnChanges {
     @Input() course: Course;
     @Input() details: Exercise;
-    @Input() statistic: CourseManagementOverviewExerciseStatisticsDTO;
+    @Input() statistic?: CourseManagementOverviewExerciseStatisticsDTO;
     @Input() rowType: ExerciseRowType;
 
     // Expose enums to the template

@@ -5,6 +5,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/angular';
 import { SessionStorageService } from 'ngx-webstorage';
 
+type LtiLaunchResponse = {
+    targetLinkUri: string;
+    ltiIdToken: string;
+    clientRegistrationId: string;
+};
+
 @Component({
     selector: 'jhi-lti-exercise-launch',
     templateUrl: './lti13-exercise-launch.component.html',
@@ -42,7 +48,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
 
         this.http
-            .post('api/public/lti13/auth-login', requestBody.toString(), {
+            .post<LtiLaunchResponse>('api/public/lti13/auth-login', requestBody.toString(), {
                 headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'),
             })
             .subscribe({
@@ -95,10 +101,10 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         });
     }
 
-    handleLtiLaunchSuccess(data: NonNullable<unknown>): void {
-        const targetLinkUri = data['targetLinkUri'];
-        const ltiIdToken = data['ltiIdToken'];
-        const clientRegistrationId = data['clientRegistrationId'];
+    handleLtiLaunchSuccess(data: LtiLaunchResponse): void {
+        const targetLinkUri = data.targetLinkUri;
+        const ltiIdToken = data.ltiIdToken;
+        const clientRegistrationId = data.clientRegistrationId;
 
         window.sessionStorage.removeItem('state');
         this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
