@@ -1,29 +1,36 @@
-import { Component, Signal, WritableSignal, computed, signal } from '@angular/core';
+import { Component, EventEmitter, Signal, WritableSignal, computed, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonType } from 'app/shared/components/button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
+import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
+import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
+import { Observable } from 'rxjs';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     standalone: true,
     selector: 'jhi-delete-users-button',
     templateUrl: './delete-users-button.component.html',
-    imports: [ArtemisSharedModule],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
 })
 export class DeleteUsersButtonComponent {
     users: WritableSignal<string[] | undefined> = signal(undefined);
     usersString: Signal<string | undefined> = computed(() => this.users()?.join(', '));
 
+    // TODO Handle like in user-management for the delete button?
+    dialogError: Observable<string>;
+
     // Boilerplate code for use in the template
     faEraser = faEraser;
-    readonly medium = ButtonSize.MEDIUM;
 
     constructor(
         private adminUserService: AdminUserService,
         private alertService: AlertService,
+        private deleteDialogService: DeleteDialogService,
     ) {}
 
     loadUserList() {
@@ -33,11 +40,10 @@ export class DeleteUsersButtonComponent {
                     throw new Error('Unexpected null response body for user list');
                 } else {
                     this.users.set(res.body);
-                    // TODO lists in the alerts contain items, but does not get to the dialog ...
-                    this.alertService.info('TEST: ' + (this.usersString() ?? 'empty ...'));
                     if (res.body.length == 0) {
                         this.alertService.info('artemisApp.userManagement.notEnrolled.delete.cancel');
-                        // TODO Cancel the delete conformation dialog
+                    } else {
+                        this.openDeleteDialog();
                     }
                 }
             },
@@ -45,6 +51,26 @@ export class DeleteUsersButtonComponent {
                 onError(this.alertService, res);
             },
         });
+    }
+
+    /**
+     * Opens delete dialog
+     */
+    openDeleteDialog() {
+        const conformer = new EventEmitter<any>();
+        conformer.subscribe(this.onConfirm);
+        const deleteDialogData: DeleteDialogData = {
+            requireConfirmationOnlyForAdditionalChecks: false,
+            entityTitle: (this.users() ?? []).length.toString(),
+            deleteQuestion: 'artemisApp.userManagement.notEnrolled.delete.question',
+            translateValues: { users: this.usersString() },
+            deleteConfirmationText: 'artemisApp.userManagement.batch.delete.typeNumberToConfirm',
+            actionType: ActionType.Delete,
+            buttonType: ButtonType.ERROR,
+            delete: conformer,
+            dialogError: this.dialogError,
+        };
+        this.deleteDialogService.openDeleteDialog(deleteDialogData, true);
     }
 
     onConfirm() {
@@ -60,4 +86,6 @@ export class DeleteUsersButtonComponent {
             throw new Error('Unexpected undefined list of user logins');
         }
     }
+
+    protected readonly ButtonType = ButtonType;
 }

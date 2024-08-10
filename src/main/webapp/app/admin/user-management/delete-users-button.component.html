@@ -1,16 +1,2 @@
-<!--TODO inside button? (like in user-management for the delete button) -->
-<!--[dialogError]="this.dialogError" -->
-<button
-    jhiDeleteButton
-    deleteQuestion="artemisApp.userManagement.notEnrolled.delete.question"
-    deleteConfirmationText="artemisApp.userManagement.batch.delete.typeNumberToConfirm"
-    [buttonSize]="medium"
-    [translateValues]="{ users: this.usersString }"
-    [entityTitle]="(this.users() ?? []).length.toString()"
-    [renderButtonText]="false"
-    (click)="this.loadUserList()"
-    (delete)="this.onConfirm()"
->
-    <fa-icon [icon]="faEraser" />
-    <span jhiTranslate="artemisApp.userManagement.notEnrolled.delete.caption"></span>
-</button>
+<!--[buttonSize]="medium"-->
+<jhi-button type="submit" [icon]="faEraser" [btnType]="ButtonType.ERROR" [title]="'artemisApp.userManagement.notEnrolled.delete.caption'" (click)="this.loadUserList()" />
