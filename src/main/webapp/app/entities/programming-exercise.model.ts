@@ -81,15 +81,15 @@ export class ProgrammingExerciseBuildConfig {
         if (exerciseJson.type !== ExerciseType.PROGRAMMING) {
             return;
         }
-        this.sequentialTestRuns = exerciseJson['sequentialTestRuns'];
-        this.checkoutPath = exerciseJson['checkoutPath'];
-        this.buildPlanConfiguration = exerciseJson['buildPlanConfiguration'];
-        this.checkoutSolutionRepository = exerciseJson['checkoutSolutionRepository'];
-        this.timeoutSeconds = exerciseJson['timeoutSeconds'];
-        this.windFile = exerciseJson['windFile'];
-        this.buildScript = exerciseJson['buildScript'];
-        this.testwiseCoverageEnabled = exerciseJson['testwiseCoverageEnabled'];
-        this.dockerFlags = exerciseJson['dockerFlags'];
+        this.sequentialTestRuns = exerciseJson['sequentialTestRuns'] ?? false;
+        this.checkoutPath = exerciseJson['checkoutPath'] ?? '';
+        this.buildPlanConfiguration = exerciseJson['buildPlanConfiguration'] ?? '';
+        this.checkoutSolutionRepository = exerciseJson['checkoutSolutionRepository'] ?? false;
+        this.timeoutSeconds = exerciseJson['timeoutSeconds'] ?? 0;
+        this.windFile = exerciseJson['windFile'] ?? undefined;
+        this.buildScript = exerciseJson['buildScript'] ?? '';
+        this.testwiseCoverageEnabled = exerciseJson['testwiseCoverageEnabled'] ?? false;
+        this.dockerFlags = exerciseJson['dockerFlags'] ?? '';
     }
 }
 
