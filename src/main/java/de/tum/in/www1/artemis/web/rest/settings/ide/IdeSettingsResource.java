@@ -53,12 +53,12 @@ public class IdeSettingsResource {
      */
     @GetMapping("ide-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<?> getIdesOfUser() {
+    public ResponseEntity<IdeMappingDTO[]> getIdesOfUser() {
         User user = userRepository.getUser();
         log.debug("REST request to get IDEs of user {}", user.getLogin());
 
         var ideMappings = userIdeMappingRepository.findAllByUserId(user.getId());
-        var ideRecords = ideMappings.stream().map(x -> new IdeMappingDTO(x.getProgrammingLanguage(), x.getIde())).toArray();
+        IdeMappingDTO[] ideRecords = ideMappings.stream().map(x -> new IdeMappingDTO(x.getProgrammingLanguage(), x.getIde())).toArray(IdeMappingDTO[]::new);
         log.debug("Successfully queried IDEs of user {}", user.getLogin());
 
         return ResponseEntity.ok(ideRecords);
@@ -67,11 +67,13 @@ public class IdeSettingsResource {
     /**
      * PUT ide-settings: set the IDE for a programming Language of the user
      *
+     * @param programmingLanguage the programming language for which the ide should be set
+     * @param ide                 the ide to set
      * @return returns the changed ide preferences of the user as IdeMappingDTO
      */
     @PutMapping("ide-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<?> setIde(@RequestParam ProgrammingLanguage programmingLanguage, @RequestBody IdeDTO ide) {
+    public ResponseEntity<IdeMappingDTO> setIde(@RequestParam ProgrammingLanguage programmingLanguage, @RequestBody IdeDTO ide) {
         User user = userRepository.getUser();
         log.debug("REST request to set IDE of user {}", user.getLogin());
         if (ide == null || ide.deepLink() == null || ide.name() == null) {
@@ -101,11 +103,12 @@ public class IdeSettingsResource {
     /**
      * DELETE ide-settings: delete a programming language from a users ide preferences
      *
+     * @param programmingLanguage the programming language preference to delete
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request)
      */
     @DeleteMapping("ide-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<?> deleteProgrammingLanguageOfUser(@RequestParam ProgrammingLanguage programmingLanguage) {
+    public ResponseEntity<Void> deleteProgrammingLanguageOfUser(@RequestParam ProgrammingLanguage programmingLanguage) {
         User user = userRepository.getUser();
         log.debug("REST request to delete IDE of user {}", user.getLogin());
 

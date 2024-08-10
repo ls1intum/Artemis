@@ -20,6 +20,8 @@ public class Ide extends DomainObject {
     @Column(name = "name", nullable = false)
     private String name;
 
+    // cloning deeplink with placeholder for the git url
+    // e.g vscode://vscode.git/clone?url={cloneUrl}
     @Column(name = "deep_link", nullable = false, unique = true)
     private String deepLink;
 
@@ -35,7 +37,6 @@ public class Ide extends DomainObject {
         this.deepLink = deepLink;
     }
 
-    // region getter
     public String getName() {
         return name;
     }
@@ -43,5 +44,4 @@ public class Ide extends DomainObject {
     public String getDeepLink() {
         return deepLink;
     }
-    // endregion
 }

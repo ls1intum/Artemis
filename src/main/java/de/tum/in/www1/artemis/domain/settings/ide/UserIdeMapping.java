@@ -54,7 +54,6 @@ public class UserIdeMapping {
         this.ide = ide;
     }
 
-    // region getter
     public User getUser() {
         return user;
     }
@@ -66,5 +65,4 @@ public class UserIdeMapping {
     public Ide getIde() {
         return ide;
     }
-    // endregion
 }
