@@ -16,7 +16,6 @@ import org.gitlab4j.api.models.PipelineFilter;
 import org.gitlab4j.api.models.PipelineStatus;
 import org.gitlab4j.api.models.Project;
 import org.gitlab4j.api.models.Variable;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -129,9 +128,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         ProjectApi projectApi = gitlab.getProjectApi();
 
-        if (exercise.getBuildConfig() == null || !Hibernate.isInitialized(exercise.getBuildConfig())) {
-            exercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise));
-        }
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
 
         try {
             Project project = projectApi.getProject(repositoryPath);

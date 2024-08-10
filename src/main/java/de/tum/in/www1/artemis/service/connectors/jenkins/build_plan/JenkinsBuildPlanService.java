@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
@@ -92,6 +93,8 @@ public class JenkinsBuildPlanService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final BuildPlanRepository buildPlanRepository;
 
     private final Optional<AeolusBuildPlanService> aeolusBuildPlanService;
@@ -108,7 +111,8 @@ public class JenkinsBuildPlanService {
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
             JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator,
-            BuildPlanRepository buildPlanRepository, Optional<AeolusBuildPlanService> aeolusBuildPlanService) {
+            BuildPlanRepository buildPlanRepository, Optional<AeolusBuildPlanService> aeolusBuildPlanService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -120,6 +124,7 @@ public class JenkinsBuildPlanService {
         this.jenkinsPipelineScriptCreator = jenkinsPipelineScriptCreator;
         this.buildPlanRepository = buildPlanRepository;
         this.aeolusBuildPlanService = aeolusBuildPlanService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -131,6 +136,7 @@ public class JenkinsBuildPlanService {
      */
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
 
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());

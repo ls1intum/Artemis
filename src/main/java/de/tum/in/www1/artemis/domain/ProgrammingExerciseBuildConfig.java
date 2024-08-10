@@ -78,6 +78,26 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "build_plan_access_secret", length = 36)
     private String buildPlanAccessSecret;
 
+    public ProgrammingExerciseBuildConfig() {
+    }
+
+    public ProgrammingExerciseBuildConfig(ProgrammingExerciseBuildConfig originalBuildConfig) {
+        this.setBranch(originalBuildConfig.getBranch());
+        this.setBuildPlanConfiguration(originalBuildConfig.getBuildPlanConfiguration());
+        this.setCheckoutPath(originalBuildConfig.getCheckoutPath());
+        this.setCheckoutSolutionRepository(originalBuildConfig.getCheckoutSolutionRepository());
+        this.setDockerFlags(originalBuildConfig.getDockerFlags());
+        this.setSequentialTestRuns(originalBuildConfig.hasSequentialTestRuns());
+        this.setBuildScript(originalBuildConfig.getBuildScript());
+        this.setTestwiseCoverageEnabled(originalBuildConfig.isTestwiseCoverageEnabled());
+        this.setTimeoutSeconds(originalBuildConfig.getTimeoutSeconds());
+        this.setTheiaImage(originalBuildConfig.getTheiaImage());
+        this.setAllowBranching(originalBuildConfig.isAllowBranching());
+        this.setBranchRegex(originalBuildConfig.getBranchRegex());
+        this.setProgrammingExercise(null);
+        this.buildPlanAccessSecret = null;
+    }
+
     @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
         return Objects.requireNonNullElse(sequentialTestRuns, false);
@@ -245,26 +265,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public void generateAndSetBuildPlanAccessSecret() {
         buildPlanAccessSecret = UUID.randomUUID().toString();
-    }
-
-    /**
-     * Copy the build config from the originalBuildConfig to this build config
-     *
-     * @param originalBuildConfig the original build config
-     */
-    public void copyBuildConfig(ProgrammingExerciseBuildConfig originalBuildConfig) {
-        this.setBranch(originalBuildConfig.getBranch());
-        this.setBuildPlanConfiguration(originalBuildConfig.getBuildPlanConfiguration());
-        this.setCheckoutPath(originalBuildConfig.getCheckoutPath());
-        this.setCheckoutSolutionRepository(originalBuildConfig.getCheckoutSolutionRepository());
-        this.setDockerFlags(originalBuildConfig.getDockerFlags());
-        this.setSequentialTestRuns(originalBuildConfig.hasSequentialTestRuns());
-        this.setBuildScript(originalBuildConfig.getBuildScript());
-        this.setTestwiseCoverageEnabled(originalBuildConfig.isTestwiseCoverageEnabled());
-        this.setTimeoutSeconds(originalBuildConfig.getTimeoutSeconds());
-        this.setTheiaImage(originalBuildConfig.getTheiaImage());
-        this.setAllowBranching(originalBuildConfig.isAllowBranching());
-        this.setBranchRegex(originalBuildConfig.getBranchRegex());
     }
 
     @Override

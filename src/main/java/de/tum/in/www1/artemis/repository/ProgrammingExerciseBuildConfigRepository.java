@@ -31,4 +31,8 @@ public interface ProgrammingExerciseBuildConfigRepository extends ArtemisJpaRepo
             save(buildConfig);
         }
     }
+
+    default void loadAndSetBuildConfig(ProgrammingExercise programmingExercise) {
+        programmingExercise.setBuildConfig(getProgrammingExerciseBuildConfigElseThrow(programmingExercise));
+    }
 }

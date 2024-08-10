@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.gitlabci;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.Trigger;
-import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -35,9 +34,7 @@ public class GitLabCITriggerService implements ContinuousIntegrationTriggerServi
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws ContinuousIntegrationException {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
-            programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise));
-        }
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
         triggerBuild(participation.getVcsRepositoryUri(), programmingExercise.getBuildConfig().getBranch());
     }
 

@@ -226,8 +226,7 @@ public class ProgrammingExerciseImportBasicService {
             newExercise.setBuildConfig(buildConfig);
         }
         else if (originalExercise.getBuildConfig() != null) {
-            var buildConfig = new ProgrammingExerciseBuildConfig();
-            buildConfig.copyBuildConfig(originalExercise.getBuildConfig());
+            var buildConfig = new ProgrammingExerciseBuildConfig(originalExercise.getBuildConfig());
             newExercise.setBuildConfig(buildConfig);
         }
         else {
