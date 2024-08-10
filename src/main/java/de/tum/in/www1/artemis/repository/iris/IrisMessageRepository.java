@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -40,6 +41,25 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
             """)
     int countLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
+    Optional<IrisMessage> findFirstBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
+
     @EntityGraph(type = LOAD, attributePaths = { "content" })
-    IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
+    IrisMessage findIrisMessageById(long irisMessageId);
+
+    /**
+     * Finds the first message with content by session ID and sender, ordered by the sent date in descending order.
+     * This method avoids in-memory paging by retrieving the message directly from the database.
+     *
+     * @param sessionId the ID of the session to find the message for
+     * @param sender    the sender of the message
+     * @return the first {@code IrisMessage} with content, ordered by sent date in descending order,
+     *         or null if no message is found
+     */
+    default IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender) {
+        var irisMessage = findFirstBySessionIdAndSenderOrderBySentAtDesc(sessionId, sender);
+        if (irisMessage.isEmpty()) {
+            return null;
+        }
+        return findIrisMessageById(irisMessage.get().getId());
+    }
 }

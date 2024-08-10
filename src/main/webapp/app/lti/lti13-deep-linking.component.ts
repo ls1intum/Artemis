@@ -137,11 +137,14 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
             const httpParams = new HttpParams().set('exerciseIds', exerciseIds).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
 
-            this.http.post(`api/lti13/deep-linking/${this.courseId}`, null, { observe: 'response', params: httpParams }).subscribe({
+            type DeepLinkingResponse = {
+                targetLinkUri: string;
+            };
+            this.http.post<DeepLinkingResponse>(`api/lti13/deep-linking/${this.courseId}`, null, { observe: 'response', params: httpParams }).subscribe({
                 next: (response) => {
                     if (response.status === 200) {
                         if (response.body) {
-                            const targetLink = response.body['targetLinkUri'];
+                            const targetLink = response.body.targetLinkUri;
                             window.location.replace(targetLink);
                         }
                     } else {
