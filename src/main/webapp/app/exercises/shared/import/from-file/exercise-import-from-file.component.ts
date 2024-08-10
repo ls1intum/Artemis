@@ -51,9 +51,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 this.exercise = JSON.parse(exerciseDetails as string) as ProgrammingExercise;
                 // This is needed to make sure that old exported programming exercises can be imported
                 if (!(this.exercise as ProgrammingExercise).buildConfig) {
-                    const buildConfig = new ProgrammingExerciseBuildConfig();
-                    copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
-                    (this.exercise as ProgrammingExercise).buildConfig = buildConfig;
+                    (this.exercise as ProgrammingExercise).buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
                 }
                 break;
             default:
