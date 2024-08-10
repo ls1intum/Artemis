@@ -617,7 +617,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user.login
             FROM User user
-            WHERE user.groups IS EMPTY
+            WHERE user.groups IS EMPTY AND NOT user.isDeleted
                 AND NOT :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
             """)
     List<String> findAllNotEnrolledUsers();
