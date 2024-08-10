@@ -430,6 +430,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         // ID 'element-row-column' is divided into array of [row, column]
         const selectedTextRowColumn = selection.focusNode!.parentNode!.parentElement!.id.split('-').slice(1);
 
+        const row = Number(selectedTextRowColumn[0]);
+        const column = Number(selectedTextRowColumn[1]);
+
         if (selectedTextRowColumn.length === 0) {
             return;
         }
@@ -449,8 +452,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const startOfRange = markdownForHtml(htmlContent).length - selection.toString().length;
         const endOfRange = startOfRange + selection.toString().length;
 
-        const markedTextHTML = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
-        const markedText = markdownForHtml(markedTextHTML).substring(startOfRange, endOfRange);
+        const markedTextHTML = this.textParts[row][column];
+        const markedText = markdownForHtml(markedTextHTML!).substring(startOfRange, endOfRange);
 
         const currentSpotNumber = this.numberOfSpot;
 
@@ -460,9 +463,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             .split(/\[-option /g)[0]
             .trim();
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
-        const textOfSelectedRow = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
-        this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] =
-            textOfSelectedRow.substring(0, startOfRange) + '[-spot ' + currentSpotNumber + ']' + textOfSelectedRow.substring(endOfRange);
+        const textOfSelectedRow = this.textParts[row][column];
+        this.textParts[row][column] = textOfSelectedRow?.substring(0, startOfRange) + '[-spot ' + currentSpotNumber + ']' + textOfSelectedRow?.substring(endOfRange);
 
         // recreation of question text from array and update textParts and parse textParts to html
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
@@ -743,7 +745,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     setQuestionText(textPartId: string): void {
         const rowColumn: string[] = textPartId.split('-').slice(1);
-        this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(textPartId)).value;
+        this.textParts[Number(rowColumn[0])][Number(rowColumn[1])] = (<HTMLInputElement>document.getElementById(textPartId)).value;
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text);
     }

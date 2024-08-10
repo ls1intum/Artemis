@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -79,7 +80,11 @@ public class BuildAgentSshKeyService {
             writer.writePrivateKey(keyPair, sshKeyComment, new OpenSSHKeyEncryptionContext(), outputStream);
         }
 
-        Files.setPosixFilePermissions(privateKeyPath, PosixFilePermissions.fromString("rw-------"));
+        // Avoid an UnsupportedOperationException on Windows
+        boolean posixSupported = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+        if (posixSupported) {
+            Files.setPosixFilePermissions(privateKeyPath, PosixFilePermissions.fromString("rw-------"));
+        }
     }
 
     /**
