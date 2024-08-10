@@ -313,7 +313,7 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
  * @param feedbacks the list of feedbacks
  */
 export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
-    const gradingInstructions = {}; // { instructionId: number of encounters }
+    const gradingInstructions: { [key: number]: number } = {}; // { instructionId: number of encounters }
     for (const feedback of feedbacks) {
         if (feedback.gradingInstruction && feedback.gradingInstruction.credits !== 0) {
             if (gradingInstructions[feedback.gradingInstruction!.id!]) {
