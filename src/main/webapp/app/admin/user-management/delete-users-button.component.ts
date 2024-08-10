@@ -58,7 +58,7 @@ export class DeleteUsersButtonComponent {
      */
     openDeleteDialog() {
         const conformer = new EventEmitter<any>();
-        conformer.subscribe(this.onConfirm);
+        conformer.subscribe(() => this.onConfirm());
         const deleteDialogData: DeleteDialogData = {
             requireConfirmationOnlyForAdditionalChecks: false,
             entityTitle: (this.users() ?? []).length.toString(),
