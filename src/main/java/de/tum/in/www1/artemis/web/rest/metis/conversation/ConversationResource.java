@@ -230,7 +230,7 @@ public class ConversationResource extends ConversationManagementResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
-        var responsibleUsers = userRepository.searchAllByLoginOrNameInGroups(Pageable.unpaged(), "", Set.of(course.getInstructorGroupName()))
+        var responsibleUsers = userRepository.searchAllWithGroupsByLoginOrNameInGroups(Pageable.unpaged(), "", Set.of(course.getInstructorGroupName()))
                 .map((user) -> new ResponsibleUserDTO(user.getName(), user.getEmail())).toList();
 
         return ResponseEntity.ok(responsibleUsers);
