@@ -64,6 +64,9 @@ pub fn find_impl<'a>(items: &'a [Item], name: &str) -> Option<&'a ItemImpl> {
             syn::Type::Path(p) => &p.path.segments.last().unwrap().ident,
             _ => return None,
         };
+        if im.trait_.is_some() {
+            return None;
+        }
 
         if self_name != name {
             return None;
