@@ -208,12 +208,18 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     buildIDEUrl(): string | undefined {
         return this.externalCloningService.buildIDEUrl(
             this.getHttpOrSshRepositoryUri(false),
-            this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ?? PREDEFINED_IDE[0],
+            this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
+                this.ideSettingsService.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
+                PREDEFINED_IDE[0],
         );
     }
 
     getIDEName(): string {
-        return `Open in ${this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY)?.name ?? 'IDE'}`;
+        return `Open in ${
+            this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY)?.name ??
+            this.ideSettingsService.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY)?.name ??
+            PREDEFINED_IDE[0].name
+        }`;
     }
 
     switchPracticeMode() {

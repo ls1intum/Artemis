@@ -85,6 +85,8 @@ public class IdeSettingsResource {
             return ResponseEntity.badRequest().build();
         }
 
+        var oldIdeMapping = userIdeMappingRepository.findById(new UserIdeMappingId(user.getId(), programmingLanguage)).orElse(null);
+
         // find or create the ide
         var savedIde = ideRepository.findByDeepLink(ide.deepLink()).orElse(null);
         if (savedIde == null) {
@@ -94,6 +96,9 @@ public class IdeSettingsResource {
         // Create or update user ide mapping
         UserIdeMapping ideMapping = new UserIdeMapping(user, programmingLanguage, savedIde);
         ideMapping = userIdeMappingRepository.save(ideMapping);
+
+        orphanRemoval(oldIdeMapping != null ? oldIdeMapping.getIde() : null);
+
         var ideRecord = new IdeMappingDTO(ideMapping.getProgrammingLanguage(), ideMapping.getIde());
         log.debug("Successfully set IDE of user {}", user.getLogin());
 
@@ -112,9 +117,29 @@ public class IdeSettingsResource {
         User user = userRepository.getUser();
         log.debug("REST request to delete IDE of user {}", user.getLogin());
 
+        var ideMapping = userIdeMappingRepository.findById(new UserIdeMappingId(user.getId(), programmingLanguage)).orElse(null);
+        if (ideMapping == null) {
+            log.error("No IDE found for user {} with programming language {}", user.getLogin(), programmingLanguage);
+            return ResponseEntity.badRequest().build();
+        }
+
         userIdeMappingRepository.deleteById(new UserIdeMappingId(user.getId(), programmingLanguage));
+
+        orphanRemoval(ideMapping.getIde());
 
         log.debug("Successfully deleted IDE of user {}", user.getLogin());
         return ResponseEntity.ok().build();
+    }
+
+    // if ide is parentless, delete it
+    private void orphanRemoval(Ide ide) {
+        // TODO should be handled by orphan removal annotation in IDE, but does not work
+        if (ide == null) {
+            return;
+        }
+
+        if (userIdeMappingRepository.findAllByIde(ide).isEmpty()) {
+            ideRepository.delete(ide);
+        }
     }
 }

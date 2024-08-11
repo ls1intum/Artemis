@@ -25,7 +25,7 @@ public class Ide extends DomainObject {
     @Column(name = "deep_link", nullable = false, unique = true)
     private String deepLink;
 
-    @OneToMany(mappedBy = "ide", orphanRemoval = true)
+    @OneToMany(mappedBy = "ide")
     private Collection<UserIdeMapping> userIdeMappings;
 
     public Ide() {
