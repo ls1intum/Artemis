@@ -23,4 +23,8 @@ export class MonacoFormulaAction extends MonacoEditorDomainAction {
         this.toggleDelimiterAroundSelection(editor, FORMULA_OPEN_DELIMITER, FORMULA_CLOSE_DELIMITER, MonacoFormulaAction.DEFAULT_FORMULA);
         editor.focus();
     }
+
+    getOpeningIdentifier(): string {
+        return FORMULA_OPEN_DELIMITER;
+    }
 }

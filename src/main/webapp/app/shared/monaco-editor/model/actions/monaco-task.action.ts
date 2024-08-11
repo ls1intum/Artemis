@@ -19,4 +19,8 @@ export class MonacoTaskAction extends MonacoEditorDomainAction {
         this.replaceTextAtCurrentSelection(editor, MonacoTaskAction.INSERT_TASK_TEXT);
         editor.focus();
     }
+
+    getOpeningIdentifier(): string {
+        return '[task]';
+    }
 }
