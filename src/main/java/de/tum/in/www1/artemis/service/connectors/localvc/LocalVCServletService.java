@@ -65,6 +65,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
+import net.sourceforge.plantuml.StringUtils;
 
 /**
  * This service is responsible for authenticating and authorizing git requests as well as for retrieving the requested Git repositories from disk.
@@ -220,7 +221,6 @@ public class LocalVCServletService {
         // The URLs of the first two requests end on '[repository URI]/info/refs'. The third one ends on '[repository URI]/git-receive-pack' (for push) and '[repository
         // URL]/git-upload-pack' (for fetch).
         // The following checks will only be conducted for the second request, so we do not have to access the database too often.
-        // The first request does not contain credentials and will thus already be blocked by the 'authenticateUser' method above.
         if (!request.getRequestURI().endsWith("/info/refs")) {
             return;
         }
@@ -257,7 +257,10 @@ public class LocalVCServletService {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
         }
         catch (AccessForbiddenException | AuthenticationException e) {
-            throw new LocalVCAuthException();
+            if (!StringUtils.isEmpty(password)) {
+                log.warn("Failed login attempt for user {} with password {} due to issue: {}", username, password, e.getMessage());
+            }
+            throw new LocalVCAuthException(e.getMessage());
         }
 
         // check user VCS access token
@@ -341,7 +344,7 @@ public class LocalVCServletService {
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
         if (authorizationHeader == null) {
-            throw new LocalVCAuthException();
+            throw new LocalVCAuthException("No authorization header provided");
         }
 
         String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");
