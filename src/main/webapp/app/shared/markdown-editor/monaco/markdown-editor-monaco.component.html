@@ -5,7 +5,9 @@
         [style.overflow]="inPreviewMode ? 'auto' : 'visible'"
         [style.height.px]="inPreviewMode ? undefined : targetWrapperHeight"
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
+        [style.min-height.px]="inPreviewMode ? resizableMinHeight.valueOf() : undefined"
     >
+        <!-- TODO remove method call -->
         <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
             <ng-container ngbNavItem="editor_edit">
                 @if (showEditButton) {
@@ -55,7 +57,7 @@
                 <ng-template ngbNavContent>
                     <ng-content class="overflow-auto" select="[#previewMonaco]">
                         @if (showDefaultPreview) {
-                            <div class="pt-1 background-editor-high markdown-preview" [style.height.px]="targetWrapperHeight" [innerHTML]="defaultPreviewHtml"></div>
+                            <div class="pt-1 background-editor-high markdown-preview" [style.min-height.px]="previewHeight" [innerHTML]="defaultPreviewHtml"></div>
                         }
                     </ng-content>
                     <!-- TODO preview handling for other exercise types -->
