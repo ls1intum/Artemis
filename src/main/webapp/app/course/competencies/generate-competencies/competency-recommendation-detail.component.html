@@ -64,7 +64,8 @@
         <div class="form-group">
             <label for="description-{{ index }}">{{ 'artemisApp.competency.description' | artemisTranslate }}</label>
             @if (isInEditMode) {
-                <jhi-markdown-editor
+                <jhi-markdown-editor-monaco
+                    [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                     [markdown]="descriptionControl.value"
                     (markdownChange)="updateDescriptionControl($event)"
                     id="description-{{ index }}"
