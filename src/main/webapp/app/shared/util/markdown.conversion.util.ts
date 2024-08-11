@@ -7,7 +7,7 @@ import DOMPurify, { Config } from 'dompurify';
  * showdown will add the classes to the converted html
  * see: https://github.com/showdownjs/showdown/wiki/Add-default-classes-for-each-HTML-element
  */
-const classMap = {
+const classMap: { [key: string]: string } = {
     table: 'table',
 };
 /**
