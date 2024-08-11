@@ -35,8 +35,9 @@ export class IdeSettingsComponent implements OnInit {
     }
 
     removeProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {
-        this.ideSettingsService.deleteIdePreference(programmingLanguage);
-        this.programmingLanguageToIde.delete(programmingLanguage);
+        this.ideSettingsService.deleteIdePreference(programmingLanguage).subscribe(() => {
+            this.programmingLanguageToIde.delete(programmingLanguage);
+        });
     }
 
     // returns all programming languages that have ide preference assigned EXCEPT ProgrammingLanguage.EMPTY

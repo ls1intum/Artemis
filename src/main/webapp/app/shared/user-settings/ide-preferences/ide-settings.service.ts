@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Ide, IdeMappingDTO } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
@@ -42,9 +42,9 @@ export class IdeSettingsService {
      * @param programmingLanguage the programming language for which the ide preference should be deleted
      * @return the deleted ide preference or error
      */
-    public deleteIdePreference(programmingLanguage: ProgrammingLanguage): void {
+    public deleteIdePreference(programmingLanguage: ProgrammingLanguage): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('programmingLanguage', programmingLanguage);
-        this.http.delete<IdeMappingDTO[]>(this.ideSettingsUrl, { params, observe: 'response' }).subscribe(() => {});
+        return this.http.delete<void>(this.ideSettingsUrl, { params, observe: 'response' });
     }
 }
 
