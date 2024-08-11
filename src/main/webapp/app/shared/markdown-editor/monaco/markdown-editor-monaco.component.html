@@ -57,7 +57,7 @@
                 <ng-template ngbNavContent>
                     <ng-content class="overflow-auto" select="[#previewMonaco]">
                         @if (showDefaultPreview) {
-                            <div class="pt-1 background-editor-high markdown-preview" [style.min-height.px]="previewHeight" [innerHTML]="defaultPreviewHtml"></div>
+                            <div class="p-0 m-1 background-editor-high markdown-preview" [style.min-height.px]="previewHeight" [innerHTML]="defaultPreviewHtml"></div>
                         }
                     </ng-content>
                     <!-- TODO preview handling for other exercise types -->

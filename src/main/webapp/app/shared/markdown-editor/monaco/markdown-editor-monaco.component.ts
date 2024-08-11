@@ -344,7 +344,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     adjustEditorDimensions(): void {
         const editorHeight = this.getEditorHeight();
         this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), editorHeight);
-        this.previewHeight = editorHeight;
+        this.previewHeight = 0.9 * editorHeight;
     }
 
     /**
