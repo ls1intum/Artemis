@@ -45,6 +45,7 @@ import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
+import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, STANDARD_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 
 interface MarkdownActionsByGroup {
     standard: MonacoEditorAction[];
@@ -103,6 +104,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Input()
     showDefaultPreview = true;
+
+    @Input()
+    useDefaultMarkdownEditorOptions = true;
 
     @Input()
     showEditButton = true;
@@ -247,6 +251,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.fileUploadFooter?.nativeElement) {
             this.resizeObserver.observe(this.fileUploadFooter.nativeElement);
         }
+        if (this.actionPalette?.nativeElement) {
+            this.resizeObserver.observe(this.actionPalette.nativeElement);
+        }
         [
             this.defaultActions,
             this.headerActions?.actions ?? [],
@@ -263,6 +270,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 }
                 this.monacoEditor.registerAction(action);
             });
+
+        if (this.useDefaultMarkdownEditorOptions) {
+            this.monacoEditor.applyOptionPreset(STANDARD_MARKDOWN_EDITOR_OPTIONS);
+        }
     }
 
     /**
@@ -354,6 +365,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onNavChanged(event: NgbNavChangeEvent) {
         this.inPreviewMode = event.nextId === 'editor_preview';
         if (!this.inPreviewMode) {
+            // TODO: necessary?
+            this.onContentHeightChanged(this.monacoEditor.getContentHeight());
             this.adjustEditorDimensions();
             this.monacoEditor.focus();
         } else {
@@ -466,7 +479,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Enable the text field mode of the editor. This makes the editor look and behave like a normal text field.
      */
     enableTextFieldMode(): void {
-        this.monacoEditor.enableTextFieldMode();
+        this.monacoEditor.applyOptionPreset(COMMUNICATION_MARKDOWN_EDITOR_OPTIONS);
     }
 
     /**
