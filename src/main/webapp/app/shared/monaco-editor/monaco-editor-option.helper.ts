@@ -61,4 +61,8 @@ export const STANDARD_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset({
     },
     overviewRulerLanes: 0,
     hideCursorInOverviewRuler: true,
+    // Suggested words are shared across markdown editors, so we disable them.
+    suggest: {
+        showWords: false,
+    },
 });
