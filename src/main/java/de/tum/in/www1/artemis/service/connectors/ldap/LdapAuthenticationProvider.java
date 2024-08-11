@@ -127,23 +127,23 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
             boolean saveNeeded = false;
-            if (Objects.equals(user.getLogin(), ldapUserDto.getLogin())) {
+            if (!Objects.equals(user.getLogin(), ldapUserDto.getLogin())) {
                 user.setLogin(ldapUserDto.getLogin());
                 saveNeeded = true;
             }
-            if (Objects.equals(user.getFirstName(), ldapUserDto.getFirstName())) {
+            if (!Objects.equals(user.getFirstName(), ldapUserDto.getFirstName())) {
                 user.setFirstName(ldapUserDto.getFirstName());
                 saveNeeded = true;
             }
-            if (Objects.equals(user.getLastName(), ldapUserDto.getLastName())) {
+            if (!Objects.equals(user.getLastName(), ldapUserDto.getLastName())) {
                 user.setLastName(ldapUserDto.getLastName());
                 saveNeeded = true;
             }
-            if (Objects.equals(user.getEmail(), ldapUserDto.getEmail())) {
+            if (!Objects.equals(user.getEmail(), ldapUserDto.getEmail())) {
                 user.setEmail(ldapUserDto.getEmail());
                 saveNeeded = true;
             }
-            if (Objects.equals(user.getRegistrationNumber(), ldapUserDto.getRegistrationNumber())) {
+            if (!Objects.equals(user.getRegistrationNumber(), ldapUserDto.getRegistrationNumber())) {
                 user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
                 saveNeeded = true;
             }
