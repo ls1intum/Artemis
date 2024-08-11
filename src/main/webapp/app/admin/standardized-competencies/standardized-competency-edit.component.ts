@@ -5,6 +5,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { Observable } from 'rxjs';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-standardized-competency-edit',
@@ -113,4 +114,6 @@ export class StandardizedCompetencyEditComponent {
         this.form.controls.description.setValue(content);
         this.form.controls.description.markAsDirty();
     }
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
