@@ -36,7 +36,6 @@
             <jhi-markdown-editor-monaco
                 id="problemStatement"
                 class="markdown-editor"
-                [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                 [domainActions]="domainActionsProblemStatement"
                 [(markdown)]="textExercise.problemStatement"
                 (markdownChange)="calculateFormSectionStatus()"
@@ -60,7 +59,6 @@
             <jhi-markdown-editor-monaco
                 id="exampleSolution"
                 class="markdown-editor"
-                [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                 [domainActions]="domainActionsExampleSolution"
                 [(markdown)]="textExercise.exampleSolution"
                 (markdownChange)="calculateFormSectionStatus()"

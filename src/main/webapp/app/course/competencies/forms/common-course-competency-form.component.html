@@ -28,7 +28,6 @@
         <div class="form-group">
             <label for="description" jhiTranslate="artemisApp.courseCompetency.description"></label>
             <jhi-markdown-editor-monaco
-                [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                 [markdown]="descriptionControl?.value"
                 (markdownChange)="updateDescriptionControl($event)"
                 id="description"

@@ -63,7 +63,6 @@
             <label jhiTranslate="artemisApp.knowledgeArea.model.description"></label>
             @if (isEditing) {
                 <jhi-markdown-editor-monaco
-                    [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                     [markdown]="form.controls.description.value"
                     (markdownChange)="updateDescriptionControl($event)"
                     class="markdown-preview"

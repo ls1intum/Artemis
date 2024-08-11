@@ -41,7 +41,6 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
             <jhi-markdown-editor-monaco
                 class="markdown-editor"
-                [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                 [domainActions]="domainActionsProblemStatement"
                 [(markdown)]="fileUploadExercise.problemStatement"
                 (markdownChange)="calculateFormSectionStatus()"
@@ -65,7 +64,6 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution"></label>
             <jhi-markdown-editor-monaco
                 class="markdown-editor"
-                [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                 [domainActions]="domainActionsExampleSolution"
                 [(markdown)]="fileUploadExercise.exampleSolution"
                 (markdownChange)="calculateFormSectionStatus()"

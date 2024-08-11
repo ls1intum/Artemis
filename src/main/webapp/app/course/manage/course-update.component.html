@@ -353,7 +353,6 @@
                             <jhi-help-icon text="artemisApp.codeOfConduct.tooltip" />
                             <jhi-markdown-editor-monaco
                                 class="markdown-editor"
-                                [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                                 [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"
                                 (markdownChange)="updateCourseInformationSharingMessagingCodeOfConduct($event)"
                             />
@@ -471,7 +470,6 @@
                         >
                         <jhi-markdown-editor-monaco
                             class="markdown-editor"
-                            [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                             [(markdown)]="course.enrollmentConfirmationMessage"
                             (markdownChange)="updateEnrollmentConfirmationMessage($event)"
                         />
