@@ -37,15 +37,20 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
         plagiarismCasesForInstructor$.subscribe({
             next: (res: HttpResponse<PlagiarismCase[]>) => {
                 this.plagiarismCases = res.body!;
-                this.groupedPlagiarismCases = this.plagiarismCases.reduce((acc, plagiarismCase) => {
+                this.groupedPlagiarismCases = this.plagiarismCases.reduce((acc: { [exerciseId: number]: PlagiarismCase[] }, plagiarismCase) => {
+                    const caseExerciseId = plagiarismCase.exercise?.id;
+                    if (caseExerciseId === undefined) {
+                        return acc;
+                    }
+
                     // Group initialization
-                    if (!acc[plagiarismCase.exercise!.id!]) {
-                        acc[plagiarismCase.exercise!.id!] = [];
+                    if (!acc[caseExerciseId]) {
+                        acc[caseExerciseId] = [];
                         this.exercisesWithPlagiarismCases.push(plagiarismCase.exercise!);
                     }
 
                     // Grouping
-                    acc[plagiarismCase.exercise!.id!].push(plagiarismCase);
+                    acc[caseExerciseId].push(plagiarismCase);
 
                     return acc;
                 }, {});

@@ -177,7 +177,7 @@ describe('TextExercise Management Update Component', () => {
             comp.validateDate();
             expect(calculatValidationSectionsSpy).toHaveBeenCalledOnce();
             for (const errorName of dateErrorNames) {
-                expect(comp.textExercise[errorName]).toBeFalsy();
+                expect(comp.textExercise[errorName as keyof TextExercise]).toBeFalsy();
             }
         }));
     });

@@ -3,7 +3,7 @@ import { faFilter, faFilterCircleXmark } from '@fortawesome/free-solid-svg-icons
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
-import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarData } from 'app/types/sidebar';
+import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash-es';
@@ -119,11 +119,12 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     }
 
     getSize() {
-        const size = {
+        const size: Record<SidebarTypes, SidebarCardSize> = {
             ['exercise']: 'M',
             ['default']: 'M',
             ['conversation']: 'S',
             ['exam']: 'L',
+            ['inExam']: 'M',
         };
         return this.sidebarData.sidebarType ? size[this.sidebarData.sidebarType] : 'M';
     }

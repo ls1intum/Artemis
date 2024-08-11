@@ -38,6 +38,7 @@ public interface ProgrammingExerciseTestRepository extends ArtemisJpaRepository<
                 LEFT JOIN FETCH t.testCases
                 LEFT JOIN FETCH t.exerciseHints
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
+                LEFT JOIN FETCH p.buildConfig
             WHERE p.id = :exerciseId
             """)
     ProgrammingExercise findOneWithEagerEverything(@Param("exerciseId") long exerciseId);
