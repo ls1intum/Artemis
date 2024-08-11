@@ -20,7 +20,7 @@ import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 
-describe('Exam Participation Service', () => {
+describe('ExamParticipationService', () => {
     let service: ExamParticipationService;
     let httpMock: HttpTestingController;
     let exam: Exam;
@@ -241,7 +241,7 @@ describe('Exam Participation Service', () => {
         const expected = Object.assign({}, sendToService);
         service.saveStudentExamToLocalStorage(1, 1, sendToService);
         jest.spyOn(localStorage, 'store').mockImplementation(() => {
-            expect(localStorage['artemis_student_exam_1_1']).toBe(expected);
+            expect(localStorage.retrieve('artemis_student_exam_1_1')).toBe(expected);
         });
     });
     it('should load StudentExam from localStorage', async () => {

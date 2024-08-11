@@ -70,8 +70,10 @@ export class AeolusService {
                     actions.push(action);
                 }
             });
-            // somehow, the returned content has a scriptActions field, which is not defined in the WindFile class
-            delete windfile['scriptActions'];
+            // somehow, the returned content may have a scriptActions field, which is not a field of the WindFile class
+            if ('scriptActions' in windfile) {
+                delete windfile['scriptActions'];
+            }
             windfile.actions = actions;
             return windfile;
         } catch (SyntaxError) {
