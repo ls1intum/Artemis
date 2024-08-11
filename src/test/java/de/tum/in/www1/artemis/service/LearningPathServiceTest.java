@@ -407,7 +407,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         void testOrderOfCompetenciesByPriorUtility() {
-            competency1.setSoftDueDate(future(200));
+            competency1.setSoftDueDate(future(150));
             competencyRepository.save(competency1);
             competency2.setSoftDueDate(future(200));
             competencyRepository.save(competency2);
