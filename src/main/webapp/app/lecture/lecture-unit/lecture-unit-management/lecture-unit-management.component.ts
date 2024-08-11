@@ -191,7 +191,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         switch (lectureUnit!.type) {
             case LectureUnitType.ATTACHMENT:
                 const attachmentUnit = <AttachmentUnit>lectureUnit;
-                return attachmentUnit.attachment!.link!.endsWith('.pdf');
+                return attachmentUnit.attachment?.link?.endsWith('.pdf');
             default:
                 return false;
         }
