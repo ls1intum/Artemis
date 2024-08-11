@@ -248,7 +248,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.examStartedSubscription?.unsubscribe();
     }
 
-    breadcrumbTranslation = {
+    breadcrumbTranslation: { [key: string]: string } = {
         new: 'global.generic.create',
         process: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
         verify_attendance: 'artemisApp.examManagement.examStudents.verifyChecks',
@@ -366,7 +366,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         import_standardized: 'artemisApp.standardizedCompetency.courseImport.title',
     };
 
-    studentPathBreadcrumbTranslations = {
+    studentPathBreadcrumbTranslations: { [key: string]: string } = {
         exams: 'artemisApp.courseOverview.menu.exams',
         test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',

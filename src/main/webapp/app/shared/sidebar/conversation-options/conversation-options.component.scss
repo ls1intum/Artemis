@@ -1,6 +1,11 @@
 .option-buttons {
     .sidebar-button {
         border-width: 0;
+
+        &:hover {
+            background-color: var(--transparent);
+            color: var(--link-item-color);
+        }
     }
 
     .dropdown-toggle::after {

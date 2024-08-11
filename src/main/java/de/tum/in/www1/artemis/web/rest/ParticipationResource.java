@@ -973,7 +973,7 @@ public class ParticipationResource {
             participation.setResults(new HashSet<>());
 
             // add the appropriate result
-            Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
+            Result result = resultRepository.findFirstByParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
             if (result != null) {
                 // find the submitted answers (they are NOT loaded eagerly anymore)
                 var quizSubmission = (QuizSubmission) result.getSubmission();

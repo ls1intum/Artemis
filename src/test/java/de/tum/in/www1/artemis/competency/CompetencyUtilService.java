@@ -134,9 +134,9 @@ public class CompetencyUtilService {
      * @param competency  The Competency to add to the LectureUnit
      * @param lectureUnit The LectureUnit to update
      */
-    public void linkLectureUnitToCompetency(Competency competency, LectureUnit lectureUnit) {
+    public LectureUnit linkLectureUnitToCompetency(Competency competency, LectureUnit lectureUnit) {
         lectureUnit.getCompetencies().add(competency);
-        lectureUnitRepository.save(lectureUnit);
+        return lectureUnitRepository.save(lectureUnit);
     }
 
     /**
