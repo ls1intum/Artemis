@@ -127,14 +127,14 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     void testFetchPush_wrongCredentials() throws InvalidNameException {
-        var student1 = new LdapUserDto().username(TEST_PREFIX + "student1");
+        var student1 = new LdapUserDto().login(TEST_PREFIX + "student1");
         student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
 
-        var fakeUser = new LdapUserDto().username(localVCBaseUsername);
+        var fakeUser = new LdapUserDto().login(localVCBaseUsername);
         fakeUser.setUid(new LdapName("cn=" + localVCBaseUsername + ",ou=test,o=lab"));
 
-        doReturn(Optional.of(student1)).when(ldapUserService).findByUsername(student1.getUsername());
-        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByUsername(localVCBaseUsername);
+        doReturn(Optional.of(student1)).when(ldapUserService).findByLogin(student1.getLogin());
+        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByLogin(localVCBaseUsername);
 
         doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
 

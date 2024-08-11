@@ -8,7 +8,13 @@
     <div class="container">
         <div class="d-flex align-items-center">
             <h3 jhiTranslate="artemisApp.prerequisite.create.title"></h3>
+            <jhi-documentation-button [type]="documentationType" />
         </div>
-        <jhi-prerequisite-form [courseId]="courseId" (onSubmit)="createPrerequisite($event)" (onCancel)="cancel()" />
+        <jhi-prerequisite-form
+            [isEditMode]="false"
+            (formSubmitted)="createPrerequisite($event)"
+            [courseId]="courseId"
+            [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"
+        />
     </div>
 }

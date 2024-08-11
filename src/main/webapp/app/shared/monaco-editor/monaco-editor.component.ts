@@ -164,6 +164,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this._editor.getValue();
     }
 
+    getContentHeight(): number {
+        return this._editor.getContentHeight() + this._editor.getOption(monaco.editor.EditorOption.lineHeight);
+    }
+
     setText(text: string): void {
         if (this.getText() !== text) {
             this._editor.setValue(text);
@@ -376,6 +380,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     setWordWrap(value: boolean): void {
         this._editor.updateOptions({
             wordWrap: value ? 'on' : 'off',
+        });
+    }
+
+    /**
+     * Sets the line number from which the editor should start counting.
+     * @param startLineNumber The line number to start counting from (starting at 1).
+     */
+    setStartLineNumber(startLineNumber: number): void {
+        this._editor.updateOptions({
+            lineNumbers: (number) => `${startLineNumber + number - 1}`,
         });
     }
 
