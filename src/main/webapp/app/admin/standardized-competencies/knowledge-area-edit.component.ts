@@ -4,6 +4,7 @@ import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/en
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-knowledge-area-edit',
@@ -161,4 +162,6 @@ export class KnowledgeAreaEditComponent {
         }
         return false;
     }
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
