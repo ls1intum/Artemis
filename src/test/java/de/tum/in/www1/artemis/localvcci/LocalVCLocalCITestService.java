@@ -83,9 +83,6 @@ public class LocalVCLocalCITestService {
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
-    private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
-
-    @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
@@ -103,7 +100,7 @@ public class LocalVCLocalCITestService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    private final int DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS = 10;
+    private static final int DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS = 10;
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCITestService.class);
 
@@ -672,7 +669,7 @@ public class LocalVCLocalCITestService {
      * @return the participationVcsAccessToken of the user for the given participationId
      */
     public ParticipationVCSAccessToken getParticipationVcsAccessToken(Long userId, Long programmingParticipationId) {
-        return participationVCSAccessTokenService.findByUserIdAndParticipationIdOrElseThrow(userId, programmingParticipationId);
+        return participationVcsAccessTokenService.findByUserIdAndParticipationIdOrElseThrow(userId, programmingParticipationId);
     }
 
     /**
@@ -681,7 +678,7 @@ public class LocalVCLocalCITestService {
      * @param participationId The participationVcsAccessToken's participationId
      */
     public void deleteParticipationVcsAccessToken(long participationId) {
-        participationVCSAccessTokenService.deleteByParticipationId(participationId);
+        participationVcsAccessTokenService.deleteByParticipationId(participationId);
     }
 
     /**
