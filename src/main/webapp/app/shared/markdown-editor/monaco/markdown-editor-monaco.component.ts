@@ -42,6 +42,9 @@ import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/shared/metis/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
 
 interface MarkdownActionsByGroup {
     standard: MonacoEditorAction[];
@@ -97,6 +100,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Input()
     showPreviewButton = true;
+
+    @Input()
+    showDefaultPreview = true;
 
     @Input()
     showEditButton = true;
@@ -158,6 +164,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Output()
     onEditSelect = new EventEmitter<void>();
 
+    @Output()
+    textWithDomainActionsFound = new EventEmitter<[string, MonacoEditorDomainAction | undefined][]>();
+
+    @Output()
+    onDefaultPreviewHtmlChanged = new EventEmitter<SafeHtml | undefined>();
+
+    defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
@@ -199,6 +212,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     constructor(
         private alertService: AlertService,
         private fileUploaderService: FileUploaderService,
+        private artemisMarkdown: ArtemisMarkdownService,
     ) {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
     }
@@ -341,6 +355,21 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.focus();
         } else {
             this.onPreviewSelect.emit();
+        }
+
+        // Parse the markdown when switching away from the edit tab
+        if (event.activeId === 'editor_edit') {
+            this.parseMarkdown();
+        }
+    }
+
+    parseMarkdown(): void {
+        if (this.showDefaultPreview) {
+            this.defaultPreviewHtml = this.artemisMarkdown.safeHtmlForMarkdown(this._markdown);
+            this.onDefaultPreviewHtmlChanged.emit(this.defaultPreviewHtml);
+        }
+        if (this.domainActions.length && this._markdown) {
+            this.textWithDomainActionsFound.emit(parseMarkdownForDomainActions(this._markdown, this.domainActions));
         }
     }
 

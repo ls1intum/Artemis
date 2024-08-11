@@ -53,7 +53,11 @@
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
                 }
                 <ng-template ngbNavContent>
-                    <ng-content class="overflow-auto" select="[#previewMonaco]" />
+                    <ng-content class="overflow-auto" select="[#previewMonaco]">
+                        @if (showDefaultPreview) {
+                            <div class="pt-1 background-editor-high markdown-preview" [style.height.px]="targetWrapperHeight" [innerHTML]="defaultPreviewHtml"></div>
+                        }
+                    </ng-content>
                     <!-- TODO preview handling for other exercise types -->
                 </ng-template>
             </ng-container>
