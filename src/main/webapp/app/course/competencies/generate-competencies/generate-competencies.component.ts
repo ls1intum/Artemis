@@ -40,7 +40,7 @@ type CompetencyRecommendation = {
 
 type CompetencyGenerationStatusUpdate = {
     stages: IrisStageDTO[];
-    result: CompetencyRecommendation[];
+    result?: CompetencyRecommendation[];
 };
 
 @Component({
@@ -88,8 +88,6 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      * @param courseDescription
      */
     getCompetencyRecommendations(courseDescription: string) {
-        // Keep only viewed competencies
-        this.form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>(this.competencies.controls.filter((c) => c.getRawValue().viewed)) });
         this.isLoading = true;
         const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
         this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription).subscribe({
@@ -97,8 +95,13 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
                 this.jhiWebsocketService.subscribe(websocketTopic);
                 this.jhiWebsocketService.receive(websocketTopic).subscribe({
                     next: (update: CompetencyGenerationStatusUpdate) => {
-                        for (const competency of update.result) {
-                            this.addCompetencyToForm(competency);
+                        if (update.result) {
+                            this.form = new FormGroup({
+                                competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>(this.competencies.controls.filter((c) => c.getRawValue().viewed)),
+                            });
+                            for (const competency of update.result) {
+                                this.addCompetencyToForm(competency);
+                            }
                         }
                         if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
                             this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
