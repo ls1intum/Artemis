@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 
 /**
@@ -38,20 +39,22 @@ public class CompetencyService extends CourseCompetencyService {
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
             LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService,
             CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService) {
+            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
+            LearningObjectImportService learningObjectImportService) {
         super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, lectureUnitService,
-                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository);
+                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService);
         this.competencyRepository = competencyRepository;
     }
 
     /**
      * Imports the given competencies and relations into a course
      *
-     * @param course       the course to import into
-     * @param competencies the competencies to import
+     * @param course        the course to import into
+     * @param competencies  the competencies to import
+     * @param importOptions the options for importing the competencies
      * @return The set of imported competencies, each also containing the relations it is the tail competency for.
      */
-    public Set<CompetencyWithTailRelationDTO> importCompetenciesAndRelations(Course course, Collection<? extends CourseCompetency> competencies) {
+    public Set<CompetencyWithTailRelationDTO> importCompetencies(Course course, Collection<? extends CourseCompetency> competencies, CompetencyImportOptionsDTO importOptions) {
         var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
 
         for (var competency : competencies) {
@@ -62,7 +65,7 @@ public class CompetencyService extends CourseCompetencyService {
             idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
         }
 
-        return importCourseCompetenciesAndRelations(course, idToImportedCompetency);
+        return importCourseCompetencies(course, idToImportedCompetency, importOptions);
     }
 
     /**
@@ -74,17 +77,6 @@ public class CompetencyService extends CourseCompetencyService {
      */
     public List<CourseCompetency> importStandardizedCompetencies(List<Long> competencyIdsToImport, Course course) {
         return super.importStandardizedCompetencies(competencyIdsToImport, course, Competency::new);
-    }
-
-    /**
-     * Imports the given course competencies into a course
-     *
-     * @param course       the course to import into
-     * @param competencies the course competencies to import
-     * @return The list of imported competencies
-     */
-    public Set<CompetencyWithTailRelationDTO> importCompetencies(Course course, Collection<? extends CourseCompetency> competencies) {
-        return importCourseCompetencies(course, competencies, Competency::new);
     }
 
     /**
