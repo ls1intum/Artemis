@@ -106,7 +106,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
                         if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
                             this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
                         } else if (update.stages.some((stage) => stage.state === IrisStageStateDTO.ERROR)) {
-                            this.alertService.error('artemisApp.competency.generate.courseDescription.warning');
+                            this.alertService.warning('artemisApp.competency.generate.courseDescription.error');
                         }
                         if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
                             this.jhiWebsocketService.unsubscribe(websocketTopic);
