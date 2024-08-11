@@ -17,7 +17,6 @@ export class ExternalCloningService {
      * @param cloneUrl the url of the repository to clone
      * @param ide the ide with the deeplink to build the url for
      */
-    // TODO shift exercise Programming Language Logic here
     buildIDEUrl(cloneUrl: string | undefined, ide: Ide): string | undefined {
         if (!cloneUrl) {
             console.error('cloneUrl is undefined');

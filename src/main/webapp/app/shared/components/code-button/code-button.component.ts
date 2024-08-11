@@ -13,6 +13,7 @@ import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService, PREDEFINED_IDE } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
+import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 
 @Component({
     selector: 'jhi-code-button',
@@ -52,6 +53,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     isTeamParticipation: boolean;
     activeParticipation?: ProgrammingExerciseStudentParticipation;
     isPracticeMode: boolean | undefined;
+
+    programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, PREDEFINED_IDE[0]]]);
 
     // Icons
     readonly faCode = faCode;
@@ -95,7 +98,12 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-        this.ideName = this.getIDEName();
+
+        this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIde) => {
+            if (programmingLanguageToIde.size !== 0) {
+                this.programmingLanguageToIde = programmingLanguageToIde;
+            }
+        });
     }
 
     public setUseSSH(useSsh: boolean) {
@@ -208,16 +216,16 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     buildIDEUrl(): string | undefined {
         return this.externalCloningService.buildIDEUrl(
             this.getHttpOrSshRepositoryUri(false),
-            this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
-                this.ideSettingsService.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
+            this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
+                this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
                 PREDEFINED_IDE[0],
         );
     }
 
     getIDEName(): string {
         return `Open in ${
-            this.ideSettingsService.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY)?.name ??
-            this.ideSettingsService.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY)?.name ??
+            this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY)?.name ??
+            this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY)?.name ??
             PREDEFINED_IDE[0].name
         }`;
     }

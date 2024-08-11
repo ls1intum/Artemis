@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Ide, IdeMappingDTO } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -8,8 +10,6 @@ export class IdeSettingsService {
     public ideSettingsUrl = 'api/ide-settings';
     error?: string;
 
-    programmingLanguageToIde: Map<ProgrammingLanguage, Ide>;
-
     constructor(private http: HttpClient) {
         this.loadIdePreferences();
     }
@@ -18,35 +18,33 @@ export class IdeSettingsService {
      * GET call to the server to receive the stored ide preferences of the current user
      * @return the saved ide preference which were found in the database or error
      */
-    public loadIdePreferences(): void {
-        this.http.get<IdeMappingDTO[]>(this.ideSettingsUrl, { observe: 'response' }).subscribe((res) => {
-            this.programmingLanguageToIde = new Map(res.body?.map((x) => [x.programmingLanguage, x.ide]));
-            if (this.programmingLanguageToIde.size === 0) {
-                this.programmingLanguageToIde = new Map([[ProgrammingLanguage.EMPTY, PREDEFINED_IDE[0]]]);
-            }
-        });
+    public loadIdePreferences(): Observable<Map<ProgrammingLanguage, Ide>> {
+        return this.http.get<IdeMappingDTO[]>(this.ideSettingsUrl).pipe(map((data) => new Map<ProgrammingLanguage, Ide>(data.map((x) => [x.programmingLanguage, x.ide]))));
     }
 
     /**
      * PUT call to the server to update a stored ide preferences of the current user
+     * @param programmingLanguage the programming language for which the ide preference should be updated
+     * @param ide the new ide preference
      * @return the newly saved ide preference or error
      */
-    public saveIdePreference(programmingLanguage: ProgrammingLanguage, ide: Ide): void {
+    public saveIdePreference(programmingLanguage: ProgrammingLanguage, ide: Ide): Observable<Ide> {
         const params = new HttpParams().set('programmingLanguage', programmingLanguage);
-        this.http.put<IdeMappingDTO>(this.ideSettingsUrl, ide, { params, observe: 'response' }).subscribe((res) => {
-            if (res.body) this.programmingLanguageToIde.set(res.body.programmingLanguage, res.body.ide);
-        });
+        return this.http.put<IdeMappingDTO>(this.ideSettingsUrl, ide, { params }).pipe(
+            map((res) => {
+                return res.ide;
+            }),
+        );
     }
 
     /**
      * DELETE call to the server to delete an ide preference of the current user
+     * @param programmingLanguage the programming language for which the ide preference should be deleted
      * @return the deleted ide preference or error
      */
     public deleteIdePreference(programmingLanguage: ProgrammingLanguage): void {
         const params = new HttpParams().set('programmingLanguage', programmingLanguage);
-        this.http.delete<IdeMappingDTO[]>(this.ideSettingsUrl, { params, observe: 'response' }).subscribe(() => {
-            this.programmingLanguageToIde.delete(programmingLanguage);
-        });
+        this.http.delete<IdeMappingDTO[]>(this.ideSettingsUrl, { params, observe: 'response' }).subscribe(() => {});
     }
 }
 
