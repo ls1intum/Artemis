@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, Input, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
+import { ComponentRef, Directive, Input, OnDestroy, OnInit, Type, ViewContainerRef } from '@angular/core';
 import type { Detail, ShownDetail } from 'app/detail-overview-list/detail.model';
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TextDetailComponent } from 'app/detail-overview-list/components/text-detail.component';
@@ -25,7 +25,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
         }
         this.detail = this.detail as ShownDetail;
 
-        const detailTypeToComponent = {
+        const detailTypeToComponent: { [key in DetailType]?: Type<TextDetailComponent | DateDetailComponent | LinkDetailComponent | BooleanDetailComponent> } = {
             [DetailType.Text]: TextDetailComponent,
             [DetailType.Date]: DateDetailComponent,
             [DetailType.Link]: LinkDetailComponent,

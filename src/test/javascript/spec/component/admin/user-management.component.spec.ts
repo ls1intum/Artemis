@@ -329,9 +329,9 @@ describe('UserManagementComponent', () => {
     it('should return correct filter values', () => {
         comp.initFilters();
 
-        expect(comp.authorityFilters).toEqual(Object.keys(AuthorityFilter).map((key) => AuthorityFilter[key]));
-        expect(comp.originFilters).toEqual(Object.keys(OriginFilter).map((key) => OriginFilter[key]));
-        expect(comp.statusFilters).toEqual(Object.keys(StatusFilter).map((key) => StatusFilter[key]));
+        expect(comp.authorityFilters).toEqual(Object.values(AuthorityFilter));
+        expect(comp.originFilters).toEqual(Object.values(OriginFilter));
+        expect(comp.statusFilters).toEqual(Object.values(StatusFilter));
     });
 
     it('should select and deselect all roles', () => {
