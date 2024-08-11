@@ -4,9 +4,8 @@
             <h4>
                 <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
                 @if (attachment) {
-                    {{ attachment.id }}: {{ attachment?.name }}
-                }
-                @if (attachmentUnit) {
+                    {{ attachment.id }}: {{ attachment.name }}
+                } @else if (attachmentUnit) {
                     {{ attachmentUnit.id }}: {{ attachmentUnit.name }}
                 }
             </h4>
@@ -15,12 +14,12 @@
                     @if (isEnlargedView) {
                         <div class="enlarged-container" (click)="closeIfOutside($event)">
                             <canvas #enlargedCanvas></canvas>
-                            <button class="btn btn-close" (click)="closeEnlargedView(); $event.stopPropagation()"></button>
+                            <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
                             @if (currentPage !== 1) {
-                                <button class="btn btn-secondary nav-button left" (click)="navigatePages('prev'); $event.stopPropagation()">←</button>
+                                <button class="btn btn-secondary nav-button left" (click)="handleNavigation(prevDirection, $event)">←</button>
                             }
                             @if (currentPage !== totalPages) {
-                                <button class="btn btn-secondary nav-button right" (click)="navigatePages('next'); $event.stopPropagation()">→</button>
+                                <button class="btn btn-secondary nav-button right" (click)="handleNavigation(nextDirection, $event)">→</button>
                             }
                             <div class="page-number-display">{{ currentPage }}</div>
                         </div>

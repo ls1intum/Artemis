@@ -216,8 +216,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         }
     }
 
-    viewButtonAvailable(attachment: Attachment) {
-        const pdfPattern = /\.pdf$/i;
-        return pdfPattern.test(attachment.link!);
+    viewButtonAvailable(attachment: Attachment): boolean {
+        return attachment.link!.endsWith('.pdf') ?? false;
     }
 }

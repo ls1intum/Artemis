@@ -12,6 +12,7 @@
     width: 95%;
     box-shadow: 0 2px 5px var(--pdf-preview-pdf-container-shadow);
     align-items: start;
+    z-index: 0;
 
     @media (max-width: 800px) {
         grid-template-columns: repeat(2, 1fr);
@@ -32,14 +33,14 @@
     justify-content: center;
     align-items: center;
     background-color: var(--pdf-preview-enlarged-container-overlay);
-    z-index: 1050;
+    z-index: 2;
 
     .btn-close {
         position: absolute;
         top: 10px;
         right: 10px;
         cursor: pointer;
-        color: var(--white);
+        color: var(--bs-body-color);
     }
 }
 

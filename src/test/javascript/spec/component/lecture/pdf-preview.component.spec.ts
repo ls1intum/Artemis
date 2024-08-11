@@ -45,9 +45,6 @@ describe('PdfPreviewComponent', () => {
         attachmentUnitServiceMock = {
             getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
         };
-        alertServiceMock = {
-            error: jest.fn(),
-        };
         routeMock = {
             data: of({
                 attachment: { id: 1, name: 'Example PDF' },
@@ -76,25 +73,29 @@ describe('PdfPreviewComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should load PDF', async () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should load PDF and handle successful response', () => {
         component.ngOnInit();
         expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1);
         expect(alertServiceMock.error).not.toHaveBeenCalled();
     });
 
-    it('should display error alert when an invalid attachment ID is provided', async () => {
+    it('should display error alert when an invalid attachment ID is provided', () => {
         routeMock.data = of({ attachment: { id: null, name: 'Invalid PDF' } });
         component.ngOnInit();
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentIDError');
     });
 
-    it('should display error alert when an invalid attachmentUnit ID is provided', async () => {
+    it('should display error alert when an invalid attachmentUnit ID is provided', () => {
         routeMock.data = of({ attachmentUnit: { id: null, name: 'Invalid PDF' } });
         component.ngOnInit();
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUnitIDError');
     });
 
-    it('should load and render PDF pages', async () => {
+    it('should load and render PDF pages', () => {
         const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
 
         attachmentServiceMock.getAttachmentFile.mockReturnValue(of(mockBlob));
@@ -125,7 +126,11 @@ describe('PdfPreviewComponent', () => {
         component.displayEnlargedCanvas(mockCanvas, 1);
         expect(component.isEnlargedView).toBeTrue();
 
-        component.closeEnlargedView();
+        const clickEvent = new MouseEvent('click', {
+            button: 0,
+        });
+
+        component.closeEnlargedView(clickEvent);
         expect(component.isEnlargedView).toBeFalse();
     });
 
