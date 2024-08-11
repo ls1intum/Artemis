@@ -116,16 +116,16 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // TODO: mock the authorization properly, potentially in each test differently
 
-        var instructor1 = new LdapUserDto().username(TEST_PREFIX + "instructor1");
+        var instructor1 = new LdapUserDto().login(TEST_PREFIX + "instructor1");
         instructor1.setUid(new LdapName("cn=instructor1,ou=test,o=lab"));
 
-        var tutor1 = new LdapUserDto().username(TEST_PREFIX + "tutor1");
+        var tutor1 = new LdapUserDto().login(TEST_PREFIX + "tutor1");
         tutor1.setUid(new LdapName("cn=tutor1,ou=test,o=lab"));
 
-        var student1 = new LdapUserDto().username(TEST_PREFIX + "student1");
+        var student1 = new LdapUserDto().login(TEST_PREFIX + "student1");
         student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
 
-        var fakeUser = new LdapUserDto().username(localVCBaseUsername);
+        var fakeUser = new LdapUserDto().login(localVCBaseUsername);
         fakeUser.setUid(new LdapName("cn=" + localVCBaseUsername + ",ou=test,o=lab"));
 
         doReturn(Optional.of(instructor1)).when(ldapUserService).findByLogin(instructor1.getLogin());
@@ -620,7 +620,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().iterator().next();
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
         programmingExercise.setExerciseGroup(exerciseGroup);
         programmingExerciseRepository.save(programmingExercise);
@@ -719,7 +719,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_instructorExamTestRun() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().iterator().next();
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
         programmingExercise.setExerciseGroup(exerciseGroup);
         programmingExerciseRepository.save(programmingExercise);

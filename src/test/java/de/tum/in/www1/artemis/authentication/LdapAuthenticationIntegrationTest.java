@@ -82,7 +82,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         userRepository.findOneByLogin(LOGIN).ifPresent(userRepository::delete);
         userRepository.findOneByLogin(NONEXISTENT_LOGIN).ifPresent(userRepository::delete);
 
-        var ldapUserDTO = new LdapUserDto().username(LOGIN);
+        var ldapUserDTO = new LdapUserDto().login(LOGIN);
         ldapUserDTO.setUid(new LdapName("cn=student1,ou=test,o=lab"));
 
         doReturn(Optional.of(ldapUserDTO)).when(ldapUserService).findByLogin(LOGIN);

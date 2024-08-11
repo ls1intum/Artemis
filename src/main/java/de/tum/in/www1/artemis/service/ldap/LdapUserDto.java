@@ -12,6 +12,7 @@ import org.springframework.ldap.odm.annotations.Id;
 
 @Entry(base = "ou=users", objectClasses = { "imdPerson" })
 @Profile("ldap | ldap-only")
+// TODO: double check if we can use a Record here
 public final class LdapUserDto {
 
     @Id
@@ -40,8 +41,8 @@ public final class LdapUserDto {
         this.login = login;
     }
 
-    public LdapUserDto username(String username) {
-        this.login = username;
+    public LdapUserDto login(String login) {
+        this.login = login;
         return this;
     }
 

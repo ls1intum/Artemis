@@ -284,7 +284,7 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         String userName = TEST_PREFIX + user + "100";
 
         // setup mocks
-        var ldapUser1Dto = new LdapUserDto().firstName(userName).lastName(userName).username(userName).email(userName + "@tum.de");
+        var ldapUser1Dto = new LdapUserDto().firstName(userName).lastName(userName).login(userName).email(userName + "@tum.de");
 
         StudentDTO dto1 = switch (user) {
             case "tutor" -> new StudentDTO(null, userName, userName, "1000001", null);
