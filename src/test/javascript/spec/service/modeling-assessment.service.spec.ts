@@ -12,9 +12,92 @@ import { Feedback } from 'app/entities/feedback.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { getNamesForAssessments } from 'app/exercises/modeling/assess/modeling-assessment.util';
+import { AssessmentNamesForModelId, getNamesForAssessments } from 'app/exercises/modeling/assess/modeling-assessment.util';
 
-describe('Modeling Assessment Service', () => {
+const assessmentNames: AssessmentNamesForModelId = {
+    '6': {
+        name: 'Dominik',
+        type: 'class',
+    },
+    '7': {
+        name: 'Dominik',
+        type: 'package',
+    },
+    '8': {
+        name: 'Dominik',
+        type: 'interface',
+    },
+    '9': {
+        name: 'Dominik',
+        type: 'abstract class',
+    },
+    '10': {
+        name: 'Dominik',
+        type: 'enum',
+    },
+    '11': {
+        name: 'Dominik',
+        type: 'attribute',
+    },
+    '12': {
+        name: 'Dominik',
+        type: 'method',
+    },
+    '13': {
+        name: 'Dominik',
+        type: 'initial node',
+    },
+    '14': {
+        name: 'Dominik',
+        type: 'final node',
+    },
+    '15': {
+        name: 'Dominik',
+        type: 'object',
+    },
+    '16': {
+        name: 'Dominik',
+        type: 'action',
+    },
+    '17': {
+        name: 'Dominik',
+        type: 'fork node',
+    },
+    '18': {
+        name: 'Dominik',
+        type: 'merge node',
+    },
+    '19': {
+        name: 'Dominik <-> Dominik',
+        type: 'association',
+    },
+    '20': {
+        name: 'Dominik --> Dominik',
+        type: 'association',
+    },
+    '21': {
+        name: 'Dominik --◇ Dominik',
+        type: 'association',
+    },
+    '22': {
+        name: 'Dominik --▷ Dominik',
+        type: 'association',
+    },
+    '23': {
+        name: 'Dominik ╌╌> Dominik',
+        type: 'association',
+    },
+    '24': {
+        name: 'Dominik --◆ Dominik',
+        type: 'association',
+    },
+    '25': {
+        name: 'Dominik --> Dominik',
+        type: 'control flow',
+    },
+};
+
+describe('ModelingAssessmentService', () => {
     let httpMock: HttpTestingController;
     let service: ModelingAssessmentService;
     let expectedResult: any;
@@ -158,7 +241,6 @@ describe('Modeling Assessment Service', () => {
             });
 
             it('should get names for assessment', async () => {
-                const expected = new Map();
                 elemDefault.feedbacks = [
                     { id: 0, credits: 3, referenceId: '6', referenceType: UMLElementType.ActivityActionNode } as Feedback,
                     { id: 0, credits: 3, referenceId: '7', referenceType: UMLElementType.ActivityActionNode } as Feedback,
@@ -210,7 +292,7 @@ describe('Modeling Assessment Service', () => {
                 } as unknown as UMLModel;
 
                 expectedResult = getNamesForAssessments(elemDefault, uml);
-                expect(expectedResult).toEqual(expected);
+                expect(expectedResult).toEqual(assessmentNames);
             });
         });
 
