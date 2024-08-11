@@ -7,10 +7,22 @@
         </div>
     } @else {
         <div class="p-2">
-            <jhi-competencies-table [courseId]="courseId()" [(courseCompetencies)]="competencies" [(relations)]="relations" />
+            <jhi-course-competencies-management-table
+                [courseId]="courseId()"
+                [(courseCompetencies)]="competencies"
+                [(relations)]="relations"
+                [competencyType]="CourseCompetencyType.COMPETENCY"
+                [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+            />
         </div>
         <div class="p-2 mt-2">
-            <jhi-prerequisites-table [courseId]="courseId()" [(courseCompetencies)]="prerequisites" [(relations)]="relations" />
+            <jhi-course-competencies-management-table
+                [courseId]="courseId()"
+                [(courseCompetencies)]="prerequisites"
+                [(relations)]="relations"
+                [competencyType]="CourseCompetencyType.PREREQUISITE"
+                [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+            />
         </div>
     }
 </div>

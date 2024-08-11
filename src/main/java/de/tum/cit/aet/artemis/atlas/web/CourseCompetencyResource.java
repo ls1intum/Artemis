@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -57,11 +58,15 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class CourseCompetencyResource {
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private static final String ENTITY_NAME = "courseCompetency";
 
@@ -153,6 +158,27 @@ public class CourseCompetencyResource {
         courseCompetencyService.filterOutLearningObjectsThatUserShouldNotSee(competency, currentUser);
 
         return ResponseEntity.ok(competency);
+    }
+
+    /**
+     * DELETE courses/:courseId/course-competencies/:courseCompetencyId : delete the course competency with the specified id
+     *
+     * @param courseCompetencyId the id of the course competency to delete
+     * @param courseId           the id of the course to which the competency belongs
+     * @return the ResponseEntity with status 204 (NO_CONTENT)
+     */
+    @DeleteMapping("courses/{courseId}/course-competencies/{courseCompetencyId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> deleteCourseCompetency(@PathVariable long courseCompetencyId, @PathVariable long courseId) {
+        log.info("REST request to delete a Course competency : {}", courseCompetencyId);
+
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var courseCompetency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(courseCompetencyId);
+        checkCourseForCompetency(course, courseCompetency);
+
+        courseCompetencyService.deleteCourseCompetency(courseCompetency, course);
+
+        return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, courseCompetency.getTitle())).build();
     }
 
     /**
