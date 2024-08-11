@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { CompetenciesTableComponent } from 'app/course/competencies/components/competencies-table/competencies-table.component';
+import { CourseCompetenciesManagementTableComponent } from 'app/course/competencies/components/competencies-management-table/course-competencies-management-table.component';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -9,19 +9,22 @@ import { CourseCompetencyApiService } from 'app/course/competencies/services/cou
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { PrerequisitesTableComponent } from 'app/course/competencies/components/prerequisites-table/prerequisites-table.component';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-competencies-instructor-page',
     standalone: true,
-    imports: [CompetenciesTableComponent, ArtemisSharedCommonModule, PrerequisitesTableComponent],
+    imports: [CourseCompetenciesManagementTableComponent, ArtemisSharedCommonModule],
     templateUrl: './course-competencies-instructor-page.component.html',
     styleUrl: './course-competencies-instructor-page.component.scss',
 })
 export class CourseCompetenciesInstructorPageComponent {
+    protected readonly CourseCompetencyType = CourseCompetencyType;
+
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
     private readonly alertService = inject(AlertService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
 
@@ -29,6 +32,8 @@ export class CourseCompetenciesInstructorPageComponent {
     readonly prerequisites = signal<Prerequisite[]>([]);
     readonly courseCompetencies = computed(() => [...this.competencies(), ...this.prerequisites()]);
     readonly relations = signal<CompetencyRelationDTO[]>([]);
+
+    readonly standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
 
     readonly isLoading = signal<boolean>(false);
 

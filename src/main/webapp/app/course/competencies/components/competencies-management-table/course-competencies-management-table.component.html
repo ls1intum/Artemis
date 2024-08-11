@@ -1,7 +1,6 @@
 <div>
     <div class="row m-0 align-items-center justify-content-between">
-        <!--       TODO: Translations-->
-        <h5 class="m-0 col-md-auto p-0">Competencies ({{ courseCompetencies().length }})</h5>
+        <h5 class="m-0 col-md-auto p-0" [jhiTranslate]="'artemisApp.' + competencyType() + '.title'"></h5>
         <div class="col-md-auto p-0 d-flex">
             @if (irisCompetencyGenerationEnabled()) {
                 <a class="btn btn-sm btn-secondary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
@@ -12,28 +11,28 @@
             <div ngbDropdown class="ms-3">
                 <button id="importCompetenciesDropdown" class="btn btn-sm btn-secondary" ngbDropdownToggle>
                     <fa-icon [icon]="faFileImport" />
-                    <span jhiTranslate="artemisApp.competency.manageCompetencies.importButton"></span>
+                    <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importButton'"></span>
                 </button>
                 <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
-                    <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
+                    <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal(competencyType().toString())" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
-                        <span jhiTranslate="artemisApp.competency.manageCompetencies.importAllButton"></span>
+                        <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importAllButton'"></span>
                     </button>
-                    <a class="btn" [routerLink]="['/course-management', courseId(), 'competency-management', 'import']" ngbDropdownItem>
+                    <a class="btn" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'import']" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
-                        <span jhiTranslate="artemisApp.competency.manageCompetencies.importFromCoursesButton"></span>
+                        <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importFromCoursesButton'"></span>
                     </a>
                     @if (standardizedCompetenciesEnabled()) {
-                        <a class="btn" [routerLink]="['/course-management', courseId(), 'competency-management', 'import-standardized']" ngbDropdownItem>
+                        <a class="btn" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'import-standardized']" ngbDropdownItem>
                             <fa-icon [icon]="faFileImport" />
-                            <span jhiTranslate="artemisApp.competency.manageCompetencies.importStandardizedButton"></span>
+                            <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importStandardizedButton'"></span>
                         </a>
                     }
                 </div>
             </div>
-            <a class="ms-3 btn btn-sm btn-secondary" [routerLink]="['/course-management', courseId(), 'competency-management', 'create']">
+            <a class="ms-3 btn btn-sm btn-secondary" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'create']">
                 <fa-icon [icon]="faPlus" />
-                <span jhiTranslate="artemisApp.competency.manageCompetencies.createButton"></span>
+                <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.createButton'"></span>
             </a>
         </div>
     </div>
@@ -66,7 +65,10 @@
                     <tr>
                         <td class="col-1">{{ competency.id }}</td>
                         <td class="col">
-                            <a [routerLink]="['/courses', courseId(), 'competencies', competency.id]"> {{ competency.title }}</a>
+                            <a [routerLink]="['/courses', courseId(), 'competencies', competency.id]">
+                                <fa-icon [icon]="getIcon(competency.taxonomy)" />
+                                <span>{{ competency.title }}</span>
+                            </a>
                         </td>
                         <td class="col markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></td>
                         <td class="col">{{ competency.softDueDate | artemisDate }}</td>
@@ -79,7 +81,10 @@
                         </td>
                         <td>
                             <div class="d-flex justify-content-end">
-                                <a [routerLink]="['/course-management', courseId(), 'competency-management', competency.id, 'edit']" class="btn btn-sm btn-outline-secondary">
+                                <a
+                                    [routerLink]="['/course-management', courseId(), competencyType() + '-management', competency.id, 'edit']"
+                                    class="btn btn-sm btn-outline-secondary"
+                                >
                                     <fa-icon [icon]="faEdit" />
                                     <span jhiTranslate="entity.action.edit"></span>
                                 </a>
@@ -88,7 +93,7 @@
                                     [entityTitle]="competency.title ?? ''"
                                     [deleteQuestion]="'artemisApp.competency.competencyCard.delete.question'"
                                     [deleteConfirmationText]="'artemisApp.competency.competencyCard.delete.typeNameToConfirm'"
-                                    (delete)="deleteCompetency(competency.id!)"
+                                    (delete)="deleteCourseCompetency(competency.id!)"
                                     [dialogError]="dialogError"
                                     class="ms-3 btn btn-sm"
                                 >
@@ -102,7 +107,7 @@
                         <td colspan="7">
                             <div class="text-center text-secondary">
                                 <small
-                                    ><em><span jhiTranslate="artemisApp.competency.manageCompetencies.empty"></span></em
+                                    ><em><span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.empty'"></span></em
                                 ></small>
                             </div>
                         </td>
