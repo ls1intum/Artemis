@@ -225,14 +225,14 @@ describe('GenerateCompetenciesComponent', () => {
         expect(successMock).toHaveBeenCalledOnce();
         expect(generateCompetenciesMock).toHaveBeenCalledOnce();
 
-        const errorMock = jest.spyOn(alertService, 'error');
+        const warnMock = jest.spyOn(alertService, 'warning');
         generateCompetenciesComponent.getCompetencyRecommendations('Cool course description');
         const errorMessage = {
             stages: [{ state: IrisStageStateDTO.ERROR }],
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
         };
         mockWebSocketSubject.next(errorMessage);
-        expect(errorMock).toHaveBeenCalled();
+        expect(warnMock).toHaveBeenCalled();
     });
 
     it('should send a warning when trying to reload', () => {

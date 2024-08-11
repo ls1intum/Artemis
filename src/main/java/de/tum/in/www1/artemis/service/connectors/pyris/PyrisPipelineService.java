@@ -87,8 +87,8 @@ public class PyrisPipelineService {
      *
      * @param name          the name of the pipeline to be executed
      * @param variant       the variant of the pipeline
-     * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param jobToken      a unique job token for tracking the pipeline execution
+     * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param statusUpdater a consumer to update the status of the pipeline execution
      */
     public void executePipeline(String name, String variant, String jobToken, Function<PyrisPipelineExecutionDTO, Object> dtoMapper, Consumer<List<PyrisStageDTO>> statusUpdater) {
@@ -137,14 +137,26 @@ public class PyrisPipelineService {
      * @see PyrisPipelineService#executePipeline for more details on the pipeline execution process.
      */
     public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session) {
-        executePipeline("tutor-chat", // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
-                variant, pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()), executionDto -> {
+        // @formatter:off
+        executePipeline(
+                "tutor-chat", // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
+                variant,
+                pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()),
+                executionDto -> {
                     var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-                    return new PyrisExerciseChatPipelineExecutionDTO(latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
-                            pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise), new PyrisCourseDTO(course), pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
-                            new PyrisUserDTO(session.getUser()), executionDto.settings(), // TODO: We don't really need to flatten the execution dto here
-                            executionDto.initialStages());
-                }, stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
+                    return new PyrisExerciseChatPipelineExecutionDTO(
+                            latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
+                            pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise),
+                            new PyrisCourseDTO(course),
+                            pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
+                            new PyrisUserDTO(session.getUser()),
+                            executionDto.settings(),
+                            executionDto.initialStages()
+                    );
+                },
+                stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
+        );
+        // @formatter:on
     }
 
     /**
@@ -161,16 +173,28 @@ public class PyrisPipelineService {
      * @see PyrisPipelineService#executePipeline for more details on the pipeline execution process.
      */
     public void executeCourseChatPipeline(String variant, IrisCourseChatSession session, CompetencyJol competencyJol) {
+        // @formatter:off
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
-        executePipeline("course-chat", variant, pyrisJobService.addCourseChatJob(courseId, session.getId()), executionDto -> {
-            var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
-            return new PyrisCourseChatPipelineExecutionDTO(PyrisExtendedCourseDTO.of(fullCourse),
-                    learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId), competencyJol == null ? null : CompetencyJolDTO.of(competencyJol),
-                    pyrisDTOService.toPyrisMessageDTOList(session.getMessages()), new PyrisUserDTO(session.getUser()), executionDto.settings(), // TODO: We don't really need to
-                                                                                                                                                // flatten the execution dto here
-                    executionDto.initialStages());
-        }, stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
+        executePipeline(
+                "course-chat",
+                variant,
+                pyrisJobService.addCourseChatJob(courseId, session.getId()),
+                executionDto -> {
+                    var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
+                    return new PyrisCourseChatPipelineExecutionDTO(
+                            PyrisExtendedCourseDTO.of(fullCourse),
+                            learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId),
+                            competencyJol == null ? null : CompetencyJolDTO.of(competencyJol),
+                            pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
+                            new PyrisUserDTO(session.getUser()),
+                            executionDto.settings(),                                                                                                            // flatten the execution dto here
+                            executionDto.initialStages()
+                    );
+                },
+                stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
+        );
+        // @formatter:on
     }
 
     /**

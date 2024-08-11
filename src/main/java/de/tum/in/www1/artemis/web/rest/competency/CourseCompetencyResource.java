@@ -333,7 +333,7 @@ public class CourseCompetencyResource {
 
     /**
      * POST courses/:courseId/course-competencies/:competencyId/competencies/generate-from-description
-     * Generates a list of competencies from a given course description by using IRIS.
+     * Generates a list of competencies from a given course description with IRIS.
      *
      * @param courseId          the id of the current course
      * @param courseDescription the text description of the course

@@ -7,12 +7,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 
 /**
- * DTO for the Iris competency generation feature. Pyris sends callback updates back to Artemis during generation
- * of competencies, which are then forwarded to the user via Websockets.
+ * DTO for the Iris competency generation feature.
+ * Pyris sends callback updates back to Artemis during generation of competencies,
+ * which are then forwarded to the user via Websockets.
  *
  * @param stages List of stages of the generation process
- * @param result List of competencies that have been generated so far
+ * @param result List of competencies recommendations that have been generated so far
  */
-@JsonInclude
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public record PyrisCompetencyStatusUpdateDTO(List<PyrisStageDTO> stages, List<PyrisCompetencyRecommendationDTO> result) {
 }

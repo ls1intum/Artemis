@@ -91,8 +91,8 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
         // Keep only viewed competencies
         this.form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>(this.competencies.controls.filter((c) => c.getRawValue().viewed)) });
         this.isLoading = true;
-        const websocketTopic = '/user/topic/iris/competencies/' + this.courseId;
-        this.competencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription).subscribe({
+        const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
+        this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription).subscribe({
             next: () => {
                 this.jhiWebsocketService.subscribe(websocketTopic);
                 this.jhiWebsocketService.receive(websocketTopic).subscribe({
@@ -103,7 +103,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
                         if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
                             this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
                         } else if (update.stages.some((stage) => stage.state === IrisStageStateDTO.ERROR)) {
-                            this.alertService.error('artemisApp.competency.generate.courseDescription.error');
+                            this.alertService.error('artemisApp.competency.generate.courseDescription.warning');
                         }
                         if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
                             this.jhiWebsocketService.unsubscribe(websocketTopic);
