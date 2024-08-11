@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 /**
@@ -38,9 +39,10 @@ public class PrerequisiteService extends CourseCompetencyService {
     public PrerequisiteService(PrerequisiteRepository prerequisiteRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
             LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService,
             CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService) {
+            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
+            LearningObjectImportService learningObjectImportService) {
         super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, lectureUnitService,
-                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository);
+                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService);
         this.prerequisiteRepository = prerequisiteRepository;
     }
 
@@ -49,9 +51,10 @@ public class PrerequisiteService extends CourseCompetencyService {
      *
      * @param course        the course to import into
      * @param prerequisites the prerequisites to import
+     * @param importOptions the options for importing the prerequisites
      * @return The set of imported prerequisites, each also containing the relations for which it is the tail prerequisite for.
      */
-    public Set<CompetencyWithTailRelationDTO> importPrerequisitesAndRelations(Course course, Collection<? extends CourseCompetency> prerequisites) {
+    public Set<CompetencyWithTailRelationDTO> importPrerequisites(Course course, Collection<? extends CourseCompetency> prerequisites, CompetencyImportOptionsDTO importOptions) {
         var idToImportedPrerequisite = new HashMap<Long, CompetencyWithTailRelationDTO>();
 
         for (var prerequisite : prerequisites) {
@@ -62,7 +65,7 @@ public class PrerequisiteService extends CourseCompetencyService {
             idToImportedPrerequisite.put(prerequisite.getId(), new CompetencyWithTailRelationDTO(importedPrerequisite, new ArrayList<>()));
         }
 
-        return importCourseCompetenciesAndRelations(course, idToImportedPrerequisite);
+        return importCourseCompetencies(course, idToImportedPrerequisite, importOptions);
     }
 
     /**
@@ -74,17 +77,6 @@ public class PrerequisiteService extends CourseCompetencyService {
      */
     public List<CourseCompetency> importStandardizedPrerequisites(List<Long> prerequisiteIdsToImport, Course course) {
         return super.importStandardizedCompetencies(prerequisiteIdsToImport, course, Prerequisite::new);
-    }
-
-    /**
-     * Imports the given course prerequisites into a course
-     *
-     * @param course        the course to import into
-     * @param prerequisites the course prerequisites to import
-     * @return The list of imported prerequisites
-     */
-    public Set<CompetencyWithTailRelationDTO> importPrerequisites(Course course, Collection<? extends CourseCompetency> prerequisites) {
-        return importCourseCompetencies(course, prerequisites, Prerequisite::new);
     }
 
     /**

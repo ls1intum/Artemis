@@ -38,6 +38,8 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
 
+    Optional<FileUploadExercise> findByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
     @NotNull
     default FileUploadExercise findWithEagerCompetenciesByIdElseThrow(Long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);

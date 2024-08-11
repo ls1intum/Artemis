@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -41,6 +40,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -173,15 +173,20 @@ public class CompetencyResource {
     /**
      * POST courses/:courseId/competencies/import : imports a new competency.
      *
-     * @param courseId     the id of the course to which the competency should be imported to
-     * @param competencyId the id of the competency that should be imported
+     * @param courseId      the id of the course to which the competency should be imported to
+     * @param importOptions the options for the import
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competency
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/competencies/import")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Competency> importCompetency(@PathVariable long courseId, @RequestBody long competencyId) throws URISyntaxException {
-        log.info("REST request to import a competency: {}", competencyId);
+    public ResponseEntity<Competency> importCompetency(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions) throws URISyntaxException {
+        log.info("REST request to import a competency: {}", importOptions.competencyIds());
+
+        if (importOptions.competencyIds() == null || importOptions.competencyIds().size() != 1) {
+            throw new BadRequestAlertException("Exactly one competency must be imported", ENTITY_NAME, "noCompetency");
+        }
+        long competencyId = importOptions.competencyIds().iterator().next();
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
         var competencyToImport = courseCompetencyRepository.findByIdElseThrow(competencyId);
@@ -191,7 +196,8 @@ public class CompetencyResource {
             throw new BadRequestAlertException("The competency is already added to this course", ENTITY_NAME, "competencyCycle");
         }
 
-        Competency createdCompetency = competencyService.createCompetency(competencyToImport, course);
+        Set<CompetencyWithTailRelationDTO> createdCompetencies = competencyService.importCompetencies(course, Set.of(competencyToImport), importOptions);
+        Competency createdCompetency = (Competency) createdCompetencies.iterator().next().competency();
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + createdCompetency.getId())).body(createdCompetency);
     }
@@ -199,21 +205,24 @@ public class CompetencyResource {
     /**
      * POST courses/:courseId/competencies/import/bulk : imports a number of competencies (and optionally their relations) into a course.
      *
-     * @param courseId        the id of the course to which the competencies should be imported to
-     * @param competencyIds   the ids of the competencies that should be imported
-     * @param importRelations if relations should be imported as well
+     * @param courseId      the id of the course to which the competencies should be imported to
+     * @param importOptions the options for the import
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/competencies/import/bulk")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importCompetencies(@PathVariable long courseId, @RequestBody Set<Long> competencyIds,
-            @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
-        log.info("REST request to import competencies: {}", competencyIds);
+    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importCompetencies(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
+            throws URISyntaxException {
+        log.info("REST request to import competencies: {}", importOptions.competencyIds());
+
+        if (importOptions.competencyIds() == null || importOptions.competencyIds().isEmpty()) {
+            throw new BadRequestAlertException("No competencies to import", ENTITY_NAME, "noCompetencies");
+        }
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
-        List<CourseCompetency> competenciesToImport = courseCompetencyRepository.findAllById(competencyIds);
+        Set<CourseCompetency> competenciesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLectures(importOptions.competencyIds());
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         competenciesToImport.forEach(competencyToImport -> {
@@ -223,48 +232,37 @@ public class CompetencyResource {
             }
         });
 
-        Set<CompetencyWithTailRelationDTO> importedCompetencies;
-        if (importRelations) {
-            importedCompetencies = competencyService.importCompetenciesAndRelations(course, competenciesToImport);
-        }
-        else {
-            importedCompetencies = competencyService.importCompetencies(course, competenciesToImport);
-        }
+        Set<CompetencyWithTailRelationDTO> importedCompetencies = competencyService.importCompetencies(course, competenciesToImport, importOptions);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }
 
     /**
-     * POST courses/{courseId}/competencies/import-all/{sourceCourseId} : Imports all competencies of the source course (and optionally their relations) into another.
+     * POST courses/{courseId}/competencies/import-all : Imports all competencies of the source course (and optionally their relations) into another.
      *
-     * @param courseId        the id of the course to import into
-     * @param sourceCourseId  the id of the course to import from
-     * @param importRelations if relations should be imported as well
+     * @param courseId      the id of the course to import into
+     * @param importOptions the options for the import
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies (and relations)
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("courses/{courseId}/competencies/import-all/{sourceCourseId}")
+    @PostMapping("courses/{courseId}/competencies/import-all")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @PathVariable long sourceCourseId,
-            @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
-        log.info("REST request to all competencies from course {} into course {}", sourceCourseId, courseId);
+    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
+            throws URISyntaxException {
+        log.info("REST request to all competencies from course {} into course {}", importOptions.sourceCourseId(), courseId);
 
-        if (courseId == sourceCourseId) {
-            throw new BadRequestAlertException("Cannot import from a course into itself", "Course", "courseCycle");
+        if (importOptions.sourceCourseId().isEmpty()) {
+            throw new BadRequestAlertException("No source course specified", ENTITY_NAME, "noSourceCourse");
+        }
+        else if (courseId == importOptions.sourceCourseId().get()) {
+            throw new BadRequestAlertException("Cannot import from a course into itself", ENTITY_NAME, "courseCycle");
         }
         var targetCourse = courseRepository.findByIdElseThrow(courseId);
-        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
+        var sourceCourse = courseRepository.findByIdElseThrow(importOptions.sourceCourseId().get());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
-        var competencies = competencyRepository.findAllForCourse(sourceCourse.getId());
-        Set<CompetencyWithTailRelationDTO> importedCompetencies;
-
-        if (importRelations) {
-            importedCompetencies = competencyService.importCompetenciesAndRelations(targetCourse, competencies);
-        }
-        else {
-            importedCompetencies = competencyService.importCompetencies(targetCourse, competencies);
-        }
+        var competencies = competencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLectures(sourceCourse.getId());
+        Set<CompetencyWithTailRelationDTO> importedCompetencies = competencyService.importCompetencies(targetCourse, competencies, importOptions);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }

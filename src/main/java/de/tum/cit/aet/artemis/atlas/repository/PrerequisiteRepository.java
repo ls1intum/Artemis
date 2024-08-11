@@ -19,26 +19,29 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
     List<Prerequisite> findAllByCourseIdOrderById(long courseId);
 
     @Query("""
-            SELECT c
-            FROM Prerequisite c
-            WHERE c.course.id = :courseId
+            SELECT p
+            FROM Prerequisite p
+                LEFT JOIN FETCH p.exercises
+                LEFT JOIN FETCH p.lectureUnits lu
+                LEFT JOIN FETCH lu.lecture
+            WHERE p.course.id = :courseId
             """)
-    Set<Prerequisite> findAllForCourse(@Param("courseId") long courseId);
+    Set<Prerequisite> findAllForCourseWithExercisesAndLectureUnitsAndLectures(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT c
-            FROM Prerequisite c
-                LEFT JOIN FETCH c.lectureUnits lu
-                LEFT JOIN FETCH c.exercises
-            WHERE c.id = :competencyId
+            SELECT p
+            FROM Prerequisite p
+                LEFT JOIN FETCH p.lectureUnits lu
+                LEFT JOIN FETCH p.exercises
+            WHERE p.id = :competencyId
             """)
     Optional<Prerequisite> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
 
     @Query("""
-            SELECT c
-            FROM Prerequisite c
-                LEFT JOIN FETCH c.lectureUnits lu
-            WHERE c.id = :competencyId
+            SELECT p
+            FROM Prerequisite p
+                LEFT JOIN FETCH p.lectureUnits lu
+            WHERE p.id = :competencyId
             """)
     Optional<Prerequisite> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 

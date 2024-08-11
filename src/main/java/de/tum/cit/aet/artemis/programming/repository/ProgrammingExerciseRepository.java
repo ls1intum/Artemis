@@ -558,6 +558,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
 
+    Optional<ProgrammingExercise> findByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    Optional<ProgrammingExercise> findByShortNameAndCourseId(@Param("shortName") String shortName, @Param("courseId") long courseId);
+
     default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
         return getValueElseThrow(findByIdWithGradingCriteria(exerciseId), exerciseId);
     }

@@ -45,6 +45,26 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             """)
     Set<CourseCompetency> findAllForCourse(@Param("courseId") long courseId);
 
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+                LEFT JOIN FETCH c.exercises ex
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH lu.lecture
+            WHERE c.course.id = :courseId
+            """)
+    Set<CourseCompetency> findAllForCourseWithExercisesAndLectureUnitsAndLectures(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+                LEFT JOIN FETCH c.exercises ex
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH lu.lecture
+            WHERE c.id IN :ids
+            """)
+    Set<CourseCompetency> findAllByIdWithExercisesAndLectureUnitsAndLectures(@Param("ids") Set<Long> ids);
+
     /**
      * Fetches all information related to the calculation of the mastery for exercises in a competency.
      * The complex grouping by is necessary for postgres
