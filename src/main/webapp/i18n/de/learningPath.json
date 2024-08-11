@@ -4,12 +4,15 @@
             "navigation": {
                 "nextButton": "Weiter",
                 "previousButton": "Zurück",
+                "completeButton": "Ende des Lernfpads",
                 "overview": {
                     "title": "Lernpfad Kompetenzen",
                     "showCompetenciesGraphButton": "Kompetenzgraph",
                     "emptyLearningObjectsLabel": "Diese Kompetenz enthält bisher noch keine Lernobjekte!",
-                    "nextLearningObjectOnPathLabel": "Nächste"
-                }
+                    "nextLearningObjectOnPathLabel": "Nächste",
+                    "unreleasedLearningObjectLabel": "Unveröffentlichte Lerneinheit"
+                },
+                "recapLabel": "Lerneinheiten wiederholen"
             },
             "competencyGraphModal": {
                 "title": "Abhängigkeiten der Lernpfadkompetenzen"
@@ -18,6 +21,10 @@
                 "title": "Willkommen bei deinem Lernpfad!",
                 "description": "Der Lernpfad ermöglicht es dir, in deinem eigenen Tempo zu lernen, mit einer personalisierten Lernreise, die auf deine Leistung zugeschnitten ist. Sie passt sich dynamisch an und stellt sicher, dass du immer die relevantesten Inhalte und Herausforderungen erhältst. Starte jetzt und erlebe deinen individuellen Weg zum Erfolg!",
                 "generateButton": "Meinen Lernfpad starten"
+            },
+            "completion": {
+                "title": "Herzlichen Glückwunsch!",
+                "description": "Herzlichen Glückwunsch zum Abschluss deines aktuellen Lernpfads! \uD83C\uDF89 Deine Mühe hat sich gelohnt. Neue Inhalte werden möglicherweise bald hinzugefügt, aber genieße diesen Moment des Erfolgs. Bleib dran für weitere Einheiten und mach weiter so!"
             }
         }
     }

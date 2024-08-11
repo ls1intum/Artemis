@@ -15,10 +15,10 @@ import { Competency } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
 describe('LectureWizardCompetenciesComponent', () => {
     let wizardCompetenciesComponentFixture: ComponentFixture<LectureUpdateWizardCompetenciesComponent>;
@@ -352,7 +352,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         wizardCompetenciesComponentFixture.detectChanges();
 
-        const formData: CompetencyFormData = {
+        const formData: CourseCompetencyFormData = {
             id: 1,
             title: 'Competency',
         };
@@ -393,7 +393,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         wizardCompetenciesComponentFixture.detectChanges();
 
-        const formData: CompetencyFormData = {
+        const formData: CourseCompetencyFormData = {
             id: 1,
             title: 'Competency',
         };
@@ -427,7 +427,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         wizardCompetenciesComponentFixture.detectChanges();
 
-        const formData: CompetencyFormData = {};
+        const formData: CourseCompetencyFormData = {};
 
         wizardCompetenciesComponentFixture.whenStable().then(() => {
             wizardCompetenciesComponent.createCompetency(formData);
@@ -452,7 +452,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         wizardCompetenciesComponentFixture.detectChanges();
 
-        const formData: CompetencyFormData = {
+        const formData: CourseCompetencyFormData = {
             id: 1,
             title: 'Competency',
         };
@@ -494,7 +494,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         wizardCompetenciesComponentFixture.detectChanges();
 
-        const formData: CompetencyFormData = {
+        const formData: CourseCompetencyFormData = {
             id: 1,
             title: 'Competency',
         };

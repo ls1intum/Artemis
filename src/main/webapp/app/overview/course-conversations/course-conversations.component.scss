@@ -15,15 +15,20 @@
     max-height: calc(100vh - var(--header-height) - var(--communications-header-height));
 }
 
-.card-border {
-    --message-input-height: 175px;
-
-    border: 1px solid;
-    border-color: var(--bs-card-border-color);
-    border-radius: 0.25rem;
+.scrollable-content {
+    --message-input-height-dev: 193px;
+    --message-input-height-prod: 177px;
     overflow-y: auto;
     overflow-x: hidden;
-    max-height: calc(100vh - var(--header-height) - var(--message-input-height));
+    max-height: calc(100vh - var(--header-height) - var(--message-input-height-prod));
+
+    &.content-height-dev {
+        max-height: calc(100vh - var(--header-height) - var(--message-input-height-dev));
+    }
+
+    @media (max-width: 768px) {
+        max-height: calc(100vh - var(--header-height) - var(--message-input-height-prod)) !important;
+    }
 }
 
 .message-input {

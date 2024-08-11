@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.sshd.common.NamedResource;
 import org.apache.sshd.common.session.SessionContext;
@@ -45,19 +46,17 @@ public class MultipleHostKeyProvider extends AbstractGeneratorHostKeyProvider {
         var keys = new ArrayList<KeyPair>();
 
         try (var stream = Files.list(path)) {
-            stream.forEach(file -> {
-                if (file != null) {
-                    try {
-                        // Read a single key pair in the directory
-                        Iterable<KeyPair> ids = readKeyPairs(session, file, IoUtils.EMPTY_OPEN_OPTIONS);
-                        KeyPair kp = GenericUtils.head(ids);
-                        if (kp != null) {
-                            keys.addAll(Lists.newArrayList(ids));
-                        }
+            stream.filter(Objects::nonNull).forEach(file -> {
+                try {
+                    // Read a single key pair in the directory
+                    Iterable<KeyPair> ids = readKeyPairs(session, file, IoUtils.EMPTY_OPEN_OPTIONS);
+                    KeyPair kp = GenericUtils.head(ids);
+                    if (kp != null) {
+                        keys.addAll(Lists.newArrayList(ids));
                     }
-                    catch (Exception e) {
-                        warn("resolveKeyPair({}) Failed ({}) to load: {}", file, e.getClass().getSimpleName(), e.getMessage(), e);
-                    }
+                }
+                catch (Exception e) {
+                    warn("resolveKeyPair({}) Failed ({}) to load: {}", file, e.getClass().getSimpleName(), e.getMessage(), e);
                 }
             });
         }

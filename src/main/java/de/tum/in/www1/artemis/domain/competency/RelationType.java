@@ -2,10 +2,6 @@ package de.tum.in.www1.artemis.domain.competency;
 
 public enum RelationType {
     /**
-     * A generic relation between two competencies.
-     */
-    RELATES,
-    /**
      * The tail competency assumes that the student already achieved the head competency.
      */
     ASSUMES,
