@@ -106,7 +106,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         this.unsavedChanges = content !== this.legalDocument.text;
     }
 
-    onLanguageChange(legalDocumentLanguage: any) {
+    onLanguageChange(legalDocumentLanguage: LegalDocumentLanguage) {
         if (this.unsavedChanges) {
             this.showWarning(legalDocumentLanguage);
         } else {
@@ -121,7 +121,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         }
     }
 
-    showWarning(legalDocumentLanguage: any) {
+    showWarning(legalDocumentLanguage: LegalDocumentLanguage) {
         this.unsavedChangesWarning = this.modalService.open(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
         if (this.legalDocumentType === LegalDocumentType.PRIVACY_STATEMENT) {
             this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.legal.privacyStatement.unsavedChangesWarning';
