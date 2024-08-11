@@ -21,6 +21,7 @@ import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/mon
 import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
 import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
+import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -235,11 +236,11 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(comp.targetWrapperHeight).toBe(300 - wrapperTop - dragElemHeight / 2);
     });
 
-    it('should forward enableTextFieldMode call', () => {
+    it('should use the correct options to enable text field mode', () => {
         fixture.detectChanges();
-        const setTextFieldModeSpy = jest.spyOn(comp.monacoEditor, 'enableTextFieldMode');
+        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
         comp.enableTextFieldMode();
-        expect(setTextFieldModeSpy).toHaveBeenCalledOnce();
+        expect(applySpy).toHaveBeenCalledExactlyOnceWith(COMMUNICATION_MARKDOWN_EDITOR_OPTIONS);
     });
 
     it('should apply option presets to the editor', () => {
