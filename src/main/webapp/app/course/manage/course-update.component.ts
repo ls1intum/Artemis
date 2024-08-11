@@ -31,6 +31,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -651,6 +652,8 @@ export class CourseUpdateComponent implements OnInit {
     disableMessaging() {
         this.messagingEnabled = false;
     }
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {

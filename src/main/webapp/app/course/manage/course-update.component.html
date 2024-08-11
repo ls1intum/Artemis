@@ -351,8 +351,9 @@
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.codeOfConduct.title"></label>
                             <jhi-help-icon text="artemisApp.codeOfConduct.tooltip" />
-                            <jhi-markdown-editor
+                            <jhi-markdown-editor-monaco
                                 class="markdown-editor"
+                                [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                                 [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"
                                 (markdownChange)="updateCourseInformationSharingMessagingCodeOfConduct($event)"
                             />
@@ -468,8 +469,9 @@
                         <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentConfirmationMessage" for="field_enrollmentConfirmationMessage"
                             >Enrollment Confirmation Message</label
                         >
-                        <jhi-markdown-editor
+                        <jhi-markdown-editor-monaco
                             class="markdown-editor"
+                            [initialEditorHeight]="MarkdownEditorHeight.SMALL"
                             [(markdown)]="course.enrollmentConfirmationMessage"
                             (markdownChange)="updateEnrollmentConfirmationMessage($event)"
                         />
