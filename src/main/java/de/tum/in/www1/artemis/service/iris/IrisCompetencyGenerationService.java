@@ -32,7 +32,13 @@ public class IrisCompetencyGenerationService {
         this.pyrisJobService = pyrisJobService;
     }
 
-    // Executes the competency extraction pipeline on Pyris for a given course, user and course description
+    /**
+     * Executes the competency extraction pipeline on Pyris for a given course, user and course description
+     *
+     * @param user              the user for which the pipeline should be executed
+     * @param course            the course for which the pipeline should be executed
+     * @param courseDescription the description of the course
+     */
     public void executeCompetencyExtractionPipeline(User user, Course course, String courseDescription) {
         // @formatter:off
         pyrisPipelineService.executePipeline(
@@ -45,8 +51,13 @@ public class IrisCompetencyGenerationService {
         // @formatter:on
     }
 
-    // Takes a status update from Pyris containing a new competency extraction result
-    // and sends it to the client via websocket
+    /**
+     * Takes a status update from Pyris containing a new competency extraction result and sends it to the client via websocket
+     *
+     * @param userLogin    the login of the user
+     * @param courseId     the id of the course
+     * @param statusUpdate the status update containing the new competency recommendations
+     */
     public void handleStatusUpdate(String userLogin, long courseId, PyrisCompetencyStatusUpdateDTO statusUpdate) {
         websocketService.sendCompetencies(userLogin, courseId, statusUpdate);
     }

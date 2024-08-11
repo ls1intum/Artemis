@@ -30,6 +30,7 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
      * This is currently used for both the exercise and course chat sessions, but
      * this could be split up in the future.
      *
+     * @param session     the session to send the message to
      * @param irisMessage that should be sent over the websocket
      * @param stages      that should be sent over the websocket
      */

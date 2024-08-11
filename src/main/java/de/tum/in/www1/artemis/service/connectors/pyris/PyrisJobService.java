@@ -129,7 +129,9 @@ public class PyrisJobService {
      * <p>
      * The token was previously generated via {@link #createTokenForJob(Function)}
      *
-     * @param request the HttpServletRequest object representing the incoming request
+     * @param request  the HttpServletRequest object representing the incoming request
+     * @param jobClass the class of the PyrisJob object to cast the retrieved job to
+     * @param <Job>    the type of the PyrisJob object
      * @return the PyrisJob object associated with the token
      * @throws AccessForbiddenException if the token is invalid or not provided
      */

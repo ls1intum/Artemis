@@ -22,6 +22,13 @@ public abstract class IrisWebsocketService {
         this.websocketMessagingService = websocketMessagingService;
     }
 
+    /**
+     * Sends a message over the websocket to a specific user
+     *
+     * @param userLogin   the login of the user
+     * @param topicSuffix the suffix of the topic, which will be appended to "/topic/iris/"
+     * @param payload     the DTO to send, which will be serialized to JSON
+     */
     public void send(String userLogin, String topicSuffix, Object payload) {
         String topic = TOPIC_PREFIX + topicSuffix;
         try {

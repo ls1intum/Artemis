@@ -95,6 +95,18 @@ public class PublicPyrisStatusUpdateResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * POST public/pyris/pipelines/competency-extraction/runs/:runId/status : Send the competencies extracted from a course description in a status update
+     * <p>
+     * Uses custom token based authentication.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     */
     @PostMapping("pipelines/competency-extraction/runs/{runId}/status")
     @EnforceNothing
     public ResponseEntity<Void> setCompetencyExtractionJobStatus(@PathVariable String runId, @RequestBody PyrisCompetencyStatusUpdateDTO statusUpdateDTO,
