@@ -7,7 +7,7 @@ import { IdeSettingsService, PREDEFINED_IDE } from 'app/shared/user-settings/ide
 @Component({
     selector: 'jhi-ide-preferences',
     templateUrl: './ide-settings.component.html',
-    styleUrls: ['../user-settings.scss'],
+    styleUrls: ['./ide-settings.scss'],
 })
 export class IdeSettingsComponent implements OnInit {
     constructor(private ideSettingsService: IdeSettingsService) {}
