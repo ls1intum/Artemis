@@ -1,6 +1,7 @@
 use crate::sort_strategy::SortStrategy;
 use chrono::NaiveDate;
 use std::cell::{Ref, RefCell};
+use std::ops::Deref;
 
 pub struct Context {
     sort_algorithm: RefCell<Option<Box<dyn SortStrategy<NaiveDate>>>>,
@@ -27,7 +28,8 @@ impl Context {
         self.sort_algorithm.borrow_mut().replace(sort_algorithm);
     }
 
-    pub fn sort_algorithm(&self) -> Ref<Option<Box<dyn SortStrategy<NaiveDate>>>> {
-        self.sort_algorithm.borrow()
+    pub fn sort_algorithm(&self) -> impl Deref<Target = dyn SortStrategy<NaiveDate>> + '_ {
+        let r = self.sort_algorithm.borrow();
+        Ref::map(r, |o| o.as_deref().expect("sort_algorithm has to be set"))
     }
 }

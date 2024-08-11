@@ -52,7 +52,7 @@ fn test_use_merge_sort_for_big_list() {
     policy.configure(&data);
 
     let sort_strategy = context.sort_algorithm();
-    let sort_strategy = sort_strategy.as_ref().unwrap().as_ref();
+    let sort_strategy = &*sort_strategy;
 
     assert_eq!(
         sort_strategy.type_id(),
@@ -73,7 +73,7 @@ fn test_use_bubble_sort_for_small_list() {
     policy.configure(&data);
 
     let sort_strategy = context.sort_algorithm();
-    let sort_strategy = sort_strategy.as_ref().unwrap().as_ref();
+    let sort_strategy = &*sort_strategy;
 
     assert_eq!(
         sort_strategy.type_id(),
