@@ -9,6 +9,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -413,5 +414,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             wrappingStrategy: 'simple',
         });
         this.setWordWrap(true);
+    }
+
+    /**
+     * Applies the given options to the editor.
+     * @param options The options to apply.
+     */
+    applyOptionPreset(options: MonacoEditorOptionPreset): void {
+        options.apply(this._editor);
     }
 }
