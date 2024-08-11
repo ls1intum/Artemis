@@ -8,6 +8,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyCardStubComponent } from '../../competencies/competency-card-stub.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { HttpResponse } from '@angular/common/http';
 
 describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;
@@ -47,7 +48,9 @@ describe('CoursePrerequisitesModal', () => {
     });
 
     it('should load prerequisites and display a card for each of them', () => {
-        const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(of([{ id: 1 }, { id: 2 }]));
+        const getAllPrerequisitesForCourseSpy = jest
+            .spyOn(prerequisiteService, 'getAllForCourse')
+            .mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }, { id: 2 }], status: 200 })));
 
         coursePrerequisitesModalComponentFixture.detectChanges();
 

@@ -166,9 +166,7 @@ describe('LectureAttachmentsComponent', () => {
         expect(addAttachmentButton).not.toBeNull();
         addAttachmentButton.nativeElement.click();
         fixture.detectChanges();
-        const fakeBlob = {};
-        fakeBlob['name'] = 'Test-File.pdf';
-        fakeBlob['size'] = 100000000000000000;
+        const fakeBlob = { name: 'Test-File.pdf', size: 100000000000000000 };
         comp.attachmentFile = fakeBlob as File;
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();

@@ -25,6 +25,7 @@ import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -40,6 +41,7 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisCompetenciesModule,
         TitleChannelNameModule,
         DetailModule,
+        CompetencyFormComponent,
     ],
     declarations: [
         LectureComponent,
