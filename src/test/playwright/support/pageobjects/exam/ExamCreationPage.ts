@@ -131,7 +131,7 @@ export class ExamCreationPage {
 
     private async enterText(selector: string, text: string) {
         const textField = this.page.locator(selector);
-        const textInput = textField.locator('.ace_text-input');
+        const textInput = textField.locator('.monaco-editor .view-lines');
         // const currentText = textField.locator('.ace_text');
 
         // if (await currentText.isVisible()) {
