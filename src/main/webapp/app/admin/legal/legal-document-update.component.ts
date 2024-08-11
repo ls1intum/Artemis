@@ -41,7 +41,6 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     currentLanguage = this.DEFAULT_LANGUAGE;
     unsavedChangesWarning: NgbModalRef;
     titleKey: string;
-    private languageChangeInPreview: boolean;
 
     constructor(
         private legalDocumentService: LegalDocumentService,
@@ -115,12 +114,9 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
             this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => {
                 this.legalDocument = document;
                 this.markdownEditor.markdown = this.legalDocument.text;
+                // Ensure the new text is parsed and displayed in the preview
                 this.markdownEditor.parseMarkdown();
                 this.unsavedChanges = false;
-                // if we are currently in preview mode, we need to update the preview
-                if (this.markdownEditor.inPreviewMode) {
-                    this.languageChangeInPreview = true;
-                }
             });
         }
     }
@@ -151,16 +147,5 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
      * */
     ngAfterContentChecked() {
         this.changeDetectorRef.detectChanges();
-    }
-
-    /**
-     * If the language is changed while we are in the preview mode, we must trigger a change event, so the ace editor updates its content.
-     * We must do this when the editor is visible because otherwise the editor will only be updated if you click on it once.
-     */
-    updateTextIfLanguageChangedInPreview() {
-        if (this.languageChangeInPreview) {
-            // we have to trigger a change event, so the ace editor updates its content
-            this.languageChangeInPreview = false;
-        }
     }
 }

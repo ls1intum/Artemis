@@ -11,7 +11,6 @@
             [initialEditorHeight]="MIN_HEIGHT"
             [enableFileUpload]="false"
             class="markdown-editor"
-            (onEditSelect)="updateTextIfLanguageChangedInPreview()"
         />
         <div>
             @if (!unsavedChanges && !isSaving) {
