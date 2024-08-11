@@ -39,12 +39,12 @@
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
-            <jhi-markdown-editor
+            <jhi-markdown-editor-monaco
                 class="markdown-editor"
-                [domainCommands]="domainCommandsProblemStatement"
+                [initialEditorHeight]="MarkdownEditorHeight.SMALL"
+                [domainActions]="domainActionsProblemStatement"
                 [(markdown)]="fileUploadExercise.problemStatement"
                 (markdownChange)="calculateFormSectionStatus()"
-                [editorMode]="EditorMode.LATEX"
             />
         </div>
         @if (!isExamMode) {
@@ -63,12 +63,12 @@
         <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
         <div class="form-group" id="field_exampleSolution">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution"></label>
-            <jhi-markdown-editor
+            <jhi-markdown-editor-monaco
                 class="markdown-editor"
-                [domainCommands]="domainCommandsSampleSolution"
+                [initialEditorHeight]="MarkdownEditorHeight.SMALL"
+                [domainActions]="domainActionsExampleSolution"
                 [(markdown)]="fileUploadExercise.exampleSolution"
                 (markdownChange)="calculateFormSectionStatus()"
-                [editorMode]="EditorMode.LATEX"
             />
         </div>
         @if (!isExamMode) {
