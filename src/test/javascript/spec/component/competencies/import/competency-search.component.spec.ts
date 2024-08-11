@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
-import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
+import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from 'app/forms/forms.module';

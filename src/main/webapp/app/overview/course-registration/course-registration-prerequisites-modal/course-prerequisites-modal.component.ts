@@ -36,7 +36,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     loadData() {
         this.isLoading = true;
         this.prerequisiteService
-            .getAllPrerequisitesForCourse(this.courseId)
+            .getAllForCourse(this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -44,7 +44,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
             )
             .subscribe({
                 next: (prerequisites) => {
-                    this.prerequisites = prerequisites;
+                    this.prerequisites = prerequisites.body ?? [];
                 },
                 error: (error: string) => {
                     this.alertService.error(error);
