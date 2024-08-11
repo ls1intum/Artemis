@@ -117,7 +117,7 @@ describe('LegalDocumentUpdateComponent', () => {
     it('should correctly determine unsaved changes', () => {
         component.unsavedChanges = false;
         component.legalDocument.text = 'text';
-        component.checkUnsavedChanges('changed text');
+        component.onContentChanged('changed text');
         expect(component.unsavedChanges).toBeTrue();
     });
 

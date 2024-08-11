@@ -1,14 +1,14 @@
 import { AfterContentChecked, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
-import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-privacy-statement-update-component',
@@ -35,8 +35,9 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     legalDocumentType: LegalDocumentType = LegalDocumentType.PRIVACY_STATEMENT;
     unsavedChanges = false;
     isSaving = false;
-    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
+    @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditor: MarkdownEditorMonacoComponent;
 
+    currentContentTrimmed = '';
     currentLanguage = this.DEFAULT_LANGUAGE;
     unsavedChangesWarning: NgbModalRef;
     titleKey: string;
@@ -48,7 +49,6 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         private route: ActivatedRoute,
         private languageHelper: JhiLanguageHelper,
         private changeDetectorRef: ChangeDetectorRef,
-        private markdownService: ArtemisMarkdownService,
     ) {}
 
     ngOnInit() {
@@ -84,7 +84,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
 
     updateLegalDocument() {
         this.isSaving = true;
-        this.legalDocument.text = this.markdownEditor.markdown!;
+        this.legalDocument.text = this.currentContentTrimmed;
         if (this.legalDocumentType === LegalDocumentType.PRIVACY_STATEMENT) {
             this.legalDocumentService.updatePrivacyStatement(this.legalDocument).subscribe((statement) => {
                 this.setUpdatedDocument(statement);
@@ -102,7 +102,8 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         this.isSaving = false;
     }
 
-    checkUnsavedChanges(content: string) {
+    onContentChanged(content: string) {
+        this.currentContentTrimmed = content.trim();
         this.unsavedChanges = content !== this.legalDocument.text;
     }
 
@@ -110,14 +111,14 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         if (this.unsavedChanges) {
             this.showWarning(legalDocumentLanguage);
         } else {
-            this.markdownEditor.markdown = '';
             this.currentLanguage = legalDocumentLanguage;
             this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => {
                 this.legalDocument = document;
+                this.markdownEditor.markdown = this.legalDocument.text;
+                this.markdownEditor.parseMarkdown();
                 this.unsavedChanges = false;
                 // if we are currently in preview mode, we need to update the preview
-                if (this.markdownEditor.previewMode) {
-                    this.markdownEditor.previewTextAsHtml = this.markdownService.safeHtmlForMarkdown(this.legalDocument.text);
+                if (this.markdownEditor.inPreviewMode) {
                     this.languageChangeInPreview = true;
                 }
             });
@@ -159,7 +160,6 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     updateTextIfLanguageChangedInPreview() {
         if (this.languageChangeInPreview) {
             // we have to trigger a change event, so the ace editor updates its content
-            this.markdownEditor.aceEditorContainer.getEditor().session._emit('change', { start: { row: 0, column: 0 }, end: { row: 0, column: 0 }, action: 'insert', lines: [] });
             this.languageChangeInPreview = false;
         }
     }
