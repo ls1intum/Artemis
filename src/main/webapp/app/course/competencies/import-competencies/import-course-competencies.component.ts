@@ -64,7 +64,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
     //Other constants
     protected readonly ButtonType = ButtonType;
     //used for sorting of the selected course competencies
-    protected readonly columnMapping = {
+    protected readonly columnMapping: { [key: string]: string } = {
         ID: 'id',
         TITLE: 'title',
         DESCRIPTION: 'description',
