@@ -55,6 +55,7 @@ export const STANDARD_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset({
     padding: {
         top: 5,
     },
+    renderLineHighlight: 'none',
     scrollbar: {
         vertical: 'auto',
         horizontal: 'auto',
