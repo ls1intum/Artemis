@@ -30,7 +30,8 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             [DetailType.Date]: DateDetailComponent,
             [DetailType.Link]: LinkDetailComponent,
             [DetailType.Boolean]: BooleanDetailComponent,
-            [DetailType.ProgrammingRepositoryButtons]: ProgrammingRepositoryButtonsDetailComponent,
+const detailTypeToComponent: { [key in DetailType]?: Type<TextDetailComponent | DateDetailComponent | LinkDetailComponent | BooleanDetailComponent | ProgrammingRepositoryButtonsDetailComponent | ProgrammingAuxiliaryRepositoryButtonsDetailComponent> } = {
+    [DetailType.ProgrammingRepositoryButtons]: ProgrammingRepositoryButtonsDetailComponent,
             [DetailType.ProgrammingAuxiliaryRepositoryButtons]: ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
         };
 
