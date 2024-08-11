@@ -4,8 +4,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { CompetencyFormControlsWithViewed, GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { FormControl, FormGroup } from '@angular/forms';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -24,6 +23,11 @@ import { CompetencyRecommendationDetailComponent } from 'app/course/competencies
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
+import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 
 describe('GenerateCompetenciesComponent', () => {
     let generateCompetenciesComponentFixture: ComponentFixture<GenerateCompetenciesComponent>;
@@ -34,23 +38,22 @@ describe('GenerateCompetenciesComponent', () => {
         mockWebSocketSubject = new Subject<any>();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule, GenerateCompetenciesComponent, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
             declarations: [
-                GenerateCompetenciesComponent,
                 CourseDescriptionFormStubComponent,
                 MockComponent(CompetencyRecommendationDetailComponent),
+                MockComponent(DocumentationButtonComponent),
+                MockComponent(CourseDescriptionFormComponent),
                 ButtonComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(FeatureToggleDirective),
                 MockDirective(TranslateDirective),
-                MockComponent(DocumentationButtonComponent),
             ],
             providers: [
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ courseId: 1 }),
                 },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: JhiWebsocketService,
@@ -60,11 +63,13 @@ describe('GenerateCompetenciesComponent', () => {
                         unsubscribe: jest.fn(),
                     },
                 },
+                MockProvider(CourseCompetencyService),
                 MockProvider(CompetencyService),
                 MockProvider(AlertService),
                 MockProvider(ArtemisTranslatePipe),
             ],
         })
+            .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })
             .compileComponents()
             .then(() => {
                 generateCompetenciesComponentFixture = TestBed.createComponent(GenerateCompetenciesComponent);
@@ -85,8 +90,8 @@ describe('GenerateCompetenciesComponent', () => {
         generateCompetenciesComponentFixture.detectChanges();
         const getCompetencyRecommendationsSpy = jest.spyOn(generateCompetenciesComponent, 'getCompetencyRecommendations').mockReturnValue();
 
-        const courseDescriptionComponent: CourseDescriptionFormStubComponent = generateCompetenciesComponentFixture.debugElement.query(
-            By.directive(CourseDescriptionFormStubComponent),
+        const courseDescriptionComponent: CourseDescriptionFormComponent = generateCompetenciesComponentFixture.debugElement.query(
+            By.directive(CourseDescriptionFormComponent),
         ).componentInstance;
         courseDescriptionComponent.formSubmitted.emit('');
 
@@ -100,8 +105,8 @@ describe('GenerateCompetenciesComponent', () => {
             body: null,
             status: 200,
         });
-        const competencyService = TestBed.inject(CompetencyService);
-        const getSpy = jest.spyOn(competencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
+        const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+        const getSpy = jest.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
 
         //expect no recommendations to exist at the start
         expect(generateCompetenciesComponentFixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(0);
@@ -203,12 +208,12 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should display alerts after generating', () => {
         const alertService = TestBed.inject(AlertService);
-        const competencyService = TestBed.inject(CompetencyService);
         const response = new HttpResponse({
             body: null,
             status: 200,
         });
-        const getSpy = jest.spyOn(competencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
+        const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+        const generateCompetenciesMock = jest.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
 
         const successMock = jest.spyOn(alertService, 'success');
         generateCompetenciesComponent.getCompetencyRecommendations('Cool course description');
@@ -218,7 +223,7 @@ describe('GenerateCompetenciesComponent', () => {
         };
         mockWebSocketSubject.next(websocketMessage);
         expect(successMock).toHaveBeenCalledOnce();
-        expect(getSpy).toHaveBeenCalledOnce();
+        expect(generateCompetenciesMock).toHaveBeenCalledOnce();
 
         const errorMock = jest.spyOn(alertService, 'error');
         generateCompetenciesComponent.getCompetencyRecommendations('Cool course description');

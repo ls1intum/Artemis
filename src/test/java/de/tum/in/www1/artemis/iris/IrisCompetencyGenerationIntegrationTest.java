@@ -55,7 +55,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
         });
 
         // Send a request to the Artemis server as if the user had clicked the button in the UI
-        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/competencies/generate-from-description", courseDescription, HttpStatus.ACCEPTED);
+        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/course-competencies/generate-from-description", courseDescription, HttpStatus.ACCEPTED);
 
         PyrisCompetencyRecommendationDTO expected = new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND);
         List<PyrisCompetencyRecommendationDTO> recommendations = List.of(expected, expected, expected);
@@ -90,6 +90,6 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     void testAllPreAuthorize() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/competencies/generate-from-description", "a", HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/course-competencies/generate-from-description", "a", HttpStatus.FORBIDDEN);
     }
 }

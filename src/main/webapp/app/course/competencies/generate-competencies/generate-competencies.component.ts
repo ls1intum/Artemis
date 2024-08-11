@@ -16,6 +16,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -42,6 +46,8 @@ type CompetencyGenerationStatusUpdate = {
 @Component({
     selector: 'jhi-generate-competencies',
     templateUrl: './generate-competencies.component.html',
+    standalone: true,
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
 })
 export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     courseId: number;
@@ -59,6 +65,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     readonly documentationType: DocumentationType = 'GenerateCompetencies';
 
     constructor(
+        private courseCompetencyService: CourseCompetencyService,
         private competencyService: CompetencyService,
         private alertService: AlertService,
         private activatedRoute: ActivatedRoute,
@@ -123,7 +130,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      * @private
      */
     private addCompetencyToForm(competency: CompetencyRecommendation) {
-        // @ts-ignore
+        // @ts-expect-error Type is assignable, but TS doesn't recognize it
         const formGroup: FormGroup<CompetencyFormControlsWithViewed> = this.formBuilder.nonNullable.group({
             competency: this.formBuilder.nonNullable.group({
                 title: [competency.title],
