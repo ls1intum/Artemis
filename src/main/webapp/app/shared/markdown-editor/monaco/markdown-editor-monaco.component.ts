@@ -117,8 +117,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /**
      * The initial height the editor should have. If set to 'external', the editor will try to grow to the available space.
      */
-    @Input({ required: true })
-    initialEditorHeight: MarkdownEditorHeight | 'external';
+    @Input()
+    initialEditorHeight: MarkdownEditorHeight | 'external' = MarkdownEditorHeight.SMALL;
 
     @Input()
     resizableMaxHeight = MarkdownEditorHeight.LARGE;
