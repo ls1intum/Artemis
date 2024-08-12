@@ -39,6 +39,7 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ImportOptions } from 'app/types/programming-exercises';
+import { ProgrammingExerciseBuildDetailsComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-build-details.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -47,6 +48,7 @@ import { ImportOptions } from 'app/types/programming-exercises';
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
+    @ViewChild(ProgrammingExerciseBuildDetailsComponent) exerciseBuildDetailsComponent?: ProgrammingExerciseBuildDetailsComponent;
     @ViewChild(ProgrammingExerciseDifficultyComponent) exerciseDifficultyComponent?: ProgrammingExerciseDifficultyComponent;
     @ViewChild(ProgrammingExerciseLanguageComponent) exerciseLanguageComponent?: ProgrammingExerciseLanguageComponent;
     @ViewChild(ProgrammingExerciseGradingComponent) exerciseGradingComponent?: ProgrammingExerciseGradingComponent;
@@ -478,6 +480,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     ngAfterViewInit() {
         this.inputFieldSubscriptions.push(this.exerciseInfoComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseBuildDetailsComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
         this.inputFieldSubscriptions.push(this.exerciseDifficultyComponent?.teamConfigComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
         this.inputFieldSubscriptions.push(this.exerciseLanguageComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
         this.inputFieldSubscriptions.push(this.exerciseGradingComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
@@ -495,6 +498,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
                 valid: this.exerciseInfoComponent?.formValid ?? false,
+            },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.buildDetailsStepTitle',
+                valid: this.exerciseBuildDetailsComponent?.formValid ?? false,
             },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
