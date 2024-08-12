@@ -833,7 +833,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Checking if the online IDE is selected and a valid image is selected
      */
     validOnlineIdeSelection = () => {
-        return !this.programmingExercise?.allowOnlineIde || this.programmingExercise?.theiaImage !== undefined;
+        return !this.programmingExercise?.allowOnlineIde || this.programmingExercise?.buildConfig!.theiaImage !== undefined;
     };
 
     isEventInsideTextArea(event: Event): boolean {

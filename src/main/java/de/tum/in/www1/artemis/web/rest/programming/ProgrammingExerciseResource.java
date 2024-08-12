@@ -309,7 +309,7 @@ public class ProgrammingExerciseResource {
                     "noParticipationModeAllowed");
         }
         // Verify that a theia image is provided when the online IDE is enabled
-        if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getTheiaImage() == null) {
+        if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getBuildConfig().getTheiaImage() == null) {
             throw new BadRequestAlertException("You need to provide a Theia image when the online IDE is enabled", ENTITY_NAME, "noTheiaImageProvided");
         }
         // Forbid changing the course the exercise belongs to.

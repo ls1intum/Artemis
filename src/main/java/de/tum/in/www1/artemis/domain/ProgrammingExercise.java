@@ -104,13 +104,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "package_name")
     private String packageName;
 
-    @Nullable
-    @Column(name = "theia_image", table = "programming_exercise_details")
-    private String theiaImage;
-
-    @Column(name = "sequential_test_runs")
-    private Boolean sequentialTestRuns;
-
     @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
     private boolean showTestNamesToStudents;
 
@@ -755,7 +748,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         // Check if theia image was selected if the online IDE is enabled
-        if (isAllowOnlineIde() && getTheiaImage() == null) {
+        if (isAllowOnlineIde() && buildConfig.getTheiaImage() == null) {
             throw new BadRequestAlertException("The Theia image must be selected if the online IDE is enabled", "Exercise", "theiaImageNotSet");
         }
     }

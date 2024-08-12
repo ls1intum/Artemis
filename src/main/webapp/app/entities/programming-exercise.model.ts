@@ -68,6 +68,7 @@ export class ProgrammingExerciseBuildConfig {
     public dockerFlags?: string;
     public windFile?: WindFile;
     public testwiseCoverageEnabled?: boolean;
+    public theiaImage?: string;
 
     constructor() {
         this.checkoutSolutionRepository = false; // default value

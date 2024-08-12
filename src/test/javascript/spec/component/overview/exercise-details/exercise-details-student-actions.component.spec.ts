@@ -614,6 +614,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             },
             {
                 allowOnlineIde: true,
+            },
+            {
                 theiaImage: 'this-is-a-theia-image',
             },
             true,
@@ -626,6 +628,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             },
             {
                 allowOnlineIde: true,
+            },
+            {
                 theiaImage: undefined,
             },
             false,
@@ -638,6 +642,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             },
             {
                 allowOnlineIde: false,
+            },
+            {
                 theiaImage: 'this-is-an-old-image',
             },
             false,
@@ -649,6 +655,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             },
             {
                 allowOnlineIde: true,
+            },
+            {
                 theiaImage: 'this-is-a-theia-image',
             },
             false,
@@ -660,16 +668,19 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             },
             {
                 allowOnlineIde: true,
+            },
+            {
                 theiaImage: 'this-is-a-theia-image',
             },
             false,
         ],
-    ])('%s', (description, profileInfo, programmingExercise, expectedVisibility) => {
+    ])('%s', (description, profileInfo, programmingExercise, buildConfig, expectedVisibility) => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
 
         // Expand the programmingExercise by given properties
         comp.exercise = { ...exercise, ...programmingExercise } as ProgrammingExercise;
+        comp.exercise.buildConfig = { ...comp.exercise.buildConfig, ...buildConfig };
 
         fixture.detectChanges();
 

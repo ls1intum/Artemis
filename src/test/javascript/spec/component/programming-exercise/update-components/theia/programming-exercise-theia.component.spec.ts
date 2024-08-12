@@ -58,7 +58,7 @@ describe('ProgrammingExerciseTheiaComponent', () => {
         fixture.detectChanges();
         comp.loadTheiaImages();
         tick();
-        expect(comp.programmingExercise.theiaImage).toBeUndefined();
+        expect(comp.programmingExercise.buildConfig?.theiaImage).toBeUndefined();
     }));
 
     it('should select first image when none was selected', fakeAsync(() => {
@@ -71,11 +71,11 @@ describe('ProgrammingExerciseTheiaComponent', () => {
         fixture.detectChanges();
         comp.loadTheiaImages();
         tick();
-        expect(comp.programmingExercise.theiaImage).toMatch('test-url');
+        expect(comp.programmingExercise.buildConfig?.theiaImage).toMatch('test-url');
     }));
 
     it('should not overwrite selected image when others are loaded', fakeAsync(() => {
-        comp.programmingExercise.theiaImage = 'test-url-2';
+        comp.programmingExercise.buildConfig!.theiaImage = 'test-url-2';
         theiaServiceMock.getTheiaImages.mockReturnValue(
             of({
                 'Java-17': 'test-url',
@@ -85,6 +85,6 @@ describe('ProgrammingExerciseTheiaComponent', () => {
         fixture.detectChanges();
         comp.loadTheiaImages();
         tick();
-        expect(comp.programmingExercise.theiaImage).toMatch('test-url-2');
+        expect(comp.programmingExercise.buildConfig?.theiaImage).toMatch('test-url-2');
     }));
 });

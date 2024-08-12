@@ -126,7 +126,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                     }
 
                     // Verify that the exercise has a theia blueprint configured
-                    if (!this.programmingExercise.theiaImage) {
+                    if (!this.programmingExercise.buildConfig?.theiaImage) {
                         this.theiaEnabled = false;
                     }
                 }
