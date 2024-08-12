@@ -65,7 +65,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
      * @private
      */
     resetCustomBuildPlan() {
-        this.programmingExercise.buildConfig!.windFile = undefined;
+        this.programmingExercise.buildConfig!.windfile = undefined;
         this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
         this.programmingExercise.buildConfig!.buildScript = undefined;
     }
@@ -104,10 +104,10 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
             .subscribe({
                 next: (file) => {
-                    this.programmingExercise.buildConfig!.windFile = this.aeolusService.parseWindFile(file);
+                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
                 },
                 error: () => {
-                    this.programmingExercise.buildConfig!.windFile = undefined;
+                    this.programmingExercise.buildConfig!.windfile = undefined;
                 },
             });
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
@@ -154,9 +154,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     }
 
     setDockerImage(dockerImage: string) {
-        if (!this.programmingExercise.buildConfig?.windFile || !this.programmingExercise.buildConfig?.windFile.metadata.docker) {
+        if (!this.programmingExercise.buildConfig?.windfile || !this.programmingExercise.buildConfig?.windfile.metadata.docker) {
             return;
         }
-        this.programmingExercise.buildConfig!.windFile.metadata.docker.image = dockerImage.trim();
+        this.programmingExercise.buildConfig!.windfile.metadata.docker.image = dockerImage.trim();
     }
 }

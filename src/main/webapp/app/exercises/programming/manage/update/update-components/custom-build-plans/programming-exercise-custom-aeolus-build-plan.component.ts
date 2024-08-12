@@ -63,7 +63,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
      * @private
      */
     resetCustomBuildPlan() {
-        this.programmingExercise.buildConfig!.windFile = undefined;
+        this.programmingExercise.buildConfig!.windfile = undefined;
         this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
     }
 
@@ -77,7 +77,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         if (this.programmingExercise?.id || isImportFromFile) {
             if (!this.programmingExerciseCreationConfig.buildPlanLoaded && !this.programmingExercise.buildConfig?.windfile) {
                 if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
-                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig?.buildPlanConfiguration);
                 }
                 this.programmingExerciseCreationConfig.buildPlanLoaded = true;
             }
@@ -114,7 +114,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     faQuestionCircle = faQuestionCircle;
 
     protected getActionScript(action: string): string {
-        const foundAction: BuildAction | undefined = this.programmingExercise.buildConfig?.windFile?.actions.find((a) => a.name === action);
+        const foundAction: BuildAction | undefined = this.programmingExercise.buildConfig?.windfile?.actions.find((a) => a.name === action);
         if (foundAction && foundAction instanceof ScriptAction) {
             return (foundAction as ScriptAction).script;
         }
@@ -122,12 +122,12 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     changeActiveAction(action: string): void {
-        if (!this.programmingExercise.buildConfig?.windFile) {
+        if (!this.programmingExercise.buildConfig?.windfile) {
             return;
         }
 
         this.code = this.getActionScript(action);
-        this.active = this.programmingExercise.buildConfig?.windFile.actions.find((a) => a.name === action);
+        this.active = this.programmingExercise.buildConfig?.windfile.actions.find((a) => a.name === action);
         this.isScriptAction = this.active instanceof ScriptAction;
         if (this.isScriptAction && this.editor) {
             this.editor.setText(this.code);
@@ -135,8 +135,8 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     deleteAction(action: string): void {
-        if (this.programmingExercise.buildConfig?.windFile) {
-            this.programmingExercise.buildConfig!.windFile.actions = this.programmingExercise.buildConfig?.windFile.actions.filter((a) => a.name !== action);
+        if (this.programmingExercise.buildConfig?.windfile) {
+            this.programmingExercise.buildConfig!.windfile.actions = this.programmingExercise.buildConfig?.windfile.actions.filter((a) => a.name !== action);
             if (this.active?.name === action) {
                 this.active = undefined;
                 this.code = '';
@@ -145,12 +145,12 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     addAction(action: string): void {
-        if (this.programmingExercise.buildConfig?.windFile) {
+        if (this.programmingExercise.buildConfig?.windfile) {
             const newAction = new ScriptAction();
             newAction.script = '#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0';
             newAction.name = action;
             newAction.runAlways = false;
-            this.programmingExercise.buildConfig?.windFile.actions.push(newAction);
+            this.programmingExercise.buildConfig?.windfile.actions.push(newAction);
             this.changeActiveAction(action);
         }
     }
@@ -198,9 +198,9 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     setDockerImage(dockerImage: string) {
-        if (!this.programmingExercise.buildConfig?.windFile || !this.programmingExercise.buildConfig?.windFile.metadata.docker) {
+        if (!this.programmingExercise.buildConfig?.windfile || !this.programmingExercise.buildConfig?.windfile.metadata.docker) {
             return;
         }
-        this.programmingExercise.buildConfig!.windFile.metadata.docker.image = dockerImage.trim();
+        this.programmingExercise.buildConfig!.windfile.metadata.docker.image = dockerImage.trim();
     }
 }
