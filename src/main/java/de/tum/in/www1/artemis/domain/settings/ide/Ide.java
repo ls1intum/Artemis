@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.settings.ide;
 
-import java.util.Collection;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,7 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 @Entity
-@Table(name = "ides")
+@Table(name = "ide")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class Ide extends DomainObject {
 
@@ -26,9 +26,9 @@ public class Ide extends DomainObject {
     private String deepLink;
 
     @OneToMany(mappedBy = "ide")
-    private Collection<UserIdeMapping> userIdeMappings;
+    private Set<UserIdeMapping> userIdeMappings;
 
-    public Ide() {
+    protected Ide() {
         // empty constructor for Jackson
     }
 

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.settings.ide;
+package de.tum.in.www1.artemis.web.rest.dto.settings.ide;
 
 import de.tum.in.www1.artemis.domain.settings.ide.Ide;
 

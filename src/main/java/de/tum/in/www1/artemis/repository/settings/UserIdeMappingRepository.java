@@ -21,5 +21,5 @@ public interface UserIdeMappingRepository extends ArtemisJpaRepository<UserIdeMa
 
     List<UserIdeMapping> findAllByUserId(Long userId);
 
-    List<UserIdeMapping> findAllByIde(Ide ide);
+    boolean existsByIde(Ide ide);
 }

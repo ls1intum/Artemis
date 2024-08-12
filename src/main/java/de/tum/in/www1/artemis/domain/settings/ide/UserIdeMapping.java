@@ -40,7 +40,7 @@ public class UserIdeMapping {
     @JoinColumn(name = "ide_id", nullable = false)
     private Ide ide;
 
-    public UserIdeMapping() {
+    protected UserIdeMapping() {
         // empty constructor for Jackson
     }
 

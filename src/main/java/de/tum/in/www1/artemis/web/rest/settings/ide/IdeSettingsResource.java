@@ -23,6 +23,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.settings.IdeRepository;
 import de.tum.in.www1.artemis.repository.settings.UserIdeMappingRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.web.rest.dto.settings.ide.IdeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.settings.ide.IdeMappingDTO;
 
 /**
  * REST controller for managing Ide Settings (IdeSettings).
@@ -58,7 +60,8 @@ public class IdeSettingsResource {
         log.debug("REST request to get IDEs of user {}", user.getLogin());
 
         var ideMappings = userIdeMappingRepository.findAllByUserId(user.getId());
-        IdeMappingDTO[] ideRecords = ideMappings.stream().map(x -> new IdeMappingDTO(x.getProgrammingLanguage(), x.getIde())).toArray(IdeMappingDTO[]::new);
+        IdeMappingDTO[] ideRecords = ideMappings.stream().map(ideMapping -> new IdeMappingDTO(ideMapping.getProgrammingLanguage(), ideMapping.getIde()))
+                .toArray(IdeMappingDTO[]::new);
         log.debug("Successfully queried IDEs of user {}", user.getLogin());
 
         return ResponseEntity.ok(ideRecords);
@@ -131,14 +134,18 @@ public class IdeSettingsResource {
         return ResponseEntity.ok().build();
     }
 
-    // if ide is parentless, delete it
+    /**
+     * Remove the ide entity if it is not used by any user
+     *
+     * @param ide the ide to check for orphan removal
+     */
     private void orphanRemoval(Ide ide) {
         // TODO should be handled by orphan removal annotation in IDE, but does not work
         if (ide == null) {
             return;
         }
 
-        if (userIdeMappingRepository.findAllByIde(ide).isEmpty()) {
+        if (!userIdeMappingRepository.existsByIde(ide)) {
             ideRepository.delete(ide);
         }
     }
