@@ -45,9 +45,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     calculateFormValid() {
         const isRecreateBuildPlansValid = this.isRecreateBuildPlansValid();
         const isUpdateTemplateFilesValid = this.isUpdateTemplateFilesValid();
-        this.formValid = Boolean(
-            this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValid && isRecreateBuildPlansValid && isUpdateTemplateFilesValid && areAuxiliaryRepositoriesValid,
-        );
+        this.formValid = Boolean(this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValid && isRecreateBuildPlansValid && isUpdateTemplateFilesValid);
         this.formValidChanges.next(this.formValid);
     }
 

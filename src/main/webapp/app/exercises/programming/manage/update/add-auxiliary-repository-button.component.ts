@@ -3,6 +3,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-add-auxiliary-repository-button',
@@ -15,6 +16,8 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
             (onClick)="addAuxiliaryRepositoryRow()"
         />
     `,
+    standalone: true,
+    imports: [ArtemisSharedComponentModule],
 })
 export class AddAuxiliaryRepositoryButtonComponent {
     ButtonType = ButtonType;
@@ -25,7 +28,7 @@ export class AddAuxiliaryRepositoryButtonComponent {
     @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
 
     // Icons
-    faPlus = faPlus;
+    readonly faPlus = faPlus;
 
     /**
      * Adds a new auxiliary repository, which is displayed as a new row, to the respective programming exercise and activates the angular change detection.

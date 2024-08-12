@@ -3,12 +3,15 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-remove-auxiliary-repository-button',
     template: `
         <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [icon]="faTrash" [title]="'entity.action.remove'" (onClick)="removeAuxiliaryRepository()" />
     `,
+    standalone: true,
+    imports: [ArtemisSharedComponentModule],
 })
 export class RemoveAuxiliaryRepositoryButtonComponent {
     ButtonType = ButtonType;
@@ -21,7 +24,7 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
     @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
 
     // Icons
-    faTrash = faTrash;
+    readonly faTrash = faTrash;
 
     /**
      * Removes the auxiliary repository of the selected row from the respective programming exercise.

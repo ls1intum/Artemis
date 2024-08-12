@@ -21,7 +21,11 @@
                 [importOptions]="importOptions"
             />
             <hr class="mb-5" />
-            <jhi-programming-exercise-build-details [isLocal]="isLocal" />
+            <jhi-programming-exercise-build-details
+                [isLocal]="isLocal"
+                [programmingExercise]="programmingExercise"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+            />
             <hr class="mb-5" />
             <jhi-programming-exercise-difficulty
                 [programmingExercise]="programmingExercise"
