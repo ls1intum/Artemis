@@ -10,7 +10,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 
-describe('Profile Service', () => {
+describe('ProfileService', () => {
     let service: ProfileService;
     let httpMock: HttpTestingController;
 

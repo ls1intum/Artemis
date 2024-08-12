@@ -60,7 +60,7 @@ public interface SolutionProgrammingExerciseParticipationRepository
     default SolutionProgrammingExerciseParticipation findByExerciseIdElseThrow(final Specification<SolutionProgrammingExerciseParticipation> specification, long exerciseId) {
         final Specification<SolutionProgrammingExerciseParticipation> hasExerciseIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder
                 .equal(root.get(TemplateProgrammingExerciseParticipation_.PROGRAMMING_EXERCISE).get(DomainObject_.ID), exerciseId);
-        return getValueElseThrow(findOne(specification.and(hasExerciseIdSpec)));
+        return getValueElseThrow(findOneBySpec(specification.and(hasExerciseIdSpec)));
     }
 
     /**

@@ -16,6 +16,10 @@ enum TestCaseBarTitle {
     WEIGHT_AND_BONUS_DE = 'Gewichtung & Bonus',
 }
 
+type TestCaseColors = {
+    [label: string]: string;
+};
+
 @Component({
     selector: 'jhi-test-case-distribution-chart',
     styleUrls: ['./sca-category-distribution-chart.scss'],
@@ -94,7 +98,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         });
 
         if (this.ngxWeightData[0].series.length !== testCaseScores.length) {
-            const testCaseColors = {};
+            const testCaseColors: TestCaseColors = {};
 
             this.ngxWeightData = [];
             this.ngxPointsData = [];
