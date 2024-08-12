@@ -270,6 +270,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         exercise.buildConfig = this.programmingExerciseBuildConfig;
         return [
             this.getExerciseDetailsGeneralSection(exercise),
+            this.getExerciseDetailsBuildDetailsSection(exercise),
             this.getExerciseDetailsModeSection(exercise),
             this.getExerciseDetailsLanguageSection(exercise),
             this.getExerciseDetailsProblemSection(exercise),
@@ -310,54 +311,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         };
     }
 
-    getExerciseDetailsModeSection(exercise: ProgrammingExercise): DetailOverviewSection {
+    getExerciseDetailsBuildDetailsSection(exercise: ProgrammingExercise): DetailOverviewSection {
         return {
-            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.buildDetailsStepTitle',
             details: [
-                {
-                    type: DetailType.Text,
-                    title: 'artemisApp.exercise.difficulty',
-                    data: { text: exercise.difficulty },
-                },
-                {
-                    type: DetailType.Text,
-                    title: 'artemisApp.exercise.mode',
-                    data: { text: exercise.mode },
-                },
-                exercise.teamAssignmentConfig && {
-                    type: DetailType.Text,
-                    title: 'artemisApp.exercise.teamAssignmentConfig.teamSize',
-                    data: { text: `Min. ${exercise.teamAssignmentConfig.minTeamSize}, Max. ${exercise.teamAssignmentConfig.maxTeamSize}` },
-                },
-                {
-                    type: DetailType.Boolean,
-                    title: 'artemisApp.programmingExercise.allowOfflineIde.title',
-                    data: { boolean: exercise.allowOfflineIde },
-                },
-                {
-                    type: DetailType.Boolean,
-                    title: 'artemisApp.programmingExercise.allowOnlineEditor.title',
-                    data: { boolean: exercise.allowOnlineEditor },
-                },
-            ],
-        };
-    }
-
-    getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
-        this.checkAndSetWindFile(exercise);
-        return {
-            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
-            details: [
-                {
-                    type: DetailType.Text,
-                    title: 'artemisApp.programmingExercise.programmingLanguage',
-                    data: { text: exercise.programmingLanguage?.toUpperCase() },
-                },
-                {
-                    type: DetailType.Boolean,
-                    title: 'artemisApp.programmingExercise.sequentialTestRuns.title',
-                    data: { boolean: exercise.buildConfig?.sequentialTestRuns },
-                },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
                     title: 'artemisApp.programmingExercise.templateRepositoryUri',
@@ -454,6 +411,58 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         isLoadingDiffReport: this.isLoadingDiffReport,
                         gitDiffReport: exercise.gitDiffReport,
                     },
+                },
+            ],
+        };
+    }
+
+    getExerciseDetailsModeSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
+            details: [
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.difficulty',
+                    data: { text: exercise.difficulty },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.mode',
+                    data: { text: exercise.mode },
+                },
+                exercise.teamAssignmentConfig && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.teamAssignmentConfig.teamSize',
+                    data: { text: `Min. ${exercise.teamAssignmentConfig.minTeamSize}, Max. ${exercise.teamAssignmentConfig.maxTeamSize}` },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.allowOfflineIde.title',
+                    data: { boolean: exercise.allowOfflineIde },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.allowOnlineEditor.title',
+                    data: { boolean: exercise.allowOnlineEditor },
+                },
+            ],
+        };
+    }
+
+    getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        this.checkAndSetWindFile(exercise);
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
+            details: [
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.programmingLanguage',
+                    data: { text: exercise.programmingLanguage?.toUpperCase() },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.sequentialTestRuns.title',
+                    data: { boolean: exercise.buildConfig?.sequentialTestRuns },
                 },
                 !!exercise.buildConfig?.buildScript &&
                     !!exercise.buildConfig?.windFile?.metadata?.docker?.image && {
@@ -747,7 +756,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if the build configuration is available and sets the windfile if it is, helpful for reliably displaying
+     * Checks if the build configuration is available and sets the windFile if it is, helpful for reliably displaying
      * the build configuration in the UI
      * @param exercise the programming exercise to check
      */

@@ -78,6 +78,7 @@
                     "difficultyStepTitle": "Mode",
                     "buildPlansTitle": "Build Plans",
                     "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
+                    "buildDetailsStepTitle": "Build Details",
                     "languageStepTitle": "Language",
                     "languageStepMessage": "Configure the specific details related to the programming language and build mechanism used in the exercise",
                     "problemStepTitle": "Problem",
