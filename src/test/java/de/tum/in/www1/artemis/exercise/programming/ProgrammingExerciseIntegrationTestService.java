@@ -252,7 +252,7 @@ class ProgrammingExerciseIntegrationTestService {
         userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(programmingExercise.getId()).orElseThrow();
         programmingExerciseInExam = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseInExam.getId())
                 .orElseThrow();
@@ -981,7 +981,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         ProgrammingExercise updatedExercise = programmingExercise;
-        updatedExercise.setTestwiseCoverageEnabled(true);
+        updatedExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
 
         request.put("/api/programming-exercises", updatedExercise, HttpStatus.BAD_REQUEST);
     }
@@ -1201,7 +1201,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setSequentialTestRuns(true);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(true);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1291,7 +1291,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.setCheckoutSolutionRepository(true);
+        programmingExercise.getBuildConfig().setCheckoutSolutionRepository(true);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1326,7 +1326,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.setTestwiseCoverageEnabled(true);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1450,6 +1450,7 @@ class ProgrammingExerciseIntegrationTestService {
         String problemStatement = "[task][Taskname](test1)";
         programmingExercise.setProblemStatement(problemStatementWithId);
         programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         String sourceId = programmingExercise.getId().toString();
 

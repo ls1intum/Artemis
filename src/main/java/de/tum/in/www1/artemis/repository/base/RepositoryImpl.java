@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.repository.base;
 import java.util.Optional;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.JpaEntityInformationSupport;
@@ -36,19 +38,6 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      */
     public RepositoryImpl(Class<T> domainClass, EntityManager entityManager) {
         this(JpaEntityInformationSupport.getEntityInformation(domainClass, entityManager), entityManager);
-    }
-
-    /**
-     * Find an entity by its id and given specification.
-     *
-     * @param specification the specification to apply
-     * @param id            the id of the entity to find
-     * @return the entity with the given id
-     */
-    @NotNull
-    Optional<T> findOneById(Specification<T> specification, ID id) {
-        final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
-        return findOne(specification.and(hasIdSpec));
     }
 
     /**
@@ -121,5 +110,64 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
     @NotNull
     public T findByIdElseThrow(ID id) {
         return getValueElseThrow(findById(id), id);
+    }
+
+    /**
+     * Find an entity by its id and given specification without using limiting internally.
+     *
+     * @param spec the specification to apply
+     * @param id   the id of the entity to find, it will augment spec with an <bold>and</bold> operator
+     * @return the entity that corresponds to spec and has the given id
+     */
+    @NotNull
+    public Optional<T> findOneById(Specification<T> spec, ID id) {
+        try {
+            final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
+            return Optional.of(this.getQuery(spec.and(hasIdSpec), Sort.unsorted()).getSingleResult());
+        }
+        catch (NoResultException noResultException) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Find an entity by given specification without using limiting internally.
+     *
+     * @param spec the specification to apply
+     * @return the entity that satisfies the given specification
+     */
+    @NotNull
+    public Optional<T> findOneBySpec(Specification<T> spec) {
+        try {
+            return Optional.of(this.getQuery(spec, Sort.unsorted()).getSingleResult());
+        }
+        catch (NoResultException noResultException) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Find an entity by its id and given specification without using limiting internally or throw if none found.
+     *
+     * @param spec the specification to apply
+     * @param id   the id of the entity to find, it will augment spec with an <bold>and</bold> operator
+     * @return the entity that corresponds to spec and has the given id
+     */
+    @NotNull
+    public T findOneByIdOrElseThrow(Specification<T> spec, ID id) {
+        Optional<T> optional = findOneById(spec, id);
+        return optional.orElseThrow();
+    }
+
+    /**
+     * Find an entity by given specification without using limiting internally or throw if none found.
+     *
+     * @param spec the specification to apply
+     * @return the entity that satisfies the given specification
+     */
+    @NotNull
+    public T findOneBySpecOrElseThrow(Specification<T> spec) {
+        Optional<T> optional = findOneBySpec(spec);
+        return optional.orElseThrow();
     }
 }

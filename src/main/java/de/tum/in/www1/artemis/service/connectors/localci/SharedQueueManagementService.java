@@ -266,7 +266,7 @@ public class SharedQueueManagementService {
 
         List<Long> buildJobIds = buildJobIdsPage.toList();
         // Fetch the build jobs with results. Since this query used "IN" clause, the order of the results is not guaranteed. We need to order them by the order of the ids.
-        List<BuildJob> unorderedBuildJobs = buildJobRepository.findAllByIdWithResults(buildJobIds);
+        List<BuildJob> unorderedBuildJobs = buildJobRepository.findWithDataByIdIn(buildJobIds);
 
         Map<Long, BuildJob> buildJobMap = unorderedBuildJobs.stream().collect(Collectors.toMap(BuildJob::getId, Function.identity()));
 

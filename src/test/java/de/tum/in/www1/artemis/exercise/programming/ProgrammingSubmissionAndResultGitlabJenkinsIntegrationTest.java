@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -56,6 +57,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
@@ -169,6 +173,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
+        programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         programmingExerciseRepository.save(exercise);
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         programmingExerciseUtilService.createProgrammingSubmission(participation, false);

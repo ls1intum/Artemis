@@ -42,6 +42,7 @@ import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -98,6 +99,7 @@ examples.forEach((activeConversation) => {
                     MockProvider(NgbModal),
                     MockProvider(MetisConversationService),
                     MockProvider(SidebarEventService),
+                    MockProvider(ProfileService),
                 ],
                 imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule, NgbCollapseMocksModule, NgbTooltipMocksModule],
             }).compileComponents();
