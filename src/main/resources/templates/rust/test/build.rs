@@ -4,7 +4,7 @@ use std::fs;
 use std::fs::read_to_string;
 use std::path::{Component, Path};
 
-use syn::{parse_file, ImplItem, Item, TraitItem, Type, TypeParamBound};
+use syn::{parse_file, FnArg, ImplItem, Item, TraitItem, Type, TypeParamBound};
 
 const SRC_DIR: &str = "assignment/src";
 
@@ -94,10 +94,19 @@ fn process_file(path: &Path) -> Result<(), Box<dyn Error>> {
                             "cargo::rustc-cfg=structure_{module}_impl_{self_ident}_const_{}",
                             c.ident
                         ),
-                        ImplItem::Fn(f) => println!(
-                            "cargo::rustc-cfg=structure_{module}_impl_{self_ident}_fn_{}",
-                            f.sig.ident
-                        ),
+                        ImplItem::Fn(f) => {
+                            println!(
+                                "cargo::rustc-cfg=structure_{module}_impl_{self_ident}_fn_{}",
+                                f.sig.ident
+                            );
+
+                            if matches!(f.sig.inputs.first(), Some(&FnArg::Receiver(_))) {
+                                println!(
+                                    "cargo::rustc-cfg=structure_{module}_impl_{self_ident}_method_{}",
+                                    f.sig.ident
+                                );
+                            }
+                        }
                         ImplItem::Type(t) => println!(
                             "cargo::rustc-cfg=structure_{module}_impl_{self_ident}_type_{}",
                             t.ident
@@ -142,10 +151,19 @@ fn process_file(path: &Path) -> Result<(), Box<dyn Error>> {
                             "cargo::rustc-cfg=structure_{module}_trait_{}_const_{}",
                             trait_.ident, c.ident
                         ),
-                        TraitItem::Fn(f) => println!(
-                            "cargo::rustc-cfg=structure_{module}_trait_{}_fn_{}",
-                            trait_.ident, f.sig.ident
-                        ),
+                        TraitItem::Fn(f) => {
+                            println!(
+                                "cargo::rustc-cfg=structure_{module}_trait_{}_fn_{}",
+                                trait_.ident, f.sig.ident
+                            );
+
+                            if matches!(f.sig.inputs.first(), Some(&FnArg::Receiver(_))) {
+                                println!(
+                                    "cargo::rustc-cfg=structure_{module}_trait_{}_method_{}",
+                                    trait_.ident, f.sig.ident
+                                );
+                            }
+                        }
                         TraitItem::Type(t) => println!(
                             "cargo::rustc-cfg=structure_{module}_trait_{}_type_{}",
                             trait_.ident, t.ident

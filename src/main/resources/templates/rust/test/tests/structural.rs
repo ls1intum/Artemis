@@ -41,7 +41,7 @@ fn test_context_methods() {
     let ast = parse_file("./assignment/src/context.rs");
     let context_impl =
         find_impl(&ast.items, "Context").expect("SortStrategy should implement functions");
-    check_impl_function_names(&context_impl.items, ["sort"])
+    check_impl_function_names(&context_impl.items, ["sort", "sort_algorithm"])
         .unwrap_or_else(|name| panic!("Context should implement the function \"{name}\""));
 }
 

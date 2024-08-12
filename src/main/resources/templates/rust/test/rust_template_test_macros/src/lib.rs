@@ -80,6 +80,16 @@ pub fn require_impl_function_or_fail(attr: TokenStream, item: TokenStream) -> To
 }
 
 #[proc_macro_attribute]
+pub fn require_impl_method(attr: TokenStream, item: TokenStream) -> TokenStream {
+    require_for_item(attr, item, make_cfg_impl_method)
+}
+
+#[proc_macro_attribute]
+pub fn require_impl_method_or_fail(attr: TokenStream, item: TokenStream) -> TokenStream {
+    require_for_function(attr, item, make_cfg_impl_method)
+}
+
+#[proc_macro_attribute]
 pub fn require_impl_const(attr: TokenStream, item: TokenStream) -> TokenStream {
     require_for_item(attr, item, make_cfg_impl_const)
 }
@@ -107,6 +117,16 @@ pub fn require_trait_function(attr: TokenStream, item: TokenStream) -> TokenStre
 #[proc_macro_attribute]
 pub fn require_trait_function_or_fail(attr: TokenStream, item: TokenStream) -> TokenStream {
     require_for_function(attr, item, make_cfg_trait_function)
+}
+
+#[proc_macro_attribute]
+pub fn require_trait_method(attr: TokenStream, item: TokenStream) -> TokenStream {
+    require_for_item(attr, item, make_cfg_trait_method)
+}
+
+#[proc_macro_attribute]
+pub fn require_trait_method_or_fail(attr: TokenStream, item: TokenStream) -> TokenStream {
+    require_for_function(attr, item, make_cfg_trait_method)
 }
 
 #[proc_macro_attribute]
@@ -249,6 +269,11 @@ fn make_cfg_impl_function(path: Path) -> Ident {
     format_ident!("structure_{module_path}_impl_{self_type}_fn_{function}")
 }
 
+fn make_cfg_impl_method(path: Path) -> Ident {
+    let (module_path, self_type, function) = split_path2(path);
+    format_ident!("structure_{module_path}_impl_{self_type}_method_{function}")
+}
+
 fn make_cfg_impl_const(path: Path) -> Ident {
     let (module_path, self_type, const_name) = split_path2(path);
     format_ident!("structure_{module_path}_impl_{self_type}_const_{const_name}")
@@ -262,6 +287,11 @@ fn make_cfg_impl_type(path: Path) -> Ident {
 fn make_cfg_trait_function(path: Path) -> Ident {
     let (module_path, trait_type, function) = split_path2(path);
     format_ident!("structure_{module_path}_trait_{trait_type}_fn_{function}")
+}
+
+fn make_cfg_trait_method(path: Path) -> Ident {
+    let (module_path, trait_type, function) = split_path2(path);
+    format_ident!("structure_{module_path}_trait_{trait_type}_method_{function}")
 }
 
 fn make_cfg_trait_const(path: Path) -> Ident {

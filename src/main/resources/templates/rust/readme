@@ -26,7 +26,8 @@ Create a `SortStrategy` trait and adjust the sorting algorithms so that they imp
 Also make sure to declare `std::any::Any` as a supertrait.
 
 2. [task][Context Class](test_context_fields,test_context_methods)
-Create and implement a `Context` struct following the below class diagram
+Create and implement a `Context` struct following the below class diagram.
+Also add a getter for `sort_algorithm` with the signature `sort_algorithm(&self) -> impl Deref<Target = dyn SortStrategy<NaiveDate>> + '_`.
 
 3. [task][Context Policy](test_policy_fields,test_policy_methods)
 Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
@@ -68,7 +69,7 @@ MergeSort -up-|> SortStrategy #testsColor(test_merge_sort_struct)
 BubbleSort -up-|> SortStrategy #testsColor(test_bubble_sort_struct)
 SortStrategy -up-|> Any #testsColor(test_sort_strategy_supertrait)
 Policy -right-> Context #testsColor(test_policy_fields): context
-Context -right-> SortStrategy #testsColor(test_context_fields): sortAlgorithm
+Context -right-> SortStrategy #testsColor(test_context_fields): sort_algorithm
 
 hide empty fields
 hide empty methods
