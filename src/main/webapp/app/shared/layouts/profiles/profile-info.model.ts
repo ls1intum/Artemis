@@ -34,6 +34,7 @@ export class ProfileInfo {
     public versionControlUrl?: string;
     public versionControlName?: string;
     public useVersionControlAccessToken?: boolean;
+    public showCloneUrlWithoutToken?: boolean;
     public continuousIntegrationName?: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2Config;

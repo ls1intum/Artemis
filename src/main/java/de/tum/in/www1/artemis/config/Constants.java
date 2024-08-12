@@ -231,6 +231,8 @@ public final class Constants {
 
     public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "useVersionControlAccessToken";
 
+    public static final String INFO_SHOW_CLONE_URL_WITHOUT_TOKEN = "showCloneUrlWithoutToken";
+
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
     public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";

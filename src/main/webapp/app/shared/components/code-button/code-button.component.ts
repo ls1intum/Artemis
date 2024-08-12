@@ -46,6 +46,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     useVersionControlAccessToken?: boolean;
     localVCEnabled = false;
     gitlabVCEnabled = false;
+    showCloneUrlWithoutToken = true;
 
     user: User;
     cloneHeadline: string;
@@ -85,6 +86,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
             this.useVersionControlAccessToken = profileInfo.useVersionControlAccessToken ?? false;
+            this.showCloneUrlWithoutToken = profileInfo.showCloneUrlWithoutToken ?? true;
+            this.useToken = !this.showCloneUrlWithoutToken;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
             if (this.localVCEnabled) {

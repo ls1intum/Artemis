@@ -31,6 +31,9 @@ public class LocalVCInfoContributor implements InfoContributor {
     @Value("${artemis.version-control.use-version-control-access-token:false}")
     private boolean useVcsAccessToken;
 
+    @Value("${artemis.version-control.show-clone-url-without-token:true}")
+    private boolean showCloneUrlWithoutToken;
+
     @Value("${artemis.version-control.ssh-port:7921}")
     private int sshPort;
 
@@ -46,6 +49,7 @@ public class LocalVCInfoContributor implements InfoContributor {
         // with the account.service.ts and its check if the access token is required
         // TODO: Find a better way to test this in LocalVCInfoContributorTest
         builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, useVcsAccessToken);
+        builder.withDetail(Constants.INFO_SHOW_CLONE_URL_WITHOUT_TOKEN, showCloneUrlWithoutToken);
 
         // Store ssh url template
         try {

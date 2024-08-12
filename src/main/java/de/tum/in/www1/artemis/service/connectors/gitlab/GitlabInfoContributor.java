@@ -27,6 +27,9 @@ public class GitlabInfoContributor implements InfoContributor {
     @Value("${artemis.version-control.use-version-control-access-token:#{false}}")
     private Boolean useVersionControlAccessToken;
 
+    @Value("${artemis.version-control.show-clone-url-without-token:true}")
+    private boolean showCloneUrlWithoutToken;
+
     @Override
     public void contribute(Info.Builder builder) {
         // Store server url
@@ -50,5 +53,6 @@ public class GitlabInfoContributor implements InfoContributor {
         }
 
         builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, useVersionControlAccessToken);
+        builder.withDetail(Constants.INFO_SHOW_CLONE_URL_WITHOUT_TOKEN, showCloneUrlWithoutToken);
     }
 }
