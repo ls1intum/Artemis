@@ -33,7 +33,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
     let programmingExercise = new ProgrammingExercise(course, undefined);
-    let windfile: WindFile = new WindFile();
+    let windFile: WindFile = new WindFile();
     let actions: BuildAction[] = [];
     let gradleBuildAction: ScriptAction = new ScriptAction();
     let cleanBuildAction: ScriptAction = new ScriptAction();
@@ -45,11 +45,11 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
         programmingExercise.customizeBuildPlanWithAeolus = true;
-        windfile = new WindFile();
+        windFile = new WindFile();
         const metadata = new WindMetadata();
         metadata.docker = new DockerConfiguration();
         metadata.docker.image = 'testImage';
-        windfile.metadata = metadata;
+        windFile.metadata = metadata;
         actions = [];
         gradleBuildAction = new ScriptAction();
         gradleBuildAction.name = 'gradle';
@@ -65,8 +65,8 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         actions.push(gradleBuildAction);
         actions.push(cleanBuildAction);
         actions.push(platformAction);
-        windfile.actions = actions;
-        programmingExercise.windfile = windfile;
+        windFile.actions = actions;
+        programmingExercise.buildConfig!.windFile = windFile;
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -114,19 +114,19 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should delete action', () => {
         comp.deleteAction('gradle');
-        const size = programmingExercise.windfile?.actions.length;
+        const size = programmingExercise.buildConfig?.windFile?.actions.length;
         expect(size).toBeDefined();
         const realSize = size!;
-        expect(programmingExercise.windfile?.actions.length).toBe(realSize);
+        expect(programmingExercise.buildConfig?.windFile?.actions.length).toBe(realSize);
         comp.deleteAction('clean');
-        expect(programmingExercise.windfile?.actions.length).toBe(realSize - 1);
+        expect(programmingExercise.buildConfig?.windFile?.actions.length).toBe(realSize - 1);
     });
 
     it('should add action', () => {
-        const size = programmingExercise.windfile?.actions.length;
+        const size = programmingExercise.buildConfig?.windFile?.actions.length;
         expect(size).toBeDefined();
         comp.addAction('gradle clean');
-        expect(programmingExercise.windfile?.actions.length).toBe(size! + 1);
+        expect(programmingExercise.buildConfig?.windFile?.actions.length).toBe(size! + 1);
     });
 
     it('should accept editor', () => {
@@ -152,7 +152,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should do nothing without a Windfile', () => {
-        comp.programmingExercise.windfile = undefined;
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         comp.code = 'this should not change';
         comp.changeActiveAction('');
         expect(comp.code).toBe('this should not change');
@@ -190,29 +190,29 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     it('should return false to reload template', () => {
         comp.programmingLanguage = programmingExercise.programmingLanguage;
         comp.projectType = programmingExercise.projectType;
-        comp.sequentialTestRuns = programmingExercise.sequentialTestRuns;
+        comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         comp.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
-        comp.testwiseCoverageEnabled = programmingExercise.testwiseCoverageEnabled;
+        comp.testwiseCoverageEnabled = programmingExercise.buildConfig?.testwiseCoverageEnabled;
         expect(comp.shouldReloadTemplate()).toBeFalse();
     });
 
     it('should return true to reload template', () => {
         comp.programmingLanguage = ProgrammingLanguage.JAVA;
         comp.projectType = ProjectType.PLAIN_GRADLE;
-        comp.sequentialTestRuns = programmingExercise.sequentialTestRuns;
+        comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         comp.staticCodeAnalysisEnabled = true;
         comp.testwiseCoverageEnabled = true;
         expect(comp.shouldReloadTemplate()).toBeTrue();
     });
 
     it('should reset buildplan', () => {
-        programmingExercise.windfile = windfile;
-        programmingExercise.buildPlanConfiguration = 'some build plan';
-        expect(programmingExercise.windfile).toBeDefined();
-        expect(programmingExercise.buildPlanConfiguration).toBeDefined();
+        programmingExercise.buildConfig!.windFile = windFile;
+        programmingExercise.buildConfig!.buildPlanConfiguration = 'some build plan';
+        expect(programmingExercise.buildConfig?.windFile).toBeDefined();
+        expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeDefined();
         comp.resetCustomBuildPlan();
-        expect(programmingExercise.windfile).toBeUndefined();
-        expect(programmingExercise.buildPlanConfiguration).toBeUndefined();
+        expect(programmingExercise.buildConfig?.windFile).toBeUndefined();
+        expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
     });
 
     it('should do nothing without a programming language', () => {
@@ -233,9 +233,9 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.loadAeolusTemplate();
         expect(comp.programmingLanguage).toBe(programmingExercise.programmingLanguage);
         expect(comp.projectType).toBe(programmingExercise.projectType);
-        expect(comp.sequentialTestRuns).toBe(programmingExercise.sequentialTestRuns);
+        expect(comp.sequentialTestRuns).toBe(programmingExercise.buildConfig?.sequentialTestRuns);
         expect(comp.staticCodeAnalysisEnabled).toBe(programmingExercise.staticCodeAnalysisEnabled);
-        expect(comp.testwiseCoverageEnabled).toBe(programmingExercise.testwiseCoverageEnabled);
+        expect(comp.testwiseCoverageEnabled).toBe(programmingExercise.buildConfig?.testwiseCoverageEnabled);
     });
 
     it('should not call loadAeolusTemplate', () => {
@@ -264,28 +264,28 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should update windfile', () => {
-        comp.programmingExercise.windfile = undefined;
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windfile))));
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
         comp.loadAeolusTemplate();
-        expect(comp.programmingExercise.windfile).toBeDefined();
-        expect(comp.programmingExercise.windfile).toEqual(windfile);
+        expect(comp.programmingExercise.buildConfig?.windFile).toBeDefined();
+        expect(comp.programmingExercise.buildConfig?.windFile).toEqual(windFile);
     });
 
     it('should call this.resetCustomBuildPlan', () => {
-        comp.programmingExercise.windfile = undefined;
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         const resetSpy = jest.spyOn(comp, 'resetCustomBuildPlan');
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
         comp.loadAeolusTemplate();
-        expect(comp.programmingExercise.windfile).toBeUndefined();
+        expect(comp.programmingExercise.buildConfig?.windFile).toBeUndefined();
         expect(resetSpy).toHaveBeenCalled();
     });
 
     it('should parse windfile correctly', () => {
-        const parsedWindFile = mockAeolusService.parseWindFile(mockAeolusService.serializeWindFile(windfile));
+        const parsedWindFile = mockAeolusService.parseWindFile(mockAeolusService.serializeWindFile(windFile));
         expect(parsedWindFile).toBeDefined();
         expect(parsedWindFile?.actions.length).toBe(3);
         expect(parsedWindFile?.actions[0]).toBeInstanceOf(ScriptAction);
@@ -341,19 +341,19 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should set docker image correctly', () => {
-        comp.programmingExercise.windfile = windfile;
-        comp.programmingExercise.windfile.metadata.docker.image = 'old';
+        comp.programmingExercise.buildConfig!.windFile = windFile;
+        comp.programmingExercise.buildConfig!.windFile.metadata.docker.image = 'old';
         comp.setDockerImage('testImage');
-        expect(comp.programmingExercise.windfile?.metadata.docker.image).toBe('testImage');
-        comp.programmingExercise.windfile = undefined;
+        expect(comp.programmingExercise.buildConfig?.windFile?.metadata.docker.image).toBe('testImage');
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         comp.setDockerImage('testImage');
-        expect(comp.programmingExercise.windfile).toBeUndefined();
+        expect(comp.programmingExercise.buildConfig?.windFile).toBeUndefined();
     });
 
     it('should not call getAeolusTemplateScript when import from file if script present', () => {
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         comp.programmingExerciseCreationConfig.isImportFromFile = true;
-        programmingExercise.buildScript = 'echo "test"';
+        programmingExercise.buildConfig!.buildScript = 'echo "test"';
         jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windfile))));
         comp.ngOnChanges({
@@ -376,6 +376,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         });
         expect(mockAeolusService.getAeolusTemplateScript).not.toHaveBeenCalled();
         expect(mockAeolusService.getAeolusTemplateFile).not.toHaveBeenCalled();
-        expect(comp.programmingExercise.buildScript).toBe('echo "test"');
+        expect(comp.programmingExercise.buildConfig?.buildScript).toBe('echo "test"');
     });
 });

@@ -34,7 +34,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         if (this._editor) {
             this.setupEditor();
             if (this.programmingExercise.id || this.isImportFromFile) {
-                this.code = this.programmingExercise.buildScript || '';
+                this.code = this.programmingExercise.buildConfig?.buildScript || '';
             }
             this._editor.setText(this.code);
         }
@@ -55,8 +55,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             (this.programmingExercise.programmingLanguage !== this.programmingLanguage ||
                 this.programmingExercise.projectType !== this.projectType ||
                 this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
-                this.programmingExercise.sequentialTestRuns !== this.sequentialTestRuns ||
-                this.programmingExercise.testwiseCoverageEnabled !== this.testwiseCoverageEnabled)
+                this.programmingExercise.buildConfig!.sequentialTestRuns !== this.sequentialTestRuns ||
+                this.programmingExercise.buildConfig!.testwiseCoverageEnabled !== this.testwiseCoverageEnabled)
         );
     }
 
@@ -65,9 +65,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
      * @private
      */
     resetCustomBuildPlan() {
-        this.programmingExercise.windfile = undefined;
-        this.programmingExercise.buildPlanConfiguration = undefined;
-        this.programmingExercise.buildScript = undefined;
+        this.programmingExercise.buildConfig!.windFile = undefined;
+        this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
+        this.programmingExercise.buildConfig!.buildScript = undefined;
     }
 
     /**
@@ -83,26 +83,38 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.programmingLanguage = this.programmingExercise.programmingLanguage;
         this.projectType = this.programmingExercise.projectType;
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
-        this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
-        this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
+        this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
+        this.testwiseCoverageEnabled = this.programmingExercise.buildConfig?.testwiseCoverageEnabled;
         this.isImportFromFile = isImportFromFile;
-        if (!isImportFromFile || !this.programmingExercise.windfile) {
+        if (!isImportFromFile || !this.programmingExercise.buildConfig?.windfile) {
             this.aeolusService
                 .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
                 .subscribe({
                     next: (file) => {
-                        this.programmingExercise.windfile = this.aeolusService.parseWindFile(file);
+                        this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
                     },
                     error: () => {
-                        this.programmingExercise.windfile = undefined;
+                        this.programmingExercise.buildConfig!.windfile = undefined;
                     },
                 });
         }
+        this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
+        this.testwiseCoverageEnabled = this.programmingExercise.buildConfig?.testwiseCoverageEnabled;
+        this.aeolusService
+            .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+            .subscribe({
+                next: (file) => {
+                    this.programmingExercise.buildConfig!.windFile = this.aeolusService.parseWindFile(file);
+                },
+                error: () => {
+                    this.programmingExercise.buildConfig!.windFile = undefined;
+                },
+            });
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-        if (!this.programmingExercise.windfile) {
+        if (!this.programmingExercise.buildConfig?.windfile) {
             this.resetCustomBuildPlan();
         }
-        if (!isImportFromFile || !this.programmingExercise.buildScript) {
+        if (!isImportFromFile || !this.programmingExercise.buildConfig?.buildScript) {
             this.aeolusService
                 .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
                 .subscribe({
@@ -111,11 +123,11 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                         this.editor?.setText(file);
                     },
                     error: () => {
-                        this.programmingExercise.buildScript = undefined;
+                        this.programmingExercise.buildConfig!.buildScript = undefined;
                     },
                 });
         }
-        if (!this.programmingExercise.buildScript) {
+        if (!this.programmingExercise.buildConfig?.buildScript) {
             this.resetCustomBuildPlan();
         }
     }
@@ -128,7 +140,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     codeChanged(code: string): void {
         this.code = code;
-        this.programmingExercise.buildScript = code;
+        this.programmingExercise.buildConfig!.buildScript = code;
     }
 
     /**
@@ -142,9 +154,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     }
 
     setDockerImage(dockerImage: string) {
-        if (!this.programmingExercise.windfile || !this.programmingExercise.windfile.metadata.docker) {
+        if (!this.programmingExercise.buildConfig?.windFile || !this.programmingExercise.buildConfig?.windFile.metadata.docker) {
             return;
         }
-        this.programmingExercise.windfile.metadata.docker.image = dockerImage.trim();
+        this.programmingExercise.buildConfig!.windFile.metadata.docker.image = dockerImage.trim();
     }
 }
