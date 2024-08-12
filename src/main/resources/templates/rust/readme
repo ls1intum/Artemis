@@ -43,10 +43,12 @@ Create and implement a `Policy` class following the below class diagram with a s
 @startuml
 
 class Policy {
+  <color:testsColor(test_policy_methods)>+new(&Context)</color>
   <color:testsColor(test_policy_methods)>+configure(&[NaiveDate])</color>
 }
 
 class Context {
+  <color:testsColor(test_context_methods)>+new()</color>
   <color:testsColor(test_context_methods)>+sort(&mut [NaiveDate])</color>
 }
 

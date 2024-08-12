@@ -69,14 +69,21 @@ fn process_file(path: &Path) -> Result<(), Box<dyn Error>> {
                     continue;
                 };
 
-                let self_ident = if let Some(i) = self_path.path.get_ident() {
+                let self_ident = if let Some(i) = self_path.path.segments.last().map(|s| &s.ident) {
                     i
                 } else {
                     continue;
                 };
 
                 if impl_.trait_.is_some() {
-                    let trait_ident = if let Some(i) = impl_.trait_.as_ref().unwrap().1.get_ident()
+                    let trait_ident = if let Some(i) = impl_
+                        .trait_
+                        .as_ref()
+                        .unwrap()
+                        .1
+                        .segments
+                        .last()
+                        .map(|s| &s.ident)
                     {
                         i
                     } else {

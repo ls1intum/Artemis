@@ -1,10 +1,7 @@
 use chrono::NaiveDate;
 use rust_template_exercise::{bubble_sort::BubbleSort, merge_sort::MergeSort};
 
-use rust_template_test_macros::{
-    require_impl_method_or_fail, require_struct_or_fail, require_trait,
-    require_trait_supertrait_or_fail,
-};
+use rust_template_test_macros::{require_impl_function_or_fail, require_impl_method_or_fail, require_struct_or_fail, require_trait, require_trait_supertrait_or_fail};
 
 #[require_trait(sort_strategy::SortStrategy)]
 use rust_template_exercise::sort_strategy::SortStrategy;
@@ -46,6 +43,8 @@ fn test_merge_sort() {
 #[require_struct_or_fail(policy::Policy)]
 #[require_trait_supertrait_or_fail(sort_strategy::SortStrategy : Any)]
 #[require_impl_method_or_fail(context::Context::sort_algorithm)]
+#[require_impl_function_or_fail(context::Context::new)]
+#[require_impl_function_or_fail(policy::Policy::new)]
 fn test_use_merge_sort_for_big_list() {
     let context = rust_template_exercise::context::Context::new();
     let mut policy = rust_template_exercise::policy::Policy::new(&context);
@@ -68,6 +67,8 @@ fn test_use_merge_sort_for_big_list() {
 #[require_struct_or_fail(policy::Policy)]
 #[require_trait_supertrait_or_fail(sort_strategy::SortStrategy : Any)]
 #[require_impl_method_or_fail(context::Context::sort_algorithm)]
+#[require_impl_function_or_fail(context::Context::new)]
+#[require_impl_function_or_fail(policy::Policy::new)]
 fn test_use_bubble_sort_for_small_list() {
     let context = rust_template_exercise::context::Context::new();
     let mut policy = rust_template_exercise::policy::Policy::new(&context);
