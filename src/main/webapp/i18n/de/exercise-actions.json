@@ -55,6 +55,7 @@
                 "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
             },
             "ideButton": {
+                "openIn": "Öffnen in",
                 "helpIcon": "IDE kann in den Einstellungen festgelegt werden"
             },
             "goToBuildPlan": "Zum Build Plan gehen",
