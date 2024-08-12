@@ -36,15 +36,12 @@ export class DeleteUsersButtonComponent {
     loadUserList() {
         this.adminUserService.queryNotEnrolledUsers().subscribe({
             next: (res: HttpResponse<string[]>) => {
-                if (res.body == null) {
-                    throw new Error('Unexpected null response body for user list');
+                const users = res.body!;
+                this.users.set(users);
+                if (users.length === 0) {
+                    this.alertService.info('artemisApp.userManagement.notEnrolled.delete.cancel');
                 } else {
-                    this.users.set(res.body);
-                    if (res.body.length == 0) {
-                        this.alertService.info('artemisApp.userManagement.notEnrolled.delete.cancel');
-                    } else {
-                        this.openDeleteDialog();
-                    }
+                    this.openDeleteDialog();
                 }
             },
             error: (res: HttpErrorResponse) => {
@@ -75,16 +72,17 @@ export class DeleteUsersButtonComponent {
 
     onConfirm() {
         const logins = this.users();
-        if (logins != undefined) {
-            /*
-             * Delete the list of confirmed users. Don't filter in the delete operation
-             * to avoid that there are other users deleted than the confirmed ones.
-             */
-            this.adminUserService.deleteUsers(logins);
-            // TODO show some feedback dialog (similar to delete selected users)
-        } else {
-            throw new Error('Unexpected undefined list of user logins');
+        if (!logins) {
+            return;
         }
+
+        /*
+         * Delete the list of confirmed users. Don't filter in the delete operation
+         * to avoid that there are other users deleted than the confirmed ones.
+         */
+        this.adminUserService.deleteUsers(logins).subscribe(() => {
+            // TODO show some feedback dialog (similar to delete selected users)
+        });
     }
 
     protected readonly ButtonType = ButtonType;
