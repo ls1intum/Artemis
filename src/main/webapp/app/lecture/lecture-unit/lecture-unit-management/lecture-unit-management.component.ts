@@ -41,7 +41,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    routerEditLinksBase = {
+    routerEditLinksBase: { [key: string]: string } = {
         [LectureUnitType.ATTACHMENT]: 'attachment-units',
         [LectureUnitType.VIDEO]: 'video-units',
         [LectureUnitType.TEXT]: 'text-units',

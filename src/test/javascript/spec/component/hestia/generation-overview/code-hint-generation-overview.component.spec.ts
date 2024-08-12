@@ -15,7 +15,7 @@ describe('CodeHintGenerationOverview Component', () => {
 
     const exercise = new ProgrammingExercise(undefined, undefined);
     exercise.id = 1;
-    exercise.testwiseCoverageEnabled = true;
+    exercise.buildConfig!.testwiseCoverageEnabled = true;
 
     let latestStepSpy: jest.SpyInstance;
 

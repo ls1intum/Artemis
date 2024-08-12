@@ -9,6 +9,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -161,6 +162,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     getText(): string {
         return this._editor.getValue();
+    }
+
+    getContentHeight(): number {
+        return this._editor.getContentHeight() + this._editor.getOption(monaco.editor.EditorOption.lineHeight);
     }
 
     setText(text: string): void {
@@ -379,6 +384,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Sets the line number from which the editor should start counting.
+     * @param startLineNumber The line number to start counting from (starting at 1).
+     */
+    setStartLineNumber(startLineNumber: number): void {
+        this._editor.updateOptions({
+            lineNumbers: (number) => `${startLineNumber + number - 1}`,
+        });
+    }
+
+    /**
      * Enables a text field mode for the editor. This will make the editor look more like a text field and less like a code editor.
      * In particular, line numbers, margins, and highlights will be disabled.
      */
@@ -413,5 +428,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             wrappingStrategy: 'simple',
         });
         this.setWordWrap(true);
+    }
+
+    /**
+     * Applies the given options to the editor.
+     * @param options The options to apply.
+     */
+    applyOptionPreset(options: MonacoEditorOptionPreset): void {
+        options.apply(this._editor);
     }
 }
