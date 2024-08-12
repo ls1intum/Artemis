@@ -124,7 +124,7 @@ class TestResultXmlParser {
 
         @JacksonXmlText
         public void setDetailedMessage(String detailedMessage) {
-            this.detailedMessage = detailedMessage != null ? detailedMessage : "";
+            this.detailedMessage = detailedMessage;
         }
     }
 }
