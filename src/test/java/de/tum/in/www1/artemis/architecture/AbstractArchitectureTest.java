@@ -11,7 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.junit.jupiter.api.BeforeAll;
@@ -35,8 +34,6 @@ import com.tngtech.archunit.lang.ConditionEvents;
 public abstract class AbstractArchitectureTest {
 
     protected static final String ARTEMIS_PACKAGE = "de.tum.in.www1.artemis";
-
-    private static final Pattern KEBAB_CASE_OR_PATH_VARIABLE_PATTERN = Pattern.compile("^([a-z]+(-[a-z]+)*|\\{[^}]+\\}|[a-z]+.json|saml2)$");
 
     protected static JavaClasses testClasses;
 
