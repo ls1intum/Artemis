@@ -1,11 +1,10 @@
-import { Component, EventEmitter, Input, Signal, WritableSignal, computed, signal } from '@angular/core';
+import { Component, EventEmitter, Output, Signal, WritableSignal, computed, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
@@ -19,7 +18,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
 })
 export class DeleteUsersButtonComponent {
-    @Input() eventManager: EventManager;
+    @Output() deletionCompleted = new EventEmitter<{ [key: string]: boolean }>();
 
     users: WritableSignal<string[] | undefined> = signal(undefined);
     usersString: Signal<string | undefined> = computed(() => this.users()?.join(', '));
@@ -85,10 +84,7 @@ export class DeleteUsersButtonComponent {
          */
         this.adminUserService.deleteUsers(logins).subscribe({
             next: () => {
-                this.eventManager.broadcast({
-                    name: 'userListModification',
-                    content: 'Deleted users',
-                });
+                this.deletionCompleted.emit();
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

@@ -134,7 +134,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        protected eventManager: EventManager,
+        private eventManager: EventManager,
         private localStorage: LocalStorageService,
         private modalService: NgbModal,
         private profileService: ProfileService,
@@ -433,6 +433,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
+     * Actions after the deletion of not enrolled users is completed.
+     */
+    deleteNotEnrolledUsersComplete() {
+        this.eventManager.broadcast({
+            name: 'userListModification',
+            content: 'Deleted users',
         });
     }
 
