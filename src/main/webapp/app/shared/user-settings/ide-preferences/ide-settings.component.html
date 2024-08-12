@@ -3,7 +3,10 @@
 </h1>
 <div class="list-group d-block">
     <div class="list-group-item pb-3">
-        <dd jhiTranslate="artemisApp.userSettings.idePreferencesPage.description"></dd>
+        <dt>
+            <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.description"></span>
+            <jhi-help-icon placement="right auto" text="artemisApp.userSettings.idePreferencesPage.jetbrainsHelp" />
+        </dt>
         <dt class="py-2" jhiTranslate="artemisApp.userSettings.idePreferencesPage.default"></dt>
         <div class="btn-group">
             @for (ide of PREDEFINED_IDE; track ide) {
