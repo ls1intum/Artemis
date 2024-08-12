@@ -55,6 +55,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
     };
+
     const teamExerciseWithoutTeamAssigned: Exercise = {
         ...exercise,
         mode: ExerciseMode.TEAM,
@@ -679,8 +680,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
 
         // Expand the programmingExercise by given properties
-        comp.exercise = { ...exercise, ...programmingExercise } as ProgrammingExercise;
-        comp.programmingExercise!.buildConfig = { ...comp.programmingExercise!.buildConfig, ...buildConfig };
+        comp.exercise = { ...exercise, ...programmingExercise, buildConfig: buildConfig } as ProgrammingExercise;
 
         fixture.detectChanges();
 

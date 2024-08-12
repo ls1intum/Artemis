@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -13,6 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('ProgrammingExerciseDifficultyComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseDifficultyComponent>;
@@ -23,7 +24,7 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [ArtemisTestModule],
             declarations: [
                 CheckboxControlValueAccessor,
                 DefaultValueAccessor,
@@ -61,10 +62,10 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
-    }));
+    });
 
     it('should initialize theiaEnabled', () => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
