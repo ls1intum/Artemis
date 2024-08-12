@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
@@ -65,7 +66,6 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
-import net.sourceforge.plantuml.StringUtils;
 
 /**
  * This service is responsible for authenticating and authorizing git requests as well as for retrieving the requested Git repositories from disk.
