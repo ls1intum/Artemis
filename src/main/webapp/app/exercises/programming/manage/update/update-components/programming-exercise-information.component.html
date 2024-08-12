@@ -45,6 +45,23 @@
             }
         }
     </div>
+    @if (!programmingExerciseCreationConfig.isExamMode) {
+        <div id="creation-config-selector">
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
+                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
+            </div>
+            <jhi-category-selector
+                [categories]="programmingExerciseCreationConfig.exerciseCategories"
+                [existingCategories]="programmingExerciseCreationConfig.existingCategories"
+                (selectedCategories)="programmingExerciseCreationConfig.updateCategories($event)"
+            />
+        </div>
+    }
+    <h3
+        jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.buildDetailsStepTitle"
+        id="artemisApp.programmingExercise.wizardMode.detailedSteps.buildDetailsStepTitle"
+    ></h3>
     @if (programmingExercise.shortName && !shortName.invalid) {
         <div class="form-group">
             <div>
@@ -177,17 +194,4 @@
             </div>
         }
     </div>
-    @if (!programmingExerciseCreationConfig.isExamMode) {
-        <div id="creation-config-selector">
-            <div>
-                <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
-                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
-            </div>
-            <jhi-category-selector
-                [categories]="programmingExerciseCreationConfig.exerciseCategories"
-                [existingCategories]="programmingExerciseCreationConfig.existingCategories"
-                (selectedCategories)="programmingExerciseCreationConfig.updateCategories($event)"
-            />
-        </div>
-    }
 </section>
