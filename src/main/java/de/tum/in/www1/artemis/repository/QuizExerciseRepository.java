@@ -81,7 +81,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
     Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
 
-    Optional<QuizExercise> findByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+    Optional<QuizExercise> findByTitleAndCourseId(String title, long courseId);
 
     @NotNull
     default QuizExercise findWithEagerBatchesByIdOrElseThrow(Long quizExerciseId) {

@@ -112,6 +112,14 @@ public class LearningObjectImportService {
         this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
+    /**
+     * Imports the related learning objects from the source course competencies into the course to import into and links them to the imported competencies.
+     *
+     * @param sourceCourseCompetencies The source course competencies to import from.
+     * @param idToImportedCompetency   A map from the source competency IDs to the imported competencies.
+     * @param courseToImportInto       The course to import the learning objects into.
+     * @param importOptions            The import options.
+     */
     public void importRelatedLearningObjects(Set<CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
             Course courseToImportInto, CompetencyImportOptionsDTO importOptions) {
         Set<CourseCompetency> importedCourseCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).collect(Collectors.toSet());

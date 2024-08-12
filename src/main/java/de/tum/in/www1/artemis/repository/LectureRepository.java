@@ -100,7 +100,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndSlidesAndAttachments(@Param("lectureId") long lectureId);
 
-    Optional<Lecture> findByTitleAndCourseId(@Param("title") String title, @Param("courseId") Long courseId);
+    Optional<Lecture> findByTitleAndCourseId(String title, long courseId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);

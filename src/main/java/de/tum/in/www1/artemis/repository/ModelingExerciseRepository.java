@@ -94,7 +94,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
 
-    Optional<ModelingExercise> findByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+    Optional<ModelingExercise> findByTitleAndCourseId(String title, long courseId);
 
     @NotNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
