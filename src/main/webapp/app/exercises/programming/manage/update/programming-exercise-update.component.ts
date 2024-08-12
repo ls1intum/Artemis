@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingExerciseBuildConfig, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -264,8 +264,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.selectedProjectTypeValue = this.projectTypes?.[0];
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
-            this.programmingExercise.windFile = undefined;
-            this.programmingExercise.buildPlanConfiguration = undefined;
+            if (this.programmingExercise.buildConfig) {
+                this.programmingExercise.buildConfig.windFile = undefined;
+                this.programmingExercise.buildConfig.buildPlanConfiguration = undefined;
+            } else {
+                this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
+            }
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -277,10 +281,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (language == ProgrammingLanguage.HASKELL || language == ProgrammingLanguage.OCAML) {
             // Instructors typically test against the example solution for Haskell and OCAML exercises.
             // If supported by the current CI configuration, this line activates the option per default.
-            this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
+            this.programmingExercise.buildConfig!.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
         }
         if (!this.checkoutSolutionRepositoryAllowed) {
-            this.programmingExercise.checkoutSolutionRepository = false;
+            this.programmingExercise.buildConfig!.checkoutSolutionRepository = false;
         }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
@@ -385,8 +389,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            if (this.programmingExercise.buildPlanConfiguration) {
-                this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+            if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
+                this.programmingExercise.buildConfig!.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig!.buildPlanConfiguration);
             }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
@@ -607,15 +611,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     saveExercise() {
         // trim potential whitespaces that can lead to issues
-        if (this.programmingExercise.windFile?.metadata?.docker?.image) {
-            this.programmingExercise.windFile.metadata.docker.image = this.programmingExercise.windFile.metadata.docker.image.trim();
+        if (this.programmingExercise.buildConfig!.windFile?.metadata?.docker?.image) {
+            this.programmingExercise.buildConfig!.windFile.metadata.docker.image = this.programmingExercise.buildConfig!.windFile.metadata.docker.image.trim();
         }
 
         if (this.programmingExercise.customizeBuildPlanWithAeolus) {
-            this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windFile!);
+            this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windFile!);
         } else {
-            this.programmingExercise.buildPlanConfiguration = undefined;
-            this.programmingExercise.windFile = undefined;
+            this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
+            this.programmingExercise.buildConfig!.windFile = undefined;
         }
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {

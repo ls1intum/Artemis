@@ -63,7 +63,7 @@ jobs:
       run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Print failed tests
       if: failure()
-      run: grep "Test >.* FAILED" tests.log || echo "No failed tests."
+      run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -118,11 +118,11 @@ jobs:
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
             if: failure()
-            run: grep "Test >.* FAILED" tests.log || echo "No failed tests."
+            run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
           - name: Count failed tests
             id: failedTestCounter
             if: failure()
-            run: echo "FAILED_TESTS_COUNT=$(grep -c "Test >.* FAILED" tests.log)" >> $GITHUB_OUTPUT
+            run: echo "FAILED_TESTS_COUNT=$(grep -c "Test >.* FAILED\$" tests.log)" >> $GITHUB_OUTPUT
           - name: Report action failure
             if: failure()
             uses: Sibz/github-status-action@v1
@@ -175,11 +175,11 @@ jobs:
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
             if: failure()
-            run: grep "Test >.* FAILED" tests.log || echo "No failed tests."
+            run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
           - name: Count failed tests
             id: failedTestCounter
             if: failure()
-            run: echo "FAILED_TESTS_COUNT=$(grep -c "Test >.* FAILED" tests.log)" >> $GITHUB_OUTPUT
+            run: echo "FAILED_TESTS_COUNT=$(grep -c "Test >.* FAILED\$" tests.log)" >> $GITHUB_OUTPUT
           - name: Report action failure
             if: failure()
             uses: Sibz/github-status-action@v1

@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -28,7 +27,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.SecondaryTable;
-import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -37,8 +35,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -56,8 +52,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
-import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
-import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -131,11 +125,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;
 
-    @Size(max = 36)
-    @Nullable
-    @Column(name = "build_plan_access_secret", table = "programming_exercise_details", length = 36)
-    private String buildPlanAccessSecret;
-
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
     @JsonIgnoreProperties("programmingExercise")
@@ -171,27 +160,13 @@ public class ProgrammingExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details")
-    private boolean testwiseCoverageEnabled;
+    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
+    private boolean releaseTestsWithExampleSolution = false;
 
-    @Column(name = "branch", table = "programming_exercise_details")
-    private String branch;
-
-    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
-    private boolean releaseTestsWithExampleSolution;
-
-    @Column(name = "build_plan_configuration", table = "programming_exercise_details", columnDefinition = "longtext")
-    private String buildPlanConfiguration;
-
-    @Column(name = "build_script", table = "programming_exercise_details", columnDefinition = "longtext")
-    private String buildScript;
-
-    /**
-     * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
-     * This is currently only supported for HASKELL and OCAML, thus the default value is false.
-     */
-    @Column(name = "checkout_solution_repository", table = "programming_exercise_details", columnDefinition = "boolean default false")
-    private boolean checkoutSolutionRepository;
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
+    @JsonIgnoreProperties("programmingExercise")
+    private ProgrammingExerciseBuildConfig buildConfig;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -313,13 +288,8 @@ public class ProgrammingExercise extends Exercise {
         this.allowOnlineIde = allowOnlineIde;
     }
 
-    @Nullable
-    public String getTheiaImage() {
-        return theiaImage;
-    }
-
-    public void setTheiaImage(@Nullable String theiaImage) {
-        this.theiaImage = theiaImage;
+    public String getProjectKey() {
+        return this.projectKey;
     }
 
     public Boolean isStaticCodeAnalysisEnabled() {
@@ -336,25 +306,6 @@ public class ProgrammingExercise extends Exercise {
 
     public void setMaxStaticCodeAnalysisPenalty(Integer maxStaticCodeAnalysisPenalty) {
         this.maxStaticCodeAnalysisPenalty = maxStaticCodeAnalysisPenalty;
-    }
-
-    public String getProjectKey() {
-        return this.projectKey;
-    }
-
-    public void setBranch(String branch) {
-        this.branch = branch;
-    }
-
-    /**
-     * Getter for the stored default branch of the exercise.
-     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfExercise(ProgrammingExercise)} if you are not sure that the value was already set in the Artemis database
-     *
-     * @return the name of the default branch or null if not yet stored in Artemis
-     */
-    @JsonIgnore
-    public String getBranch() {
-        return branch;
     }
 
     public void setReleaseTestsWithExampleSolution(boolean releaseTestsWithExampleSolution) {
@@ -506,6 +457,14 @@ public class ProgrammingExercise extends Exercise {
         this.submissionPolicy = submissionPolicy;
     }
 
+    public ProgrammingExerciseBuildConfig getBuildConfig() {
+        return buildConfig;
+    }
+
+    public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
+        this.buildConfig = buildConfig;
+    }
+
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
@@ -630,15 +589,6 @@ public class ProgrammingExercise extends Exercise {
         staticCodeAnalysisCategories.add(category);
     }
 
-    @JsonProperty("sequentialTestRuns")
-    public boolean hasSequentialTestRuns() {
-        return Objects.requireNonNullElse(sequentialTestRuns, false);
-    }
-
-    public void setSequentialTestRuns(Boolean sequentialTestRuns) {
-        this.sequentialTestRuns = sequentialTestRuns;
-    }
-
     public Boolean getShowTestNamesToStudents() {
         return showTestNamesToStudents;
     }
@@ -681,14 +631,6 @@ public class ProgrammingExercise extends Exercise {
         this.projectType = projectType;
     }
 
-    public Boolean isTestwiseCoverageEnabled() {
-        return testwiseCoverageEnabled;
-    }
-
-    public void setTestwiseCoverageEnabled(Boolean testwiseCoverageEnabled) {
-        this.testwiseCoverageEnabled = testwiseCoverageEnabled;
-    }
-
     /**
      * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
@@ -699,8 +641,9 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
-        setBuildPlanConfiguration(null);
-        setBuildScript(null);
+        if (buildConfig != null && Hibernate.isInitialized(buildConfig)) {
+            buildConfig.filterSensitiveInformation();
+        }
         super.filterSensitiveInformation();
     }
 
@@ -786,15 +729,7 @@ public class ProgrammingExercise extends Exercise {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", allowOnlineEditor='"
                 + isAllowOnlineEditor() + "'" + ", allowOnlineIde='" + isAllowOnlineIde() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='"
-                + getPackageName() + "'" + ", theiaImage='" + getTheiaImage() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
-    }
-
-    public boolean getCheckoutSolutionRepository() {
-        return this.checkoutSolutionRepository;
-    }
-
-    public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
-        this.checkoutSolutionRepository = checkoutSolutionRepository;
+                + getPackageName() + "'" + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     /**
@@ -842,7 +777,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && hasSequentialTestRuns()) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && getBuildConfig().hasSequentialTestRuns()) {
             throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
         }
 
@@ -897,19 +832,6 @@ public class ProgrammingExercise extends Exercise {
         this.exerciseHints = exerciseHints;
     }
 
-    public boolean hasBuildPlanAccessSecretSet() {
-        return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
-    }
-
-    @Nullable
-    public String getBuildPlanAccessSecret() {
-        return buildPlanAccessSecret;
-    }
-
-    public void generateAndSetBuildPlanAccessSecret() {
-        buildPlanAccessSecret = UUID.randomUUID().toString();
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -918,61 +840,6 @@ public class ProgrammingExercise extends Exercise {
         Stream.of(exerciseHints, testCases, staticCodeAnalysisCategories).filter(Objects::nonNull).forEach(Collection::clear);
 
         super.disconnectRelatedEntities();
-    }
-
-    /**
-     * Returns the JSON encoded custom build plan configuration
-     *
-     * @return the JSON encoded custom build plan configuration or null if the default one should be used
-     */
-    public String getBuildPlanConfiguration() {
-        return buildPlanConfiguration;
-    }
-
-    /**
-     * Sets the JSON encoded custom build plan configuration
-     *
-     * @param buildPlanConfiguration the JSON encoded custom build plan configuration
-     */
-    public void setBuildPlanConfiguration(String buildPlanConfiguration) {
-        this.buildPlanConfiguration = buildPlanConfiguration;
-    }
-
-    /**
-     * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
-     * This method parses the JSON string and returns a {@link Windfile} object.
-     *
-     * @return the {@link Windfile} object or null if the JSON string could not be parsed
-     */
-    public Windfile getWindfile() {
-        if (buildPlanConfiguration == null) {
-            return null;
-        }
-        try {
-            return Windfile.deserialize(buildPlanConfiguration);
-        }
-        catch (JsonProcessingException e) {
-            log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
-        }
-        return null;
-    }
-
-    /**
-     * We store the bash script in the database
-     *
-     * @return the build script or null if the build script does not exist
-     */
-    public String getBuildScript() {
-        return buildScript;
-    }
-
-    /**
-     * Update the build script
-     *
-     * @param buildScript the new build script for the programming exercise
-     */
-    public void setBuildScript(String buildScript) {
-        this.buildScript = buildScript;
     }
 
     /**
