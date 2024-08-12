@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use crate::{
     bubble_sort::BubbleSort, context::Context, merge_sort::MergeSort, sort_strategy::SortStrategy,
 };
@@ -6,11 +7,11 @@ use chrono::NaiveDate;
 const SIZE_THRESHOLD: usize = 10;
 
 pub struct Policy<'a> {
-    context: &'a Context,
+    context: &'a RefCell<Context>,
 }
 
 impl<'a> Policy<'a> {
-    pub fn new(context: &'a Context) -> Policy<'a> {
+    pub fn new(context: &'a RefCell<Context>) -> Policy<'a> {
         Policy { context }
     }
 
@@ -22,6 +23,6 @@ impl<'a> Policy<'a> {
             Box::new(BubbleSort)
         };
 
-        self.context.set_sort_algorithm(sort_algorithm);
+        self.context.borrow_mut().set_sort_algorithm(sort_algorithm);
     }
 }

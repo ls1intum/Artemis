@@ -27,10 +27,10 @@ Also make sure to declare `std::any::Any` as a supertrait.
 
 2. [task][Context Class](test_context_fields,test_context_methods)
 Create and implement a `Context` struct following the below class diagram.
-Also add a getter for `sort_algorithm` with the signature `sort_algorithm(&self) -> impl Deref<Target = dyn SortStrategy> + '_`.
+Also add a getter for `sort_algorithm` with the signature `sort_algorithm(&self) -> &dyn SortStrategy<NaiveDate>`.
 
 3. [task][Context Policy](test_policy_fields,test_policy_methods)
-Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
+Create and implement a `Policy` struct following the below class diagram with a simple configuration mechanism:
 
     1. [task][Select MergeSort](test_merge_sort_struct,test_use_merge_sort_for_big_list)
     Select `MergeSort` when the List has more than 10 dates.
@@ -43,7 +43,7 @@ Create and implement a `Policy` class following the below class diagram with a s
 @startuml
 
 class Policy {
-  <color:testsColor(test_policy_methods)>+new(&Context)</color>
+  <color:testsColor(test_policy_methods)>+new(&RefCell<Context>)</color>
   <color:testsColor(test_policy_methods)>+configure(&[NaiveDate])</color>
 }
 

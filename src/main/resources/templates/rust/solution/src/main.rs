@@ -1,4 +1,4 @@
-use std::ops::RangeInclusive;
+use std::{cell::RefCell, ops::RangeInclusive};
 use std::time::Duration;
 
 use chrono::{NaiveDate, TimeDelta};
@@ -14,7 +14,7 @@ const LENGTH_MAX: usize = 15;
 /// Add code to demonstrate your implementation here.
 fn main() {
     // Init Context and Policy
-    let context = Context::new();
+    let context = RefCell::new(Context::new());
     let mut policy = Policy::new(&context);
 
     // Run multiple times to simulate different sorting strategies
@@ -23,7 +23,7 @@ fn main() {
         policy.configure(&dates);
         println!("Unsorted Array of course dates = {dates:#?}");
 
-        context.sort(&mut dates);
+        context.borrow().sort(&mut dates);
 
         println!("Sorted Array of course dates = {dates:#?}");
     }

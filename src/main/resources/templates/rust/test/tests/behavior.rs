@@ -46,14 +46,14 @@ fn test_merge_sort() {
 #[require_impl_function_or_fail(context::Context::new)]
 #[require_impl_function_or_fail(policy::Policy::new)]
 fn test_use_merge_sort_for_big_list() {
-    let context = rust_template_exercise::context::Context::new();
+    let context = std::cell::RefCell::new(rust_template_exercise::context::Context::new());
     let mut policy = rust_template_exercise::policy::Policy::new(&context);
 
     let data = [NaiveDate::default(); 20];
     policy.configure(&data);
 
+    let context = context.borrow();
     let sort_strategy = context.sort_algorithm();
-    let sort_strategy = &*sort_strategy;
 
     assert_eq!(
         sort_strategy.type_id(),
@@ -70,14 +70,14 @@ fn test_use_merge_sort_for_big_list() {
 #[require_impl_function_or_fail(context::Context::new)]
 #[require_impl_function_or_fail(policy::Policy::new)]
 fn test_use_bubble_sort_for_small_list() {
-    let context = rust_template_exercise::context::Context::new();
+    let context = std::cell::RefCell::new(rust_template_exercise::context::Context::new());
     let mut policy = rust_template_exercise::policy::Policy::new(&context);
 
     let data = [NaiveDate::default(); 10];
     policy.configure(&data);
 
+    let context = context.borrow();
     let sort_strategy = context.sort_algorithm();
-    let sort_strategy = &*sort_strategy;
 
     assert_eq!(
         sort_strategy.type_id(),
