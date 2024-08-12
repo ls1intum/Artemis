@@ -41,7 +41,7 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th class="col-1">#</th>
+                    <th class="col-md-auto">#</th>
                     <th class="col">
                         <span jhiTranslate="artemisApp.competency.title"></span>
                     </th>
@@ -63,12 +63,14 @@
             <tbody>
                 @for (competency of courseCompetencies(); track competency.id) {
                     <tr>
-                        <td class="col-1">{{ competency.id }}</td>
+                        <td class="col-md-auto">{{ competency.id }}</td>
                         <td class="col">
-                            <a [routerLink]="['/courses', courseId(), 'competencies', competency.id]">
+                            <div class="d-flex align-items-center">
                                 <fa-icon [icon]="getIcon(competency.taxonomy)" />
-                                <span>{{ competency.title }}</span>
-                            </a>
+                                <a class="ms-2" [routerLink]="['/courses', courseId(), 'competencies', competency.id]">
+                                    {{ competency.title }}
+                                </a>
+                            </div>
                         </td>
                         <td class="col markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></td>
                         <td class="col">{{ competency.softDueDate | artemisDate }}</td>
