@@ -34,7 +34,7 @@
                     </button>
                     <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
                         <a (click)="useHttpsUrlWithoutToken()" class="dropdown-item {{ !useToken && !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
-                        @if (useVersionControlAccessToken) {
+                        @if (useVersionControlAccessToken && participations) {
                             <a (click)="useHttpsUrlWithToken()" class="dropdown-item {{ useToken && !useSsh ? 'active' : '' }}" id="useHTTPSWithTokenButton">Token</a>
                         }
                         <a (click)="useSshUrl()" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
