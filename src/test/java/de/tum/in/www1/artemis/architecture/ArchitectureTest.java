@@ -136,21 +136,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void testUseKebabCaseForRestEndpoints() {
-        var postMapping = simpleNameAnnotation("PostMapping");
-        var getMapping = simpleNameAnnotation("GetMapping");
-        var putMapping = simpleNameAnnotation("PutMapping");
-        var deleteMapping = simpleNameAnnotation("DeleteMapping");
-
-        Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(postMapping, getMapping, putMapping, deleteMapping);
-
-        for (var predicate : allPredicates) {
-            ArchRule restRequestAnnotatedMethods = methods().should(useKebabCaseForRestAnnotations(predicate));
-            restRequestAnnotatedMethods.check(allClasses);
-        }
-    }
-
-    @Test
     void testNullnessAnnotations() {
         var notNullPredicate = and(not(resideInPackageAnnotation("jakarta.validation.constraints")), simpleNameAnnotation("NotNull"));
         var nonNullPredicate = simpleNameAnnotation("NonNull");

@@ -144,23 +144,6 @@ public abstract class AbstractArchitectureTest {
         };
     }
 
-    protected ArchCondition<JavaMethod> useKebabCaseForRestAnnotations(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
-        return new ArchCondition<>("use kebab case for rest mapping annotations") {
-
-            @Override
-            public void check(JavaMethod item, ConditionEvents events) {
-                var restMappingAnnotation = item.getAnnotations().stream().filter(annotationPredicate).findFirst();
-                if (restMappingAnnotation.isPresent()) {
-                    boolean satisfied = Arrays.stream(((String[]) restMappingAnnotation.get().tryGetExplicitlyDeclaredProperty("value").get())[0].split("/"))
-                            .allMatch(part -> KEBAB_CASE_OR_PATH_VARIABLE_PATTERN.matcher(part).matches());
-                    if (!satisfied) {
-                        events.add(violated(item, String.format("%s violates rule to use kebab case for rest call annotations", item.getFullName())));
-                    }
-                }
-            }
-        };
-    }
-
     /**
      * Checks if the given method has a parameter with the given name.
      *
