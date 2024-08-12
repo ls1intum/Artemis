@@ -15,7 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
+import java.util.UUID;
 
 import jakarta.annotation.Nullable;
 
@@ -67,10 +67,6 @@ public class BuildJobExecutionService {
     private final BuildLogsMap buildLogsMap;
 
     private static final int MAX_CLONE_RETRIES = 3;
-
-    private static final String CHARACTERS = "0123456789abcdef";
-
-    private static final int HASH_LENGTH = 40;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -469,9 +465,11 @@ public class BuildJobExecutionService {
         while (attempt < MAX_CLONE_RETRIES) {
             try {
                 attempt++;
-                String commitHashForPath = commitHash != null ? commitHash : generateCommitHash();
+                // Generate a random folder name for the repository parent folder if the commit hash is null. This is to avoid conflicts when cloning multiple repositories.
+                String repositoryParentFolder = commitHash != null ? commitHash : UUID.randomUUID().toString();
                 // Clone the assignment repository into a temporary directory
-                repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHashForPath, repositoryUri.folderNameForRepositoryUri()));
+                repository = buildJobGitService.cloneRepository(repositoryUri,
+                        Path.of(CHECKED_OUT_REPOS_TEMP_DIR, repositoryParentFolder, repositoryUri.folderNameForRepositoryUri()));
 
                 break;
             }
@@ -538,17 +536,5 @@ public class BuildJobExecutionService {
 
     private Path getRepositoryParentFolderPath(Path repoPath) {
         return repoPath.getParent().getParent();
-    }
-
-    private static String generateCommitHash() {
-        Random random = new Random();
-        StringBuilder hash = new StringBuilder(HASH_LENGTH);
-
-        for (int i = 0; i < HASH_LENGTH; i++) {
-            int index = random.nextInt(CHARACTERS.length());
-            hash.append(CHARACTERS.charAt(index));
-        }
-
-        return hash.toString();
     }
 }
