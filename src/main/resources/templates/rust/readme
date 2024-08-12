@@ -27,7 +27,7 @@ Also make sure to declare `std::any::Any` as a supertrait.
 
 2. [task][Context Class](test_context_fields,test_context_methods)
 Create and implement a `Context` struct following the below class diagram.
-Also add a getter for `sort_algorithm` with the signature `sort_algorithm(&self) -> impl Deref<Target = dyn SortStrategy<NaiveDate>> + '_`.
+Also add a getter for `sort_algorithm` with the signature `sort_algorithm(&self) -> impl Deref<Target = dyn SortStrategy> + '_`.
 
 3. [task][Context Policy](test_policy_fields,test_policy_methods)
 Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
