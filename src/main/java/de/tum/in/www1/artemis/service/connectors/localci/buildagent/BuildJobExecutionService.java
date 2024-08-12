@@ -296,7 +296,7 @@ public class BuildJobExecutionService {
             }
 
             try {
-                FileUtils.deleteDirectory(Path.of(CHECKED_OUT_REPOS_TEMP_DIR, assignmentRepoCommitHash).toFile());
+                deleteRepoParentFolder(assignmentRepoCommitHash, assignmentRepositoryPath, testRepoCommitHash, testsRepositoryPath);
             }
             catch (IOException e) {
                 msg = "Could not delete " + CHECKED_OUT_REPOS_TEMP_DIR + " directory";
@@ -526,6 +526,18 @@ public class BuildJobExecutionService {
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             throw new LocalCIException(msg, e);
         }
+    }
+
+    private void deleteRepoParentFolder(String assignmentRepoCommitHash, Path assignmentRepositoryPath, String testRepoCommitHash, Path testsRepositoryPath) throws IOException {
+        Path assignmentRepo = assignmentRepoCommitHash != null ? Path.of(CHECKED_OUT_REPOS_TEMP_DIR, assignmentRepoCommitHash)
+                : getRepositoryParentFolderPath(assignmentRepositoryPath);
+        FileUtils.deleteDirectory(assignmentRepo.toFile());
+        Path testRepo = testRepoCommitHash != null ? Path.of(CHECKED_OUT_REPOS_TEMP_DIR, testRepoCommitHash) : getRepositoryParentFolderPath(testsRepositoryPath);
+        FileUtils.deleteDirectory(testRepo.toFile());
+    }
+
+    private Path getRepositoryParentFolderPath(Path repoPath) {
+        return repoPath.getParent().getParent();
     }
 
     private static String generateCommitHash() {
