@@ -63,16 +63,18 @@
                 },
                 "detailedSteps": {
                     "generalInfoStepTitle": "Allgemein",
-                    "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
+                    "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden.",
                     "difficultyStepTitle": "Modus",
-                    "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
+                    "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe.",
                     "buildDetailsStepTitle": "Build Details",
+                    "buildDetailsStepMessage": "Konfiguration der Repositories für die Aufgabe.",
+                    "buildDetailsStepMessageLocalCI": "Konfiguration der Repositories und Checkout Directories für die Aufgabe.",
                     "languageStepTitle": "Sprache",
-                    "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
+                    "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung.",
                     "problemStepTitle": "Aufgabe",
-                    "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
+                    "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden.",
                     "gradingStepTitle": "Bewertung",
-                    "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt"
+                    "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt."
                 },
                 "gradingLabels": {
                     "points": "Es gibt insgesamt maximal {maxPoints} Punkte bei dieser {exerciseType} zu erreichen.",

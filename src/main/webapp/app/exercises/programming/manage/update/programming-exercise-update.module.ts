@@ -33,6 +33,7 @@ import { FormsModule } from 'app/forms/forms.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
+import { ProgrammingExerciseBuildDetailsComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-build-details.component';
 
 @NgModule({
     imports: [
@@ -59,6 +60,7 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
         ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         MonacoEditorModule,
+        ProgrammingExerciseBuildDetailsComponent,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,
