@@ -28,7 +28,7 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
 
     onTheiaImageChange(theiaImage: string) {
         if (this.programmingExercise.buildConfig) {
-            this.programmingExercise.buildConfig!.theiaImage = theiaImage;
+            this.programmingExercise.buildConfig.theiaImage = theiaImage;
         }
     }
 
@@ -42,7 +42,7 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
      */
     resetImageSelection() {
         if (this.programmingExercise.buildConfig) {
-            this.programmingExercise.buildConfig!.theiaImage = undefined;
+            this.programmingExercise.buildConfig.theiaImage = undefined;
         }
     }
 
@@ -69,8 +69,8 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
                 this.theiaImages = images;
 
                 // Set the first image as default if none is selected
-                if (this.programmingExercise && this.programmingExercise.buildConfig && !this.programmingExercise.buildConfig!.theiaImage && Object.values(images).length > 0) {
-                    this.programmingExercise.buildConfig!.theiaImage = Object.values(images).first() as string;
+                if (this.programmingExercise && this.programmingExercise.buildConfig && !this.programmingExercise.buildConfig.theiaImage && Object.values(images).length > 0) {
+                    this.programmingExercise.buildConfig.theiaImage = Object.values(images).first() as string;
                 }
             },
             error: () => {
