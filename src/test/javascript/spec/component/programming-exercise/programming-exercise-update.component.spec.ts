@@ -804,7 +804,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('find validation errors for invalid online IDE image', () => {
             comp.programmingExercise.allowOnlineIde = true;
-            comp.programmingExercise.theiaImage = undefined;
+            comp.programmingExercise.buildConfig!.theiaImage = undefined;
             expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.programmingExercise.theiaImage.alert',
                 translateValues: {},

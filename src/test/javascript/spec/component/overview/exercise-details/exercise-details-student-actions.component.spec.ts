@@ -680,7 +680,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         // Expand the programmingExercise by given properties
         comp.exercise = { ...exercise, ...programmingExercise } as ProgrammingExercise;
-        comp.exercise.buildConfig = { ...comp.exercise.buildConfig, ...buildConfig };
+        comp.programmingExercise!.buildConfig = { ...comp.programmingExercise!.buildConfig, ...buildConfig };
 
         fixture.detectChanges();
 
