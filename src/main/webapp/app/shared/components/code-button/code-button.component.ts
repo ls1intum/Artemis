@@ -37,6 +37,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     exercise?: ProgrammingExercise;
 
     useSsh = false;
+    useToken = false;
     setupSshKeysUrl?: string;
     sshEnabled = false;
     sshTemplateUrl?: string;
@@ -97,11 +98,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
     }
 
-    public setUseSSH(useSsh: boolean) {
-        this.useSsh = useSsh;
-        this.localStorage.store('useSsh', this.useSsh);
-    }
-
     ngOnChanges() {
         if (this.participations?.length) {
             const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
@@ -114,6 +110,24 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
         this.loadVcsAccessTokens();
+    }
+
+    public useSshUrl() {
+        this.useSsh = true;
+        this.useToken = false;
+        this.localStorage.store('useSsh', this.useSsh);
+    }
+
+    public useHttpsUrlWithToken() {
+        this.useSsh = false;
+        this.useToken = true;
+        this.localStorage.store('useSsh', this.useSsh);
+    }
+
+    public useHttpsUrlWithoutToken() {
+        this.useSsh = false;
+        this.useToken = false;
+        this.localStorage.store('useSsh', this.useSsh);
     }
 
     private getRepositoryUri() {
@@ -191,7 +205,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
     private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
-        const includeToken = this.useVersionControlAccessToken && this.user.vcsAccessToken;
+        const includeToken = this.useVersionControlAccessToken && this.user.vcsAccessToken && this.useToken;
         const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
         const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
