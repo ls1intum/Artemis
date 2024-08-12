@@ -98,18 +98,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                     },
                 });
         }
-        this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
-        this.testwiseCoverageEnabled = this.programmingExercise.buildConfig?.testwiseCoverageEnabled;
-        this.aeolusService
-            .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-            .subscribe({
-                next: (file) => {
-                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
-                },
-                error: () => {
-                    this.programmingExercise.buildConfig!.windfile = undefined;
-                },
-            });
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
         if (!this.programmingExercise.buildConfig?.windfile) {
             this.resetCustomBuildPlan();
