@@ -208,6 +208,7 @@ describe('CodeButtonComponent', () => {
         component.useSsh = true;
         component.isTeamParticipation = false;
         component.useVersionControlAccessToken = true;
+        component.useToken = true;
         component.ngOnInit();
         component.ngOnChanges();
 
@@ -256,6 +257,7 @@ describe('CodeButtonComponent', () => {
         participation.repositoryUri = `https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.participations = [participation];
         component.useSsh = false;
+        component.useToken = true;
         component.isTeamParticipation = false;
         component.useVersionControlAccessToken = true;
         component.ngOnInit();
@@ -285,6 +287,7 @@ describe('CodeButtonComponent', () => {
         participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.participations = [participation];
         component.useSsh = false;
+        component.useToken = true;
         component.isTeamParticipation = false;
         component.useVersionControlAccessToken = true;
         component.ngOnInit();
@@ -355,6 +358,12 @@ describe('CodeButtonComponent', () => {
         tick();
         expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
         expect(component.useSsh).toBeFalsy();
+
+        fixture.debugElement.query(By.css('#useHTTPSWithTokenButton')).nativeElement.click();
+        tick();
+        expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
+        expect(component.useSsh).toBeFalsy();
+        expect(component.useToken).toBeTruthy();
 
         localStorageUseSshObserveStubSubject.next(true);
         tick();
