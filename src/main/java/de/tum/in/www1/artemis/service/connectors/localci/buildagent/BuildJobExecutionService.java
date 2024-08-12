@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 import jakarta.annotation.Nullable;
 
@@ -66,6 +67,10 @@ public class BuildJobExecutionService {
     private final BuildLogsMap buildLogsMap;
 
     private static final int MAX_CLONE_RETRIES = 3;
+
+    private static final String CHARACTERS = "0123456789abcdef";
+
+    private static final int HASH_LENGTH = 40;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -278,14 +283,16 @@ public class BuildJobExecutionService {
             buildJobContainerService.stopContainer(containerName);
 
             // Delete the cloned repositories
-            deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash, buildJob.id());
-            deleteCloneRepo(testRepositoryUri, assignmentRepoCommitHash, buildJob.id());
+            deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash, buildJob.id(), assignmentRepositoryPath);
+            deleteCloneRepo(testRepositoryUri, assignmentRepoCommitHash, buildJob.id(), testsRepositoryPath);
             // do not try to delete the temp repository if it does not exist or is the same as the assignment reposity
             if (solutionRepositoryUri != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {
-                deleteCloneRepo(solutionRepositoryUri, assignmentRepoCommitHash, buildJob.id());
+                deleteCloneRepo(solutionRepositoryUri, assignmentRepoCommitHash, buildJob.id(), solutionRepositoryPath);
             }
+            int index = 0;
             for (VcsRepositoryUri auxiliaryRepositoryUri : auxiliaryRepositoriesUris) {
-                deleteCloneRepo(auxiliaryRepositoryUri, assignmentRepoCommitHash, buildJob.id());
+                deleteCloneRepo(auxiliaryRepositoryUri, assignmentRepoCommitHash, buildJob.id(), auxiliaryRepositoriesPaths[index]);
+                index++;
             }
 
             try {
@@ -462,9 +469,9 @@ public class BuildJobExecutionService {
         while (attempt < MAX_CLONE_RETRIES) {
             try {
                 attempt++;
+                String commitHashForPath = commitHash != null ? commitHash : generateCommitHash();
                 // Clone the assignment repository into a temporary directory
-                // TODO: use a random value if commitHash is null
-                repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()));
+                repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHashForPath, repositoryUri.folderNameForRepositoryUri()));
 
                 break;
             }
@@ -497,12 +504,11 @@ public class BuildJobExecutionService {
         }
     }
 
-    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId) {
+    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repoPath) {
         String msg;
         try {
-            // TODO: handle the case when commitHash is null
-            Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(
-                    Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()), repositoryUri, defaultBranch);
+            Path repositoryPath = commitHash != null ? Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()) : repoPath;
+            Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(repositoryPath, repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository with commit hash " + commitHash + " not found";
                 buildLogsMap.appendBuildLogEntry(buildJobId, msg);
@@ -520,5 +526,17 @@ public class BuildJobExecutionService {
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             throw new LocalCIException(msg, e);
         }
+    }
+
+    private static String generateCommitHash() {
+        Random random = new Random();
+        StringBuilder hash = new StringBuilder(HASH_LENGTH);
+
+        for (int i = 0; i < HASH_LENGTH; i++) {
+            int index = random.nextInt(CHARACTERS.length());
+            hash.append(CHARACTERS.charAt(index));
+        }
+
+        return hash.toString();
     }
 }
