@@ -28,6 +28,7 @@ test.describe('Programming exercise participation', () => {
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
     });
 
     const testCases = [
