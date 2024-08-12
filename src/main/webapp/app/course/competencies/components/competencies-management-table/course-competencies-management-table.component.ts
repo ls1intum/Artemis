@@ -20,6 +20,8 @@ import { CourseCompetencyType, getIcon } from 'app/entities/competency.model';
     styleUrl: './course-competencies-management-table.component.scss',
 })
 export class CourseCompetenciesManagementTableComponent extends ImportCourseCompetenciesDirective {
+    protected readonly getIcon = getIcon;
+
     protected readonly faRobot = faRobot;
     protected readonly faTrash = faTrash;
     protected readonly faEdit = faEdit;
@@ -53,6 +55,4 @@ export class CourseCompetenciesManagementTableComponent extends ImportCourseComp
             this.dialogErrorSource.emit(error.message);
         }
     }
-
-    protected readonly getIcon = getIcon;
 }
