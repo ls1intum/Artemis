@@ -188,7 +188,7 @@ public class UserResource {
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
-    @PutMapping("users/sshpublickey")
+    @PutMapping("users/ssh-publickey")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> addSshPublicKey(@RequestBody String sshPublicKey) throws GeneralSecurityException, IOException {
 
@@ -215,7 +215,7 @@ public class UserResource {
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
-    @DeleteMapping("users/sshpublickey")
+    @DeleteMapping("users/ssh-public-key")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteSshPublicKey() {
         User user = userRepository.getUser();
@@ -231,7 +231,7 @@ public class UserResource {
      *
      * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
-    @PutMapping("users/vcsAccessToken")
+    @PutMapping("users/vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<UserDTO> createVcsAccessToken() {
         User user = userRepository.getUser();
@@ -253,7 +253,7 @@ public class UserResource {
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
-    @DeleteMapping("users/vcsAccessToken")
+    @DeleteMapping("users/vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteVcsAccessToken() {
         User user = userRepository.getUser();

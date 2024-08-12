@@ -337,7 +337,7 @@ export class AccountService implements IAccountService {
         if (this.userIdentity) {
             this.userIdentity.sshPublicKey = sshPublicKey;
         }
-        return this.http.put<void>('api/users/sshpublickey', sshPublicKey);
+        return this.http.put<void>('api/users/ssh-public-key', sshPublicKey);
     }
 
     /**
@@ -347,20 +347,20 @@ export class AccountService implements IAccountService {
         if (this.userIdentity) {
             this.userIdentity.sshPublicKey = undefined;
         }
-        return this.http.delete<void>('api/users/sshpublickey');
+        return this.http.delete<void>('api/users/ssh-public-key');
     }
 
     /**
      * Sends a request to the server to delete the user's current vcsAccessToken
      */
     deleteUserVcsAccessToken(): Observable<void> {
-        return this.http.delete<void>('api/users/vcsAccessToken');
+        return this.http.delete<void>('api/users/vcs-access-token');
     }
 
     /**
      * Sends a request to the server to delete the user's current vcsAccessToken
      */
     addNewVcsAccessToken(): Observable<EntityResponseType> {
-        return this.http.put<User>('api/users/vcsAccessToken', null, { observe: 'response' });
+        return this.http.put<User>('api/users/vcs-access-token', null, { observe: 'response' });
     }
 }
