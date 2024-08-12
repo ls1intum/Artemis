@@ -7,19 +7,20 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.dto.IrisChatWebsocketDTO;
 
 @Service
 @Profile("iris")
-public class IrisChatWebsocketService extends IrisWebsocketService {
+public class IrisChatWebsocketService {
+
+    private final IrisWebsocketService websocketService;
 
     private final IrisRateLimitService rateLimitService;
 
-    public IrisChatWebsocketService(WebsocketMessagingService websocketMessagingService, IrisRateLimitService rateLimitService) {
-        super(websocketMessagingService);
+    public IrisChatWebsocketService(IrisWebsocketService websocketService, IrisRateLimitService rateLimitService) {
+        this.websocketService = websocketService;
         this.rateLimitService = rateLimitService;
     }
 
@@ -39,7 +40,7 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null);
-        super.send(user.getLogin(), topic, payload);
+        websocketService.send(user.getLogin(), topic, payload);
     }
 
     /**
@@ -64,6 +65,6 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, suggestions);
-        super.send(user.getLogin(), topic, payload);
+        websocketService.send(user.getLogin(), topic, payload);
     }
 }

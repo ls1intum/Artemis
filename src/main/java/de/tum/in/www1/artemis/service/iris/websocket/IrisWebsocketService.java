@@ -4,13 +4,17 @@ import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 /**
  * A service to send a message over the websocket to a specific user
  */
-public abstract class IrisWebsocketService {
+@Service
+@Profile("iris")
+public class IrisWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisWebsocketService.class);
 

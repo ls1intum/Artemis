@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CompetencyExtractionJob;
-import de.tum.in.www1.artemis.service.iris.websocket.IrisCompetencyWebsocketService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisWebsocketService;
 
 /**
  * Service to handle the Competency generation subsytem of Iris.
@@ -22,11 +22,11 @@ public class IrisCompetencyGenerationService {
 
     private final PyrisPipelineService pyrisPipelineService;
 
-    private final IrisCompetencyWebsocketService websocketService;
+    private final IrisWebsocketService websocketService;
 
     private final PyrisJobService pyrisJobService;
 
-    public IrisCompetencyGenerationService(PyrisPipelineService pyrisPipelineService, IrisCompetencyWebsocketService websocketService, PyrisJobService pyrisJobService) {
+    public IrisCompetencyGenerationService(PyrisPipelineService pyrisPipelineService, IrisWebsocketService websocketService, PyrisJobService pyrisJobService) {
         this.pyrisPipelineService = pyrisPipelineService;
         this.websocketService = websocketService;
         this.pyrisJobService = pyrisJobService;
@@ -46,7 +46,7 @@ public class IrisCompetencyGenerationService {
                 "default",
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getLogin())),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, CompetencyTaxonomy.values(), 10),
-                stages -> websocketService.sendCompetencies(user.getLogin(), course.getId(), new PyrisCompetencyStatusUpdateDTO(stages, null))
+                stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisCompetencyStatusUpdateDTO(stages, null))
         );
         // @formatter:on
     }
@@ -59,7 +59,11 @@ public class IrisCompetencyGenerationService {
      * @param statusUpdate the status update containing the new competency recommendations
      */
     public void handleStatusUpdate(String userLogin, long courseId, PyrisCompetencyStatusUpdateDTO statusUpdate) {
-        websocketService.sendCompetencies(userLogin, courseId, statusUpdate);
+        websocketService.send(userLogin, websocketTopic(courseId), statusUpdate);
+    }
+
+    private static String websocketTopic(long courseId) {
+        return "competencies/" + courseId;
     }
 
 }
