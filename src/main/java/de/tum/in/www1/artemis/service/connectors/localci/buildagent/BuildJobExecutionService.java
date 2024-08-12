@@ -504,11 +504,11 @@ public class BuildJobExecutionService {
         }
     }
 
-    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repoPath) {
+    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repositoryPath) {
         String msg;
         try {
-            Path repositoryPath = commitHash != null ? Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()) : repoPath;
-            Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(repositoryPath, repositoryUri, defaultBranch);
+            Path repositoryPathForDeletion = commitHash != null ? Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;
+            Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(repositoryPathForDeletion, repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository with commit hash " + commitHash + " not found";
                 buildLogsMap.appendBuildLogEntry(buildJobId, msg);
