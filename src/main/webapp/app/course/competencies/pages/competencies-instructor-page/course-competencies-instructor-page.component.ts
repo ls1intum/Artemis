@@ -10,11 +10,12 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseCompetenciesRelationGraphComponent } from 'app/course/competencies/components/course-competencies-relation-graph/course-competencies-relation-graph.component';
 
 @Component({
     selector: 'jhi-course-competencies-instructor-page',
     standalone: true,
-    imports: [CourseCompetenciesManagementTableComponent, ArtemisSharedCommonModule],
+    imports: [CourseCompetenciesManagementTableComponent, ArtemisSharedCommonModule, CourseCompetenciesRelationGraphComponent],
     templateUrl: './course-competencies-instructor-page.component.html',
     styleUrl: './course-competencies-instructor-page.component.scss',
 })

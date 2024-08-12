@@ -7,6 +7,9 @@
         </div>
     } @else {
         <div class="p-2">
+            <jhi-course-competencies-relation-graph [courseCompetencies]="courseCompetencies()" />
+        </div>
+        <div class="p-2">
             <jhi-course-competencies-management-table
                 [courseId]="courseId()"
                 [(courseCompetencies)]="competencies"
