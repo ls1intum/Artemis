@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
@@ -63,6 +64,8 @@ public class BuildJobExecutionService {
     private final BuildAgentDockerService buildAgentDockerService;
 
     private final BuildLogsMap buildLogsMap;
+
+    private static final int MAX_CLONE_RETRIES = 3;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -453,21 +456,45 @@ public class BuildJobExecutionService {
     }
 
     private Path cloneRepository(VcsRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
+        int attempt = 0;
+        Repository repository = null;
+
+        // Ignore warning about always true condition, as the loop will break if the clone is successful
+        while (attempt < MAX_CLONE_RETRIES) {
+            try {
+                attempt++;
+                // Clone the assignment repository into a temporary directory
+                // TODO: use a random value if commitHash is null
+                repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()));
+
+                // Break out of the loop if clone is successful
+                break;
+            }
+            catch (GitAPIException | IOException | URISyntaxException e) {
+                if (attempt >= MAX_CLONE_RETRIES) {
+                    String msg = "Error while cloning repository " + repositoryUri.repositorySlug() + " with uri " + repositoryUri + " after " + MAX_CLONE_RETRIES + " attempts";
+                    buildLogsMap.appendBuildLogEntry(buildJobId, msg);
+                    throw new LocalCIException(msg, e);
+                }
+                // Log the retry attempt
+                buildLogsMap.appendBuildLogEntry(buildJobId,
+                        "Attempt " + attempt + " to clone repository " + repositoryUri.repositorySlug() + " failed due to " + e.getMessage() + ". Retrying...");
+            }
+        }
+
         try {
-            // Clone the assignment repository into a temporary directory
-            // TODO: use a random value if commitHash is null
-            Repository repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()));
             if (checkout && commitHash != null) {
                 // Checkout the commit hash
                 buildJobGitService.checkoutRepositoryAtCommit(repository, commitHash);
             }
+
             // if repository is not closed, it causes weird IO issues when trying to delete the repository later on
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
             repository.closeBeforeDelete();
             return repository.getLocalPath();
         }
-        catch (GitAPIException | IOException | URISyntaxException e) {
-            String msg = "Error while cloning repository " + repositoryUri.repositorySlug() + " with uri " + repositoryUri;
+        catch (GitException e) {
+            String msg = "Error while checking out commit " + commitHash + " in repository " + repositoryUri.repositorySlug();
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             throw new LocalCIException(msg, e);
         }
