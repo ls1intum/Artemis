@@ -6,9 +6,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -386,11 +387,12 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         createCall(course.getId(), newCompetency, HttpStatus.FORBIDDEN);
     }
 
-    abstract CourseCompetency importCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception;
+    abstract CourseCompetency importCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception;
 
     // Test
     void shouldImportCompetency() throws Exception {
-        CourseCompetency importedCompetency = importCall(course2.getId(), competency.getId(), HttpStatus.CREATED);
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(competency.getId()), Optional.empty(), false, false, false, Optional.empty(), false);
+        CourseCompetency importedCompetency = importCall(course2.getId(), importOptions, HttpStatus.CREATED);
 
         assertThat(courseCompetencyRepository.findById(importedCompetency.getId())).isNotEmpty();
         assertThat(importedCompetency.getTitle()).isEqualTo(competency.getTitle());
@@ -405,7 +407,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void shouldReturnForbiddenForInstructorOfOtherCourseForImport() throws Exception {
-        importCall(course.getId(), 42, HttpStatus.FORBIDDEN);
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(42L), Optional.empty(), false, false, false, Optional.empty(), false);
+
+        importCall(course.getId(), importOptions, HttpStatus.FORBIDDEN);
     }
 
     abstract List<? extends CourseCompetency> createBulkCall(long courseId, List<? extends CourseCompetency> competencies, HttpStatus expectedStatus) throws Exception;
@@ -451,13 +455,14 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         createBulkCall(course.getId(), List.of(), HttpStatus.FORBIDDEN);
     }
 
-    abstract List<CompetencyWithTailRelationDTO> importAllCall(long courseId, long sourceCourseId, boolean importRelations, HttpStatus expectedStatus) throws Exception;
+    abstract List<CompetencyWithTailRelationDTO> importAllCall(long sourceCourseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception;
 
     // Test
     void shouldImportAllCompetencies(Function<Course, CourseCompetency> createCourseCompetencyForCourse) throws Exception {
         var course3 = courseUtilService.createCourse();
 
-        var competencyDTOList = importAllCall(course.getId(), course3.getId(), false, HttpStatus.CREATED);
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course3.getId()), false, false, false, Optional.empty(), false);
+        var competencyDTOList = importAllCall(course.getId(), importOptions, HttpStatus.CREATED);
 
         assertThat(competencyDTOList).isEmpty();
 
@@ -465,7 +470,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         CourseCompetency tail = createCourseCompetencyForCourse.apply(course3);
         createRelation(tail, head, RelationType.ASSUMES);
 
-        competencyDTOList = importAllCall(course.getId(), course3.getId(), true, HttpStatus.CREATED);
+        importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course3.getId()), true, false, false, Optional.empty(), false);
+        competencyDTOList = importAllCall(course.getId(), importOptions, HttpStatus.CREATED);
 
         assertThat(competencyDTOList).hasSize(2);
         // assert that only one of the DTOs has the relation connected
@@ -476,7 +482,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
             assertThat(competencyDTOList.get(1).tailRelations()).isNull();
         }
 
-        competencyDTOList = importAllCall(course.getId(), course3.getId(), false, HttpStatus.CREATED);
+        importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course3.getId()), false, false, false, Optional.empty(), false);
+        competencyDTOList = importAllCall(course.getId(), importOptions, HttpStatus.CREATED);
         assertThat(competencyDTOList).hasSize(2);
         // relations should be empty when not importing them
         assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
@@ -485,12 +492,14 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void shouldReturnForbiddenForInstructorNotInCourse() throws Exception {
-        importAllCall(course.getId(), course2.getId(), false, HttpStatus.FORBIDDEN);
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course2.getId()), false, false, false, Optional.empty(), false);
+        importAllCall(course.getId(), importOptions, HttpStatus.FORBIDDEN);
     }
 
     // Test
     void shouldReturnBadRequestForImportFromSameCourse() throws Exception {
-        importAllCall(course.getId(), course.getId(), false, HttpStatus.BAD_REQUEST);
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course.getId()), false, false, false, Optional.empty(), false);
+        importAllCall(course.getId(), importOptions, HttpStatus.BAD_REQUEST);
     }
 
     abstract List<CompetencyImportResponseDTO> importStandardizedCall(long courseId, List<Long> idList, HttpStatus expectedStatus) throws Exception;
@@ -526,24 +535,23 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         importStandardizedCall(course.getId(), idList, HttpStatus.NOT_FOUND);
     }
 
-    abstract List<CompetencyWithTailRelationDTO> importBulkCall(long courseId, Set<Long> competencyIds, boolean importRelations, HttpStatus expectedStatus) throws Exception;
+    abstract List<CompetencyWithTailRelationDTO> importBulkCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception;
 
     // Test
     void shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport() throws Exception {
-        importBulkCall(course.getId(), Set.of(), false, HttpStatus.FORBIDDEN);
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.empty(), false, false, false, Optional.empty(), false);
+        importBulkCall(course.getId(), importOptions, HttpStatus.FORBIDDEN);
     }
 
     // Test
     void shouldImportCompetencies(Function<Course, CourseCompetency> createCourseCompetencyForCourse) throws Exception {
-        var competencyDTOList = importBulkCall(course.getId(), Collections.emptySet(), false, HttpStatus.CREATED);
-        assertThat(competencyDTOList).isEmpty();
-
         CourseCompetency head = createCourseCompetencyForCourse.apply(course2);
         CourseCompetency tail = createCourseCompetencyForCourse.apply(course2);
         createRelation(tail, head, RelationType.ASSUMES);
         Set<Long> competencyIds = Set.of(head.getId(), tail.getId());
 
-        competencyDTOList = importBulkCall(course.getId(), competencyIds, true, HttpStatus.CREATED);
+        var importOptions = new CompetencyImportOptionsDTO(competencyIds, Optional.empty(), true, false, false, Optional.empty(), false);
+        var competencyDTOList = importBulkCall(course.getId(), importOptions, HttpStatus.CREATED);
 
         assertThat(competencyDTOList).hasSize(2);
         // competency 2 should be the tail of one relation
@@ -556,7 +564,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
             assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
         }
 
-        competencyDTOList = importBulkCall(course.getId(), competencyIds, false, HttpStatus.CREATED);
+        importOptions = new CompetencyImportOptionsDTO(competencyIds, Optional.empty(), false, false, false, Optional.empty(), false);
+        competencyDTOList = importBulkCall(course.getId(), importOptions, HttpStatus.CREATED);
         assertThat(competencyDTOList).hasSize(2);
         // relations should be empty when not importing them
         assertThat(competencyDTOList.getFirst().tailRelations()).isNull();

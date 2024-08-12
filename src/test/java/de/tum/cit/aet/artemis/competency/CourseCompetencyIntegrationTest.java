@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -70,6 +71,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 
@@ -498,10 +500,9 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Nested
     class ImportAll {
 
-        List<CompetencyWithTailRelationDTO> importAllCall(long courseId, long sourceCourseId, boolean importRelations, HttpStatus expectedStatus) throws Exception {
-            return request.postListWithResponseBody(
-                    "/api/courses/" + courseId + "/course-competencies/import-all/" + sourceCourseId + (importRelations ? "?importRelations=true" : ""), null,
-                    CompetencyWithTailRelationDTO.class, expectedStatus);
+        List<CompetencyWithTailRelationDTO> importAllCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
+            return request.postListWithResponseBody("/api/courses/" + courseId + "/course-competencies/import-all", importOptions, CompetencyWithTailRelationDTO.class,
+                    expectedStatus);
         }
 
         @Test
@@ -509,7 +510,8 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
         void shouldImportAllCompetencies() throws Exception {
             var course3 = courseUtilService.createCourse();
 
-            var competencyDTOList = importAllCall(course.getId(), course3.getId(), false, HttpStatus.CREATED);
+            CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course3.getId()), false, false, false, Optional.empty(), false);
+            var competencyDTOList = importAllCall(course.getId(), importOptions, HttpStatus.CREATED);
 
             assertThat(competencyDTOList).isEmpty();
 
@@ -517,7 +519,8 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
             CourseCompetency tail = prerequisiteUtilService.createPrerequisite(course3);
             createRelation(tail, head, RelationType.ASSUMES);
 
-            competencyDTOList = importAllCall(course.getId(), course3.getId(), true, HttpStatus.CREATED);
+            importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course3.getId()), true, false, false, Optional.empty(), false);
+            competencyDTOList = importAllCall(course.getId(), importOptions, HttpStatus.CREATED);
 
             assertThat(competencyDTOList).hasSize(2);
             // assert that only one of the DTOs has the relation connected
@@ -528,7 +531,8 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 assertThat(competencyDTOList.get(1).tailRelations()).isNull();
             }
 
-            competencyDTOList = importAllCall(course.getId(), course3.getId(), false, HttpStatus.CREATED);
+            importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course3.getId()), false, false, false, Optional.empty(), false);
+            competencyDTOList = importAllCall(course.getId(), importOptions, HttpStatus.CREATED);
             assertThat(competencyDTOList).hasSize(2);
             // relations should be empty when not importing them
             assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
@@ -538,7 +542,8 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnBadRequestForImportFromSameCourse() throws Exception {
-            importAllCall(course.getId(), course.getId(), false, HttpStatus.BAD_REQUEST);
+            CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course.getId()), false, false, false, Optional.empty(), false);
+            importAllCall(course.getId(), importOptions, HttpStatus.BAD_REQUEST);
         }
     }
 
