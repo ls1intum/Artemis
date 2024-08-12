@@ -103,6 +103,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             if (programmingLanguageToIde.size !== 0) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }
+
+            this.ideName = this.getIde().name;
         });
     }
 
@@ -214,20 +216,15 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     }
 
     buildIDEUrl(): string | undefined {
-        return this.externalCloningService.buildIDEUrl(
-            this.getHttpOrSshRepositoryUri(false),
-            this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
-                this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
-                PREDEFINED_IDE[0],
-        );
+        return this.externalCloningService.buildIDEUrl(this.getHttpOrSshRepositoryUri(false), this.getIde());
     }
 
-    getIDEName(): string {
-        return `Open in ${
-            this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY)?.name ??
-            this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY)?.name ??
-            PREDEFINED_IDE[0].name
-        }`;
+    getIde(): Ide {
+        return (
+            this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
+            this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
+            PREDEFINED_IDE[0]
+        );
     }
 
     switchPracticeMode() {

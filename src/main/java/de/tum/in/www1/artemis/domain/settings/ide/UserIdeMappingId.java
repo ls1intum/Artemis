@@ -37,28 +37,4 @@ public class UserIdeMappingId implements Serializable {
     public void setUser(Long user) {
         this.user = user;
     }
-
-    // @Override
-    // public boolean equals(Object o) {
-    // if (this == o) {
-    // return true;
-    // }
-    // if (o == null || getClass() != o.getClass()) {
-    // return false;
-    // }
-    //
-    // UserIdeMappingId that = (UserIdeMappingId) o;
-    //
-    // if (!user.equals(that.user)) {
-    // return false;
-    // }
-    // return programmingLanguage == that.programmingLanguage;
-    // }
-    //
-    // @Override
-    // public int hashCode() {
-    // int result = user.hashCode();
-    // result = 31 * result + programmingLanguage.hashCode();
-    // return result;
-    // }
 }

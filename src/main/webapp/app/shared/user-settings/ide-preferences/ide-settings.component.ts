@@ -12,6 +12,10 @@ import { IdeSettingsService, PREDEFINED_IDE } from 'app/shared/user-settings/ide
 export class IdeSettingsComponent implements OnInit {
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, PREDEFINED_IDE[0]]]);
 
+    assignedProgrammingLanguages: ProgrammingLanguage[] = [];
+    // languages that have no IDE assigned yet
+    remainingProgrammingLanguages: ProgrammingLanguage[] = Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.EMPTY);
+
     constructor(private ideSettingsService: IdeSettingsService) {}
 
     ngOnInit() {
@@ -19,12 +23,23 @@ export class IdeSettingsComponent implements OnInit {
             if (programmingLanguageToIde.size !== 0) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }
+
+            // initialize assigned programming languages
+            this.assignedProgrammingLanguages = Array.from(this.programmingLanguageToIde.keys()).filter((x: ProgrammingLanguage) => x !== ProgrammingLanguage.EMPTY);
+
+            // initialize remaining programming languages
+            this.remainingProgrammingLanguages = Array.from(
+                Object.values(ProgrammingLanguage).filter((x) => !this.assignedProgrammingLanguages.includes(x) || x === ProgrammingLanguage.EMPTY),
+            );
         });
     }
 
     addProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {
         this.ideSettingsService.saveIdePreference(programmingLanguage, PREDEFINED_IDE[0]).subscribe((ide) => {
             this.programmingLanguageToIde.set(programmingLanguage, ide);
+
+            this.assignedProgrammingLanguages.push(programmingLanguage);
+            this.remainingProgrammingLanguages = this.remainingProgrammingLanguages.filter((x) => x !== programmingLanguage);
         });
     }
 
@@ -37,19 +52,10 @@ export class IdeSettingsComponent implements OnInit {
     removeProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {
         this.ideSettingsService.deleteIdePreference(programmingLanguage).subscribe(() => {
             this.programmingLanguageToIde.delete(programmingLanguage);
+
+            this.remainingProgrammingLanguages.push(programmingLanguage);
+            this.assignedProgrammingLanguages = this.assignedProgrammingLanguages.filter((x) => x !== programmingLanguage);
         });
-    }
-
-    // returns all programming languages that have ide preference assigned EXCEPT ProgrammingLanguage.EMPTY
-    getCustomizedProgrammingLanguages(): ProgrammingLanguage[] {
-        return Array.from(this.programmingLanguageToIde.keys()).filter((x: ProgrammingLanguage) => x !== ProgrammingLanguage.EMPTY);
-    }
-
-    // returns all programming languages that have no ide preference assigned
-    getRemainingProgrammingLanguages(): ProgrammingLanguage[] {
-        const selected = Array.from(this.programmingLanguageToIde.keys());
-        const allLanguages = Object.values(ProgrammingLanguage);
-        return Array.from(allLanguages.filter((x) => !selected.includes(x)));
     }
 
     isIdeOfProgrammingLanguage(programmingLanguage: ProgrammingLanguage, ide: Ide) {

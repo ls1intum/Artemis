@@ -21,7 +21,7 @@
         </div>
     </div>
     <!-- Display each customized Programming Language -->
-    @for (programmingLanguage of getCustomizedProgrammingLanguages(); track programmingLanguage) {
+    @for (programmingLanguage of assignedProgrammingLanguages; track programmingLanguage) {
         <div class="list-group-item pb-3">
             <div class="item-container d-flex flex-row justify-content-between align-items-center pb-2">
                 <dt>
@@ -48,14 +48,14 @@
         </div>
     }
     <!-- Display plus button to add Programming Language with drop down menu -->
-    @if (getRemainingProgrammingLanguages().length != 0) {
+    @if (remainingProgrammingLanguages.length != 0) {
         <div class="list-group-item">
             <div ngbDropdown class="d-inline-block">
                 <button type="button" class="btn btn-outline-primary" id="dropdown" ngbDropdownToggle>
                     <fa-icon [icon]="faPlus"></fa-icon>
                 </button>
                 <div ngbDropdownMenu aria-labelledby="dropdown">
-                    @for (programmingLanguage of getRemainingProgrammingLanguages(); track programmingLanguage) {
+                    @for (programmingLanguage of remainingProgrammingLanguages; track programmingLanguage) {
                         <button ngbDropdownItem (click)="addProgrammingLanguage(programmingLanguage)">
                             {{ programmingLanguage }}
                         </button>

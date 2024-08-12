@@ -19,11 +19,9 @@ export class ExternalCloningService {
      */
     buildIDEUrl(cloneUrl: string | undefined, ide: Ide): string | undefined {
         if (!cloneUrl) {
-            console.error('cloneUrl is undefined');
             return undefined;
         }
         if (!ide.deepLink.includes('{cloneUrl}')) {
-            console.error('ide deepLink does not contain {cloneUrl}');
             return undefined;
         }
 
