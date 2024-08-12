@@ -1,0 +1,20 @@
+<div class="competency-graph-modal">
+    <div class="col p-3">
+        <div class="row m-0">
+            <span class="col p-0 h5 m-0 align-self-center">Course competency relations</span>
+            <fa-icon id="close-button" (click)="closeModal()" [icon]="closeIcon" class="col-md-auto h5 clickable m-0 p-1 pe-0" />
+        </div>
+    </div>
+    <hr class="m-0" />
+    <div class="competency-graph-modal-body h-100">
+        @if (isLoading()) {
+            <div class="row justify-content-center m-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only" jhiTranslate="loading"></span>
+                </div>
+            </div>
+        } @else {
+            <jhi-course-competencies-relation-graph [(relations)]="relations" [courseCompetencies]="courseCompetencies()" />
+        }
+    </div>
+</div>
