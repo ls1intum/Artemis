@@ -358,7 +358,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sends a request to the server to delete the user's current vcsAccessToken
+     * Sends a request to the server to create  the user's current vcsAccessToken
      */
     addNewVcsAccessToken(): Observable<EntityResponseType> {
         return this.http.put<User>('api/users/vcs-access-token', null, { observe: 'response' });
