@@ -134,7 +134,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        private eventManager: EventManager,
+        protected eventManager: EventManager,
         private localStorage: LocalStorageService,
         private modalService: NgbModal,
         private profileService: ProfileService,

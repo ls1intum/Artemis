@@ -1,14 +1,15 @@
-import { Component, EventEmitter, Signal, WritableSignal, computed, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Signal, WritableSignal, computed, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
-import { Observable } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
@@ -18,11 +19,13 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
 })
 export class DeleteUsersButtonComponent {
+    @Input() eventManager: EventManager;
+
     users: WritableSignal<string[] | undefined> = signal(undefined);
     usersString: Signal<string | undefined> = computed(() => this.users()?.join(', '));
 
-    // TODO Handle like in user-management for the delete button?
-    dialogError: Observable<string>;
+    private dialogErrorSource = new Subject<string>();
+    dialogError = this.dialogErrorSource.asObservable();
 
     // Boilerplate code for use in the template
     faEraser = faEraser;
@@ -80,8 +83,15 @@ export class DeleteUsersButtonComponent {
          * Delete the list of confirmed users. Don't filter in the delete operation
          * to avoid that there are other users deleted than the confirmed ones.
          */
-        this.adminUserService.deleteUsers(logins).subscribe(() => {
-            // TODO show some feedback dialog (similar to delete selected users)
+        this.adminUserService.deleteUsers(logins).subscribe({
+            next: () => {
+                this.eventManager.broadcast({
+                    name: 'userListModification',
+                    content: 'Deleted users',
+                });
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
