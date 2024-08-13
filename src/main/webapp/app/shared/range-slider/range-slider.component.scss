@@ -40,6 +40,7 @@ $slider-thumb-color: $primary;
     background: $slider-thumb-color;
     pointer-events: auto;
     -webkit-appearance: none;
+    cursor: pointer;
 }
 
 [type='range']::-moz-range-thumb {
@@ -49,6 +50,7 @@ $slider-thumb-color: $primary;
     background: $slider-thumb-color;
     pointer-events: auto;
     -moz-appearance: none;
+    cursor: pointer;
 }
 
 .slider-value {
