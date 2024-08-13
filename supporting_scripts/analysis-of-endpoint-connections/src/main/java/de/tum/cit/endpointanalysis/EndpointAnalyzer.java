@@ -58,7 +58,7 @@ public class EndpointAnalyzer {
 
             EndpointAnalysis endpointAnalysis = new EndpointAnalysis(endpointsAndMatchingRestCalls, unusedEndpoints);
             System.out.println("working directory: " + System.getProperty("user.dir"));
-            mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"), endpointAnalysis);
+            mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointAnalysisResult.json"), endpointAnalysis);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -69,7 +69,7 @@ public class EndpointAnalyzer {
         ObjectMapper mapper = new ObjectMapper();
         EndpointAnalysis endpointsAndMatchingRestCalls = null;
         try {
-            endpointsAndMatchingRestCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"),
+            endpointsAndMatchingRestCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointAnalysisResult.json"),
                 new TypeReference<EndpointAnalysis>() {
                 });
         }

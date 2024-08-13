@@ -77,3 +77,11 @@ jobs:
       - name: Analyze Rest Calls
         run:
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runRestCallAnalysis
+
+      - name: Upload Analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: json-files
+          path: |
+            supporting_scripts/analysis-of-endpoint-connections/endpointAnalysisResult.json
+            supporting_scripts/analysis-of-endpoint-connections/restCallAnalysisResult.json
