@@ -33,6 +33,9 @@ import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 
 public class EndpointParser {
 
+    static String EndpointParsingResultPath = "endpoints.json";
+    static String RestCallParsingResultPath = "restCalls.json";
+
     public static void main(String[] args) {
         final String relativeDirectoryPath = ".." + File.separator + ".." + File.separator + "src" + File.separator + "main" + File.separator + "java";
         final Path absoluteDirectoryPath = Paths.get(relativeDirectoryPath).toAbsolutePath().normalize();

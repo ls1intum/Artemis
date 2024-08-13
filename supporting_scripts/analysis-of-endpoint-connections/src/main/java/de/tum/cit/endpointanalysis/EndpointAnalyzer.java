@@ -9,22 +9,29 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class EndpointAnalyzer {
+    private static String EndpointAnalysisResultPath = "endpointAnalysisResult.json";
 
     public static void main(String[] args) {
-        System.out.println("working directory: " + System.getProperty("user.dir"));
         analyzeEndpoints();
         printEndpointAnalysisResult();
     }
 
+    /**
+     * Analyzes endpoints and matches them with REST calls.
+     *
+     * This method reads endpoint and REST call information from JSON files,
+     * compares them to find matching REST calls for each endpoint, and writes
+     * the analysis result to a JSON file. Endpoints without matching REST calls
+     * are also recorded.
+     */
     private static void analyzeEndpoints() {
-        final String endpointsJsonPath = "endpoints.json";
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(endpointsJsonPath),
+            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.EndpointParsingResultPath),
                 new TypeReference<List<EndpointClassInformation>>() {
                 });
-            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File("restCalls.json"),
+            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File(EndpointParser.RestCallParsingResultPath),
                 new TypeReference<List<RestCallFileInformation>>() {
                 });
 
@@ -57,21 +64,26 @@ public class EndpointAnalyzer {
             }
 
             EndpointAnalysis endpointAnalysis = new EndpointAnalysis(endpointsAndMatchingRestCalls, unusedEndpoints);
-            System.out.println("working directory: " + System.getProperty("user.dir"));
-            mapper.writeValue(new File("endpointAnalysisResult.json"), endpointAnalysis);
-            System.out.println("Endpoint analysis result written to file: endpointAnalysisResult.json");
+            mapper.writeValue(new File(EndpointAnalysisResultPath), endpointAnalysis);
         }
         catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Prints the endpoint analysis result.
+     *
+     * This method reads the endpoint analysis result from a JSON file and prints
+     * the details of unused endpoints to the console. The details include the
+     * endpoint URI, HTTP method, file path, and line number. If no matching REST
+     * call is found for an endpoint, it prints a message indicating this.
+     */
     private static void printEndpointAnalysisResult() {
         ObjectMapper mapper = new ObjectMapper();
         EndpointAnalysis endpointsAndMatchingRestCalls = null;
         try {
-            System.out.println("trying to read file: endpointAnalysisResult.json");
-            endpointsAndMatchingRestCalls = mapper.readValue(new File("endpointAnalysisResult.json"),
+            endpointsAndMatchingRestCalls = mapper.readValue(new File(EndpointAnalysisResultPath),
                 new TypeReference<EndpointAnalysis>() {
                 });
         }
