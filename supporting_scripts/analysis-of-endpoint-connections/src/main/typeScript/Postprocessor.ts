@@ -43,13 +43,9 @@ export class Postprocessor {
     private readonly fileName: string;
     private readonly ast: TSESTree.Program;
 
-    constructor(fileName: string) {
+    constructor(fileName: string, ast: TSESTree.Program) {
         this.fileName = fileName;
-        this.ast = Preprocessor.parseTypeScriptFile(Preprocessor.pathPrefix + fileName)
-    }
-
-    extractRestCalls() {
-        this.extractRestCallsFromProgram();
+        this.ast = ast;
     }
 
     extractRestCallsFromProgram() {
