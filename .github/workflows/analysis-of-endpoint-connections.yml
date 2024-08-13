@@ -67,7 +67,7 @@ jobs:
       - name: download JSON files
         uses: actions/download-artifact@v4
         with:
-          name: json-files
+          name: parsing results
           path: supporting_scripts/analysis-of-endpoint-connections/
 
       - name: analyze endpoints
