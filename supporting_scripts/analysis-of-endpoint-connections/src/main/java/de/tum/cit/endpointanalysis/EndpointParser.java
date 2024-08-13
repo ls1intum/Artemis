@@ -55,6 +55,15 @@ public class EndpointParser {
         parseServerEndpoints(filesToParse);
     }
 
+    /**
+     * Parses server endpoints from the given file paths.
+     *
+     * This method reads Java files from the specified file paths, extracts endpoint
+     * information annotated with HTTP method annotations, and writes the parsed
+     * endpoint information to a JSON file. It also logs any files that failed to parse.
+     *
+     * @param filePaths an array of file paths to parse for endpoint information
+     */
     private static void parseServerEndpoints(String[] filePaths) {
         List<EndpointClassInformation> endpointClasses = new ArrayList<>();
 

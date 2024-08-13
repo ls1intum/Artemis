@@ -73,7 +73,6 @@ Array.from(astMap.keys()).forEach((filePath) => {
 });
 
 try {
-    console.log('Working directory:', process.cwd());
     writeFileSync('supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
 } catch (error) {
     console.error('Failed to write REST calls to file:', error);
