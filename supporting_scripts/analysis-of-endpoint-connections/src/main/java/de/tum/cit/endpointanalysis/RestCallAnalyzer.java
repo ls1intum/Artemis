@@ -1,12 +1,13 @@
 package de.tum.cit.endpointanalysis;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RestCallAnalyzer {
 
@@ -30,11 +31,10 @@ public class RestCallAnalyzer {
 
         try {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.EndpointParsingResultPath),
-                new TypeReference<List<EndpointClassInformation>>() {
-                });
-            List<RestCallFileInformation> restCalls = mapper.readValue(new File(EndpointParser.RestCallParsingResultPath),
-                new TypeReference<List<RestCallFileInformation>>() {
-                });
+                    new TypeReference<List<EndpointClassInformation>>() {
+                    });
+            List<RestCallFileInformation> restCalls = mapper.readValue(new File(EndpointParser.RestCallParsingResultPath), new TypeReference<List<RestCallFileInformation>>() {
+            });
 
             List<RestCallWithMatchingEndpoint> restCallsWithMatchingEndpoint = new ArrayList<>();
             List<RestCallInformation> restCallsWithoutMatchingEndpoint = new ArrayList<>();
@@ -49,7 +49,9 @@ public class RestCallAnalyzer {
                             String restCallURI = restCall.buildComparableRestCallUri();
                             if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
                                 matchingEndpoint = Optional.of(endpoint);
-                            } else if (endpointURI.endsWith("*") && restCallURI.startsWith(endpointURI.substring(0, endpointURI.length() - 1)) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
+                            }
+                            else if (endpointURI.endsWith("*") && restCallURI.startsWith(endpointURI.substring(0, endpointURI.length() - 1))
+                                    && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
                                 matchingEndpoint = Optional.of(endpoint);
                             }
                         }
@@ -85,9 +87,8 @@ public class RestCallAnalyzer {
         RestCallAnalysis restCallsAndMatchingEndpoints = null;
 
         try {
-            restCallsAndMatchingEndpoints = mapper.readValue(new File(RestCallAnalysisResultPath),
-                new TypeReference<RestCallAnalysis>() {
-                });
+            restCallsAndMatchingEndpoints = mapper.readValue(new File(RestCallAnalysisResultPath), new TypeReference<RestCallAnalysis>() {
+            });
         }
         catch (IOException e) {
             throw new RuntimeException(e);

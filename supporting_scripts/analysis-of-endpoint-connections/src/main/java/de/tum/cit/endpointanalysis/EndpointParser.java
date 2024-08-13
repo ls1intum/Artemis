@@ -11,8 +11,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import com.github.javaparser.ast.expr.ArrayInitializerExpr;
-import com.github.javaparser.ast.expr.Expression;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -27,6 +25,8 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.ArrayInitializerExpr;
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MemberValuePair;
 import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
@@ -34,6 +34,7 @@ import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 public class EndpointParser {
 
     static String EndpointParsingResultPath = "endpoints.json";
+
     static String RestCallParsingResultPath = "restCalls.json";
 
     public static void main(String[] args) {
@@ -68,7 +69,7 @@ public class EndpointParser {
         List<EndpointClassInformation> endpointClasses = new ArrayList<>();
 
         final Set<String> httpMethodClasses = Set.of(GetMapping.class.getSimpleName(), PostMapping.class.getSimpleName(), PutMapping.class.getSimpleName(),
-            DeleteMapping.class.getSimpleName(), PatchMapping.class.getSimpleName(), RequestMapping.class.getSimpleName());
+                DeleteMapping.class.getSimpleName(), PatchMapping.class.getSimpleName(), RequestMapping.class.getSimpleName());
 
         List<String> filesFailedToParse = new ArrayList<>();
 
@@ -80,10 +81,10 @@ public class EndpointParser {
                     List<EndpointInformation> endpoints = new ArrayList<>();
                     final String[] classRequestMapping = { "" };
                     Optional<AnnotationExpr> requestMappingOptional = javaClass.getAnnotations().stream()
-                        .filter(annotation -> annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())).findFirst();
+                            .filter(annotation -> annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())).findFirst();
 
                     boolean hasEndpoint = javaClass.getMethods().stream().flatMap(method -> method.getAnnotations().stream())
-                        .anyMatch(annotation -> httpMethodClasses.contains(annotation.getNameAsString()));
+                            .anyMatch(annotation -> httpMethodClasses.contains(annotation.getNameAsString()));
 
                     if (hasEndpoint) {
                         requestMappingOptional.ifPresent(annotation -> {
@@ -111,13 +112,15 @@ public class EndpointParser {
                                     if (memberValue instanceof ArrayInitializerExpr) {
                                         ArrayInitializerExpr arrayExpr = (ArrayInitializerExpr) memberValue;
                                         annotationPathValue.addAll(arrayExpr.getValues().stream().map(Expression::toString).toList());
-                                    } else {
+                                    }
+                                    else {
                                         annotationPathValue.add(single.getMemberValue().toString());
                                     }
                                 }
                                 else if (annotation instanceof NormalAnnotationExpr) {
                                     NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
-                                    Optional<MemberValuePair> annotationPathOptional = normal.getPairs().stream().filter(pair -> "value".equals(pair.getNameAsString())).findFirst();
+                                    Optional<MemberValuePair> annotationPathOptional = normal.getPairs().stream().filter(pair -> "value".equals(pair.getNameAsString()))
+                                            .findFirst();
                                     annotationPathOptional.ifPresent(pair -> {
                                         annotationPathValue.add(pair.getValue().toString());
                                     });
@@ -126,8 +129,8 @@ public class EndpointParser {
                                 List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.toString()).toList();
 
                                 for (String path : annotationPathValue) {
-                                    EndpointInformation endpointInformation = new EndpointInformation(classRequestMapping[0], method.getNameAsString(), annotation.getNameAsString(),
-                                        path, javaClass.getNameAsString(), method.getBegin().get().line, annotations);
+                                    EndpointInformation endpointInformation = new EndpointInformation(classRequestMapping[0], method.getNameAsString(),
+                                            annotation.getNameAsString(), path, javaClass.getNameAsString(), method.getBegin().get().line, annotations);
                                     endpoints.add(endpointInformation);
                                 }
                             }
@@ -135,7 +138,7 @@ public class EndpointParser {
                     }
                     if (!endpoints.isEmpty()) {
                         endpointClasses.add(new EndpointClassInformation(javaClass.getNameAsString(),
-                            requestMappingOptional.isPresent() ? requestMappingOptional.get().toString() : "", endpoints));
+                                requestMappingOptional.isPresent() ? requestMappingOptional.get().toString() : "", endpoints));
                     }
                 }
             }

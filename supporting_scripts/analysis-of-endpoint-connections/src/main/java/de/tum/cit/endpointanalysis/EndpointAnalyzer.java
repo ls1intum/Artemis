@@ -1,4 +1,4 @@
-package de.tum.cit .endpointanalysis;
+package de.tum.cit.endpointanalysis;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class EndpointAnalyzer {
+
     private static String EndpointAnalysisResultPath = "endpointAnalysisResult.json";
 
     public static void main(String[] args) {
@@ -29,11 +30,10 @@ public class EndpointAnalyzer {
 
         try {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.EndpointParsingResultPath),
-                new TypeReference<List<EndpointClassInformation>>() {
-                });
-            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File(EndpointParser.RestCallParsingResultPath),
-                new TypeReference<List<RestCallFileInformation>>() {
-                });
+                    new TypeReference<List<EndpointClassInformation>>() {
+                    });
+            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File(EndpointParser.RestCallParsingResultPath), new TypeReference<List<RestCallFileInformation>>() {
+            });
 
             List<UsedEndpoints> endpointsAndMatchingRestCalls = new ArrayList<>();
             List<EndpointInformation> unusedEndpoints = new ArrayList<>();
@@ -48,7 +48,9 @@ public class EndpointAnalyzer {
                             String restCallURI = restCall.buildComparableRestCallUri();
                             if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
                                 matchingRestCalls.add(restCall);
-                            } else if (endpointURI.endsWith("*") && restCallURI.startsWith(endpointURI.substring(0, endpointURI.length() - 1)) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
+                            }
+                            else if (endpointURI.endsWith("*") && restCallURI.startsWith(endpointURI.substring(0, endpointURI.length() - 1))
+                                    && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
                                 matchingRestCalls.add(restCall);
                             }
                         }
@@ -83,9 +85,8 @@ public class EndpointAnalyzer {
         ObjectMapper mapper = new ObjectMapper();
         EndpointAnalysis endpointsAndMatchingRestCalls = null;
         try {
-            endpointsAndMatchingRestCalls = mapper.readValue(new File(EndpointAnalysisResultPath),
-                new TypeReference<EndpointAnalysis>() {
-                });
+            endpointsAndMatchingRestCalls = mapper.readValue(new File(EndpointAnalysisResultPath), new TypeReference<EndpointAnalysis>() {
+            });
         }
         catch (IOException e) {
             throw new RuntimeException(e);
