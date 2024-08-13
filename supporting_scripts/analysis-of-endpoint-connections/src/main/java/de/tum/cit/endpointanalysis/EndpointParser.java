@@ -34,8 +34,8 @@ import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 public class EndpointParser {
 
     public static void main(String[] args) {
-        final String directoryPath = "src/main/java/de/tum/in/www1/artemis";
-        final Path absoluteDirectoryPath = Paths.get(directoryPath).toAbsolutePath();
+        final String relativeDirectoryPath = ".." + File.separator + ".." + File.separator + ".." + File.separator + "src" + File.separator + "main" + File.separator + "java";
+        final Path absoluteDirectoryPath = Paths.get(relativeDirectoryPath).toAbsolutePath();
         System.out.println("working directory: " + System.getProperty("user.dir"));
         System.out.println("absolute directory path: " + absoluteDirectoryPath);
 
