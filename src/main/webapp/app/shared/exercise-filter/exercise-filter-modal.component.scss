@@ -8,7 +8,7 @@
     padding-left: 0 !important;
 }
 
-// otherwise the dropdown changes the color on hover if no further options can be selected
+/* otherwise the dropdown changes the color on hover if no further options can be selected */
 .form-control:disabled,
 .form-control[disabled] {
     pointer-events: none;
