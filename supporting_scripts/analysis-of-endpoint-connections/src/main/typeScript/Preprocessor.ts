@@ -28,7 +28,7 @@ interface MemberVariable {
 
 export class Preprocessor {
     public static PREPROCESSING_RESULTS = new Map<string, SuperClass>();
-    public static readonly pathPrefix = '../../../../../'
+    public static readonly pathPrefix = ''
     private readonly directoryPrefix = 'src/main/webapp/';
     private readonly fileToPreprocess: string;
     private ast: TSESTree.Program;
