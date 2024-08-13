@@ -59,6 +59,10 @@ public class RestCallInformation {
 
     public String buildComparableRestCallUri() {
         // Replace arguments with placeholder
-        return this.buildCompleteRestCallURI().replaceAll("\\$\\{.*?\\}", ":param:");
+        String result = this.buildCompleteRestCallURI().replaceAll("\\$\\{.*?\\}", ":param:");
+        if (result.contains("?")) {
+            result = result.substring(0, result.indexOf("?"));
+        }
+        return result;
     }
 }
