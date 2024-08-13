@@ -112,6 +112,133 @@ export function getExerciseDifficultyFilterOptions(sidebarData?: SidebarData, ex
     return { isDisplayed: !!availableDifficultyFilters.length, options: availableDifficultyFilters };
 }
 
+export function isRangeFilterApplied(rangeFilter?: RangeFilter): boolean {
+    if (!rangeFilter?.filter) {
+        return false;
+    }
+
+    const filter = rangeFilter.filter;
+    const isExcludingMinValues = filter.selectedMin !== filter.generalMin;
+    const isExcludingMaxValues = filter.selectedMax !== filter.generalMax;
+    return isExcludingMinValues || isExcludingMaxValues;
+}
+
+function getUpdatedMinAndMaxValues(minValue: number, maxValue: number, currentMaxValue: number) {
+    let updatedMinValue = minValue;
+    let updatedMaxValue = maxValue;
+
+    if (currentMaxValue < minValue) {
+        updatedMinValue = currentMaxValue;
+    }
+    if (currentMaxValue > maxValue) {
+        updatedMaxValue = currentMaxValue;
+    }
+
+    return { updatedMinValue, updatedMaxValue };
+}
+
+/**
+ * The calculation for points and score are intentionally mixed into one method to reduce the number of iterations over the sidebar data.
+ * @param sidebarData
+ */
+function calculateMinAndMaxForPointsAndScore(sidebarData: SidebarData) {
+    let minAchievablePoints = Infinity;
+    let maxAchievablePoints = -Infinity;
+
+    let minAchievedScore = Infinity;
+    let maxAchievedScore = -Infinity;
+
+    sidebarData.ungroupedData?.forEach((sidebarElement: SidebarCardElement) => {
+        if (sidebarElement.exercise?.maxPoints) {
+            const currentExerciseMaxPoints = sidebarElement.exercise.maxPoints;
+
+            const { updatedMinValue, updatedMaxValue } = getUpdatedMinAndMaxValues(minAchievablePoints, maxAchievablePoints, currentExerciseMaxPoints);
+            minAchievablePoints = updatedMinValue;
+            maxAchievablePoints = updatedMaxValue;
+
+            if (sidebarElement.studentParticipation) {
+                const currentExerciseAchievedScore = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true)?.score;
+
+                if (currentExerciseAchievedScore !== undefined) {
+                    const { updatedMinValue, updatedMaxValue } = getUpdatedMinAndMaxValues(minAchievedScore, maxAchievedScore, currentExerciseAchievedScore);
+                    minAchievedScore = updatedMinValue;
+                    maxAchievedScore = updatedMaxValue;
+                }
+            }
+        }
+    });
+
+    return { minAchievablePoints, maxAchievablePoints, minAchievedScore, maxAchievedScore };
+}
+
+/**
+ * **Rounds the min and max values for achievable points and achieved score to the next multiple of the step.
+ * The step {@link POINTS_STEP}, and {@link SCORE_STEP} or {@link SMALL_SCORE_STEP} are the selectable values for the range filter.**
+ * <br>
+ * <i>For the **score filter**, the step is increased if we have more than 20 values between the min and max value,
+ * as up to 100 values are theoretically possible.<br>
+ * For the **achievable points filter**, the step is always 1 as exercises usually have between 1 and 15 points,
+ * so we do not need to increase the step and thereby limit accuracy of filter options.</i>
+ *
+ * @param minAchievablePoints
+ * @param maxAchievablePoints
+ * @param minAchievedScore
+ * @param maxAchievedScore
+ */
+function roundRangeFilterMinAndMaxValues(minAchievablePoints: number, maxAchievablePoints: number, minAchievedScore: number, maxAchievedScore: number) {
+    const roundUp = true;
+    const roundDown = false;
+    const minAchievablePointsRounded = roundToNextMultiple(minAchievablePoints, POINTS_STEP, roundDown);
+    const maxAchievablePointsRounded = roundToNextMultiple(maxAchievablePoints, POINTS_STEP, roundUp);
+
+    let minAchievedScoreRounded;
+    let maxAchievedScoreRounded;
+
+    if (maxAchievedScore > SCORE_THRESHOLD_TO_INCREASE_STEP) {
+        minAchievedScoreRounded = roundToNextMultiple(minAchievedScore, SCORE_STEP, roundDown);
+        maxAchievedScoreRounded = roundToNextMultiple(maxAchievedScore, SCORE_STEP, roundUp);
+    } else {
+        minAchievedScoreRounded = roundToNextMultiple(minAchievedScore, SMALL_SCORE_STEP, roundDown);
+        maxAchievedScoreRounded = roundToNextMultiple(maxAchievedScore, SMALL_SCORE_STEP, roundUp);
+    }
+
+    return { minAchievablePointsRounded, maxAchievablePointsRounded, minAchievedScoreRounded, maxAchievedScoreRounded };
+}
+
+function calculateAchievablePointsFilterOptions(sidebarData: SidebarData): { achievablePoints?: RangeFilter; achievedScore?: RangeFilter } {
+    const { minAchievablePoints, maxAchievablePoints, minAchievedScore, maxAchievedScore } = calculateMinAndMaxForPointsAndScore(sidebarData);
+
+    const { minAchievablePointsRounded, maxAchievablePointsRounded, minAchievedScoreRounded, maxAchievedScoreRounded } = roundRangeFilterMinAndMaxValues(
+        minAchievablePoints,
+        maxAchievablePoints,
+        minAchievedScore,
+        maxAchievedScore,
+    );
+
+    return {
+        achievablePoints: {
+            isDisplayed: minAchievablePointsRounded < maxAchievablePointsRounded,
+            filter: {
+                generalMin: minAchievablePointsRounded,
+                generalMax: maxAchievablePointsRounded,
+                selectedMin: minAchievablePointsRounded,
+                selectedMax: maxAchievablePointsRounded,
+                step: POINTS_STEP,
+            },
+        },
+        achievedScore: {
+            isDisplayed: minAchievedScoreRounded < maxAchievedScoreRounded && minAchievedScoreRounded !== Infinity,
+            filter: {
+                generalMin: minAchievedScoreRounded,
+                generalMax: maxAchievedScoreRounded,
+                selectedMin: minAchievedScoreRounded,
+                selectedMax: maxAchievedScoreRounded,
+                step: maxAchievedScoreRounded <= SCORE_THRESHOLD_TO_INCREASE_STEP ? SMALL_SCORE_STEP : SCORE_STEP,
+            },
+        },
+    };
+}
+
 /**
  * @param exerciseFilters that might already be defined for the course sidebar
  * @param sidebarData that contains the exercises of a course and their information
@@ -129,82 +256,14 @@ export function getAchievablePointsAndAchievedScoreFilterOptions(
         return { achievablePoints: undefined, achievedScore: undefined };
     }
 
-    const isPointsFilterApplied =
-        exerciseFilters?.achievablePoints?.filter.selectedMax !== exerciseFilters?.achievablePoints?.filter.generalMax ||
-        exerciseFilters?.achievablePoints?.filter.selectedMin !== exerciseFilters?.achievablePoints?.filter.generalMin;
-    const isScoreFilterApplied =
-        exerciseFilters?.achievedScore?.filter.selectedMax !== exerciseFilters?.achievedScore?.filter.generalMax ||
-        exerciseFilters?.achievedScore?.filter.selectedMin !== exerciseFilters?.achievedScore?.filter.generalMin;
-    if (!isPointsFilterApplied && !isScoreFilterApplied && exerciseFilters?.achievablePoints && exerciseFilters?.achievedScore) {
+    const isPointsFilterApplied = isRangeFilterApplied(exerciseFilters?.achievablePoints);
+    const isScoreFilterApplied = isRangeFilterApplied(exerciseFilters?.achievedScore);
+
+    const isRecalculatingFilterOptionsRequired = isPointsFilterApplied || isScoreFilterApplied || !exerciseFilters?.achievablePoints || !exerciseFilters?.achievedScore;
+    if (!isRecalculatingFilterOptionsRequired) {
         // the scores might change when we work on exercises, so we re-calculate the filter options (but only if the filter is actually applied)
         return { achievablePoints: exerciseFilters?.achievablePoints, achievedScore: exerciseFilters?.achievedScore };
     }
 
-    let minAchievablePoints = Infinity;
-    let maxAchievablePoints = -Infinity;
-
-    let minAchievedScore = Infinity;
-    let maxAchievedScore = -Infinity;
-
-    sidebarData.ungroupedData.forEach((sidebarElement: SidebarCardElement) => {
-        if (sidebarElement.exercise?.maxPoints) {
-            const currentExerciseMaxPoints = sidebarElement.exercise.maxPoints;
-
-            if (currentExerciseMaxPoints > maxAchievablePoints) {
-                maxAchievablePoints = currentExerciseMaxPoints;
-            }
-            if (currentExerciseMaxPoints < minAchievablePoints) {
-                minAchievablePoints = currentExerciseMaxPoints;
-            }
-
-            if (sidebarElement.studentParticipation) {
-                const currentExerciseAchievedScore = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true)?.score;
-
-                if (currentExerciseAchievedScore !== undefined) {
-                    if (currentExerciseAchievedScore > maxAchievedScore) {
-                        maxAchievedScore = currentExerciseAchievedScore;
-                    }
-                    if (currentExerciseAchievedScore < minAchievedScore) {
-                        minAchievedScore = currentExerciseAchievedScore;
-                    }
-                }
-            }
-        }
-    });
-
-    const roundUp = true;
-    const roundDown = false;
-    minAchievablePoints = roundToNextMultiple(minAchievablePoints, POINTS_STEP, roundDown);
-    maxAchievablePoints = roundToNextMultiple(maxAchievablePoints, POINTS_STEP, roundUp);
-
-    minAchievedScore = roundToNextMultiple(minAchievedScore, SMALL_SCORE_STEP, roundDown);
-    maxAchievedScore = roundToNextMultiple(maxAchievedScore, SMALL_SCORE_STEP, roundUp);
-
-    if (maxAchievedScore > SCORE_THRESHOLD_TO_INCREASE_STEP) {
-        minAchievedScore = roundToNextMultiple(minAchievedScore, SCORE_STEP, roundDown);
-        maxAchievedScore = roundToNextMultiple(maxAchievedScore, SCORE_STEP, roundUp);
-    }
-
-    return {
-        achievablePoints: {
-            isDisplayed: minAchievablePoints < maxAchievablePoints,
-            filter: {
-                generalMin: minAchievablePoints,
-                generalMax: maxAchievablePoints,
-                selectedMin: minAchievablePoints,
-                selectedMax: maxAchievablePoints,
-                step: POINTS_STEP,
-            },
-        },
-        achievedScore: {
-            isDisplayed: minAchievedScore < maxAchievedScore && minAchievedScore !== Infinity,
-            filter: {
-                generalMin: minAchievedScore,
-                generalMax: maxAchievedScore,
-                selectedMin: minAchievedScore,
-                selectedMax: maxAchievedScore,
-                step: maxAchievedScore <= SCORE_THRESHOLD_TO_INCREASE_STEP ? SMALL_SCORE_STEP : SCORE_STEP,
-            },
-        },
-    };
+    return calculateAchievablePointsFilterOptions(sidebarData);
 }

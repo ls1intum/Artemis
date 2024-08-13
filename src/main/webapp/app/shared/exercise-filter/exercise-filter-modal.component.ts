@@ -23,6 +23,7 @@ import {
 import { satisfiesFilters } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { isRangeFilterApplied } from 'app/shared/sidebar/sidebar.helper';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -163,8 +164,8 @@ export class ExerciseFilterModalComponent implements OnInit {
             searchedTypes: this.getSearchedTypes(),
             selectedCategories: this.getSelectedCategories(),
             searchedDifficulties: this.getSearchedDifficulties(),
-            isScoreFilterApplied: this.isScoreFilterApplied(),
-            isPointsFilterApplied: this.isPointsFilterApplied(),
+            isScoreFilterApplied: isRangeFilterApplied(this.achievedScore),
+            isPointsFilterApplied: isRangeFilterApplied(this.achievablePoints),
             achievedScore: this.achievedScore,
             achievablePoints: this.achievablePoints,
         };
@@ -180,25 +181,6 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     private getSearchedDifficulties(): DifficultyLevel[] | undefined {
         return this.difficultyFilter?.options.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
-    }
-
-    private isFilterApplied(rangeFilter?: RangeFilter): boolean {
-        if (!rangeFilter?.filter) {
-            return false;
-        }
-
-        const filter = rangeFilter.filter;
-        const isExcludingMinValues = filter.selectedMin !== filter.generalMin;
-        const isExcludingMaxValues = filter.selectedMax !== filter.generalMax;
-        return isExcludingMinValues || isExcludingMaxValues;
-    }
-
-    private isScoreFilterApplied(): boolean {
-        return this.isFilterApplied(this.achievedScore);
-    }
-
-    private isPointsFilterApplied(): boolean {
-        return this.isFilterApplied(this.achievablePoints);
     }
 
     private isFilterActive(filterDetails: FilterDetails): boolean {
