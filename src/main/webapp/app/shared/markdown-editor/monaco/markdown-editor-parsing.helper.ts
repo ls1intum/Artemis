@@ -9,7 +9,6 @@ export function parseMarkdownForDomainActions(markdown: string, domainActions: M
         .map((identifier) => identifier.replace('[', '').replace(']', ''))
         .map(escapeStringForUseInRegex)
         .join('|');
-
     const actionTextsMappedToActionIdentifiers: [string, MonacoEditorDomainAction | undefined][] = [];
     /** create a new regex expression which searches for the domainCommands identifiers
      * (?=   If a command is found, add the command identifier to the result of the split
@@ -20,7 +19,7 @@ export function parseMarkdownForDomainActions(markdown: string, domainActions: M
      *  g: search in the whole string
      *  i: case insensitive, neglecting capital letters
      *  m: match the regex over multiple lines*/
-    const regex = new RegExp(`(?=\[(${actionIdentifiersString})])`, 'gmi');
+    const regex = new RegExp(`(?=\\[(${actionIdentifiersString})])`, 'gmi');
     while (remainingText.length) {
         const [textWithActionIdentifier] = remainingText.split(regex, 1);
         remainingText = remainingText.substring(textWithActionIdentifier.length);
