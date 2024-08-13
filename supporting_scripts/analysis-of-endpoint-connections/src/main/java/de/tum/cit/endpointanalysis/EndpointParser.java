@@ -35,6 +35,7 @@ public class EndpointParser {
 
     public static void main(String[] args) {
         final String directoryPath = "src/main/java/de/tum/in/www1/artemis";
+        System.out.println("working directory: " + System.getProperty("user.dir"));
 
         StaticJavaParser.getParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
 
