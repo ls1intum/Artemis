@@ -24,7 +24,6 @@ jobs:
           java-version: '${{ env.java }}'
           distribution: 'adopt'
 
-      # Analyze the client sided REST-API calls
       - name: set up node.js
         uses: actions/setup-node@v4
         with:
@@ -57,7 +56,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Analyze the server sided endpoints
       - name: set up JDK 21
         uses: actions/setup-java@v4
         with:
