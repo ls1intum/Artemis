@@ -54,7 +54,7 @@ public class RestCallAnalyzer {
                 }
             }
             RestCallAnalysis restCallAnalysis = new RestCallAnalysis(restCallsWithMatchingEndpoint, restCallsWithoutMatchingEndpoint);
-            mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCallAnalysisResult.json"), restCallAnalysis);
+            mapper.writeValue(new File("restCallAnalysisResult.json"), restCallAnalysis);
         }
         catch (IOException e) {
             e.printStackTrace();
