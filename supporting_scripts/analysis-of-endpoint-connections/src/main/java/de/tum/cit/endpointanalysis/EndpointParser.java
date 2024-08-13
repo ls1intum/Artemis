@@ -35,12 +35,13 @@ public class EndpointParser {
 
     public static void main(String[] args) {
         final String directoryPath = "src/main/java/de/tum/in/www1/artemis";
+        final Path absoluteDirectoryPath = Paths.get(directoryPath).toAbsolutePath();
         System.out.println("working directory: " + System.getProperty("user.dir"));
 
         StaticJavaParser.getParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
 
         String[] filesToParse = {};
-        try (Stream<Path> paths = Files.walk(Paths.get(directoryPath))) {
+        try (Stream<Path> paths = Files.walk(absoluteDirectoryPath)) {
             filesToParse = paths.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".java")).map(Path::toString).toArray(String[]::new);
         }
         catch (IOException e) {
