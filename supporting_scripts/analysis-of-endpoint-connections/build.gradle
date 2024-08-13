@@ -24,6 +24,22 @@ application {
     mainClassName = 'de.tum.cit.endpointanalysis.AnalysisOfEndpointConnections'
 }
 
+task runEndpointParser(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'de.tum.cit.endpointanalysis.EndpointParser'
+}
+
+task runEndpointAnalysis(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'de.tum.cit.endpointanalysis.EndpointAnalyzer'
+}
+
+task runRestCallAnalysis(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'de.tum.cit.endpointanalysis.RestCallAnalyzer'
+}
+
+// todo: remove this task if no arguments are needed
 run {
     if (project.hasProperty('appArgs')) {
         args = project.appArgs.split(' ')

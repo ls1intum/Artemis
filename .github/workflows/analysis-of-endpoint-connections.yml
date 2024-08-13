@@ -37,7 +37,7 @@ jobs:
           node supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
 
       - name: parse server sided Endpoints
-        run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:parser:run
+        run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runEndpointParser
 
       - name: Upload JSON files
         uses: actions/upload-artifact@v4
@@ -72,8 +72,8 @@ jobs:
 
       - name: Analyze Endpoints
         run:
-          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:endpointAnalysis:run
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runEndpointAnalysis
 
       - name: Analyze Rest Calls
         run:
-          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:RestCallAnalysis:run
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runRestCallAnalysis
