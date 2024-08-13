@@ -318,7 +318,7 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getProjectApi().getProject(repositoryPath);
         }
         catch (Exception emAll) {
-            log.warn("Invalid repository VcsRepositoryUri {}", repositoryUri);
+            log.warn("Invalid repository VcsRepositoryUri {}. Searched for project '{}'.", repositoryUri, repositoryPath, emAll);
             return false;
         }
 
