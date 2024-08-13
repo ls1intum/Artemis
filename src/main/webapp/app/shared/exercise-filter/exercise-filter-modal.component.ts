@@ -176,7 +176,9 @@ export class ExerciseFilterModalComponent implements OnInit {
     }
 
     private getSelectedCategories(): ExerciseCategory[] {
-        return this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
+        return this.selectedCategoryOptions
+            .filter((categoryOption: ExerciseCategoryFilterOption) => categoryOption.searched)
+            .map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
     }
 
     private getSearchedDifficulties(): DifficultyLevel[] | undefined {
