@@ -35,7 +35,7 @@ public class EndpointParser {
 
     public static void main(String[] args) {
         final String relativeDirectoryPath = ".." + File.separator + ".." + File.separator + ".." + File.separator + "src" + File.separator + "main" + File.separator + "java";
-        final Path absoluteDirectoryPath = Paths.get(relativeDirectoryPath).toAbsolutePath();
+        final Path absoluteDirectoryPath = Paths.get(relativeDirectoryPath).toAbsolutePath().normalize();
         System.out.println("working directory: " + System.getProperty("user.dir"));
         System.out.println("absolute directory path: " + absoluteDirectoryPath);
 
@@ -141,7 +141,7 @@ public class EndpointParser {
 
         ObjectMapper mapper = new ObjectMapper();
         try {
-            mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"), endpointClasses);
+            mapper.writeValue(new File("endpoints.json"), endpointClasses);
         }
         catch (IOException e) {
             e.printStackTrace();
