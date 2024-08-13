@@ -290,7 +290,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
         jest.spyOn(exerciseService, 'getLatestFullTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
         comp.programmingExercise = mockProgrammingExercise;
-        comp.programmingExercise.testwiseCoverageEnabled = true;
+        comp.programmingExercise.buildConfig!.testwiseCoverageEnabled = true;
         comp.onParticipationChange();
         tick();
         expect(loadDiffSpy).toHaveBeenCalledOnce();
