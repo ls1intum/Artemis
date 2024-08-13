@@ -1,16 +1,21 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
+import static de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -38,12 +43,14 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
+import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -95,6 +102,8 @@ public class LocalVCServletService {
 
     private static URL localVCBaseUrl;
 
+    private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
     @Value("${artemis.version-control.url}")
     public void setLocalVCBaseUrl(URL localVCBaseUrl) {
         LocalVCServletService.localVCBaseUrl = localVCBaseUrl;
@@ -122,7 +131,8 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService) {
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -134,6 +144,7 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
+        this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
     }
 
     /**
@@ -205,14 +216,11 @@ public class LocalVCServletService {
             }
         }
 
-        User user = authenticateUser(authorizationHeader);
-
         // Optimization.
         // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
         // The URLs of the first two requests end on '[repository URI]/info/refs'. The third one ends on '[repository URI]/git-receive-pack' (for push) and '[repository
         // URL]/git-upload-pack' (for fetch).
         // The following checks will only be conducted for the second request, so we do not have to access the database too often.
-        // The first request does not contain credentials and will thus already be blocked by the 'authenticateUser' method above.
         if (!request.getRequestURI().endsWith("/info/refs")) {
             return;
         }
@@ -222,6 +230,8 @@ public class LocalVCServletService {
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
+
+        User user = authenticateUser(authorizationHeader, exercise, localVCRepositoryUri);
 
         // Check that offline IDE usage is allowed.
         if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
@@ -235,37 +245,64 @@ public class LocalVCServletService {
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
-    private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
+    private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri) throws LocalVCAuthException {
 
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
         String username = usernameAndPassword.username();
         String password = usernameAndPassword.password();
-
-        var user = userRepository.findOneByLogin(username);
+        User user = userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
 
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
-
-            // Note: we first check if the user has used a vcs access token instead of a password
-
-            if (user.isPresent() && !StringUtils.isEmpty(user.get().getVcsAccessToken()) && Objects.equals(user.get().getVcsAccessToken(), password)) {
-                // user is authenticated by using the correct access token
-                return user.get();
-            }
-
-            // if the user does not have an access token or has used a password, we try to authenticate the user with it
-
-            // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-            authenticationManager.authenticate(authenticationToken);
         }
         catch (AccessForbiddenException | AuthenticationException e) {
-            throw new LocalVCAuthException(e);
+            if (!StringUtils.isEmpty(password)) {
+                log.warn("Failed login attempt for user {} with password {} due to issue: {}", username, password, e.getMessage());
+            }
+            throw new LocalVCAuthException(e.getMessage());
         }
 
-        // Check that the user exists.
-        return user.orElseThrow(LocalVCAuthException::new);
+        // check user VCS access token
+        if (Objects.equals(user.getVcsAccessToken(), password) && user.getVcsAccessTokenExpiryDate() != null && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
+            return user;
+        }
+
+        // Note: we first check if the user has used a vcs access token instead of a password
+        if (password.startsWith(TOKEN_PREFIX) && password.length() == VCS_ACCESS_TOKEN_LENGTH) {
+            try {
+
+                // check participation vcs access token
+                // var part = programmingExerciseParticipationService.findTeamParticipationByExerciseAndTeamShortNameOrThrow()
+                List<ProgrammingExerciseStudentParticipation> participations;
+                Optional<ProgrammingExerciseStudentParticipation> studentParticipation;
+                if (exercise.isTeamMode()) {
+                    studentParticipation = programmingExerciseParticipationService.findTeamParticipationByExerciseAndUser(exercise, user);
+                }
+                else {
+                    participations = programmingExerciseParticipationService.findStudentParticipationsByExerciseAndStudentId(exercise, user.getLogin());
+                    studentParticipation = participations.stream().filter(participation -> participation.getRepositoryUri().equals(localVCRepositoryUri.toString())).findAny();
+                }
+                if (studentParticipation.isPresent()) {
+                    var token = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.get().getId());
+                    if (token.isPresent() && Objects.equals(token.get().getVcsAccessToken(), password)) {
+                        user.setVcsAccessToken(token.get().getVcsAccessToken());
+                        return user;
+                    }
+                }
+            }
+            catch (EntityNotFoundException e) {
+                throw new LocalVCAuthException();
+            }
+        }
+
+        // if the user does not have an access token or has used a password, we try to authenticate the user with it
+
+        // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        authenticationManager.authenticate(authenticationToken);
+
+        return user;
     }
 
     /**
@@ -307,7 +344,7 @@ public class LocalVCServletService {
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
         if (authorizationHeader == null) {
-            throw new LocalVCAuthException();
+            throw new LocalVCAuthException("No authorization header provided");
         }
 
         String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");

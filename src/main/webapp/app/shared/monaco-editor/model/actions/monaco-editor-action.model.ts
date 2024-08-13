@@ -236,6 +236,15 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     }
 
     /**
+     * Gets the text of the current selection. If there is no selection, undefined is returned.
+     * @param editor The editor to get the selection text from.
+     */
+    getSelectedText(editor: monaco.editor.ICodeEditor): string | undefined {
+        const selection = editor.getSelection();
+        return selection ? this.getTextAtRange(editor, selection) : undefined;
+    }
+
+    /**
      * Inserts the given text at the current cursor position.
      * @param editor The editor to insert the text in.
      * @param position The position to insert the text at.
@@ -281,6 +290,45 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      */
     getLineText(editor: monaco.editor.ICodeEditor, lineNumber: number): string | undefined {
         return editor.getModel()?.getLineContent(lineNumber);
+    }
+
+    /**
+     * Gets the number of lines in the editor.
+     * @param editor The editor to get the line count from.
+     */
+    getLineCount(editor: monaco.editor.ICodeEditor): number {
+        return editor.getModel()?.getLineCount() ?? 0;
+    }
+
+    /**
+     * Gets the position of the last character in the editor.
+     * @param editor The editor to get the position from.
+     */
+    getEndPosition(editor: monaco.editor.ICodeEditor): monaco.IPosition {
+        return editor.getModel()?.getFullModelRange().getEndPosition() ?? { lineNumber: 1, column: 1 };
+    }
+
+    /**
+     * Sets the position of the cursor in the given editor.
+     * @param editor The editor to set the position in.
+     * @param position The position to set.
+     * @param revealLine Whether to scroll the editor to reveal the line the position is on. Defaults to false.
+     */
+    setPosition(editor: monaco.editor.ICodeEditor, position: monaco.IPosition, revealLine = false): void {
+        editor.setPosition(position);
+        if (revealLine) {
+            editor.revealLineInCenter(position.lineNumber);
+        }
+    }
+
+    /**
+     * Sets the selection of the given editor to the given range and reveals it in the center of the editor.
+     * @param editor The editor to set the selection in.
+     * @param selection The selection to set.
+     */
+    setSelection(editor: monaco.editor.ICodeEditor, selection: monaco.IRange): void {
+        editor.setSelection(selection);
+        editor.revealRangeInCenter(selection);
     }
 
     /**
