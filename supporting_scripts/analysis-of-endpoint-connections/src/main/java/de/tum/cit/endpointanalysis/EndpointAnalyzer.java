@@ -17,14 +17,14 @@ public class EndpointAnalyzer {
     }
 
     private static void analyzeEndpoints() {
-        final String endpointsJsonPath = "supporting_scripts/analysis-of-endpoint-connections/endpoints.json";
+        final String endpointsJsonPath = "endpoints.json";
         ObjectMapper mapper = new ObjectMapper();
 
         try {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(endpointsJsonPath),
                 new TypeReference<List<EndpointClassInformation>>() {
                 });
-            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
+            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File("restCalls.json"),
                 new TypeReference<List<RestCallFileInformation>>() {
                 });
 
