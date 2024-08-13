@@ -14,16 +14,8 @@ pluginManagement {
 
 rootProject.name = 'Artemis'
 
+// needed for rest call and endpoint analysis
 include 'supporting_scripts:analysis-of-endpoint-connections'
-include 'supporting_scripts:analysis-of-endpoint-connections:parser'
-findProject(':supporting_scripts:analysis-of-endpoint-connections:parser')?.name = 'parser'
-include 'supporting_scripts:analysis-of-endpoint-connections:endpointAnalysis'
-findProject(':supporting_scripts:analysis-of-endpoint-connections:endpointAnalysis')?.name = 'endpointAnalysis'
-include 'supporting_scripts:analysis-of-endpoint-connections:RestCallAnalysis'
-findProject(':supporting_scripts:analysis-of-endpoint-connections:RestCallAnalysis')?.name = 'RestCallAnalysis'
-include 'supporting_scripts:analysis-of-endpoint-connections:shared'
-findProject(':supporting_scripts:analysis-of-endpoint-connections:shared')?.name = 'shared'
-
 
 // needed for programming exercise templates
 DirectoryScanner.removeDefaultExclude "**/.gitattributes"
