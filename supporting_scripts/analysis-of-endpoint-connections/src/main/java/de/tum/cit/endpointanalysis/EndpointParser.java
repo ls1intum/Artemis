@@ -37,6 +37,7 @@ public class EndpointParser {
         final String directoryPath = "src/main/java/de/tum/in/www1/artemis";
         final Path absoluteDirectoryPath = Paths.get(directoryPath).toAbsolutePath();
         System.out.println("working directory: " + System.getProperty("user.dir"));
+        System.out.println("absolute directory path: " + absoluteDirectoryPath);
 
         StaticJavaParser.getParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
 
