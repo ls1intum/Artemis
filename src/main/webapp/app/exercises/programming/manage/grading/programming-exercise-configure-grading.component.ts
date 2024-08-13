@@ -56,7 +56,7 @@ const DefaultFieldValues: { [key: string]: number } = {
     [EditableField.MAX_PENALTY]: 0,
 };
 
-export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy';
+export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy' | 'test-analysis';
 
 export type Table = 'testCases' | 'codeAnalysis';
 

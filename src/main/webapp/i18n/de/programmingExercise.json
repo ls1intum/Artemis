@@ -306,6 +306,15 @@
                     "testType": "Type",
                     "passedPercent": "Bestanden %"
                 },
+                "testAnalysis": {
+                    "title": "Error Analyse für {{exerciseTitle}}",
+                    "occurrence": "Häufigkeit",
+                    "testCaseFeedback": "Test Fall Feedback",
+                    "task": "Task",
+                    "testcase": "Test Fall",
+                    "errorCategory": "Error Kategorie",
+                    "totalItems": "Insgesamt {{count}} items"
+                },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
                     "state": "Gibt an, ob Issues in dieser Kategorie den Studierenden angezeigt und bewertet werden sollen.",

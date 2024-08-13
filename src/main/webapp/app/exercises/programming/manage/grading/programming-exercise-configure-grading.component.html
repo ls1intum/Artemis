@@ -16,12 +16,15 @@
                 <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab === 'submission-policy' ? 'active' : ''">
                     <b>Submission Policy</b>
                 </div>
+                <div class="tab-item test-analysis" (click)="selectTab('test-analysis')" [ngClass]="activeTab === 'test-analysis' ? 'active' : ''">
+                    <b>Test Analysis</b>
+                </div>
             </div>
             <ng-template>
                 <div></div>
             </ng-template>
             <div class="d-flex align-items-center">
-                @if (activeTab !== 'submission-policy') {
+                @if (activeTab !== 'submission-policy' && activeTab !== 'test-analysis') {
                     <jhi-programming-exercise-configure-grading-status
                         [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
                         [hasUnsavedTestCaseChanges]="hasUnsavedChanges"
@@ -29,7 +32,7 @@
                         [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
                     />
                 }
-                @if (programmingExercise.isAtLeastInstructor) {
+                @if (programmingExercise.isAtLeastInstructor && activeTab !== 'test-analysis') {
                     <jhi-programming-exercise-configure-grading-actions
                         [exercise]="programmingExercise"
                         [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
@@ -253,6 +256,13 @@
                             />
                         </div>
                     </div>
+                </div>
+            }
+        </div>
+        <div class="grading-body-container mt-3">
+            @if (activeTab === 'test-analysis') {
+                <div>
+                    <jhi-testcase-analysis [exerciseTitle]="programmingExercise.title" />
                 </div>
             }
         </div>

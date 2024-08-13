@@ -308,6 +308,15 @@
                     "testType": "Type",
                     "passedPercent": "Passed %"
                 },
+                "testAnalysis": {
+                    "title": "Error Analysis for {{exerciseTitle}}",
+                    "occurrence": "Occurrence",
+                    "testCaseFeedback": "Test Case Feedback",
+                    "task": "Task",
+                    "testcase": "Testcase",
+                    "errorCategory": "Error Category",
+                    "totalItems": "Total {{count}} items"
+                },
                 "help": {
                     "name": "Task names are written in bold whereas Test names are normal. Task or test name depending on whether the row is a task or test.",
                     "state": "Determines whether issues in this category should be shown to the students and used for grading.",

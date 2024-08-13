@@ -1,0 +1,27 @@
+<div class="container">
+    <h2>{{ 'artemisApp.programmingExercise.configureGrading.testAnalysis.title' | artemisTranslate: { exerciseTitle: exerciseTitle } }}</h2>
+    <h2>Feature currently in development. Following data is testdata</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.occurrence"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.testCaseFeedback"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.task"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.testcase"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.errorCategory"></th>
+            </tr>
+        </thead>
+        <tbody class="table-group-divider">
+            @for (item of exampleArray; track item) {
+                <tr>
+                    <td>{{ item.occurrence }}</td>
+                    <td>{{ item.feedback }}</td>
+                    <td>{{ item.task }}</td>
+                    <td>{{ item.testcase }}</td>
+                    <td>{{ item.errorCategory }}</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div>{{ 'artemisApp.programmingExercise.configureGrading.testAnalysis.totalItems' | artemisTranslate: { count: exampleArray.length } }}</div>
+</div>
