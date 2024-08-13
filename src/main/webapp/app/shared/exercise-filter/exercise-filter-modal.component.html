@@ -1,7 +1,7 @@
 <form name="exerciseFilterForm" (ngSubmit)="applyFilter()">
     <div class="modal-header">
         <h4 class="modal-title">
-            <fa-icon [icon]="faFilter" />&nbsp;
+            <fa-icon [icon]="faFilter" />
             <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.modalTitle"></span>
         </h4>
         <button type="button" class="btn-close" (click)="closeModal()"></button>
@@ -31,7 +31,6 @@
                     (click)="click$.next($any($event).target.value)"
                     #categoriesFilterSelection="ngbTypeahead"
                     (selectItem)="onSelectItem($event)"
-                    [inputFormatter]="inputFormatter"
                     [resultFormatter]="resultFormatter"
                     (keydown.enter)="onSelectItem($event)"
                     [disabled]="!selectableCategoryOptions.length"
@@ -76,11 +75,11 @@
         <!--            TODO: Implement Date Range Picker (follow up PR @FlorianGlombik)-->
         <!--        </div>-->
 
-        @if (difficultyFilter?.isDisplayed) {
+        @if (difficultyFilter?.isDisplayed && difficultyFilter) {
             <div class="form-group">
                 <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
                 <div id="difficulty-filter-selection">
-                    @for (difficultyFilter of difficultyFilter!.options; track difficultyFilter) {
+                    @for (difficultyFilter of difficultyFilter.options; track difficultyFilter) {
                         <div class="form-check form-check-inline no-left-margin-padding">
                             <label>
                                 <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
@@ -122,7 +121,7 @@
         }
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="clearFilter()">
+        <button type="button" class="btn btn-outline-secondary" (click)="clearFilter()">
             <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.clearFilter"></span>
         </button>
 

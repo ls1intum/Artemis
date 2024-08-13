@@ -24,6 +24,35 @@ const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOption[] = [
     { name: 'artemisApp.courseStatistics.file-upload', value: ExerciseType.FILE_UPLOAD, checked: false, icon: getIcon(ExerciseType.FILE_UPLOAD) },
 ];
 
+function getAvailableCategoriesAsFilterOptions(sidebarData?: SidebarData): ExerciseCategoryFilterOption[] | undefined {
+    const sidebarElementsWithExerciseCategory: SidebarCardElement[] | undefined = sidebarData?.ungroupedData?.filter(
+        (sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined,
+    );
+    const availableCategories: ExerciseCategory[] | undefined = sidebarElementsWithExerciseCategory?.flatMap(
+        (sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || [],
+    );
+
+    // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+    const availableCategoriesAsFilterOptions: ExerciseCategoryFilterOption[] | undefined = availableCategories?.map((category: ExerciseCategory) => ({
+        category: category,
+        searched: false,
+    }));
+    return availableCategoriesAsFilterOptions;
+}
+
+function getExerciseCategoryFilterOptionsWithoutDuplicates(exerciseCategoryFilterOptions?: ExerciseCategoryFilterOption[]): ExerciseCategoryFilterOption[] | undefined {
+    return exerciseCategoryFilterOptions?.reduce((unique: ExerciseCategoryFilterOption[], item: ExerciseCategoryFilterOption) => {
+        if (!unique.some((uniqueItem) => uniqueItem.category.equals(item.category))) {
+            unique.push(item);
+        }
+        return unique;
+    }, []);
+}
+
+function sortExerciseCategoryFilterOptionsSortedByName(exerciseCategoryFilterOptions?: ExerciseCategoryFilterOption[]): ExerciseCategoryFilterOption[] {
+    return exerciseCategoryFilterOptions?.sort((categoryFilterOptionsA, categoryFilterOptionB) => categoryFilterOptionsA.category.compare(categoryFilterOptionB.category)) ?? [];
+}
+
 /**
  * @param exerciseFilters that might already be defined for the course sidebar
  * @param sidebarData that contains the exercises of a course and their information
@@ -35,21 +64,12 @@ export function getExerciseCategoryFilterOptions(sidebarData?: SidebarData, exer
         return exerciseFilters?.categoryFilter;
     }
 
-    const categoryOptions =
-        sidebarData?.ungroupedData
-            ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
-            .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || [])
-            .map((category: ExerciseCategory) => ({ category: category, searched: false }))
-            .reduce((unique: ExerciseCategoryFilterOption[], item: ExerciseCategoryFilterOption) => {
-                if (!unique.some((uniqueItem) => uniqueItem.category.equals(item.category))) {
-                    unique.push(item);
-                }
-                return unique;
-            }, [])
-            .sort((categoryFilterOptionsA, categoryFilterOptionB) => categoryFilterOptionsA.category.compare(categoryFilterOptionB.category)) ?? [];
+    const availableCategoriesAsFilterOptions = getAvailableCategoriesAsFilterOptions(sidebarData);
+    const selectableCategoryFilterOptions = getExerciseCategoryFilterOptionsWithoutDuplicates(availableCategoriesAsFilterOptions);
+    const sortedCategoryFilterOptions = sortExerciseCategoryFilterOptionsSortedByName(selectableCategoryFilterOptions);
 
-    const isDisplayed = !!categoryOptions.length;
-    return { isDisplayed: isDisplayed, options: categoryOptions };
+    const isDisplayed = !!sortedCategoryFilterOptions.length;
+    return { isDisplayed: isDisplayed, options: selectableCategoryFilterOptions ?? [] };
 }
 
 /**

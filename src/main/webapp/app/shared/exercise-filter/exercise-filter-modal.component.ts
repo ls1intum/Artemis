@@ -21,6 +21,8 @@ import {
     RangeFilter,
 } from 'app/types/exercise-filter';
 import { satisfiesFilters } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
+import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -100,13 +102,16 @@ export class ExerciseFilterModalComponent implements OnInit {
             map((term) =>
                 term === ''
                     ? this.selectableCategoryOptions
-                    : this.selectableCategoryOptions.filter(
-                          (categoryFilter: ExerciseCategoryFilterOption) => categoryFilter.category.category!.toLowerCase().indexOf(term.toLowerCase()) > -1,
-                      ),
+                    : this.selectableCategoryOptions.filter((categoryFilter: ExerciseCategoryFilterOption) => {
+                          if (categoryFilter.category.category !== undefined) {
+                              return categoryFilter.category.category?.toLowerCase().indexOf(term.toLowerCase()) > -1;
+                          }
+
+                          return false;
+                      }),
             ),
         );
     };
-    inputFormatter = (exerciseCategory: ExerciseCategoryFilterOption) => exerciseCategory.category.category ?? '';
     resultFormatter = (exerciseCategory: ExerciseCategoryFilterOption) => exerciseCategory.category.category ?? '';
 
     onSelectItem(event: any) {
@@ -155,18 +160,45 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     private getAppliedFilterDetails(): FilterDetails {
         return {
-            searchedTypes: this.typeFilter?.options.filter((type) => type.checked).map((type) => type.value),
-            selectedCategories: this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category),
-            searchedDifficulties: this.difficultyFilter?.options.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value),
-            isScoreFilterApplied:
-                this.achievedScore?.filter.selectedMin !== this.achievedScore?.filter.generalMin ||
-                this.achievedScore?.filter.selectedMax !== this.achievedScore?.filter.generalMax,
-            isPointsFilterApplied:
-                this.achievablePoints?.filter.selectedMin !== this.achievablePoints?.filter.generalMin ||
-                this.achievablePoints?.filter.selectedMax !== this.achievablePoints?.filter.generalMax,
+            searchedTypes: this.getSearchedTypes(),
+            selectedCategories: this.getSelectedCategories(),
+            searchedDifficulties: this.getSearchedDifficulties(),
+            isScoreFilterApplied: this.isScoreFilterApplied(),
+            isPointsFilterApplied: this.isPointsFilterApplied(),
             achievedScore: this.achievedScore,
             achievablePoints: this.achievablePoints,
         };
+    }
+
+    private getSearchedTypes(): ExerciseType[] | undefined {
+        return this.typeFilter?.options.filter((type) => type.checked).map((type) => type.value);
+    }
+
+    private getSelectedCategories(): ExerciseCategory[] {
+        return this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
+    }
+
+    private getSearchedDifficulties(): DifficultyLevel[] | undefined {
+        return this.difficultyFilter?.options.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
+    }
+
+    private isFilterApplied(rangeFilter?: RangeFilter): boolean {
+        if (!rangeFilter?.filter) {
+            return false;
+        }
+
+        const filter = rangeFilter.filter;
+        const isExcludingMinValues = filter.selectedMin !== filter.generalMin;
+        const isExcludingMaxValues = filter.selectedMax !== filter.generalMax;
+        return isExcludingMinValues || isExcludingMaxValues;
+    }
+
+    private isScoreFilterApplied(): boolean {
+        return this.isFilterApplied(this.achievedScore);
+    }
+
+    private isPointsFilterApplied(): boolean {
+        return this.isFilterApplied(this.achievablePoints);
     }
 
     private isFilterActive(filterDetails: FilterDetails): boolean {
@@ -196,13 +228,8 @@ export class ExerciseFilterModalComponent implements OnInit {
         }
 
         const filter = rangeFilter.filter;
-
-        if (filter.selectedMin) {
-            filter.selectedMin = filter.generalMin;
-        }
-        if (filter.selectedMax) {
-            filter.selectedMax = filter.generalMax;
-        }
+        filter.selectedMin = filter.generalMin;
+        filter.selectedMax = filter.generalMax;
     }
 
     private updateCategoryOptionsStates() {

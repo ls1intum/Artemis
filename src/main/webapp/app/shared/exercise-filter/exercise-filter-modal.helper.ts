@@ -34,15 +34,16 @@ export function satisfiesCategoryFilter(sidebarElement: SidebarCardElement, sele
         return false;
     }
 
-    return sidebarElement.exercise.categories.some((category) => selectedCategories.some((selectedCategory) => selectedCategory.equals(category)));
+    // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+    const isAnyExerciseCategoryMatchingASelectedCategory = sidebarElement.exercise.categories.some((category) =>
+        selectedCategories.some((selectedCategory) => selectedCategory.equals(category)),
+    );
+    return isAnyExerciseCategoryMatchingASelectedCategory;
 }
 
 export function satisfiesScoreFilter(sidebarElement: SidebarCardElement, isFilterApplied: boolean, achievedScoreFilter?: RangeFilter): boolean {
     if (!isFilterApplied || !achievedScoreFilter) {
         return true;
-    }
-    if (!sidebarElement.studentParticipation) {
-        return achievedScoreFilter.filter.selectedMin === 0;
     }
 
     const latestResult = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true);
@@ -50,7 +51,10 @@ export function satisfiesScoreFilter(sidebarElement: SidebarCardElement, isFilte
         return achievedScoreFilter.filter.selectedMin === 0;
     }
 
-    return latestResult.score <= achievedScoreFilter.filter.selectedMax && latestResult.score >= achievedScoreFilter.filter.selectedMin;
+    const isScoreInSelectedMinRange = latestResult.score >= achievedScoreFilter.filter.selectedMin;
+    const isScoreInSelectedMaxRange = latestResult.score <= achievedScoreFilter.filter.selectedMax;
+
+    return isScoreInSelectedMinRange && isScoreInSelectedMaxRange;
 }
 
 export function satisfiesPointsFilter(sidebarElement: SidebarCardElement, isPointsFilterApplied: boolean, achievablePointsFilter?: RangeFilter): boolean {
@@ -63,7 +67,10 @@ export function satisfiesPointsFilter(sidebarElement: SidebarCardElement, isPoin
         return false;
     }
 
-    return sidebarElement.exercise.maxPoints <= achievablePointsFilter.filter.selectedMax && sidebarElement.exercise.maxPoints >= achievablePointsFilter.filter.selectedMin;
+    const isAchievablePointsInSelectedMinRange = sidebarElement.exercise.maxPoints >= achievablePointsFilter.filter.selectedMin;
+    const isAchievablePointsInSelectedMaxRange = sidebarElement.exercise.maxPoints <= achievablePointsFilter.filter.selectedMax;
+
+    return isAchievablePointsInSelectedMinRange && isAchievablePointsInSelectedMaxRange;
 }
 
 export function satisfiesFilters(sidebarElement: SidebarCardElement, filterDetails: FilterDetails) {
