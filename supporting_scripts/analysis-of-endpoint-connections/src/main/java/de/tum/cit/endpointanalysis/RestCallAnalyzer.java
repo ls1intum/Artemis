@@ -67,7 +67,7 @@ public class RestCallAnalyzer {
         RestCallAnalysis restCallsAndMatchingEndpoints = null;
 
         try {
-            restCallsAndMatchingEndpoints = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCallAnalysisResult.json"),
+            restCallsAndMatchingEndpoints = mapper.readValue(new File("restCallAnalysisResult.json"),
                 new TypeReference<RestCallAnalysis>() {
                 });
         }
