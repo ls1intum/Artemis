@@ -1,9 +1,9 @@
 @for (solutionEntry of sortedSolutionEntries; track solutionEntry) {
     <div>
-        <div class="d-flex flex-row mb-3">
-            <jhi-solution-entry class="flex-grow-1" [solutionEntry]="solutionEntry" [enableEditing]="enableEditing" (onRemoveEntry)="removeEntryFromCodeHint(solutionEntry.id!)" />
+        <div class="d-flex flex-column gap-1 mb-4">
+            <jhi-solution-entry [solutionEntry]="solutionEntry" [enableEditing]="enableEditing" (onRemoveEntry)="removeEntryFromCodeHint(solutionEntry.id!)" />
             @if (enableEditing) {
-                <div class="ps-2 flex-grow-0">
+                <div>
                     <button
                         jhiDeleteButton
                         [entityTitle]="solutionEntry.id!.toString()"

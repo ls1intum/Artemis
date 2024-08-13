@@ -19,4 +19,6 @@ public interface LearningObject {
     Long getId();
 
     Set<CourseCompetency> getCompetencies();
+
+    boolean isVisibleToStudents();
 }

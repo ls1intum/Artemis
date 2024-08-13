@@ -187,4 +187,25 @@ class TestResultXmlParserTest {
         assertThat(test.getName()).isEqualTo("CompileLinkedList");
         assertThat(test.getTestMessages().getFirst()).isEqualTo("Build for directory ../assignment/build failed. Returncode is 2.");
     }
+
+    @Test
+    void testEmptyTestMessage() throws IOException {
+        String input = """
+                <testsuites>
+                    <testsuite package="mwe-package" id="0" name="mwe-suite-name" timestamp="2024-08-09T12:34:56"
+                    hostname="localhost" tests="1" failures="1" errors="0" time="0">
+                        <properties></properties>
+                            <testcase name="mwe-name" classname="mwe-class" time="0">
+                                <failure type="empty"></failure>
+                        </testcase>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+        assertThat(failedTests).hasSize(1);
+        var test = failedTests.getFirst();
+        assertThat(test.getName()).isEqualTo("mwe-name");
+        assertThat(test.getTestMessages()).hasSize(1).contains("");
+    }
 }

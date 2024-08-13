@@ -309,7 +309,7 @@ public class ExamImportService {
 
                 case PROGRAMMING -> {
                     final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
-                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(exerciseToCopy.getId());
+                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(exerciseToCopy.getId());
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
                         yield Optional.empty();
                     }
