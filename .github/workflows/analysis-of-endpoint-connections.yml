@@ -33,8 +33,8 @@ jobs:
       - name: parse client sided REST-API calls
         run: |
           npm install
-          tsc -p supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/tsconfig.analysisOfEndpointConnections.json
-          node supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
+          tsc -p supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/tsconfig.analysisOfEndpointConnections.json
+          node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
 
       - name: parse server sided Endpoints
         run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runEndpointParser
