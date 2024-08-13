@@ -16,7 +16,7 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     @Input() step: number = DEFAULT_STEP;
 
     /** When extending the supported label symbols you might have to adjust the logic for */
-    @Input() labelSymbol: '%';
+    @Input() labelSymbol?: '%';
 
     @Input() selectedMinValue: number;
     @Input() selectedMaxValue: number;
@@ -107,7 +107,7 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
      */
     private getLabelMargin() {
         const BASE_LABEL_MARGIN = 0.4; // should be approximately the width of 1 symbol
-        const shiftToTheLeftDueToAddedSymbols = BASE_LABEL_MARGIN * this.labelSymbol.length;
+        const shiftToTheLeftDueToAddedSymbols = BASE_LABEL_MARGIN * (this.labelSymbol?.length ?? 0);
 
         return BASE_LABEL_MARGIN - shiftToTheLeftDueToAddedSymbols;
     }
