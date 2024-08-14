@@ -4,6 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import dayjs from 'dayjs/esm';
 import { faCopy, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -22,7 +23,10 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     readonly faTrash = faTrash;
     readonly faCopy = faCopy;
     private authStateSubscription: Subscription;
+    public expiryDate?: dayjs.Dayjs;
+
     wasCopied = false;
+    edit = false;
 
     private dialogErrorSource = new Subject<string>();
 
@@ -74,6 +78,10 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     }
 
     addNewVcsAccessToken() {
+        this.edit = true;
+    }
+
+    doVcs() {
         this.accountService.addNewVcsAccessToken().subscribe({
             next: (res) => {
                 if (this.currentUser) {

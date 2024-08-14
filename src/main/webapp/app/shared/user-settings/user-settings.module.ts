@@ -10,9 +10,10 @@ import { SshUserSettingsComponent } from 'app/shared/user-settings/ssh-settings/
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 @NgModule({
-    imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule, ArtemisSharedComponentModule, ClipboardModule],
+    imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule, ArtemisSharedComponentModule, ClipboardModule, FormDateTimePickerModule],
     declarations: [
         UserSettingsContainerComponent,
         AccountInformationComponent,

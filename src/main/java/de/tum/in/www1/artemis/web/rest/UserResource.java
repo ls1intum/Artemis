@@ -182,7 +182,7 @@ public class UserResource {
     }
 
     /**
-     * PUT users/sshpublickey : sets the ssh public key
+     * PUT users/ssh-public-key : sets the ssh public key
      *
      * @param sshPublicKey the ssh public key to set
      *
@@ -211,7 +211,7 @@ public class UserResource {
     }
 
     /**
-     * PUT users/sshpublickey : sets the ssh public key
+     * PUT users/ssh-public-key : sets the ssh public key
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
@@ -227,7 +227,7 @@ public class UserResource {
     }
 
     /**
-     * PUT users/vcsAccessToken : creates a vcsAccessToken for a user
+     * PUT users/vcs-access-token : creates a vcsAccessToken for a user
      *
      * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
@@ -249,7 +249,7 @@ public class UserResource {
     }
 
     /**
-     * DELETE users/vcsAccessToken : deletes the vcsAccessToken of a user
+     * DELETE users/vcs-access-token : deletes the vcsAccessToken of a user
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */

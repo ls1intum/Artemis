@@ -8,6 +8,7 @@
             <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.infoText"></span>
         </dt>
     </div>
+    @if (!edit) {
     <div class="list-group-item">
         <dt>
             @if (this.currentUser?.vcsAccessToken) {
@@ -67,6 +68,44 @@
     <div class="list-group-item">
         <dt>
             <div class="btn-group" role="group" aria-label="Actions">
+                <jhi-button
+                    class="d-flex"
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.SMALL"
+                    [icon]="faEdit"
+                    [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken'"
+                    (onClick)="addNewVcsAccessToken()"
+                />
+            </div>
+        </dt>
+    </div>
+    } } @if (edit) {
+    <div class="list-group-item">
+        <dt>
+            <h4>Add personal access token</h4>
+
+            <div class="row mb-3">
+                <div class="col-sm-6">
+                    <jhi-date-time-picker
+                        [shouldDisplayTimeZoneWarning]="false"
+                        labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
+                        [(ngModel)]="expiryDate"
+                        name="expiryDate"
+                        id="expiryDate"
+                    />
+                </div>
+            </div>
+
+            <div class="btn-group" role="group" aria-label="Actions">
+                <jhi-button
+                    class="d-flex"
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.SMALL"
+                    [icon]="faEdit"
+                    [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken'"
+                    (onClick)="addNewVcsAccessToken()"
+                    style="margin-right: 10px"
+                />
                 <jhi-button
                     class="d-flex"
                     [btnType]="ButtonType.PRIMARY"
