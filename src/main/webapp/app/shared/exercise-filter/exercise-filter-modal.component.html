@@ -59,7 +59,7 @@
                 <div id="exercise-type-filter-selection">
                     @for (typeFilter of typeFilter!.options; track typeFilter) {
                         <div class="form-check form-check-inline no-left-margin-padding">
-                            <label>
+                            <label class="pointer">
                                 <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
                                 <fa-icon [icon]="typeFilter.icon" class="ms-2" />
                                 <span [jhiTranslate]="typeFilter.name" class="ms-1"></span>
@@ -81,7 +81,7 @@
                 <div id="difficulty-filter-selection">
                     @for (difficultyFilter of difficultyFilter.options; track difficultyFilter) {
                         <div class="form-check form-check-inline no-left-margin-padding">
-                            <label>
+                            <label class="pointer">
                                 <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
                                 <span [jhiTranslate]="difficultyFilter.name" class="ms-1"></span>
                             </label>
