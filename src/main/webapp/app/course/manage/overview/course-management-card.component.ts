@@ -12,7 +12,6 @@ import {
     faAngleUp,
     faChartBar,
     faClipboard,
-    faComment,
     faComments,
     faFilePdf,
     faFlag,
@@ -38,9 +37,9 @@ export class CourseManagementCardComponent implements OnChanges {
     CachingStrategy = CachingStrategy;
     // TODO: can we merge the 3 courses here?
     @Input() course: Course;
-    @Input() courseStatistics: CourseManagementOverviewStatisticsDto;
-    @Input() courseWithExercises: Course;
-    @Input() courseWithUsers: Course;
+    @Input() courseStatistics?: CourseManagementOverviewStatisticsDto;
+    @Input() courseWithExercises: Course | undefined;
+    @Input() courseWithUsers: Course | undefined;
     @Input() isGuidedTour: boolean;
 
     statisticsPerExercise = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();
@@ -71,7 +70,6 @@ export class CourseManagementCardComponent implements OnChanges {
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faFilePdf = faFilePdf;
-    faComment = faComment;
     faComments = faComments;
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
@@ -96,7 +94,11 @@ export class CourseManagementCardComponent implements OnChanges {
         // Only sort one time once loaded
         if (!this.statisticsSorted && this.courseStatistics && this.courseStatistics.exerciseDTOS?.length > 0) {
             this.statisticsSorted = true;
-            this.courseStatistics.exerciseDTOS.forEach((dto) => (this.statisticsPerExercise[dto.exerciseId!] = dto));
+            this.courseStatistics.exerciseDTOS.forEach((dto) => {
+                if (dto.exerciseId !== undefined) {
+                    this.statisticsPerExercise.set(dto.exerciseId, dto);
+                }
+            });
         }
 
         // Only sort one time once loaded

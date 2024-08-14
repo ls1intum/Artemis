@@ -10,15 +10,18 @@ import { iconsAsHTML } from 'app/utils/icons.utils';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-
-const NAME_KEY = 'Name';
-const USERNAME_KEY = 'Username';
-const EMAIL_KEY = 'Email';
-const REGISTRATION_NUMBER_KEY = 'Registration Number';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 
 const cssClasses = {
     alreadyMember: 'already-member',
     newlyAddedMember: 'newly-added-member',
+};
+
+export type GroupUserInformationRow = {
+    [NAME_KEY]: string;
+    [USERNAME_KEY]: string;
+    [EMAIL_KEY]: string;
+    [REGISTRATION_NUMBER_KEY]: string;
 };
 
 @Component({
@@ -225,13 +228,13 @@ export class CourseGroupComponent implements OnDestroy {
      */
     exportUserInformation = () => {
         if (this.allGroupUsers.length > 0) {
-            const rows: any[] = this.allGroupUsers.map((user: User) => {
-                const data = {};
-                data[NAME_KEY] = user.name?.trim() ?? '';
-                data[USERNAME_KEY] = user.login?.trim() ?? '';
-                data[EMAIL_KEY] = user.email?.trim() ?? '';
-                data[REGISTRATION_NUMBER_KEY] = user.visibleRegistrationNumber?.trim() ?? '';
-                return data;
+            const rows: any[] = this.allGroupUsers.map((user: User): GroupUserInformationRow => {
+                return {
+                    [NAME_KEY]: user.name?.trim() ?? '',
+                    [USERNAME_KEY]: user.login?.trim() ?? '',
+                    [EMAIL_KEY]: user.email?.trim() ?? '',
+                    [REGISTRATION_NUMBER_KEY]: user.visibleRegistrationNumber?.trim() ?? '',
+                };
             });
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
             this.exportAsCsv(rows, keys);

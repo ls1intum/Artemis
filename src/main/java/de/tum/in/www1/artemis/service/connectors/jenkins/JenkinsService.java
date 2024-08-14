@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -67,11 +67,12 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final ProfileService profileService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public JenkinsService(JenkinsServer jenkinsServer, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate,
             JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
@@ -79,7 +80,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.aeolusTemplateService = aeolusTemplateService;
         this.profileService = profileService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
@@ -99,7 +100,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
         deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
 
-        if (exercise.getBuildPlanConfiguration() != null) {
+        if (exercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             resetCustomBuildPlanToTemplate(exercise);
         }
 
@@ -118,16 +119,19 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
         Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(exercise);
         if (windfile != null) {
-            exercise.setBuildPlanConfiguration(mapper.writeValueAsString(windfile));
+            exercise.getBuildConfig().setBuildPlanConfiguration(mapper.writeValueAsString(windfile));
         }
         if (profileService.isAeolusActive()) {
-            programmingExerciseRepository.save(exercise);
+            programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         }
     }
 
     @Override
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
+        // Make sure the build config is loaded
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(sourceExercise);
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(targetExercise);
         return jenkinsBuildPlanService.copyBuildPlan(sourceExercise, sourcePlanName, targetExercise, targetPlanName);
     }
 

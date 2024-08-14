@@ -21,6 +21,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -170,8 +171,9 @@ public class AeolusTemplateService {
      */
     public Windfile getDefaultWindfileFor(ProgrammingExercise exercise) {
         try {
+            ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             return getWindfileFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                    exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
+                    buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
             log.info("No windfile for the settings of exercise {}", exercise.getId(), e);

@@ -15,6 +15,8 @@ import { Exercise } from 'app/entities/exercise.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@ls1intum/apollon';
 
+type DuplicateType = keyof Pick<ExamExerciseImportComponent, 'exercisesWithDuplicatedTitles' | 'exercisesWithDuplicatedShortNames'>;
+
 describe('Exam Exercise Import Component', () => {
     let component: ExamExerciseImportComponent;
     let fixture: ComponentFixture<ExamExerciseImportComponent>;
@@ -339,7 +341,7 @@ describe('Exam Exercise Import Component', () => {
             expect(programmingExercise3.title).toBe('');
         });
 
-        it.each(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
+        it.each<DuplicateType>(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
             'should check for programming exercise duplicated titles and short names when entering input',
             (attrToCheck) => {
                 const duplicatesToCheck = component[attrToCheck];
@@ -362,7 +364,7 @@ describe('Exam Exercise Import Component', () => {
             },
         );
 
-        it.each([
+        it.each<[DuplicateType, boolean]>([
             ['exercisesWithDuplicatedShortNames', false],
             ['exercisesWithDuplicatedShortNames', true],
             ['exercisesWithDuplicatedTitles', false],
@@ -388,7 +390,7 @@ describe('Exam Exercise Import Component', () => {
             expect(duplicatesToCheck.size).toBe(additionalDuplicate ? 2 : 0);
         });
 
-        it.each(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
+        it.each<DuplicateType>(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
             'should check for programming exercise duplicated titles and short names when unselecting exercises',
             (attrToCheck) => {
                 const duplicatesToCheck = component[attrToCheck];
@@ -413,7 +415,7 @@ describe('Exam Exercise Import Component', () => {
             },
         );
 
-        it.each(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])('should ignore unselected exercises', (attrToCheck) => {
+        it.each<DuplicateType>(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])('should ignore unselected exercises', (attrToCheck) => {
             const duplicatesToCheck = component[attrToCheck];
             const duplicatedTitles = attrToCheck === 'exercisesWithDuplicatedTitles';
 
