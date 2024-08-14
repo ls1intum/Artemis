@@ -34,8 +34,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lecture: Lecture;
     isLoading = false;
     updateOrderSubject: Subject<any>;
+    viewButtonAvailable = new Map<number, boolean>();
+
     updateOrderSubjectSubscription: Subscription;
     navigationEndSubscription: Subscription;
+
     readonly LectureUnitType = LectureUnitType;
     readonly ActionType = ActionType;
     private dialogErrorSource = new Subject<string>();
@@ -105,6 +108,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     this.lecture = lecture;
                     if (lecture?.lectureUnits) {
                         this.lectureUnits = lecture?.lectureUnits;
+                        this.lectureUnits.forEach((lectureUnit) => {
+                            this.viewButtonAvailable.set(lectureUnit.id!, this.isViewButtonAvailable(lectureUnit));
+                        });
                     } else {
                         this.lectureUnits = [];
                     }
@@ -187,11 +193,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    viewButtonAvailable(lectureUnit: LectureUnit) {
+    isViewButtonAvailable(lectureUnit: LectureUnit) {
         switch (lectureUnit!.type) {
             case LectureUnitType.ATTACHMENT:
                 const attachmentUnit = <AttachmentUnit>lectureUnit;
-                return attachmentUnit.attachment?.link?.endsWith('.pdf');
+                return attachmentUnit.attachment?.link?.endsWith('.pdf') ?? false;
             default:
                 return false;
         }

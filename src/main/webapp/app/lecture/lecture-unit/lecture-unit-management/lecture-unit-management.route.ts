@@ -19,6 +19,7 @@ import { AttachmentUnitsComponent } from 'app/lecture/lecture-unit/lecture-unit-
 import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 
 @Injectable({ providedIn: 'root' })
 export class AttachmentUnitResolve implements Resolve<AttachmentUnit> {
@@ -114,6 +115,7 @@ export const lectureUnitRoute: Routes = [
                 path: 'attachment-units/:attachmentUnitId/view',
                 component: PdfPreviewComponent,
                 resolve: {
+                    course: CourseManagementResolve,
                     attachmentUnit: AttachmentUnitResolve,
                 },
             },

@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
@@ -70,6 +69,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -77,6 +77,7 @@ import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.NotFoundAlertException;
 
 /**
  * REST controller for managing Files.
@@ -374,20 +375,20 @@ public class FileResource {
     }
 
     /**
-     * GET /attachments/{attachmentId}/file : Returns the file associated with the
+     * GET /files/courses/{courseId}/attachments/{attachmentId} : Returns the file associated with the
      * given attachment ID as a downloadable resource
      *
+     * @param courseId     The ID of the course that the Attachment belongs to
      * @param attachmentId the ID of the attachment to retrieve
      * @return ResponseEntity containing the file as a resource
      */
-    @GetMapping("attachments/{attachmentId}/file")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long attachmentId) {
+    @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found with id: " + attachmentId));
+                .orElseThrow(() -> new NotFoundAlertException(HttpStatus.NOT_FOUND, "artemisApp.attachment.pdfPreview.attachmentIDError"));
 
-        Lecture lecture = attachment.getLecture();
-        Course course = lecture.getCourse();
+        Course course = courseRepository.findByIdElseThrow(courseId);
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
@@ -457,15 +458,15 @@ public class FileResource {
      * @param attachmentUnitId the ID of the attachment to retrieve
      * @return ResponseEntity containing the file as a resource
      */
-    @GetMapping("files/attachments/attachment-units/{attachmentUnitId}/file")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long attachmentUnitId) {
+    @GetMapping("files/courses/{courseId}/attachments/attachment-units/{attachmentUnitId}")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
         log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findById(attachmentUnitId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment unit not found with id: " + attachmentUnitId));
+                .orElseThrow(() -> new NotFoundAlertException(HttpStatus.NOT_FOUND, "Attachment unit not found with id: " + attachmentUnitId));
 
         Attachment attachment = attachmentUnit.getAttachment();
-        Course course = attachmentUnit.getLecture().getCourse();
+        Course course = courseRepository.findByIdElseThrow(courseId);
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 

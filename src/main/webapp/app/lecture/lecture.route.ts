@@ -119,6 +119,7 @@ export const lectureRoute: Routes = [
                                         component: PdfPreviewComponent,
                                         resolve: {
                                             attachment: AttachmentResolve,
+                                            course: CourseManagementResolve,
                                         },
                                     },
                                 ],

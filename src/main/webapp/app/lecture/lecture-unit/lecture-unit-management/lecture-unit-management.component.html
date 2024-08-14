@@ -71,7 +71,7 @@
                         @if (lecture.course?.id && showCompetencies) {
                             <jhi-competencies-popover [courseId]="lecture.course!.id!" [competencies]="lectureUnit.competencies || []" [navigateTo]="'competencyManagement'" />
                         }
-                        @if (viewButtonAvailable(lectureUnit)) {
+                        @if (viewButtonAvailable.get(lectureUnit.id!)) {
                             <a
                                 type="button"
                                 class="btn btn-primary btn-sm flex-grow-1"

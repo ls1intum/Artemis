@@ -31,6 +31,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     notificationText?: string;
     erroredFile?: File;
     errorMessage?: string;
+    viewButtonAvailable = new Map<number, boolean>();
 
     // A human-readable list of allowed file extensions
     readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
@@ -76,11 +77,18 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     loadAttachments(): void {
         this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
             this.attachments = attachmentsResponse.body!;
+            this.attachments.forEach((attachment) => {
+                this.viewButtonAvailable.set(attachment.id!, this.isViewButtonAvailable(attachment.link!));
+            });
         });
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+    }
+
+    isViewButtonAvailable(attachmentLink: string): boolean {
+        return attachmentLink.endsWith('.pdf') ?? false;
     }
 
     get isSubmitPossible(): boolean {
@@ -214,9 +222,5 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         if (this.attachmentToBeCreated!.name == undefined || this.attachmentToBeCreated!.name == '') {
             this.attachmentToBeCreated!.name = this.attachmentFile.name.replace(/\.[^/.]+$/, '');
         }
-    }
-
-    viewButtonAvailable(attachment: Attachment): boolean {
-        return attachment.link!.endsWith('.pdf') ?? false;
     }
 }

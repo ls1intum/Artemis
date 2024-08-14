@@ -9,6 +9,7 @@ import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-man
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { Subscription } from 'rxjs';
+import { Course } from 'app/entities/course.model';
 
 enum NavigationDirection {
     Next = 'next',
@@ -23,6 +24,9 @@ enum NavigationDirection {
 export class PdfPreviewComponent implements OnInit, OnDestroy {
     @ViewChild('pdfContainer', { static: true }) pdfContainer: ElementRef<HTMLDivElement>;
     @ViewChild('enlargedCanvas') enlargedCanvas: ElementRef<HTMLCanvasElement>;
+
+    readonly DEFAULT_SLIDE_WIDTH = 250;
+    course?: Course;
     attachment?: Attachment;
     attachmentUnit?: AttachmentUnit;
     isEnlargedView: boolean = false;
@@ -42,26 +46,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.route.data.subscribe((data) => {
+            this.course = data.course;
             if ('attachment' in data) {
                 this.attachment = data.attachment;
-                if (this.attachment?.id) {
-                    this.attachmentSub = this.attachmentService.getAttachmentFile(this.attachment.id).subscribe({
-                        next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
-                        error: (error) => onError(this.alertService, error),
-                    });
-                } else {
-                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentIDError');
-                }
+                this.attachmentSub = this.attachmentService.getAttachmentFile(this.course?.id!, this.attachment?.id!).subscribe({
+                    next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
+                });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit = data.attachmentUnit;
-                if (this.attachmentUnit?.id) {
-                    this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.attachmentUnit.id).subscribe({
-                        next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
-                        error: (error) => onError(this.alertService, error),
-                    });
-                } else {
-                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUnitIDError');
-                }
+                this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course?.id!, this.attachmentUnit?.id!).subscribe({
+                    next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
+                });
             }
         });
     }
@@ -130,9 +125,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     private createCanvas(viewport: PDFJS.PageViewport): HTMLCanvasElement {
         const canvas = document.createElement('canvas');
+        /* Canvas styling is predefined because Canvas tags do not support CSS classes
+         * as they are not HTML elements but rather a bitmap drawing surface.
+         * See: https://stackoverflow.com/a/29675448
+         * */
         canvas.height = viewport.height;
         canvas.width = viewport.width;
-        const fixedWidth = 250;
+        const fixedWidth = this.DEFAULT_SLIDE_WIDTH;
         const scaleFactor = fixedWidth / viewport.width;
         canvas.style.width = `${fixedWidth}px`;
         canvas.style.height = `${viewport.height * scaleFactor}px`;
@@ -147,6 +146,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     private createContainer(canvas: HTMLCanvasElement, pageIndex: number): HTMLDivElement {
         const container = document.createElement('div');
+        /* Dynamically created elements are not detected by DOM, that is why we need to set the styles manually.
+         * See: https://stackoverflow.com/a/70911189
+         */
         container.classList.add('pdf-page-container');
         container.style.cssText = `position: relative; display: inline-block; width: ${canvas.style.width}; height: ${canvas.style.height}; margin: 20px; box-shadow: 0 2px 6px var(--pdf-preview-canvas-shadow);`;
 
@@ -169,7 +171,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     private createOverlay(pageIndex: number): HTMLDivElement {
         const overlay = document.createElement('div');
         overlay.innerHTML = `<span>${pageIndex}</span>`;
-        overlay.style.cssText = `position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: white; background-color: rgba(0, 0, 0, 0.4); z-index: 1; transition: opacity 0.3s ease; opacity: 0; cursor: pointer;`;
+        /* Dynamically created elements are not detected by DOM, that is why we need to set the styles manually.
+         * See: https://stackoverflow.com/a/70911189
+         */
+        overlay.style.cssText = `position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: white; z-index: 1; transition: opacity 0.3s ease; opacity: 0; cursor: pointer; background-color: var(--pdf-preview-container-overlay)`;
         return overlay;
     }
 
@@ -212,6 +217,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 const context = enlargedCanvas.getContext('2d');
                 if (!context) return;
 
+                /* Canvas styling is predefined because Canvas tags do not support CSS classes
+                 * as they are not HTML elements but rather a bitmap drawing surface.
+                 * See: https://stackoverflow.com/a/29675448
+                 * */
                 const containerWidth = this.pdfContainer.nativeElement.clientWidth;
                 const containerHeight = this.pdfContainer.nativeElement.clientHeight;
 
