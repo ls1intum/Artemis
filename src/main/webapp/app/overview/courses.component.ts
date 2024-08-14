@@ -10,7 +10,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { Router } from '@angular/router';
-import { faArrowDownAZ, faArrowUpAZ, faPenAlt, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDownAZ, faArrowUpAZ, faFilter, faPenAlt, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { sortCourses, sortCoursesDescending } from 'app/shared/util/course.util';
@@ -39,6 +39,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     faSearch = faSearch;
     faArrowDownAZ = faArrowDownAZ;
     faArrowUpAZ = faArrowUpAZ;
+    faFilter = faFilter;
 
     coursesLoaded = false;
     isSortAscending = true;
@@ -81,7 +82,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
                         courses.push(courseDto.course);
                     });
                     this.courses = sortCourses(courses);
-                    this.courses.forEach((a) => console.log(a.title!));
                     this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
 
                     this.nextRelevantExams = res.body.activeExams ?? [];
