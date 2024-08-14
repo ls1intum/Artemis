@@ -4,7 +4,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingExerciseBuildConfig, copyBuildConfigFromExerciseJson } from 'app/entities/programming-exercise.model';
 import JSZip from 'jszip';
 
 @Component({
@@ -49,6 +49,10 @@ export class ExerciseImportFromFileComponent implements OnInit {
         switch (this.exerciseType) {
             case ExerciseType.PROGRAMMING:
                 this.exercise = JSON.parse(exerciseDetails as string) as ProgrammingExercise;
+                // This is needed to make sure that old exported programming exercises can be imported
+                if (!(this.exercise as ProgrammingExercise).buildConfig) {
+                    (this.exercise as ProgrammingExercise).buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
+                }
                 break;
             default:
                 this.alertService.error('artemisApp.exercise.importFromFile.notSupportedExerciseType', {
