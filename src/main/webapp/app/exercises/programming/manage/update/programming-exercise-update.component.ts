@@ -1072,7 +1072,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig.timeoutSeconds < 0) {
             validationErrorReasons.push({
-                translateKey: 'artemisApp.programmingExercise.timeoutSeconds.alert',
+                translateKey: 'artemisApp.programmingExercise.timeout.alert',
                 translateValues: {},
             });
         }
