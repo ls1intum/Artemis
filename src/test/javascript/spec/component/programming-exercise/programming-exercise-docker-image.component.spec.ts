@@ -1,22 +1,22 @@
 import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
+import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
 import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
 
 describe('ProgrammingExercise Docker Image', () => {
-    let comp: ProgrammingExerciseDockerImageComponent;
+    let comp: ProgrammingExerciseBuildConfigurationComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, ArtemisProgrammingExerciseUpdateModule],
-            declarations: [ProgrammingExerciseDockerImageComponent],
+            declarations: [ProgrammingExerciseBuildConfigurationComponent],
             providers: [],
         })
             .compileComponents()
             .then();
 
-        const fixture = TestBed.createComponent(ProgrammingExerciseDockerImageComponent);
+        const fixture = TestBed.createComponent(ProgrammingExerciseBuildConfigurationComponent);
         comp = fixture.componentInstance;
 
         comp.dockerImage = 'testImage';

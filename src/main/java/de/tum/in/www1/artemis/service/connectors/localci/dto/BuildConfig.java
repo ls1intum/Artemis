@@ -25,6 +25,12 @@ public record BuildConfig(String buildScript, String dockerImage, String commitH
         return dockerImage.trim();
     }
 
+    /**
+     * Get the working directory for the build. If the checkout path is not valid, the default working directory is returned.
+     *
+     * @param checkoutPath the checkout path
+     * @return the working directory
+     */
     public static String getWorkingDirectory(String checkoutPath) {
         if (checkoutPath != null && !checkoutPath.isBlank() && isValidUnixPath(checkoutPath)) {
             return checkoutPath;
