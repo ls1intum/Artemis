@@ -13,4 +13,9 @@ public class LocalVCAuthException extends LocalVCOperationException {
     public LocalVCAuthException(Throwable cause) {
         super(cause);
     }
+
+    public LocalVCAuthException(String message) {
+        super(message);
+    }
+
 }
