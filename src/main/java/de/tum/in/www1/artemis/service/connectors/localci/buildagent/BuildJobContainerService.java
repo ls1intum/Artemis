@@ -83,9 +83,10 @@ public class BuildJobContainerService {
     /**
      * Configure a container with the Docker image, the container name, optional proxy config variables, and set the command that runs when the container starts.
      *
-     * @param containerName the name of the container to be created
-     * @param image         the Docker image to use for the container
-     * @param buildScript   the build script to be executed in the container
+     * @param containerName    the name of the container to be created
+     * @param image            the Docker image to use for the container
+     * @param buildScript      the build script to be executed in the container
+     * @param workingDirectory the working directory in the container where the script is located
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, String workingDirectory) {
@@ -119,10 +120,10 @@ public class BuildJobContainerService {
     /**
      * Run the script in the container and wait for it to finish before returning.
      *
-     * @param containerId the id of the container in which the script should be run
-     * @param buildJobId  the id of the build job that is currently being executed
+     * @param containerId      the id of the container in which the script should be run
+     * @param buildJobId       the id of the build job that is currently being executed
+     * @param workingDirectory the working directory in the container where the script is located
      */
-
     public void runScriptInContainer(String containerId, String buildJobId, String workingDirectory) {
         log.info("Started running the build script for build job in container with id {}", containerId);
         // The "sh script.sh" execution command specified here is run inside the container as an additional process. This command runs in the background, independent of the
@@ -167,8 +168,10 @@ public class BuildJobContainerService {
      * In case the container is not responding, we can force remove it using {@link DockerClient#removeContainerCmd(String)}.
      * This takes significantly longer than using the approach with the file because of increased overhead for the removeContainerCmd() method.
      *
-     * @param containerName The name of the container to stop. Cannot use the container ID, because this method might have to be called from the main thread (not the thread started
-     *                          for the build job) where the container ID is not available.
+     * @param containerName    The name of the container to stop. Cannot use the container ID, because this method might have to be called from the main thread (not the thread
+     *                             started
+     *                             for the build job) where the container ID is not available.
+     * @param workingDirectory The working directory in the container where the file "stop_container.txt" should be created.
      */
     public void stopContainer(String containerName, String workingDirectory) {
         // List all containers, including the non-running ones.
@@ -274,6 +277,7 @@ public class BuildJobContainerService {
      * @param auxiliaryRepositoriesPaths             An array of paths for auxiliary repositories to be included in the build process.
      * @param auxiliaryRepositoryCheckoutDirectories An array of directory names within the container where each auxiliary repository should be checked out.
      * @param programmingLanguage                    The programming language of the repositories, which influences directory naming conventions.
+     * @param workingDirectory                       The working directory within the container where the repositories and scripts should be placed.
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
             Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, String workingDirectory) {

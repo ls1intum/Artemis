@@ -29,6 +29,7 @@ public class LocalCIBuildConfigurationService {
      * The build script is used to build the programming exercise in a Docker container.
      *
      * @param programmingExercise the programming exercise for which the build script should be created
+     * @param workingDirectory    the working directory in which the build script should be executed
      * @return the build script
      */
     public String createBuildScript(ProgrammingExercise programmingExercise, String workingDirectory) {
