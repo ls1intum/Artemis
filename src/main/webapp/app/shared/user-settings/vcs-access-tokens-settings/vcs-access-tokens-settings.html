@@ -37,6 +37,7 @@
                                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                                 [class.btn-success]="wasCopied"
                                 class="btn btn-secondary btn-sm me-2"
+                                id="copy-token-button"
                                 type="button"
                             >
                                 <fa-icon [icon]="faCopy"></fa-icon>
@@ -46,6 +47,7 @@
                         <td>
                             <button
                                 class="btn btn-md flex-grow-1 d-flex align-items-center"
+                                id="delete-vcs-token-button"
                                 jhiDeleteButton
                                 [renderButtonText]="false"
                                 (delete)="deleteVcsAccessToken()"
@@ -70,6 +72,7 @@
             <div class="btn-group" role="group" aria-label="Actions">
                 <jhi-button
                     class="d-flex"
+                    id="add-new-token-button"
                     [btnType]="ButtonType.PRIMARY"
                     [btnSize]="ButtonSize.SMALL"
                     [icon]="faEdit"
@@ -101,6 +104,7 @@
             <div class="btn-group" role="group" aria-label="Actions">
                 <jhi-button
                     class="d-flex"
+                    id="create-vcs-token-button"
                     [btnType]="ButtonType.PRIMARY"
                     [btnSize]="ButtonSize.SMALL"
                     [disabled]="!validExpiryDate"
@@ -111,6 +115,7 @@
                 />
                 <jhi-button
                     class="d-flex"
+                    id="cancel-vcs-token-creation-button"
                     [btnType]="ButtonType.SECONDARY"
                     [btnSize]="ButtonSize.SMALL"
                     [icon]="faBan"
