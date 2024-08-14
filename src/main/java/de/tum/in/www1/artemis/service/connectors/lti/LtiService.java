@@ -198,13 +198,15 @@ public class LtiService {
         User user = userRepository.getUser();
 
         if (!user.getActivated()) {
-            log.info("User is not activated. Adding JWT cookie for activation.");
-            log.info("Add JWT cookie so the user will be logged in");
-            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
-            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+            log.info("User is not activated. Adding initialize parameter to query.");
 
             uriComponentsBuilder.queryParam("initialize", "");
         }
+
+        log.info("Add/Update JWT cookie so the user will be logged in");
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
         // TODO: Decide what to do with this logout
         // else {
         // log.info("User is activated. Adding JWT cookie for logout.");
