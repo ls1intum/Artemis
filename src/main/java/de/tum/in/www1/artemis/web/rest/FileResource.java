@@ -463,7 +463,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
         log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findById(attachmentUnitId)
-                .orElseThrow(() -> new NotFoundAlertException(HttpStatus.NOT_FOUND, "Attachment unit not found with id: " + attachmentUnitId));
+                .orElseThrow(() -> new NotFoundAlertException(HttpStatus.NOT_FOUND, "artemisApp.attachment.pdfPreview.attachmentUnitIDError"));
 
         Attachment attachment = attachmentUnit.getAttachment();
         Course course = courseRepository.findByIdElseThrow(courseId);
