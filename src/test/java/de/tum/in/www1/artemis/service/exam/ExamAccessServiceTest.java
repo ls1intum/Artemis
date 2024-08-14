@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -366,7 +365,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_studentExamPresent() {
         StudentExam studentExam = examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId());
-        Assertions.assertEquals(studentExam, studentExam1);
+        assertThat(studentExam.equals(studentExam1)).isEqualTo(true);
     }
 
     @Test
