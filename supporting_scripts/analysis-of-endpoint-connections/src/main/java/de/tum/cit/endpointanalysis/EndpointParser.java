@@ -67,96 +67,156 @@ public class EndpointParser {
      */
     private static void parseServerEndpoints(String[] filePaths) {
         List<EndpointClassInformation> endpointClasses = new ArrayList<>();
-
         final Set<String> httpMethodClasses = Set.of(GetMapping.class.getSimpleName(), PostMapping.class.getSimpleName(), PutMapping.class.getSimpleName(),
                 DeleteMapping.class.getSimpleName(), PatchMapping.class.getSimpleName(), RequestMapping.class.getSimpleName());
-
         List<String> filesFailedToParse = new ArrayList<>();
 
         for (String filePath : filePaths) {
+            CompilationUnit compilationUnit;
             try {
-                CompilationUnit compilationUnit = StaticJavaParser.parse(new File(filePath));
-                List<ClassOrInterfaceDeclaration> classes = compilationUnit.findAll(ClassOrInterfaceDeclaration.class);
-                for (ClassOrInterfaceDeclaration javaClass : classes) {
-                    List<EndpointInformation> endpoints = new ArrayList<>();
-                    final String[] classRequestMapping = { "" };
-                    Optional<AnnotationExpr> requestMappingOptional = javaClass.getAnnotations().stream()
-                            .filter(annotation -> annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())).findFirst();
-
-                    boolean hasEndpoint = javaClass.getMethods().stream().flatMap(method -> method.getAnnotations().stream())
-                            .anyMatch(annotation -> httpMethodClasses.contains(annotation.getNameAsString()));
-
-                    if (hasEndpoint) {
-                        requestMappingOptional.ifPresent(annotation -> {
-                            if (annotation instanceof SingleMemberAnnotationExpr) {
-                                SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
-                                classRequestMapping[0] = single.getMemberValue().toString();
-                            }
-                            else if (annotation instanceof NormalAnnotationExpr) {
-                                NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
-                                Optional<MemberValuePair> pathOptional = normal.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).findFirst();
-                                pathOptional.ifPresent(pair -> classRequestMapping[0] = pair.getValue().toString());
-                            }
-                        });
-                    }
-
-                    for (MethodDeclaration method : javaClass.getMethods()) {
-                        for (AnnotationExpr annotation : method.getAnnotations()) {
-                            if (httpMethodClasses.contains(annotation.getNameAsString())) {
-                                final List<String> annotationPathValue = new ArrayList<>();
-
-                                if (annotation instanceof SingleMemberAnnotationExpr) {
-                                    SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
-
-                                    Expression memberValue = single.getMemberValue();
-                                    if (memberValue instanceof ArrayInitializerExpr) {
-                                        ArrayInitializerExpr arrayExpr = (ArrayInitializerExpr) memberValue;
-                                        annotationPathValue.addAll(arrayExpr.getValues().stream().map(Expression::toString).toList());
-                                    }
-                                    else {
-                                        annotationPathValue.add(single.getMemberValue().toString());
-                                    }
-                                }
-                                else if (annotation instanceof NormalAnnotationExpr) {
-                                    NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
-                                    Optional<MemberValuePair> annotationPathOptional = normal.getPairs().stream().filter(pair -> "value".equals(pair.getNameAsString()))
-                                            .findFirst();
-                                    annotationPathOptional.ifPresent(pair -> {
-                                        annotationPathValue.add(pair.getValue().toString());
-                                    });
-                                }
-
-                                List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.toString()).toList();
-
-                                for (String path : annotationPathValue) {
-                                    EndpointInformation endpointInformation = new EndpointInformation(classRequestMapping[0], method.getNameAsString(),
-                                            annotation.getNameAsString(), path, javaClass.getNameAsString(), method.getBegin().get().line, annotations);
-                                    endpoints.add(endpointInformation);
-                                }
-                            }
-                        }
-                    }
-                    if (!endpoints.isEmpty()) {
-                        endpointClasses.add(new EndpointClassInformation(javaClass.getNameAsString(),
-                                requestMappingOptional.isPresent() ? requestMappingOptional.get().toString() : "", endpoints));
-                    }
-                }
+                compilationUnit = StaticJavaParser.parse(new File(filePath));
             }
             catch (Exception e) {
                 filesFailedToParse.add(filePath);
+                continue;
+            }
+
+            List<ClassOrInterfaceDeclaration> classes = compilationUnit.findAll(ClassOrInterfaceDeclaration.class);
+            for (ClassOrInterfaceDeclaration javaClass : classes) {
+                List<EndpointInformation> endpoints = new ArrayList<>();
+                final String classRequestMappingString = extractClassRequestMapping(javaClass, httpMethodClasses);
+
+                endpoints.addAll(extractAnnotationPathValues(javaClass, httpMethodClasses, classRequestMappingString));
+
+                if (!endpoints.isEmpty()) {
+                    endpointClasses.add(new EndpointClassInformation(javaClass.getNameAsString(), classRequestMappingString, endpoints));
+                }
+            }
+
+        }
+
+        printFilesFailedToParse(filesFailedToParse);
+
+        writeEndpointsToFile(endpointClasses);
+    }
+
+    /**
+     * Extracts endpoint information from the methods of a given class declaration.
+     *
+     * This method iterates over the methods of the provided class and their annotations.
+     * If an annotation matches one of the specified HTTP method annotations, it extracts
+     * the path values from the annotation and creates EndpointInformation objects for each path.
+     *
+     * @param javaClass                 the class declaration to extract endpoint information from
+     * @param httpMethodClasses         a set of HTTP method annotation class names
+     * @param classRequestMappingString the class-level request mapping string
+     * @return a list of EndpointInformation objects representing the extracted endpoint information
+     */
+    private static List<EndpointInformation> extractAnnotationPathValues(ClassOrInterfaceDeclaration javaClass, Set<String> httpMethodClasses, String classRequestMappingString) {
+        List<EndpointInformation> endpointPaths = new ArrayList<>();
+        for (MethodDeclaration method : javaClass.getMethods()) {
+            for (AnnotationExpr annotation : method.getAnnotations()) {
+                if (httpMethodClasses.contains(annotation.getNameAsString())) {
+                    final List<String> annotationPathValue = new ArrayList<>();
+
+                    if (annotation instanceof SingleMemberAnnotationExpr) {
+                        SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
+
+                        Expression memberValue = single.getMemberValue();
+                        if (memberValue instanceof ArrayInitializerExpr) {
+                            ArrayInitializerExpr arrayExpr = (ArrayInitializerExpr) memberValue;
+                            annotationPathValue.addAll(arrayExpr.getValues().stream().map(Expression::toString).toList());
+                        }
+                        else {
+                            annotationPathValue.add(single.getMemberValue().toString());
+                        }
+                    }
+                    else if (annotation instanceof NormalAnnotationExpr) {
+                        NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
+                        Optional<MemberValuePair> annotationPathOptional = normal.getPairs().stream().filter(pair -> "value".equals(pair.getNameAsString())).findFirst();
+                        annotationPathOptional.ifPresent(pair -> {
+                            annotationPathValue.add(pair.getValue().toString());
+                        });
+                    }
+
+                    List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.toString()).toList();
+
+                    for (String path : annotationPathValue) {
+                        EndpointInformation endpointInformation = new EndpointInformation(classRequestMappingString, method.getNameAsString(), annotation.getNameAsString(), path,
+                                javaClass.getNameAsString(), method.getBegin().get().line, annotations);
+                        endpointPaths.add(endpointInformation);
+                    }
+                }
             }
         }
 
+        return endpointPaths;
+    }
+
+    /**
+     * Extracts the class-level request mapping from a given class declaration.
+     *
+     * This method scans the annotations of the provided class to find a `RequestMapping` annotation.
+     * It then checks if the class contains any methods annotated with HTTP method annotations.
+     * If such methods are found, it extracts the value of the `RequestMapping` annotation.
+     *
+     * @param javaClass         the class declaration to extract the request mapping from
+     * @param httpMethodClasses a set of HTTP method annotation class names
+     * @return the extracted request mapping value, or an empty string if no request mapping is found or the class has no HTTP method annotations
+     */
+    private static String extractClassRequestMapping(ClassOrInterfaceDeclaration javaClass, Set<String> httpMethodClasses) {
+        boolean hasEndpoint = javaClass.getMethods().stream().flatMap(method -> method.getAnnotations().stream())
+                .anyMatch(annotation -> httpMethodClasses.contains(annotation.getNameAsString()));
+
+        if (!hasEndpoint) {
+            return "";
+        }
+
+        String classRequestMapping = javaClass.getAnnotations().stream().filter(annotation -> annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())).findFirst()
+                .map(annotation -> {
+                    if (annotation instanceof SingleMemberAnnotationExpr) {
+                        return ((SingleMemberAnnotationExpr) annotation).getMemberValue().toString();
+                    }
+                    else if (annotation instanceof NormalAnnotationExpr) {
+                        return ((NormalAnnotationExpr) annotation).getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).map(pair -> pair.getValue().toString())
+                                .findFirst().orElse("");
+                    }
+                    return "";
+                }).orElse("");
+
+        return classRequestMapping;
+    }
+
+    /**
+     * Prints the list of files that failed to parse.
+     *
+     * This method checks if the provided list of file paths is not empty.
+     * If it is not empty, it prints a message indicating that some files failed to parse,
+     * followed by the paths of the files that failed.
+     *
+     * @param filesFailedToParse the list of file paths that failed to parse
+     */
+    private static void printFilesFailedToParse(List<String> filesFailedToParse) {
         if (!filesFailedToParse.isEmpty()) {
             System.out.println("Files failed to Parse:");
             for (String file : filesFailedToParse) {
                 System.out.println(file);
             }
         }
+    }
 
-        ObjectMapper mapper = new ObjectMapper();
+    /**
+     * Writes the list of endpoint class information to a JSON file.
+     *
+     * This method uses the Jackson ObjectMapper to serialize the list of
+     * EndpointClassInformation objects and write them to a file specified
+     * by the EndpointParsingResultPath constant.
+     *
+     * @param endpointClasses the list of EndpointClassInformation objects to write to the file
+     */
+    private static void writeEndpointsToFile(List<EndpointClassInformation> endpointClasses) {
         try {
-            mapper.writeValue(new File("endpoints.json"), endpointClasses);
+            new ObjectMapper().writeValue(new File(EndpointParsingResultPath), endpointClasses);
         }
         catch (IOException e) {
             e.printStackTrace();
