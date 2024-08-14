@@ -3,7 +3,7 @@ import { BuildAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, Scr
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
+import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @Component({
@@ -15,7 +15,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
-    @ViewChild(ProgrammingExerciseDockerImageComponent) programmingExerciseDockerImageComponent?: ProgrammingExerciseDockerImageComponent;
+    @ViewChild(ProgrammingExerciseBuildConfigurationComponent) programmingExerciseDockerImageComponent?: ProgrammingExerciseBuildConfigurationComponent;
 
     programmingLanguage?: ProgrammingLanguage;
     projectType?: ProjectType;
@@ -100,6 +100,12 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
                     this.programmingExercise.buildConfig!.windFile = undefined;
                 },
             });
+        if (!this.programmingExercise.buildConfig?.checkoutPath) {
+            this.programmingExercise.buildConfig!.checkoutPath = '';
+        }
+        if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
+            this.programmingExercise.buildConfig!.timeoutSeconds = 0;
+        }
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
     }
 
@@ -198,5 +204,13 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
             return;
         }
         this.programmingExercise.buildConfig!.windFile.metadata.docker.image = dockerImage.trim();
+    }
+
+    setCheckoutPath(checkoutPath: string) {
+        this.programmingExercise.buildConfig!.checkoutPath = checkoutPath.trim();
+    }
+
+    setTimeout(timeout: number) {
+        this.programmingExercise.buildConfig!.timeoutSeconds = timeout;
     }
 }

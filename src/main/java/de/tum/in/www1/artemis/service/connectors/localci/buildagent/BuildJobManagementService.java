@@ -33,6 +33,7 @@ import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 
@@ -137,7 +138,7 @@ public class BuildJobManagementService {
         Future<BuildResult> future;
         try {
             if (cancelledBuildJobs.contains(buildJobItem.id())) {
-                finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
+                finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName, buildJobItem.buildConfig().workingDirectory());
                 String msg = "Build job with id " + buildJobItem.id() + " was cancelled before it was submitted to the executor service.";
                 buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                 throw new CompletionException(msg, null);
@@ -149,16 +150,25 @@ public class BuildJobManagementService {
             lock.unlock();
         }
 
+        int buildJobTimeoutSeconds;
+        if (buildJobItem.buildConfig().timeoutSeconds() != 0 && buildJobItem.buildConfig().timeoutSeconds() < this.timeoutSeconds) {
+            buildJobTimeoutSeconds = buildJobItem.buildConfig().timeoutSeconds();
+        }
+        else {
+            buildJobTimeoutSeconds = this.timeoutSeconds;
+        }
+
         CompletableFuture<BuildResult> futureResult = createCompletableFuture(() -> {
             try {
-                return future.get(timeoutSeconds, TimeUnit.SECONDS);
+                return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
             }
             catch (Exception e) {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 if (cancelledBuildJobs.contains(buildJobItem.id())) {
-                    finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
+                    finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName,
+                            buildJobItem.buildConfig().workingDirectory());
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
                     String stackTrace = stackTraceToString(e);
                     buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
@@ -250,10 +260,11 @@ public class BuildJobManagementService {
      * @param buildJobId    The id of the cancelled build job
      * @param containerName The name of the Docker container that was used to execute the build job.
      */
-    private void finishCancelledBuildJob(String repositoryUri, String buildJobId, String containerName) {
+    private void finishCancelledBuildJob(String repositoryUri, String buildJobId, String containerName, String workingDirectory) {
         log.debug("Build job with id {} in repository {} was cancelled", buildJobId, repositoryUri);
 
-        buildJobContainerService.stopContainer(containerName);
+        workingDirectory = BuildConfig.getWorkingDirectory(workingDirectory);
+        buildJobContainerService.stopContainer(containerName, workingDirectory);
 
         cancelledBuildJobs.remove(buildJobId);
     }

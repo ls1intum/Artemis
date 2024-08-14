@@ -128,6 +128,16 @@
             "dockerImage": "Docker Image",
             "script": "Build script",
             "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
+            "checkoutPath": {
+                "title": "Checkout Path",
+                "customize": "You can customize the checkout path where the repositories are cloned inside the Docker container. Make sure to provide a valid absolute UNIX path. The default path is /var/tmp.",
+                "alert": "The checkout path must be a valid absolute UNIX path."
+            },
+            "timeout": {
+                "title": "Timeout",
+                "customize": "You can customize the timeout for the build. Make sure to provide a valid integer value. The unit is seconds. The default value is 240 seconds.",
+                "alert": "The timeout must be a valid integer value."
+            },
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"

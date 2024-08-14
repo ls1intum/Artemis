@@ -18,7 +18,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { EXERCISE_TITLE_NAME_PATTERN, EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { EXERCISE_TITLE_NAME_PATTERN, EXERCISE_TITLE_NAME_REGEX, PROGRAMMING_EXERCISE_CHECKOUT_PATH_PATTERN, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
@@ -625,6 +625,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
             this.programmingExercise.buildConfig!.windFile = undefined;
         }
+
+        if (this.programmingExercise.buildConfig?.checkoutPath) {
+            this.programmingExercise.buildConfig!.checkoutPath = this.programmingExercise.buildConfig!.checkoutPath.trim();
+        }
+
+        if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
+            this.programmingExercise.buildConfig!.timeoutSeconds = 0;
+        }
+
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
             this.programmingExercise.submissionPolicy = undefined;
@@ -852,6 +861,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExerciseBonusPoints(validationErrorReasons);
         this.validateExerciseSCAMaxPenalty(validationErrorReasons);
         this.validateExerciseSubmissionLimit(validationErrorReasons);
+        this.validateCheckoutPathAndTimeout(validationErrorReasons);
 
         return validationErrorReasons;
     }
@@ -1051,6 +1061,26 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateValues: {},
             });
         }
+    }
+
+    private validateCheckoutPathAndTimeout(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.buildConfig?.checkoutPath && !this.isValidUnixPath(this.programmingExercise.buildConfig.checkoutPath)) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.alert',
+                translateValues: {},
+            });
+        }
+        if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig.timeoutSeconds < 0) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.timeoutSeconds.alert',
+                translateValues: {},
+            });
+        }
+    }
+
+    private isValidUnixPath(path: string): boolean {
+        const pattern = new RegExp(PROGRAMMING_EXERCISE_CHECKOUT_PATH_PATTERN);
+        return pattern.test(path);
     }
 
     private createProgrammingExerciseForImportFromFile() {

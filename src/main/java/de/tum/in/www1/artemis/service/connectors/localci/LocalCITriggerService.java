@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
@@ -201,10 +200,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     // -------Helper methods for triggerBuild()-------
 
-    private List<String> getTestResultPaths(Windfile windfile) throws IllegalArgumentException {
+    private List<String> getTestResultPaths(Windfile windfile, String workingDirectory) throws IllegalArgumentException {
         List<String> testResultPaths = new ArrayList<>();
         for (AeolusResult testResultPath : windfile.getResults()) {
-            testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.path());
+            testResultPaths.add(workingDirectory + "/testing-dir/" + testResultPath.path());
         }
         return testResultPaths;
     }
@@ -301,14 +300,16 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }
 
-        List<String> resultPaths = getTestResultPaths(windfile);
+        String workingDirectory = BuildConfig.getWorkingDirectory(buildConfig.getCheckoutPath());
+
+        List<String> resultPaths = getTestResultPaths(windfile, workingDirectory);
 
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
         programmingExercise.setBuildConfig(buildConfig);
-        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
+        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise, workingDirectory);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, workingDirectory, buildConfig.getTimeoutSeconds());
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {

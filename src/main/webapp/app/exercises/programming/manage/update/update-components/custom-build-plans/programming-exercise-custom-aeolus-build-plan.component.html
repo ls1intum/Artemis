@@ -7,9 +7,13 @@
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
         <div class="row m-1">
             @if (programmingExercise.buildConfig?.windFile && programmingExercise.buildConfig?.windFile?.metadata && programmingExercise.buildConfig?.windFile?.metadata?.docker) {
-                <jhi-programming-exercise-docker-image
+                <jhi-programming-exercise-build-configuration
                     [dockerImage]="programmingExercise.buildConfig!.windFile!.metadata.docker.image"
                     (dockerImageChange)="setDockerImage($event)"
+                    [checkoutPath]="programmingExercise.buildConfig!.checkoutPath!"
+                    (checkoutPathChange)="setCheckoutPath($event)"
+                    [timeout]="programmingExercise.buildConfig!.timeoutSeconds!"
+                    (timeoutChange)="setTimeout($event)"
                 />
             }
             <div class="col-3 col-md-3">

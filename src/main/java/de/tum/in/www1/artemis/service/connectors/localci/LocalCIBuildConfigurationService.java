@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
@@ -32,11 +31,11 @@ public class LocalCIBuildConfigurationService {
      * @param programmingExercise the programming exercise for which the build script should be created
      * @return the build script
      */
-    public String createBuildScript(ProgrammingExercise programmingExercise) {
+    public String createBuildScript(ProgrammingExercise programmingExercise, String workingDirectory) {
 
         StringBuilder buildScript = new StringBuilder();
         buildScript.append("#!/bin/bash\n");
-        buildScript.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir\n");
+        buildScript.append("cd ").append(workingDirectory).append("/testing-dir\n");
 
         ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
         String customScript = buildConfig.getBuildScript();
@@ -62,11 +61,11 @@ public class LocalCIBuildConfigurationService {
             actions.forEach(action -> {
                 String workdir = action.getWorkdir();
                 if (workdir != null) {
-                    buildScript.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
+                    buildScript.append("cd ").append(workingDirectory).append("/testing-dir/").append(workdir).append("\n");
                 }
                 buildScript.append(action.getScript()).append("\n");
                 if (workdir != null) {
-                    buildScript.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir\n");
+                    buildScript.append("cd ").append(workingDirectory).append("/testing-dir\n");
                 }
             });
 

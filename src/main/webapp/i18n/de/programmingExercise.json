@@ -115,6 +115,16 @@
             "customizeDockerImage": "Du kannst das Docker-Image anpassen. Stelle sicher, dass du es in amd64 und arm64 bereitstellst und alle Build Abhängigkeiten enthalten sind, um eine kurze Build Dauer zu gewährleisten.",
             "parameters": "Parameter",
             "dockerImage": "Docker Image",
+            "checkoutPath": {
+                "title": "Checkout-Pfad",
+                "customize": "Du kannst den Checkout-Pfad anpassen, in dem die Repositories im Docker-Container geklont werden. Achte darauf, dass du einen gültigen absoluten UNIX-Pfad angibst. Der Standardpfad ist /var/tmp.",
+                "alert": "Der Checkout-Pfad muss ein gültiger absoluter UNIX-Pfad sein."
+            },
+            "timeout": {
+                "title": "Zeitüberschreitung",
+                "customize": "Du kannst die Zeitüberschreitung für den Build anpassen. Achte darauf, dass du einen gültigen Ganzzahlwert angibst. Die Einheit ist Sekunden. Der Standardwert beträgt 240 Sekunden.",
+                "alert": "Die Zeitüberschreitung muss ein gültiger Ganzzahlwert sein."
+            },
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
