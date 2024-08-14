@@ -5,15 +5,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class EndpointAnalyzer {
 
     private static String EndpointAnalysisResultPath = "endpointAnalysisResult.json";
+
     private static final Logger logger = LoggerFactory.getLogger(EndpointAnalyzer.class);
 
     public static void main(String[] args) {

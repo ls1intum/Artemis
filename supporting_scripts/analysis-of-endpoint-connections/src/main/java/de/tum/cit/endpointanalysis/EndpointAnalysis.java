@@ -1,6 +1,5 @@
 package de.tum.cit.endpointanalysis;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class EndpointAnalysis {

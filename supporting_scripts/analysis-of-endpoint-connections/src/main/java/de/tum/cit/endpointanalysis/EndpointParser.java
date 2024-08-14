@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,20 +25,19 @@ import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.ArrayInitializerExpr;
 import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.MemberValuePair;
 import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 
 public class EndpointParser {
 
     static String EndpointParsingResultPath = "endpoints.json";
-    static String RestCallParsingResultPath = "restCalls.json";
-    private static final Logger logger = LoggerFactory.getLogger(EndpointParser.class);
 
+    static String RestCallParsingResultPath = "restCalls.json";
+
+    private static final Logger logger = LoggerFactory.getLogger(EndpointParser.class);
 
     public static void main(String[] args) {
         final String relativeDirectoryPath = ".." + File.separator + ".." + File.separator + "src" + File.separator + "main" + File.separator + "java";
@@ -117,12 +115,11 @@ public class EndpointParser {
      * @return a list of EndpointInformation objects representing the extracted endpoint information
      */
     private static List<EndpointInformation> extractAnnotationPathValues(ClassOrInterfaceDeclaration javaClass, Set<String> httpMethodClasses, String classRequestMappingString) {
-        return javaClass.getMethods().stream()
-            .flatMap(method -> method.getAnnotations().stream()
-                .filter(annotation -> httpMethodClasses.contains(annotation.getNameAsString()))
+        return javaClass.getMethods().stream().flatMap(method -> method.getAnnotations().stream().filter(annotation -> httpMethodClasses.contains(annotation.getNameAsString()))
                 .flatMap(annotation -> extractPathsFromAnnotation(annotation).stream()
-                    .map(path -> new EndpointInformation(classRequestMappingString, method.getNameAsString(), annotation.getNameAsString(), path, javaClass.getNameAsString(), method.getBegin().get().line, method.getAnnotations().stream().map(AnnotationExpr::toString).collect(Collectors.toList())))))
-            .collect(Collectors.toList());
+                        .map(path -> new EndpointInformation(classRequestMappingString, method.getNameAsString(), annotation.getNameAsString(), path, javaClass.getNameAsString(),
+                                method.getBegin().get().line, method.getAnnotations().stream().map(AnnotationExpr::toString).collect(Collectors.toList())))))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -141,13 +138,13 @@ public class EndpointParser {
             Expression memberValue = ((SingleMemberAnnotationExpr) annotation).getMemberValue();
             if (memberValue instanceof ArrayInitializerExpr) {
                 paths.addAll(((ArrayInitializerExpr) memberValue).getValues().stream().map(Expression::toString).collect(Collectors.toList()));
-            } else {
+            }
+            else {
                 paths.add(memberValue.toString());
             }
-        } else if (annotation instanceof NormalAnnotationExpr) {
-            ((NormalAnnotationExpr) annotation).getPairs().stream()
-                .filter(pair -> "value".equals(pair.getNameAsString()))
-                .forEach(pair -> paths.add(pair.getValue().toString()));
+        }
+        else if (annotation instanceof NormalAnnotationExpr) {
+            ((NormalAnnotationExpr) annotation).getPairs().stream().filter(pair -> "value".equals(pair.getNameAsString())).forEach(pair -> paths.add(pair.getValue().toString()));
         }
         return paths;
     }
