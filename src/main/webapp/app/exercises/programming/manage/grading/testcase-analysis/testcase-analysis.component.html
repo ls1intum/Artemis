@@ -1,6 +1,5 @@
 <div class="container">
     <h2>{{ 'artemisApp.programmingExercise.configureGrading.testAnalysis.title' | artemisTranslate: { exerciseTitle: exerciseTitle } }}</h2>
-    <h2>Feature currently in development. Following data is testdata</h2>
     <table class="table">
         <thead>
             <tr>
@@ -12,16 +11,16 @@
             </tr>
         </thead>
         <tbody class="table-group-divider">
-            @for (item of exampleArray; track item) {
+            @for (item of feedbacks; track item) {
                 <tr>
-                    <td>{{ item.occurrence }}</td>
-                    <td>{{ item.feedback }}</td>
-                    <td>{{ item.task }}</td>
-                    <td>{{ item.testcase }}</td>
-                    <td>{{ item.errorCategory }}</td>
+                    <td>{{ item.count }}</td>
+                    <td>{{ item.detailText }}</td>
+                    <td>1</td>
+                    <td>1</td>
+                    <td>Student Error</td>
                 </tr>
             }
         </tbody>
     </table>
-    <div>{{ 'artemisApp.programmingExercise.configureGrading.testAnalysis.totalItems' | artemisTranslate: { count: exampleArray.length } }}</div>
+    <div>{{ 'artemisApp.programmingExercise.configureGrading.testAnalysis.totalItems' | artemisTranslate: { count: feedbacks.length } }}</div>
 </div>
