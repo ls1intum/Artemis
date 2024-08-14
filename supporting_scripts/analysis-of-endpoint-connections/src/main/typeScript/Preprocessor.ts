@@ -33,6 +33,11 @@ export class Preprocessor {
 
     private memberVariables: Map<string, Attribute> = new Map<string, Attribute>();
 
+    /**
+     * Constructs a new instance of the Preprocessor class.
+     *
+     * @param ast - The abstract syntax tree (AST) of the file being processed. The Tree must be a TSESTree
+     */
     constructor(ast: TSESTree.Program) {
         this.ast = ast;
     }

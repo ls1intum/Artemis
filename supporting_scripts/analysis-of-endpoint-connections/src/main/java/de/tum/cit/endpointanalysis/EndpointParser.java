@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -34,8 +37,9 @@ import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 public class EndpointParser {
 
     static String EndpointParsingResultPath = "endpoints.json";
-
     static String RestCallParsingResultPath = "restCalls.json";
+    private static final Logger logger = LoggerFactory.getLogger(EndpointParser.class);
+
 
     public static void main(String[] args) {
         final String relativeDirectoryPath = ".." + File.separator + ".." + File.separator + "src" + File.separator + "main" + File.separator + "java";
@@ -50,7 +54,7 @@ public class EndpointParser {
             filesToParse = paths.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".java")).map(Path::toString).toArray(String[]::new);
         }
         catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error reading files from directory: {}", absoluteDirectoryPath, e);
         }
 
         parseServerEndpoints(filesToParse);
@@ -113,44 +117,39 @@ public class EndpointParser {
      * @return a list of EndpointInformation objects representing the extracted endpoint information
      */
     private static List<EndpointInformation> extractAnnotationPathValues(ClassOrInterfaceDeclaration javaClass, Set<String> httpMethodClasses, String classRequestMappingString) {
-        List<EndpointInformation> endpointPaths = new ArrayList<>();
-        for (MethodDeclaration method : javaClass.getMethods()) {
-            for (AnnotationExpr annotation : method.getAnnotations()) {
-                if (httpMethodClasses.contains(annotation.getNameAsString())) {
-                    final List<String> annotationPathValue = new ArrayList<>();
+        return javaClass.getMethods().stream()
+            .flatMap(method -> method.getAnnotations().stream()
+                .filter(annotation -> httpMethodClasses.contains(annotation.getNameAsString()))
+                .flatMap(annotation -> extractPathsFromAnnotation(annotation).stream()
+                    .map(path -> new EndpointInformation(classRequestMappingString, method.getNameAsString(), annotation.getNameAsString(), path, javaClass.getNameAsString(), method.getBegin().get().line, method.getAnnotations().stream().map(AnnotationExpr::toString).collect(Collectors.toList())))))
+            .collect(Collectors.toList());
+    }
 
-                    if (annotation instanceof SingleMemberAnnotationExpr) {
-                        SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
-
-                        Expression memberValue = single.getMemberValue();
-                        if (memberValue instanceof ArrayInitializerExpr) {
-                            ArrayInitializerExpr arrayExpr = (ArrayInitializerExpr) memberValue;
-                            annotationPathValue.addAll(arrayExpr.getValues().stream().map(Expression::toString).toList());
-                        }
-                        else {
-                            annotationPathValue.add(single.getMemberValue().toString());
-                        }
-                    }
-                    else if (annotation instanceof NormalAnnotationExpr) {
-                        NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
-                        Optional<MemberValuePair> annotationPathOptional = normal.getPairs().stream().filter(pair -> "value".equals(pair.getNameAsString())).findFirst();
-                        annotationPathOptional.ifPresent(pair -> {
-                            annotationPathValue.add(pair.getValue().toString());
-                        });
-                    }
-
-                    List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.toString()).toList();
-
-                    for (String path : annotationPathValue) {
-                        EndpointInformation endpointInformation = new EndpointInformation(classRequestMappingString, method.getNameAsString(), annotation.getNameAsString(), path,
-                                javaClass.getNameAsString(), method.getBegin().get().line, annotations);
-                        endpointPaths.add(endpointInformation);
-                    }
-                }
+    /**
+     * Extracts the paths from the given annotation.
+     *
+     * This method processes the provided annotation to extract path values.
+     * It handles both single-member and normal annotations, extracting the
+     * path values from the annotation's member values or pairs.
+     *
+     * @param annotation the annotation to extract paths from
+     * @return a list of extracted path values
+     */
+    private static List<String> extractPathsFromAnnotation(AnnotationExpr annotation) {
+        List<String> paths = new ArrayList<>();
+        if (annotation instanceof SingleMemberAnnotationExpr) {
+            Expression memberValue = ((SingleMemberAnnotationExpr) annotation).getMemberValue();
+            if (memberValue instanceof ArrayInitializerExpr) {
+                paths.addAll(((ArrayInitializerExpr) memberValue).getValues().stream().map(Expression::toString).collect(Collectors.toList()));
+            } else {
+                paths.add(memberValue.toString());
             }
+        } else if (annotation instanceof NormalAnnotationExpr) {
+            ((NormalAnnotationExpr) annotation).getPairs().stream()
+                .filter(pair -> "value".equals(pair.getNameAsString()))
+                .forEach(pair -> paths.add(pair.getValue().toString()));
         }
-
-        return endpointPaths;
+        return paths;
     }
 
     /**
@@ -198,10 +197,7 @@ public class EndpointParser {
      */
     private static void printFilesFailedToParse(List<String> filesFailedToParse) {
         if (!filesFailedToParse.isEmpty()) {
-            System.out.println("Files failed to Parse:");
-            for (String file : filesFailedToParse) {
-                System.out.println(file);
-            }
+            logger.warn("Files failed to parse:", filesFailedToParse);
         }
     }
 
@@ -219,7 +215,7 @@ public class EndpointParser {
             new ObjectMapper().writeValue(new File(EndpointParsingResultPath), endpointClasses);
         }
         catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Failed to write endpoint information to file", e);
         }
     }
 }

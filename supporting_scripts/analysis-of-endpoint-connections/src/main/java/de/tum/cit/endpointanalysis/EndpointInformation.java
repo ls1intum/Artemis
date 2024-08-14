@@ -8,29 +8,25 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class EndpointInformation {
 
     @JsonProperty
-    private String requestMapping;
+    private final String requestMapping;
 
     @JsonProperty
-    private String endpoint;
+    private final String endpoint;
 
     @JsonProperty
-    private String httpMethodAnnotation;
+    private final String httpMethodAnnotation;
 
     @JsonProperty
-    private String URI;
+    private final String URI;
 
     @JsonProperty
-    private String className;
+    private final String className;
 
     @JsonProperty
-    private int line;
+    private final int line;
 
     @JsonProperty
-    private List<String> otherAnnotations;
-
-    public EndpointInformation() {
-
-    }
+    private final List<String> otherAnnotations;
 
     public EndpointInformation(String requestMapping, String endpoint, String httpMethodAnnotation, String URI, String className, int line, List<String> otherAnnotations) {
         this.requestMapping = requestMapping;
@@ -46,66 +42,37 @@ public class EndpointInformation {
         return otherAnnotations;
     }
 
-    public void setOtherAnnotations(List<String> otherAnnotations) {
-        this.otherAnnotations = otherAnnotations;
-    }
-
     public String getRequestMapping() {
         return requestMapping;
-    }
-
-    public void setRequestMapping(String requestMapping) {
-        this.requestMapping = requestMapping;
     }
 
     public String getEndpoint() {
         return endpoint;
     }
 
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-    }
-
     public String getHttpMethodAnnotation() {
         return httpMethodAnnotation;
-    }
-
-    public void setHttpMethodAnnotation(String httpMethodAnnotation) {
-        this.httpMethodAnnotation = httpMethodAnnotation;
     }
 
     public String getURI() {
         return URI;
     }
 
-    public void setURI(String URI) {
-        this.URI = URI;
-    }
-
     public String getClassName() {
         return className;
-    }
-
-    public void setClassName(String className) {
-        this.className = className;
     }
 
     public int getLine() {
         return line;
     }
 
-    public void setLine(int line) {
-        this.line = line;
-    }
-
     public String buildCompleteEndpointURI() {
-        String result = "";
-
+        StringBuilder result = new StringBuilder();
         if (this.requestMapping != null && !this.requestMapping.isEmpty()) {
-            result = this.requestMapping.replace("\"", "");
+            result.append(this.requestMapping.replace("\"", ""));
         }
-        result += this.URI.replace("\"", "");
-        return result;
+        result.append(this.URI.replace("\"", ""));
+        return result.toString();
     }
 
     String buildComparableEndpointUri() {

@@ -9,9 +9,13 @@ import java.util.Optional;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RestCallAnalyzer {
 
     private static String RestCallAnalysisResultPath = "restCallAnalysisResult.json";
+    private static final Logger logger = LoggerFactory.getLogger(EndpointAnalyzer.class);
 
     public static void main(String[] args) {
         analyzeRestCalls();
@@ -69,7 +73,7 @@ public class RestCallAnalyzer {
             mapper.writeValue(new File(RestCallAnalysisResultPath), restCallAnalysis);
         }
         catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Failed to analyze REST calls", e);
         }
     }
 
@@ -91,7 +95,7 @@ public class RestCallAnalyzer {
             });
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            logger.error("failed to deserialize rest call analysis results", e);
         }
 
         restCallsAndMatchingEndpoints.getRestCallsWithoutMatchingEndpoints().stream().forEach(endpoint -> {

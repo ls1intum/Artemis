@@ -31,7 +31,7 @@ function collectTypeScriptFiles(dir: string, files: string[] = []) : string[] {
  * Parses a TypeScript file and returns its Abstract Syntax Tree (AST).
  *
  * @param filePath - The path to the TypeScript file to be parsed.
- * @returns The AST of the parsed TypeScript file.
+ * @returns The TSESTree of the parsed TypeScript file.
  */
 function parseTypeScriptFile(filePath: string): TSESTree.Program {
     const code = readFileSync(filePath, 'utf8');

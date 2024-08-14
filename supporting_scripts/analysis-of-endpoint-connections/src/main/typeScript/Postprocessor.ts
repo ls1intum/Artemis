@@ -43,6 +43,12 @@ export class Postprocessor {
     private readonly fileName: string;
     private readonly ast: TSESTree.Program;
 
+    /**
+     * Constructs a new instance of the Postprocessor class.
+     *
+     * @param fileName - The name of the file being processed.
+     * @param ast - The abstract syntax tree (AST) of the file being processed. The Tree must be a TSESTree
+     */
     constructor(fileName: string, ast: TSESTree.Program) {
         this.fileName = fileName;
         this.ast = ast;

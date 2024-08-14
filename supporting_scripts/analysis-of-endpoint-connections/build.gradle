@@ -18,6 +18,8 @@ dependencies {
     implementation 'com.github.javaparser:javaparser-core-serialization:3.26.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
     implementation rootProject.ext.springBootStarterWeb
+    implementation 'org.slf4j:slf4j-api:1.7.32'
+    implementation 'ch.qos.logback:logback-classic:1.2.6'
 }
 
 task runEndpointParser(type: JavaExec) {

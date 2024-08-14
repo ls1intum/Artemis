@@ -8,9 +8,13 @@ import java.util.List;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class EndpointAnalyzer {
 
     private static String EndpointAnalysisResultPath = "endpointAnalysisResult.json";
+    private static final Logger logger = LoggerFactory.getLogger(EndpointAnalyzer.class);
 
     public static void main(String[] args) {
         analyzeEndpoints();
@@ -69,7 +73,7 @@ public class EndpointAnalyzer {
             mapper.writeValue(new File(EndpointAnalysisResultPath), endpointAnalysis);
         }
         catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Failed to analyze endpoints", e);
         }
     }
 
