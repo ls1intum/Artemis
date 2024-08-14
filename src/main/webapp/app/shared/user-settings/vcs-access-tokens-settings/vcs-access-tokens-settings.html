@@ -53,7 +53,7 @@
                                 [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="faTrash" />
-                                <div jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteVcsAccessToken" class="ms-2"></div>
+                                <div jhiTranslate="entity.action.delete" class="ms-2"></div>
                             </button>
                         </td>
                     </tr>
@@ -88,8 +88,10 @@
                 <div class="col-sm-6">
                     <jhi-date-time-picker
                         [shouldDisplayTimeZoneWarning]="false"
-                        labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
+                        labelName="{{ 'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate }}"
                         [(ngModel)]="expiryDate"
+                        (valueChange)="validateDate()"
+                        [error]="!!expiryDate && !validExpiryDate"
                         name="expiryDate"
                         id="expiryDate"
                     />
@@ -101,18 +103,19 @@
                     class="d-flex"
                     [btnType]="ButtonType.PRIMARY"
                     [btnSize]="ButtonSize.SMALL"
-                    [icon]="faEdit"
-                    [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken'"
-                    (onClick)="addNewVcsAccessToken()"
-                    style="margin-right: 10px"
+                    [disabled]="!validExpiryDate"
+                    [icon]="faSave"
+                    [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.createAccessToken'"
+                    (onClick)="sendTokenCreationRequest()"
+                    style="margin-right: 3px"
                 />
                 <jhi-button
                     class="d-flex"
-                    [btnType]="ButtonType.PRIMARY"
+                    [btnType]="ButtonType.SECONDARY"
                     [btnSize]="ButtonSize.SMALL"
-                    [icon]="faEdit"
-                    [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken'"
-                    (onClick)="addNewVcsAccessToken()"
+                    [icon]="faBan"
+                    [title]="'entity.action.cancel'"
+                    (onClick)="cancelTokenCreation()"
                 />
             </div>
         </dt>

@@ -337,7 +337,7 @@ export class AccountService implements IAccountService {
         if (this.userIdentity) {
             this.userIdentity.sshPublicKey = sshPublicKey;
         }
-        return this.http.put<void>('api/users/ssh-public-key', sshPublicKey);
+        return this.http.put<void>('api/account/ssh-public-key', sshPublicKey);
     }
 
     /**
@@ -347,21 +347,22 @@ export class AccountService implements IAccountService {
         if (this.userIdentity) {
             this.userIdentity.sshPublicKey = undefined;
         }
-        return this.http.delete<void>('api/users/ssh-public-key');
+        return this.http.delete<void>('api/account/ssh-public-key');
     }
 
     /**
      * Sends a request to the server to delete the user's current vcsAccessToken
      */
     deleteUserVcsAccessToken(): Observable<void> {
-        return this.http.delete<void>('api/users/vcs-access-token');
+        return this.http.delete<void>('api/account/user-vcs-access-token');
     }
 
     /**
      * Sends a request to the server to create  the user's current vcsAccessToken
      */
-    addNewVcsAccessToken(): Observable<EntityResponseType> {
-        return this.http.put<User>('api/users/vcs-access-token', null, { observe: 'response' });
+    addNewVcsAccessToken(expiryDate: string): Observable<EntityResponseType> {
+        const params = new HttpParams().set('expiryDate', expiryDate);
+        return this.http.put<User>('api/account/user-vcs-access-token', null, { observe: 'response', params });
     }
 
     /**
@@ -372,7 +373,7 @@ export class AccountService implements IAccountService {
      */
     getVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.get<string>('api/users/vcsToken', { observe: 'response', params, responseType: 'text' as 'json' });
+        return this.http.get<string>('api/account/participation-vcs-access-token', { observe: 'response', params, responseType: 'text' as 'json' });
     }
 
     /**
@@ -383,6 +384,6 @@ export class AccountService implements IAccountService {
      */
     createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.put<string>('api/users/vcsToken', null, { observe: 'response', params, responseType: 'text' as 'json' });
+        return this.http.put<string>('api/account/participation-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
     }
 }

@@ -5,7 +5,7 @@ import { Subject, Subscription, tap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
-import { faCopy, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCopy, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -22,9 +22,10 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     readonly faSave = faSave;
     readonly faTrash = faTrash;
     readonly faCopy = faCopy;
+    readonly faBan = faBan;
     private authStateSubscription: Subscription;
-    public expiryDate?: dayjs.Dayjs;
-
+    expiryDate?: dayjs.Dayjs;
+    validExpiryDate = false;
     wasCopied = false;
     edit = false;
 
@@ -81,13 +82,18 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
         this.edit = true;
     }
 
-    doVcs() {
-        this.accountService.addNewVcsAccessToken().subscribe({
+    sendTokenCreationRequest() {
+        if (!this.expiryDate || this.expiryDate.isBefore(dayjs())) {
+            this.alertService.error('artemisApp.userSettings.vcsAccessTokensSettingsPage.addFailure');
+            return;
+        }
+        this.accountService.addNewVcsAccessToken(this.expiryDate.toISOString()).subscribe({
             next: (res) => {
                 if (this.currentUser) {
                     const user = res.body as User;
                     this.currentUser.vcsAccessToken = user.vcsAccessToken;
                     this.currentUser.vcsAccessTokenExpiryDate = user.vcsAccessTokenExpiryDate;
+                    this.edit = false;
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.addSuccess');
             },
@@ -106,5 +112,21 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
                 this.wasCopied = false;
             }, 3000);
         }
+    }
+
+    /**
+     * Validates if the expiry date is after current time
+     */
+    validateDate() {
+        this.validExpiryDate = this.expiryDate?.isAfter(dayjs()) || false;
+    }
+
+    /**
+     *  Cancel creation of a new token
+     */
+    cancelTokenCreation() {
+        this.edit = false;
+        this.expiryDate = undefined;
+        this.validExpiryDate = false;
     }
 }

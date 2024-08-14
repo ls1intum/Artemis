@@ -6,7 +6,7 @@
             "saveSettingsSuccessAlert": "Your Settings have been successfully saved.",
             "userSettings": "User Settings",
             "sshSettings": "SSH Settings",
-            "vcsAccessTokenSettings": "VCS Tokens Settings",
+            "vcsAccessTokenSettings": "VCS Token Settings",
             "accountInformation": "Account Information",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
@@ -31,7 +31,7 @@
             "vcsAccessTokensSettingsPage": {
                 "infoText": "You can generate a personal access token to interact with the Artemis Local Version Control System. You can use it to authenticate to Git over HTTP.",
                 "deleteVcsAccessTokenQuestion": "Do you really want to delete your version control system access token? You will not be able to authenticate to local repositories cloned with this token any more.",
-                "deleteVcsAccessToken": "Delete",
+                "createAccessToken": "Create new VCS access token",
                 "noTokenSet": "You do not have any user tokens",
                 "addToken": "Add new token",
                 "deleteFailure": "Deleting the VCS access token failed",
