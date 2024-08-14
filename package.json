@@ -91,7 +91,7 @@
         "@typescript-eslint/utils": {
             "eslint": "^9.9.0"
         },
-        "axios": "1.7.3",
+        "axios": "1.7.4",
         "braces": "3.0.3",
         "critters": "0.0.24",
         "debug": "4.3.6",
