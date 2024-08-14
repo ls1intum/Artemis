@@ -29,9 +29,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     course?: Course;
     attachment?: Attachment;
     attachmentUnit?: AttachmentUnit;
-    isEnlargedView: boolean = false;
-    currentPage: number = 1;
-    totalPages: number = 0;
+    isEnlargedView = false;
+    currentPage = 1;
+    totalPages = 0;
     nextDirection = NavigationDirection.Next;
     prevDirection = NavigationDirection.Previous;
     attachmentSub: Subscription;

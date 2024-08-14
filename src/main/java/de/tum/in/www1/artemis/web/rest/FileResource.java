@@ -385,8 +385,7 @@ public class FileResource {
     @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
-        Attachment attachment = attachmentRepository.findById(attachmentId)
-                .orElseThrow(() -> new NotFoundAlertException(HttpStatus.NOT_FOUND, "artemisApp.attachment.pdfPreview.attachmentIDError"));
+        Attachment attachment = attachmentRepository.findById(attachmentId).orElseThrow(() -> new NotFoundAlertException("artemisApp.attachment.pdfPreview.attachmentIDError"));
 
         Course course = courseRepository.findByIdElseThrow(courseId);
 
@@ -463,7 +462,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
         log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findById(attachmentUnitId)
-                .orElseThrow(() -> new NotFoundAlertException(HttpStatus.NOT_FOUND, "artemisApp.attachment.pdfPreview.attachmentUnitIDError"));
+                .orElseThrow(() -> new NotFoundAlertException("artemisApp.attachment.pdfPreview.attachmentUnitIDError"));
 
         Attachment attachment = attachmentUnit.getAttachment();
         Course course = courseRepository.findByIdElseThrow(courseId);

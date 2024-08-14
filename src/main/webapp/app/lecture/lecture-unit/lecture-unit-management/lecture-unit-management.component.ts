@@ -195,9 +195,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     isViewButtonAvailable(lectureUnit: LectureUnit) {
         switch (lectureUnit!.type) {
-            case LectureUnitType.ATTACHMENT:
+            case LectureUnitType.ATTACHMENT: {
                 const attachmentUnit = <AttachmentUnit>lectureUnit;
                 return attachmentUnit.attachment?.link?.endsWith('.pdf') ?? false;
+            }
             default:
                 return false;
         }
