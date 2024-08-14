@@ -31,3 +31,4 @@ public class EndpointAnalysis {
     public void setUnusedEndpoints(List<EndpointInformation> unusedEndpoints) {
         this.unusedEndpoints = unusedEndpoints;
     }
+}
