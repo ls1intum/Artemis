@@ -41,6 +41,10 @@ export class LearningPathNavigationService {
         }
     }
 
+    completeLearningPath(): void {
+        this.learningPathNavigation.set({ predecessorLearningObject: this.currentLearningObject(), progress: 100 });
+    }
+
     setCurrentLearningObjectCompletion(completed: boolean): void {
         this.isCurrentLearningObjectCompleted.set(completed);
     }

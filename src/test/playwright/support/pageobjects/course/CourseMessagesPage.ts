@@ -212,7 +212,7 @@ export class CourseMessagesPage {
      * @param message - The message to be written.
      */
     async writeMessage(message: string) {
-        const messageField = this.page.locator('.markdown-editor .ace_editor');
+        const messageField = this.page.locator('.markdown-editor .monaco-editor');
         await messageField.click();
         await messageField.pressSequentially(message);
     }
@@ -243,7 +243,7 @@ export class CourseMessagesPage {
     async editMessage(messageId: number, message: string) {
         const postLocator = this.getSinglePost(messageId);
         await postLocator.locator('.editIcon').click();
-        const editorLocator = postLocator.locator('.markdown-editor .ace_editor');
+        const editorLocator = postLocator.locator('.markdown-editor .monaco-editor');
         await editorLocator.click();
         await editorLocator.pressSequentially(message);
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages/*`);
