@@ -383,7 +383,7 @@ describe('CompetencyService', () => {
             ],
         };
 
-        competencyService.convertCompetencyResponseFromServer({} as HttpResponse<Competency>);
+        competencyService['convertCompetencyResponseFromServer']({} as HttpResponse<Competency>);
         expect(convertDateSpy).not.toHaveBeenCalled();
         expect(convertLectureUnitsSpy).not.toHaveBeenCalled();
         expect(setAccessRightsCourseSpy).not.toHaveBeenCalled();
@@ -391,7 +391,7 @@ describe('CompetencyService', () => {
         expect(parseCategoriesSpy).not.toHaveBeenCalled();
         expect(setAccessRightsExerciseSpy).not.toHaveBeenCalled();
 
-        competencyService.convertCompetencyResponseFromServer({ body: competencyFromServer } as HttpResponse<Competency>);
+        competencyService['convertCompetencyResponseFromServer']({ body: competencyFromServer } as HttpResponse<Competency>);
 
         expect(convertDateSpy).toHaveBeenCalled();
         expect(convertLectureUnitsSpy).toHaveBeenCalledOnce();
