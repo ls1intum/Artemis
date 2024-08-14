@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,7 +135,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         exerciseGroup1.addExercise(quiz);
         exerciseRepository.save(quiz);
         exerciseGroup2 = exam2.getExerciseGroups().getFirst();
-        studentExam1 = examUtilService.addStudentExam(exam1);
+        studentExam1 = examUtilService.addStudentExamWithUser(exam1, student1);
         studentExam2 = examUtilService.addStudentExam(exam2);
         studentExamForTestExam1 = examUtilService.addStudentExamForTestExam(testExam1, student1);
         studentExamForTestExam2 = examUtilService.addStudentExamForTestExam(testExam2, student1);
@@ -359,6 +360,13 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         examRepository.save(exam1);
         studentExamRepository.delete(studentExam1);
         assertThatNoException().isThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_studentExamPresent() {
+        StudentExam studentExam = examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId());
+        Assertions.assertEquals(studentExam, studentExam1);
     }
 
     @Test
