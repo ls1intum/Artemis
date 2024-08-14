@@ -114,7 +114,7 @@ public class LtiService {
                 // If the email is already in use, but we trust external LTI systems, we authenticate the user with the email
                 log.info("Trusting external LTI system. Authenticating user with email: {}", email);
                 User user = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email).orElseThrow();
-                SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(email, null, user.getGrantedAuthorities()));
+                SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
                 // TODO: Do we need to set a login cookie?
                 return;
             }
