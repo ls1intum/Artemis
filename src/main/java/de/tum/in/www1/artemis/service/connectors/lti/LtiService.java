@@ -179,7 +179,7 @@ public class LtiService {
      * @param response             the response to add the JWT cookie to
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
-        // TODO SK: why do we logout the user here if it was already activated?
+        // TODO SK: why do we logout the user here if it was already activated? +1
 
         User user = userRepository.getUser();
 
@@ -191,11 +191,11 @@ public class LtiService {
 
             uriComponentsBuilder.queryParam("initialize", "");
         }
-        else {
-            log.info("User is activated. Adding JWT cookie for logout.");
-            prepareLogoutCookie(response);
-            uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
-        }
+        // else {
+        // log.info("User is activated. Adding JWT cookie for logout.");
+        // prepareLogoutCookie(response);
+        // uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
+        // }
     }
 
     /**
