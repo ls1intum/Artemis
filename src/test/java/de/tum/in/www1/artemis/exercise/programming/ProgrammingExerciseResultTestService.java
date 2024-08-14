@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -127,6 +128,9 @@ public class ProgrammingExerciseResultTestService {
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
     private Course course;
 
     private ProgrammingExercise programmingExercise;
@@ -178,7 +182,11 @@ public class ProgrammingExerciseResultTestService {
     // Test
     public void shouldUpdateFeedbackInSemiAutomaticResult(AbstractBuildResultNotificationDTO buildResultNotification, String loginName) throws Exception {
         // Make sure we only have one participation
-        participationRepository.deleteAll(participationRepository.findByExerciseId(programmingExercise.getId()));
+        var participations = participationRepository.findByExerciseId(programmingExercise.getId());
+        for (ProgrammingExerciseStudentParticipation participation : participations) {
+            participationVCSAccessTokenRepository.deleteByParticipationId(participation.getId());
+        }
+        participationRepository.deleteAll(participations);
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, loginName);
 
         // Add a student submission with two manual results and a semi automatic result

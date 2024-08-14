@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SessionStorageService } from 'ngx-webstorage';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
@@ -140,7 +140,7 @@ export class AccountService implements IAccountService {
 
         if (this.versionControlAccessTokenRequired === undefined) {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken ?? false;
+                this.versionControlAccessTokenRequired = profileInfo.useVersionControlAccessToken ?? false;
             });
         }
 
@@ -362,5 +362,27 @@ export class AccountService implements IAccountService {
      */
     addNewVcsAccessToken(): Observable<EntityResponseType> {
         return this.http.put<User>('api/users/vcs-access-token', null, { observe: 'response' });
+    }
+
+    /**
+     * Sends a request to the server to obtain the VCS access token for a specific participation.
+     * Users can use this access token to clone the repository belonging to a participation.
+     *
+     * @param participationId The participation for which the VCS access token is requested
+     */
+    getVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
+        const params = new HttpParams().set('participationId', participationId);
+        return this.http.get<string>('api/users/vcsToken', { observe: 'response', params, responseType: 'text' as 'json' });
+    }
+
+    /**
+     * Sends a request to the server, to create a VCS access token for a specific participation.
+     * Users can use this access token to clone the repository belonging to a participation.
+     *
+     * @param participationId The participation for which the VCS access token should get created
+     */
+    createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
+        const params = new HttpParams().set('participationId', participationId);
+        return this.http.put<string>('api/users/vcsToken', null, { observe: 'response', params, responseType: 'text' as 'json' });
     }
 }
