@@ -1,12 +1,12 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import ace from 'brace';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @Component({
     selector: 'jhi-testwise-coverage-file',
     templateUrl: './testwise-coverage-file.component.html',
     styleUrls: ['./testwise-coverage-file.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
     @Input()
@@ -19,13 +19,17 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
     fileReport: CoverageFileReport;
 
     @ViewChild('editor', { static: true })
-    editor: AceEditorComponent;
+    editor: MonacoEditorComponent;
 
     proportionCoveredLines: number;
+    proportionString: string;
+    editorHeight: number = 20;
+
+    static readonly COVERED_LINE_HIGHLIGHT_CLASS = 'covered-line-highlight';
 
     ngOnInit(): void {
-        this.setupEditor();
         this.renderFile();
+        this.editorHeight = this.editor.getContentHeight();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -48,6 +52,7 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
 
         // set the covered line ratio accordingly
         this.proportionCoveredLines = orderedLines.length / this.fileReport!.lineCount!;
+        this.proportionString = `${(this.proportionCoveredLines * 100).toFixed(1)} %`;
 
         let index = 0;
         while (index < orderedLines.length) {
@@ -76,25 +81,11 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
         return [...Array(lineCount).keys()].map((i) => i + startLine - 1);
     }
 
-    private setupEditor(): void {
-        this.editor.getEditor().setOptions({
-            animatedScroll: true,
-            maxLines: Infinity,
-            highlightActiveLine: false,
-            showPrintMargin: false,
-        });
-        ace.Range = ace.acequire('ace/range').Range;
-    }
-
     private renderFile() {
-        const session = this.editor.getEditor().getSession();
-        session.setValue(this.fileContent ?? '');
-
-        Object.entries(session.getMarkers() ?? {}).forEach(([, v]) => session.removeMarker((v as any).id));
-
+        this.editor.changeModel(this.fileName, this.fileContent ?? '');
+        this.editor.disposeLineHighlights();
         this.aggregateCoveredLinesBlocks(this.fileReport).forEach((blockLength, lineNumber) => {
-            const range = new ace.Range(lineNumber, 0, lineNumber + blockLength - 1, 1);
-            session.addMarker(range, 'ace_highlight-marker', 'fullLine');
+            this.editor.highlightLines(lineNumber + 1, lineNumber + blockLength, 'covered-line-highlight', 'covered-line-highlight');
         });
     }
 }
