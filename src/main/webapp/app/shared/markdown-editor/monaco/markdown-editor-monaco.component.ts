@@ -68,6 +68,7 @@ const EXTERNAL_HEIGHT = 'external';
  * from covering the border while shrinking.
  */
 const BORDER_WIDTH_OFFSET = 3;
+const BORDER_HEIGHT_OFFSET = 2;
 
 // TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
@@ -227,16 +228,24 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.targetWrapperHeight = this.initialEditorHeight !== EXTERNAL_HEIGHT ? this.initialEditorHeight.valueOf() : undefined;
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
-            standard: this.defaultActions,
-            header: this.headerActions?.actions ?? [],
-            color: this.colorAction,
+            standard: this.filterDisplayedActions(this.defaultActions),
+            header: this.filterDisplayedActions(this.headerActions?.actions ?? []),
+            color: this.filterDisplayedAction(this.colorAction),
             domain: {
-                withoutOptions: this.domainActions.filter((action) => !(action instanceof MonacoEditorDomainActionWithOptions)),
-                withOptions: <MonacoEditorDomainActionWithOptions[]>this.domainActions.filter((action) => action instanceof MonacoEditorDomainActionWithOptions),
+                withoutOptions: this.filterDisplayedActions(this.domainActions.filter((action) => !(action instanceof MonacoEditorDomainActionWithOptions))),
+                withOptions: this.filterDisplayedActions(this.domainActions.filter((action) => action instanceof MonacoEditorDomainActionWithOptions)),
             },
-            lecture: this.lectureReferenceAction,
-            meta: this.metaActions,
+            lecture: this.filterDisplayedAction(this.lectureReferenceAction),
+            meta: this.filterDisplayedActions(this.metaActions),
         };
+    }
+
+    filterDisplayedActions<T extends MonacoEditorAction>(actions: T[]): T[] {
+        return actions.filter((action) => !action.hideInEditor);
+    }
+
+    filterDisplayedAction<T extends MonacoEditorAction>(action?: T): T | undefined {
+        return action?.hideInEditor ? undefined : action;
     }
 
     ngAfterViewInit(): void {
@@ -331,7 +340,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         const elementHeight = this.getElementClientHeight(this.isInitialHeightExternal() ? this.fullElement : this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
-        return elementHeight - fileUploadFooterHeight - actionPaletteHeight;
+        return elementHeight - fileUploadFooterHeight - actionPaletteHeight - BORDER_HEIGHT_OFFSET;
     }
 
     /**
@@ -379,13 +388,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
     }
 
-    parseMarkdown(): void {
+    parseMarkdown(domainActionsToCheck: MonacoEditorDomainAction[] = this.domainActions): void {
         if (this.showDefaultPreview) {
             this.defaultPreviewHtml = this.artemisMarkdown.safeHtmlForMarkdown(this._markdown);
             this.onDefaultPreviewHtmlChanged.emit(this.defaultPreviewHtml);
         }
-        if (this.domainActions.length && this._markdown) {
-            this.textWithDomainActionsFound.emit(parseMarkdownForDomainActions(this._markdown, this.domainActions));
+        if (domainActionsToCheck.length && this._markdown) {
+            this.textWithDomainActionsFound.emit(parseMarkdownForDomainActions(this._markdown, domainActionsToCheck));
         }
     }
 
