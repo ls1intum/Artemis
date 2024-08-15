@@ -100,12 +100,6 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
                     this.programmingExercise.buildConfig!.windFile = undefined;
                 },
             });
-        if (!this.programmingExercise.buildConfig?.checkoutPath) {
-            this.programmingExercise.buildConfig!.checkoutPath = '';
-        }
-        if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
-            this.programmingExercise.buildConfig!.timeoutSeconds = 0;
-        }
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
     }
 
@@ -204,13 +198,5 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
             return;
         }
         this.programmingExercise.buildConfig!.windFile.metadata.docker.image = dockerImage.trim();
-    }
-
-    setCheckoutPath(checkoutPath: string) {
-        this.programmingExercise.buildConfig!.checkoutPath = checkoutPath.trim();
-    }
-
-    setTimeout(timeout: number) {
-        this.programmingExercise.buildConfig!.timeoutSeconds = timeout;
     }
 }

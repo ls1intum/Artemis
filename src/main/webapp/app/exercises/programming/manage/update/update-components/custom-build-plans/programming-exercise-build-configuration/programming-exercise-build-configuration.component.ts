@@ -17,6 +17,8 @@ export class ProgrammingExerciseBuildConfigurationComponent {
     @Input() timeout: number;
     @Output() timeoutChange = new EventEmitter<number>();
 
+    @Input() isAeolus: boolean = false;
+
     @ViewChild('dockerImageField') dockerImageField?: NgModel;
 
     @ViewChild('checkoutPathField') checkoutPathField?: NgModel;

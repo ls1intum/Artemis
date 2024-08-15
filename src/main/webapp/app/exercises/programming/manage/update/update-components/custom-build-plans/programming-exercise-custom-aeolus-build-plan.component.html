@@ -10,10 +10,7 @@
                 <jhi-programming-exercise-build-configuration
                     [dockerImage]="programmingExercise.buildConfig!.windFile!.metadata.docker.image"
                     (dockerImageChange)="setDockerImage($event)"
-                    [checkoutPath]="programmingExercise.buildConfig!.checkoutPath!"
-                    (checkoutPathChange)="setCheckoutPath($event)"
-                    [timeout]="programmingExercise.buildConfig!.timeoutSeconds!"
-                    (timeoutChange)="setTimeout($event)"
+                    [isAeolus]="true"
                 />
             }
             <div class="col-3 col-md-3">

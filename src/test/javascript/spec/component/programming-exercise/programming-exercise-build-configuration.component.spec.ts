@@ -20,15 +20,25 @@ describe('ProgrammingExercise Docker Image', () => {
         comp = fixture.componentInstance;
 
         comp.dockerImage = 'testImage';
+        comp.checkoutPath = '/var/tmp';
+        comp.timeout = 10;
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should update docker image', () => {
+    it('should update build values', () => {
         expect(comp.dockerImage).toBe('testImage');
         comp.dockerImageChange.subscribe((value) => expect(value).toBe('newImage'));
         comp.dockerImageChange.emit('newImage');
+
+        expect(comp.checkoutPath).toBe('/var/tmp');
+        comp.checkoutPathChange.subscribe((value) => expect(value).toBe('/var/tmp/new'));
+        comp.checkoutPathChange.emit('/var/tmp/new');
+
+        expect(comp.timeout).toBe(10);
+        comp.timeoutChange.subscribe((value) => expect(value).toBe(20));
+        comp.timeoutChange.emit(20);
     });
 });
