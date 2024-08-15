@@ -273,7 +273,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
         if (testwiseCoverageAnalysis) {
-            exercise.setTestwiseCoverageEnabled(true);
+            exercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         }
         request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 

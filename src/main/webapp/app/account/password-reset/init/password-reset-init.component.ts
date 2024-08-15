@@ -38,10 +38,10 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
                 this.externalCredentialProvider = profileInfo.externalCredentialProvider;
                 const lang = this.translateService.currentLang;
                 const linkMap = profileInfo.externalPasswordResetLinkMap;
-                if (linkMap[lang]) {
-                    this.externalPasswordResetLink = linkMap[lang];
+                if (linkMap.get(lang)) {
+                    this.externalPasswordResetLink = linkMap.get(lang);
                 } else {
-                    this.externalPasswordResetLink = linkMap['en'];
+                    this.externalPasswordResetLink = linkMap.get('en');
                 }
             }
         });

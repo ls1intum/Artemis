@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -32,8 +33,9 @@ public class GitLabCIResultService extends AbstractContinuousIntegrationResultSe
 
     public GitLabCIResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
-            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository) {
-        super(testCaseRepository, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService);
+            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        super(testCaseRepository, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService, programmingExerciseBuildConfigRepository);
     }
 
     @Override
