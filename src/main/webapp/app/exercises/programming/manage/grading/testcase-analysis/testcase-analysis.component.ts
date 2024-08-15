@@ -82,7 +82,7 @@ export class TestcaseAnalysisComponent implements OnInit {
         if (!testCase) {
             return undefined;
         }
-        // Find the index of the task and add 1 to it (to make it a 1-based index)
+        // Find the index of the task and add 1 to it (to make it a 1-based index), if 0 is returned then no element was found
         return this.tasks.findIndex((task) => task.testCases.some((tc) => tc.testName === testCase.testName)) + 1;
     }
 
