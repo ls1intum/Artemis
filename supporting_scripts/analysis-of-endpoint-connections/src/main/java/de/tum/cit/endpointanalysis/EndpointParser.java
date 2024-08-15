@@ -172,8 +172,8 @@ public class EndpointParser {
                         return singleMemberAnnotationExpr.getMemberValue().toString();
                     }
                     else if (annotation instanceof NormalAnnotationExpr normalAnnotationExpr) {
-                        return normalAnnotationExpr.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).map(pair -> pair.getValue().toString())
-                                .findFirst().orElse("");
+                        return normalAnnotationExpr.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).map(pair -> pair.getValue().toString()).findFirst()
+                                .orElse("");
                     }
                     return "";
                 }).orElse("");

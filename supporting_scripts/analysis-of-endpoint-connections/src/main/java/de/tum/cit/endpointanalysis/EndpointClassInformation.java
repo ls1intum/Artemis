@@ -2,12 +2,12 @@ package de.tum.cit.endpointanalysis;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class EndpointClassInformation {
 
     private String filePath;
+
     private String classRequestMapping;
+
     private List<EndpointInformation> endpoints;
 
     public EndpointClassInformation() {

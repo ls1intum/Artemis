@@ -1,10 +1,9 @@
 package de.tum.cit.endpointanalysis;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class RestCallFileInformation {
 
     String fileName;
+
     RestCallInformation[] restCalls;
 
     public RestCallFileInformation() {

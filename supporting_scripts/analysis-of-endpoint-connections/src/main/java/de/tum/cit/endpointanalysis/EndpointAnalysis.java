@@ -5,6 +5,7 @@ import java.util.List;
 public class EndpointAnalysis {
 
     private List<UsedEndpoints> usedEndpoints;
+
     private List<EndpointInformation> unusedEndpoints;
 
     public EndpointAnalysis(List<UsedEndpoints> usedEndpoints, List<EndpointInformation> unusedEndpoints) {

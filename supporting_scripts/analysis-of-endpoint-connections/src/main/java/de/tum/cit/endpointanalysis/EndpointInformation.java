@@ -3,16 +3,21 @@ package de.tum.cit.endpointanalysis;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class EndpointInformation {
 
     private String requestMapping;
+
     private String endpoint;
+
     private String httpMethodAnnotation;
+
     private String URI;
+
     private String className;
+
     private int line;
+
     private List<String> otherAnnotations;
 
     public EndpointInformation() {

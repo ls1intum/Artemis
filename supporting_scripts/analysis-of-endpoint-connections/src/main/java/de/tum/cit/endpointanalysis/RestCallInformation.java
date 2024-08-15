@@ -3,8 +3,11 @@ package de.tum.cit.endpointanalysis;
 public class RestCallInformation {
 
     private String method;
+
     private String url;
+
     private int line;
+
     private String fileName;
 
     public RestCallInformation() {
