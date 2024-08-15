@@ -28,22 +28,13 @@ describe('Grading Instructions Management Component', () => {
     const backupExercise = { id: 1 } as Exercise;
 
     const criterionMarkdownText =
-        '[criterion] ' +
-        'testCriteria' +
-        '\n' +
-        '\t' +
-        '[instruction]\n' +
-        '\t' +
-        '[credits]' +
-        ' 1\n' +
-        '\t' +
-        '[gradingScale] scale\n' +
-        '\t' +
-        '[description] description\n' +
-        '\t' +
-        '[feedback] feedback\n' +
-        '\t' +
-        '[maxCountInScore] 0\n\n';
+        '[criterion] testCriteria\n' +
+        '\t[instruction]\n' +
+        '\t[credits] 1\n' +
+        '\t[gradingScale] scale\n' +
+        '\t[description] description\n' +
+        '\t[feedback] feedback\n' +
+        '\t[maxCountInScore] 0\n\n';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -146,10 +137,10 @@ describe('Grading Instructions Management Component', () => {
 
     it('should change grading instruction', () => {
         const newDescription = 'new text';
-        const domainCommands = [[newDescription, new MonacoGradingDescriptionAction()]] as [string, MonacoEditorDomainAction | undefined][];
+        const domainActions = [[newDescription, new MonacoGradingDescriptionAction()]] as [string, MonacoEditorDomainAction | undefined][];
 
         component.exercise.gradingCriteria = [gradingCriterion];
-        component.onInstructionChange(domainCommands, gradingInstruction);
+        component.onInstructionChange(domainActions, gradingInstruction);
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual(newDescription);
@@ -193,7 +184,7 @@ describe('Grading Instructions Management Component', () => {
         ] as [string, MonacoEditorDomainAction | undefined][];
     };
 
-    it('should set grading instruction without criterion command when markdown-change triggered', () => {
+    it('should set grading instruction without criterion action when markdown-change triggered', () => {
         const domainActionsWithoutCriterion = getDomainActionArray().slice(1);
 
         component.onDomainActionsFound(domainActionsWithoutCriterion);
@@ -204,7 +195,7 @@ describe('Grading Instructions Management Component', () => {
         expect(gradingCriteria.structuredGradingInstructions[0]).toEqual(gradingInstructionWithoutId);
     });
 
-    it('should set grading instruction with criterion command when markdown-change triggered', () => {
+    it('should set grading instruction with criterion action when markdown-change triggered', () => {
         const domainActions = getDomainActionArray();
 
         component.onDomainActionsFound(domainActions);
