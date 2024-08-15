@@ -358,7 +358,9 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sends a request to the server to create  the user's current vcsAccessToken
+     * Sends a request to the server to create a new vcsAccessToken for the user
+     *
+     * @param expiryDate The expiry date which should get set for the vcsAccessToken
      */
     addNewVcsAccessToken(expiryDate: string): Observable<EntityResponseType> {
         const params = new HttpParams().set('expiryDate', expiryDate);
