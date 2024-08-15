@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -10,6 +11,7 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -33,9 +35,29 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     Optional<BuildJob> findBuildJobByResult(Result result);
 
-    // TODO: rewrite this query, pageable does not work well with EntityGraph
-    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
-    Page<BuildJob> findAll(Pageable pageable);
+    @Query("""
+            SELECT b.id
+            FROM BuildJob b
+            """)
+    List<Long> findAllIds(Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
+    List<BuildJob> findWithDataByIdIn(List<Long> ids);
+
+    /**
+     * Retrieves a paginated list of all {@link BuildJob} entities.
+     *
+     * @param pageable the pagination information.
+     * @return a paginated list of {@link BuildJob} entities. If no entities are found, returns an empty page.
+     */
+    default Page<BuildJob> findAllWithData(Pageable pageable) {
+        List<Long> ids = findAllIds(pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<BuildJob> result = findWithDataByIdIn(ids);
+        return new PageImpl<>(result, pageable, count());
+    }
 
     // Cast to string is necessary. Otherwise, the query will fail on PostgreSQL.
     @Query("""
@@ -57,17 +79,6 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             @Param("durationLower") Duration durationLower, @Param("durationUpper") Duration durationUpper, Pageable pageable);
 
     @Query("""
-            SELECT b
-            FROM BuildJob b
-                LEFT JOIN FETCH b.result r
-                LEFT JOIN FETCH r.participation p
-                LEFT JOIN FETCH p.exercise
-                LEFT JOIN FETCH r.submission
-            WHERE b.id IN :buildJobIds
-            """)
-    List<BuildJob> findAllByIdWithResults(@Param("buildJobIds") List<Long> buildJobIds);
-
-    @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
                 b.dockerImage,
                 MAX(b.buildStartDate)
@@ -77,9 +88,30 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
-    // TODO: rewrite this query, pageable does not work well with EntityGraph
-    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
-    Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable);
+    @Query("""
+            SELECT b.id
+            FROM BuildJob b
+            WHERE b.courseId = :courseId
+            """)
+    List<Long> findIdsByCourseId(@Param("courseId") long courseId, Pageable pageable);
+
+    long countBuildJobByCourseId(long courseId);
+
+    /**
+     * Retrieves a paginated list of all {@link BuildJob} entities that have a given course id.
+     *
+     * @param courseId the course id.
+     * @param pageable the pagination information.
+     * @return a paginated list of {@link BuildJob} entities. If no entities are found, returns an empty page.
+     */
+    default Page<BuildJob> findAllWithDataByCourseId(long courseId, Pageable pageable) {
+        List<Long> ids = findIdsByCourseId(courseId, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<BuildJob> result = findWithDataByIdIn(ids);
+        return new PageImpl<>(result, pageable, countBuildJobByCourseId(courseId));
+    }
 
     @Query("""
              SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob(

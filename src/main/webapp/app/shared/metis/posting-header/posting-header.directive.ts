@@ -14,7 +14,7 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
-    todayFlag: string | undefined;
+    todayFlag?: string;
     userAuthority: string;
     userRoleBadge: string;
     userAuthorityTooltip: string;
