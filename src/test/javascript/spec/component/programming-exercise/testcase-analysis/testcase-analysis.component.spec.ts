@@ -14,6 +14,7 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
+import { HttpResponse } from '@angular/common/http';
 
 describe('TestcaseAnalysisComponent', () => {
     let component: TestcaseAnalysisComponent;
@@ -48,6 +49,9 @@ describe('TestcaseAnalysisComponent', () => {
         { id: 2, taskName: 'Task 2', testCases: [{ testName: 'test2' } as ProgrammingExerciseTestCase] },
     ] as ProgrammingExerciseTask[];
 
+    const participationResponseMock = new HttpResponse({ body: participationMock });
+    const feedbackResponseMock = new HttpResponse({ body: feedbackMock });
+
     beforeEach(() => {
         const mockProgrammingExerciseTaskService = {
             exercise: { id: 1 }, // Mock the exercise with an id
@@ -70,8 +74,8 @@ describe('TestcaseAnalysisComponent', () => {
         participationService = TestBed.inject(ParticipationService);
         resultService = TestBed.inject(ResultService);
 
-        jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of({ body: participationMock }));
-        jest.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of({ body: feedbackMock }));
+        jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(participationResponseMock));
+        jest.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(feedbackResponseMock));
     });
 
     it('should initialize and load feedbacks correctly', () => {
