@@ -205,7 +205,6 @@ describe('CodeEditorFileBrowserComponent', () => {
         };
         const forbiddenFiles = {
             'danger.bin': FileType.FILE,
-            'README.md': FileType.FILE,
             '.hidden': FileType.FILE,
             '.': FileType.FOLDER,
         };
@@ -806,6 +805,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const filteredChangeInformation = {
             'Class.java': true,
             'Document.md': false,
+            'README.md': true,
         };
         const getFilesWithChangeInfoStub = jest.fn().mockReturnValue(of(changeInformation));
         codeEditorRepositoryFileService.getFilesWithInformationAboutChange = getFilesWithChangeInfoStub;
