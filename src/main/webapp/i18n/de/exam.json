@@ -613,7 +613,7 @@
                     "numberBuilds": "Anzahl der Builds",
                     "numberRegisteredStudents": "Anzahl der angemeldeten Studierenden",
                     "numberNotStartedExams": "Anzahl der Klausuren (nicht gestartet)",
-                    "numberStartedExams": "Anzahl der Klausuren (gestartet, aber nicht abgegeben)",
+                    "numberStartedExams": "Anzahl der Klausuren",
                     "numberSubmittedExams": "Anzahl der Klausuren (abgegeben)",
                     "numberCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
                     "numberAnswerPosts": "Anzahl der Antwortbeiträge",

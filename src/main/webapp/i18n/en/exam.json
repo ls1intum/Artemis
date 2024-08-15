@@ -614,7 +614,7 @@
                     "numberBuilds": "Number of Builds",
                     "numberRegisteredStudents": "Number of Registered Students",
                     "numberNotStartedExams": "Number of Exams (not started)",
-                    "numberStartedExams": "Number of Exams (started, but not submitted)",
+                    "numberStartedExams": "Number of Exams",
                     "numberSubmittedExams": "Number of Exams (submitted)",
                     "numberCommunicationPosts": "Number of Communication Posts",
                     "numberAnswerPosts": "Number of Answer Posts",

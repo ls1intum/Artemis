@@ -279,9 +279,10 @@ public class ExamDeletionService {
         Set<StudentExam> studentExams = exam.getStudentExams();
         long numberRegisteredStudents = studentExams.size();
 
-        long notStartedExams = studentExams.stream().filter(studentExam -> !studentExam.isStarted()).count();
-        long startedExams = studentExams.stream().filter(studentExam -> studentExam.isStarted() && !studentExam.isSubmitted()).count();
-        long submittedExams = studentExams.stream().filter(StudentExam::isSubmitted).count();
+        // Boolean.TRUE/Boolean.FALSE are used to handle the case where isStarted/isSubmitted is null
+        long notStartedExams = studentExams.stream().filter(studentExam -> studentExam.isStarted() == null || !studentExam.isStarted()).count();
+        long startedExams = studentExams.stream().filter(studentExam -> Boolean.TRUE.equals(studentExam.isStarted())).count();
+        long submittedExams = studentExams.stream().filter(studentExam -> Boolean.TRUE.equals(studentExam.isStarted()) && Boolean.TRUE.equals(studentExam.isSubmitted())).count();
 
         return new ExamDeletionSummaryDTO(numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts, numberRegisteredStudents, notStartedExams, startedExams, submittedExams);
     }
