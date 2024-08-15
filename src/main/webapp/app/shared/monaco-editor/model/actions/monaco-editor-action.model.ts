@@ -11,6 +11,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     keybindings?: number[];
 
     icon?: IconDefinition;
+    readonly hideInEditor: boolean;
 
     /**
      * The disposable action that is returned by `editor.addAction`. This is required to unregister the action from the editor.
@@ -28,12 +29,14 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param translationKey The translation key of the action label.
      * @param icon The icon to display in the editor toolbar, if any.
      * @param keybindings The keybindings to trigger the action, if any.
+     * @param hideInEditor Whether to hide the action in the editor toolbar. Defaults to false.
      */
-    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: number[]) {
+    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: number[], hideInEditor?: boolean) {
         this.id = id;
         this.translationKey = translationKey;
         this.icon = icon;
         this.keybindings = keybindings;
+        this.hideInEditor = hideInEditor ?? false;
     }
 
     /**
@@ -319,6 +322,10 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         if (revealLine) {
             editor.revealLineInCenter(position.lineNumber);
         }
+    }
+
+    getPosition(editor: monaco.editor.ICodeEditor): monaco.IPosition {
+        return editor.getPosition() ?? { lineNumber: 1, column: 1 };
     }
 
     /**
