@@ -193,6 +193,9 @@ public class EndpointParser {
     private static void printFilesFailedToParse(List<String> filesFailedToParse) {
         if (!filesFailedToParse.isEmpty()) {
             logger.warn("Files failed to parse:", filesFailedToParse);
+            for (String file : filesFailedToParse) {
+                logger.warn(file);
+            }
         }
     }
 
