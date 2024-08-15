@@ -27,7 +27,6 @@ import { TaskArray } from 'app/exercises/programming/shared/instructions-render/
 import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/entities/result.model';
@@ -94,7 +93,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     constructor(
         public viewContainerRef: ViewContainerRef,
         private resultService: ResultService,
-        private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,

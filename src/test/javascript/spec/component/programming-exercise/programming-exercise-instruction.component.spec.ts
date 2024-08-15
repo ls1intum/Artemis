@@ -10,7 +10,6 @@ import { Subscription, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
 import {
     problemStatementBubbleSortNotExecutedHtml,
     problemStatementEmptySecondTask,
@@ -28,7 +27,6 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
@@ -48,7 +46,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInstructionComponent>;
     let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
-    let repositoryFileService: RepositoryFileService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingExerciseGradingService: ProgrammingExerciseGradingService;
     let modalService: NgbModal;
@@ -79,7 +76,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
             ],
@@ -93,13 +89,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 programmingExerciseGradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
-                repositoryFileService = debugElement.injector.get(RepositoryFileService);
                 modalService = debugElement.injector.get(NgbModal);
                 themeService = debugElement.injector.get(ThemeService);
 
                 subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 openModalStub = jest.spyOn(modalService, 'open');
-                getFileStub = jest.spyOn(repositoryFileService, 'get');
                 getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
 
                 comp.personalParticipation = true;
