@@ -7,25 +7,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class EndpointInformation {
 
-    @JsonProperty
     private String requestMapping;
-
-    @JsonProperty
     private String endpoint;
-
-    @JsonProperty
     private String httpMethodAnnotation;
-
-    @JsonProperty
     private String URI;
-
-    @JsonProperty
     private String className;
-
-    @JsonProperty
     private int line;
-
-    @JsonProperty
     private List<String> otherAnnotations;
 
     public EndpointInformation() {

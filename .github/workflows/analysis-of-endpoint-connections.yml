@@ -13,32 +13,32 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - name: checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: set up JDK 21
+      - name: Set up JDK 21
         uses: actions/setup-java@v2
         with:
           java-version: '${{ env.java }}'
           distribution: 'adopt'
 
-      - name: set up node.js
+      - name: Set up node.js
         uses: actions/setup-node@v4
         with:
           node-version: '${{ env.node }}'
 
-      - name: parse client sided REST-API calls
+      - name: Parse client sided REST-API calls
         run: |
           npm install
           tsc -p supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/tsconfig.analysisOfEndpointConnections.json
           node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
 
-      - name: parse server sided Endpoints
+      - name: Parse server sided Endpoints
         run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runEndpointParser
 
-      - name: upload parsing results
+      - name: Upload parsing results
         uses: actions/upload-artifact@v4
         with:
           name: parsing results
@@ -56,27 +56,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: set up JDK 21
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
 
-      - name: download JSON files
+      - name: Download JSON files
         uses: actions/download-artifact@v4
         with:
           name: parsing results
           path: supporting_scripts/analysis-of-endpoint-connections/
 
-      - name: analyze endpoints
+      - name: Analyze endpoints
         run:
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runEndpointAnalysis
 
-      - name: analyze rest calls
+      - name: Analyze rest calls
         run:
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runRestCallAnalysis
 
-      - name: upload analysis results
+      - name: Upload analysis results
         uses: actions/upload-artifact@v4
         with:
           name: analysis results

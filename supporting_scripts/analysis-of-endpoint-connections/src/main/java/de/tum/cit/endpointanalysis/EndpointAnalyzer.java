@@ -34,10 +34,10 @@ public class EndpointAnalyzer {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.EndpointParsingResultPath),
+            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.ENDPOINT_PARSING_RESULT_PATH),
                     new TypeReference<List<EndpointClassInformation>>() {
                     });
-            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File(EndpointParser.RestCallParsingResultPath), new TypeReference<List<RestCallFileInformation>>() {
+            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File(EndpointParser.REST_CALL_PARSING_RESULT_PATH), new TypeReference<List<RestCallFileInformation>>() {
             });
 
             List<UsedEndpoints> endpointsAndMatchingRestCalls = new ArrayList<>();

@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RestCallAnalyzer {
 
-    private static String RestCallAnalysisResultPath = "restCallAnalysisResult.json";
+    private static final String REST_CALL_ANALYSIS_RESULT_PATH = "restCallAnalysisResult.json";
 
     private static final Logger logger = LoggerFactory.getLogger(EndpointAnalyzer.class);
 
@@ -35,10 +35,10 @@ public class RestCallAnalyzer {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.EndpointParsingResultPath),
+            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.ENDPOINT_PARSING_RESULT_PATH),
                     new TypeReference<List<EndpointClassInformation>>() {
                     });
-            List<RestCallFileInformation> restCalls = mapper.readValue(new File(EndpointParser.RestCallParsingResultPath), new TypeReference<List<RestCallFileInformation>>() {
+            List<RestCallFileInformation> restCalls = mapper.readValue(new File(EndpointParser.REST_CALL_PARSING_RESULT_PATH), new TypeReference<List<RestCallFileInformation>>() {
             });
 
             List<RestCallWithMatchingEndpoint> restCallsWithMatchingEndpoint = new ArrayList<>();
@@ -71,7 +71,7 @@ public class RestCallAnalyzer {
                 }
             }
             RestCallAnalysis restCallAnalysis = new RestCallAnalysis(restCallsWithMatchingEndpoint, restCallsWithoutMatchingEndpoint);
-            mapper.writeValue(new File(RestCallAnalysisResultPath), restCallAnalysis);
+            mapper.writeValue(new File(REST_CALL_ANALYSIS_RESULT_PATH), restCallAnalysis);
         }
         catch (IOException e) {
             logger.error("Failed to analyze REST calls", e);
@@ -92,7 +92,7 @@ public class RestCallAnalyzer {
         RestCallAnalysis restCallsAndMatchingEndpoints = null;
 
         try {
-            restCallsAndMatchingEndpoints = mapper.readValue(new File(RestCallAnalysisResultPath), new TypeReference<RestCallAnalysis>() {
+            restCallsAndMatchingEndpoints = mapper.readValue(new File(REST_CALL_ANALYSIS_RESULT_PATH), new TypeReference<RestCallAnalysis>() {
             });
         }
         catch (IOException e) {

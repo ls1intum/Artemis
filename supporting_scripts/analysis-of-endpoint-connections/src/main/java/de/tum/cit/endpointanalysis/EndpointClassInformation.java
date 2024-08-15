@@ -6,13 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class EndpointClassInformation {
 
-    @JsonProperty
     private String filePath;
-
-    @JsonProperty
     private String classRequestMapping;
-
-    @JsonProperty
     private List<EndpointInformation> endpoints;
 
     public EndpointClassInformation() {

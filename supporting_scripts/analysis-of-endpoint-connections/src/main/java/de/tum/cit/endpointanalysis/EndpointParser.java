@@ -33,9 +33,9 @@ import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 
 public class EndpointParser {
 
-    static String EndpointParsingResultPath = "endpoints.json";
+    static final String ENDPOINT_PARSING_RESULT_PATH = "endpoints.json";
 
-    static String RestCallParsingResultPath = "restCalls.json";
+    static final String REST_CALL_PARSING_RESULT_PATH = "restCalls.json";
 
     private static final Logger logger = LoggerFactory.getLogger(EndpointParser.class);
 
@@ -132,17 +132,17 @@ public class EndpointParser {
      */
     private static List<String> extractPathsFromAnnotation(AnnotationExpr annotation) {
         List<String> paths = new ArrayList<>();
-        if (annotation instanceof SingleMemberAnnotationExpr) {
-            Expression memberValue = ((SingleMemberAnnotationExpr) annotation).getMemberValue();
-            if (memberValue instanceof ArrayInitializerExpr) {
-                paths.addAll(((ArrayInitializerExpr) memberValue).getValues().stream().map(Expression::toString).collect(Collectors.toList()));
+        if (annotation instanceof SingleMemberAnnotationExpr singleMemberAnnotationExpr) {
+            Expression memberValue = singleMemberAnnotationExpr.getMemberValue();
+            if (memberValue instanceof ArrayInitializerExpr arrayInitializerExpr) {
+                paths.addAll(arrayInitializerExpr.getValues().stream().map(Expression::toString).collect(Collectors.toList()));
             }
             else {
                 paths.add(memberValue.toString());
             }
         }
-        else if (annotation instanceof NormalAnnotationExpr) {
-            ((NormalAnnotationExpr) annotation).getPairs().stream().filter(pair -> "value".equals(pair.getNameAsString())).forEach(pair -> paths.add(pair.getValue().toString()));
+        else if (annotation instanceof NormalAnnotationExpr normalAnnotationExpr) {
+            normalAnnotationExpr.getPairs().stream().filter(pair -> "value".equals(pair.getNameAsString())).forEach(pair -> paths.add(pair.getValue().toString()));
         }
         return paths;
     }
@@ -168,11 +168,11 @@ public class EndpointParser {
 
         String classRequestMapping = javaClass.getAnnotations().stream().filter(annotation -> annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())).findFirst()
                 .map(annotation -> {
-                    if (annotation instanceof SingleMemberAnnotationExpr) {
-                        return ((SingleMemberAnnotationExpr) annotation).getMemberValue().toString();
+                    if (annotation instanceof SingleMemberAnnotationExpr singleMemberAnnotationExpr) {
+                        return singleMemberAnnotationExpr.getMemberValue().toString();
                     }
-                    else if (annotation instanceof NormalAnnotationExpr) {
-                        return ((NormalAnnotationExpr) annotation).getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).map(pair -> pair.getValue().toString())
+                    else if (annotation instanceof NormalAnnotationExpr normalAnnotationExpr) {
+                        return normalAnnotationExpr.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).map(pair -> pair.getValue().toString())
                                 .findFirst().orElse("");
                     }
                     return "";
@@ -207,7 +207,7 @@ public class EndpointParser {
      */
     private static void writeEndpointsToFile(List<EndpointClassInformation> endpointClasses) {
         try {
-            new ObjectMapper().writeValue(new File(EndpointParsingResultPath), endpointClasses);
+            new ObjectMapper().writeValue(new File(ENDPOINT_PARSING_RESULT_PATH), endpointClasses);
         }
         catch (IOException e) {
             logger.error("Failed to write endpoint information to file", e);

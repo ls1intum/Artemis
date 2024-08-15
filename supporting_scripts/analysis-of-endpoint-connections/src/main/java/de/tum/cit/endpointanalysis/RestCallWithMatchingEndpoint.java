@@ -3,9 +3,7 @@ package de.tum.cit.endpointanalysis;
 public class RestCallWithMatchingEndpoint {
 
     private EndpointInformation matchingEndpoint;
-
     private RestCallInformation restCallInformation;
-
     private String filePath;
 
     public RestCallWithMatchingEndpoint(EndpointInformation matchingEndpoint, RestCallInformation restCallInformation, String filePath) {

@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RestCallFileInformation {
 
-    @JsonProperty
     String fileName;
-
-    @JsonProperty
     RestCallInformation[] restCalls;
 
     public RestCallFileInformation() {
