@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import {
@@ -7,18 +7,18 @@ import {
     CompetencyRelationDTO,
     CompetencyWithTailRelationDTO,
     CourseCompetency,
+    CourseCompetencyImportOptionsDTO,
     CourseCompetencyType,
     dtoToCompetencyRelation,
     getIcon,
 } from 'app/entities/competency.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription, forkJoin } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { PROFILE_IRIS } from 'app/app.constants';
@@ -27,6 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { ImportAllCourseCompetenciesModalComponent } from 'app/course/competencies/components/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -130,30 +131,29 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      * Opens a modal for selecting a course to import all competencies from.
      */
     openImportAllModal() {
-        const modalRef = this.modalService.open(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
-        //unary operator is necessary as otherwise courseId is seen as a string and will not match.
-        modalRef.componentInstance.disabledIds = [+this.courseId];
-        modalRef.componentInstance.competencyType = 'courseCompetency';
-        modalRef.result.then((result: ImportAllFromCourseResult) => {
-            const courseTitle = result.courseForImportDTO.title ?? '';
-
-            this.courseCompetencyService
-                .importAll(this.courseId, result.courseForImportDTO.id!, result.importRelations)
-                .pipe(
-                    filter((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.ok),
-                    map((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.body),
-                )
-                .subscribe({
-                    next: (res: Array<CompetencyWithTailRelationDTO>) => {
-                        if (res.length > 0) {
-                            this.alertService.success(`artemisApp.courseCompetency.importAll.success`, { noOfCompetencies: res.length, courseTitle: courseTitle });
-                            this.updateDataAfterImportAll(res);
-                        } else {
-                            this.alertService.warning(`artemisApp.courseCompetency.importAll.warning`, { courseTitle: courseTitle });
-                        }
-                    },
-                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                });
+        const modalRef = this.modalService.open(ImportAllCourseCompetenciesModalComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.courseId = signal<number>(this.courseId);
+        modalRef.result.then((result: CourseCompetencyImportOptionsDTO) => {
+            console.log(result);
+            // const courseTitle = result.courseForImportDTO.title ?? '';
+            //
+            // this.courseCompetencyService
+            //     .importAll(this.courseId, result.courseForImportDTO.id!, result.importRelations)
+            //     .pipe(
+            //         filter((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.ok),
+            //         map((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.body),
+            //     )
+            //     .subscribe({
+            //         next: (res: Array<CompetencyWithTailRelationDTO>) => {
+            //             if (res.length > 0) {
+            //                 this.alertService.success(`artemisApp.courseCompetency.importAll.success`, { noOfCompetencies: res.length, courseTitle: courseTitle });
+            //                 this.updateDataAfterImportAll(res);
+            //             } else {
+            //                 this.alertService.warning(`artemisApp.courseCompetency.importAll.warning`, { courseTitle: courseTitle });
+            //             }
+            //         },
+            //         error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            //     });
         });
     }
 

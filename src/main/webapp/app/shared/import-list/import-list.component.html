@@ -1,0 +1,84 @@
+<div class="d-flex align-items-center justify-content-between">
+    <!--    TODO: Translations-->
+    <h5 class="m-0">Courses</h5>
+    <div>
+        <div class="d-flex align-items-center">
+            @if (isLoading()) {
+                <fa-icon [icon]="faSpinner" animation="spin" />
+            }
+            <input
+                id="import-course-competencies-course-search"
+                type="search"
+                class="form-control ms-2 rounded"
+                [placeholder]="'Search'"
+                aria-label="Search"
+                [(ngModel)]="searchTerm"
+            />
+        </div>
+    </div>
+</div>
+<hr class="my-2" />
+<div class="import-table-container">
+    <table class="table align-middle table-striped">
+        <thead>
+            <tr>
+                <th class="col-1 clickable">
+                    <div class="d-flex align-items-center" (click)="setSortedColumn('ID')">
+                        <span>#</span>
+                        <ng-container
+                            *ngTemplateOutlet="sortIcon; context: { sortedColumn: 'ID', currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }"
+                        ></ng-container>
+                    </div>
+                </th>
+                @for (column of columns(); track column) {
+                    <th class="col-4 clickable" (click)="setSortedColumn(column.name)">
+                        <div class="d-flex align-items-center">
+                            <span [jhiTranslate]="'artemisApp.' + entityName() + '.importAll.table.' + column.name"></span>
+                            <ng-container
+                                *ngTemplateOutlet="sortIcon; context: { sortedColumn: column.name, currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }"
+                            ></ng-container>
+                        </div>
+                    </th>
+                }
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (entity of resultsOnPage(); track entity.id) {
+                <tr class="flex-row">
+                    <td class="col-1">
+                        <span>{{ entity.id }}</span>
+                    </td>
+                    @for (column of columns(); track column) {
+                        <td class="text-break col-4">
+                            <ngb-highlight [result]="column.getProperty(entity)" [term]="searchTerm()" />
+                        </td>
+                    }
+                    <td class="col-1">
+                        <button class="btn btn-sm btn-outline-secondary" (click)="selectRow(entity.id!)">Select</button>
+                    </td>
+                </tr>
+            } @empty {
+                <tr>
+                    <td [colSpan]="columns().length + 2" class="text-center text-secondary"><em>No courses found</em></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<ngb-pagination
+    [collectionSize]="collectionSize()"
+    [pageSize]="pageSize()"
+    [page]="page()"
+    (pageChange)="setPage($event)"
+    size="sm"
+    class="d-flex justify-content-end mt-2 pagination"
+/>
+
+<ng-template #sortIcon let-sortedColumn="sortedColumn" let-currentSortedColumn="currentSortedColumn" let-sortingOrder="sortingOrder">
+    @if (sortedColumn !== currentSortedColumn) {
+        <fa-icon [icon]="faSort" class="ms-1"></fa-icon>
+    } @else {
+        <fa-icon [icon]="sortingOrder === SortingOrder.DESCENDING ? faSortDown : faSortUp" class="ms-1"></fa-icon>
+    }
+</ng-template>
