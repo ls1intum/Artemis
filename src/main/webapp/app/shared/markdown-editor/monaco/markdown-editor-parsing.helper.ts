@@ -1,15 +1,16 @@
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
+import { TextWithDomainAction } from './markdown-editor-monaco.component';
 
 // TODO update docs
-export function parseMarkdownForDomainActions(markdown: string, domainActions: MonacoEditorDomainAction[]): [string, MonacoEditorDomainAction | undefined][] {
+export function parseMarkdownForDomainActions(markdown: string, domainActions: MonacoEditorDomainAction[]): TextWithDomainAction[] {
     let remainingText = markdown;
     const actionIdentifiersString = domainActions
         .map((action) => action.getOpeningIdentifier())
         .map((identifier) => identifier.replace('[', '').replace(']', ''))
         .map(escapeStringForUseInRegex)
         .join('|');
-    const actionTextsMappedToActionIdentifiers: [string, MonacoEditorDomainAction | undefined][] = [];
+    const actionTextsMappedToActionIdentifiers: TextWithDomainAction[] = [];
     /** create a new regex expression which searches for the domainCommands identifiers
      * (?=   If a command is found, add the command identifier to the result of the split
      * \\[  look for the character '[' to determine the beginning of the command identifier
@@ -40,7 +41,7 @@ export function parseMarkdownForDomainActions(markdown: string, domainActions: M
  * @param domainActions The array of domain actions for which to extract the identifiers
  * @return array of the text with the domainCommand identifier
  */
-function parseLineForDomainCommand(text: string, domainActions: MonacoEditorDomainAction[]): [string, MonacoEditorDomainAction | undefined] {
+function parseLineForDomainCommand(text: string, domainActions: MonacoEditorDomainAction[]): TextWithDomainAction {
     for (const domainAction of domainActions) {
         const possibleOpeningCommandIdentifier = [
             domainAction.getOpeningIdentifier(),

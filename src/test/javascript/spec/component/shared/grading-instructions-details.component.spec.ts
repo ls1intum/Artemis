@@ -15,7 +15,7 @@ import { MonacoGradingDescriptionAction } from 'app/shared/monaco-editor/model/a
 import { MonacoGradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-feedback.action';
 import { MonacoGradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-usage-count.action';
 import { MonacoGradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-criterion.action';
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('Grading Instructions Management Component', () => {
     let component: GradingInstructionsDetailsComponent;
@@ -137,7 +137,7 @@ describe('Grading Instructions Management Component', () => {
 
     it('should change grading instruction', () => {
         const newDescription = 'new text';
-        const domainActions = [[newDescription, new MonacoGradingDescriptionAction()]] as [string, MonacoEditorDomainAction | undefined][];
+        const domainActions = [[newDescription, new MonacoGradingDescriptionAction()]] as TextWithDomainAction[];
 
         component.exercise.gradingCriteria = [gradingCriterion];
         component.onInstructionChange(domainActions, gradingInstruction);
@@ -156,7 +156,7 @@ describe('Grading Instructions Management Component', () => {
 
     it('should set grading instruction text for exercise', () => {
         const markdownText = 'new text';
-        const domainActions = [[markdownText, undefined]] as [string, MonacoEditorDomainAction | undefined][];
+        const domainActions = [[markdownText, undefined]] as TextWithDomainAction[];
 
         component.setExerciseGradingInstructionText(domainActions);
         fixture.detectChanges();
@@ -181,7 +181,7 @@ describe('Grading Instructions Management Component', () => {
             ['description', descriptionAction],
             ['feedback', feedbackAction],
             ['0', usageCountAction],
-        ] as [string, MonacoEditorDomainAction | undefined][];
+        ] as TextWithDomainAction[];
     };
 
     it('should set grading instruction without criterion action when markdown-change triggered', () => {

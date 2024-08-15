@@ -60,6 +60,8 @@ interface MarkdownActionsByGroup {
     meta: MonacoEditorAction[];
 }
 
+export type TextWithDomainAction = [string, MonacoEditorDomainAction | undefined];
+
 const EXTERNAL_HEIGHT = 'external';
 
 /**
@@ -170,7 +172,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onEditSelect = new EventEmitter<void>();
 
     @Output()
-    textWithDomainActionsFound = new EventEmitter<[string, MonacoEditorDomainAction | undefined][]>();
+    textWithDomainActionsFound = new EventEmitter<TextWithDomainAction[]>();
 
     @Output()
     onDefaultPreviewHtmlChanged = new EventEmitter<SafeHtml | undefined>();
