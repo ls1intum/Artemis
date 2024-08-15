@@ -7,11 +7,11 @@ export class MonacoCorrectMultipleChoiceAnswerAction extends MonacoEditorDomainA
     static readonly TEXT = 'Enter a correct answer option here';
 
     constructor() {
-        super(MonacoCorrectMultipleChoiceAnswerAction.ID, 'artemisApp.quizEditor.correctMultipleChoiceAnswer');
+        super(MonacoCorrectMultipleChoiceAnswerAction.ID, 'artemisApp.multipleChoiceQuestion.editor.addCorrectAnswerOption');
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        this.insertTextAtPosition(editor, this.getPosition(editor), `\n${this.getOpeningIdentifier()} {${MonacoCorrectMultipleChoiceAnswerAction.TEXT}}`);
+        this.insertTextAtPosition(editor, this.getPosition(editor), `\n${this.getOpeningIdentifier()} ${MonacoCorrectMultipleChoiceAnswerAction.TEXT}`);
         editor.focus();
         this.setPosition(editor, this.getPosition(editor), true);
     }

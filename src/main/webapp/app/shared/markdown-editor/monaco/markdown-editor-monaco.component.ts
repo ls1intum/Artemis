@@ -106,6 +106,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     showPreviewButton = true;
 
     @Input()
+    showVisualButton = false;
+
+    @Input()
     showDefaultPreview = true;
 
     @Input()
@@ -179,6 +182,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
+    inVisualMode = false;
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
     targetWrapperHeight?: number;

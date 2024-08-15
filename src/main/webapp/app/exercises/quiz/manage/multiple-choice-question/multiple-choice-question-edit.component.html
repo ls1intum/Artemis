@@ -94,19 +94,19 @@
         </div>
         <div class="markupEditorArea">
             <div class="question-content">
-                <jhi-markdown-editor
+                <jhi-markdown-editor-monaco
                     #markdownEditor
                     [markdown]="questionEditorText"
                     [showPreviewButton]="true"
-                    [showVisualModeButton]="true"
-                    [domainCommands]="commandMultipleChoiceQuestions"
+                    [showVisualButton]="true"
+                    [domainActions]="multipleChoiceActions"
                     (markdownChange)="changesInMarkdown()"
-                    (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                    (textWithDomainActionsFound)="domainCommandsFound($event)"
                     [showDefaultPreview]="false"
                     class="h-auto"
                 >
                     <!-- Preview -->
-                    <ng-container id="preview">
+                    <ng-container id="previewMonaco">
                         @if (showMultipleChoiceQuestionPreview) {
                             <jhi-multiple-choice-question [question]="question" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex" />
                         }
@@ -120,7 +120,7 @@
                         }
                     </ng-container>
                     <!-- End of Visual -->
-                </jhi-markdown-editor>
+                </jhi-markdown-editor-monaco>
             </div>
         </div>
     </div>
