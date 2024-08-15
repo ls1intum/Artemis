@@ -181,7 +181,7 @@ public class AccountResource {
         user = userRepository.getUser();
         UserDTO userDTO = new UserDTO();
         userDTO.setLogin(user.getLogin());
-        userDTO.setVcsAccessToken(user.getVcsAccessToken() + "abcde");
+        userDTO.setVcsAccessToken(user.getVcsAccessToken());
         userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
         return ResponseEntity.ok(userDTO);
     }
