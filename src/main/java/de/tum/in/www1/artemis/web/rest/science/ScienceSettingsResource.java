@@ -77,7 +77,7 @@ public class ScienceSettingsResource {
      */
     @PutMapping("science-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<ScienceSetting[]> saveScienceSettingsForCurrentUser(@NonNull @RequestBody ScienceSetting[] scienceSettings) {
+    public ResponseEntity<ScienceSetting[]> saveScienceSettingsForCurrentUser(@RequestBody ScienceSetting @NonNull [] scienceSettings) {
         if (scienceSettings.length == 0) {
             throw new BadRequestAlertException("Cannot save non-existing Science Settings", "ScienceSettings", "scienceSettingsEmpty");
         }

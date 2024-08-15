@@ -86,7 +86,7 @@ public class NotificationSettingsResource {
      */
     @PutMapping("notification-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<NotificationSetting[]> saveNotificationSettingsForCurrentUser(@NonNull @RequestBody NotificationSetting[] notificationSettings) {
+    public ResponseEntity<NotificationSetting[]> saveNotificationSettingsForCurrentUser(@RequestBody NotificationSetting @NonNull [] notificationSettings) {
         if (notificationSettings.length == 0) {
             throw new BadRequestAlertException("Cannot save non-existing Notification Settings", "NotificationSettings", "notificationSettingsEmpty");
         }

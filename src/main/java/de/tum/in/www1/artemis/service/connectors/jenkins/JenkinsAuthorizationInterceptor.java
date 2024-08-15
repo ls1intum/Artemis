@@ -47,7 +47,7 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
 
     @NonNull
     @Override
-    public ClientHttpResponse intercept(HttpRequest request, @NonNull byte[] body, @NonNull ClientHttpRequestExecution execution) throws IOException {
+    public ClientHttpResponse intercept(HttpRequest request, byte @NonNull [] body, @NonNull ClientHttpRequestExecution execution) throws IOException {
         request.getHeaders().setBasicAuth(username, password);
         if (useCrumb) {
             setCrumb(request.getHeaders());
