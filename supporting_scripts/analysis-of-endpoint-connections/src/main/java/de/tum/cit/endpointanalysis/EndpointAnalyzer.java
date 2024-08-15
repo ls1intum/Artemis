@@ -94,18 +94,19 @@ public class EndpointAnalyzer {
             });
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            logger.error("Failed to deserialize endpoint analysis result", e);
         }
+
         endpointsAndMatchingRestCalls.getUnusedEndpoints().stream().forEach(endpoint -> {
-            System.out.println("=============================================");
-            System.out.println("Endpoint URI: " + endpoint.buildCompleteEndpointURI());
-            System.out.println("HTTP method: " + endpoint.getHttpMethodAnnotation());
-            System.out.println("File path: " + endpoint.getClassName());
-            System.out.println("Line: " + endpoint.getLine());
-            System.out.println("=============================================");
-            System.out.println("No matching REST call found for endpoint: " + endpoint.buildCompleteEndpointURI());
-            System.out.println("---------------------------------------------");
-            System.out.println();
+            logger.info("=============================================");
+            logger.info("Endpoint URI: {}", endpoint.buildCompleteEndpointURI());
+            logger.info("HTTP method: {}", endpoint.getHttpMethodAnnotation());
+            logger.info("File path: {}", endpoint.getClassName());
+            logger.info("Line: {}", endpoint.getLine());
+            logger.info("=============================================");
+            logger.info("No matching REST call found for endpoint: {}", endpoint.buildCompleteEndpointURI());
+            logger.info("---------------------------------------------");
+            logger.info("");
         });
     }
 }

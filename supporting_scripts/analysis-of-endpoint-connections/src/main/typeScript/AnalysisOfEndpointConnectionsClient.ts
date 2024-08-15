@@ -33,15 +33,20 @@ function collectTypeScriptFiles(dir: string, files: string[] = []) : string[] {
  * @param filePath - The path to the TypeScript file to be parsed.
  * @returns The TSESTree of the parsed TypeScript file.
  */
-function parseTypeScriptFile(filePath: string): TSESTree.Program {
+function parseTypeScriptFile(filePath: string): TSESTree.Program | null {
     const code = readFileSync(filePath, 'utf8');
-    return parse(code, {
-        loc: true,
-        comment: true,
-        tokens: true,
-        ecmaVersion: 2020,
-        sourceType: 'module',
-    });
+    try {
+        return parse(code, {
+            loc: true,
+            comment: true,
+            tokens: true,
+            ecmaVersion: 2020,
+            sourceType: 'module',
+        });
+    } catch (error) {
+        console.error(`Failed to parse TypeScript file at ${filePath}:`, error);
+        return null;
+    }
 }
 
 const clientDirPath = resolve('src/main/webapp/app');
@@ -51,7 +56,10 @@ const tsFiles = collectTypeScriptFiles(clientDirPath);
 // create and store Syntax Tree for each file
 const astMap = new Map<string, TSESTree.Program>;
 tsFiles.forEach((filePath) => {
-    astMap.set(filePath, parseTypeScriptFile(filePath));
+    const ast =  parseTypeScriptFile(filePath);
+    if (ast) {
+        astMap.set(filePath, ast);
+    }
 });
 
 // preprocess each file

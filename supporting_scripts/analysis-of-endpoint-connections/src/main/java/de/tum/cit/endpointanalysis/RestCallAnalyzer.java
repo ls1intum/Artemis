@@ -100,17 +100,17 @@ public class RestCallAnalyzer {
         }
 
         restCallsAndMatchingEndpoints.getRestCallsWithoutMatchingEndpoints().stream().forEach(endpoint -> {
-            System.out.println("=============================================");
-            System.out.println("REST call URI: " + endpoint.buildCompleteRestCallURI());
-            System.out.println("HTTP method: " + endpoint.getMethod());
-            System.out.println("File path: " + endpoint.getFileName());
-            System.out.println("Line: " + endpoint.getLine());
-            System.out.println("=============================================");
-            System.out.println("No matching endpoint found for REST call: " + endpoint.buildCompleteRestCallURI());
-            System.out.println("---------------------------------------------");
-            System.out.println();
+            logger.info("=============================================");
+            logger.info("REST call URI: {}", endpoint.buildCompleteRestCallURI());
+            logger.info("HTTP method: {}", endpoint.getMethod());
+            logger.info("File path: {}", endpoint.getFileName());
+            logger.info("Line: {}", endpoint.getLine());
+            logger.info("=============================================");
+            logger.info("No matching endpoint found for REST call: {}", endpoint.buildCompleteRestCallURI());
+            logger.info("---------------------------------------------");
+            logger.info("");
         });
 
-        System.out.println("Number of REST calls without matching endpoints: " + restCallsAndMatchingEndpoints.getRestCallsWithoutMatchingEndpoints().size());
+        logger.info("Number of REST calls without matching endpoints: {}", restCallsAndMatchingEndpoints.getRestCallsWithoutMatchingEndpoints().size());
     }
 }
