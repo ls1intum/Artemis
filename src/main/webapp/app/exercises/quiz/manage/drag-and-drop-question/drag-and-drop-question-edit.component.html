@@ -206,7 +206,7 @@
                         [showPreviewButton]="false"
                         [domainActions]="dragAndDropDomainActions"
                         (markdownChange)="changesInMarkdown($event)"
-                        (textWithDomainActionsFound)="domainCommandsFound($event)"
+                        (textWithDomainActionsFound)="domainActionsFound($event)"
                         class="h-auto"
                     />
                 </div>
@@ -221,7 +221,7 @@
                                 [showPreviewButton]="false"
                                 [domainActions]="dragAndDropDomainActions"
                                 (markdownChange)="changesInMarkdown($event)"
-                                (textWithDomainActionsFound)="domainCommandsFound($event)"
+                                (textWithDomainActionsFound)="domainActionsFound($event)"
                                 [enableFileUpload]="false"
                                 class="h-auto"
                             />

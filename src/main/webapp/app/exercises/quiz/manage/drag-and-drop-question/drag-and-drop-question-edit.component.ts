@@ -16,13 +16,10 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/entities/quiz/drag-state.enum';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
-import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { cloneDeep } from 'lodash-es';
 import { round } from 'app/shared/util/utils';
@@ -109,14 +106,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     mouse: DragAndDropMouseEvent;
 
-    hintCommand = new HintCommand();
-    explanationCommand = new ExplanationCommand();
-
     hintAction = new MonacoQuizHintAction();
     explanationAction = new MonacoQuizExplanationAction();
-
-    /** {array} with domainCommands that are needed for a drag and drop question **/
-    dragAndDropQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
 
     dragAndDropDomainActions = [this.explanationAction, this.hintAction];
 
@@ -845,20 +836,20 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * 1. Gets the {array} containing the text with the domainCommandIdentifier and creates a new drag and drop problem statement
-     * by assigning the text according to the domainCommandIdentifiers to the drag and drop attributes.
+     * 1. Gets the {array} containing the text with the domain action identifier and creates a new drag and drop problem statement
+     * by assigning the text according to the domain action identifier to the drag and drop attributes.
      * (question text, explanation, hint)
-     * @param domainCommands - containing markdownText with the corresponding domainCommand {DomainCommand} identifier
+     * @param domainActions - containing markdownText with the corresponding domain action identifier
      */
-    domainCommandsFound(domainCommands: TextWithDomainAction[]): void {
+    domainActionsFound(domainActions: TextWithDomainAction[]): void {
         this.cleanupQuestion();
-        for (const [text, command] of domainCommands) {
-            if (command === undefined && text.length > 0) {
+        for (const [text, action] of domainActions) {
+            if (action === undefined && text.length > 0) {
                 this.question.text = text;
             }
-            if (command instanceof MonacoQuizExplanationAction) {
+            if (action instanceof MonacoQuizExplanationAction) {
                 this.question.explanation = text;
-            } else if (command instanceof MonacoQuizHintAction) {
+            } else if (action instanceof MonacoQuizHintAction) {
                 this.question.hint = text;
             }
         }
