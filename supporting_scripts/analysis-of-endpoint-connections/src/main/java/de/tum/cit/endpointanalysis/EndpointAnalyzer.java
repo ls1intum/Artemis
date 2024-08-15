@@ -109,5 +109,7 @@ public class EndpointAnalyzer {
             logger.info("---------------------------------------------");
             logger.info("");
         });
+
+        logger.info("Number of endpoints without matching REST calls: {}", endpointsAndMatchingRestCalls.getUnusedEndpoints().size());
     }
 }
