@@ -35,6 +35,8 @@ import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -59,10 +61,13 @@ import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -96,6 +101,9 @@ public class ExamUtilService {
     private ExerciseRepository exerciseRepo;
 
     @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
     private ExamUserRepository examUserRepository;
 
     @Autowired
@@ -127,6 +135,12 @@ public class ExamUtilService {
 
     @Autowired
     private ConversationRepository conversationRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -518,6 +532,37 @@ public class ExamUtilService {
     }
 
     /**
+     * Creates and saves a Post for the given Channel.
+     *
+     * @param channel The Channel for which the Post should be created
+     * @param title   The title of the Post
+     * @param author  The author of the Post
+     * @return The newly created Post
+     */
+    public Post createPost(Channel channel, String title, User author) {
+        Post post = new Post();
+        post.setTitle(title);
+        post.setConversation(channel);
+        post.setAuthor(author);
+        return postRepository.save(post);
+    }
+
+    /**
+     * Creates and saves an AnswerPost for the given Post.
+     *
+     * @param post    The Post for which the AnswerPost should be created
+     * @param content The content of the AnswerPost
+     * @param author  The author of the AnswerPost
+     */
+    public void createAnswerPost(Post post, String content, User author) {
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setContent(content);
+        answerPost.setPost(post);
+        answerPost.setAuthor(author);
+        answerPostRepository.save(answerPost);
+    }
+
+    /**
      * Creates and saves an Exam and corresponding StudentExam with a registered User. The Exam started 1 hour ago and ends in 1 hour.
      *
      * @param course The Course to which the Exam should be added
@@ -829,6 +874,7 @@ public class ExamUtilService {
             var exerciseGroup6 = exam.getExerciseGroups().get(6);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup6, "Programming");
+            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepo.save(programmingExercise1);
             programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
@@ -876,6 +922,7 @@ public class ExamUtilService {
             var exerciseGroup2 = exam.getExerciseGroups().get(2);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup2);
+            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepo.save(programmingExercise1);
             programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);

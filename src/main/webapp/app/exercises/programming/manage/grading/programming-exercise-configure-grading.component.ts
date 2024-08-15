@@ -48,7 +48,7 @@ enum TestCaseView {
     SAVE_VALUES,
 }
 
-const DefaultFieldValues = {
+const DefaultFieldValues: { [key: string]: number } = {
     [EditableField.WEIGHT]: 1,
     [EditableField.BONUS_MULTIPLIER]: 1,
     [EditableField.BONUS_POINTS]: 0,
@@ -117,7 +117,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
 
     testCaseColors = {};
-    categoryColors = {};
+    categoryColors: { [key: string]: string } = {};
     totalWeight = 0;
 
     submissionPolicy?: SubmissionPolicy;
@@ -304,9 +304,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     updateEditedField(editedTestCase: ProgrammingExerciseTestCase, field: EditableField) {
         return (newValue: any) => {
-            newValue = this.checkFieldValue(newValue, editedTestCase[field], field);
+            newValue = this.checkFieldValue(newValue, editedTestCase[field as keyof ProgrammingExerciseTestCase], field);
             // Only mark the testcase as changed, if the field has changed.
-            if (newValue !== editedTestCase[field]) {
+            if (newValue !== editedTestCase[field as keyof ProgrammingExerciseTestCase]) {
                 this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
                 this.updateAllTestCaseViewsAfterEditing(editedTestCase, field, newValue);
                 this.updateTestPoints(editedTestCase, field, newValue);
@@ -324,9 +324,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     updateEditedCategoryField(editedCategory: StaticCodeAnalysisCategory, field: EditableField) {
         return (newValue: any) => {
-            newValue = this.checkFieldValue(newValue, editedCategory[field], field);
+            newValue = this.checkFieldValue(newValue, editedCategory[field as keyof StaticCodeAnalysisCategory], field);
             // Only mark the category as changed, if the field has changed.
-            if (newValue !== editedCategory[field]) {
+            if (newValue !== editedCategory[field as keyof StaticCodeAnalysisCategory]) {
                 this.changedCategoryIds = this.changedCategoryIds.includes(editedCategory.id) ? this.changedCategoryIds : [...this.changedCategoryIds, editedCategory.id];
                 this.updateStaticCodeAnalysisCategories(editedCategory, field, newValue);
             }

@@ -302,7 +302,7 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         String userName = TEST_PREFIX + user + "100";
 
         // setup mocks
-        var ldapUser1Dto = new LdapUserDto().firstName(userName).lastName(userName).username(userName).email(userName + "@tum.de");
+        var ldapUser1Dto = new LdapUserDto().firstName(userName).lastName(userName).login(userName).email(userName + "@tum.de");
 
         StudentDTO dto1 = switch (user) {
             case "tutor" -> new StudentDTO(null, userName, userName, "1000001", null);
@@ -312,10 +312,10 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         };
 
         if (dto1.login() != null) {
-            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(dto1.login());
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByLogin(dto1.login());
         }
         else if (dto1.email() != null) {
-            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByEmail(dto1.email());
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByAnyEmail(dto1.email());
         }
         else {
             doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByRegistrationNumber(dto1.registrationNumber());
