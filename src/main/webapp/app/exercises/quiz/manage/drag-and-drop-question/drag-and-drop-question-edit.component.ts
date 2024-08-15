@@ -20,7 +20,6 @@ import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.comm
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
@@ -52,6 +51,9 @@ import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 import { FileService } from 'app/shared/http/file.service';
+import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
+import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
+import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -63,7 +65,7 @@ import { FileService } from 'app/shared/http/file.service';
 export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('clickLayer', { static: false }) private clickLayer: ElementRef;
     @ViewChild('backgroundImage ', { static: false }) private backgroundImage: SecuredImageComponent;
-    @ViewChild('markdownEditor', { static: false }) private markdownEditor: MarkdownEditorComponent;
+    @ViewChild('markdownEditor', { static: false }) private markdownEditor: MarkdownEditorMonacoComponent;
 
     @Input() question: DragAndDropQuestion;
     @Input() questionIndex: number;
@@ -110,8 +112,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     hintCommand = new HintCommand();
     explanationCommand = new ExplanationCommand();
 
+    hintAction = new MonacoQuizHintAction();
+    explanationAction = new MonacoQuizExplanationAction();
+
     /** {array} with domainCommands that are needed for a drag and drop question **/
     dragAndDropQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
+
+    dragAndDropDomainActions = [this.explanationAction, this.hintAction];
 
     // Icons
     faBan = faBan;
@@ -843,15 +850,15 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * (question text, explanation, hint)
      * @param domainCommands - containing markdownText with the corresponding domainCommand {DomainCommand} identifier
      */
-    domainCommandsFound(domainCommands: [string, DomainCommand | null][]): void {
+    domainCommandsFound(domainCommands: TextWithDomainAction[]): void {
         this.cleanupQuestion();
         for (const [text, command] of domainCommands) {
-            if (command === null && text.length > 0) {
+            if (command === undefined && text.length > 0) {
                 this.question.text = text;
             }
-            if (command instanceof ExplanationCommand) {
+            if (command instanceof MonacoQuizExplanationAction) {
                 this.question.explanation = text;
-            } else if (command instanceof HintCommand) {
+            } else if (command instanceof MonacoQuizHintAction) {
                 this.question.hint = text;
             }
         }
@@ -873,6 +880,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     prepareForSave(): void {
         this.cleanupQuestion();
-        this.markdownEditor.parse();
+        this.markdownEditor.parseMarkdown();
     }
 }

@@ -200,29 +200,28 @@
         <div class="markupEditorArea">
             @if (!reEvaluationInProgress) {
                 <div class="question-content">
-                    <jhi-markdown-editor
+                    <jhi-markdown-editor-monaco
                         #markdownEditor
                         [markdown]="questionEditorText"
                         [showPreviewButton]="false"
-                        [domainCommands]="dragAndDropQuestionDomainCommands"
+                        [domainActions]="dragAndDropDomainActions"
                         (markdownChange)="changesInMarkdown($event)"
-                        (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                        (textWithDomainActionsFound)="domainCommandsFound($event)"
                         class="h-auto"
                     />
                 </div>
-            }
-            @if (reEvaluationInProgress) {
+            } @else {
                 <div class="markupEditorArea">
                     <div class="question-content row">
                         <div class="col-10 col-lg-11">
                             <!-- TODO: Fix file upload    -->
-                            <jhi-markdown-editor
+                            <jhi-markdown-editor-monaco
                                 #markdownEditor
                                 [markdown]="questionEditorText"
                                 [showPreviewButton]="false"
-                                [domainCommands]="dragAndDropQuestionDomainCommands"
+                                [domainActions]="dragAndDropDomainActions"
                                 (markdownChange)="changesInMarkdown($event)"
-                                (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                                (textWithDomainActionsFound)="domainCommandsFound($event)"
                                 [enableFileUpload]="false"
                                 class="h-auto"
                             />
