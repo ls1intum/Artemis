@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.ldap;
 
-import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_EMAIL;
+import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_EMAILS;
+import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MAIN_EMAIL;
 import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
 import static org.springframework.ldap.query.LdapQueryBuilder.query;
 
@@ -38,12 +39,16 @@ public class LdapUserService {
         this.ldapUserRepository = ldapUserRepository;
     }
 
-    public Optional<LdapUserDto> findByUsername(final String username) {
-        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where("cn").is(username));
+    public Optional<LdapUserDto> findByLogin(final String login) {
+        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where("cn").is(login));
     }
 
-    public Optional<LdapUserDto> findByEmail(final String email) {
-        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where(TUM_LDAP_EMAIL).is(email));
+    public Optional<LdapUserDto> findByMainEmail(final String email) {
+        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where(TUM_LDAP_MAIN_EMAIL).is(email));
+    }
+
+    public Optional<LdapUserDto> findByAnyEmail(final String email) {
+        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where(TUM_LDAP_EMAILS).is(email));
     }
 
     public Optional<LdapUserDto> findByRegistrationNumber(final String registrationNumber) {
@@ -59,10 +64,10 @@ public class LdapUserService {
     @Nullable
     public LdapUserDto loadUserDetailsFromLdap(@NotNull String login) {
         try {
-            Optional<LdapUserDto> ldapUserOptional = findByUsername(login);
+            Optional<LdapUserDto> ldapUserOptional = findByLogin(login);
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
-                log.debug("Ldap User {} has registration number: {}", ldapUser.getUsername(), ldapUser.getRegistrationNumber());
+                log.debug("Ldap User {} has registration number: {}", ldapUser.getLogin(), ldapUser.getRegistrationNumber());
                 return ldapUserOptional.get();
             }
             else {
