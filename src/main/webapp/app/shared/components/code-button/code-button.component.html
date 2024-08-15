@@ -36,7 +36,7 @@
                         @if (showCloneUrlWithoutToken) {
                             <a (click)="useHttpsUrlWithoutToken()" class="dropdown-item {{ !useToken && !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
                         }
-                        @if (useVersionControlAccessToken && participations) {
+                        @if ((useVersionControlAccessToken && participations) || (useVersionControlAccessToken && user.vcsAccessToken)) {
                             <a (click)="useHttpsUrlWithToken()" class="dropdown-item {{ useToken && !useSsh ? 'active' : '' }}" id="useHTTPSWithTokenButton">Token</a>
                         }
                         <a (click)="useSshUrl()" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
