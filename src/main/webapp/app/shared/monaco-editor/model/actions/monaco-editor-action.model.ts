@@ -64,6 +64,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      */
     dispose(): void {
         this.disposableAction?.dispose();
+        this.disposableAction = undefined;
         this._editor = undefined;
     }
 
