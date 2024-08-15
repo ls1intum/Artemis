@@ -4,18 +4,18 @@ import { Exercise } from 'app/entities/exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
-import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
-import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
-import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
-import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
-import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
-import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { MonacoGradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-instruction.action';
+import { MonacoGradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-credits.action';
+import { MonacoGradingScaleAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-scale.action';
+import { MonacoGradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-description.action';
+import { MonacoGradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-feedback.action';
+import { MonacoGradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-usage-count.action';
+import { MonacoGradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-criterion.action';
+import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 
 describe('Grading Instructions Management Component', () => {
     let component: GradingInstructionsDetailsComponent;
@@ -28,7 +28,7 @@ describe('Grading Instructions Management Component', () => {
     const backupExercise = { id: 1 } as Exercise;
 
     const criterionMarkdownText =
-        '[criterion]' +
+        '[criterion] ' +
         'testCriteria' +
         '\n' +
         '\t' +
@@ -146,7 +146,7 @@ describe('Grading Instructions Management Component', () => {
 
     it('should change grading instruction', () => {
         const newDescription = 'new text';
-        const domainCommands = [[newDescription, new InstructionDescriptionCommand()]] as [string, DomainCommand | null][];
+        const domainCommands = [[newDescription, new MonacoGradingDescriptionAction()]] as [string, MonacoEditorDomainAction | undefined][];
 
         component.exercise.gradingCriteria = [gradingCriterion];
         component.onInstructionChange(domainCommands, gradingInstruction);
@@ -165,25 +165,38 @@ describe('Grading Instructions Management Component', () => {
 
     it('should set grading instruction text for exercise', () => {
         const markdownText = 'new text';
-        const domainCommands = [[markdownText, null]] as [string, DomainCommand | null][];
+        const domainActions = [[markdownText, undefined]] as [string, MonacoEditorDomainAction | undefined][];
 
-        component.setExerciseGradingInstructionText(domainCommands);
+        component.setExerciseGradingInstructionText(domainActions);
         fixture.detectChanges();
 
         expect(component.exercise.gradingInstructions).toEqual(markdownText);
     });
 
-    it('should set grading instruction without criterion command when markdown-change triggered', () => {
-        const domainCommands = [
-            ['', new GradingInstructionCommand()],
-            ['1', new CreditsCommand()],
-            ['scale', new GradingScaleCommand()],
-            ['description', new InstructionDescriptionCommand()],
-            ['feedback', new FeedbackCommand()],
-            ['0', new UsageCountCommand()],
-        ] as [string, DomainCommand | null][];
+    const getDomainActionArray = () => {
+        const creditsAction = new MonacoGradingCreditsAction();
+        const scaleAction = new MonacoGradingScaleAction();
+        const descriptionAction = new MonacoGradingDescriptionAction();
+        const feedbackAction = new MonacoGradingFeedbackAction();
+        const usageCountAction = new MonacoGradingUsageCountAction();
+        const instructionAction = new MonacoGradingInstructionAction(creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction);
+        const criterionAction = new MonacoGradingCriterionAction(instructionAction);
 
-        component.onDomainActionsFound(domainCommands);
+        return [
+            ['testCriteria', criterionAction],
+            ['', instructionAction],
+            ['1', creditsAction],
+            ['scale', scaleAction],
+            ['description', descriptionAction],
+            ['feedback', feedbackAction],
+            ['0', usageCountAction],
+        ] as [string, MonacoEditorDomainAction | undefined][];
+    };
+
+    it('should set grading instruction without criterion command when markdown-change triggered', () => {
+        const domainActionsWithoutCriterion = getDomainActionArray().slice(1);
+
+        component.onDomainActionsFound(domainActionsWithoutCriterion);
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria).toBeDefined();
@@ -192,17 +205,9 @@ describe('Grading Instructions Management Component', () => {
     });
 
     it('should set grading instruction with criterion command when markdown-change triggered', () => {
-        const domainCommands = [
-            ['testCriteria', new GradingCriterionCommand()],
-            ['', new GradingInstructionCommand()],
-            ['1', new CreditsCommand()],
-            ['scale', new GradingScaleCommand()],
-            ['description', new InstructionDescriptionCommand()],
-            ['feedback', new FeedbackCommand()],
-            ['0', new UsageCountCommand()],
-        ] as [string, DomainCommand | null][];
+        const domainActions = getDomainActionArray();
 
-        component.onDomainActionsFound(domainCommands);
+        component.onDomainActionsFound(domainActions);
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria).toBeDefined();
