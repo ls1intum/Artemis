@@ -18,20 +18,32 @@
     width: 100% !important;
 }
 
-@media screen and (min-width: 992px) {
-    .col-lg-6 {
+@media screen and (min-width: 576px) {
+    .col-sm-12 {
+        width: 100% !important;
+    }
+}
+
+@media screen and (min-width: 910px) {
+    .col-md-6 {
         width: 50% !important;
     }
 }
 
-@media screen and (min-width: 1200px) {
-    .col-xl-4 {
+@media screen and (min-width: 992px) {
+    .col-lg-4 {
+        width: 50% !important;
+    }
+}
+
+@media screen and (min-width: 1300px) {
+    .col-xl-3 {
         width: 33.33% !important;
     }
 }
 
-@media screen and (min-width: 1900px) {
-    .col-xl-4 {
+@media screen and (min-width: 1685px) {
+    .col-xl-3 {
         flex: 0 0 25;
         width: 25% !important;
     }

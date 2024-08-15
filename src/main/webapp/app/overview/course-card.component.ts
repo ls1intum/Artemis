@@ -14,6 +14,7 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { CourseScores } from 'app/course/course-scores/course-scores';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -42,6 +43,9 @@ export class CourseCardComponent implements OnChanges {
     courseColor: string;
     readonly iconSize: SizeProp = 'lg';
 
+    // Icons
+    readonly faArrowRight = faArrowRight;
+
     // ngx
     ngxDoughnutData: any[] = [
         { name: 'achievedPointsLabel', value: 0 },
@@ -53,6 +57,7 @@ export class CourseCardComponent implements OnChanges {
         group: ScaleType.Ordinal,
         domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
+    ngxSize = 140;
 
     constructor(
         private router: Router,
@@ -88,6 +93,23 @@ export class CourseCardComponent implements OnChanges {
             this.ngxDoughnutData[0].value = this.totalAbsoluteScore;
             this.ngxDoughnutData[1].value = scoreNotReached;
             this.ngxDoughnutData = [...this.ngxDoughnutData];
+
+            const cardBody = document.querySelector('.card-body');
+
+            if (cardBody) {
+                const resizeObserver = new ResizeObserver((entries) => {
+                    for (const entry of entries) {
+                        const width = entry.contentRect.width;
+
+                        if (width < 260) {
+                            this.ngxSize = 120;
+                        }
+                    }
+                });
+
+                // Start observing the cardBody element
+                resizeObserver.observe(cardBody);
+            }
         }
 
         this.lectureCount = this.course.numberOfLectures ?? this.course.lectures?.length ?? 0;

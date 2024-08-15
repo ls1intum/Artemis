@@ -1,5 +1,6 @@
 .card {
-    min-height: 380px;
+    height: 320px;
+    min-width: 380px;
     transition: transform 0.2s linear;
     border-radius: 20px;
 
@@ -42,20 +43,8 @@
     }
 
     .card-body {
-        padding: 20px;
-
-        .next-exercise-title {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .icon-wrapper {
-            width: 90px;
-
-            .next-exercise-icon {
-                z-index: 1;
-                font-size: large;
-            }
+        .information-box-wrapper {
+            height: 145px;
         }
 
         .chart-container {
@@ -72,6 +61,14 @@
         .btn-management {
             z-index: 2;
             position: relative;
+        }
+
+        .exercise-title {
+            display: inline-block;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .btn-exercise {
