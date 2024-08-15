@@ -28,6 +28,7 @@ export class MonacoGradingInstructionAction extends MonacoEditorDomainAction {
         this.feedbackAction.executeInCurrentEditor();
         this.usageCountAction.executeInCurrentEditor();
         editor.focus();
+        this.setPosition(editor, this.getPosition(editor), true);
     }
 
     getOpeningIdentifier(): string {
