@@ -1,13 +1,7 @@
 import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
-import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
-import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
-import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
-import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
 import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
@@ -107,10 +101,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         if (this.exercise.gradingCriteria) {
             for (const criterion of this.exercise.gradingCriteria) {
                 if (criterion.title == undefined) {
-                    // if it is a dummy criterion, leave out the command identifier
+                    // if it is a dummy criterion, leave out the action identifier
                     markdownText += this.generateInstructionsMarkdown(criterion);
                 } else {
-                    markdownText += GradingCriterionCommand.IDENTIFIER + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+                    markdownText += `${MonacoGradingCriterionAction.IDENTIFIER} ${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
                 }
             }
         }
@@ -138,7 +132,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     generateInstructionText(instruction: GradingInstruction): string {
         let markdownText = '';
         markdownText =
-            GradingInstructionCommand.IDENTIFIER +
+            MonacoGradingInstructionAction.IDENTIFIER +
             '\n' +
             '\t' +
             this.generateCreditsText(instruction) +
@@ -160,51 +154,44 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     generateCreditsText(instruction: GradingInstruction): string {
+        const creditsText = MonacoGradingCreditsAction.TEXT;
+        const creditsIdentifier = MonacoGradingCreditsAction.IDENTIFIER;
         if (instruction.credits == undefined) {
-            instruction.credits = parseFloat(CreditsCommand.TEXT);
-            return CreditsCommand.IDENTIFIER + ' ' + CreditsCommand.TEXT;
+            instruction.credits = parseFloat(creditsText) || 0;
         }
-        return CreditsCommand.IDENTIFIER + ' ' + instruction.credits;
+        return `${creditsIdentifier} ${instruction.credits || creditsText}`;
     }
 
     generateGradingScaleText(instruction: GradingInstruction): string {
         if (instruction.gradingScale == undefined) {
-            instruction.gradingScale = GradingScaleCommand.TEXT;
-            return GradingScaleCommand.IDENTIFIER + ' ' + GradingScaleCommand.TEXT;
+            instruction.gradingScale = MonacoGradingScaleAction.TEXT;
         }
-        return GradingScaleCommand.IDENTIFIER + ' ' + instruction.gradingScale;
+        return `${MonacoGradingScaleAction.IDENTIFIER} ${instruction.gradingScale}`;
     }
 
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
         if (instruction.instructionDescription == undefined) {
-            instruction.instructionDescription = InstructionDescriptionCommand.TEXT;
-            return InstructionDescriptionCommand.IDENTIFIER + ' ' + InstructionDescriptionCommand.TEXT;
+            instruction.instructionDescription = MonacoGradingDescriptionAction.TEXT;
         }
-        return InstructionDescriptionCommand.IDENTIFIER + ' ' + instruction.instructionDescription;
+        return `${MonacoGradingDescriptionAction.IDENTIFIER} ${instruction.instructionDescription}`;
     }
 
     generateInstructionFeedback(instruction: GradingInstruction): string {
         if (instruction.feedback == undefined) {
-            instruction.feedback = FeedbackCommand.TEXT;
-            return FeedbackCommand.IDENTIFIER + ' ' + FeedbackCommand.TEXT;
+            instruction.feedback = MonacoGradingFeedbackAction.TEXT;
         }
-        return FeedbackCommand.IDENTIFIER + ' ' + instruction.feedback;
+        return `${MonacoGradingFeedbackAction.IDENTIFIER} ${instruction.feedback}`;
     }
 
     generateUsageCount(instruction: GradingInstruction): string {
         if (instruction.usageCount == undefined) {
-            instruction.usageCount = parseInt(UsageCountCommand.TEXT, 10);
-            return UsageCountCommand.IDENTIFIER + ' ' + UsageCountCommand.TEXT;
+            instruction.usageCount = parseInt(MonacoGradingUsageCountAction.TEXT, 10) || 0;
         }
-        return UsageCountCommand.IDENTIFIER + ' ' + instruction.usageCount;
+        return `${MonacoGradingUsageCountAction.IDENTIFIER} ${instruction.usageCount}`;
     }
 
     initializeExerciseGradingInstructionText(): string {
-        if (this.exercise.gradingInstructions) {
-            return this.exercise.gradingInstructions + '\n\n';
-        } else {
-            return 'Add Assessment Instruction text here' + '\n\n';
-        }
+        return `${this.exercise.gradingInstructions || 'Add Assessment Instruction text here'}\n\n`;
     }
 
     prepareForSave(): void {
@@ -226,23 +213,23 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     // TODO update naming; remove occurrences of "command"
-    hasCriterionCommand(domainCommands: [string, MonacoEditorDomainAction | undefined][]): boolean {
-        return domainCommands.some(([, action]) => action instanceof MonacoGradingCriterionAction);
+    hasCriterionAction(domainActions: [string, MonacoEditorDomainAction | undefined][]): boolean {
+        return domainActions.some(([, action]) => action instanceof MonacoGradingCriterionAction);
     }
 
     /**
-     * @function createSubInstructionCommands
+     * @function createSubInstructionActions
      * @desc 1. divides the input: domainCommands in two subarrays:
      *          instructionCommands, which consists of all stand-alone instructions
      *          criteriaCommands, which consists of instructions that belong to a criterion
      *       2. for each subarrray a method is called to create the criterion and instruction objects
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
-    createSubInstructionCommands(domainCommands: [string, MonacoEditorDomainAction | undefined][]): void {
+    createSubInstructionActions(domainCommands: [string, MonacoEditorDomainAction | undefined][]): void {
         let instructionCommands;
         let criteriaCommands;
         let endOfInstructionsCommand = 0;
-        if (!this.hasCriterionCommand(domainCommands)) {
+        if (!this.hasCriterionAction(domainCommands)) {
             this.setParentForInstructionsWithNoCriterion(domainCommands);
         } else {
             for (const [, command] of domainCommands) {
@@ -360,7 +347,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.instructions = [];
         this.criteria = [];
         this.exercise.gradingCriteria = [];
-        this.createSubInstructionCommands(domainCommands);
+        this.createSubInstructionActions(domainCommands);
     }
 
     /**
