@@ -85,7 +85,7 @@ public class ExamAccessService {
         }
         else {
             Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-            // Generate a student exam if exam is a test exam or of student is registered for a normal exam
+            // Generate a student exam if the exam is a test exam or if the student is registered for a normal exam
             if (examWithExerciseGroupsAndExercises.isTestExam() || examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId())) {
                 studentExam = studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, currentUser);
                 // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
@@ -94,7 +94,7 @@ public class ExamAccessService {
             }
             else {
                 // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
-                throw new BadRequestAlertException("Cannot generate student exam. Student is not registered for the exam", ENTITY_NAME,
+                throw new BadRequestAlertException("Cannot generate student exam for exam ID " + examId + ". Student is not registered for the exam", ENTITY_NAME,
                         "StudentExamGenerationOnlyForRegisteredStudents", true);
             }
         }

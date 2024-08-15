@@ -9,7 +9,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -797,18 +796,17 @@ public class StudentExamService {
     }
 
     /**
-     * Generates a new individual StudentExam for the student and stores it in the database
+     * Generates a new individual StudentExam for the specified student and stores it in the database.
      *
-     * @param exam    with eagerly loaded users, exerciseGroups and exercises loaded
-     * @param student the student for which the StudentExam should be created
-     * @return the generated StudentExam
+     * @param exam    The exam with eagerly loaded users, exercise groups, and exercises.
+     * @param student The student for whom the StudentExam should be created.
+     * @return The generated StudentExam.
      */
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
         long start = System.nanoTime();
-        HashSet<User> userHashSet = new HashSet<>();
-        userHashSet.add(student);
-        StudentExam studentExam = studentExamRepository.createRandomStudentExams(exam, userHashSet, examQuizQuestionsGenerator).getFirst();
+        Set<User> userSet = Collections.singleton(student);
+        StudentExam studentExam = studentExamRepository.createRandomStudentExams(exam, userSet, examQuizQuestionsGenerator).getFirst();
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
