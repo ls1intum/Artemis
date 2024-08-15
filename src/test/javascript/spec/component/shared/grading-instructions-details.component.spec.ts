@@ -17,7 +17,7 @@ import { MonacoGradingUsageCountAction } from 'app/shared/monaco-editor/model/ac
 import { MonacoGradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-criterion.action';
 import { TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
-describe('Grading Instructions Management Component', () => {
+describe('GradingInstructionsDetailsComponent', () => {
     let component: GradingInstructionsDetailsComponent;
     let fixture: ComponentFixture<GradingInstructionsDetailsComponent>;
     let gradingInstruction: GradingInstruction;
