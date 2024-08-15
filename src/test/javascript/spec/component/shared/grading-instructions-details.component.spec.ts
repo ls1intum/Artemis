@@ -183,7 +183,7 @@ describe('Grading Instructions Management Component', () => {
             ['0', new UsageCountCommand()],
         ] as [string, DomainCommand | null][];
 
-        component.domainCommandsFound(domainCommands);
+        component.onDomainActionsFound(domainCommands);
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria).toBeDefined();
@@ -202,7 +202,7 @@ describe('Grading Instructions Management Component', () => {
             ['0', new UsageCountCommand()],
         ] as [string, DomainCommand | null][];
 
-        component.domainCommandsFound(domainCommands);
+        component.onDomainActionsFound(domainCommands);
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria).toBeDefined();

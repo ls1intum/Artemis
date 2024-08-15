@@ -2,7 +2,6 @@ import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryLis
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
@@ -212,38 +211,37 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.exercise.gradingInstructions = undefined;
     }
 
-    // TODO update naming; remove occurrences of "command"
     hasCriterionAction(domainActions: [string, MonacoEditorDomainAction | undefined][]): boolean {
         return domainActions.some(([, action]) => action instanceof MonacoGradingCriterionAction);
     }
 
     /**
      * @function createSubInstructionActions
-     * @desc 1. divides the input: domainCommands in two subarrays:
-     *          instructionCommands, which consists of all stand-alone instructions
-     *          criteriaCommands, which consists of instructions that belong to a criterion
-     *       2. for each subarrray a method is called to create the criterion and instruction objects
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * @desc 1. divides the input: domainActions into two subarrays:
+     *          instructionActions, which consists of all stand-alone instructions
+     *          criterionActions, which consists of instructions that belong to a criterion
+     *       2. for each subarray, a method is called to create the criterion and instruction objects
+     * @param domainActions containing tuples of [text, domainActionIdentifier]
      */
-    createSubInstructionActions(domainCommands: [string, MonacoEditorDomainAction | undefined][]): void {
-        let instructionCommands;
-        let criteriaCommands;
-        let endOfInstructionsCommand = 0;
-        if (!this.hasCriterionAction(domainCommands)) {
-            this.setParentForInstructionsWithNoCriterion(domainCommands);
+    createSubInstructionActions(domainActions: [string, MonacoEditorDomainAction | undefined][]): void {
+        let instructionActions;
+        let criterionActions;
+        let endOfInstructionsAction = 0;
+        if (!this.hasCriterionAction(domainActions)) {
+            this.setParentForInstructionsWithNoCriterion(domainActions);
         } else {
-            for (const [, command] of domainCommands) {
-                endOfInstructionsCommand++;
-                this.setExerciseGradingInstructionText(domainCommands);
-                if (command instanceof MonacoGradingCriterionAction) {
-                    instructionCommands = domainCommands.slice(0, endOfInstructionsCommand - 1);
-                    if (instructionCommands.length !== 0) {
-                        this.setParentForInstructionsWithNoCriterion(instructionCommands);
+            for (const [, action] of domainActions) {
+                endOfInstructionsAction++;
+                this.setExerciseGradingInstructionText(domainActions);
+                if (action instanceof MonacoGradingCriterionAction) {
+                    instructionActions = domainActions.slice(0, endOfInstructionsAction - 1);
+                    if (instructionActions.length !== 0) {
+                        this.setParentForInstructionsWithNoCriterion(instructionActions);
                     }
-                    criteriaCommands = domainCommands.slice(endOfInstructionsCommand - 1);
-                    if (criteriaCommands.length !== 0) {
+                    criterionActions = domainActions.slice(endOfInstructionsAction - 1);
+                    if (criterionActions.length !== 0) {
                         this.instructions = []; // resets the instructions array to be filled with the instructions of the criteria
-                        this.groupInstructionsToCriteria(criteriaCommands); // creates criterion object for each criterion and their corresponding instruction objects
+                        this.groupInstructionsToCriteria(criterionActions); // creates criterion object for each criterion and their corresponding instruction objects
                     }
                     break;
                 }
@@ -254,12 +252,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     /**
      * @function setParentForInstructionsWithNoCriterion
      * @desc 1. creates a dummy criterion object for each stand-alone instruction
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * @param domainActions containing tuples of [text, domain action identifier]
      */
-    setParentForInstructionsWithNoCriterion(domainCommands: [string, MonacoEditorDomainAction | undefined][]): void {
-        for (const [, command] of domainCommands) {
-            this.setExerciseGradingInstructionText(domainCommands);
-            if (command instanceof MonacoGradingInstructionAction) {
+    setParentForInstructionsWithNoCriterion(domainActions: [string, MonacoEditorDomainAction | undefined][]): void {
+        for (const [, action] of domainActions) {
+            this.setExerciseGradingInstructionText(domainActions);
+            if (action instanceof MonacoGradingInstructionAction) {
                 const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
                 dummyCriterion.structuredGradingInstructions = [];
@@ -269,68 +267,67 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             }
         }
         this.exercise.gradingCriteria = this.criteria;
-        this.setInstructionParameters(domainCommands);
+        this.setInstructionParameters(domainActions);
     }
 
     /**
      * @function groupInstructionsToCriteria
-     * @desc 1. creates a criterion for each GradingCriterionCommandIdentifier
+     * @desc 1. creates a criterion for each MonacoGradingCriterionAction found in the domainActions array
      *          and creates the instruction objects of this criterion then assigns them to their parent criterion
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * @param domainActions containing tuples of [text, domain action identifier]
      */
-    groupInstructionsToCriteria(domainCommands: [string, MonacoEditorDomainAction | undefined][]): void {
-        const initialCriteriaCommands = domainCommands;
+    groupInstructionsToCriteria(domainActions: [string, MonacoEditorDomainAction | undefined][]): void {
+        const initialCriterionActions = domainActions;
         if (this.exercise.gradingCriteria == undefined) {
             this.exercise.gradingCriteria = [];
         }
-        for (const [text, command] of domainCommands) {
-            if (command instanceof MonacoGradingCriterionAction) {
+        for (const [text, action] of domainActions) {
+            if (action instanceof MonacoGradingCriterionAction) {
                 const newCriterion = new GradingCriterion();
                 newCriterion.title = text;
                 this.exercise.gradingCriteria.push(newCriterion);
                 newCriterion.structuredGradingInstructions = [];
-                const modifiedArray = domainCommands.slice(1); // remove GradingCriterionCommandIdentifier after creating its criterion object
+                const modifiedArray = domainActions.slice(1); // remove the identifier after creating its criterion object
                 let endOfCriterion = 0;
-                for (const [, instrCommand] of modifiedArray) {
+                for (const [, instrAction] of modifiedArray) {
                     endOfCriterion++;
-                    if (instrCommand instanceof MonacoGradingInstructionAction) {
+                    if (instrAction instanceof MonacoGradingInstructionAction) {
                         const newInstruction = new GradingInstruction(); // create instruction objects that belong to the above created criterion
                         newCriterion.structuredGradingInstructions.push(newInstruction);
                         this.instructions.push(newInstruction);
                     }
-                    if (instrCommand instanceof MonacoGradingCriterionAction) {
-                        domainCommands = domainCommands.slice(endOfCriterion, domainCommands.length);
+                    if (instrAction instanceof MonacoGradingCriterionAction) {
+                        domainActions = domainActions.slice(endOfCriterion, domainActions.length);
                         break;
                     }
                 }
             }
         }
-        this.setInstructionParameters(initialCriteriaCommands.filter(([, command]) => !(command instanceof GradingCriterionCommand)));
+        this.setInstructionParameters(initialCriterionActions.filter(([, action]) => !(action instanceof MonacoGradingCriterionAction)));
     }
 
     /**
      * @function setInstructionParameters
-     * @desc 1. Gets a tuple of text and domainCommandIdentifiers not including GradingCriterionCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
+     * @desc 1. Gets a tuple of text and domain action identifiers (not including MonacoGradingCriterionAction) and assigns text values according to the domain action identifiers
+     *       2. The tuple order is the same as the order of the actions in the markdown text inserted by the user
      *       instruction objects must be created before the method gets triggered
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * @param domainActions containing tuples of [text, domain action identifier]
      */
-
-    setInstructionParameters(domainCommands: [string, MonacoEditorDomainAction | undefined][]): void {
+    setInstructionParameters(domainActions: [string, MonacoEditorDomainAction | undefined][]): void {
         let index = 0;
-        for (const [text, command] of domainCommands) {
+        for (const [text, action] of domainActions) {
             if (!this.instructions[index]) {
                 break;
             }
-            if (command instanceof MonacoGradingCreditsAction) {
+            if (action instanceof MonacoGradingCreditsAction) {
                 this.instructions[index].credits = parseFloat(text);
-            } else if (command instanceof MonacoGradingScaleAction) {
+            } else if (action instanceof MonacoGradingScaleAction) {
                 this.instructions[index].gradingScale = text;
-            } else if (command instanceof MonacoGradingDescriptionAction) {
+            } else if (action instanceof MonacoGradingDescriptionAction) {
                 this.instructions[index].instructionDescription = text;
-            } else if (command instanceof MonacoGradingFeedbackAction) {
+            } else if (action instanceof MonacoGradingFeedbackAction) {
                 this.instructions[index].feedback = text;
-            } else if (command instanceof MonacoGradingUsageCountAction) {
+            } else if (action instanceof MonacoGradingUsageCountAction) {
                 this.instructions[index].usageCount = parseInt(text, 10);
                 index++; // index must be increased after the last parameter of the instruction to continue with the next instruction object
             }
@@ -338,29 +335,28 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * @function domainCommandsFound
-     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * @function onDomainActionsFound
+     * @desc 1. Gets a tuple of text and domain action identifiers and assigns text values according to the domain action identifiers
+     *       2. The tuple order is the same as the order of the actions in the markdown text inserted by the user
+     * @param domainActions containing tuples of [text, domain action identifier]
      */
-    domainCommandsFound(domainCommands: [string, MonacoEditorDomainAction | undefined][]): void {
+    onDomainActionsFound(domainActions: [string, MonacoEditorDomainAction | undefined][]): void {
         this.instructions = [];
         this.criteria = [];
         this.exercise.gradingCriteria = [];
-        this.createSubInstructionActions(domainCommands);
+        this.createSubInstructionActions(domainActions);
     }
 
     /**
      * @function onInstructionChange
-     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * @desc 1. Gets a tuple of text and domain action identifiers and assigns text values according to the domain action identifiers
+     *       2. The tuple order is the same as the order of the actions in the markdown text inserted by the user
+     * @param domainActions containing tuples of [text, domain action identifier]
      * @param {GradingInstruction} instruction
      */
-    onInstructionChange(domainCommands: [string, MonacoEditorDomainAction | undefined][], instruction: GradingInstruction): void {
+    onInstructionChange(domainActions: [string, MonacoEditorDomainAction | undefined][], instruction: GradingInstruction): void {
         this.instructions = [instruction];
-        console.error('Received an event: ' + JSON.stringify(domainCommands.map(([text, action]) => [text, action?.getOpeningIdentifier()])));
-        this.setInstructionParameters(domainCommands);
+        this.setInstructionParameters(domainActions);
     }
 
     /**
@@ -487,8 +483,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     /**
      * @function setExerciseGradingInstructionText
-     * @desc Gets a tuple of text and domainCommandIdentifiers and assigns text values as grading instructions of exercise
-     * @param domainActions todo
+     * @desc Gets a tuple of text and domain action identifiers and assigns text values as grading instructions of exercise
+     * @param domainActions The domain action identifiers along with their text values
      */
     setExerciseGradingInstructionText(domainActions: [string, MonacoEditorDomainAction | undefined][]): void {
         const [text, action] = domainActions[0];
