@@ -57,7 +57,6 @@ const DefaultFieldValues: { [key: string]: number } = {
 };
 
 export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy' | 'test-analysis';
-
 export type Table = 'testCases' | 'codeAnalysis';
 
 @Component({

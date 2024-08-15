@@ -6,6 +6,8 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { from, of } from 'rxjs';
+import { catchError, mergeMap, toArray } from 'rxjs/operators';
 
 // Define the structure for FeedbackDetail
 type FeedbackDetail = {
@@ -33,9 +35,10 @@ export class TestcaseAnalysisComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        if (this.programmingExerciseTaskService.exercise.id != undefined) {
+        const exerciseId = this.programmingExerciseTaskService.exercise?.id;
+        if (exerciseId !== undefined) {
             // Find all participations for the programming exercise and instantiate the feedbacks array with the FeedbackDetail structure
-            this.participationService.findAllParticipationsByExercise(this.programmingExerciseTaskService.exercise.id, true).subscribe((participationsResponse) => {
+            this.participationService.findAllParticipationsByExercise(exerciseId, true).subscribe((participationsResponse) => {
                 this.participation = participationsResponse.body ?? [];
                 this.loadFeedbacks(this.participation);
             });
@@ -44,30 +47,48 @@ export class TestcaseAnalysisComponent implements OnInit {
         this.tasks = this.programmingExerciseTaskService.updateTasks();
     }
 
+    // Iterate over all participations, get feedback details for each result, and filter them for negative feedback
     loadFeedbacks(participations: Participation[]): void {
-        // Iterate over all participations, get feedback details for each result, and filter them for negative feedback
-        participations.forEach((participation) => {
-            participation.results?.forEach((result) => {
-                this.resultService.getFeedbackDetailsForResult(participation.id!, result).subscribe((response) => {
-                    const feedbackArray = response.body ?? [];
-                    const negativeFeedbackArray = feedbackArray.filter((feedback) => !feedback.positive); // Filter out positive feedback
-                    this.saveFeedbacks(negativeFeedbackArray); // Save only negative feedback
-                });
+        const MAX_CONCURRENT_REQUESTS = 5; // Maximum number of parallel requests
+
+        from(participations)
+            .pipe(
+                mergeMap((participation) => {
+                    return from(participation.results ?? []).pipe(
+                        mergeMap((result) => {
+                            return this.resultService.getFeedbackDetailsForResult(participation.id!, result).pipe(
+                                catchError(() => {
+                                    return of({ body: [] });
+                                }),
+                            );
+                        }, MAX_CONCURRENT_REQUESTS),
+                    );
+                }, MAX_CONCURRENT_REQUESTS),
+                toArray(),
+            )
+            .subscribe((responses) => {
+                const feedbackArray = responses.flatMap((response) => response.body ?? []);
+                const negativeFeedbackArray = feedbackArray.filter((feedback) => !feedback.positive); // Filter out positive feedback
+                this.saveFeedbacks(negativeFeedbackArray); // Save only negative feedback
             });
-        });
     }
 
+    // Iterate over all feedback and save them in the feedbacks array
+    // If a feedback with the corresponding testcase already exists in the list, then the count is incremented; otherwise, a new FeedbackDetail is added
     saveFeedbacks(feedbackArray: Feedback[]): void {
-        // Iterate over all feedback and save them in the feedbacks array
-        // If a feedback with the corresponding testcase already exists in the list, then the count is incremented; otherwise, a new FeedbackDetail is added
+        const feedbackMap: Map<string, FeedbackDetail> = new Map();
+
         feedbackArray.forEach((feedback) => {
             const feedbackText = feedback.detailText ?? '';
-            const existingFeedback = this.feedbacks.find((f) => f.detailText === feedbackText && f.testcase === feedback.testCase?.testName);
-            if (existingFeedback) {
+            const testcase = feedback.testCase?.testName ?? '';
+            const key = `${feedbackText}_${testcase}`;
+
+            if (feedbackMap.has(key)) {
+                const existingFeedback = feedbackMap.get(key)!;
                 existingFeedback.count += 1; // Increment count if feedback already exists
             } else {
                 const task = this.findTaskIndexForTestCase(feedback.testCase); // Find the task index for the test case
-                this.feedbacks.push(<FeedbackDetail>{
+                feedbackMap.set(key, <FeedbackDetail>{
                     count: 1,
                     detailText: feedback.detailText ?? '',
                     testcase: feedback.testCase?.testName,
@@ -75,7 +96,9 @@ export class TestcaseAnalysisComponent implements OnInit {
                 });
             }
         });
-        this.feedbacks.sort((a, b) => b.count - a.count); // Sort feedback by count in descending order
+
+        // Convert map values to array and sort feedback by count in descending order
+        this.feedbacks = Array.from(feedbackMap.values()).sort((a, b) => b.count - a.count);
     }
 
     findTaskIndexForTestCase(testCase?: ProgrammingExerciseTestCase): number | undefined {

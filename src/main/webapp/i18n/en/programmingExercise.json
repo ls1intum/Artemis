@@ -310,7 +310,7 @@
                 },
                 "testAnalysis": {
                     "title": "Error Analysis for {{exerciseTitle}}",
-                    "occurrence": "Occurrency",
+                    "occurrence": "Occurrence",
                     "testCaseFeedback": "Test Case Feedback",
                     "task": "Task",
                     "testcase": "Testcase",
