@@ -106,7 +106,7 @@ describe('TestcaseAnalysisComponent', () => {
         const zeroIndex = component.findTaskIndexForTestCase({ testName: 'test3' } as ProgrammingExerciseTestCase);
         expect(zeroIndex).toBe(0);
 
-        const undefinedIndex = component.findTaskIndexForTestCase({ testName: undefined } as ProgrammingExerciseTestCase);
+        const undefinedIndex = component.findTaskIndexForTestCase(undefined);
         expect(undefinedIndex).toBe(0);
     });
 
