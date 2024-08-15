@@ -84,8 +84,10 @@ export class TestcaseAnalysisComponent implements OnInit {
             const key = `${feedbackText}_${testcase}`;
 
             if (feedbackMap.has(key)) {
-                const existingFeedback = feedbackMap.get(key)!;
-                existingFeedback.count += 1; // Increment count if feedback already exists
+                const existingFeedback = feedbackMap.get(key);
+                if (existingFeedback) {
+                    existingFeedback.count += 1;
+                } // Increment count if feedback already exists
             } else {
                 const task = this.findTaskIndexForTestCase(feedback.testCase); // Find the task index for the test case
                 feedbackMap.set(key, <FeedbackDetail>{
