@@ -13,11 +13,12 @@
         <tbody class="table-group-divider">
             @for (item of feedbacks; track item) {
                 <tr>
-                    <td>{{ item.count }}</td>
+                    <td class="text-center">{{ item.count }} ({{ getRelativeCount(item.count) | number: '1.0-0' }}%)</td>
                     <td>{{ item.detailText }}</td>
-                    <td>1</td>
-                    <td>1</td>
+                    <td class="text-center">{{ item.task }}</td>
+                    <td>{{ item.testcase }}</td>
                     <td>Student Error</td>
+                    <!-- This is a placeholder, will be covered in follow up PRs -->
                 </tr>
             }
         </tbody>
