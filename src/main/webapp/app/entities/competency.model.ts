@@ -167,6 +167,16 @@ export class CompetencyRelation implements BaseEntity {
     public type?: CompetencyRelationType;
 }
 
+export interface CourseCompetencyImportOptionsDTO {
+    competencyIds: number[];
+    sourceCourseId?: number;
+    importRelations: boolean;
+    importExercises: boolean;
+    importLectures: boolean;
+    referenceDate?: dayjs.Dayjs;
+    isReleaseDate?: boolean;
+}
+
 export class CompetencyRelationDTO implements BaseEntity {
     id?: number;
     tailCompetencyId?: number;
