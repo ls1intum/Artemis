@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
@@ -41,6 +41,12 @@ describe('TestcaseAnalysisComponent', () => {
             positive: false,
             detailText: 'Test feedback 2 detail',
             testCase: { testName: 'test2' } as ProgrammingExerciseTestCase,
+        },
+        {
+            text: 'Test feedback 1',
+            positive: false,
+            detailText: 'Test feedback 1 detail',
+            testCase: { testName: 'test1' } as ProgrammingExerciseTestCase,
         },
     ] as Feedback[];
 
@@ -87,13 +93,14 @@ describe('TestcaseAnalysisComponent', () => {
         expect(component.participation).toEqual(participationMock);
         expect(component.feedbacks).toHaveLength(2);
         expect(component.feedbacks[0].detailText).toBe('Test feedback 1 detail');
+        expect(component.feedbacks[1].detailText).toBe('Test feedback 2 detail');
     });
 
     it('should save feedbacks and sort them by count', () => {
         component.saveFeedbacks(feedbackMock);
 
         expect(component.feedbacks).toHaveLength(2);
-        expect(component.feedbacks[0].count).toBe(1);
+        expect(component.feedbacks[0].count).toBe(2);
         expect(component.feedbacks[1].count).toBe(1);
         expect(component.feedbacks[0].detailText).toBe('Test feedback 1 detail');
     });
@@ -117,5 +124,14 @@ describe('TestcaseAnalysisComponent', () => {
 
         const zeroRelativeCount = component.getRelativeCount(0);
         expect(zeroRelativeCount).toBe(0);
+    });
+
+    it('should handle errors when loading feedbacks', () => {
+        jest.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(throwError('Error'));
+
+        component.loadFeedbacks(participationMock);
+
+        expect(resultService.getFeedbackDetailsForResult).toHaveBeenCalled();
+        expect(component.feedbacks).toHaveLength(0);
     });
 });
