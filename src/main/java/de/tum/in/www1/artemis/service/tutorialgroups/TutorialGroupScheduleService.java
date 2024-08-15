@@ -13,8 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -76,7 +75,7 @@ public class TutorialGroupScheduleService {
         tutorialGroupSessionRepository.saveAll(individualSessions);
     }
 
-    @NotNull
+    @NonNull
     private Set<TutorialGroupSession> findOverlappingExistingSessions(TutorialGroup tutorialGroup, List<TutorialGroupSession> individualSessions) {
         var overlappingIndividualSessions = new HashSet<TutorialGroupSession>();
         for (var individualSession : individualSessions) {
@@ -128,7 +127,7 @@ public class TutorialGroupScheduleService {
         return sessions;
     }
 
-    @NotNull
+    @NonNull
     private TutorialGroupSession generateScheduledSession(Course course, TutorialGroupSchedule tutorialGroupSchedule, ZonedDateTime sessionStart, ZonedDateTime sessionEnd) {
         TutorialGroupSession session = new TutorialGroupSession();
         session.setStart(sessionStart);

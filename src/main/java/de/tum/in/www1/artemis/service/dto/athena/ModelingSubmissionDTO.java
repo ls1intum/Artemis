@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.dto.athena;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -19,7 +19,7 @@ public record ModelingSubmissionDTO(long id, long exerciseId, String model) impl
      * @param submission The submission to create the DTO from
      * @return The created DTO
      */
-    public static ModelingSubmissionDTO of(long exerciseId, @NotNull ModelingSubmission submission) {
+    public static ModelingSubmissionDTO of(long exerciseId, @NonNull ModelingSubmission submission) {
         return new ModelingSubmissionDTO(submission.getId(), exerciseId, submission.getModel());
     }
 }

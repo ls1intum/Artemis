@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto.pageablesearch;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -23,7 +23,7 @@ public class SearchTermPageableSearchDTO<T> extends PageableSearchDTO<T> {
     protected String searchTerm;
 
     // make sure to avoid null values and instead return an empty string
-    @NotNull
+    @NonNull
     public String getSearchTerm() {
         return searchTerm != null ? searchTerm : "";
     }

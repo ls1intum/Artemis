@@ -6,8 +6,7 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsC
 
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -106,7 +105,7 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
      * @param channel      which channel to use (e.g. email or webapp or push)
      * @return filtered user list
      */
-    @NotNull
+    @NonNull
     private Set<User> filterRecipients(Notification notification, Set<User> users, NotificationSettingsCommunicationChannel channel) {
         return notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, users, channel);
     }

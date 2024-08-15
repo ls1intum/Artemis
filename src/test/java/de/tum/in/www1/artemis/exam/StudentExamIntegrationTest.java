@@ -33,11 +33,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.lib.ObjectId;
 import org.gitlab4j.api.GitLabApiException;
 import org.json.JSONException;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -1812,7 +1811,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         deleteExamWithInstructor(exam1);
     }
 
-    @NotNull
+    @NonNull
     private StudentExam createStudentExamWithResultsAndAssessments(boolean setFields, int numberOfStudents) throws Exception {
         StudentExam studentExam = prepareStudentExamsForConduction(false, setFields, numberOfStudents).getFirst();
         var exam = examRepository.findById(studentExam.getExam().getId()).orElseThrow();
@@ -2124,7 +2123,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().mostSeverePlagiarismVerdict()).isNull();
     }
 
-    @NotNull
+    @NonNull
     private Exam configureFinalExamWithBonusExam(StudentExam finalStudentExam, StudentExam bonusStudentExam, BonusStrategy bonusStrategy) {
         var finalExam = examRepository.findById(finalStudentExam.getExam().getId()).orElseThrow();
         var bonusExam = examRepository.findById(bonusStudentExam.getExam().getId()).orElseThrow();

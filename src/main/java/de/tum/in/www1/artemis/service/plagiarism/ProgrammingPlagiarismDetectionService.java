@@ -16,9 +16,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -181,7 +180,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @param minimumScore        the minimum score
      * @return the JPlag result or null if there are not enough participations
      */
-    @NotNull
+    @NonNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         long programmingExerciseId = programmingExercise.getId();
         final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 60);

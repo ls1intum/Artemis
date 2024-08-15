@@ -13,8 +13,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import jakarta.validation.constraints.NotNull;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -23,6 +21,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -201,7 +200,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
      * @param initializationVector the initialization vector needed for CBC
      * @return the ciphertext
      */
-    private static Optional<String> encrypt(@NotNull String payload, SecretKey key, byte[] initializationVector) {
+    private static Optional<String> encrypt(@NonNull String payload, SecretKey key, byte[] initializationVector) {
         try {
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
 

@@ -14,10 +14,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -213,7 +212,7 @@ public class ResultService {
      * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
-    public Result storeFeedbackInResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+    public Result storeFeedbackInResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
         var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
         result.setFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
@@ -232,8 +231,8 @@ public class ResultService {
      * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
-    @NotNull
-    public Result addFeedbackToResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+    @NonNull
+    public Result addFeedbackToResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
         List<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
         result.addFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
@@ -465,8 +464,8 @@ public class ResultService {
         return logsAvailability;
     }
 
-    @NotNull
-    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
+    @NonNull
+    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, List<Feedback> feedbackList) {
         // Avoid hibernate exception
         List<Feedback> savedFeedbacks = new ArrayList<>();
         // Collect ids of feedbacks that have long feedback.
@@ -503,8 +502,8 @@ public class ResultService {
         return savedFeedbacks;
     }
 
-    @NotNull
-    private Result shouldSaveResult(@NotNull Result result, boolean shouldSave) {
+    @NonNull
+    private Result shouldSaveResult(@NonNull Result result, boolean shouldSave) {
         if (shouldSave) {
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);

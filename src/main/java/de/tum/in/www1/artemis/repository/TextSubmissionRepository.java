@@ -6,8 +6,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
@@ -56,17 +55,17 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
     @EntityGraph(type = LOAD, attributePaths = { "blocks" })
     Set<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
 
-    @NotNull
+    @NonNull
     default TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(long resultId) {
         return getValueElseThrow(findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId));
     }
 
-    @NotNull
+    @NonNull
     default TextSubmission findByIdWithParticipationExerciseResultAssessorElseThrow(long submissionId) {
         return getValueElseThrow(findWithEagerParticipationExerciseResultAssessorById(submissionId), submissionId);
     }
 
-    @NotNull
+    @NonNull
     default TextSubmission findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(long submissionId) {
         return getValueElseThrow(findWithEagerParticipationExerciseResultAssessorAssessmentNoteById(submissionId), submissionId);
     }

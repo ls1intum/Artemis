@@ -10,10 +10,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,28 +35,28 @@ public class TutorialGroupsConfiguration extends DomainObject {
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "tutorial_period_start_inclusive")
-    @NotNull
+    @NonNull
     private String tutorialPeriodStartInclusive;
 
     /**
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "tutorial_period_end_inclusive")
-    @NotNull
+    @NonNull
     private String tutorialPeriodEndInclusive;
 
     /**
      * If true, tutorial groups channel will be created for each tutorial group. If false, they will not be created.
      */
     @Column(name = "use_tutorial_group_channels")
-    @NotNull
+    @NonNull
     private Boolean useTutorialGroupChannels;
 
     /**
      * If true, the created tutorial group channels will be public. If false, they will be private.
      */
     @Column(name = "use_public_tutorial_group_channels")
-    @NotNull
+    @NonNull
     private Boolean usePublicTutorialGroupChannels;
 
     @OneToMany(mappedBy = "tutorialGroupsConfiguration", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)

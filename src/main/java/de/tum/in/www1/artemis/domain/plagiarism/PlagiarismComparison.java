@@ -13,7 +13,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -166,7 +167,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     }
 
     @Override
-    public int compareTo(@NotNull PlagiarismComparison<E> otherComparison) {
+    public int compareTo(@NonNull PlagiarismComparison<E> otherComparison) {
         return Double.compare(similarity, otherComparison.similarity);
     }
 

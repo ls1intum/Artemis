@@ -5,8 +5,9 @@ import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.in.www1.artemis.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -16,11 +17,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LoginVM {
 
-    @NotNull
+    @NonNull
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     private String username;
 
-    @NotNull
+    @NonNull
     @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH)
     private String password;
 

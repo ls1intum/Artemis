@@ -27,10 +27,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -65,6 +63,8 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -498,7 +498,7 @@ public class GitService extends AbstractGitService {
      * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri) {
         return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUri, defaultBranch);
     }
 
@@ -511,7 +511,7 @@ public class GitService extends AbstractGitService {
      * @param defaultBranch       the name of the branch that should be used as default branch
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch) {
         try {
             // Check if there is a folder with the provided path of the git repository.
             if (!Files.exists(localPath)) {
@@ -1053,7 +1053,7 @@ public class GitService extends AbstractGitService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
-    @NotNull
+    @NonNull
     public Collection<File> listFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {

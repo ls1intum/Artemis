@@ -21,9 +21,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -447,7 +446,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         log.debug("Scheduled Exam Programming Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
     }
 
-    @NotNull
+    @NonNull
     private Runnable combineTemplateCommitsForExercise(ProgrammingExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -463,7 +462,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         };
     }
 
-    @NotNull
+    @NonNull
     private Runnable buildAndTestRunnableForExercise(ProgrammingExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -487,7 +486,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise for which the repositories should be locked.
      * @return a Runnable that will lock the repositories once it is executed.
      */
-    @NotNull
+    @NonNull
     public Runnable lockAllStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
         return lockStudentRepositoriesAndParticipations(exercise, participation -> true);
     }
@@ -503,7 +502,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise for which the repositories should be locked.
      * @return a Runnable that will lock the repositories once it is executed.
      */
-    @NotNull
+    @NonNull
     public Runnable lockAllStudentRepositories(ProgrammingExercise exercise) {
         return lockStudentRepositories(exercise, participation -> true);
     }
@@ -517,7 +516,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise for which the repositories should be locked.
      * @return a Runnable that will lock the repositories and participations once it is executed.
      */
-    @NotNull
+    @NonNull
     public Runnable lockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(ProgrammingExercise exercise) {
         return lockStudentRepositoriesAndParticipations(exercise, exerciseDateService::isAfterDueDate);
     }
@@ -532,7 +531,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise for which the repositories should be locked.
      * @return a Runnable that will lock the participations once it is executed.
      */
-    @NotNull
+    @NonNull
     public Runnable lockAllStudentParticipationsWithEarlierDueDate(ProgrammingExercise exercise) {
         return lockStudentParticipations(exercise, exerciseDateService::isAfterDueDate);
     }
@@ -547,7 +546,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise for which the repositories should be locked.
      * @return a Runnable that will lock the repositories once it is executed.
      */
-    @NotNull
+    @NonNull
     public Runnable lockStudentRepositoriesAndParticipationsRegularDueDate(ProgrammingExercise exercise) {
         return lockStudentRepositoriesAndParticipations(exercise, participation -> participation.getIndividualDueDate() == null);
     }
@@ -568,7 +567,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise for which the results should be updated.
      * @return a Runnable that will update all results for the given exercise.
      */
-    @NotNull
+    @NonNull
     public Runnable updateStudentScoresRegularDueDate(final ProgrammingExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -586,7 +585,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param condition a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will lock the repositories once it is executed
      */
-    @NotNull
+    @NonNull
     public Runnable lockStudentRepositoriesAndParticipations(ProgrammingExercise exercise, Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
@@ -610,7 +609,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param condition a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will lock the repositories once it is executed
      */
-    @NotNull
+    @NonNull
     public Runnable lockStudentRepositories(ProgrammingExercise exercise, Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
@@ -634,7 +633,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param condition a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will lock the participations once it is executed
      */
-    @NotNull
+    @NonNull
     public Runnable lockStudentParticipations(ProgrammingExercise exercise, Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
@@ -687,7 +686,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param participation of which the Git repository will be locked.
      * @return a runnable that will lock the Git repository of the participation when run.
      */
-    @NotNull
+    @NonNull
     private Runnable lockStudentRepositoryAndParticipation(ProgrammingExerciseStudentParticipation participation) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -710,7 +709,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param condition       a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will unlock the repositories once it is executed
      */
-    @NotNull
+    @NonNull
     public Runnable runUnlockOperation(ProgrammingExercise exercise, Consumer<ProgrammingExerciseStudentParticipation> unlockOperation,
             Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
@@ -771,7 +770,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise The exercise for which the repositories and participations should be unlocked
      * @return a Runnable that will unlock the repositories once it is executed
      */
-    @NotNull
+    @NonNull
     public Runnable unlockAllStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
         return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation, participation -> true);
     }
@@ -784,7 +783,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise The exercise for which the repositories should be unlocked
      * @return a Runnable that will unlock the repositories once it is executed
      */
-    @NotNull
+    @NonNull
     public Runnable unlockAllStudentRepositories(ProgrammingExercise exercise) {
         return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepository, participation -> true);
     }
@@ -798,7 +797,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise The exercise for which the repositories should be unlocked
      * @return a Runnable that will unlock the repositories once it is executed
      */
-    @NotNull
+    @NonNull
     public Runnable unlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
         return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation,
                 participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
@@ -812,7 +811,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise The exercise for which the repositories should be unlocked
      * @return a Runnable that will unlock the repositories once it is executed
      */
-    @NotNull
+    @NonNull
     public Runnable unlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
         return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepository,
                 participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
@@ -826,7 +825,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise The exercise for which the participations should be unlocked
      * @return a Runnable that will unlock the participations once it is executed
      */
-    @NotNull
+    @NonNull
     public Runnable unlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
         return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentParticipation,
                 participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));

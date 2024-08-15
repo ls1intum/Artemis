@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.dto.athena;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -19,7 +19,7 @@ public record TextSubmissionDTO(long id, long exerciseId, String text, String la
      * @param submission The submission to create the DTO from
      * @return The created DTO
      */
-    public static TextSubmissionDTO of(long exerciseId, @NotNull TextSubmission submission) {
+    public static TextSubmissionDTO of(long exerciseId, @NonNull TextSubmission submission) {
         String language = null;
         if (submission.getLanguage() != null) {
             language = submission.getLanguage().toString();

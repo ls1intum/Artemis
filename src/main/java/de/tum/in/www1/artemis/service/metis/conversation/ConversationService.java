@@ -12,8 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -338,7 +337,7 @@ public class ConversationService {
         recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
     }
 
-    @NotNull
+    @NonNull
     public static String getConversationParticipantTopicName(Long courseId) {
         return METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
     }
@@ -511,7 +510,7 @@ public class ConversationService {
      * @param channel the channel under consideration
      * @return true if the channel is visible to students
      */
-    public boolean isChannelVisibleToStudents(@NotNull Channel channel) {
+    public boolean isChannelVisibleToStudents(@NonNull Channel channel) {
         if (channel.getLecture() != null) {
             return channel.getLecture().isVisibleToStudents();
         }

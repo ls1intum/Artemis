@@ -12,8 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -405,7 +404,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * @param examId the id of the entity
      * @return the exam with exercise groups
      */
-    @NotNull
+    @NonNull
     default Exam findByIdWithExerciseGroupsElseThrow(long examId) {
         return getValueElseThrow(findWithExerciseGroupsById(examId), examId);
     }
@@ -428,7 +427,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * @param examId the id of the entity
      * @return the exam with registered users
      */
-    @NotNull
+    @NonNull
     default Exam findByIdWithExamUsersElseThrow(long examId) {
         return getValueElseThrow(findWithExamUsersById(examId), examId);
     }
@@ -439,7 +438,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * @param examId the id of the entity
      * @return the exam with registered users and exercise groups
      */
-    @NotNull
+    @NonNull
     default Exam findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(long examId) {
         return getValueElseThrow(findWithExamUsersAndExerciseGroupsAndExercisesById(examId), examId);
     }
@@ -458,7 +457,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
         return getValueElseThrow(findWithExerciseGroupsAndExercisesById(examId), examId);
     }
 
-    @NotNull
+    @NonNull
     default Exam findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(long examId) {
         return getValueElseThrow(findWithExerciseGroupsAndExercisesAndDetailsById(examId), examId);
     }

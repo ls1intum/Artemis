@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -61,7 +61,7 @@ public class ObjectDiagramParser {
      * @param modelElements a JSON array containing all the model elements of the corresponding UML object diagram as JSON objects
      * @return the UMLObject map parsed from the JSON array
      */
-    @NotNull
+    @NonNull
     public static Map<String, UMLObject> parseUMLObjects(JsonArray modelElements) {
         Map<String, UMLObject> umlObjectMap = new HashMap<>();
         // loop over all JSON elements and create the UML objects
@@ -120,7 +120,7 @@ public class ObjectDiagramParser {
      * @param jsonElementMap a map containing all the model elements and their ids of the corresponding UML object diagram as JSON objects
      * @return the list of UMLObjectAttribute parsed from the JSON object map
      */
-    @NotNull
+    @NonNull
     protected static List<UMLObjectAttribute> parseUmlAttributes(JsonObject objectJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLObjectAttribute> umlAttributesList = new ArrayList<>();
         for (JsonElement attributeId : objectJson.getAsJsonArray(ELEMENT_ATTRIBUTES)) {
@@ -137,7 +137,7 @@ public class ObjectDiagramParser {
      * @param jsonElementMap a map containing all the model elements and their ids of the corresponding UML object diagram as JSON objects
      * @return the list of UMLObjectMethod parsed from the JSON object map
      */
-    @NotNull
+    @NonNull
     protected static List<UMLObjectMethod> parseUmlMethods(JsonObject objectJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLObjectMethod> umlMethodList = new ArrayList<>();
         for (JsonElement methodId : objectJson.getAsJsonArray(ELEMENT_METHODS)) {

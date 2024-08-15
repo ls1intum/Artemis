@@ -5,8 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,7 +30,7 @@ public interface ExerciseHintRepository extends ArtemisJpaRepository<ExerciseHin
             """)
     Optional<ExerciseHint> findByIdWithRelations(@Param("hintId") Long hintId);
 
-    @NotNull
+    @NonNull
     default ExerciseHint findByIdWithRelationsElseThrow(long hintId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdWithRelations(hintId), hintId);
     }

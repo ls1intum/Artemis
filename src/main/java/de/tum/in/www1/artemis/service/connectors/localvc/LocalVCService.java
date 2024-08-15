@@ -12,9 +12,6 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -24,6 +21,8 @@ import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -308,7 +307,7 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     @Override
-    @NotNull
+    @NonNull
     public Commit getLastCommitDetails(Object requestBody) {
         // The local VCS will create a Commit object straight away and hand that to the processNewProgrammingSubmission method in
         // ProgrammingSubmissionService.

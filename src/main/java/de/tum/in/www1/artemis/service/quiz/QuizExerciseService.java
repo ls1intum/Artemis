@@ -19,10 +19,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -144,7 +143,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param files                the files that were uploaded
      * @return the updated quiz exercise with the changed statistics
      */
-    public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) throws IOException {
+    public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise, @NonNull List<MultipartFile> files) throws IOException {
         quizExercise.undoUnallowedChanges(originalQuizExercise);
         validateQuizExerciseFiles(quizExercise, files, false);
 
@@ -336,7 +335,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param providedFiles the provided files to validate
      * @param isCreate      On create all files get validated, on update only changed files get validated
      */
-    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NotNull List<MultipartFile> providedFiles, boolean isCreate) {
+    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NonNull List<MultipartFile> providedFiles, boolean isCreate) {
         long fileCount = providedFiles.size();
         Set<String> exerciseFileNames = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
         Set<String> newFileNames = isCreate ? exerciseFileNames : exerciseFileNames.stream().filter(fileNameOrUri -> {

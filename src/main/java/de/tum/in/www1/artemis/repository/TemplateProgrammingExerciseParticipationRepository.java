@@ -7,8 +7,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.Collection;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -51,7 +50,7 @@ public interface TemplateProgrammingExerciseParticipationRepository
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "submissions" })
     Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(long exerciseId);
 
-    @NotNull
+    @NonNull
     default TemplateProgrammingExerciseParticipation findByExerciseIdElseThrow(final Specification<TemplateProgrammingExerciseParticipation> specification, long exerciseId) {
         final Specification<TemplateProgrammingExerciseParticipation> hasExerciseIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder
                 .equal(root.get(TemplateProgrammingExerciseParticipation_.PROGRAMMING_EXERCISE).get(DomainObject_.ID), exerciseId);
@@ -67,7 +66,7 @@ public interface TemplateProgrammingExerciseParticipationRepository
      *         provided options.
      * @throws EntityNotFoundException if the template programming exercise participation with the specified exercise ID does not exist.
      */
-    @NotNull
+    @NonNull
     default TemplateProgrammingExerciseParticipation findByExerciseIdWithDynamicFetchElseThrow(long exerciseId, Collection<TemplateParticipationFetchOptions> fetchOptions)
             throws EntityNotFoundException {
         var specification = getDynamicSpecification(fetchOptions);

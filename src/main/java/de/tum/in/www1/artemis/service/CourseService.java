@@ -28,9 +28,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -931,7 +931,7 @@ public class CourseService {
      * @param groupName the name of the group
      * @return list of users
      */
-    @NotNull
+    @NonNull
     public ResponseEntity<Set<User>> getAllUsersInGroup(Course course, String groupName) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var usersInGroup = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(groupName);
@@ -1108,7 +1108,7 @@ public class CourseService {
      *
      * @param course the course to check
      */
-    public void checkLearningPathsEnabledElseThrow(@NotNull Course course) {
+    public void checkLearningPathsEnabledElseThrow(@NonNull Course course) {
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }

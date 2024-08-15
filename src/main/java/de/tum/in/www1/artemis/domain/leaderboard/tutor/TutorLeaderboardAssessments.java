@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.leaderboard.tutor;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -13,37 +13,37 @@ public record TutorLeaderboardAssessments(Long userId, Long assessments, Double 
     }
 
     @Override
-    @NotNull
+    @NonNull
     public Long userId() {
         return userId != null ? userId : 0L;
     }
 
     @Override
-    @NotNull
+    @NonNull
     public Long assessments() {
         return assessments != null ? assessments : 0L;
     }
 
     @Override
-    @NotNull
+    @NonNull
     public Double points() {
         return points != null ? points : 0.0;
     }
 
     @Override
-    @NotNull
+    @NonNull
     public Double averageScore() {
         return averageScore != null ? averageScore : 0.0;
     }
 
     @Override
-    @NotNull
+    @NonNull
     public Double averageRating() {
         return averageRating != null ? averageRating : 0.0;
     }
 
     @Override
-    @NotNull
+    @NonNull
     public Long numberOfRatings() {
         return numberOfRatings != null ? numberOfRatings : 0L;
     }

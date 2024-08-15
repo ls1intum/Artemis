@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.repository.iris;
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -33,7 +32,7 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
             """)
     IrisSession findByIdWithMessagesAndContents(@Param("sessionId") long sessionId);
 
-    @NotNull
+    @NonNull
     default IrisSession findByIdWithMessagesElseThrow(long sessionId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdWithMessages(sessionId), sessionId);
     }

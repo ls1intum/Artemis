@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
@@ -47,7 +47,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      *
      * @return the UML class that contains this method
      */
-    @NotNull
+    @NonNull
     @Override
     public UMLElement getParentElement() {
         return parentElement;
@@ -59,7 +59,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      * @param parentElement the UML class that contains this method
      */
     @Override
-    public void setParentElement(@NotNull UMLElement parentElement) {
+    public void setParentElement(@NonNull UMLElement parentElement) {
         this.parentElement = parentElement;
     }
 

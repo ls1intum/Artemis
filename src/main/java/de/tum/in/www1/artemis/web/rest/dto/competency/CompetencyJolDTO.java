@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest.dto.competency;
 
 import java.time.ZonedDateTime;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyJolDTO(long id, long competencyId, short jolValue, ZonedDateTime judgementTime, double competencyProgress, double competencyConfidence) {
 
-    public static CompetencyJolDTO of(@NotNull CompetencyJol competencyJol) {
+    public static CompetencyJolDTO of(@NonNull CompetencyJol competencyJol) {
         return new CompetencyJolDTO(competencyJol.getId(), competencyJol.getCompetency().getId(), competencyJol.getValue(), competencyJol.getJudgementTime(),
                 competencyJol.getCompetencyProgress(), competencyJol.getCompetencyConfidence());
     }

@@ -4,8 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
@@ -21,12 +20,12 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
 
     List<AnswerPost> findAnswerPostsByAuthorId(long authorId);
 
-    @NotNull
+    @NonNull
     default AnswerPost findAnswerPostByIdElseThrow(Long answerPostId) {
         return getValueElseThrow(findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() == null), answerPostId);
     }
 
-    @NotNull
+    @NonNull
     default AnswerPost findAnswerMessageByIdElseThrow(Long answerPostId) {
         return getValueElseThrow(findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() != null), answerPostId);
     }

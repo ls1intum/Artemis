@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency;
 import java.util.List;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -41,8 +41,8 @@ public record StandardizedCompetencyCatalogDTO(List<@Valid KnowledgeAreaForCatal
      * DTO containing knowledge area data as well as its children and competencies
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record KnowledgeAreaForCatalogDTO(@NotNull @Size(min = 1, max = KnowledgeArea.MAX_TITLE_LENGTH) String title,
-            @NotNull @Size(min = 1, max = KnowledgeArea.MAX_SHORT_TITLE_LENGTH) String shortTitle, @Size(max = KnowledgeArea.MAX_DESCRIPTION_LENGTH) String description,
+    public record KnowledgeAreaForCatalogDTO(@NonNull @Size(min = 1, max = KnowledgeArea.MAX_TITLE_LENGTH) String title,
+            @NonNull @Size(min = 1, max = KnowledgeArea.MAX_SHORT_TITLE_LENGTH) String shortTitle, @Size(max = KnowledgeArea.MAX_DESCRIPTION_LENGTH) String description,
             List<@Valid KnowledgeAreaForCatalogDTO> children, List<@Valid StandardizedCompetencyForCatalogDTO> competencies) {
 
         /**
@@ -66,7 +66,7 @@ public record StandardizedCompetencyCatalogDTO(List<@Valid KnowledgeAreaForCatal
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record StandardizedCompetencyForCatalogDTO(@NotNull @Size(min = 1, max = StandardizedCompetency.MAX_TITLE_LENGTH) String title,
+    public record StandardizedCompetencyForCatalogDTO(@NonNull @Size(min = 1, max = StandardizedCompetency.MAX_TITLE_LENGTH) String title,
             @Size(max = StandardizedCompetency.MAX_DESCRIPTION_LENGTH) String description, CompetencyTaxonomy taxonomy,
             @Size(min = 1, max = StandardizedCompetency.MAX_VERSION_LENGTH) String version, Long sourceId) {
 

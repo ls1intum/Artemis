@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -24,7 +23,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -32,6 +30,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -57,7 +57,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
 
-    @NotNull
+    @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     @Column(length = USERNAME_MAX_LENGTH, unique = true, nullable = false)
@@ -90,11 +90,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(length = 100)
     private String email;
 
-    @NotNull
+    @NonNull
     @Column(nullable = false)
     private boolean activated = false;
 
-    @NotNull
+    @NonNull
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false; // default value
 

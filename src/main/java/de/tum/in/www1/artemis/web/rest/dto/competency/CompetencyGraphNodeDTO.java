@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest.dto.competency;
 
 import java.time.ZonedDateTime;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -15,7 +15,7 @@ public record CompetencyGraphNodeDTO(String id, String label, ZonedDateTime soft
         MASTERY_PROGRESS
     }
 
-    public static CompetencyGraphNodeDTO of(@NotNull CourseCompetency competency, Double value, CompetencyNodeValueType valueType) {
+    public static CompetencyGraphNodeDTO of(@NonNull CourseCompetency competency, Double value, CompetencyNodeValueType valueType) {
         return new CompetencyGraphNodeDTO(competency.getId().toString(), competency.getTitle(), competency.getSoftDueDate(), value, valueType);
     }
 }

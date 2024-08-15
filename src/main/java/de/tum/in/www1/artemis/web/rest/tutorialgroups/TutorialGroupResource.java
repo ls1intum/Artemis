@@ -15,12 +15,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.BadRequestException;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -303,7 +303,7 @@ public class TutorialGroupResource {
      * @param updateTutorialGroupChannelName whether the tutorial group channel name should be updated with the new tutorial group title or not
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
+    public record TutorialGroupUpdateDTO(@Valid @NonNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
             @Nullable Boolean updateTutorialGroupChannelName) {
     }
 

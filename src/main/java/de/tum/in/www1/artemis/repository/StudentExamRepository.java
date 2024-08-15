@@ -11,8 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -335,7 +334,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises
      */
-    @NotNull
+    @NonNull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
         return getValueElseThrow(findWithExercisesById(studentExamId), studentExamId);
     }
@@ -346,7 +345,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises
      */
-    @NotNull
+    @NonNull
     default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
         return getValueElseThrow(findWithExercisesSubmissionPolicyAndSessionsById(studentExamId), studentExamId);
     }
@@ -358,7 +357,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @return the maximum of all student exam working times for the given exam
      * @throws EntityNotFoundException if no student exams could be found
      */
-    @NotNull
+    @NonNull
     default Integer findMaxWorkingTimeByExamIdElseThrow(Long examId) {
         return getArbitraryValueElseThrow(findMaxWorkingTimeByExamId(examId), Long.toString(examId));
     }

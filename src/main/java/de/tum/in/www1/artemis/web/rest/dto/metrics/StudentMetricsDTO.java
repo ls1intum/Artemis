@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto.metrics;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -14,6 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param competencyMetrics            the metrics for the competencies
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record StudentMetricsDTO(@NotNull ExerciseStudentMetricsDTO exerciseMetrics, @NotNull LectureUnitStudentMetricsDTO lectureUnitStudentMetricsDTO,
-        @NotNull CompetencyStudentMetricsDTO competencyMetrics) {
+public record StudentMetricsDTO(@NonNull ExerciseStudentMetricsDTO exerciseMetrics, @NonNull LectureUnitStudentMetricsDTO lectureUnitStudentMetricsDTO,
+        @NonNull CompetencyStudentMetricsDTO competencyMetrics) {
 }

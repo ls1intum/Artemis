@@ -16,9 +16,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -759,7 +758,7 @@ public class ExerciseService {
      * @param exercises  set of exercises
      * @param competency competency to remove
      */
-    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull CourseCompetency competency) {
+    public void removeCompetency(@NonNull Set<Exercise> exercises, @NonNull CourseCompetency competency) {
         exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
         exerciseRepository.saveAll(exercises);
     }

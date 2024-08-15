@@ -2,9 +2,11 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.Feedback;
 
 /**
  * A DTO representing a Feedback on a ModelingExercise, for transferring data to Athena and receiving suggestions from Athena
@@ -21,7 +23,7 @@ public record ModelingFeedbackDTO(long id, long exerciseId, long submissionId, S
      * @param feedback     the feedback object
      * @return the ModelingFeedbackDTO
      */
-    public static ModelingFeedbackDTO of(long exerciseId, long submissionId, @NotNull de.tum.in.www1.artemis.domain.Feedback feedback) {
+    public static ModelingFeedbackDTO of(long exerciseId, long submissionId, @NonNull Feedback feedback) {
         Long gradingInstructionId = null;
         if (feedback.getGradingInstruction() != null) {
             gradingInstructionId = feedback.getGradingInstruction().getId();

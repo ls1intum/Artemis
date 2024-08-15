@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.service.util;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.NonNull;
 
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
@@ -19,7 +20,7 @@ public class HttpRequestUtils {
      * @param request Http Request
      * @return String representation of IP Address
      */
-    private static String getIpStringFromRequest(@NotNull HttpServletRequest request) {
+    private static String getIpStringFromRequest(@NonNull HttpServletRequest request) {
         for (String header : IP_HEADER_CANDIDATES) {
             String ipList = request.getHeader(header);
             if (ipList != null && !ipList.isEmpty() && !"unknown".equalsIgnoreCase(ipList)) {
@@ -36,7 +37,7 @@ public class HttpRequestUtils {
      * @param request Http Request
      * @return IPAddress Object
      */
-    public static Optional<IPAddress> getIpAddressFromRequest(@NotNull HttpServletRequest request) {
+    public static Optional<IPAddress> getIpAddressFromRequest(@NonNull HttpServletRequest request) {
         final String ipString = getIpStringFromRequest(request);
         final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
         return Optional.ofNullable(ipAddress);

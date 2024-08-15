@@ -6,8 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -194,7 +193,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
-    @NotNull
+    @NonNull
     private ExampleSubmission prepareTextExampleSubmission(boolean usedForTutorial) throws Exception {
         var exampleSubmissionText = "This is first sentence:This is second sentence.";
         ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(exampleSubmissionText, textExercise, false, usedForTutorial);
@@ -232,7 +231,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         return exampleSubmission;
     }
 
-    @NotNull
+    @NonNull
     private ExampleSubmission prepareModelingExampleSubmission(boolean usedForTutorial) throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);

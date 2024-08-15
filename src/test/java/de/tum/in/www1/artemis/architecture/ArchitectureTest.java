@@ -137,10 +137,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNullnessAnnotations() {
-        var notNullPredicate = and(not(resideInPackageAnnotation("jakarta.validation.constraints")), simpleNameAnnotation("NotNull"));
-        var nonNullPredicate = simpleNameAnnotation("NonNull");
+        var nonNullPredicate = and(not(resideInPackageAnnotation("org.jspecify.annotations")), simpleNameAnnotation("NonNull"));
+        var notNullPredicate = simpleNameAnnotation("NotNull");
         var nonnullPredicate = simpleNameAnnotation("Nonnull");
-        var nullablePredicate = and(not(resideInPackageAnnotation("jakarta.annotation")), simpleNameAnnotation("Nullable"));
+        var nullablePredicate = and(not(resideInPackageAnnotation("org.jspecify.annotations")), simpleNameAnnotation("Nullable"));
 
         Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nonnullPredicate, nullablePredicate);
 

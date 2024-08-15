@@ -10,8 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -418,7 +417,7 @@ public class CourseCompetencyResource {
      * @param course     The course for which to check the authorization role for
      * @param competency The course competency to be accessed by the user
      */
-    private void checkCourseForCompetency(@NotNull Course course, @NotNull CourseCompetency competency) {
+    private void checkCourseForCompetency(@NonNull Course course, @NonNull CourseCompetency competency) {
         if (competency.getCourse() == null) {
             throw new BadRequestAlertException("A course competency must belong to a course", ENTITY_NAME, "courseCompetencyNoCourse");
         }

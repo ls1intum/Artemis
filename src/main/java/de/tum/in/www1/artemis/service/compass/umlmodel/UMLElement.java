@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 

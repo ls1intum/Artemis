@@ -438,6 +438,7 @@ dependencies {
     // use newest version of guava to avoid security issues through outdated dependencies
     implementation "com.google.guava:guava:33.2.1-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
+    implementation "org.jspecify:jspecify:1.0.0"
 
     // use newest version of gson to avoid security issues through outdated dependencies
     implementation "com.google.code.gson:gson:2.11.0"

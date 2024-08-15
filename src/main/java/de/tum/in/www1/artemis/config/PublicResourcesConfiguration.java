@@ -8,8 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.CacheControl;
@@ -33,7 +32,7 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
     }
 
     @Override
-    public void addResourceHandlers(@NotNull ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
         // Enable static resource serving in general from "/public" from both classpath and hosts filesystem
         addResourceHandlerForPath(registry);
 

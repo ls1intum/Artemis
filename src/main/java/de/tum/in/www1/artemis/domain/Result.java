@@ -29,12 +29,12 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -242,7 +242,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.rated = rated;
     }
 
-    private void setRatedIfNotAfterDueDate(@NotNull Participation participation, @NotNull ZonedDateTime submissionDate) {
+    private void setRatedIfNotAfterDueDate(@NonNull Participation participation, @NonNull ZonedDateTime submissionDate) {
         var optionalDueDate = ExerciseDateService.getDueDate(participation);
         if (optionalDueDate.isEmpty()) {
             this.rated = true;
@@ -518,7 +518,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      *
      * @param quizExercise the quiz exercise for which the submission should be evaluated, must contain access to the course to calculate the score correctly
      */
-    public void evaluateQuizSubmission(@NotNull QuizExercise quizExercise) {
+    public void evaluateQuizSubmission(@NonNull QuizExercise quizExercise) {
         if (submission instanceof QuizSubmission quizSubmission) {
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission), quizExercise.getCourseViaExerciseGroupOrCourseMember());

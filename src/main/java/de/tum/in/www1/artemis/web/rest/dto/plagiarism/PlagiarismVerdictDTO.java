@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.dto.plagiarism;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismVerdictDTO(@NotNull PlagiarismVerdict verdict, String verdictMessage, int verdictPointDeduction) {
+public record PlagiarismVerdictDTO(@NonNull PlagiarismVerdict verdict, String verdictMessage, int verdictPointDeduction) {
 }

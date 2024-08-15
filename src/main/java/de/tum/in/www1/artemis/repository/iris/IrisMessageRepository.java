@@ -6,8 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -41,7 +40,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
             """)
     int countLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
-    Optional<IrisMessage> findFirstBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
+    Optional<IrisMessage> findFirstBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NonNull IrisMessageSender sender);
 
     @EntityGraph(type = LOAD, attributePaths = { "content" })
     IrisMessage findIrisMessageById(long irisMessageId);
@@ -55,7 +54,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
      * @return the first {@code IrisMessage} with content, ordered by sent date in descending order,
      *         or null if no message is found
      */
-    default IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender) {
+    default IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NonNull IrisMessageSender sender) {
         var irisMessage = findFirstBySessionIdAndSenderOrderBySentAtDesc(sessionId, sender);
         if (irisMessage.isEmpty()) {
             return null;

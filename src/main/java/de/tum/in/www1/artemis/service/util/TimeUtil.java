@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.service.util;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class TimeUtil {
 
@@ -25,7 +25,7 @@ public class TimeUtil {
      * @param target the target ZonedDateTime object
      * @return the relative time of the target ZonedDateTime object compared to the origin and unit ZonedDateTime objects
      */
-    public static double toRelativeTime(@NotNull ZonedDateTime origin, @NotNull ZonedDateTime unit, @NotNull ZonedDateTime target) {
+    public static double toRelativeTime(@NonNull ZonedDateTime origin, @NonNull ZonedDateTime unit, @NonNull ZonedDateTime target) {
         return toRelativeTime(origin.toEpochSecond(), unit.toEpochSecond(), target.toEpochSecond());
     }
 
@@ -39,11 +39,11 @@ public class TimeUtil {
      * @param target the target ZonedDateTime object
      * @return the relative time of the target ZonedDateTime object compared to the origin and unit ZonedDateTime objects
      */
-    public static double toRelativeTime(@NotNull Instant origin, @NotNull Instant unit, @NotNull Instant target) {
+    public static double toRelativeTime(@NonNull Instant origin, @NonNull Instant unit, @NonNull Instant target) {
         return toRelativeTime(origin.getEpochSecond(), unit.getEpochSecond(), target.getEpochSecond());
     }
 
-    private static double toRelativeTime(@NotNull long originEpochSecond, @NotNull long unitEpochSecond, @NotNull long targetEpochSecond) {
+    private static double toRelativeTime(@NonNull long originEpochSecond, @NonNull long unitEpochSecond, @NonNull long targetEpochSecond) {
         if (originEpochSecond == unitEpochSecond) {
             return 1;
         }

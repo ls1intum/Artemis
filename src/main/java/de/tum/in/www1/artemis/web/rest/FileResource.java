@@ -15,12 +15,11 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.validation.constraints.NotNull;
-
 import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -524,7 +523,7 @@ public class FileResource {
         }
     }
 
-    private Path getActualPathFromPublicPathString(@NotNull String publicPath) {
+    private Path getActualPathFromPublicPathString(@NonNull String publicPath) {
         if (publicPath == null) {
             throw new EntityNotFoundException("No file linked");
         }

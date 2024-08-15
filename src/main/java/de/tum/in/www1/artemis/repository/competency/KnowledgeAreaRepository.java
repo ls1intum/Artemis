@@ -6,8 +6,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -31,7 +30,7 @@ public interface KnowledgeAreaRepository extends ArtemisJpaRepository<KnowledgeA
     @EntityGraph(type = LOAD, attributePaths = "competencies")
     List<KnowledgeArea> findAllWithCompetenciesByOrderByTitleAsc();
 
-    @NotNull
+    @NonNull
     default KnowledgeArea findWithChildrenAndCompetenciesByIdElseThrow(long knowledgeAreaId) throws EntityNotFoundException {
         return getValueElseThrow(findWithChildrenAndCompetenciesById(knowledgeAreaId), knowledgeAreaId);
     }

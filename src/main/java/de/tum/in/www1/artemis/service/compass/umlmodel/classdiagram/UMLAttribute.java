@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 import java.io.Serializable;
 import java.util.Objects;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
@@ -39,7 +39,7 @@ public class UMLAttribute extends UMLElement implements Serializable {
      *
      * @return the UML element that contains this attribute
      */
-    @NotNull
+    @NonNull
     @Override
     public UMLElement getParentElement() {
         return parentElement;
@@ -51,7 +51,7 @@ public class UMLAttribute extends UMLElement implements Serializable {
      * @param parentElement the UML element that contains this attribute
      */
     @Override
-    public void setParentElement(@NotNull UMLElement parentElement) {
+    public void setParentElement(@NonNull UMLElement parentElement) {
         this.parentElement = parentElement;
     }
 

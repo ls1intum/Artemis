@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -19,7 +19,7 @@ public record TextExerciseDTO(long id, String title, double maxPoints, double bo
     /**
      * Create a new TextExerciseDTO from a TextExercise
      */
-    public static TextExerciseDTO of(@NotNull TextExercise exercise) {
+    public static TextExerciseDTO of(@NonNull TextExercise exercise) {
         return new TextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
                 exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).toList(), exercise.getProblemStatement(), exercise.getExampleSolution());
     }

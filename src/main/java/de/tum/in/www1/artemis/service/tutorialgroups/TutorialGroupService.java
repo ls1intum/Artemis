@@ -21,11 +21,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -556,7 +555,7 @@ public class TutorialGroupService {
      * @param user   The user for whom to set the transient properties of the tutorial groups.
      * @return A list of tutorial groups for the given course with the transient properties set for the given user.
      */
-    public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
+    public Set<TutorialGroup> findAllForCourse(@NonNull Course course, @NonNull User user) {
         // do not load all sessions here as they are not needed for the overview page and would slow down the request
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(course.getId());
         // TODO: this is some overkill, we calculate way too many information with way too many database calls, we must reduce this
@@ -578,7 +577,7 @@ public class TutorialGroupService {
      * @param course          The course for which the tutorial group should be retrieved.
      * @return The tutorial group of the course with the transient properties set for the given user.
      */
-    public TutorialGroup getOneOfCourse(@NotNull Course course, @NotNull User user, @NotNull Long tutorialGroupId) {
+    public TutorialGroup getOneOfCourse(@NonNull Course course, @NonNull User user, @NonNull Long tutorialGroupId) {
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
         if (!course.equals(tutorialGroup.getCourse())) {
             throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
@@ -597,7 +596,7 @@ public class TutorialGroupService {
      * @param user          the user for which to check permission
      * @return true if the user is allowed, false otherwise
      */
-    public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+    public boolean isAllowedToSeePrivateTutorialGroupInformation(@NonNull TutorialGroup tutorialGroup, @Nullable User user) {
         var userToCheck = user;
         var persistenceUtil = getPersistenceUtil();
         if (userToCheck == null || !persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "groups") || userToCheck.getGroups() == null
@@ -630,7 +629,7 @@ public class TutorialGroupService {
      * @param tutorialGroup the tutorial group for which to check permission
      * @param user          the user for which to check permission
      */
-    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NonNull TutorialGroup tutorialGroup, @Nullable User user) {
         // ToDo: Clarify if this is the correct permission check
         if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
             throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
@@ -643,7 +642,7 @@ public class TutorialGroupService {
      * @param tutorialGroup the tutorial group for which to check permission
      * @param user          the user for which to check permission
      */
-    public void isAllowedToModifySessionsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+    public void isAllowedToModifySessionsOfTutorialGroup(@NonNull TutorialGroup tutorialGroup, @Nullable User user) {
         // ToDo: Clarify if this is the correct permission check
         if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
             throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());

@@ -7,8 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -94,27 +93,27 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
 
-    @NotNull
+    @NonNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(long exerciseId) {
         return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithStudentParticipationsSubmissionsResultsById(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
     }

@@ -9,11 +9,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -289,7 +288,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws IOException     If an error occurs while accessing the file system
      * @throws GitAPIException If an error occurs while accessing the git repository
      */
-    @NotNull
+    @NonNull
     private ProgrammingExerciseGitDiffReport parseFilesAndCreateReport(Repository repo1, Repository repo2) throws IOException, GitAPIException {
         var oldTreeParser = new FileTreeIterator(repo1);
         var newTreeParser = new FileTreeIterator(repo2);
@@ -313,7 +312,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws IOException     If an error occurs while accessing the file system
      * @throws GitAPIException If an error occurs while accessing the git repository
      */
-    @NotNull
+    @NonNull
     private ProgrammingExerciseGitDiffReport createReport(Repository repo1, FileTreeIterator oldTreeParser, FileTreeIterator newTreeParser) throws IOException, GitAPIException {
         try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(repo1)) {
             git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();

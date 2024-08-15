@@ -7,8 +7,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -119,7 +119,7 @@ public class LtiService {
         throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user."); // If user couldn't be authenticated, throw an error
     }
 
-    @NotNull
+    @NonNull
     protected Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(login).orElseGet(() -> {
             final User newUser;

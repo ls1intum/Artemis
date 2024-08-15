@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.ATHENA_PROGRAMMING_EXERCIS
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -21,7 +21,7 @@ public record ProgrammingExerciseDTO(long id, String title, double maxPoints, do
     /**
      * Create a new TextExerciseDTO from a TextExercise
      */
-    public static ProgrammingExerciseDTO of(@NotNull ProgrammingExercise exercise, String artemisServerUrl) {
+    public static ProgrammingExerciseDTO of(@NonNull ProgrammingExercise exercise, String artemisServerUrl) {
         return new ProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
                 exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).toList(), exercise.getProblemStatement(), exercise.getProgrammingLanguage().name(),
                 artemisServerUrl + ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + exercise.getId() + "/repository/solution",

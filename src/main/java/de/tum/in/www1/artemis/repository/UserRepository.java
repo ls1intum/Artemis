@@ -20,8 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -852,7 +851,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     /**
      * @return existing user object by current user login
      */
-    @NotNull
+    @NonNull
     default User getUser() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneByLogin(currentUserLogin));
@@ -887,7 +886,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param login the login of the user to search
      * @return the user entity if it exists
      */
-    @NotNull
+    @NonNull
     default User getUserByLoginElseThrow(String login) {
         return getValueElseThrow(findOneByLogin(login));
     }
@@ -897,7 +896,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      *
      * @return currently logged-in user
      */
-    @NotNull
+    @NonNull
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin));
@@ -908,7 +907,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      *
      * @return currently logged-in user
      */
-    @NotNull
+    @NonNull
     default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
@@ -920,7 +919,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      *
      * @return currently logged-in user
      */
-    @NotNull
+    @NonNull
     default User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin));
@@ -940,8 +939,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param username the username of the user who should be retrieved from the database
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
-    @NotNull
-    default User getUserWithGroupsAndAuthorities(@NotNull String username) {
+    @NonNull
+    default User getUserWithGroupsAndAuthorities(@NonNull String username) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
     }
 
@@ -984,7 +983,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return findOneWithGroupsAndAuthoritiesByEmail(email);
     }
 
-    @NotNull
+    @NonNull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId), userId);
     }
@@ -995,7 +994,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param userId the id of the user to find
      * @return the user with groups, authorities and organizations if it exists, else throw exception
      */
-    @NotNull
+    @NonNull
     default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId), userId);
     }
@@ -1006,7 +1005,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param userId the id of the user to find
      * @return the user with learning paths if it exists, else throw exception
      */
-    @NotNull
+    @NonNull
     default User findWithLearningPathsByIdElseThrow(long userId) {
         return getValueElseThrow(findWithLearningPathsById(userId), userId);
     }

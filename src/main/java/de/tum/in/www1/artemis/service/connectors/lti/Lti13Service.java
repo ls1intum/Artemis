@@ -8,10 +8,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -153,7 +153,7 @@ public class Lti13Service {
      * @param onlineCourseConfiguration the configuration for the online course
      * @return the username for the LTI user
      */
-    @NotNull
+    @NonNull
     public String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 

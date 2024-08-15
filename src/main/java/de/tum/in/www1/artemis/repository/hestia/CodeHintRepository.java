@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.repository.hestia;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,7 +18,7 @@ public interface CodeHintRepository extends ArtemisJpaRepository<CodeHint, Long>
 
     Set<CodeHint> findByExerciseId(Long exerciseId);
 
-    @NotNull
+    @NonNull
     default CodeHint findByIdWithSolutionEntriesElseThrow(long exerciseHintId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdWithSolutionEntries(exerciseHintId), exerciseHintId);
     }

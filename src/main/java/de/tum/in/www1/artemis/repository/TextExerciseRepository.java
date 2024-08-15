@@ -6,8 +6,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -62,22 +61,22 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
     Optional<TextExercise> findWithGradingCriteriaById(long exerciseId);
 
-    @NotNull
+    @NonNull
     default TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithGradingCriteriaById(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default TextExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default TextExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithExampleSubmissionsAndResultsById(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default TextExercise findByIdWithStudentParticipationsAndSubmissionsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithStudentParticipationsAndSubmissionsById(exerciseId), exerciseId);
     }

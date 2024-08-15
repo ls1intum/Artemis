@@ -7,9 +7,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -81,7 +80,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
     Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
 
-    @NotNull
+    @NonNull
     default QuizExercise findWithEagerBatchesByIdOrElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
@@ -103,7 +102,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @NotNull
+    @NonNull
     default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsById(quizExerciseId), quizExerciseId);
     }
@@ -114,7 +113,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @NotNull
+    @NonNull
     default QuizExercise findByIdWithQuestionsAndCompetenciesElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndCompetenciesById(quizExerciseId), quizExerciseId);
     }
@@ -125,7 +124,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @NotNull
+    @NonNull
     default QuizExercise findByIdWithBatchesElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
@@ -141,12 +140,12 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
         return findWithEagerQuestionsAndStatisticsById(quizExerciseId).orElse(null);
     }
 
-    @NotNull
+    @NonNull
     default QuizExercise findByIdWithQuestionsAndStatisticsElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndStatisticsById(quizExerciseId), quizExerciseId);
     }
 
-    @NotNull
+    @NonNull
     default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndStatisticsAndCompetenciesById(quizExerciseId), quizExerciseId);
     }

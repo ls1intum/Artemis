@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.competency;
 
 import java.time.ZonedDateTime;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -173,7 +172,7 @@ public class CompetencyUtilService {
      * @param masteryThreshold The new mastery threshold
      * @return The updated Competency
      */
-    public Competency updateMasteryThreshold(@NotNull Competency competency, int masteryThreshold) {
+    public Competency updateMasteryThreshold(@NonNull Competency competency, int masteryThreshold) {
         competency.setMasteryThreshold(masteryThreshold);
         return competencyRepo.save(competency);
     }

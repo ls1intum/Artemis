@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -22,7 +22,7 @@ public record ModelingExerciseDTO(long id, String title, double maxPoints, doubl
      * @param exercise The exercise for which a ModelingExerciseDTO should be constructed
      * @return The ModelingExerciseDTO representation of the provided exercise
      */
-    public static ModelingExerciseDTO of(@NotNull ModelingExercise exercise) {
+    public static ModelingExerciseDTO of(@NonNull ModelingExercise exercise) {
         return new ModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
                 exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).toList(), exercise.getProblemStatement(), exercise.getExampleSolutionModel());
     }

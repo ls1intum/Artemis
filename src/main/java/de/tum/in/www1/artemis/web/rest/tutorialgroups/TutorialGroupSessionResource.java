@@ -15,10 +15,10 @@ import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.BadRequestException;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -340,7 +340,7 @@ public class TutorialGroupSessionResource {
      * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupSessionDTO(@NotNull LocalDate date, @NotNull LocalTime startTime, @NotNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
+    public record TutorialGroupSessionDTO(@NonNull LocalDate date, @NonNull LocalTime startTime, @NonNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
 
         public void validityCheck() {
             if (startTime.isAfter(endTime)) {

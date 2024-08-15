@@ -12,9 +12,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.IOUtils;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -315,7 +314,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         }
     }
 
-    private MockHttpServletRequestBuilder buildUpdateExamUser(@NotNull ExamUserDTO examUserDTO, boolean hasSigned, long courseId, long examId) throws Exception {
+    private MockHttpServletRequestBuilder buildUpdateExamUser(@NonNull ExamUserDTO examUserDTO, boolean hasSigned, long courseId, long examId) throws Exception {
         var examUserPart = new MockMultipartFile("examUserDTO", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(examUserDTO).getBytes());
         if (hasSigned) {
             var signingImage = loadFile("classpath:test-data/exam-users", "examUserSigningImage.png");

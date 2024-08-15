@@ -16,11 +16,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
-import jakarta.annotation.Nullable;
 import jakarta.servlet.ServletException;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -824,7 +824,7 @@ public class RequestUtilService {
     /**
      * Creates the delete params with both deleteStudentReposBuildPlans and deleteBaseReposBuildPlans set to false.
      */
-    @NotNull
+    @NonNull
     public static LinkedMultiValueMap<String, String> deleteProgrammingExerciseParamsFalse() {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "false");

@@ -21,9 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.EnumUtils;
+import org.jspecify.annotations.NonNull;
 
 import com.google.common.base.CaseFormat;
 import com.google.gson.JsonElement;
@@ -187,7 +186,7 @@ public class ClassDiagramParser {
      * @param jsonElementMap map of element ids and elements in the model
      * @return the list of UMLAttribute java objects
      */
-    @NotNull
+    @NonNull
     protected static List<UMLAttribute> parseUmlAttributes(JsonObject classJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLAttribute> umlAttributesList = new ArrayList<>();
         for (JsonElement attributeId : classJson.getAsJsonArray(ELEMENT_ATTRIBUTES)) {
@@ -204,7 +203,7 @@ public class ClassDiagramParser {
      * @param jsonElementMap map of element ids and elements in the model
      * @return the list of UMLMethod Java objects
      */
-    @NotNull
+    @NonNull
     protected static List<UMLMethod> parseUmlMethods(JsonObject objectJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLMethod> umlMethodList = new ArrayList<>();
         for (JsonElement methodId : objectJson.getAsJsonArray(ELEMENT_METHODS)) {

@@ -12,8 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -180,7 +179,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
      * @param exercise The exercise for which the clusters will be created
      * @return a Runnable that will build clusters once it is executed
      */
-    @NotNull
+    @NonNull
     private Runnable buildModelingClusters(ModelingExercise exercise) {
         Long modelingExerciseId = exercise.getId();
         return () -> {

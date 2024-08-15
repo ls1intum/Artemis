@@ -15,14 +15,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -172,7 +171,7 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
     }
 
-    @NotNull
+    @NonNull
     private String getCommitHash(String msg) {
         AtomicReference<String> commitHash = new AtomicReference<>();
         gitUtilService.getLog(GitUtilService.REPOS.LOCAL).forEach(revCommit -> {

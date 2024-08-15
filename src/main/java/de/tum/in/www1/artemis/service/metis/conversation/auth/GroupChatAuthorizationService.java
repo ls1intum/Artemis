@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.service.metis.conversation.auth;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_GROUP_CHATS_PER_USER_PER_COURSE;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +46,7 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
      * @param course the course the group chat should be created in
      * @param user   the user that wants to create the group chat
      */
-    public void isAllowedToCreateGroupChat(@NotNull Course course, @NotNull User user) {
+    public void isAllowedToCreateGroupChat(@NonNull Course course, @NonNull User user) {
         var userToCheck = getUserIfNecessary(user);
         var createdGroupChats = groupChatRepository.countByCreatorIdAndCourseId(userToCheck.getId(), course.getId());
         if (createdGroupChats >= MAX_GROUP_CHATS_PER_USER_PER_COURSE) {
@@ -62,7 +61,7 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
      * @param groupChat the group chat the user should be added to
      * @param user      the user that wants to add the other user
      */
-    public void isAllowedToAddUsersToGroupChat(@NotNull GroupChat groupChat, @NotNull User user) {
+    public void isAllowedToAddUsersToGroupChat(@NonNull GroupChat groupChat, @NonNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!isMember(groupChat.getId(), userToCheck.getId())) {
             throw new AccessForbiddenException("You are not a member of this group chat");
@@ -75,7 +74,7 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
      * @param groupChat the group chat that should be edited
      * @param user      the user that wants to edit the group chatNotNull
      */
-    public void isAllowedToUpdateGroupChat(@NotNull GroupChat groupChat, @NotNull User user) {
+    public void isAllowedToUpdateGroupChat(@NonNull GroupChat groupChat, @NonNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!isMember(groupChat.getId(), userToCheck.getId())) {
             throw new AccessForbiddenException("You are not a member of this group chat");
@@ -88,7 +87,7 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
      * @param groupChat the group chat the user should be removed from
      * @param user      the user that wants to remove the other user
      */
-    public void isAllowedToRemoveUsersFromGroupChat(@NotNull GroupChat groupChat, @NotNull User user) {
+    public void isAllowedToRemoveUsersFromGroupChat(@NonNull GroupChat groupChat, @NonNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!isMember(groupChat.getId(), userToCheck.getId())) {
             throw new AccessForbiddenException("You are not a member of this group chat");

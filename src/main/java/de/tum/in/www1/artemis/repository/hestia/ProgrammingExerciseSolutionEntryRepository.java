@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.repository.hestia;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -24,7 +23,7 @@ public interface ProgrammingExerciseSolutionEntryRepository extends ArtemisJpaRe
      * @return The solution entry with the given ID if found
      * @throws EntityNotFoundException If no solution entry with the given ID was found
      */
-    @NotNull
+    @NonNull
     default ProgrammingExerciseSolutionEntry findByIdWithTestCaseAndProgrammingExerciseElseThrow(long entryId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdWithTestCaseAndProgrammingExercise(entryId), entryId);
     }

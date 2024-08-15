@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -23,11 +22,12 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -591,7 +591,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
      * @return the view depending on the current state of the quiz
      */
     @JsonIgnore
-    @NotNull
+    @NonNull
     public Class<?> viewForStudentsInQuizExercise(@Nullable QuizBatch batch) {
         if (isQuizEnded()) {
             return QuizView.After.class;

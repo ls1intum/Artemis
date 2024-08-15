@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.iris;
 
-import jakarta.annotation.Nullable;
 import jakarta.ws.rs.BadRequestException;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 

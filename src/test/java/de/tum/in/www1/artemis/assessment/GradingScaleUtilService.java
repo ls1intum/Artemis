@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -41,7 +40,7 @@ public class GradingScaleUtilService {
      * @param valid        whether the second grade step is valid (i.e. the upper bound of the second grade step is equal to the lower bound of the third grade step)
      * @return a set of grade steps
      */
-    @NotNull
+    @NonNull
     public Set<GradeStep> generateGradeStepSet(GradingScale gradingScale, boolean valid) {
         GradeStep gradeStep1 = new GradeStep();
         GradeStep gradeStep2 = new GradeStep();

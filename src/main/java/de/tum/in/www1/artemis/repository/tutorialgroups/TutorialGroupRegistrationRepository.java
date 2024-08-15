@@ -5,8 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
@@ -36,7 +35,7 @@ public interface TutorialGroupRegistrationRepository extends ArtemisJpaRepositor
 
     @Transactional  // ok because of delete
     @Modifying
-    void deleteById(@NotNull Long tutorialGroupRegistrationId);
+    void deleteById(@NonNull Long tutorialGroupRegistrationId);
 
     @Transactional  // ok because of delete
     @Modifying

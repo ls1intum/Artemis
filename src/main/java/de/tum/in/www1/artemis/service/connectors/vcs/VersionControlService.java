@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.vcs;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;

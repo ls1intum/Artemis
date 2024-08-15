@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -13,11 +13,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamChecklistDTO(@Nullable Long numberOfGeneratedStudentExams, @Nullable Long numberOfTestRuns,
-        @Nullable Long[] numberOfTotalExamAssessmentsFinishedByCorrectionRound, Long numberOfTotalParticipationsForAssessment, @Nullable Long numberOfExamsSubmitted,
+        Long @Nullable [] numberOfTotalExamAssessmentsFinishedByCorrectionRound, Long numberOfTotalParticipationsForAssessment, @Nullable Long numberOfExamsSubmitted,
         @Nullable Long numberOfExamsStarted, Long numberOfAllComplaints, Long numberOfAllComplaintsDone, @Nullable Boolean allExamExercisesAllStudentsPrepared,
         Boolean existsUnassessedQuizzes, Boolean existsUnsubmittedExercises) {
 
-    public ExamChecklistDTO(@Nullable Long[] numberOfTotalExamAssessmentsFinishedByCorrectionRound, Long numberOfTotalParticipationsForAssessment, Boolean existsUnassessedQuizzes,
+    public ExamChecklistDTO(Long @Nullable [] numberOfTotalExamAssessmentsFinishedByCorrectionRound, Long numberOfTotalParticipationsForAssessment, Boolean existsUnassessedQuizzes,
             Boolean existsUnsubmittedExercises) {
         this(null, null, numberOfTotalExamAssessmentsFinishedByCorrectionRound, numberOfTotalParticipationsForAssessment, null, null, null, null, null, existsUnassessedQuizzes,
                 existsUnsubmittedExercises);

@@ -9,8 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -370,7 +369,7 @@ public class ConversationUtilService {
      *
      * @param postings The list of Postings to check
      */
-    public <T extends Posting> void assertSensitiveInformationHidden(@NotNull Collection<T> postings) {
+    public <T extends Posting> void assertSensitiveInformationHidden(@NonNull Collection<T> postings) {
         for (Posting posting : postings) {
             assertSensitiveInformationHidden(posting);
         }
@@ -381,7 +380,7 @@ public class ConversationUtilService {
      *
      * @param posting The Posting to check
      */
-    public void assertSensitiveInformationHidden(@NotNull Posting posting) {
+    public void assertSensitiveInformationHidden(@NonNull Posting posting) {
         if (posting.getAuthor() != null) {
             assertThat(posting.getAuthor().getEmail()).isNull();
             assertThat(posting.getAuthor().getLogin()).isNull();
@@ -394,7 +393,7 @@ public class ConversationUtilService {
      *
      * @param reaction The Reaction to check
      */
-    public void assertSensitiveInformationHidden(@NotNull Reaction reaction) {
+    public void assertSensitiveInformationHidden(@NonNull Reaction reaction) {
         if (reaction.getUser() != null) {
             assertThat(reaction.getUser().getEmail()).isNull();
             assertThat(reaction.getUser().getLogin()).isNull();
