@@ -539,7 +539,7 @@ public class ExamUtilService {
      * @param author  The author of the Post
      * @return The newly created Post
      */
-    public Post addPost(Channel channel, String title, User author) {
+    public Post createPost(Channel channel, String title, User author) {
         Post post = new Post();
         post.setTitle(title);
         post.setConversation(channel);
@@ -554,7 +554,7 @@ public class ExamUtilService {
      * @param content The content of the AnswerPost
      * @param author  The author of the AnswerPost
      */
-    public void addAnswerPost(Post post, String content, User author) {
+    public void createAnswerPost(Post post, String content, User author) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setContent(content);
         answerPost.setPost(post);

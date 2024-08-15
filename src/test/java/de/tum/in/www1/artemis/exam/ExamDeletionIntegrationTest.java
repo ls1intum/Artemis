@@ -86,9 +86,9 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, NUMBER_OF_STUDENTS);
 
         Channel channel = examUtilService.addExamChannel(exam, "exam1 channel");
-        Post instructorPost = examUtilService.addPost(channel, "Instructor Post", instructor);
-        examUtilService.addAnswerPost(instructorPost, "Student Answer", student1);
-        examUtilService.addAnswerPost(instructorPost, "Instructor Answer", instructor);
+        Post instructorPost = examUtilService.createPost(channel, "Instructor Post", instructor);
+        examUtilService.createAnswerPost(instructorPost, "Student Answer", student1);
+        examUtilService.createAnswerPost(instructorPost, "Instructor Answer", instructor);
 
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
         programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
@@ -97,7 +97,7 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteExamSummary() throws Exception {
+    void testDeletionSummary() throws Exception {
         addStudentExam(student1, false, false);
         addStudentExam(student2, false, false);
 
