@@ -1,3 +1,4 @@
+<!-- TODO for a follow-up: This template relies on method calls to ensure the drag/drop of answer options works. We should avoid this for performance reasons -->
 <div class="edit-mc-question">
     <div class="card-header">
         <div class="row">
@@ -135,18 +136,18 @@
                 <div class="row">
                     <div class="col-10 col-lg-11">
                         <!-- TODO: Fix file upload    -->
-                        <jhi-markdown-editor
+                        <jhi-markdown-editor-monaco
                             [markdown]="getQuestionText(question)"
-                            [editorMode]="editorMode"
-                            [metaCommands]="[]"
-                            [defaultCommands]="[]"
-                            [headerCommands]="[]"
-                            [domainCommands]="[]"
-                            [colorCommands]="[]"
+                            [metaActions]="[]"
+                            [defaultActions]="[]"
+                            [headerActions]="undefined"
+                            [domainActions]="[]"
+                            [colorAction]="undefined"
                             [showEditButton]="false"
                             [showPreviewButton]="false"
                             (markdownChange)="onQuestionChange($event)"
                             [enableFileUpload]="false"
+                            [enableResize]="false"
                             class="editor col"
                             style="width: 90%"
                         />
@@ -177,18 +178,18 @@
                         </div>
                         <div class="col-9 col-lg-7 option-text">
                             <!-- TODO: Fix file upload -->
-                            <jhi-markdown-editor
+                            <jhi-markdown-editor-monaco
                                 [markdown]="markdownMap.get(answer.id!)"
-                                [editorMode]="editorMode"
-                                [metaCommands]="[]"
-                                [defaultCommands]="[]"
-                                [headerCommands]="[]"
-                                [domainCommands]="[]"
-                                [colorCommands]="[]"
+                                [metaActions]="[]"
+                                [defaultActions]="[]"
+                                [headerActions]="undefined"
+                                [domainActions]="[]"
+                                [colorAction]="undefined"
                                 [showEditButton]="false"
                                 [showPreviewButton]="false"
                                 (markdownChange)="onAnswerOptionChange($event, answer)"
                                 [enableFileUpload]="false"
+                                [enableResize]="false"
                                 class="editor"
                                 style="width: 65%"
                             />
