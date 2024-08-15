@@ -79,7 +79,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         else {
             final var user = session.getAttribute(SshConstants.USER_KEY);
             try {
-                localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, AuthenticationMechanism.SSH,
+                localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, AuthenticationMechanism.SSH, session.getClientAddress().toString(),
                         localVCRepositoryUri.isPracticeRepository());
             }
             catch (LocalVCForbiddenException e) {

@@ -35,11 +35,11 @@ public class VcsAccessLogService {
      * @param actionType              The action type: READ or WRITE
      * @param authenticationMechanism The used authentication mechanism: password, token or SSH
      */
-    public void storeAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism) {
+    public void storeAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
+            String ipAddress) {
         log.debug("Storing access operation for user {}", user);
 
-        VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, null,
-                "not sure how i ge tip yet");
+        VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, null, ipAddress);
         vcsAccessLogRepository.save(accessLogEntry);
     }
 }

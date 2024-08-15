@@ -148,8 +148,9 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
-        this.vcsAccessLogService = vcsAccessLogService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
+        this.vcsAccessLogService = vcsAccessLogService;
+
     }
 
     /**
@@ -220,7 +221,6 @@ public class LocalVCServletService {
                 return;
             }
         }
-        User user = authenticateUser(authorizationHeader);
 
         // Optimization.
         // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
@@ -245,8 +245,8 @@ public class LocalVCServletService {
         }
 
         var authenticationMechanism = resolveAuthenticationMechanism(authorizationHeader, user);
-
-        authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, authenticationMechanism, localVCRepositoryUri.isPracticeRepository());
+        var ipAddress = request.getRemoteAddr();
+        authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, authenticationMechanism, ipAddress, localVCRepositoryUri.isPracticeRepository());
 
         request.setAttribute("user", user);
 
@@ -275,7 +275,7 @@ public class LocalVCServletService {
 
     }
 
-    private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
+    private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri) throws LocalVCAuthException {
 
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
@@ -374,7 +374,7 @@ public class LocalVCServletService {
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
         if (authorizationHeader == null) {
-            throw new LocalVCAuthException();
+            throw new LocalVCAuthException("No authorization header provided");
         }
 
         String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");
@@ -401,18 +401,17 @@ public class LocalVCServletService {
     }
 
     /**
-     * Authorize a user to access a certain repository, and logs the repository action.
+     * Authorize a user to access a certain repository.
      *
      * @param repositoryTypeOrUserName The type of the repository or the username of the user.
      * @param user                     The user that wants to access the repository.
      * @param exercise                 The exercise the repository belongs to.
      * @param repositoryActionType     The type of the action the user wants to perform.
-     * @param authenticationMechanism  The authentication mechanism used (password, token or SSH)
      * @param isPracticeRepository     Whether the repository is a practice repository.
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository.
      */
     public void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType,
-            AuthenticationMechanism authenticationMechanism, boolean isPracticeRepository) throws LocalVCForbiddenException {
+            AuthenticationMechanism authenticationMechanism, String ipAddress, boolean isPracticeRepository) throws LocalVCForbiddenException {
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
             // Test and auxiliary repositories are only accessible by instructors and higher.
@@ -434,10 +433,9 @@ public class LocalVCServletService {
                     "No participation found for repository with repository type or username " + repositoryTypeOrUserName + " in exercise " + exercise.getId(), e);
         }
 
-        vcsAccessLogService.storeAccessLog(user, participation, repositoryActionType, authenticationMechanism);
-
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, repositoryActionType);
+            vcsAccessLogService.storeAccessLog(user, participation, repositoryActionType, authenticationMechanism, ipAddress);
         }
         catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException(e);
