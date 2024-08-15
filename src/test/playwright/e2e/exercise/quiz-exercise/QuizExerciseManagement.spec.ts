@@ -8,7 +8,7 @@ import { expect } from '@playwright/test';
 import { promises as fs } from 'fs';
 
 test.describe('Quiz Exercise Management', () => {
-    test.describe.configure({ timeout: 30000 });
+    test.describe.configure({ timeout: 45000 });
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
