@@ -11,10 +11,10 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TestcaseAnalysisComponent', () => {
     let component: TestcaseAnalysisComponent;
@@ -66,7 +66,7 @@ describe('TestcaseAnalysisComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
-            declarations: [TestcaseAnalysisComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
+            declarations: [TestcaseAnalysisComponent, MockComponent(ButtonComponent), TranslateDirective],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 ParticipationService,
@@ -115,15 +115,6 @@ describe('TestcaseAnalysisComponent', () => {
 
         const undefinedIndex = component.findTaskIndexForTestCase(undefined);
         expect(undefinedIndex).toBe(0);
-    });
-
-    it('should calculate relative count correctly', () => {
-        component.participation = participationMock;
-        const relativeCount = component.getRelativeCount(1);
-        expect(relativeCount).toBe(100);
-
-        const zeroRelativeCount = component.getRelativeCount(0);
-        expect(zeroRelativeCount).toBe(0);
     });
 
     it('should handle errors when loading feedbacks', () => {

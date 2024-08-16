@@ -260,6 +260,7 @@
                     "settingNegative": "Der Testfall {{testCase}} darf keine Einstellungen mit negativen Werten haben."
                 },
                 "categories": {
+                    "titleHeader": "Code-Analyse",
                     "title": "Code-Analyse-Kategorien",
                     "notGraded": "Nicht bewertet.",
                     "noFeedback": "Ohne sichtbares Feedback.",
@@ -307,6 +308,7 @@
                     "passedPercent": "Bestanden %"
                 },
                 "testAnalysis": {
+                    "titleHeader": "Test Analyse",
                     "title": "Error Analyse für {{exerciseTitle}}",
                     "occurrence": "Häufigkeit",
                     "testCaseFeedback": "Test Fall Feedback",

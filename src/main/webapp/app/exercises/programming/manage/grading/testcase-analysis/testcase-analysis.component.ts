@@ -103,16 +103,11 @@ export class TestcaseAnalysisComponent implements OnInit {
         this.feedbacks = Array.from(feedbackMap.values()).sort((a, b) => b.count - a.count);
     }
 
-    findTaskIndexForTestCase(testCase?: ProgrammingExerciseTestCase): number | undefined {
+    findTaskIndexForTestCase(testCase?: ProgrammingExerciseTestCase): number {
         if (!testCase) {
             return 0;
         }
         // Find the index of the task and add 1 to it (to make it a 1-based index), if 0 is returned then no element was found
         return this.tasks.findIndex((task) => task.testCases.some((tc) => tc.testName === testCase.testName)) + 1;
-    }
-
-    // Used to calculate the relative occurrence of a feedback
-    getRelativeCount(count: number): number {
-        return (this.participation.length > 0 ? count / this.participation.length : 0) * 100;
     }
 }

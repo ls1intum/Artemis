@@ -1,5 +1,5 @@
-<div class="container">
-    <h2>{{ 'artemisApp.programmingExercise.configureGrading.testAnalysis.title' | artemisTranslate: { exerciseTitle: exerciseTitle } }}</h2>
+<div class="container m-3">
+    <h2 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle }"></h2>
     <table class="table">
         <thead>
             <tr>
@@ -13,7 +13,7 @@
         <tbody class="table-group-divider">
             @for (item of feedbacks; track item) {
                 <tr>
-                    <td class="text-center">{{ item.count }} ({{ getRelativeCount(item.count) | number: '1.0-0' }}%)</td>
+                    <td class="text-center">{{ item.count }} ({{ (this.participation.length > 0 ? item.count / this.participation.length : 0) * 100 | number: '1.0-0' }}%)</td>
                     <td>{{ item.detailText }}</td>
                     <td class="text-center">{{ item.task }}</td>
                     <td>{{ item.testcase }}</td>
@@ -23,5 +23,5 @@
             }
         </tbody>
     </table>
-    <div>{{ 'artemisApp.programmingExercise.configureGrading.testAnalysis.totalItems' | artemisTranslate: { count: feedbacks.length } }}</div>
+    <div jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.totalItems" [translateValues]="{ count: feedbacks.length }"></div>
 </div>

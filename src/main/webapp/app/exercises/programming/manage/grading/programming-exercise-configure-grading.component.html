@@ -6,25 +6,25 @@
         <div class="top-bar">
             <div class="d-flex align-items-center">
                 <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab === 'test-cases' ? 'active' : ''">
-                    <b>Test Cases</b>
+                    <b jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.title"></b>
                 </div>
                 @if (programmingExercise.staticCodeAnalysisEnabled) {
                     <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab === 'code-analysis' ? 'active' : ''">
-                        <b>Code Analysis</b>
+                        <b jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.titleHeader"></b>
                     </div>
                 }
                 <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab === 'submission-policy' ? 'active' : ''">
-                    <b>Submission Policy</b>
+                    <b jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title"></b>
                 </div>
                 <div class="tab-item test-analysis" (click)="selectTab('test-analysis')" [ngClass]="activeTab === 'test-analysis' ? 'active' : ''">
-                    <b>Test Analysis</b>
+                    <b jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.titleHeader"></b>
                 </div>
             </div>
             <ng-template>
                 <div></div>
             </ng-template>
             <div class="d-flex align-items-center">
-                @if (activeTab !== 'submission-policy' && activeTab !== 'test-analysis') {
+                @if (activeTab === 'test-cases' || activeTab === 'code-analysis') {
                     <jhi-programming-exercise-configure-grading-status
                         [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
                         [hasUnsavedTestCaseChanges]="hasUnsavedChanges"
@@ -261,9 +261,7 @@
         </div>
         <div class="grading-body-container mt-3">
             @if (activeTab === 'test-analysis') {
-                <div>
-                    <jhi-testcase-analysis [exerciseTitle]="programmingExercise.title" />
-                </div>
+                <jhi-testcase-analysis [exerciseTitle]="programmingExercise.title" />
             }
         </div>
     }

@@ -262,6 +262,7 @@
                     "settingNegative": "Test case {{testCase}} must not have settings set to negative values."
                 },
                 "categories": {
+                    "titleHeader": "Code Analysis",
                     "title": "Code Analysis Categories",
                     "notGraded": "Not graded.",
                     "noFeedback": "No visible feedback.",
@@ -309,6 +310,7 @@
                     "passedPercent": "Passed %"
                 },
                 "testAnalysis": {
+                    "titleHeader": "Test Analysis",
                     "title": "Error Analysis for {{exerciseTitle}}",
                     "occurrence": "Occurrence",
                     "testCaseFeedback": "Test Case Feedback",
