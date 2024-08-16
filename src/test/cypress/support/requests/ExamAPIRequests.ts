@@ -145,7 +145,7 @@ export class ExamAPIRequests {
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
         exerciseGroup.isMandatory = mandatory;
-        return cy.request({ method: POST, url: `${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exerciseGroups`, body: exerciseGroup });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exercise-groups`, body: exerciseGroup });
     }
 
     /**

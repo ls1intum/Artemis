@@ -1153,7 +1153,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void getParticipationBuildArtifact() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         doReturn(new ResponseEntity<>(null, HttpStatus.OK)).when(continuousIntegrationService).retrieveLatestArtifact(participation);
-        request.getNullable("/api/participations/" + participation.getId() + "/buildArtifact", HttpStatus.OK, Object.class);
+        request.getNullable("/api/participations/" + participation.getId() + "/build-artifact", HttpStatus.OK, Object.class);
         verify(continuousIntegrationService).retrieveLatestArtifact(participation);
     }
 
@@ -1180,7 +1180,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         }
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         mockDeleteBuildPlan(programmingExercise.getProjectKey(), participation.getBuildPlanId(), false);
-        var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, Participation.class, HttpStatus.OK);
+        var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanup-build-plan", null, Participation.class, HttpStatus.OK);
         assertThat(actualParticipation).isEqualTo(participation);
         assertThat(actualParticipation.getInitializationState()).isEqualTo(!practiceMode && afterDueDate ? InitializationState.FINISHED : InitializationState.INACTIVE);
         assertThat(((ProgrammingExerciseStudentParticipation) actualParticipation).getBuildPlanId()).isNull();

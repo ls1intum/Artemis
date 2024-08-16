@@ -21,13 +21,13 @@ export class ExamExerciseGroupCreationPage {
     }
 
     clickSave() {
-        cy.intercept({ method: POST, url: `${COURSE_BASE}/*/exams/*/exerciseGroups` }).as('createExerciseGroup');
+        cy.intercept({ method: POST, url: `${COURSE_BASE}/*/exams/*/exercise-groups` }).as('createExerciseGroup');
         cy.get('#save-group').click();
         return cy.wait('@createExerciseGroup');
     }
 
     update() {
-        cy.intercept({ method: PUT, url: `${COURSE_BASE}/*/exams/*/exerciseGroups` }).as('updateExerciseGroup');
+        cy.intercept({ method: PUT, url: `${COURSE_BASE}/*/exams/*/exercise-groups` }).as('updateExerciseGroup');
         cy.get('#save-group').click();
         cy.wait('@updateExerciseGroup');
     }

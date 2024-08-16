@@ -487,7 +487,7 @@ export class ExamManagementService {
     }
 
     findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
-        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/lockedSubmissions`, { observe: 'response' }).pipe(
+        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/locked-submissions`, { observe: 'response' }).pipe(
             filter((res) => !!res.body),
             tap((res) => reconnectSubmissions(res.body!)),
         );
