@@ -40,8 +40,7 @@ public class EndpointParser {
     private static final Logger logger = LoggerFactory.getLogger(EndpointParser.class);
 
     public static void main(String[] args) {
-        final String relativeDirectoryPath = ".." + File.separator + ".." + File.separator + "src" + File.separator + "main" + File.separator + "java";
-        final Path absoluteDirectoryPath = Paths.get(relativeDirectoryPath).toAbsolutePath().normalize();
+        final Path absoluteDirectoryPath = Path.of("../../src/main/java").toAbsolutePath().normalize();
 
         StaticJavaParser.getParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
 
