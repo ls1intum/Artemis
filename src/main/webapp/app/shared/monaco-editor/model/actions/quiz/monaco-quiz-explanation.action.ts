@@ -3,7 +3,7 @@ import * as monaco from 'monaco-editor';
 
 export class MonacoQuizExplanationAction extends MonacoEditorDomainAction {
     static readonly ID = 'monaco-quiz-explanation.action';
-    static readonly IDENTIFIER = '[explanation]';
+    static readonly IDENTIFIER = '[exp]';
     static readonly TEXT = 'Add an explanation here (only visible in feedback after quiz has ended)';
 
     constructor() {
