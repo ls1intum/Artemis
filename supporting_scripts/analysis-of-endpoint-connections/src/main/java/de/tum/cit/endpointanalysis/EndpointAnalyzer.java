@@ -58,7 +58,6 @@ public class EndpointAnalyzer {
 
             for (EndpointClassInformation endpointClass : endpointClasses) {
                 for (EndpointInformation endpoint : endpointClass.endpoints()) {
-                    restCallMap.put(endpoint.buildComparableEndpointUri(), new ArrayList<>());
 
                     String endpointURI = endpoint.buildComparableEndpointUri();
                     List<RestCallInformation> matchingRestCalls = restCallMap.getOrDefault(endpointURI, new ArrayList<>());
