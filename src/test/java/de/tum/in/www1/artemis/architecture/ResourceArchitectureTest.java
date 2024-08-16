@@ -6,8 +6,10 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,8 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import de.tum.in.www1.artemis.web.rest.ogparser.LinkPreviewResource;
 
 class ResourceArchitectureTest extends AbstractArchitectureTest {
+
+    private static final Pattern KEBAB_CASE_OR_PATH_VARIABLE_PATTERN = Pattern.compile("^([a-z0-9]+(-[a-z0-9]+)*|\\{[^}]+\\}|[a-z0-9]+.json)$");
 
     @Test
     void shouldBeNamedResource() {
@@ -67,6 +71,32 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
         for (var annotation : annotationClasses) {
             methods().that().areAnnotatedWith(annotation).should(haveCorrectRequestMappingPathForMethods(annotation)).allowEmptyShould(true).check(productionClasses);
         }
+    }
+
+    @Test
+    void testUseKebabCaseForRestEndpoints() {
+        for (var annotation : annotationClasses) {
+            methods().should(useKebabCaseForRestAnnotations(annotation)).check(productionClasses);
+        }
+    }
+
+    protected ArchCondition<JavaMethod> useKebabCaseForRestAnnotations(Class<?> annotationClass) {
+        return new ArchCondition<>("use kebab case for rest mapping annotations") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                var restMappingAnnotation = item.getAnnotations().stream()
+                        .filter(annotation -> ((JavaClass) annotation.getType()).getSimpleName().equals(annotationClass.getSimpleName())).findFirst();
+
+                if (restMappingAnnotation.isPresent()) {
+                    boolean satisfied = Arrays.stream(((String[]) restMappingAnnotation.get().tryGetExplicitlyDeclaredProperty("value").get())[0].split("/"))
+                            .allMatch(part -> KEBAB_CASE_OR_PATH_VARIABLE_PATTERN.matcher(part).matches());
+                    if (!satisfied) {
+                        events.add(violated(item, String.format("%s violates rule to use kebab case for rest call annotations", item.getFullName())));
+                    }
+                }
+            }
+        };
     }
 
     private ArchCondition<JavaClass> haveCorrectRequestMappingPathForClasses() {

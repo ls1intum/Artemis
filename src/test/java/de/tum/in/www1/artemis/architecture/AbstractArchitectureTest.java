@@ -11,7 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.junit.jupiter.api.BeforeAll;
@@ -35,8 +34,6 @@ import com.tngtech.archunit.lang.ConditionEvents;
 public abstract class AbstractArchitectureTest {
 
     protected static final String ARTEMIS_PACKAGE = "de.tum.in.www1.artemis";
-
-    private static final Pattern KEBAB_CASE_OR_PATH_VARIABLE_PATTERN = Pattern.compile("^([a-z]+(-[a-z]+)*|\\{[^}]+\\}|[a-z]+.json|saml2)$");
 
     protected static JavaClasses testClasses;
 
@@ -139,23 +136,6 @@ public abstract class AbstractArchitectureTest {
                 boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
                 if (!satisfied) {
                     events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
-                }
-            }
-        };
-    }
-
-    protected ArchCondition<JavaMethod> useKebabCaseForRestAnnotations(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
-        return new ArchCondition<>("use kebab case for rest mapping annotations") {
-
-            @Override
-            public void check(JavaMethod item, ConditionEvents events) {
-                var restMappingAnnotation = item.getAnnotations().stream().filter(annotationPredicate).findFirst();
-                if (restMappingAnnotation.isPresent()) {
-                    boolean satisfied = Arrays.stream(((String[]) restMappingAnnotation.get().tryGetExplicitlyDeclaredProperty("value").get())[0].split("/"))
-                            .allMatch(part -> KEBAB_CASE_OR_PATH_VARIABLE_PATTERN.matcher(part).matches());
-                    if (!satisfied) {
-                        events.add(violated(item, String.format("%s violates rule to use kebab case for rest call annotations", item.getFullName())));
-                    }
                 }
             }
         };
