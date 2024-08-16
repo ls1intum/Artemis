@@ -9,6 +9,7 @@ import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorLineDecorationsHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-line-decorations-hover-button.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -264,5 +265,24 @@ describe('MonacoEditorComponent', () => {
         expect(comp.models).toBeEmpty();
         expect(modelDisposeSpy).toHaveBeenCalledOnce();
         expect(model.isDisposed()).toBeTrue();
+    });
+
+    it('should correctly set the start line number', () => {
+        fixture.detectChanges();
+        comp.changeModel('file', multiLineText);
+        comp.setStartLineNumber(5);
+        // Ensure that the editor is large enough to display all lines.
+        comp.layoutWithFixedSize(400, 400);
+        const lineNumbers = fixture.debugElement.nativeElement.querySelectorAll('.line-numbers');
+        expect(lineNumbers).toHaveLength(5);
+        expect([...lineNumbers].map((elem: HTMLElement) => elem.textContent)).toContainAllValues(['5', '6', '7', '8', '9']);
+    });
+
+    it('should apply option presets to the editor', () => {
+        fixture.detectChanges();
+        const preset = new MonacoEditorOptionPreset({ lineNumbers: 'off' });
+        const applySpy = jest.spyOn(preset, 'apply');
+        comp.applyOptionPreset(preset);
+        expect(applySpy).toHaveBeenCalledExactlyOnceWith(comp['_editor']);
     });
 });

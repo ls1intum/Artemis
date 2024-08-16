@@ -8,8 +8,9 @@
                 "overview": {
                     "title": "Lernpfad Kompetenzen",
                     "showCompetenciesGraphButton": "Kompetenzgraph",
-                    "emptyLearningObjectsLabel": "Diese Kompetenz enthält bisher noch keine Lerneinheiten!",
-                    "nextLearningObjectOnPathLabel": "Nächste"
+                    "emptyLearningObjectsLabel": "Diese Kompetenz enthält bisher noch keine Lernobjekte!",
+                    "nextLearningObjectOnPathLabel": "Nächste",
+                    "unreleasedLearningObjectLabel": "Unveröffentlichte Lerneinheit"
                 },
                 "recapLabel": "Lerneinheiten wiederholen"
             },

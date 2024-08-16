@@ -103,6 +103,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.OK);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
+        programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
@@ -116,6 +117,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.FORBIDDEN);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
+        programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.FORBIDDEN);
 
@@ -138,7 +140,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         var auditEvents = request.getList("/api/admin/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents).hasSize(1);
         var auditEvent = auditEvents.getFirst();
-        var auditEventsInDb = persistenceAuditEventRepository.findAllByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
+        var auditEventsInDb = persistenceAuditEventRepository.findAllWithDataByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
         assertThat(auditEventsInDb.getTotalElements()).isEqualTo(1);
         assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().orElseThrow().getPrincipal());
     }
