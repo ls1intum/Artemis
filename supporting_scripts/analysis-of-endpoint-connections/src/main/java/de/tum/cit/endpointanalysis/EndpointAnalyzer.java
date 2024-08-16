@@ -67,7 +67,7 @@ public class EndpointAnalyzer {
                     if (matchingRestCalls.isEmpty() && endpointURI.endsWith("*")) {
                         for (String uri : restCallMap.keySet()) {
                             if (uri.startsWith(endpoint.buildComparableEndpointUri().substring(0, endpoint.buildComparableEndpointUri().length() - 1))
-                                && endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).getMethod().toLowerCase())) {
+                                    && endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).getMethod().toLowerCase())) {
                                 matchingRestCalls.addAll(restCallMap.get(uri));
                             }
                         }

@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,60 +32,62 @@ public class RestCallAnalyzer {
      * the analysis result to a JSON file. REST calls without matching endpoints
      * are also recorded.
      */
- private static void analyzeRestCalls() {
-    ObjectMapper mapper = new ObjectMapper();
+    private static void analyzeRestCalls() {
+        ObjectMapper mapper = new ObjectMapper();
 
-    try {
-        List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.ENDPOINT_PARSING_RESULT_PATH),
-                new TypeReference<List<EndpointClassInformation>>() {
-                });
-        List<RestCallFileInformation> restCalls = mapper.readValue(new File(EndpointParser.REST_CALL_PARSING_RESULT_PATH), new TypeReference<List<RestCallFileInformation>>() {
-        });
+        try {
+            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.ENDPOINT_PARSING_RESULT_PATH),
+                    new TypeReference<List<EndpointClassInformation>>() {
+                    });
+            List<RestCallFileInformation> restCalls = mapper.readValue(new File(EndpointParser.REST_CALL_PARSING_RESULT_PATH), new TypeReference<List<RestCallFileInformation>>() {
+            });
 
-        List<RestCallWithMatchingEndpoint> restCallsWithMatchingEndpoint = new ArrayList<>();
-        List<RestCallInformation> restCallsWithoutMatchingEndpoint = new ArrayList<>();
+            List<RestCallWithMatchingEndpoint> restCallsWithMatchingEndpoint = new ArrayList<>();
+            List<RestCallInformation> restCallsWithoutMatchingEndpoint = new ArrayList<>();
 
-        Map<String, List<EndpointInformation>> endpointMap = new HashMap<>();
+            Map<String, List<EndpointInformation>> endpointMap = new HashMap<>();
 
-        // Populate the map with endpoints
-        for (EndpointClassInformation endpointClass : endpointClasses) {
-            for (EndpointInformation endpoint : endpointClass.endpoints()) {
-                String endpointURI = endpoint.buildComparableEndpointUri();
-                endpointMap.computeIfAbsent(endpointURI, k -> new ArrayList<>()).add(endpoint);
+            // Populate the map with endpoints
+            for (EndpointClassInformation endpointClass : endpointClasses) {
+                for (EndpointInformation endpoint : endpointClass.endpoints()) {
+                    String endpointURI = endpoint.buildComparableEndpointUri();
+                    endpointMap.computeIfAbsent(endpointURI, k -> new ArrayList<>()).add(endpoint);
+                }
             }
-        }
 
-        for (RestCallFileInformation restCallFile : restCalls) {
-            for (RestCallInformation restCall : restCallFile.restCalls()) {
-                String restCallURI = restCall.buildComparableRestCallUri();
-                List<EndpointInformation> matchingEndpoints = endpointMap.getOrDefault(restCallURI, new ArrayList<>());
+            for (RestCallFileInformation restCallFile : restCalls) {
+                for (RestCallInformation restCall : restCallFile.restCalls()) {
+                    String restCallURI = restCall.buildComparableRestCallUri();
+                    List<EndpointInformation> matchingEndpoints = endpointMap.getOrDefault(restCallURI, new ArrayList<>());
 
-                // Check for wildcard matches if no exact match is found
-                if (matchingEndpoints.isEmpty() && restCallURI.endsWith("*")) {
-                    for (String uri : endpointMap.keySet()) {
-                        if (uri.startsWith(restCallURI.substring(0, restCallURI.length() - 1))
-                                && endpointMap.get(uri).get(0).getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
-                            matchingEndpoints.addAll(endpointMap.get(uri));
+                    // Check for wildcard matches if no exact match is found
+                    if (matchingEndpoints.isEmpty() && restCallURI.endsWith("*")) {
+                        for (String uri : endpointMap.keySet()) {
+                            if (uri.startsWith(restCallURI.substring(0, restCallURI.length() - 1))
+                                    && endpointMap.get(uri).get(0).getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
+                                matchingEndpoints.addAll(endpointMap.get(uri));
+                            }
+                        }
+                    }
+
+                    if (matchingEndpoints.isEmpty()) {
+                        restCallsWithoutMatchingEndpoint.add(restCall);
+                    }
+                    else {
+                        for (EndpointInformation endpoint : matchingEndpoints) {
+                            restCallsWithMatchingEndpoint.add(new RestCallWithMatchingEndpoint(endpoint, restCall, restCall.getFileName()));
                         }
                     }
                 }
-
-                if (matchingEndpoints.isEmpty()) {
-                    restCallsWithoutMatchingEndpoint.add(restCall);
-                } else {
-                    for (EndpointInformation endpoint : matchingEndpoints) {
-                        restCallsWithMatchingEndpoint.add(new RestCallWithMatchingEndpoint(endpoint, restCall, restCall.getFileName()));
-                    }
-                }
             }
-        }
 
-        RestCallAnalysis restCallAnalysis = new RestCallAnalysis(restCallsWithMatchingEndpoint, restCallsWithoutMatchingEndpoint);
-        mapper.writeValue(new File(REST_CALL_ANALYSIS_RESULT_PATH), restCallAnalysis);
-    } catch (IOException e) {
-        logger.error("Failed to analyze REST calls", e);
+            RestCallAnalysis restCallAnalysis = new RestCallAnalysis(restCallsWithMatchingEndpoint, restCallsWithoutMatchingEndpoint);
+            mapper.writeValue(new File(REST_CALL_ANALYSIS_RESULT_PATH), restCallAnalysis);
+        }
+        catch (IOException e) {
+            logger.error("Failed to analyze REST calls", e);
+        }
     }
-}
 
     /**
      * Prints the endpoint analysis result.
