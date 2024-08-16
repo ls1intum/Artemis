@@ -17,13 +17,14 @@ svg {
         transform-origin: 50%;
     }
     .progressbar {
+        stroke-linecap: round;
+
         &-anim {
             animation: ring-appear 1s ease-in-out forwards;
             transition:
                 stroke-dasharray 1s ease-in-out,
                 opacity 1s linear;
         }
-        stroke-linecap: round;
 
         &.hidden {
             // Use opacity: 0 instead of display: none to prevent animation when appearing
@@ -56,11 +57,11 @@ svg {
             stroke: var(--competency-rings-green-bg);
         }
         .progressbar {
+            stroke: var(--competency-rings-green);
             &-anim {
                 animation-duration: 1s;
                 transition-duration: 1s;
             }
-            stroke: var(--competency-rings-green);
         }
     }
 }
