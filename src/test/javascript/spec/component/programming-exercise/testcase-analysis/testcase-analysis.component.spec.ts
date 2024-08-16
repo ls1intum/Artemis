@@ -4,7 +4,6 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TestcaseAnalysisComponent } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.component';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -14,12 +13,10 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TestcaseAnalysisComponent', () => {
     let component: TestcaseAnalysisComponent;
     let fixture: ComponentFixture<TestcaseAnalysisComponent>;
-    let participationService: ParticipationService;
     let resultService: ResultService;
 
     const participationMock: Participation[] = [
@@ -55,8 +52,9 @@ describe('TestcaseAnalysisComponent', () => {
         { id: 2, taskName: 'Task 2', testCases: [{ testName: 'test2' } as ProgrammingExerciseTestCase] },
     ] as ProgrammingExerciseTask[];
 
-    const participationResponseMock = new HttpResponse({ body: participationMock });
-    const feedbackResponseMock = new HttpResponse({ body: feedbackMock });
+    const feedbackDetailsResponseMock = new HttpResponse({
+        body: { feedback: feedbackMock, participation: participationMock },
+    });
 
     beforeEach(() => {
         const mockProgrammingExerciseTaskService = {
@@ -66,10 +64,9 @@ describe('TestcaseAnalysisComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
-            declarations: [TestcaseAnalysisComponent, MockComponent(ButtonComponent), TranslateDirective],
+            declarations: [TestcaseAnalysisComponent, MockComponent(ButtonComponent)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                ParticipationService,
                 ResultService,
                 { provide: ProgrammingExerciseTaskService, useValue: mockProgrammingExerciseTaskService },
             ],
@@ -77,32 +74,29 @@ describe('TestcaseAnalysisComponent', () => {
 
         fixture = TestBed.createComponent(TestcaseAnalysisComponent);
         component = fixture.componentInstance;
-        participationService = TestBed.inject(ParticipationService);
         resultService = TestBed.inject(ResultService);
 
-        jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(participationResponseMock));
-        jest.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(feedbackResponseMock));
+        jest.spyOn(resultService, 'getFeedbackDetailsForExercise').mockReturnValue(of(feedbackDetailsResponseMock));
     });
 
-    it('should initialize and load feedbacks correctly', () => {
+    it('should initialize and load feedback details correctly', () => {
         component.ngOnInit();
         fixture.detectChanges();
 
-        expect(participationService.findAllParticipationsByExercise).toHaveBeenCalled();
-        expect(resultService.getFeedbackDetailsForResult).toHaveBeenCalled();
+        expect(resultService.getFeedbackDetailsForExercise).toHaveBeenCalled();
         expect(component.participation).toEqual(participationMock);
-        expect(component.feedbacks).toHaveLength(2);
-        expect(component.feedbacks[0].detailText).toBe('Test feedback 1 detail');
-        expect(component.feedbacks[1].detailText).toBe('Test feedback 2 detail');
+        expect(component.feedback).toHaveLength(2);
+        expect(component.feedback[0].detailText).toBe('Test feedback 1 detail');
+        expect(component.feedback[1].detailText).toBe('Test feedback 2 detail');
     });
 
     it('should save feedbacks and sort them by count', () => {
-        component.saveFeedbacks(feedbackMock);
+        component.saveFeedback(feedbackMock);
 
-        expect(component.feedbacks).toHaveLength(2);
-        expect(component.feedbacks[0].count).toBe(2);
-        expect(component.feedbacks[1].count).toBe(1);
-        expect(component.feedbacks[0].detailText).toBe('Test feedback 1 detail');
+        expect(component.feedback).toHaveLength(2);
+        expect(component.feedback[0].count).toBe(2);
+        expect(component.feedback[1].count).toBe(1);
+        expect(component.feedback[0].detailText).toBe('Test feedback 1 detail');
     });
 
     it('should find task index for a given test case', () => {
@@ -117,12 +111,12 @@ describe('TestcaseAnalysisComponent', () => {
         expect(undefinedIndex).toBe(0);
     });
 
-    it('should handle errors when loading feedbacks', () => {
-        jest.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(throwError('Error'));
+    it('should handle errors when loading feedback details', () => {
+        jest.spyOn(resultService, 'getFeedbackDetailsForExercise').mockReturnValue(throwError('Error'));
 
-        component.loadFeedbacks(participationMock);
+        component.loadFeedbackDetails(1);
 
-        expect(resultService.getFeedbackDetailsForResult).toHaveBeenCalled();
-        expect(component.feedbacks).toHaveLength(0);
+        expect(resultService.getFeedbackDetailsForExercise).toHaveBeenCalled();
+        expect(component.feedback).toHaveLength(0);
     });
 });

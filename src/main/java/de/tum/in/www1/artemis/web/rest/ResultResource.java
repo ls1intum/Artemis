@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -276,4 +278,59 @@ public class ResultResource {
         return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(savedResult);
     }
+
+    /**
+     * GET /exercises/:exerciseId/feedback-details : get all feedback details and participations for an exercise.
+     *
+     * @param exerciseId The ID of the exercise
+     * @return A response entity containing feedback details and participations
+     */
+    @GetMapping("exercises/{exerciseId}/feedback-details")
+    @EnforceAtLeastTutor
+    public ResponseEntity<FeedbackDetailsResponse> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        // Get all Student participations for the exercise
+        Set<StudentParticipation> participation;
+        if (exercise.isTeamMode()) {
+            participation = studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
+        }
+        else {
+            participation = studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(exercise.getId());
+        }
+        removeSubmissionAndExerciseData(participation);
+
+        List<Feedback> allFeedback = new ArrayList<>();
+
+        // For each participation, get the feedback from its latest result
+        for (StudentParticipation singleParticipation : participation) {
+            Result latestResult = singleParticipation.getResults().stream().max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
+
+            if (latestResult != null) {
+                List<Feedback> feedback = getResultDetails(singleParticipation.getId(), latestResult.getId()).getBody();
+                if (feedback != null) {
+                    allFeedback.addAll(feedback);
+                }
+            }
+        }
+
+        FeedbackDetailsResponse response = new FeedbackDetailsResponse(allFeedback, participation);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    private void removeSubmissionAndExerciseData(Set<StudentParticipation> participations) {
+        // remove unnecessary data to reduce response size
+        participations.forEach(participation -> {
+            participation.setSubmissionCount(participation.getSubmissions().size());
+            participation.setSubmissions(null);
+        });
+        participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
+            participation.setExercise(null);
+        });
+    }
+
+    public record FeedbackDetailsResponse(List<Feedback> feedback, Set<StudentParticipation> participation) {
+    }
+
 }

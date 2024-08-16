@@ -11,7 +11,7 @@
             </tr>
         </thead>
         <tbody class="table-group-divider">
-            @for (item of feedbacks; track item) {
+            @for (item of feedback; track item) {
                 <tr>
                     <td class="text-center">{{ item.count }} ({{ (this.participation.length > 0 ? item.count / this.participation.length : 0) * 100 | number: '1.0-0' }}%)</td>
                     <td>{{ item.detailText }}</td>
@@ -23,5 +23,5 @@
             }
         </tbody>
     </table>
-    <div jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.totalItems" [translateValues]="{ count: feedbacks.length }"></div>
+    <div jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.totalItems" [translateValues]="{ count: feedback.length }"></div>
 </div>

@@ -60,6 +60,7 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
@@ -71,6 +72,8 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.web.rest.ResultResource;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -125,6 +128,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private ResultService resultService;
 
     private Course course;
 
@@ -722,4 +731,53 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(assessments[0].inTime()).isEqualTo(1);    // correction round 1
         assertThat(assessments[1].inTime()).isEqualTo(1);    // correction round 2
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGetAllFeedbackDetailsForExercise() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, "student1");
+        Result result = participationUtilService.addResultToParticipation(null, null, participation);
+        participationUtilService.addSampleFeedbackToResults(result);
+
+        ResultResource.FeedbackDetailsResponse response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
+                ResultResource.FeedbackDetailsResponse.class);
+
+        assertThat(response.feedback()).isNotEmpty();
+        assertThat(response.participation()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGetAllFeedbackDetailsForExercise_NoFeedback() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, "student1");
+
+        ResultResource.FeedbackDetailsResponse response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
+                ResultResource.FeedbackDetailsResponse.class);
+
+        assertThat(response.feedback()).isEmpty();
+        assertThat(response.participation()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGetAllFeedbackDetailsForExercise_NoParticipations() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        ResultResource.FeedbackDetailsResponse response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
+                ResultResource.FeedbackDetailsResponse.class);
+
+        assertThat(response.feedback()).isEmpty();
+        assertThat(response.participation()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGetAllFeedbackDetailsForExercise_InvalidExerciseId() throws Exception {
+        long invalidExerciseId = 9999L;
+
+        request.get("/api/exercises/" + invalidExerciseId + "/feedback-details", HttpStatus.NOT_FOUND, ResultResource.FeedbackDetailsResponse.class);
+    }
+
 }

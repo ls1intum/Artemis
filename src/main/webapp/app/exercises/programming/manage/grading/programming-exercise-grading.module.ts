@@ -34,6 +34,7 @@ import { TestcaseAnalysisComponent } from 'app/exercises/programming/manage/grad
         ArtemisProgrammingExerciseActionsModule,
         SubmissionPolicyUpdateModule,
         BarChartModule,
+        TestcaseAnalysisComponent,
     ],
     declarations: [
         ProgrammingExerciseConfigureGradingComponent,
@@ -43,7 +44,6 @@ import { TestcaseAnalysisComponent } from 'app/exercises/programming/manage/grad
         ProgrammingExerciseGradingTableActionsComponent,
         ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent,
         ProgrammingExerciseGradingTasksTableComponent,
-        TestcaseAnalysisComponent,
         TestCasePassedBuildsChartComponent,
         CategoryIssuesChartComponent,
         TestCaseDistributionChartComponent,

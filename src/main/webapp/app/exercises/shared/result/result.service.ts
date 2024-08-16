@@ -46,6 +46,11 @@ export interface IResultService {
     triggerDownloadCSV: (rows: string[], csvFileName: string) => void;
 }
 
+interface FeedbackDetailsResponse {
+    feedback: Feedback[];
+    participation: Participation[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ResultService implements IResultService {
     private exerciseResourceUrl = 'api/exercises';
@@ -216,6 +221,10 @@ export class ResultService implements IResultService {
                 return res;
             }),
         );
+    }
+
+    getFeedbackDetailsForExercise(exerciseId: number): Observable<HttpResponse<FeedbackDetailsResponse>> {
+        return this.http.get<FeedbackDetailsResponse>(`${this.exerciseResourceUrl}/${exerciseId}/feedback-details`, { observe: 'response' });
     }
 
     public convertResultDatesFromClient(result: Result): Result {
