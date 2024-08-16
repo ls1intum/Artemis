@@ -26,6 +26,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
 
     editorMode = EditorMode.NONE;
     markdownMap: Map<number, string>;
+    questionText: string;
 
     // Create Backup Question for resets
     @Input() backupQuestion: MultipleChoiceQuestion;
@@ -49,6 +50,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
                 (answer.isCorrect ? CorrectOptionCommand.IDENTIFIER : IncorrectOptionCommand.IDENTIFIER) + ' ' + generateExerciseHintExplanation(answer),
             );
         }
+        this.questionText = this.getQuestionText(this.question);
     }
 
     /**

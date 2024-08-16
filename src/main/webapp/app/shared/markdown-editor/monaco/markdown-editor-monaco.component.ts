@@ -175,6 +175,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onEditSelect = new EventEmitter<void>();
 
     @Output()
+    onBlurEditor = new EventEmitter<void>();
+
+    @Output()
     textWithDomainActionsFound = new EventEmitter<TextWithDomainAction[]>();
 
     @Output()

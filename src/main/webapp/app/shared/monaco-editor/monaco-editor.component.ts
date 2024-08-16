@@ -100,8 +100,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Output()
     contentHeightChanged = new EventEmitter<number>();
 
+    @Output()
+    onBlurEditor = new EventEmitter<void>();
+
     private contentHeightListener?: monaco.IDisposable;
     private textChangedListener?: monaco.IDisposable;
+    private blurEditorWidgetListener?: monaco.IDisposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
@@ -120,6 +124,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             }
         });
 
+        this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+            this.onBlurEditor.emit();
+        });
+
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
@@ -129,6 +137,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.themeSubscription?.unsubscribe();
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
+        this.blurEditorWidgetListener?.dispose();
     }
 
     private emitTextChangeEvent() {
