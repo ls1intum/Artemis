@@ -11,6 +11,10 @@ import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.serv
 import { Subject } from 'rxjs';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
+/**
+ * Button to delete not enrolled users with a confirmation dialog
+ * that shows a list of the logins of the users which will be deleted.
+ */
 @Component({
     standalone: true,
     selector: 'jhi-delete-users-button',
@@ -36,6 +40,9 @@ export class DeleteUsersButtonComponent {
         private deleteDialogService: DeleteDialogService,
     ) {}
 
+    /**
+     * Load the list of users to user confirmation and delete.
+     */
     loadUserList() {
         this.adminUserService.queryNotEnrolledUsers().subscribe({
             next: (res: HttpResponse<string[]>) => {
@@ -73,6 +80,9 @@ export class DeleteUsersButtonComponent {
         this.deleteDialogService.openDeleteDialog(deleteDialogData, true);
     }
 
+    /**
+     * Method for the actions after the user confirmed the deletion.
+     */
     onConfirm() {
         const logins = this.users();
         if (!logins) {
