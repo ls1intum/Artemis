@@ -3,7 +3,9 @@ package de.tum.cit.endpointanalysis;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,20 +46,29 @@ public class EndpointAnalyzer {
             List<UsedEndpoints> endpointsAndMatchingRestCalls = new ArrayList<>();
             List<EndpointInformation> unusedEndpoints = new ArrayList<>();
 
+            Map<String, List<RestCallInformation>> restCallMap = new HashMap<>();
+
+            // Populate the map with rest calls
+            for (RestCallFileInformation restCallFile : restCallFiles) {
+                for (RestCallInformation restCall : restCallFile.restCalls()) {
+                    String restCallURI = restCall.buildComparableRestCallUri();
+                    restCallMap.computeIfAbsent(restCallURI, k -> new ArrayList<>()).add(restCall);
+                }
+            }
+
             for (EndpointClassInformation endpointClass : endpointClasses) {
                 for (EndpointInformation endpoint : endpointClass.endpoints()) {
-                    List<RestCallInformation> matchingRestCalls = new ArrayList<>();
+                    restCallMap.put(endpoint.buildComparableEndpointUri(), new ArrayList<>());
 
-                    for (RestCallFileInformation restCallFile : restCallFiles) {
-                        for (RestCallInformation restCall : restCallFile.restCalls()) {
-                            String endpointURI = endpoint.buildComparableEndpointUri();
-                            String restCallURI = restCall.buildComparableRestCallUri();
-                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
-                                matchingRestCalls.add(restCall);
-                            }
-                            else if (endpointURI.endsWith("*") && restCallURI.startsWith(endpointURI.substring(0, endpointURI.length() - 1))
-                                    && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
-                                matchingRestCalls.add(restCall);
+                    String endpointURI = endpoint.buildComparableEndpointUri();
+                    List<RestCallInformation> matchingRestCalls = restCallMap.getOrDefault(endpointURI, new ArrayList<>());
+
+                    // Check for wildcard endpoints if no exact match is found
+                    if (matchingRestCalls.isEmpty() && endpointURI.endsWith("*")) {
+                        for (String uri : restCallMap.keySet()) {
+                            if (uri.startsWith(endpoint.buildComparableEndpointUri().substring(0, endpoint.buildComparableEndpointUri().length() - 1))
+                                && endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).getMethod().toLowerCase())) {
+                                matchingRestCalls.addAll(restCallMap.get(uri));
                             }
                         }
                     }
