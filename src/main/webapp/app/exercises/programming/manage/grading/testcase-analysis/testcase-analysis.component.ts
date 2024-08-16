@@ -42,9 +42,11 @@ export class TestcaseAnalysisComponent implements OnInit {
 
     loadFeedbackDetails(exerciseId: number): void {
         this.resultService.getFeedbackDetailsForExercise(exerciseId).subscribe((response) => {
-            const feedbackArray = response.body?.feedback ?? [];
             this.participation = response.body?.participation ?? [];
-
+            this.participation = this.participation.filter((participation) => {
+                return participation.results && participation.results.length > 0;
+            });
+            const feedbackArray = response.body?.feedback ?? [];
             const negativeFeedbackArray = feedbackArray.filter((feedback) => !feedback.positive);
             this.saveFeedback(negativeFeedbackArray);
         });
