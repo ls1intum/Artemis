@@ -23,7 +23,7 @@ export class ExerciseGroupService {
      * @param exerciseGroup The exercise group to create.
      */
     create(courseId: number, examId: number, exerciseGroup: ExerciseGroup): Observable<EntityResponseType> {
-        return this.http.post<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups`, exerciseGroup, { observe: 'response' });
+        return this.http.post<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups`, exerciseGroup, { observe: 'response' });
     }
 
     /**
@@ -33,7 +33,7 @@ export class ExerciseGroupService {
      * @param exerciseGroup The exercise group to update.
      */
     update(courseId: number, examId: number, exerciseGroup: ExerciseGroup): Observable<EntityResponseType> {
-        return this.http.put<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups`, exerciseGroup, { observe: 'response' });
+        return this.http.put<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups`, exerciseGroup, { observe: 'response' });
     }
 
     /**
@@ -43,7 +43,7 @@ export class ExerciseGroupService {
      * @param exerciseGroupId The id of the exercise group to get.
      */
     find(courseId: number, examId: number, exerciseGroupId: number): Observable<EntityResponseType> {
-        return this.http.get<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups/${exerciseGroupId}`, { observe: 'response' });
+        return this.http.get<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups/${exerciseGroupId}`, { observe: 'response' });
     }
 
     /**
@@ -60,7 +60,7 @@ export class ExerciseGroupService {
             params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
             params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
         }
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups/${exerciseGroupId}`, { params, observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups/${exerciseGroupId}`, { params, observe: 'response' });
     }
 
     /**
@@ -69,6 +69,6 @@ export class ExerciseGroupService {
      * @param examId The exam id.
      */
     findAllForExam(courseId: number, examId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups`, { observe: 'response' });
+        return this.http.get<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups`, { observe: 'response' });
     }
 }
