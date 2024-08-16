@@ -66,9 +66,13 @@ public class EndpointAnalyzer {
                     // Check for wildcard endpoints if no exact match is found
                     if (matchingRestCalls.isEmpty() && endpointURI.endsWith("*")) {
                         for (String uri : restCallMap.keySet()) {
-                            if (uri.startsWith(endpoint.buildComparableEndpointUri().substring(0, endpoint.buildComparableEndpointUri().length() - 1))
-                                    && endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).getMethod().toLowerCase())) {
-                                matchingRestCalls.addAll(restCallMap.get(uri));
+                            if (uri.startsWith(endpoint.buildComparableEndpointUri().substring(0, endpoint.buildComparableEndpointUri().length() - 1))) {
+                                System.out.println("Endpoint URI: " + endpoint.buildComparableEndpointUri());
+                                System.out.println("REST Call URI: " + uri);
+                                System.out.println("REST Call List length: " + restCallMap.get(uri).size());
+                                if (endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).getMethod().toLowerCase())) {
+                                    matchingRestCalls.addAll(restCallMap.get(uri));
+                                }
                             }
                         }
                     }
