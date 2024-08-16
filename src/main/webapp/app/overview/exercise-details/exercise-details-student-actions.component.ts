@@ -125,6 +125,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.editorLabel = 'openModelingEditor';
         } else if (this.exercise.type === ExerciseType.TEXT) {
             this.editorLabel = 'openTextEditor';
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+            });
         } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
             this.editorLabel = 'uploadFile';
         }

@@ -15,6 +15,8 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     @Input() dueDate?: dayjs.Dayjs;
     @Input() readOnly: boolean = false;
 
+    protected readonly ExerciseType = ExerciseType;
+
     protected readonly AssessmentType = AssessmentType;
 
     readonly assessmentType: AssessmentType;
@@ -71,17 +73,18 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     toggleFeedbackSuggestions(event: any) {
         if (event.target.checked) {
             this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
-        } else {
+        } else if (!this.exercise.allowFeedbackRequests) {
             this.exercise.feedbackSuggestionModule = undefined;
         }
     }
-
+    // this two toggle functions act weirdly together and they should be rewritten
     toggleFeedbackRequests(event: any) {
         if (event.target.checked) {
             this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
-            this.exercise.allowFeedbackRequests = !this.exercise.allowFeedbackRequests;
+            this.exercise.allowFeedbackRequests = true;
         } else {
             this.exercise.feedbackSuggestionModule = undefined;
+            this.exercise.allowFeedbackRequests = false;
         }
     }
 
