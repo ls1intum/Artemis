@@ -28,6 +28,7 @@ export class DeleteUsersButtonComponent {
 
     // Boilerplate code for use in the template
     faEraser = faEraser;
+    protected readonly ButtonType = ButtonType;
 
     constructor(
         private adminUserService: AdminUserService,
@@ -90,6 +91,4 @@ export class DeleteUsersButtonComponent {
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
-
-    protected readonly ButtonType = ButtonType;
 }
