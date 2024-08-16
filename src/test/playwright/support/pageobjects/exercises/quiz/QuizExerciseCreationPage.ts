@@ -26,7 +26,7 @@ export class QuizExerciseCreationPage {
 
         const fileContent = await Fixtures.get('exercise/quiz/multiple_choice/question.txt');
         const textInputField = this.page.locator('.monaco-editor');
-        await textInputField.focus();
+        await textInputField.click();
         await textInputField.pressSequentially(fileContent!);
     }
 
