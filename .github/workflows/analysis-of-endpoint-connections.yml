@@ -9,7 +9,7 @@ env:
   java: 21
 
 jobs:
-  parse-rest-calls-and-endpoints:
+  Parse-rest-calls-and-endpoints:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '${{ env.java }}'
-          distribution: 'adopt'
+          distribution: 'temurin'
 
       - name: Set up node.js
         uses: actions/setup-node@v4
@@ -46,8 +46,8 @@ jobs:
             supporting_scripts/analysis-of-endpoint-connections/endpoints.json
             supporting_scripts/analysis-of-endpoint-connections/restCalls.json
 
-  analysis-of-endpoint-connections:
-    needs: parse-rest-calls-and-endpoints
+  Analysis-of-endpoint-connections:
+    needs: Parse-rest-calls-and-endpoints
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
