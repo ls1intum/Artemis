@@ -27,6 +27,7 @@ import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -141,7 +142,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.course = getCourseFromExercise(this.textExercise);
 
         if (participation.submissions?.length) {
-            this.submission = participation.submissions[0] as TextSubmission;
+            this.submission = participation.submissions[participation.submissions.length-1] as TextSubmission;
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
             if (this.submission?.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
                 this.result = this.submission.latestResult!;
@@ -187,8 +188,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     get isAutomaticResult(): boolean {
-        const isAutomatic = this.result?.assessmentType === 'AUTOMATIC_ATHENA';
-        return !!isAutomatic;
+
+        const isAutomatic = this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+        return isAutomatic;
     }
     /**
      * True, if the due date is after the current date, or there is no due date, or the exercise is always active
@@ -289,7 +291,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     /**
      * Stream of submissions being emitted on:
-     * 1. text editor input after a debounce time of 2 seconds
+     * 1. text editor input after a debounce time of  2 seconds
      * 2. manually triggered change on submission (e.g. when submit was clicked)
      */
     private buildSubmissionObservable() {
