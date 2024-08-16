@@ -29,6 +29,7 @@
                 "key": "SSH Key"
             },
             "vcsAccessTokensSettingsPage": {
+                "addTokenTitle": "Add personal access token",
                 "infoText": "You can generate a personal access token to interact with the Artemis Local Version Control System. You can use it to authenticate to Git over HTTP.",
                 "deleteVcsAccessTokenQuestion": "Do you really want to delete your version control system access token? You will not be able to authenticate to local repositories cloned with this token any more.",
                 "createAccessToken": "Create new VCS access token",

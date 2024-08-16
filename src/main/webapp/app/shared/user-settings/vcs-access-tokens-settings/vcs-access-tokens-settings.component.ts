@@ -3,7 +3,6 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { faBan, faCopy, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -16,7 +15,6 @@ import { AlertService } from 'app/core/util/alert.service';
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     currentUser?: User;
-    localVCEnabled = false;
 
     readonly faEdit = faEdit;
     readonly faSave = faSave;
@@ -43,10 +41,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-        });
-
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
