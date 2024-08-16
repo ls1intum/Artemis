@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Signal, WritableSignal, computed, signal } from '@angular/core';
+import { Component, EventEmitter, Output, WritableSignal, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -25,7 +25,6 @@ export class DeleteUsersButtonComponent {
     @Output() deletionCompleted = new EventEmitter<{ [key: string]: boolean }>();
 
     users: WritableSignal<string[] | undefined> = signal(undefined);
-    usersString: Signal<string | undefined> = computed(() => this.users()?.join(', '));
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -70,7 +69,7 @@ export class DeleteUsersButtonComponent {
             requireConfirmationOnlyForAdditionalChecks: false,
             entityTitle: (this.users() ?? []).length.toString(),
             deleteQuestion: 'artemisApp.userManagement.notEnrolled.delete.question',
-            translateValues: { users: this.usersString() },
+            translateValues: { users: this.users()?.join(', ') },
             deleteConfirmationText: 'artemisApp.userManagement.batch.delete.typeNumberToConfirm',
             actionType: ActionType.Delete,
             buttonType: ButtonType.ERROR,
