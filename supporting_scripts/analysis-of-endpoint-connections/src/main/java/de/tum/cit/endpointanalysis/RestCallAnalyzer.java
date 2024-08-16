@@ -45,7 +45,7 @@ public class RestCallAnalyzer {
             List<RestCallInformation> restCallsWithoutMatchingEndpoint = new ArrayList<>();
 
             for (RestCallFileInformation restCallFile : restCalls) {
-                for (RestCallInformation restCall : restCallFile.getRestCalls()) {
+                for (RestCallInformation restCall : restCallFile.restCalls()) {
                     Optional<EndpointInformation> matchingEndpoint = Optional.empty();
 
                     matchingEndpoint = findMatchingEndpoint(restCall, endpointClasses, matchingEndpoint);
@@ -80,7 +80,7 @@ public class RestCallAnalyzer {
     private static Optional<EndpointInformation> findMatchingEndpoint(RestCallInformation restCall, List<EndpointClassInformation> endpointClasses,
             Optional<EndpointInformation> matchingEndpoint) {
         for (EndpointClassInformation endpointClass : endpointClasses) {
-            for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
+            for (EndpointInformation endpoint : endpointClass.endpoints()) {
                 String endpointURI = endpoint.buildComparableEndpointUri();
                 String restCallURI = restCall.buildComparableRestCallUri();
                 if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
@@ -116,7 +116,7 @@ public class RestCallAnalyzer {
             logger.error("failed to deserialize rest call analysis results", e);
         }
 
-        restCallsAndMatchingEndpoints.getRestCallsWithoutMatchingEndpoints().stream().forEach(endpoint -> {
+        restCallsAndMatchingEndpoints.restCallsWithoutMatchingEndpoints().stream().forEach(endpoint -> {
             logger.info("=============================================");
             logger.info("REST call URI: {}", endpoint.buildCompleteRestCallURI());
             logger.info("HTTP method: {}", endpoint.getMethod());
@@ -128,6 +128,6 @@ public class RestCallAnalyzer {
             logger.info("");
         });
 
-        logger.info("Number of REST calls without matching endpoints: {}", restCallsAndMatchingEndpoints.getRestCallsWithoutMatchingEndpoints().size());
+        logger.info("Number of REST calls without matching endpoints: {}", restCallsAndMatchingEndpoints.restCallsWithoutMatchingEndpoints().size());
     }
 }

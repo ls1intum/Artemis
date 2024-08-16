@@ -45,11 +45,11 @@ public class EndpointAnalyzer {
             List<EndpointInformation> unusedEndpoints = new ArrayList<>();
 
             for (EndpointClassInformation endpointClass : endpointClasses) {
-                for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
+                for (EndpointInformation endpoint : endpointClass.endpoints()) {
                     List<RestCallInformation> matchingRestCalls = new ArrayList<>();
 
                     for (RestCallFileInformation restCallFile : restCallFiles) {
-                        for (RestCallInformation restCall : restCallFile.getRestCalls()) {
+                        for (RestCallInformation restCall : restCallFile.restCalls()) {
                             String endpointURI = endpoint.buildComparableEndpointUri();
                             String restCallURI = restCall.buildComparableRestCallUri();
                             if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
@@ -66,7 +66,7 @@ public class EndpointAnalyzer {
                         unusedEndpoints.add(endpoint);
                     }
                     else {
-                        endpointsAndMatchingRestCalls.add(new UsedEndpoints(endpoint, matchingRestCalls, endpointClass.getFilePath()));
+                        endpointsAndMatchingRestCalls.add(new UsedEndpoints(endpoint, matchingRestCalls, endpointClass.filePath()));
                     }
                 }
             }
@@ -98,7 +98,7 @@ public class EndpointAnalyzer {
             logger.error("Failed to deserialize endpoint analysis result", e);
         }
 
-        endpointsAndMatchingRestCalls.getUnusedEndpoints().stream().forEach(endpoint -> {
+        endpointsAndMatchingRestCalls.unusedEndpoints().stream().forEach(endpoint -> {
             logger.info("=============================================");
             logger.info("Endpoint URI: {}", endpoint.buildCompleteEndpointURI());
             logger.info("HTTP method: {}", endpoint.getHttpMethodAnnotation());
@@ -110,6 +110,6 @@ public class EndpointAnalyzer {
             logger.info("");
         });
 
-        logger.info("Number of endpoints without matching REST calls: {}", endpointsAndMatchingRestCalls.getUnusedEndpoints().size());
+        logger.info("Number of endpoints without matching REST calls: {}", endpointsAndMatchingRestCalls.unusedEndpoints().size());
     }
 }
