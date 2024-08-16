@@ -103,7 +103,7 @@
 
             <div class="btn-group" role="group" aria-label="Actions">
                 <jhi-button
-                    class="d-flex"
+                    class="me-1"
                     id="create-vcs-token-button"
                     [btnType]="ButtonType.PRIMARY"
                     [btnSize]="ButtonSize.SMALL"
@@ -111,10 +111,8 @@
                     [icon]="faSave"
                     [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.createAccessToken'"
                     (onClick)="sendTokenCreationRequest()"
-                    style="margin-right: 3px"
                 />
                 <jhi-button
-                    class="d-flex"
                     id="cancel-vcs-token-creation-button"
                     [btnType]="ButtonType.SECONDARY"
                     [btnSize]="ButtonSize.SMALL"
