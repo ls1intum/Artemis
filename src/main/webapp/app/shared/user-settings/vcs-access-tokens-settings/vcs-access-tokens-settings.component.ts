@@ -10,7 +10,7 @@ import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-account-information',
-    templateUrl: './vcs-access-tokens-settings.html',
+    templateUrl: './vcs-access-tokens-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {

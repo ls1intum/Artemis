@@ -165,6 +165,7 @@ public class AccountResource {
     /**
      * PUT account/user-vcs-access-token : creates a vcsAccessToken for a user
      *
+     * @param expiryDate The expiry date which should be set for the token
      * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
     @PutMapping("account/user-vcs-access-token")
