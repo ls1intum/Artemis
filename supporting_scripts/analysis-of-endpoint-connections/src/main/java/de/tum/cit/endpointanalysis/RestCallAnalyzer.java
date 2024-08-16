@@ -48,19 +48,7 @@ public class RestCallAnalyzer {
                 for (RestCallInformation restCall : restCallFile.getRestCalls()) {
                     Optional<EndpointInformation> matchingEndpoint = Optional.empty();
 
-                    for (EndpointClassInformation endpointClass : endpointClasses) {
-                        for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
-                            String endpointURI = endpoint.buildComparableEndpointUri();
-                            String restCallURI = restCall.buildComparableRestCallUri();
-                            if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
-                                matchingEndpoint = Optional.of(endpoint);
-                            }
-                            else if (endpointURI.endsWith("*") && restCallURI.startsWith(endpointURI.substring(0, endpointURI.length() - 1))
-                                    && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
-                                matchingEndpoint = Optional.of(endpoint);
-                            }
-                        }
-                    }
+                    matchingEndpoint = findMatchingEndpoint(restCall, endpointClasses, matchingEndpoint);
 
                     if (matchingEndpoint.isPresent()) {
                         restCallsWithMatchingEndpoint.add(new RestCallWithMatchingEndpoint(matchingEndpoint.get(), restCall, restCall.getFileName()));
@@ -76,6 +64,34 @@ public class RestCallAnalyzer {
         catch (IOException e) {
             logger.error("Failed to analyze REST calls", e);
         }
+    }
+
+    /**
+     * Finds a matching endpoint for a given REST call.
+     *
+     * This method iterates over a list of endpoint classes and their endpoints to find a match for the provided REST call.
+     * A match is determined based on the URI and HTTP method of the endpoint and the REST call.
+     *
+     * @param restCall The REST call information to match.
+     * @param endpointClasses The list of endpoint classes containing endpoint information.
+     * @param matchingEndpoint An optional containing the matching endpoint if found.
+     * @return An optional containing the matching endpoint if found, otherwise an empty optional.
+     */
+    private static Optional<EndpointInformation> findMatchingEndpoint(RestCallInformation restCall, List<EndpointClassInformation> endpointClasses, Optional<EndpointInformation> matchingEndpoint) {
+        for (EndpointClassInformation endpointClass : endpointClasses) {
+            for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
+                String endpointURI = endpoint.buildComparableEndpointUri();
+                String restCallURI = restCall.buildComparableRestCallUri();
+                if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
+                    matchingEndpoint = Optional.of(endpoint);
+                }
+                else if (endpointURI.endsWith("*") && restCallURI.startsWith(endpointURI.substring(0, endpointURI.length() - 1))
+                        && endpoint.getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
+                    matchingEndpoint = Optional.of(endpoint);
+                }
+            }
+        }
+        return matchingEndpoint;
     }
 
     /**
