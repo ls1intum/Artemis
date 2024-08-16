@@ -72,12 +72,13 @@ public class RestCallAnalyzer {
      * This method iterates over a list of endpoint classes and their endpoints to find a match for the provided REST call.
      * A match is determined based on the URI and HTTP method of the endpoint and the REST call.
      *
-     * @param restCall The REST call information to match.
-     * @param endpointClasses The list of endpoint classes containing endpoint information.
+     * @param restCall         The REST call information to match.
+     * @param endpointClasses  The list of endpoint classes containing endpoint information.
      * @param matchingEndpoint An optional containing the matching endpoint if found.
      * @return An optional containing the matching endpoint if found, otherwise an empty optional.
      */
-    private static Optional<EndpointInformation> findMatchingEndpoint(RestCallInformation restCall, List<EndpointClassInformation> endpointClasses, Optional<EndpointInformation> matchingEndpoint) {
+    private static Optional<EndpointInformation> findMatchingEndpoint(RestCallInformation restCall, List<EndpointClassInformation> endpointClasses,
+            Optional<EndpointInformation> matchingEndpoint) {
         for (EndpointClassInformation endpointClass : endpointClasses) {
             for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
                 String endpointURI = endpoint.buildComparableEndpointUri();
