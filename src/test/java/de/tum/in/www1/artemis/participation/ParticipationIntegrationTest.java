@@ -1141,7 +1141,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var result = ParticipationFactory.generateResult(true, 70D);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);
-        var actualParticipation = request.get("/api/participations/" + participation.getId() + "/withLatestResult", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipation.class);
 
         assertThat(actualParticipation).isNotNull();
         assertThat(actualParticipation.getResults()).hasSize(1);

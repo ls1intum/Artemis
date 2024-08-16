@@ -671,7 +671,7 @@ public class ParticipationResource {
      * @param participationId the participationId of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping("participations/{participationId}/withLatestResult")
+    @GetMapping("participations/{participationId}/with-latest-result")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
