@@ -108,7 +108,7 @@ describe('TestcaseAnalysisComponent', () => {
         expect(zeroIndex).toBe(0);
 
         const undefinedIndex = component.findTaskIndexForTestCase(undefined);
-        expect(undefinedIndex).toBe(0);
+        expect(undefinedIndex).toBe(-1);
     });
 
     it('should handle errors when loading feedback details', () => {

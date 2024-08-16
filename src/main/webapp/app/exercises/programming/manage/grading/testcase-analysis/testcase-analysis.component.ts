@@ -42,11 +42,11 @@ export class TestcaseAnalysisComponent implements OnInit {
 
     loadFeedbackDetails(exerciseId: number): void {
         this.resultService.getFeedbackDetailsForExercise(exerciseId).subscribe((response) => {
-            this.participation = response.body?.participation ?? [];
+            this.participation = response.body?.participation || [];
             this.participation = this.participation.filter((participation) => {
                 return participation.results && participation.results.length > 0;
             });
-            const feedbackArray = response.body?.feedback ?? [];
+            const feedbackArray = response.body?.feedback || [];
             const negativeFeedbackArray = feedbackArray.filter((feedback) => !feedback.positive);
             this.saveFeedback(negativeFeedbackArray);
         });
@@ -80,7 +80,7 @@ export class TestcaseAnalysisComponent implements OnInit {
 
     findTaskIndexForTestCase(testCase?: ProgrammingExerciseTestCase): number {
         if (!testCase) {
-            return 0;
+            return -1;
         }
         return this.tasks.findIndex((task) => task.testCases.some((tc) => tc.testName === testCase.testName)) + 1;
     }
