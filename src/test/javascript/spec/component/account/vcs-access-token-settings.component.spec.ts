@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -21,15 +20,11 @@ describe('VcsAccessTokensSettingsComponent', () => {
     let comp: VcsAccessTokensSettingsComponent;
 
     let accountServiceMock: { getAuthenticationState: jest.Mock; deleteUserVcsAccessToken: jest.Mock; addNewVcsAccessToken: jest.Mock };
-    let profileServiceMock: { getProfileInfo: jest.Mock };
     let translateService: TranslateService;
 
     const token = 'initial-token';
 
     beforeEach(async () => {
-        profileServiceMock = {
-            getProfileInfo: jest.fn(),
-        };
         accountServiceMock = {
             getAuthenticationState: jest.fn(),
             deleteUserVcsAccessToken: jest.fn(),
@@ -47,7 +42,6 @@ describe('VcsAccessTokensSettingsComponent', () => {
             ],
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
-                { provide: ProfileService, useValue: profileServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],

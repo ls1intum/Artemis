@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
 import { faBan, faCopy, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -36,7 +35,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
 
     constructor(
         private accountService: AccountService,
-        private profileService: ProfileService,
         private alertService: AlertService,
     ) {}
 
