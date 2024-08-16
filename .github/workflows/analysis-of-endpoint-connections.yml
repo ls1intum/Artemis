@@ -4,12 +4,6 @@ on:
   workflow_dispatch:
   push:
 
-# Hacky workaround to prevent weired grouping together of workflows H2 Tests, Junit Results and Java Architecture Tests
-# This is a workaround for the issue that the workflows are grouped together in the Actions tab, but it does not work
-#concurrency:
-#  group: analysisOfEndpointConnections-${{ github.run_id }}
-#  cancel-in-progress: false
-
 # Keep in sync with build.yml and test.yml and codeql-analysis.yml
 env:
   CI: true
