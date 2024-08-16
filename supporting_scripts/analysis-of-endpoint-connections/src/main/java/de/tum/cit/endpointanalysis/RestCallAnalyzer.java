@@ -16,7 +16,7 @@ public class RestCallAnalyzer {
 
     private static final String REST_CALL_ANALYSIS_RESULT_PATH = "restCallAnalysisResult.json";
 
-    private static final Logger logger = LoggerFactory.getLogger(EndpointAnalyzer.class);
+    private static final Logger logger = LoggerFactory.getLogger(RestCallAnalyzer.class);
 
     public static void main(String[] args) {
         analyzeRestCalls();
