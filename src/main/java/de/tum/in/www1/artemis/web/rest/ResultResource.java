@@ -278,16 +278,20 @@ public class ResultResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(savedResult);
     }
 
+    /**
+     * GET exercises/:exerciseId/feedback-details : Retrieves all feedback details and the latest result IDs for a given exercise.
+     *
+     * @param exerciseId The ID of the exercise for which feedback details and result IDs should be retrieved.
+     * @return A ResponseEntity containing a list of all feedback details and the corresponding result IDs for the exercise.
+     */
     @GetMapping("exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastTutor
     public ResponseEntity<FeedbackDetailsResponse> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
 
-        // Fetch participations along with the latest results and their feedbacks
         Set<StudentParticipation> participations = resultRepository.findByExerciseIdWithLatestResultAndFeedbackElseThrow(exerciseId);
         removeSubmissionAndExerciseData(participations);
 
-        // Collect all feedback and result IDs from the participations
         List<Feedback> allFeedback = new ArrayList<>();
         List<Long> resultIds = new ArrayList<>();
 

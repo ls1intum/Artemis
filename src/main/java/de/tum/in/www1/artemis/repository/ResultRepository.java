@@ -858,11 +858,12 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Get the results with the given IDs from the database. The results are loaded together with their feedbacks.
-     * Throws an EntityNotFoundException if no results could be found for any of the given IDs.
+     * Get the latest results and their feedbacks for a given exercise ID from the database.
+     * The results are loaded together with their feedbacks.
+     * Throws an EntityNotFoundException if no results could be found for the given exercise ID.
      *
-     * @param resultIds the list of ids for the results that should be loaded from the database
-     * @return the list of results with the given ids
+     * @param exerciseId the ID of the exercise for which the latest results and feedbacks should be loaded from the database
+     * @return the set of student participations containing the latest results and their feedbacks
      */
     default Set<StudentParticipation> findByExerciseIdWithLatestResultAndFeedbackElseThrow(long exerciseId) {
         return getArbitraryValueElseThrow(Optional.of(findByExerciseIdWithLatestResultAndFeedback(exerciseId)), "Results with Feedback for: " + exerciseId);
