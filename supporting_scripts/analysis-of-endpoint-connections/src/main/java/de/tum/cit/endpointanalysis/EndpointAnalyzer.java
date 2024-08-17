@@ -95,7 +95,7 @@ public class EndpointAnalyzer {
      * @param endpointURI       The URI of the endpoint being checked.
      * @param restCallMap       The map of rest call URIs to their corresponding information.
      */
-    private static void CheckForWildcardEndpoints(EndpointInformation endpoint, List<RestCallInformation> matchingRestCalls, String endpointURI,
+    private static void checkForWildcardEndpoints(EndpointInformation endpoint, List<RestCallInformation> matchingRestCalls, String endpointURI,
             Map<String, List<RestCallInformation>> restCallMap) {
         if (matchingRestCalls.isEmpty() && endpointURI.endsWith("*")) {
             for (String uri : restCallMap.keySet()) {
