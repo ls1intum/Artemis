@@ -129,5 +129,5 @@ info:
     # default value set to false in production
     text-assessment-analytics-enabled: false
     universityName: # Must be set before starting the application in production
-    universityAdminName: # Must be set before starting the application in production
+    universityAdminName: # Can be set before starting the application in production. Used by the telemetry service
     contact: artemis@xcit.tum.de  #default value, can be overridden on the server
