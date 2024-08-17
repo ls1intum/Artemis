@@ -28,11 +28,16 @@
             @if (sshEnabled) {
                 <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
                     <button class="btn btn-primary btn-sm dropdown-toggle https-or-ssh-button" ngbDropdownToggle type="button">
-                        {{ useSsh ? 'SSH' : 'HTTPS' }}
+                        {{ useSsh ? 'SSH' : useToken ? 'Token' : 'HTTPS' }}
                     </button>
                     <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
-                        <a (click)="setUseSSH(false)" class="dropdown-item {{ !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
-                        <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
+                        @if (showCloneUrlWithoutToken) {
+                            <a (click)="useHttpsUrlWithoutToken()" class="dropdown-item {{ !useToken && !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
+                        }
+                        @if (useVersionControlAccessToken && participations) {
+                            <a (click)="useHttpsUrlWithToken()" class="dropdown-item {{ useToken && !useSsh ? 'active' : '' }}" id="useHTTPSWithTokenButton">Token</a>
+                        }
+                        <a (click)="useSshUrl()" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
                     </div>
                 </div>
             }

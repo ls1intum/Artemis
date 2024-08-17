@@ -1,21 +1,23 @@
-<div class="d-flex justify-content-between my-1">
-    <div class="align-items-center">
-        <span class="fs-x-small header-author-date">
-            @if (posting.author) {
-                <span ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}" class="badge fs-xx-small p-1 rounded-3" [ngClass]="'badge-' + userAuthority" id="role-badge">{{
-                    userRoleBadge | artemisTranslate
-                }}</span>
-                <span class="fs-small pe-1 fw-bold">
-                    {{ posting.author?.name }}
-                </span>
-            }
-            <span class="px-1"> - </span>
-            @if (postingIsOfToday) {
-                <span class="today-flag">{{ todayFlag | artemisTranslate }}</span>
-            }
-            <span [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
-                {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+<div class="d-flex justify-content-between">
+    <div id="header-author-date" class="d-flex align-items-center gap-2 flex-wrap">
+        @if (posting.author) {
+            <span
+                [jhiTranslate]="userRoleBadge"
+                ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}"
+                class="badge fs-xx-small rounded-3"
+                [ngClass]="'badge-' + userAuthority"
+                id="role-badge"
+            ></span>
+            <span class="fs-small fw-semibold">
+                {{ posting.author?.name }}
             </span>
+        }
+        <span>-</span>
+        @if (postingIsOfToday) {
+            <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-x-small"></span>
+        }
+        <span class="fs-x-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+            {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
         </span>
         @if (posting.resolved) {
             <fa-icon
@@ -26,14 +28,14 @@
             />
         }
         @if (!!isCommunicationPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
-            <span class="badge bg-secondary hideAfter5Seconds" jhiTranslate="global.generic.new"></span>
+            <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>
         }
     </div>
-    <div class="mx-2 d-flex">
+    <div class="gap-1 d-flex">
         @if (mayEditOrDelete) {
             <fa-icon
                 size="xs"
-                class="ms-1 mx-2 allign-right editIcon clickable icon"
+                class="editIcon clickable icon"
                 [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
                 [icon]="faPencilAlt"
                 (click)="posting.title !== '' ? createEditModal.open() : isModalOpen.emit()"

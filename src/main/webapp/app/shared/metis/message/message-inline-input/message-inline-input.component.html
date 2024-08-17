@@ -7,7 +7,7 @@
             [isInputLengthDisplayed]="false"
             (keydown.enter)="confirm()"
         />
-        <div class="col text-end">
+        <div class="col mt-1 text-end">
             @if (!warningDismissed) {
                 <div class="alert alert-warning alert-dismissible text-start fade show" role="alert">
                     <button type="button" class="btn-close" (click)="closeAlert()" aria-label="Close"></button>

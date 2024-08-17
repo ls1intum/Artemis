@@ -89,7 +89,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
     @Input() categoryIssuesMap?: CategoryIssuesMap;
     @Input() exercise: ProgrammingExercise;
 
-    @Output() categoryColorsChange = new EventEmitter<any>();
+    @Output() categoryColorsChange = new EventEmitter<{ [key: string]: string }>();
     @Output() scaCategoryFilter = new EventEmitter<number>();
 
     readonly scaChartBarTitle = ScaChartBarTitle;
@@ -111,7 +111,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
         this.ngxData = [];
         this.ngxColors.domain = [];
         // update colors for category table
-        const categoryColors = {};
+        const categoryColors: { [key: string]: string } = {};
         const categoryPenalties = this.categories
             .map((category) => ({
                 ...category,

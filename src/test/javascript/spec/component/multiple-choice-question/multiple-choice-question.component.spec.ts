@@ -88,7 +88,10 @@ describe('MultipleChoiceQuestionComponent', () => {
     }
 
     function safeHtmlToString(safeHtml: SafeHtml) {
-        return safeHtml['changingThisBreaksApplicationSecurity'] ?? '';
+        if (safeHtml && 'changingThisBreaksApplicationSecurity' in safeHtml) {
+            return safeHtml.changingThisBreaksApplicationSecurity;
+        }
+        return '';
     }
 
     it('should return true is if the answer option was selected', () => {

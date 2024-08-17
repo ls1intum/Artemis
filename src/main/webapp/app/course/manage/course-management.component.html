@@ -49,9 +49,9 @@
                                 <jhi-course-management-card
                                     class="col-md-8"
                                     [course]="course"
-                                    [courseStatistics]="statistics[course.id!]"
-                                    [courseWithExercises]="coursesWithExercises[course.id!]"
-                                    [courseWithUsers]="coursesWithUsers[course.id!]"
+                                    [courseStatistics]="statistics.get(course.id!)"
+                                    [courseWithExercises]="coursesWithExercises.get(course.id!)"
+                                    [courseWithUsers]="coursesWithUsers.get(course.id!)"
                                     [isGuidedTour]="course === courseForGuidedTour"
                                 />
                             }

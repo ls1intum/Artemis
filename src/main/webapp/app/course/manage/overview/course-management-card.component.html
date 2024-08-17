@@ -117,7 +117,7 @@
                                                 [course]="course"
                                                 [rowType]="exerciseRowType.FUTURE"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise[exercise.id!]"
+                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
                                             />
                                         }
                                     </div>
@@ -140,7 +140,7 @@
                                                 [course]="course"
                                                 [rowType]="exerciseRowType.CURRENT"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise[exercise.id!]"
+                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
                                             />
                                         }
                                     </div>
@@ -163,7 +163,7 @@
                                                 [course]="course"
                                                 [rowType]="exerciseRowType.ASSESSING"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise[exercise.id!]"
+                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
                                             />
                                         }
                                     </div>
@@ -186,7 +186,7 @@
                                                 [course]="course"
                                                 [rowType]="exerciseRowType.PAST"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise[exercise.id!]"
+                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
                                             />
                                         }
                                     </div>

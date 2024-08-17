@@ -76,7 +76,7 @@ describe('TutorialGroupSessionForm', () => {
 
         const formControlNames = ['date', 'startTime', 'endTime'];
         formControlNames.forEach((control) => {
-            expect(component.form.get(control)!.value).toEqual(formData[control]);
+            expect(component.form.get(control)?.value).toEqual(formData[control as keyof TutorialGroupSessionFormData]);
         });
     });
 

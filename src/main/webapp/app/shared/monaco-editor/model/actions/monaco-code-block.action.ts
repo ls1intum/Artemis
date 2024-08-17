@@ -2,15 +2,15 @@ import * as monaco from 'monaco-editor';
 import { faFileCode } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 
-const CODE_BLOCK_OPEN_DELIMITER = '```java\n';
-const CODE_BLOCK_CLOSE_DELIMITER = '\n```';
+const CODE_BLOCK_DELIMITER = '```';
 
 /**
- * Action to toggle code block in the editor. It wraps the selected text with the code block delimiters and inserts newlines, e.g. switching between text and ```java\n text \n```.
+ * Action to toggle code block in the editor. It wraps the selected text with the code block delimiters and inserts newlines, e.g. for the default language java, switching between text and ```java\n text \n```.
  */
 export class MonacoCodeBlockAction extends MonacoEditorAction {
     static readonly ID = 'monaco-code-block.action';
-    constructor() {
+
+    constructor(private readonly defaultLanguage?: string) {
         super(MonacoCodeBlockAction.ID, 'artemisApp.multipleChoiceQuestion.editor.codeBlock', faFileCode, undefined);
     }
 
@@ -19,7 +19,7 @@ export class MonacoCodeBlockAction extends MonacoEditorAction {
      * @param editor The editor in which to toggle code block text.
      */
     run(editor: monaco.editor.ICodeEditor): void {
-        this.toggleDelimiterAroundSelection(editor, CODE_BLOCK_OPEN_DELIMITER, CODE_BLOCK_CLOSE_DELIMITER);
+        this.toggleDelimiterAroundSelection(editor, `${CODE_BLOCK_DELIMITER}${this.defaultLanguage ?? ''}\n`, `\n${CODE_BLOCK_DELIMITER}`);
         editor.focus();
     }
 }

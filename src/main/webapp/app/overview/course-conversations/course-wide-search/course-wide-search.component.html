@@ -1,13 +1,13 @@
 <div class="mt-2 ms-2">
-    <div class="conversation-header">
-        <div class="d-flex justify-content-between">
-            <div>
+    <div class="d-flex justify-content-between">
+        <div>
+            <h4 class="d-inline-block rounded p-1 info">
                 @if (!courseWideSearchConfig.searchTerm) {
-                    <h3 class="conversation-name d-inline-block rounded p-1 info">All Messages</h3>
+                    All Messages
                 } @else {
-                    <h3 class="conversation-name d-inline-block rounded p-1 info">Search Results for "{{ courseWideSearchConfig.searchTerm }}"</h3>
+                    Search Results for "{{ courseWideSearchConfig.searchTerm }}"
                 }
-            </div>
+            </h4>
         </div>
     </div>
     @if (formGroup) {
@@ -86,7 +86,6 @@
             <div
                 id="scrollableDiv"
                 #container
-                class="body-bg"
                 [ngClass]="{ 'posting-infinite-scroll-container': posts.length !== 0 }"
                 infinite-scroll
                 [scrollWindow]="false"

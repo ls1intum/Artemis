@@ -139,7 +139,7 @@
                                 @if (
                                     (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA ||
                                         programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN) &&
-                                    programmingExercise.testwiseCoverageEnabled
+                                    programmingExercise.buildConfig?.testwiseCoverageEnabled
                                 ) {
                                     <span class="me-1">
                                         <button
