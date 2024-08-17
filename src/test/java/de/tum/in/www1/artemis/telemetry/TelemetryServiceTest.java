@@ -52,13 +52,13 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
     public void init() {
         telemetryServiceSpy = spy(telemetryService);
         mockServer = MockRestServiceServer.createServer(restTemplate);
+        telemetryServiceSpy.useTelemetry = true;
     }
 
     @Test
     public void testSendTelemetry_TelemetryEnabled() throws Exception {
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
-        telemetryServiceSpy.useTelemetry = true;
         telemetryServiceSpy.sendTelemetry();
         mockServer.verify();
     }
@@ -76,7 +76,6 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
     public void testSendTelemetry_ExceptionHandling() throws Exception {
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withServerError().body(mapper.writeValueAsString("Failure!")));
-        telemetryServiceSpy.useTelemetry = true;
         telemetryServiceSpy.sendTelemetry();
         mockServer.verify();
     }
