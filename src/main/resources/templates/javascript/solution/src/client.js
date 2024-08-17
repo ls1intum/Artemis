@@ -38,7 +38,7 @@ function main() {
  * @return an Array of random Date objects
  */
 function createRandomDates() {
-    const length = randomIntegerWithin(5, 15);
+    const length = randomIntegerWithin(DATES_LENGTH_MIN, DATES_LENGTH_MAX);
 
     const lowestDate = new Date('2024-09-15');
     const highestDate = new Date('2025-01-15');
