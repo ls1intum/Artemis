@@ -110,7 +110,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
      * Validates if the expiry date is after current time
      */
     validateDate() {
-        this.validExpiryDate = this.expiryDate?.isAfter(dayjs()) || false;
+        this.validExpiryDate = !!this.expiryDate?.isAfter(dayjs());
     }
 
     /**
