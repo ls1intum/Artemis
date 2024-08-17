@@ -25,12 +25,12 @@ public class RestCallAnalyzer {
     }
 
     /**
-     * Analyzes REST calls and matches them with endpoints.
+     * The RestCallAnalyzer analyzes the client REST Calls and focuses on them having a matching Endpoint on the server
      *
-     * This method reads endpoint and REST call information from JSON files,
-     * compares them to find matching endpoints for each REST call, and writes
-     * the analysis result to a JSON file. REST calls without matching endpoints
-     * are also recorded.
+     * This method reads endpoint and REST call information from JSON files.
+     * It then matches the REST calls with the endpoints they are calling and
+     * writes the analysis result to a JSON file.
+     * REST calls without matching endpoints are also recorded.
      */
     private static void analyzeRestCalls() {
         ObjectMapper mapper = new ObjectMapper();
