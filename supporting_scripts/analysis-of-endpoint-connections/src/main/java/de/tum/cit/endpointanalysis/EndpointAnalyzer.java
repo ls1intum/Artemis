@@ -63,14 +63,7 @@ public class EndpointAnalyzer {
                     List<RestCallInformation> matchingRestCalls = restCallMap.getOrDefault(endpointURI, new ArrayList<>());
 
                     // Check for wildcard endpoints if no exact match is found
-                    if (matchingRestCalls.isEmpty() && endpointURI.endsWith("*")) {
-                        for (String uri : restCallMap.keySet()) {
-                            if (uri.startsWith(endpoint.buildComparableEndpointUri().substring(0, endpoint.buildComparableEndpointUri().length() - 1))
-                                    && endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).method().toLowerCase())) {
-                                matchingRestCalls.addAll(restCallMap.get(uri));
-                            }
-                        }
-                    }
+                    CheckForWildcardEndpoints(endpoint, matchingRestCalls, endpointURI, restCallMap);
 
                     if (matchingRestCalls.isEmpty()) {
                         unusedEndpoints.add(endpoint);
@@ -86,6 +79,30 @@ public class EndpointAnalyzer {
         }
         catch (IOException e) {
             logger.error("Failed to analyze endpoints", e);
+        }
+    }
+
+    /**
+     * Checks for wildcard endpoints and adds matching REST calls to the list.
+     *
+     * This method is used to find matching REST calls for endpoints that use wildcard URIs.
+     * If no exact match is found for an endpoint, it checks if the endpoint URI ends with a wildcard ('*').
+     * It then iterates through the rest call map to find URIs that start with the same prefix as the endpoint URI
+     * (excluding the wildcard) and have the same HTTP method. If such URIs are found, they are added to the list of matching REST calls.
+     *
+     * @param endpoint The endpoint information to check for wildcard matches.
+     * @param matchingRestCalls The list of matching REST calls to be populated.
+     * @param endpointURI The URI of the endpoint being checked.
+     * @param restCallMap The map of rest call URIs to their corresponding information.
+     */
+    private static void CheckForWildcardEndpoints(EndpointInformation endpoint, List<RestCallInformation> matchingRestCalls, String endpointURI, Map<String, List<RestCallInformation>> restCallMap) {
+        if (matchingRestCalls.isEmpty() && endpointURI.endsWith("*")) {
+            for (String uri : restCallMap.keySet()) {
+                if (uri.startsWith(endpoint.buildComparableEndpointUri().substring(0, endpoint.buildComparableEndpointUri().length() - 1))
+                        && endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).method().toLowerCase())) {
+                    matchingRestCalls.addAll(restCallMap.get(uri));
+                }
+            }
         }
     }
 

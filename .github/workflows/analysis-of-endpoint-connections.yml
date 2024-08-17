@@ -44,7 +44,7 @@ jobs:
       - name: Upload parsing results
         uses: actions/upload-artifact@v4
         with:
-          name: parsing results
+          name: REST API Parsing Results
           path: |
             supporting_scripts/analysis-of-endpoint-connections/endpoints.json
             supporting_scripts/analysis-of-endpoint-connections/restCalls.json
@@ -69,7 +69,7 @@ jobs:
       - name: Download JSON files
         uses: actions/download-artifact@v4
         with:
-          name: parsing results
+          name: REST API Parsing Results
           path: supporting_scripts/analysis-of-endpoint-connections/
 
       - name: Analyze endpoints
@@ -83,7 +83,7 @@ jobs:
       - name: Upload analysis results
         uses: actions/upload-artifact@v4
         with:
-          name: analysis results
+          name: Endpoint and REST Call Analysis Results
           path: |
             supporting_scripts/analysis-of-endpoint-connections/endpointAnalysisResult.json
             supporting_scripts/analysis-of-endpoint-connections/restCallAnalysisResult.json

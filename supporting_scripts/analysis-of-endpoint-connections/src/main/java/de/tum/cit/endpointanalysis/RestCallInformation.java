@@ -7,8 +7,7 @@ public record RestCallInformation(
     String fileName
 ) {
     public String buildCompleteRestCallURI() {
-        String result = this.url.replace("`", "");
-        return result;
+        return this.url.replace("`", "");
     }
 
     public String buildComparableRestCallUri() {
