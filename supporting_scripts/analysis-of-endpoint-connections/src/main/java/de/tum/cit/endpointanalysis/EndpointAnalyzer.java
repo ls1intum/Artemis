@@ -63,7 +63,7 @@ public class EndpointAnalyzer {
                     List<RestCallInformation> matchingRestCalls = restCallMap.getOrDefault(endpointURI, new ArrayList<>());
 
                     // Check for wildcard endpoints if no exact match is found
-                    CheckForWildcardEndpoints(endpoint, matchingRestCalls, endpointURI, restCallMap);
+                    checkForWildcardEndpoints(endpoint, matchingRestCalls, endpointURI, restCallMap);
 
                     if (matchingRestCalls.isEmpty()) {
                         unusedEndpoints.add(endpoint);
