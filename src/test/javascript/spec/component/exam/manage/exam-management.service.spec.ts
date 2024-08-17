@@ -635,7 +635,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'GET',
-            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/lockedSubmissions`,
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/locked-submissions`,
         });
         req.flush(mockResponse);
         tick();

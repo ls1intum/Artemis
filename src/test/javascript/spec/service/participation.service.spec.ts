@@ -90,7 +90,7 @@ describe('Participation Service', () => {
     }));
 
     it('should cleanup build plan', fakeAsync(() => {
-        servicecleanupBuildPlan(participationDefault).subscribe((resp) => expect(resp).toMatchObject(participationDefault));
+        service.cleanupBuildPlan(participationDefault).subscribe((resp) => expect(resp).toMatchObject(participationDefault));
         httpMock.expectOne({ method: 'PUT' });
     }));
 
