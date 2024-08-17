@@ -82,13 +82,21 @@
             <div class="inline-block fixed-width" jhiTranslate="artemisApp.universityInfo.name"></div>
             <div class="inline-block">{{ universityName }}</div>
         </div>
-        <div>
-            <div class="inline-block fixed-width" jhiTranslate="artemisApp.universityInfo.adminName"></div>
-            <div class="inline-block">{{ universityAdminName }}</div>
-        </div>
-        <div>
-            <div class="inline-block fixed-width" jhiTranslate="artemisApp.universityInfo.adminEmail"></div>
-            <div class="inline-block">{{ universityContactEmail }}</div>
-        </div>
+        @if (universityAdminName) {
+            <div>
+                <div class="inline-block fixed-width" jhiTranslate="artemisApp.universityInfo.adminName"></div>
+                <div class="inline-block">{{ universityAdminName }}</div>
+            </div>
+        }
+        @if (universityContactEmail) {
+            <div>
+                <div class="inline-block fixed-width" jhiTranslate="artemisApp.universityInfo.adminEmail"></div>
+                <div class="inline-block">
+                    <a [href]="email" class="footer-text" target="_top">
+                        {{ universityContactEmail }}
+                    </a>
+                </div>
+            </div>
+        }
     </div>
 </div>
