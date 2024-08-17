@@ -25,11 +25,13 @@ jobs:
         with:
           java-version: '${{ env.java }}'
           distribution: 'temurin'
+          cache: 'gradle'
 
       - name: Set up node.js
         uses: actions/setup-node@v4
         with:
           node-version: '${{ env.node }}'
+          cache: 'node'
 
       - name: Parse client sided REST-API calls
         run: |
@@ -63,6 +65,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
+          cache: 'gradle'
 
       - name: Download JSON files
         uses: actions/download-artifact@v4

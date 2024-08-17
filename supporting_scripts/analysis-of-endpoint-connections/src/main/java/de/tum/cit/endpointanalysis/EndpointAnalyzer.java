@@ -25,7 +25,7 @@ public class EndpointAnalyzer {
     }
 
     /**
-     * Analyzes endpoints and matches them with REST calls.
+     * Analyzes server side endpoints and matches them with client side REST calls.
      *
      * This method reads endpoint and REST call information from JSON files,
      * compares them to find matching REST calls for each endpoint, and writes
@@ -52,7 +52,7 @@ public class EndpointAnalyzer {
             for (RestCallFileInformation restCallFile : restCallFiles) {
                 for (RestCallInformation restCall : restCallFile.restCalls()) {
                     String restCallURI = restCall.buildComparableRestCallUri();
-                    restCallMap.computeIfAbsent(restCallURI, k -> new ArrayList<>()).add(restCall);
+                    restCallMap.computeIfAbsent(restCallURI, uri -> new ArrayList<>()).add(restCall);
                 }
             }
 
@@ -66,7 +66,7 @@ public class EndpointAnalyzer {
                     if (matchingRestCalls.isEmpty() && endpointURI.endsWith("*")) {
                         for (String uri : restCallMap.keySet()) {
                             if (uri.startsWith(endpoint.buildComparableEndpointUri().substring(0, endpoint.buildComparableEndpointUri().length() - 1))
-                                    && endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).getMethod().toLowerCase())) {
+                                    && endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).method().toLowerCase())) {
                                 matchingRestCalls.addAll(restCallMap.get(uri));
                             }
                         }
@@ -111,9 +111,9 @@ public class EndpointAnalyzer {
         endpointsAndMatchingRestCalls.unusedEndpoints().stream().forEach(endpoint -> {
             logger.info("=============================================");
             logger.info("Endpoint URI: {}", endpoint.buildCompleteEndpointURI());
-            logger.info("HTTP method: {}", endpoint.getHttpMethodAnnotation());
-            logger.info("File path: {}", endpoint.getClassName());
-            logger.info("Line: {}", endpoint.getLine());
+            logger.info("HTTP method: {}", endpoint.httpMethodAnnotation());
+            logger.info("File path: {}", endpoint.className());
+            logger.info("Line: {}", endpoint.line());
             logger.info("=============================================");
             logger.info("No matching REST call found for endpoint: {}", endpoint.buildCompleteEndpointURI());
             logger.info("---------------------------------------------");

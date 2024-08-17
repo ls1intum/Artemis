@@ -45,6 +45,7 @@ function parseTypeScriptFile(filePath: string): TSESTree.Program | null {
         });
     } catch (error) {
         console.error(`Failed to parse TypeScript file at ${filePath}:`, error);
+        console.error('Please make sure the file is valid TypeScript code.');
         return null;
     }
 }

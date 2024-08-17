@@ -4,97 +4,22 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class EndpointInformation {
-
-    private String requestMapping;
-
-    private String endpoint;
-
-    private String httpMethodAnnotation;
-
-    private String URI;
-
-    private String className;
-
-    private int line;
-
-    private List<String> otherAnnotations;
-
-    public EndpointInformation() {
-
-    }
-
-    public EndpointInformation(String requestMapping, String endpoint, String httpMethodAnnotation, String URI, String className, int line, List<String> otherAnnotations) {
-        this.requestMapping = requestMapping;
-        this.endpoint = endpoint;
-        this.httpMethodAnnotation = httpMethodAnnotation;
-        this.URI = URI;
-        this.className = className;
-        this.line = line;
-        this.otherAnnotations = otherAnnotations;
-    }
-
-    public List<String> getOtherAnnotations() {
-        return otherAnnotations;
-    }
-
-    public void setOtherAnnotations(List<String> otherAnnotations) {
-        this.otherAnnotations = otherAnnotations;
-    }
-
-    public String getRequestMapping() {
-        return requestMapping;
-    }
-
-    public void setRequestMapping(String requestMapping) {
-        this.requestMapping = requestMapping;
-    }
-
-    public String getEndpoint() {
-        return endpoint;
-    }
-
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-    }
-
-    public String getHttpMethodAnnotation() {
-        return httpMethodAnnotation;
-    }
-
-    public void setHttpMethodAnnotation(String httpMethodAnnotation) {
-        this.httpMethodAnnotation = httpMethodAnnotation;
-    }
-
-    public String getURI() {
-        return URI;
-    }
-
-    public void setURI(String URI) {
-        this.URI = URI;
-    }
-
-    public String getClassName() {
-        return className;
-    }
-
-    public void setClassName(String className) {
-        this.className = className;
-    }
-
-    public int getLine() {
-        return line;
-    }
-
-    public void setLine(int line) {
-        this.line = line;
-    }
-
+public record EndpointInformation(
+    String requestMapping,
+    String endpoint,
+    String httpMethodAnnotation,
+    String URI,
+    String className,
+    int line,
+    List<String> otherAnnotations
+) {
     public String buildCompleteEndpointURI() {
         StringBuilder result = new StringBuilder();
         if (this.requestMapping != null && !this.requestMapping.isEmpty()) {
+            // Remove quotes from the requestMapping as they are used to define the String in the source code but are not part of the URI
             result.append(this.requestMapping.replace("\"", ""));
         }
+        // Remove quotes from the URI as they are used to define the String in the source code but are not part of the URI
         result.append(this.URI.replace("\"", ""));
         return result.toString();
     }

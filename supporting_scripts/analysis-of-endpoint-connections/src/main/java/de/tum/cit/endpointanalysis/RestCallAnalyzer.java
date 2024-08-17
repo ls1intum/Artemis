@@ -51,7 +51,7 @@ public class RestCallAnalyzer {
             for (EndpointClassInformation endpointClass : endpointClasses) {
                 for (EndpointInformation endpoint : endpointClass.endpoints()) {
                     String endpointURI = endpoint.buildComparableEndpointUri();
-                    endpointMap.computeIfAbsent(endpointURI, k -> new ArrayList<>()).add(endpoint);
+                    endpointMap.computeIfAbsent(endpointURI, uri -> new ArrayList<>()).add(endpoint);
                 }
             }
 
@@ -60,22 +60,14 @@ public class RestCallAnalyzer {
                     String restCallURI = restCall.buildComparableRestCallUri();
                     List<EndpointInformation> matchingEndpoints = endpointMap.getOrDefault(restCallURI, new ArrayList<>());
 
-                    // Check for wildcard matches if no exact match is found
-                    if (matchingEndpoints.isEmpty() && restCallURI.endsWith("*")) {
-                        for (String uri : endpointMap.keySet()) {
-                            if (uri.startsWith(restCallURI.substring(0, restCallURI.length() - 1))
-                                    && endpointMap.get(uri).get(0).getHttpMethod().toLowerCase().equals(restCall.getMethod().toLowerCase())) {
-                                matchingEndpoints.addAll(endpointMap.get(uri));
-                            }
-                        }
-                    }
+                    checkForWildcardMatches(restCall, matchingEndpoints, restCallURI, endpointMap);
 
                     if (matchingEndpoints.isEmpty()) {
                         restCallsWithoutMatchingEndpoint.add(restCall);
                     }
                     else {
                         for (EndpointInformation endpoint : matchingEndpoints) {
-                            restCallsWithMatchingEndpoint.add(new RestCallWithMatchingEndpoint(endpoint, restCall, restCall.getFileName()));
+                            restCallsWithMatchingEndpoint.add(new RestCallWithMatchingEndpoint(endpoint, restCall, restCall.fileName()));
                         }
                     }
                 }
@@ -86,6 +78,17 @@ public class RestCallAnalyzer {
         }
         catch (IOException e) {
             logger.error("Failed to analyze REST calls", e);
+        }
+    }
+
+    private static void checkForWildcardMatches(RestCallInformation restCall, List<EndpointInformation> matchingEndpoints, String restCallURI, Map<String, List<EndpointInformation>> endpointMap) {
+        if (matchingEndpoints.isEmpty() && restCallURI.endsWith("*")) {
+            for (String uri : endpointMap.keySet()) {
+                if (uri.startsWith(restCallURI.substring(0, restCallURI.length() - 1))
+                        && endpointMap.get(uri).get(0).getHttpMethod().toLowerCase().equals(restCall.method().toLowerCase())) {
+                    matchingEndpoints.addAll(endpointMap.get(uri));
+                }
+            }
         }
     }
 
@@ -113,9 +116,9 @@ public class RestCallAnalyzer {
         restCallsAndMatchingEndpoints.restCallsWithoutMatchingEndpoints().stream().forEach(endpoint -> {
             logger.info("=============================================");
             logger.info("REST call URI: {}", endpoint.buildCompleteRestCallURI());
-            logger.info("HTTP method: {}", endpoint.getMethod());
-            logger.info("File path: {}", endpoint.getFileName());
-            logger.info("Line: {}", endpoint.getLine());
+            logger.info("HTTP method: {}", endpoint.method());
+            logger.info("File path: {}", endpoint.fileName());
+            logger.info("Line: {}", endpoint.line());
             logger.info("=============================================");
             logger.info("No matching endpoint found for REST call: {}", endpoint.buildCompleteRestCallURI());
             logger.info("---------------------------------------------");
