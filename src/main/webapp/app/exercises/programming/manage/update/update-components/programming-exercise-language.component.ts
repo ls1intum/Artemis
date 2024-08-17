@@ -50,13 +50,6 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
             this.fieldSubscriptions.push(dockerImageField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
 
-        const checkoutPathField =
-            this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.checkoutPathField ??
-            this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.checkoutPathField;
-        if (!(checkoutPathField?.valueChanges as EventEmitter<string>)?.observed) {
-            this.fieldSubscriptions.push(checkoutPathField?.valueChanges?.subscribe(() => this.calculateFormValid()));
-        }
-
         const timeoutField =
             this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField ??
             this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField;
@@ -96,7 +89,6 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         if (this.programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
             return (
                 (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField?.valid ?? false) &&
-                (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.checkoutPathField?.valid ?? false) &&
                 (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField?.valid ?? false)
             );
         }
@@ -104,7 +96,6 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         if (this.programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_AEOLUS) {
             return (
                 (this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField?.valid ?? false) &&
-                (this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.checkoutPathField?.valid ?? false) &&
                 (this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField?.valid ?? false)
             );
         }

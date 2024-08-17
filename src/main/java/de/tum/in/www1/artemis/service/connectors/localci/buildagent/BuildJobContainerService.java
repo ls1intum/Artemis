@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
+import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.ByteArrayInputStream;
@@ -83,13 +84,12 @@ public class BuildJobContainerService {
     /**
      * Configure a container with the Docker image, the container name, optional proxy config variables, and set the command that runs when the container starts.
      *
-     * @param containerName    the name of the container to be created
-     * @param image            the Docker image to use for the container
-     * @param buildScript      the build script to be executed in the container
-     * @param workingDirectory the working directory in the container where the script is located
+     * @param containerName the name of the container to be created
+     * @param image         the Docker image to use for the container
+     * @param buildScript   the build script to be executed in the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, String workingDirectory) {
+    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript) {
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
             envVars.add("HTTP_PROXY=" + httpProxy);
@@ -102,7 +102,7 @@ public class BuildJobContainerService {
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f " + workingDirectory + "/stop_container.txt ]; do sleep 0.5; done")
+                .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
                 // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
@@ -120,17 +120,17 @@ public class BuildJobContainerService {
     /**
      * Run the script in the container and wait for it to finish before returning.
      *
-     * @param containerId      the id of the container in which the script should be run
-     * @param buildJobId       the id of the build job that is currently being executed
-     * @param workingDirectory the working directory in the container where the script is located
+     * @param containerId the id of the container in which the script should be run
+     * @param buildJobId  the id of the build job that is currently being executed
      */
-    public void runScriptInContainer(String containerId, String buildJobId, String workingDirectory) {
+
+    public void runScriptInContainer(String containerId, String buildJobId) {
         log.info("Started running the build script for build job in container with id {}", containerId);
         // The "sh script.sh" execution command specified here is run inside the container as an additional process. This command runs in the background, independent of the
         // container's
         // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
         // command has finished before trying to extract the results.
-        executeDockerCommand(containerId, buildJobId, true, true, false, "bash", workingDirectory + "/script.sh");
+        executeDockerCommand(containerId, buildJobId, true, true, false, "bash", LOCALCI_WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -168,12 +168,10 @@ public class BuildJobContainerService {
      * In case the container is not responding, we can force remove it using {@link DockerClient#removeContainerCmd(String)}.
      * This takes significantly longer than using the approach with the file because of increased overhead for the removeContainerCmd() method.
      *
-     * @param containerName    The name of the container to stop. Cannot use the container ID, because this method might have to be called from the main thread (not the thread
-     *                             started
-     *                             for the build job) where the container ID is not available.
-     * @param workingDirectory The working directory in the container where the file "stop_container.txt" should be created.
+     * @param containerName The name of the container to stop. Cannot use the container ID, because this method might have to be called from the main thread (not the thread started
+     *                          for the build job) where the container ID is not available.
      */
-    public void stopContainer(String containerName, String workingDirectory) {
+    public void stopContainer(String containerName) {
         // List all containers, including the non-running ones.
         Container container = getContainerForName(containerName);
 
@@ -194,12 +192,12 @@ public class BuildJobContainerService {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", workingDirectory + "/stop_container.txt");
+        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", LOCALCI_WORKING_DIRECTORY + "/stop_container.txt");
     }
 
     /**
      * Stops or kills a container in case a build job has failed or the container is unresponsive.
-     * Adding a file "stop_container.txt" like in {@link #stopContainer(String, String)} might not work for unresponsive containers, thus we use
+     * Adding a file "stop_container.txt" like in {@link #stopContainer(String)} might not work for unresponsive containers, thus we use
      * {@link DockerClient#stopContainerCmd(String)} and {@link DockerClient#killContainerCmd(String)} to stop or kill the container.
      *
      * @param containerId The ID of the container to stop or kill.
@@ -209,7 +207,7 @@ public class BuildJobContainerService {
         try {
             // Attempt to stop the container. It should stop the container and auto-remove it.
             // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
-            // and if it does not stop within the timeoutSeconds, it sends a SIGKILL command to kill the container.
+            // and if it does not stop within the timeout, it sends a SIGKILL command to kill the container.
             log.info("Stopping container with id {}", containerId);
 
             // Submit Docker stop command to executor service
@@ -218,8 +216,8 @@ public class BuildJobContainerService {
                 return null;  // Return type to match Future<Void>
             });
 
-            // Await the future with a timeoutSeconds
-            future.get(10, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeoutSeconds
+            // Await the future with a timeout
+            future.get(10, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
         }
         catch (NotFoundException | NotModifiedException e) {
             log.debug("Container with id {} is already stopped: {}", containerId, e.getMessage());
@@ -234,7 +232,7 @@ public class BuildJobContainerService {
                     return null;
                 });
 
-                killFuture.get(5, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeoutSeconds
+                killFuture.get(5, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
             }
             catch (Exception killException) {
                 log.warn("Failed to kill container with id {}: {}", containerId, killException.getMessage());
@@ -277,43 +275,41 @@ public class BuildJobContainerService {
      * @param auxiliaryRepositoriesPaths             An array of paths for auxiliary repositories to be included in the build process.
      * @param auxiliaryRepositoryCheckoutDirectories An array of directory names within the container where each auxiliary repository should be checked out.
      * @param programmingLanguage                    The programming language of the repositories, which influences directory naming conventions.
-     * @param workingDirectory                       The working directory within the container where the repositories and scripts should be placed.
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
-            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, String workingDirectory) {
+            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage) {
         String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
         // Make sure to create the working directory in case it does not exist.
         // In case the test checkout path is the working directory, we only create up to the parent, as the working directory is created below.
-        addDirectory(buildJobContainerId, workingDirectory + (testCheckoutPath.isEmpty() ? "" : "/testing-dir"), true);
+        addDirectory(buildJobContainerId, LOCALCI_WORKING_DIRECTORY + (testCheckoutPath.isEmpty() ? "" : "/testing-dir"), true);
         // Make sure the working directory and all subdirectories are accessible
-        executeDockerCommand(buildJobContainerId, null, false, false, true, "chmod", "-R", "777", workingDirectory + "/testing-dir");
+        executeDockerCommand(buildJobContainerId, null, false, false, true, "chmod", "-R", "777", LOCALCI_WORKING_DIRECTORY + "/testing-dir");
 
         // Copy the test repository to the container and move it to the test checkout path (may be the working directory)
-        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, workingDirectory + "/testing-dir/" + testCheckoutPath, workingDirectory);
+        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
         // Copy the assignment repository to the container and move it to the assignment checkout path
-        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, workingDirectory + "/testing-dir/" + assignmentCheckoutPath, workingDirectory);
+        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
         if (solutionRepositoryPath != null) {
             String solutionCheckoutPath = RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-            addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, workingDirectory + "/testing-dir/" + solutionCheckoutPath, workingDirectory);
+            addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
         }
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], workingDirectory + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i],
-                    workingDirectory);
+            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
 
-        createScriptFile(buildJobContainerId, workingDirectory);
+        createScriptFile(buildJobContainerId);
     }
 
-    private void createScriptFile(String buildJobContainerId, String workingDirectory) {
-        executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo \"$SCRIPT\" > " + workingDirectory + "/script.sh");
-        executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + workingDirectory + "/script.sh");
+    private void createScriptFile(String buildJobContainerId) {
+        executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo \"$SCRIPT\" > " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
     }
 
-    private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName, String workingDirectory) {
-        copyToContainer(repositoryPath.toString(), containerId, workingDirectory);
-        renameDirectoryOrFile(containerId, workingDirectory + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
+    private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName) {
+        copyToContainer(repositoryPath.toString(), containerId);
+        renameDirectoryOrFile(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
     private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
@@ -325,9 +321,9 @@ public class BuildJobContainerService {
         executeDockerCommand(containerId, null, false, false, true, command);
     }
 
-    private void copyToContainer(String sourcePath, String containerId, String workingDirectory) {
+    private void copyToContainer(String sourcePath, String containerId) {
         try (InputStream uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray())) {
-            dockerClient.copyArchiveToContainerCmd(containerId).withRemotePath(workingDirectory).withTarInputStream(uploadStream).exec();
+            dockerClient.copyArchiveToContainerCmd(containerId).withRemotePath(LOCALCI_WORKING_DIRECTORY).withTarInputStream(uploadStream).exec();
         }
         catch (IOException e) {
             throw new LocalCIException("Could not copy to container " + containerId, e);

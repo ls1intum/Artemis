@@ -882,20 +882,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             }
         });
 
-        it('should find invalid checkout path', () => {
-            comp.programmingExercise.buildConfig!.checkoutPath = 'invalid/checkout/path';
-            expect(comp.getInvalidReasons()).toContainEqual({
-                translateKey: 'artemisApp.programmingExercise.checkoutPath.alert',
-                translateValues: {},
-            });
-
-            comp.programmingExercise.buildConfig!.checkoutPath = '/valid/checkout/path';
-            expect(comp.getInvalidReasons()).not.toContainEqual({
-                translateKey: 'artemisApp.programmingExercise.checkoutPath.alert',
-                translateValues: {},
-            });
-        });
-
         it('should find invalid timeout', () => {
             comp.programmingExercise.buildConfig!.timeoutSeconds = -1;
             expect(comp.getInvalidReasons()).toContainEqual({

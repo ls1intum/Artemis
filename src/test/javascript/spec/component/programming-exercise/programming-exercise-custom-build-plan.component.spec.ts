@@ -192,7 +192,6 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.next("echo 'test'")));
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.buildConfig?.windFile).toBeDefined();
-        expect(comp.programmingExercise.buildConfig?.checkoutPath).toBe('');
         expect(comp.programmingExercise.buildConfig?.timeoutSeconds).toBe(0);
     });
 
@@ -252,12 +251,6 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExercise.buildConfig!.windFile = undefined;
         comp.setDockerImage('testImage');
         expect(comp.programmingExercise.buildConfig?.windFile).toBeUndefined();
-    });
-
-    it('should set checkout path correctly', () => {
-        comp.programmingExercise.buildConfig!.checkoutPath = 'old';
-        comp.setCheckoutPath('/var/tmp');
-        expect(comp.programmingExercise.buildConfig?.checkoutPath).toBe('/var/tmp');
     });
 
     it('should set timeout correctly', () => {

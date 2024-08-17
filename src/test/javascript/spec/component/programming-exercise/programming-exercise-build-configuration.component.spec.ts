@@ -33,10 +33,6 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.dockerImageChange.subscribe((value) => expect(value).toBe('newImage'));
         comp.dockerImageChange.emit('newImage');
 
-        expect(comp.checkoutPath).toBe('/var/tmp');
-        comp.checkoutPathChange.subscribe((value) => expect(value).toBe('/var/tmp/new'));
-        comp.checkoutPathChange.emit('/var/tmp/new');
-
         expect(comp.timeout).toBe(10);
         comp.timeoutChange.subscribe((value) => expect(value).toBe(20));
         comp.timeoutChange.emit(20);

@@ -110,9 +110,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         if (!this.programmingExercise.buildConfig?.buildScript) {
             this.resetCustomBuildPlan();
         }
-        if (!this.programmingExercise.buildConfig?.checkoutPath) {
-            this.programmingExercise.buildConfig!.checkoutPath = '';
-        }
         if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
             this.programmingExercise.buildConfig!.timeoutSeconds = 0;
         }
@@ -144,10 +141,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             return;
         }
         this.programmingExercise.buildConfig!.windFile.metadata.docker.image = dockerImage.trim();
-    }
-
-    setCheckoutPath(checkoutPath: string) {
-        this.programmingExercise.buildConfig!.checkoutPath = checkoutPath.trim();
     }
 
     setTimeout(timeout: number) {

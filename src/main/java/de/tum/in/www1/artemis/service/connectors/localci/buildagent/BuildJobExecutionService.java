@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.ReportParser;
@@ -189,12 +188,10 @@ public class BuildJobExecutionService {
             index++;
         }
 
-        String workingDirectory = BuildConfig.getWorkingDirectory(buildJob.buildConfig().workingDirectory());
-        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript(),
-                workingDirectory);
+        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript());
 
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
-                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash, workingDirectory);
+                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash);
     }
 
     /**
@@ -229,7 +226,7 @@ public class BuildJobExecutionService {
     private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
             Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
-            @Nullable String testRepoCommitHash, String workingDirectory) {
+            @Nullable String testRepoCommitHash) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -244,13 +241,13 @@ public class BuildJobExecutionService {
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
         buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
-                buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage(), workingDirectory);
+                buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage());
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
 
-        buildJobContainerService.runScriptInContainer(containerId, buildJob.id(), workingDirectory);
+        buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
@@ -275,7 +272,7 @@ public class BuildJobExecutionService {
             return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
         finally {
-            buildJobContainerService.stopContainer(containerName, workingDirectory);
+            buildJobContainerService.stopContainer(containerName);
 
             // Delete the cloned repositories
             deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash, buildJob.id());
