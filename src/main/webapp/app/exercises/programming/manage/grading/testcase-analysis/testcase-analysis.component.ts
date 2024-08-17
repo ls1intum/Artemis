@@ -32,7 +32,7 @@ export class TestcaseAnalysisComponent implements OnInit {
 
     ngOnInit(): void {
         const exerciseId = this.programmingExerciseTaskService.exercise?.id;
-        if (exerciseId !== undefined) {
+        if (exerciseId) {
             this.loadFeedbackDetails(exerciseId);
         }
         this.tasks = this.programmingExerciseTaskService.updateTasks();
@@ -55,17 +55,15 @@ export class TestcaseAnalysisComponent implements OnInit {
             const testcase = feedback.testCase?.testName ?? '';
             const key = `${feedbackText}_${testcase}`;
 
-            if (feedbackMap.has(key)) {
-                const existingFeedback = feedbackMap.get(key);
-                if (existingFeedback) {
-                    existingFeedback.count += 1;
-                }
+            const existingFeedback = feedbackMap.get(key);
+            if (existingFeedback) {
+                existingFeedback.count += 1;
             } else {
                 const task = this.findTaskIndexForTestCase(feedback.testCase);
-                feedbackMap.set(key, <FeedbackDetail>{
+                feedbackMap.set(key, {
                     count: 1,
                     detailText: feedback.detailText ?? '',
-                    testcase: feedback.testCase?.testName,
+                    testcase: feedback.testCase?.testName ?? '',
                     task: task,
                 });
             }
