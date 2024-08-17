@@ -4,14 +4,6 @@ import Context from 'artemis-exercise/context.js';
 import Policy from 'artemis-exercise/policy.js';
 
 // prettier-ignore
-const dates = [
-    new Date('2018-11-08'),
-    new Date('2017-04-15'),
-    new Date('2016-02-15'),
-    new Date('2017-09-15'),
-];
-
-// prettier-ignore
 const datesWithCorrectOrder = [
     new Date('2016-02-15'),
     new Date('2017-04-15'),
@@ -20,6 +12,17 @@ const datesWithCorrectOrder = [
 ];
 
 describe('behavior', () => {
+    let dates;
+    beforeEach(() => {
+        // prettier-ignore
+        dates = [
+            new Date('2018-11-08'),
+            new Date('2017-04-15'),
+            new Date('2016-02-15'),
+            new Date('2017-09-15'),
+        ];
+    });
+
     describe('BubbleSort', () => {
         it('should_sort_correctly', () => {
             const bubbleSort = new BubbleSort();
