@@ -1,11 +1,7 @@
 package de.tum.cit.endpointanalysis;
 
-public record RestCallInformation(
-    String method,
-    String url,
-    int line,
-    String fileName
-) {
+public record RestCallInformation(String method, String url, int line, String fileName) {
+
     public String buildCompleteRestCallURI() {
         return this.url.replace("`", "");
     }

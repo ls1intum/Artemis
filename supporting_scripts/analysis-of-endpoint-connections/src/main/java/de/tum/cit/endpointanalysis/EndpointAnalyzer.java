@@ -90,12 +90,13 @@ public class EndpointAnalyzer {
      * It then iterates through the rest call map to find URIs that start with the same prefix as the endpoint URI
      * (excluding the wildcard) and have the same HTTP method. If such URIs are found, they are added to the list of matching REST calls.
      *
-     * @param endpoint The endpoint information to check for wildcard matches.
+     * @param endpoint          The endpoint information to check for wildcard matches.
      * @param matchingRestCalls The list of matching REST calls to be populated.
-     * @param endpointURI The URI of the endpoint being checked.
-     * @param restCallMap The map of rest call URIs to their corresponding information.
+     * @param endpointURI       The URI of the endpoint being checked.
+     * @param restCallMap       The map of rest call URIs to their corresponding information.
      */
-    private static void CheckForWildcardEndpoints(EndpointInformation endpoint, List<RestCallInformation> matchingRestCalls, String endpointURI, Map<String, List<RestCallInformation>> restCallMap) {
+    private static void CheckForWildcardEndpoints(EndpointInformation endpoint, List<RestCallInformation> matchingRestCalls, String endpointURI,
+            Map<String, List<RestCallInformation>> restCallMap) {
         if (matchingRestCalls.isEmpty() && endpointURI.endsWith("*")) {
             for (String uri : restCallMap.keySet()) {
                 if (uri.startsWith(endpoint.buildComparableEndpointUri().substring(0, endpoint.buildComparableEndpointUri().length() - 1))

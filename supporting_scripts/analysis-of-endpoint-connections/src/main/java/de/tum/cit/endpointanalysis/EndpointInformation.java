@@ -4,15 +4,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public record EndpointInformation(
-    String requestMapping,
-    String endpoint,
-    String httpMethodAnnotation,
-    String URI,
-    String className,
-    int line,
-    List<String> otherAnnotations
-) {
+public record EndpointInformation(String requestMapping, String endpoint, String httpMethodAnnotation, String URI, String className, int line, List<String> otherAnnotations) {
+
     public String buildCompleteEndpointURI() {
         StringBuilder result = new StringBuilder();
         if (this.requestMapping != null && !this.requestMapping.isEmpty()) {
