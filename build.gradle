@@ -349,6 +349,15 @@ dependencies {
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:5.2.0"
+
+    // Hazelcast replacement to enable caching and communication between server nodes
+    implementation "org.redisson:redisson:3.34.1"
+    implementation "org.redisson:redisson-spring-boot-starter:3.34.1"
+
+    // Enables the use of PassKey authentication in the web app and mobile apps
+    implementation "com.webauthn4j:webauthn4j-spring-security-core:0.10.0.RELEASE"
+
+
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
     implementation "com.zaxxer:HikariCP:5.1.0"
