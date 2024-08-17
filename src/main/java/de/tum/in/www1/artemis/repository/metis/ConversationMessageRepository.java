@@ -123,7 +123,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     List<Post> findByPostIdsWithEagerRelationships(@Param("postIds") List<Long> postIds);
 
     default Post findMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
-        return findById(postId).filter(post -> post.getConversation() != null).orElseThrow(() -> new EntityNotFoundException("Message", postId));
+        return getValueElseThrow(findById(postId).filter(post -> post.getConversation() != null), postId);
     }
 
     Integer countByConversationId(Long conversationId);

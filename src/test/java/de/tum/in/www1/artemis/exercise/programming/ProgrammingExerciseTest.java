@@ -113,16 +113,16 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseOnce() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId).orElseThrow();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseTwice() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId).orElseThrow();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
         updateProgrammingExercise(programmingExercise, "new problem 2", "new title 2");
     }
@@ -145,7 +145,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement_examExercise() throws Exception {
-        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM", true);
         var exam = programmingExercise.getExam();
         StudentExam studentExam = examUtilService.addStudentExam(exam);
         examUtilService.addExerciseToStudentExam(studentExam, programmingExercise);
@@ -166,8 +166,8 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseAutomaticFeedbackNoTestCases() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId).orElseThrow();
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEmpty();
@@ -180,8 +180,8 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseAutomaticFeedbackTestCasesPositiveWeight() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         // test cases with weights > 0, changing to automatic feedback: update should work
@@ -193,8 +193,8 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseTestCasesZeroWeight(AssessmentType assessmentType) throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());

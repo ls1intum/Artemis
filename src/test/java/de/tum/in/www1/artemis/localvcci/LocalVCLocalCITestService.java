@@ -57,8 +57,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -72,6 +74,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -111,6 +114,9 @@ public class LocalVCLocalCITestService {
     private ExerciseUtilService exerciseUtilService;
 
     @Autowired
+    private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
+
+    @Autowired
     private ResultRepository resultRepository;
 
     @Autowired
@@ -134,7 +140,7 @@ public class LocalVCLocalCITestService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    private final int DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS = 10;
+    private static final int DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS = 10;
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCITestService.class);
 
@@ -569,6 +575,19 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug   the repository slug of the repository.
      */
     public void testPushSuccessful(Git repositoryHandle, String username, String projectKey, String repositorySlug) {
+        testPushSuccessful(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
+    }
+
+    /**
+     * Perform a push operation and fail if there was an exception.
+     *
+     * @param repositoryHandle the Git object for the repository.
+     * @param username         the username of the user that tries to push to the repository.
+     * @param password         the password or token of the user
+     * @param projectKey       the project key of the repository.
+     * @param repositorySlug   the repository slug of the repository.
+     */
+    public void testPushSuccessful(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) {
         try {
             performPush(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
         }
@@ -679,6 +698,46 @@ public class LocalVCLocalCITestService {
         assertThat(solutionRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
+    }
+
+    /**
+     * Gets the participationVcsAccessToken belonging to a user and a participation
+     *
+     * @param userId                     The user's id
+     * @param programmingParticipationId The participation's id
+     *
+     * @return the participationVcsAccessToken of the user for the given participationId
+     */
+    public ParticipationVCSAccessToken getParticipationVcsAccessToken(Long userId, Long programmingParticipationId) {
+        return participationVcsAccessTokenService.findByUserIdAndParticipationIdOrElseThrow(userId, programmingParticipationId);
+    }
+
+    /**
+     * Deletes the participationVcsAccessToken for a participation
+     *
+     * @param participationId The participationVcsAccessToken's participationId
+     */
+    public void deleteParticipationVcsAccessToken(long participationId) {
+        participationVcsAccessTokenService.deleteByParticipationId(participationId);
+    }
+
+    /**
+     * Creates the participationVcsAccessToken for a user and a participation
+     *
+     * @param user            The user for which the token should get created
+     * @param participationId The participationVcsAccessToken's participationId
+     */
+    public void createParticipationVcsAccessToken(User user, long participationId) {
+        participationVcsAccessTokenService.createVcsAccessTokenForUserAndParticipationIdOrElseThrow(user, participationId);
+    }
+
+    /**
+     * Deletes a programmingParticipation
+     *
+     * @param programmingParticipation The participation to delete
+     */
+    public void deleteParticipation(ProgrammingExerciseStudentParticipation programmingParticipation) {
+        programmingExerciseStudentParticipationRepository.delete(programmingParticipation);
     }
 
     public void setupProgrammingExerciseWithRepositories(String testPrefix, String localVCBasePath) throws Exception {

@@ -19,6 +19,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -124,8 +125,9 @@ public class BuildScriptProviderService {
      */
     public String getScriptFor(ProgrammingExercise exercise) {
         try {
+            ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             return getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                    exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
+                    buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
             log.error("Failed to provide build script for programming exercise " + exercise.getId(), e);
