@@ -90,7 +90,6 @@ public class EndpointParser {
                     endpointClasses.add(new EndpointClassInformation(javaClass.getNameAsString(), classRequestMappingString, endpoints));
                 }
             }
-
         }
 
         printFilesFailedToParse(filesFailedToParse);
@@ -111,11 +110,12 @@ public class EndpointParser {
      * @return a list of EndpointInformation objects representing the extracted endpoint information
      */
     private static List<EndpointInformation> extractAnnotationPathValues(ClassOrInterfaceDeclaration javaClass, Set<String> httpMethodClasses, String classRequestMappingString) {
-        return javaClass.getMethods().stream().flatMap(method -> method.getAnnotations().stream().filter(annotation -> httpMethodClasses.contains(annotation.getNameAsString()))
-                .flatMap(annotation -> extractPathsFromAnnotation(annotation).stream()
-                        .map(path -> new EndpointInformation(classRequestMappingString, method.getNameAsString(), annotation.getNameAsString(), path, javaClass.getNameAsString(),
-                                method.getBegin().get().line, method.getAnnotations().stream().map(AnnotationExpr::toString).collect(Collectors.toList())))))
-                .collect(Collectors.toList());
+        return javaClass.getMethods().stream()
+                .flatMap(method -> method.getAnnotations().stream().filter(annotation -> httpMethodClasses.contains(annotation.getNameAsString()))
+                        .flatMap(annotation -> extractPathsFromAnnotation(annotation).stream()
+                                .map(path -> new EndpointInformation(classRequestMappingString, method.getNameAsString(), annotation.getNameAsString(), path,
+                                        javaClass.getNameAsString(), method.getBegin().get().line, method.getAnnotations().stream().map(AnnotationExpr::toString).toList()))))
+                .toList();
     }
 
     /**

@@ -124,6 +124,7 @@ public class EndpointAnalyzer {
         }
         catch (IOException e) {
             logger.error("Failed to deserialize endpoint analysis result", e);
+            return;
         }
 
         endpointsAndMatchingRestCalls.unusedEndpoints().stream().forEach(endpoint -> {
