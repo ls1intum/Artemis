@@ -362,7 +362,7 @@ public class BuildJobExecutionService {
             }
             catch (Exception e) {
                 // Exceptions due to one invalid file should not lead to the whole build to fail.
-                String msg = "Error while parsing report file" + fileName + ", ignoring.";
+                String msg = "Error while parsing report file " + fileName + ", ignoring.";
                 buildLogsMap.appendBuildLogEntry(buildJobId, msg);
                 log.warn(msg, e);
             }
