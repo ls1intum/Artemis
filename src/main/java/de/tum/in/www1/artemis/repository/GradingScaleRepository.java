@@ -84,7 +84,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
     @NotNull
     default GradingScale findByCourseIdOrElseThrow(long courseId) {
         try {
-            return findByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Grading scale with course ID " + courseId + " doesn't exist"));
+            return getValueElseThrow(findByCourseId(courseId));
         }
         catch (IncorrectResultSizeDataAccessException exception) {
             return deleteExcessiveGradingScales(courseId, false);
@@ -111,7 +111,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
     @NotNull
     default GradingScale findByExamIdOrElseThrow(long examId) {
         try {
-            return findByExamId(examId).orElseThrow(() -> new EntityNotFoundException("Grading scale with exam ID " + examId + " doesn't exist"));
+            return getValueElseThrow(findByExamId(examId));
         }
         catch (IncorrectResultSizeDataAccessException exception) {
             return deleteExcessiveGradingScales(examId, true);
@@ -197,7 +197,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
      * @return grade step corresponding to the given percentage
      */
     default GradeStep matchPercentageToGradeStep(double percentage, long gradingScaleId) {
-        Set<GradeStep> gradeSteps = findById(gradingScaleId).orElseThrow().getGradeSteps();
+        Set<GradeStep> gradeSteps = findByIdElseThrow(gradingScaleId).getGradeSteps();
         return this.matchPercentageToGradeStep(percentage, gradeSteps);
     }
 
@@ -217,8 +217,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
         }
         if (percentage > 100) {
             // return the highest grade step for percentages > 100 (bonus points)
-            Optional<GradeStep> highestGradeStep = gradeSteps.stream().max(Comparator.comparing(GradeStep::getUpperBoundPercentage));
-            return highestGradeStep.orElseThrow(() -> new EntityNotFoundException("No grade steps available"));
+            return getArbitraryValueElseThrow(gradeSteps.stream().max(Comparator.comparing(GradeStep::getUpperBoundPercentage)));
         }
         throw new EntityNotFoundException("No grade step in selected grading scale matches given percentage");
     }

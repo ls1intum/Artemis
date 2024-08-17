@@ -31,7 +31,8 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenti
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
 
 /**
- * Processes an LTI 1.3 Authorization Request response.
+ * Filter for processing an LTI 1.3 Authorization Request response.
+ * It listens for LTI login attempts {@see CustomLti13Configurer#LTI13_LOGIN_PATH} and processes them.
  * Step 3. of OpenID Connect Third Party Initiated Login is handled solely by spring-security-lti13
  * OAuth2LoginAuthenticationFilter.
  */
@@ -58,8 +59,10 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+        log.info("LTI 1.3 Launch request received for url {}", this.requestMatcher.getPattern());
 
         try {
+            // Login using the distributed authorization request repository
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
             String targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
@@ -80,6 +83,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             catch (LtiEmailAlreadyInUseException ex) {
                 // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
                 // We need targetLink to redirect user on the client-side after successful authentication
+                log.error("LTI 1.3 launch failed due to email already in use: {}", ex.getMessage(), ex);
                 handleLtiEmailAlreadyInUseException(response, ltiIdToken);
             }
 
@@ -96,7 +100,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
-    private OidcAuthenticationToken finishOidcFlow(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    private OidcAuthenticationToken finishOidcFlow(HttpServletRequest request, HttpServletResponse response) {
         OidcAuthenticationToken ltiAuthToken;
         try {
             // call spring-security-lti13 authentication filter to finish the OpenID Connect Third Party Initiated Login
@@ -117,6 +121,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
         if (SecurityUtils.isAuthenticated()) {
+            log.info("User is authenticated, building LTI response");
             lti13Service.buildLtiResponse(uriBuilder, response);
         }
         LtiAuthenticationResponse jsonResponse = new LtiAuthenticationResponse(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);

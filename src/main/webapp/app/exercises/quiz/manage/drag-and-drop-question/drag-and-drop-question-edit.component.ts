@@ -62,7 +62,7 @@ import { FileService } from 'app/shared/http/file.service';
 })
 export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('clickLayer', { static: false }) private clickLayer: ElementRef;
-    @ViewChild('backgroundImage', { static: false }) private backgroundImage: SecuredImageComponent;
+    @ViewChild('backgroundImage ', { static: false }) private backgroundImage: SecuredImageComponent;
     @ViewChild('markdownEditor', { static: false }) private markdownEditor: MarkdownEditorComponent;
 
     @Input() question: DragAndDropQuestion;
@@ -216,7 +216,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                 debounceTime(300),
             )
             .subscribe(() => this.adjustClickLayerWidth());
-
+        // render import images on UI immediatly
+        this.makeFileMapPreview();
         // Trigger click layer width adjustment upon window resize.
         window.onresize = () => this.adjustClickLayerWidth();
     }
@@ -254,6 +255,19 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     drop(): void {
         this.dropAllowed = false;
+    }
+
+    /**
+     * This method takes the files and creates preview objects so that images
+     * are rendered immediately on the UI after importing
+     */
+    makeFileMapPreview() {
+        if (this.filePool) {
+            this.filePool.forEach((value, key) => {
+                this.filePreviewPaths.set(key, URL.createObjectURL(value.file));
+            });
+            this.changeDetector.detectChanges();
+        }
     }
 
     /**
