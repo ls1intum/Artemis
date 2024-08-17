@@ -5,13 +5,11 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -284,43 +282,35 @@ public class ResultResource {
     @EnforceAtLeastTutor
     public ResponseEntity<FeedbackDetailsResponse> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        // Get all Student participations for the exercise
-        Set<StudentParticipation> participations;
-        if (exercise.isTeamMode()) {
-            participations = studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
-        }
-        else {
-            participations = studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(exercise.getId());
-        }
+        // Fetch participations along with the latest results and their feedbacks
+        Set<StudentParticipation> participations = resultRepository.findByExerciseIdWithLatestResultAndFeedbackElseThrow(exerciseId);
         removeSubmissionAndExerciseData(participations);
 
-        // Gather result IDs from the latest result of each participation
-        List<Long> resultIds = participations.stream()
-                .map(singleParticipation -> singleParticipation.getResults().stream().max(Comparator.comparing(Result::getCompletionDate)).map(Result::getId).orElse(null))
-                .filter(Objects::nonNull).collect(Collectors.toList());
+        // Collect all feedback and result IDs from the participations
+        List<Feedback> allFeedback = new ArrayList<>();
+        List<Long> resultIds = new ArrayList<>();
 
-        // Fetch all feedbacks in one query using the list of result IDs
-        List<Feedback> allFeedback = resultRepository.findAllByIdWithEagerFeedbacksElseThrow(resultIds).stream().flatMap(result -> result.getFeedbacks().stream())
-                .collect(Collectors.toList());
+        participations.forEach(participation -> {
+            participation.getResults().forEach(result -> {
+                resultIds.add(result.getId());
+                allFeedback.addAll(result.getFeedbacks());
+            });
+        });
 
-        FeedbackDetailsResponse response = new FeedbackDetailsResponse(allFeedback, participations);
+        FeedbackDetailsResponse response = new FeedbackDetailsResponse(allFeedback, resultIds);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     private void removeSubmissionAndExerciseData(Set<StudentParticipation> participations) {
         // remove unnecessary data to reduce response size
         participations.forEach(participation -> {
-            participation.setSubmissionCount(participation.getSubmissions().size());
             participation.setSubmissions(null);
-        });
-        participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
             participation.setExercise(null);
         });
     }
 
-    public record FeedbackDetailsResponse(List<Feedback> feedback, Set<StudentParticipation> participations) {
+    public record FeedbackDetailsResponse(List<Feedback> feedback, List<Long> resultIds) {
     }
 
 }

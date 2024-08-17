@@ -16,7 +16,7 @@
                 <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab === 'submission-policy' ? 'active' : ''">
                     <b jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title"></b>
                 </div>
-                <div class="tab-item test-analysis" (click)="selectTab('test-analysis')" [ngClass]="activeTab === 'test-analysis' ? 'active' : ''">
+                <div class="tab-item testcase-analysis" (click)="selectTab('testcase-analysis')" [ngClass]="activeTab === 'testcase-analysis' ? 'active' : ''">
                     <b jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.titleHeader"></b>
                 </div>
             </div>
@@ -32,7 +32,7 @@
                         [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
                     />
                 }
-                @if (programmingExercise.isAtLeastInstructor && activeTab !== 'test-analysis') {
+                @if (programmingExercise.isAtLeastInstructor && activeTab !== 'testcase-analysis') {
                     <jhi-programming-exercise-configure-grading-actions
                         [exercise]="programmingExercise"
                         [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
@@ -260,7 +260,7 @@
             }
         </div>
         <div class="grading-body-container mt-3">
-            @if (activeTab === 'test-analysis') {
+            @if (activeTab === 'testcase-analysis') {
                 <jhi-testcase-analysis [exerciseTitle]="programmingExercise.title"></jhi-testcase-analysis>
             }
         </div>

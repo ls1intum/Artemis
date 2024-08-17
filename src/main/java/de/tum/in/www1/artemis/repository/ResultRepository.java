@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -199,13 +200,22 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") long resultId);
 
     @Query("""
-            SELECT r
-            FROM Result r
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH p.submissions
+                LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
-            WHERE r.id IN :resultIds
+            WHERE p.exercise.id = :exerciseId
+                AND (
+                    r.id = (SELECT MAX(p_r.id) FROM p.results p_r)
+                    OR r.assessmentType <> de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                    OR r IS NULL
+                )
             """)
-    List<Result> findAllByIdWithEagerFeedbacks(@Param("resultIds") List<Long> resultIds);
+    Set<StudentParticipation> findByExerciseIdWithLatestResultAndFeedback(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT r
@@ -854,8 +864,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @param resultIds the list of ids for the results that should be loaded from the database
      * @return the list of results with the given ids
      */
-    default List<Result> findAllByIdWithEagerFeedbacksElseThrow(List<Long> resultIds) {
-        return getArbitraryValueElseThrow(Optional.of(findAllByIdWithEagerFeedbacks(resultIds)), "Results with IDs: " + resultIds);
+    default Set<StudentParticipation> findByExerciseIdWithLatestResultAndFeedbackElseThrow(long exerciseId) {
+        return getArbitraryValueElseThrow(Optional.of(findByExerciseIdWithLatestResultAndFeedback(exerciseId)), "Results with Feedback for: " + exerciseId);
     }
 
     /**

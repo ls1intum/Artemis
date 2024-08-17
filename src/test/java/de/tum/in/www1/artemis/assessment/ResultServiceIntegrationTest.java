@@ -736,7 +736,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 ResultResource.FeedbackDetailsResponse.class);
 
         assertThat(response.feedback()).isNotEmpty();
-        assertThat(response.participations()).hasSize(1);
+        assertThat(response.resultIds()).containsExactly(result.getId());
     }
 
     @Test
@@ -744,12 +744,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void testGetAllFeedbackDetailsForExercise_NoFeedback() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToParticipation(null, null, participation);
 
         ResultResource.FeedbackDetailsResponse response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
                 ResultResource.FeedbackDetailsResponse.class);
 
         assertThat(response.feedback()).isEmpty();
-        assertThat(response.participations()).hasSize(1);
+        assertThat(response.resultIds()).containsExactly(result.getId());
     }
 
     @Test
@@ -761,15 +762,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 ResultResource.FeedbackDetailsResponse.class);
 
         assertThat(response.feedback()).isEmpty();
-        assertThat(response.participations()).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetAllFeedbackDetailsForExercise_InvalidExerciseId() throws Exception {
-        long invalidExerciseId = 9999L;
-
-        request.get("/api/exercises/" + invalidExerciseId + "/feedback-details", HttpStatus.NOT_FOUND, ResultResource.FeedbackDetailsResponse.class);
+        assertThat(response.resultIds()).isEmpty();
     }
 
 }

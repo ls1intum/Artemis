@@ -4,7 +4,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { Participation } from 'app/entities/participation/participation.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 type FeedbackDetail = {
@@ -23,7 +22,7 @@ type FeedbackDetail = {
 })
 export class TestcaseAnalysisComponent implements OnInit {
     @Input() exerciseTitle?: string;
-    participations: Participation[] = [];
+    resultIds: number[] = [];
     tasks: ProgrammingExerciseTask[] = [];
     feedback: FeedbackDetail[] = [];
 
@@ -42,10 +41,7 @@ export class TestcaseAnalysisComponent implements OnInit {
 
     loadFeedbackDetails(exerciseId: number): void {
         this.resultService.getFeedbackDetailsForExercise(exerciseId).subscribe((response) => {
-            this.participations = response.body?.participations || [];
-            this.participations = this.participations.filter((participation) => {
-                return participation.results && participation.results.length > 0;
-            });
+            this.resultIds = response.body?.resultIds || [];
             const feedbackArray = response.body?.feedback || [];
             const negativeFeedbackArray = feedbackArray.filter((feedback) => !feedback.positive);
             this.saveFeedback(negativeFeedbackArray);

@@ -6,7 +6,6 @@ import { ArtemisTestModule } from '../../../test.module';
 import { TestcaseAnalysisComponent } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
-import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
@@ -18,13 +17,6 @@ describe('TestcaseAnalysisComponent', () => {
     let component: TestcaseAnalysisComponent;
     let fixture: ComponentFixture<TestcaseAnalysisComponent>;
     let resultService: ResultService;
-
-    const participationMock: Participation[] = [
-        {
-            id: 1,
-            results: [{ id: 1 }],
-        },
-    ] as Participation[];
 
     const feedbackMock: Feedback[] = [
         {
@@ -53,7 +45,7 @@ describe('TestcaseAnalysisComponent', () => {
     ] as ProgrammingExerciseTask[];
 
     const feedbackDetailsResponseMock = new HttpResponse({
-        body: { feedback: feedbackMock, participations: participationMock },
+        body: { feedback: feedbackMock, resultIds: [1, 2] },
     });
 
     beforeEach(() => {
@@ -84,7 +76,7 @@ describe('TestcaseAnalysisComponent', () => {
         fixture.detectChanges();
 
         expect(resultService.getFeedbackDetailsForExercise).toHaveBeenCalled();
-        expect(component.participations).toEqual(participationMock);
+        expect(component.resultIds).toEqual([1, 2]);
         expect(component.feedback).toHaveLength(2);
         expect(component.feedback[0].detailText).toBe('Test feedback 1 detail');
         expect(component.feedback[1].detailText).toBe('Test feedback 2 detail');

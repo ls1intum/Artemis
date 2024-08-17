@@ -317,7 +317,7 @@
                     "task": "Task",
                     "testcase": "Testcase",
                     "errorCategory": "Error Category",
-                    "totalItems": "Total {{count}} items"
+                    "totalItems": "In total {{count}} items"
                 },
                 "help": {
                     "name": "Task names are written in bold whereas Test names are normal. Task or test name depending on whether the row is a task or test.",
