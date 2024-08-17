@@ -16,7 +16,6 @@ type FeedbackDetail = {
 @Component({
     selector: 'jhi-testcase-analysis',
     templateUrl: './testcase-analysis.component.html',
-    styleUrls: ['./testcase-analysis.component.scss'],
     standalone: true,
     imports: [ArtemisSharedModule],
 })
