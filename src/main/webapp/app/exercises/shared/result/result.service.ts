@@ -48,7 +48,7 @@ export interface IResultService {
 
 interface FeedbackDetailsResponse {
     feedback: Feedback[];
-    participation: Participation[];
+    participations: Participation[];
 }
 
 @Injectable({ providedIn: 'root' })

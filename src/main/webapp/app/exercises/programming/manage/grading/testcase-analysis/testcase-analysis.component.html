@@ -13,7 +13,7 @@
         <tbody class="table-group-divider">
             @for (item of feedback; track item) {
                 <tr>
-                    <td class="text-center">{{ item.count }} ({{ (this.participation.length > 0 ? item.count / this.participation.length : 0) * 100 | number: '1.0-0' }}%)</td>
+                    <td class="text-center">{{ item.count }} ({{ (this.participations.length > 0 ? item.count / this.participations.length : 0) * 100 | number: '1.0-0' }}%)</td>
                     <td>{{ item.detailText }}</td>
                     <td class="text-center">{{ item.task }}</td>
                     <td>{{ item.testcase }}</td>

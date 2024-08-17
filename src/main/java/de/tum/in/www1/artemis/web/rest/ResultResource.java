@@ -5,12 +5,13 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -279,12 +280,6 @@ public class ResultResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(savedResult);
     }
 
-    /**
-     * GET /exercises/:exerciseId/feedback-details : get all feedback details and participations for an exercise.
-     *
-     * @param exerciseId The ID of the exercise
-     * @return A response entity containing feedback details and participations
-     */
     @GetMapping("exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastTutor
     public ResponseEntity<FeedbackDetailsResponse> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
@@ -292,30 +287,25 @@ public class ResultResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         // Get all Student participations for the exercise
-        Set<StudentParticipation> participation;
+        Set<StudentParticipation> participations;
         if (exercise.isTeamMode()) {
-            participation = studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
+            participations = studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
         }
         else {
-            participation = studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(exercise.getId());
+            participations = studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(exercise.getId());
         }
-        removeSubmissionAndExerciseData(participation);
+        removeSubmissionAndExerciseData(participations);
 
-        List<Feedback> allFeedback = new ArrayList<>();
+        // Gather result IDs from the latest result of each participation
+        List<Long> resultIds = participations.stream()
+                .map(singleParticipation -> singleParticipation.getResults().stream().max(Comparator.comparing(Result::getCompletionDate)).map(Result::getId).orElse(null))
+                .filter(Objects::nonNull).collect(Collectors.toList());
 
-        // For each participation, get the feedback from its latest result
-        for (StudentParticipation singleParticipation : participation) {
-            Result latestResult = singleParticipation.getResults().stream().max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
+        // Fetch all feedbacks in one query using the list of result IDs
+        List<Feedback> allFeedback = resultRepository.findAllByIdWithEagerFeedbacksElseThrow(resultIds).stream().flatMap(result -> result.getFeedbacks().stream())
+                .collect(Collectors.toList());
 
-            if (latestResult != null) {
-                List<Feedback> feedback = getResultDetails(singleParticipation.getId(), latestResult.getId()).getBody();
-                if (feedback != null) {
-                    allFeedback.addAll(feedback);
-                }
-            }
-        }
-
-        FeedbackDetailsResponse response = new FeedbackDetailsResponse(allFeedback, participation);
+        FeedbackDetailsResponse response = new FeedbackDetailsResponse(allFeedback, participations);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -330,7 +320,7 @@ public class ResultResource {
         });
     }
 
-    public record FeedbackDetailsResponse(List<Feedback> feedback, Set<StudentParticipation> participation) {
+    public record FeedbackDetailsResponse(List<Feedback> feedback, Set<StudentParticipation> participations) {
     }
 
 }

@@ -736,7 +736,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 ResultResource.FeedbackDetailsResponse.class);
 
         assertThat(response.feedback()).isNotEmpty();
-        assertThat(response.participation()).hasSize(1);
+        assertThat(response.participations()).hasSize(1);
     }
 
     @Test
@@ -749,7 +749,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 ResultResource.FeedbackDetailsResponse.class);
 
         assertThat(response.feedback()).isEmpty();
-        assertThat(response.participation()).hasSize(1);
+        assertThat(response.participations()).hasSize(1);
     }
 
     @Test
@@ -761,7 +761,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 ResultResource.FeedbackDetailsResponse.class);
 
         assertThat(response.feedback()).isEmpty();
-        assertThat(response.participation()).isEmpty();
+        assertThat(response.participations()).isEmpty();
     }
 
     @Test

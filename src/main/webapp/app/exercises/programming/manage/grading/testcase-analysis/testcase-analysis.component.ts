@@ -23,7 +23,7 @@ type FeedbackDetail = {
 })
 export class TestcaseAnalysisComponent implements OnInit {
     @Input() exerciseTitle?: string;
-    participation: Participation[] = [];
+    participations: Participation[] = [];
     tasks: ProgrammingExerciseTask[] = [];
     feedback: FeedbackDetail[] = [];
 
@@ -42,8 +42,8 @@ export class TestcaseAnalysisComponent implements OnInit {
 
     loadFeedbackDetails(exerciseId: number): void {
         this.resultService.getFeedbackDetailsForExercise(exerciseId).subscribe((response) => {
-            this.participation = response.body?.participation || [];
-            this.participation = this.participation.filter((participation) => {
+            this.participations = response.body?.participations || [];
+            this.participations = this.participations.filter((participation) => {
                 return participation.results && participation.results.length > 0;
             });
             const feedbackArray = response.body?.feedback || [];

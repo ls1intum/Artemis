@@ -53,7 +53,7 @@ describe('TestcaseAnalysisComponent', () => {
     ] as ProgrammingExerciseTask[];
 
     const feedbackDetailsResponseMock = new HttpResponse({
-        body: { feedback: feedbackMock, participation: participationMock },
+        body: { feedback: feedbackMock, participations: participationMock },
     });
 
     beforeEach(() => {
@@ -84,7 +84,7 @@ describe('TestcaseAnalysisComponent', () => {
         fixture.detectChanges();
 
         expect(resultService.getFeedbackDetailsForExercise).toHaveBeenCalled();
-        expect(component.participation).toEqual(participationMock);
+        expect(component.participations).toEqual(participationMock);
         expect(component.feedback).toHaveLength(2);
         expect(component.feedback[0].detailText).toBe('Test feedback 1 detail');
         expect(component.feedback[1].detailText).toBe('Test feedback 2 detail');

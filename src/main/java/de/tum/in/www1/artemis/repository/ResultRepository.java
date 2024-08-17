@@ -203,6 +203,15 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             FROM Result r
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
+            WHERE r.id IN :resultIds
+            """)
+    List<Result> findAllByIdWithEagerFeedbacks(@Param("resultIds") List<Long> resultIds);
+
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
             WHERE r.id = :resultId
             """)
@@ -836,6 +845,17 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
         return getValueElseThrow(findByIdWithEagerFeedbacks(resultId), resultId);
+    }
+
+    /**
+     * Get the results with the given IDs from the database. The results are loaded together with their feedbacks.
+     * Throws an EntityNotFoundException if no results could be found for any of the given IDs.
+     *
+     * @param resultIds the list of ids for the results that should be loaded from the database
+     * @return the list of results with the given ids
+     */
+    default List<Result> findAllByIdWithEagerFeedbacksElseThrow(List<Long> resultIds) {
+        return getArbitraryValueElseThrow(Optional.of(findAllByIdWithEagerFeedbacks(resultIds)), "Results with IDs: " + resultIds);
     }
 
     /**
