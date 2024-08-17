@@ -6,7 +6,7 @@ import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 
-test.describe('Static code analysis tests', () => {
+test.describe('Static code analysis tests', { tag: '@slow' }, () => {
     test.describe.configure({
         mode: 'default',
         timeout: 120000,

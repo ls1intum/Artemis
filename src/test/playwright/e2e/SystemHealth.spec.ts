@@ -14,7 +14,7 @@ const healthChecks = [
     { selector: '#websocketConnection', name: 'websocket connection', expectedStatus: 'Connected' },
 ];
 
-test.describe('Check artemis system health', () => {
+test.describe('Check artemis system health', { tag: '@fast' }, () => {
     test.describe.configure({ timeout: 5000 });
 
     let page: Page;

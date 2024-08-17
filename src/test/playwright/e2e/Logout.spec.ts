@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { admin, studentOne, studentTwo } from '../support/users';
 
-test.describe('Logout tests', () => {
+test.describe('Logout tests', { tag: '@fast' }, () => {
     test.describe.configure({ timeout: 10000 });
 
     let course: Course;

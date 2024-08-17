@@ -4,7 +4,7 @@ import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answe
 import { admin, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 
-test.describe('Quiz Exercise Assessment', () => {
+test.describe('Quiz Exercise Assessment', { tag: '@slow' }, () => {
     test.describe.configure({ timeout: 60000 });
 
     let course: Course;

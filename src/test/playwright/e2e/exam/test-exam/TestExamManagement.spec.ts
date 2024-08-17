@@ -11,7 +11,7 @@ import { expect } from '@playwright/test';
 const uid = generateUUID();
 const examTitle = 'test-exam' + uid;
 
-test.describe('Test Exam management', () => {
+test.describe('Test Exam management', { tag: '@slow' }, () => {
     test.describe.configure({
         mode: 'default',
         timeout: 60000,

@@ -13,10 +13,8 @@ import { expect } from '@playwright/test';
 // Common primitives
 const textFixture = 'loremIpsum-short.txt';
 
-test.describe('Test exam participation', () => {
-    test.describe.configure({
-        timeout: 60000,
-    });
+test.describe('Test exam participation', { tag: '@slow' }, () => {
+    test.describe.configure({ timeout: 60000 });
 
     let course: Course;
     let exerciseArray: Array<Exercise> = [];

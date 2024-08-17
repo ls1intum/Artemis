@@ -8,7 +8,7 @@ import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 
-test.describe('File upload exercise management', () => {
+test.describe('File upload exercise management', { tag: '@fast' }, () => {
     test.describe.configure({ timeout: 25000 });
 
     let course: Course;

@@ -11,7 +11,7 @@ import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIReques
 import { Commands } from '../../../support/commands';
 import { newBrowserPage } from '../../../support/utils';
 
-test.describe('Modeling Exercise Assessment', () => {
+test.describe('Modeling Exercise Assessment', { tag: '@fast' }, () => {
     test.describe.configure({ timeout: 25000 });
 
     let course: Course;

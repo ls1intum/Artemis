@@ -8,7 +8,7 @@ import { expect } from '@playwright/test';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
-test.describe('Text exercise management', () => {
+test.describe('Text exercise management', { tag: '@fast' }, () => {
     test.describe.configure({ timeout: 30000 });
 
     let course: Course;
