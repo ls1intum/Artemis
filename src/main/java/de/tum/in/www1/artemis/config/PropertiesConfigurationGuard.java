@@ -14,11 +14,8 @@ public class PropertiesConfigurationGuard implements InitializingBean {
     @Value("${info.universityName:#{null}}")
     private String universityName;
 
-    @Value("${info.universityAdminName:#{null}}")
-    private String universityAdminName;
-
     public void afterPropertiesSet() {
-        if (this.universityName == null || this.universityAdminName == null || this.universityAdminName.isEmpty() || this.universityName.isEmpty()) {
+        if (this.universityName == null || this.universityName.isEmpty()) {
             log.error(
                     "The name of the university and the name of the main admin are not configured in the application-prod.yml! These are needed to be displayed in the /about page, and for the telemetry service.");
             throw new IllegalArgumentException("The name of the University, and the name of the main admin must be configured! "); // exists the application

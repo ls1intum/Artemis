@@ -89,7 +89,7 @@ public class TelemetryService {
 
         var telemetryJson = objectWriter.writeValueAsString(telemetryData);
         HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
-        var response = restTemplate.postForEntity(destination + "/telemetry", requestEntity, String.class);
+        var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
         log.info("Successfully sent telemetry data. {}", response.getBody());
     }
 }
