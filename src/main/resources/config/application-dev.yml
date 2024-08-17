@@ -117,7 +117,7 @@ info:
     # default value set to true for development environment
     text-assessment-analytics-enabled: true
     universityName: Some University # Must be set before starting the application in production
-    universityAdminName: Some Universities Admin # Must be set before starting the application in production
+    universityAdminName: # Can be set before starting the application in production. Used by the telemetry service
     contact: someUniversityAdminEmail@xcit.tum.de  #default value, can be overridden if needed
 
 # Eureka configuration
