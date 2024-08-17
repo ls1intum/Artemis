@@ -20,7 +20,6 @@ describe('ProgrammingExercise Docker Image', () => {
         comp = fixture.componentInstance;
 
         comp.dockerImage = 'testImage';
-        comp.checkoutPath = '/var/tmp';
         comp.timeout = 10;
     });
 
