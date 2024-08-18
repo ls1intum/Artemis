@@ -185,13 +185,13 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.getActionType(new OnlineUnit())).toEqual(ActionType.Delete);
     });
 
-    describe('viewButtonAvailable', () => {
+    describe('isViewButtonAvailable', () => {
         it('should return true for an attachment unit with a PDF link', () => {
             const lectureUnit = {
                 type: LectureUnitType.ATTACHMENT,
                 attachment: { link: 'file.pdf' },
             } as LectureUnit;
-            expect(lectureUnitManagementComponent.viewButtonAvailable(lectureUnit)).toBeTrue();
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeTrue();
         });
 
         it('should return false for an attachment unit with a non-PDF link', () => {
@@ -199,7 +199,7 @@ describe('LectureUnitManagementComponent', () => {
                 type: LectureUnitType.ATTACHMENT,
                 attachment: { link: 'file.txt' },
             };
-            expect(lectureUnitManagementComponent.viewButtonAvailable(lectureUnit)).toBeFalse();
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();
         });
     });
 });

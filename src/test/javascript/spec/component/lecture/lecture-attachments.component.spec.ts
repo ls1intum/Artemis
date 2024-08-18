@@ -381,21 +381,21 @@ describe('LectureAttachmentsComponent', () => {
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
-    describe('viewButtonAvailable', () => {
+    describe('isViewButtonAvailable', () => {
         it('should return true if the attachment link ends with .pdf', () => {
             const attachment = { id: 1, link: 'example.pdf', attachmentType: 'FILE' } as Attachment;
-            expect(comp.viewButtonAvailable(attachment)).toBeTrue();
+            expect(comp.isViewButtonAvailable(attachment.link!)).toBeTrue();
         });
 
         it('should return false if the attachment link does not end with .pdf', () => {
             const attachment = { id: 2, link: 'example.txt', attachmentType: 'FILE' } as Attachment;
-            expect(comp.viewButtonAvailable(attachment)).toBeFalse();
+            expect(comp.isViewButtonAvailable(attachment.link!)).toBeFalse();
         });
 
         it('should return false for other common file extensions', () => {
             const attachments = [{ link: 'document.docx' }, { link: 'spreadsheet.xlsx' }, { link: 'presentation.pptx' }, { link: 'image.jpeg' }];
             attachments.forEach((att) => {
-                expect(comp.viewButtonAvailable(att)).toBeFalse();
+                expect(comp.isViewButtonAvailable(att.link!)).toBeFalse();
             });
         });
     });
