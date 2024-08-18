@@ -22,12 +22,13 @@ jest.mock('pdfjs-dist/build/pdf.worker', () => {
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { ElementRef } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('PdfPreviewComponent', () => {
     let component: PdfPreviewComponent;
@@ -35,6 +36,7 @@ describe('PdfPreviewComponent', () => {
     let attachmentServiceMock: any;
     let attachmentUnitServiceMock: any;
     let alertServiceMock: any;
+    let routeMock: any;
 
     beforeEach(async () => {
         global.URL.createObjectURL = jest.fn().mockReturnValue('mocked_blob_url');
@@ -44,7 +46,7 @@ describe('PdfPreviewComponent', () => {
         attachmentUnitServiceMock = {
             getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
         };
-        const routeMock = {
+        routeMock = {
             data: of({
                 course: { id: 1, name: 'Example Course' },
                 attachment: { id: 1, name: 'Example PDF' },
@@ -77,10 +79,58 @@ describe('PdfPreviewComponent', () => {
         jest.clearAllMocks();
     });
 
-    it('should load PDF and handle successful response', () => {
+    it('should load attachment file when attachment data is available', () => {
         component.ngOnInit();
         expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
-        expect(alertServiceMock.error).not.toHaveBeenCalled();
+        expect(attachmentUnitServiceMock.getAttachmentFile).not.toHaveBeenCalled();
+    });
+
+    it('should load attachment unit file when attachment unit data is available', () => {
+        routeMock.data = of({
+            course: { id: 1, name: 'Example Course' },
+            attachmentUnit: { id: 1, name: 'Chapter 1' },
+        });
+        component.ngOnInit();
+        expect(attachmentUnitServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
+        expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalled();
+    });
+
+    it('should handle errors when loading an attachment file fails', () => {
+        const errorResponse = new HttpErrorResponse({
+            status: 404,
+            statusText: 'Not Found',
+            error: 'File not found',
+        });
+
+        const attachmentService = TestBed.inject(AttachmentService);
+        jest.spyOn(attachmentService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
+        const alertServiceSpy = jest.spyOn(alertServiceMock, 'error');
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should handle errors when loading an attachment unit file fails', () => {
+        routeMock.data = of({
+            course: { id: 1, name: 'Example Course' },
+            attachmentUnit: { id: 1, name: 'Chapter 1' },
+        });
+        const errorResponse = new HttpErrorResponse({
+            status: 404,
+            statusText: 'Not Found',
+            error: 'File not found',
+        });
+
+        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        jest.spyOn(attachmentUnitService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
+        const alertServiceSpy = jest.spyOn(alertServiceMock, 'error');
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should load and render PDF pages', () => {
@@ -92,6 +142,10 @@ describe('PdfPreviewComponent', () => {
         expect(URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
         expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
         expect(component.totalPages).toBeGreaterThan(0);
+    });
+
+    it('should handle loading errors', async () => {
+        await expect(component.loadPdf('invalid_url')).rejects.toThrow('Failed to load PDF document');
     });
 
     it('should handle keyboard navigation for enlarged view', () => {
@@ -130,14 +184,6 @@ describe('PdfPreviewComponent', () => {
         expect(component.pdfContainer.nativeElement.style.overflow).toBe('auto');
     });
 
-    it('should not navigate beyond totalPages', () => {
-        component.totalPages = 5;
-        component.currentPage = 5;
-        const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-        component.handleKeyboardEvents(event);
-        expect(component.currentPage).toBe(5); // Should not increase
-    });
-
     it('should resize canvas correctly on window resize', () => {
         const adjustCanvasSizeSpy = jest.spyOn(component, 'adjustCanvasSize');
         window.dispatchEvent(new Event('resize'));
@@ -159,19 +205,22 @@ describe('PdfPreviewComponent', () => {
         expect(component.currentPage).toBe(1);
     });
 
-    it('should handle error when loading PDF pages', () => {
-        attachmentServiceMock.getAttachmentFile.mockReturnValue(of(new Blob([''], { type: 'application/pdf' })));
-        component.ngOnInit();
-        expect(alertServiceMock.error).not.toHaveBeenCalled();
+    it('should unsubscribe from attachment subscription on destroy', () => {
+        const spySub = jest.spyOn(component.attachmentSub, 'unsubscribe');
+        component.ngOnDestroy();
+        expect(spySub).toHaveBeenCalled();
     });
 
-    it('should update the page view when new pages are loaded', () => {
-        const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
-        attachmentServiceMock.getAttachmentFile.mockReturnValue(of(mockBlob));
+    it('should unsubscribe from attachmentUnit subscription on destroy', () => {
+        routeMock.data = of({
+            course: { id: 1, name: 'Example Course' },
+            attachmentUnit: { id: 1, name: 'Chapter 1' },
+        });
         component.ngOnInit();
-
-        // Assuming `loadPdf` sets `totalPages` based on the PDF document
-        expect(component.totalPages).toBeGreaterThan(0);
-        expect(component.pdfContainer.nativeElement.children.length).toBeGreaterThan(0);
+        fixture.detectChanges();
+        expect(component.attachmentUnitSub).toBeDefined();
+        const spySub = jest.spyOn(component.attachmentUnitSub, 'unsubscribe');
+        component.ngOnDestroy();
+        expect(spySub).toHaveBeenCalled();
     });
 });

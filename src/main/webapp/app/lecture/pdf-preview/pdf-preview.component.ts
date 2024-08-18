@@ -10,6 +10,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
+import { HttpErrorResponse } from '@angular/common/http';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -46,11 +47,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 this.attachment = data.attachment;
                 this.attachmentSub = this.attachmentService.getAttachmentFile(this.course?.id!, this.attachment?.id!).subscribe({
                     next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit = data.attachmentUnit;
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course?.id!, this.attachmentUnit?.id!).subscribe({
                     next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             }
         });
@@ -88,7 +91,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Loads a PDF from a provided URL and initializes viewer setup.
      * @param fileUrl The URL of the file to load.
      */
-    private async loadPdf(fileUrl: string) {
+    async loadPdf(fileUrl: string) {
         try {
             const loadingTask = PDFJS.getDocument(fileUrl);
             const pdf = await loadingTask.promise;
