@@ -12,7 +12,7 @@ export class MonacoGradingCriterionAction extends MonacoEditorDomainAction {
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        this.insertTextAtPosition(editor, this.getPosition(editor), this.getOpeningIdentifier() + MonacoGradingCriterionAction.TEXT + '\n');
+        this.insertTextAtPosition(editor, this.getPosition(editor), `${this.getOpeningIdentifier()}${MonacoGradingCriterionAction.TEXT}\n`);
         this.gradingInstructionAction.executeInCurrentEditor();
         editor.focus();
     }

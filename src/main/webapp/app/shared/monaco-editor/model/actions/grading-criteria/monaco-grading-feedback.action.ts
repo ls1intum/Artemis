@@ -11,7 +11,7 @@ export class MonacoGradingFeedbackAction extends MonacoEditorDomainAction {
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        this.insertTextAtPosition(editor, this.getPosition(editor), `\t${this.getOpeningIdentifier()}\n`);
+        this.insertTextAtPosition(editor, this.getPosition(editor), `\t${this.getOpeningIdentifier()} ${MonacoGradingFeedbackAction.TEXT}\n`);
     }
 
     getOpeningIdentifier(): string {
