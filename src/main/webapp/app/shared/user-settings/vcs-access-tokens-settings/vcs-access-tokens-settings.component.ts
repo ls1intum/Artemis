@@ -94,6 +94,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
             },
         });
     }
+
     /**
      * set wasCopied for 3 seconds on success
      */

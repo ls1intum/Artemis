@@ -37,9 +37,9 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing the current user's account.
@@ -136,8 +136,7 @@ public class AccountResource {
             keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
         }
         catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "sshUserSettings", "saveSshKeyError", "Invalid SSH key format"))
-                    .body(null);
+            throw new BadRequestAlertException("Invalid SSH key format", "SSH key", "invalidKeyFormat", true);
         }
         // Extract the PublicKey object
         PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
