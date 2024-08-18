@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -33,8 +34,9 @@ public class JenkinsResultService extends AbstractContinuousIntegrationResultSer
 
     public JenkinsResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
-            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository) {
-        super(testCaseRepository, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService);
+            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        super(testCaseRepository, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService, programmingExerciseBuildConfigRepository);
     }
 
     @Override

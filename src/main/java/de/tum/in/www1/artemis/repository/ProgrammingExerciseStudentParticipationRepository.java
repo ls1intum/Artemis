@@ -76,6 +76,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
+    List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
+
     default ProgrammingExerciseStudentParticipation findByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
         return getValueElseThrow(findByExerciseIdAndStudentLogin(exerciseId, username));
     }
@@ -114,6 +116,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") long exerciseId,
             @Param("teamShortName") String teamShortName);
+
+    @Query("""
+            SELECT DISTINCT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.team team
+                LEFT JOIN FETCH team.students student
+            WHERE participation.exercise.id = :exerciseId
+                AND student.id = :studentId
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     List<ProgrammingExerciseStudentParticipation> findByExerciseId(long exerciseId);
 

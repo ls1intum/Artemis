@@ -99,14 +99,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
-    Optional<User> findOneWithAuthoritiesByLogin(String login);
-
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(String login, boolean isInternal);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    Optional<User> findOneWithGroupsAndAuthoritiesByEmailAndIsInternal(String email, boolean isInternal);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
