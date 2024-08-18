@@ -18,7 +18,7 @@ artemis:
     # Artemis sends the artemis version, the university name, the universities main admin contact, (email + name), the server url,
     # and used profiles (gitlab, localVC, ...) to a telemetry collection service.
     telemetry:
-        enabled: true  # setting this to false will disable sending any information to the telemetry service
+        enabled: true # Set this to false, to disable sending any information to the telemetry service
         destination: telemetry.artemis.cit.tum.de
 
 spring:

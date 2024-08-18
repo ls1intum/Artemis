@@ -136,5 +136,5 @@ theia:
 # Telemetry service: disabled for development
 artemis:
   telemetry:
-    enabled: false
+    enabled: false # Set to false for the dev profile, as we only want to receive telemetry data from production deployments
     destination: telemetry.artemis.cit.tum.de

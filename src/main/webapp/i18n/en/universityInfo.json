@@ -3,7 +3,7 @@
         "universityInfo": {
             "title": "University",
             "name": "Name",
-            "adminName": "Main Admins Name",
+            "adminName": "Admin",
             "adminEmail": "Contact Email"
         }
     }
