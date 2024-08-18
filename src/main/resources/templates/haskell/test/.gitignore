@@ -3,10 +3,10 @@ test-reports/
 
 # Subdirectories containing other repositories
 template/
-solution/
+${solutionWorkingDirectory}/
 
 # Subdirectories with test submission
-assignment/
+${studentParentWorkingDirectoryName}/
 
 # Taken from https://github.com/github/gitignore
 
