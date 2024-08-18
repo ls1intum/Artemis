@@ -90,7 +90,10 @@ public class LocalCIResultProcessingService {
     public void init() {
         this.resultQueue = this.redissonClient.getQueue("buildResultQueue");
         this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
-        this.listenerId = resultQueue.addListener((ListAddListener) item -> processResult());
+        this.listenerId = resultQueue.addListener((ListAddListener) item -> {
+            log.info("Build job result added to queue: {}", item);
+            processResult();
+        });
     }
 
     @PreDestroy

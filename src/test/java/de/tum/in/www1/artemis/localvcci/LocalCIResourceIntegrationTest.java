@@ -108,7 +108,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         finishedJob2 = new BuildJob(finishedJobQueueItem2, BuildStatus.FAILED, result2);
         finishedJob3 = new BuildJob(finishedJobQueueItem3, BuildStatus.FAILED, result3);
 
-        queuedJobs = redissonClient.getQueue("buildJobQueue");
+        queuedJobs = redissonClient.getPriorityQueue("buildJobQueue");
         processingJobs = redissonClient.getMap("processingJobs");
         buildAgentInformation = redissonClient.getMap("buildAgentInformation");
 

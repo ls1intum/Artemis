@@ -66,7 +66,7 @@ public class SharedQueueProcessingService {
 
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
-    private RPriorityQueue<BuildJobQueueItem> queue;
+    private RPriorityQueue<BuildJobQueueItem> buildJobQueue;
 
     private RQueue<ResultQueueItem> resultQueue;
 
@@ -104,21 +104,21 @@ public class SharedQueueProcessingService {
     public void init() {
         this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
         this.processingJobs = this.redissonClient.getMap("processingJobs");
-        this.queue = this.redissonClient.getPriorityQueue("buildJobQueue");
+        this.buildJobQueue = this.redissonClient.getPriorityQueue("buildJobQueue");
         this.resultQueue = this.redissonClient.getQueue("buildResultQueue");
-        this.listenerIdAdd = this.queue.addListener((ListAddListener) name -> {
-            log.debug("CIBuildJobQueueItem added to queue: {}", name);
+        this.listenerIdAdd = this.buildJobQueue.addListener((ListAddListener) name -> {
+            log.info("CIBuildJobQueueItem added to queue: {}", name);
             checkAvailabilityAndProcessNextBuild();
         });
-        this.listenerIdRemove = this.queue.addListener((ListRemoveListener) name -> log.debug("CIBuildJobQueueItem removed from queue: {}", name));
+        this.listenerIdRemove = this.buildJobQueue.addListener((ListRemoveListener) name -> log.info("CIBuildJobQueueItem removed from queue: {}", name));
     }
 
     @PreDestroy
     public void removeListener() {
         // Remove the build agent from the map to avoid issues
         this.buildAgentInformation.remove(getBuildAgentName());
-        this.queue.removeListener(this.listenerIdAdd);
-        this.queue.removeListener(this.listenerIdRemove);
+        this.buildJobQueue.removeListener(this.listenerIdAdd);
+        this.buildJobQueue.removeListener(this.listenerIdRemove);
         // TODO: remove the build agent information from the map
     }
 
@@ -168,14 +168,14 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        if (queue.isEmpty()) {
+        if (buildJobQueue.isEmpty()) {
             return;
         }
         BuildJobQueueItem buildJob = null;
         instanceLock.lock();
         try {
             // Recheck conditions after acquiring the lock to ensure they are still valid
-            if (!nodeIsAvailable() || queue.isEmpty()) {
+            if (!nodeIsAvailable() || buildJobQueue.isEmpty()) {
                 return;
             }
             buildJob = addToProcessingJobs();
@@ -191,7 +191,7 @@ public class SharedQueueProcessingService {
 
                 buildJob = new BuildJobQueueItem(buildJob, "");
                 log.info("Adding build job back to the queue: {}", buildJob);
-                queue.add(buildJob);
+                buildJobQueue.add(buildJob);
                 localProcessingJobs.decrementAndGet();
             }
 
@@ -203,7 +203,7 @@ public class SharedQueueProcessingService {
     }
 
     private BuildJobQueueItem addToProcessingJobs() {
-        BuildJobQueueItem buildJob = queue.poll();
+        BuildJobQueueItem buildJob = buildJobQueue.poll();
         if (buildJob != null) {
             String memberAddress = getBuildAgentName();
 
@@ -333,6 +333,7 @@ public class SharedQueueProcessingService {
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
+            log.info("Adding build result to result queue: {}", resultQueueItem);
             resultQueue.add(resultQueueItem);
 
             // after processing a build job, remove it from the processing jobs
@@ -368,6 +369,7 @@ public class SharedQueueProcessingService {
             failedResult.setBuildLogEntries(buildLogs);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
+            log.info("Adding build result to result queue: {}", resultQueueItem);
             resultQueue.add(resultQueueItem);
 
             processingJobs.remove(buildJob.id());

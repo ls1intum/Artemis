@@ -52,7 +52,7 @@ public class SharedQueueManagementService {
 
     private final ProfileService profileService;
 
-    private RPriorityQueue<BuildJobQueueItem> queue;
+    private RPriorityQueue<BuildJobQueueItem> buildJobQueue;
 
     /**
      * Map of build jobs currently being processed across all nodes
@@ -78,7 +78,8 @@ public class SharedQueueManagementService {
     public void init() {
         this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
         this.processingJobs = this.redissonClient.getMap("processingJobs");
-        this.queue = this.redissonClient.getPriorityQueue("buildJobQueue");
+        this.buildJobQueue = this.redissonClient.getPriorityQueue("buildJobQueue");
+        this.buildJobQueue.trySetComparator(new LocalCIPriorityQueueComparator());
         this.canceledBuildJobsTopic = this.redissonClient.getTopic("canceledBuildJobsTopic");
         this.dockerImageCleanupInfo = this.redissonClient.getMap("dockerImageCleanupInfo");
     }
@@ -101,7 +102,7 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobQueueItem> getQueuedJobs() {
-        return queue.stream().toList();
+        return buildJobQueue.stream().toList();
     }
 
     public List<BuildJobQueueItem> getProcessingJobs() {
@@ -109,7 +110,7 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
-        return queue.stream().filter(job -> job.courseId() == courseId).toList();
+        return buildJobQueue.stream().filter(job -> job.courseId() == courseId).toList();
     }
 
     public List<BuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
@@ -117,7 +118,7 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobQueueItem> getQueuedJobsForParticipation(long participationId) {
-        return queue.stream().filter(job -> job.participationId() == participationId).toList();
+        return buildJobQueue.stream().filter(job -> job.participationId() == participationId).toList();
     }
 
     public List<BuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
@@ -140,14 +141,14 @@ public class SharedQueueManagementService {
      */
     public void cancelBuildJob(String buildJobId) {
         // Remove build job if it is queued
-        if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
+        if (buildJobQueue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
             List<BuildJobQueueItem> toRemove = new ArrayList<>();
-            for (BuildJobQueueItem job : queue) {
+            for (BuildJobQueueItem job : buildJobQueue) {
                 if (Objects.equals(job.id(), buildJobId)) {
                     toRemove.add(job);
                 }
             }
-            queue.removeAll(toRemove);
+            buildJobQueue.removeAll(toRemove);
         }
         else {
             // Cancel build job if it is currently being processed
@@ -174,7 +175,7 @@ public class SharedQueueManagementService {
      */
     public void cancelAllQueuedBuildJobs() {
         log.debug("Cancelling all queued build jobs");
-        queue.clear();
+        buildJobQueue.clear();
     }
 
     /**
@@ -204,12 +205,12 @@ public class SharedQueueManagementService {
     public void cancelAllQueuedBuildJobsForCourse(long courseId) {
         // TODO: implement better searching based on predicates to avoid retrieving all values
         List<BuildJobQueueItem> toRemove = new ArrayList<>();
-        for (BuildJobQueueItem job : queue) {
+        for (BuildJobQueueItem job : buildJobQueue) {
             if (job.courseId() == courseId) {
                 toRemove.add(job);
             }
         }
-        queue.removeAll(toRemove);
+        buildJobQueue.removeAll(toRemove);
     }
 
     /**
@@ -233,12 +234,12 @@ public class SharedQueueManagementService {
     public void cancelAllJobsForParticipation(long participationId) {
         // TODO: implement better searching based on predicates to avoid retrieving all values
         List<BuildJobQueueItem> toRemove = new ArrayList<>();
-        for (BuildJobQueueItem queuedJob : queue) {
+        for (BuildJobQueueItem queuedJob : buildJobQueue) {
             if (queuedJob.participationId() == participationId) {
                 toRemove.add(queuedJob);
             }
         }
-        queue.removeAll(toRemove);
+        buildJobQueue.removeAll(toRemove);
 
         for (BuildJobQueueItem runningJob : processingJobs.values()) {
             if (runningJob.participationId() == participationId) {

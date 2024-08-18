@@ -62,30 +62,36 @@ public class LocalCIQueueWebsocketService {
         RMap<String, BuildAgentInformation> buildAgentInformation = redissonClient.getMap("buildAgentInformation");
 
         queue.addListener((ListAddListener) item -> {
+            log.info("Build job added to queue: {}", item);
             // TODO: how to get the courseId here?
             long courseId = 1L;
             sendQueuedJobsOverWebsocket(courseId);
         });
         queue.addListener((ListRemoveListener) item -> {
+            log.info("Build job removed from queue: {}", item);
             // TODO: how to get the courseId here?
             long courseId = 1L;
             sendQueuedJobsOverWebsocket(courseId);
         });
         processingJobs.addListener((MapPutListener) item -> {
+            log.info("Build job added to processing: {}", item);
             // TODO: how to get the courseId here?
             long courseId = 1L;
             sendProcessingJobsOverWebsocket(courseId);
         });
         processingJobs.addListener((MapRemoveListener) item -> {
+            log.info("Build job removed to processing: {}", item);
             // TODO: how to get the courseId here?
             long courseId = 1L;
             sendProcessingJobsOverWebsocket(courseId);
         });
         buildAgentInformation.addListener((MapPutListener) item -> {
+            log.info("Build Agent added: {}", item);
             // TODO: get build agent name from item
             sendBuildAgentInformationOverWebsocket(item);
         });
         buildAgentInformation.addListener((MapRemoveListener) item -> {
+            log.info("Build Agent removed: {}", item);
             // TODO: get build agent name from item
             sendBuildAgentInformationOverWebsocket(item);
         });
