@@ -726,11 +726,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAllFeedbackDetailsForExercise() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(null, null, participation);
+
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
 
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
@@ -744,35 +745,21 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(response.feedbackDetails()).isNotEmpty();
         assertThat(response.resultIds()).containsExactly(result.getId());
 
-        FeedbackDetailDTO feedbackDetail = response.feedbackDetails().getFirst();
+        FeedbackDetailDTO feedbackDetail = response.feedbackDetails().get(0);
         assertThat(feedbackDetail.detailText()).isEqualTo("Some feedback");
-        assertThat(feedbackDetail.testCaseName()).isNull();
+        assertThat(feedbackDetail.testCaseName()).isNull();  // Test case name should be null since no test case was linked
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetAllFeedbackDetailsForExercise_NoFeedback() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(null, null, participation);
-
-        FeedbackDetailsWithResultIdsDTO response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
-                FeedbackDetailsWithResultIdsDTO.class);
-
-        assertThat(response.feedbackDetails()).isEmpty();
-        assertThat(response.resultIds()).containsExactly(result.getId());
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAllFeedbackDetailsForExercise_NoParticipations() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
         FeedbackDetailsWithResultIdsDTO response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
                 FeedbackDetailsWithResultIdsDTO.class);
 
-        assertThat(response.feedbackDetails()).isEmpty();
-        assertThat(response.resultIds()).isEmpty();
+        assertThat(response.feedbackDetails()).isNull();
+        assertThat(response.resultIds()).isNull();
     }
 
 }

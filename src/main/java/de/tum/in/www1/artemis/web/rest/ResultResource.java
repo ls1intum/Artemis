@@ -292,7 +292,8 @@ public class ResultResource {
     public ResponseEntity<FeedbackDetailsWithResultIdsDTO> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
 
-        Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestResultsAndFeedbackAndTestcasesElseThrow(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository
+                .findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(exerciseId);
         removeSubmissionAndExerciseData(participations);
 
         List<FeedbackDetailDTO> allFeedbackDetails = new ArrayList<>();
@@ -313,10 +314,10 @@ public class ResultResource {
         });
 
         FeedbackDetailsWithResultIdsDTO response = new FeedbackDetailsWithResultIdsDTO(allFeedbackDetails, resultIds);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.ok(response);
     }
 
-    private void removeSubmissionAndExerciseData(Set<StudentParticipation> participations) {
+    private void removeSubmissionAndExerciseData(List<StudentParticipation> participations) {
         // remove unnecessary data to reduce response size
         participations.forEach(participation -> {
             participation.setSubmissions(null);
