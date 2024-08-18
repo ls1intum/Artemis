@@ -179,7 +179,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     /**
      * Dynamically updates the canvas size within an enlarged view based on the viewport.
      */
-    private adjustCanvasSize = () => {
+    adjustCanvasSize = () => {
         if (this.isEnlargedView) {
             const canvasElements = this.pdfContainer.nativeElement.querySelectorAll('.pdf-page-container canvas');
             if (this.currentPage - 1 < canvasElements.length) {
