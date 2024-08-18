@@ -28,6 +28,11 @@ const tableColumns: Column<Course>[] = [
     },
 ];
 
+export interface ImportAllCourseCompetenciesResult {
+    course: Course;
+    courseCompetencyImportOptions: CourseCompetencyImportOptionsDTO;
+}
+
 @Component({
     selector: 'jhi-import-all-course-competencies-modal',
     standalone: true,
@@ -53,14 +58,18 @@ export class ImportAllCourseCompetenciesModalComponent {
 
     readonly importSettings = signal<CourseCompetencyImportSettings>(new CourseCompetencyImportSettings());
 
-    protected selectCourse(courseId: number): void {
-        this.activeModal.close(<CourseCompetencyImportOptionsDTO>{
-            sourceCourseId: courseId,
+    protected selectCourse(course: Course): void {
+        const courseCompetencyImportOptions = <CourseCompetencyImportOptionsDTO>{
+            sourceCourseId: course.id,
             importExercises: this.importSettings().importExercises,
             importLectures: this.importSettings().importLectures,
             importRelations: this.importSettings().importRelations,
             referenceDate: this.importSettings().referenceDate,
             isReleaseDate: this.importSettings().isReleaseDate,
+        };
+        this.activeModal.close(<ImportAllCourseCompetenciesResult>{
+            course,
+            courseCompetencyImportOptions,
         });
     }
 

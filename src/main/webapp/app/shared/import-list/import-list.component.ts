@@ -37,10 +37,10 @@ export class ImportListComponent<T extends BaseEntity> {
     private readonly pagingService = inject(PagingService);
 
     readonly columns = input.required<Column<T>[]>();
-    readonly entityName = input<string>('competency');
+    readonly entityName = input.required<string>();
     readonly disabledIds = input<number[]>([]);
 
-    readonly onRowSelection = output<number>();
+    readonly onRowSelection = output<T>();
 
     readonly isLoading = signal<boolean>(false);
     private readonly searchResult = signal<SearchResult<T> | undefined>(undefined);
@@ -135,7 +135,7 @@ export class ImportListComponent<T extends BaseEntity> {
         this.searchState.update((state) => ({ ...state, page: page }));
     }
 
-    protected selectRow(id: number): void {
-        this.onRowSelection.emit(id);
+    protected selectRow(item: T): void {
+        this.onRowSelection.emit(item);
     }
 }

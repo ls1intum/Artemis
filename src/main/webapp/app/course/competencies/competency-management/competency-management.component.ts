@@ -7,7 +7,6 @@ import {
     CompetencyRelationDTO,
     CompetencyWithTailRelationDTO,
     CourseCompetency,
-    CourseCompetencyImportOptionsDTO,
     CourseCompetencyType,
     dtoToCompetencyRelation,
     getIcon,
@@ -27,7 +26,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
-import { ImportAllCourseCompetenciesModalComponent } from 'app/course/competencies/components/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
+import {
+    ImportAllCourseCompetenciesModalComponent,
+    ImportAllCourseCompetenciesResult,
+} from 'app/course/competencies/components/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
+import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -61,6 +64,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     // Injected services
     private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
+    private readonly courseCompetencyApiService: CourseCompetencyApiService = inject(CourseCompetencyApiService);
     private readonly courseCompetencyService: CourseCompetencyService = inject(CourseCompetencyService);
     private readonly alertService: AlertService = inject(AlertService);
     private readonly modalService: NgbModal = inject(NgbModal);
@@ -130,31 +134,28 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     /**
      * Opens a modal for selecting a course to import all competencies from.
      */
-    openImportAllModal() {
-        const modalRef = this.modalService.open(ImportAllCourseCompetenciesModalComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.courseId = signal<number>(this.courseId);
-        modalRef.result.then((result: CourseCompetencyImportOptionsDTO) => {
-            console.log(result);
-            // const courseTitle = result.courseForImportDTO.title ?? '';
-            //
-            // this.courseCompetencyService
-            //     .importAll(this.courseId, result.courseForImportDTO.id!, result.importRelations)
-            //     .pipe(
-            //         filter((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.ok),
-            //         map((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.body),
-            //     )
-            //     .subscribe({
-            //         next: (res: Array<CompetencyWithTailRelationDTO>) => {
-            //             if (res.length > 0) {
-            //                 this.alertService.success(`artemisApp.courseCompetency.importAll.success`, { noOfCompetencies: res.length, courseTitle: courseTitle });
-            //                 this.updateDataAfterImportAll(res);
-            //             } else {
-            //                 this.alertService.warning(`artemisApp.courseCompetency.importAll.warning`, { courseTitle: courseTitle });
-            //             }
-            //         },
-            //         error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            //     });
+    async openImportAllModal() {
+        const modalRef = this.modalService.open(ImportAllCourseCompetenciesModalComponent, {
+            size: 'lg',
+            backdrop: 'static',
         });
+        modalRef.componentInstance.courseId = signal<number>(this.courseId);
+        const importResults: ImportAllCourseCompetenciesResult = await modalRef.result;
+        const courseTitle = importResults.course.title ?? '';
+        try {
+            const importedCompetencies = await this.courseCompetencyApiService.importAllByCourseId(importResults.course.id!, importResults.courseCompetencyImportOptions);
+            if (importedCompetencies.length > 0) {
+                this.alertService.success(`artemisApp.courseCompetency.importAll.success`, {
+                    noOfCompetencies: importedCompetencies.length,
+                    courseTitle: courseTitle,
+                });
+                this.updateDataAfterImportAll(importedCompetencies);
+            } else {
+                this.alertService.warning(`artemisApp.courseCompetency.importAll.warning`, { courseTitle: courseTitle });
+            }
+        } catch (error) {
+            onError(this.alertService, error);
+        }
     }
 
     /**
