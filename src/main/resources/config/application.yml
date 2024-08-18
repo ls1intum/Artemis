@@ -146,9 +146,12 @@ spring:
             import-check:
                 enabled: false
     data:
-        jpa:
+      jpa:
             repositories:
                 bootstrap-mode: deferred
+      redis:
+          host: localhost
+          port: 6379
     jpa:
         open-in-view: false
         show-sql: false
@@ -167,7 +170,8 @@ spring:
             hibernate.query.in_clause_parameter_padding: true
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
-            hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
+            hibernate.cache.redisson.config: config/redisson.yml
+            hibernate.cache.region.factory_class: org.redisson.hibernate.RedissonRegionFactory
             hibernate.cache.use_minimal_puts: true
             hibernate.cache.hazelcast.instance_name: Artemis
             hibernate.cache.hazelcast.use_lite_member: true

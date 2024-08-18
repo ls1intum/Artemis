@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -85,6 +88,7 @@ public class SharedQueueProcessingService {
     public SharedQueueProcessingService(RedissonClient redissonClient, RedisClient redisClient, ExecutorService localCIBuildExecutorService,
             BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService) {
         this.redissonClient = redissonClient;
+        // TODO: we use redissonClient for a few aspects, double check if it also uses the build agent name
         this.redisClient = redisClient;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.buildJobManagementService = buildJobManagementService;
@@ -110,27 +114,29 @@ public class SharedQueueProcessingService {
 
     @PreDestroy
     public void removeListener() {
+        this.buildAgentInformation.remove(getBuildAgentName());
         this.queue.removeListener(this.listenerIdAdd);
         this.queue.removeListener(this.listenerIdRemove);
+        // TODO: remove the build agent information from the map
     }
 
     /**
      * Wait 1 minute after startup and then every 1 minute update the build agent information of the local cluster member.
      * This is necessary because the build agent information is not updated automatically when a node joins the cluster.
      */
-    @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
+    @Scheduled(initialDelay = 10000, fixedRate = 5000) // 1 minute initial delay, 1 minute fixed rate
     public void updateBuildAgentInformation() {
         // Remove build agent information of offline nodes
         removeOfflineNodes();
 
         // Add build agent information of local cluster member to map if not already present
-        if (!buildAgentInformation.containsKey(getLocalAddress())) {
+        if (!buildAgentInformation.containsKey(getBuildAgentName())) {
             updateLocalBuildAgentInformation();
         }
     }
 
-    private String getLocalAddress() {
-        return redisClient.getAddr().toString();
+    private String getBuildAgentName() {
+        return "build-agent-1"; // TODO: load from yml
     }
 
     /**
@@ -152,7 +158,7 @@ public class SharedQueueProcessingService {
         // Check conditions before acquiring the lock to avoid unnecessary locking
         if (!nodeIsAvailable()) {
             // Add build agent information of local member to map if not already present
-            if (!buildAgentInformation.containsKey(getLocalAddress())) {
+            if (!buildAgentInformation.containsKey(getBuildAgentName())) {
                 updateLocalBuildAgentInformation();
             }
 
@@ -197,7 +203,7 @@ public class SharedQueueProcessingService {
     private BuildJobQueueItem addToProcessingJobs() {
         BuildJobQueueItem buildJob = queue.poll();
         if (buildJob != null) {
-            String memberAddress = getLocalAddress();
+            String memberAddress = getBuildAgentName();
 
             BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, memberAddress);
 
@@ -226,7 +232,7 @@ public class SharedQueueProcessingService {
     }
 
     private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob) {
-        String memberAddress = getLocalAddress();
+        String memberAddress = getBuildAgentName();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
@@ -257,15 +263,45 @@ public class SharedQueueProcessingService {
     }
 
     private void removeOfflineNodes() {
+        log.info("Current redis client name: {}", redisClient.getConfig().getClientName());
         redisClient.connect().async(RedisCommands.CLIENT_LIST).thenAccept(clientList -> {
+            log.info("Build agent information: {}", buildAgentInformation.keySet());
+            // log.info("Redis client list: {}", clientList);
+
             List<String> clients = (List<String>) clientList;
-            // TODO: double check that the keys and the clients are the same
-            for (String key : buildAgentInformation.keySet()) {
-                if (!clients.contains(key)) {
+
+            // Parse the Redis client list to extract names and filter duplicates
+            Map<String, String> uniqueClients = new HashMap<>();
+
+            for (String clientInfo : clients) {
+                String clientName = extractClientNameFromClientInfo(clientInfo);
+                if (clientName != null && !uniqueClients.containsKey(clientName)) {
+                    uniqueClients.put(clientName, clientInfo); // Keep the first occurrence
+                }
+                // Optional: Apply more complex logic here to choose the most relevant connection
+            }
+
+            log.info("Redis client list based on names: {}", uniqueClients.keySet());
+
+            // Compare the client names with the build agent information
+            for (String key : new HashSet<>(buildAgentInformation.keySet())) {
+                if (!uniqueClients.containsKey(key)) {
                     buildAgentInformation.remove(key);
+                    log.info("Removed offline build agent: {}", key);
                 }
             }
         });
+    }
+
+    // Helper method to extract the 'name' field from the Redis client info
+    private String extractClientNameFromClientInfo(String clientInfo) {
+        String[] parts = clientInfo.split(" ");
+        for (String part : parts) {
+            if (part.startsWith("name=")) {
+                return part.substring(5); // Extract the client name
+            }
+        }
+        return null; // Return null if no name is found
     }
 
     /**

@@ -1,0 +1,20 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+#  redis-insight:
+#    image: redis/redisinsight:latest
+#    restart: always
+#    ports:
+#      - "5540:5540"
+#    volumes:
+#      - redis-insight:/data
+
+volumes:
+  redis-data:
+#  redis-insight:

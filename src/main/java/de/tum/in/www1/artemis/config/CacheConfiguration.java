@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 
+import org.redisson.client.RedisClient;
+import org.redisson.client.RedisClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,6 +118,14 @@ public class CacheConfiguration {
     public CacheManager cacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         log.debug("Starting HazelcastCacheManager");
         return new HazelcastCacheManager(hazelcastInstance);
+    }
+
+    @Bean
+    public RedisClient redisClient() {
+        RedisClientConfig config = new RedisClientConfig();
+        config.setAddress("redis://localhost:6379");    // TODO: read from yml
+        config.setClientName("build-agent-1");          // TODO: read from yml
+        return RedisClient.create(config);
     }
 
     /**

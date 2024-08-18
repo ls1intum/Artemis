@@ -353,6 +353,7 @@ dependencies {
     // Hazelcast replacement to enable caching and communication between server nodes
     implementation "org.redisson:redisson:3.34.1"
     implementation "org.redisson:redisson-spring-boot-starter:3.34.1"
+    implementation "org.redisson:redisson-hibernate-6:3.34.1"
 
     // Enables the use of PassKey authentication in the web app and mobile apps
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.10.0.RELEASE"
