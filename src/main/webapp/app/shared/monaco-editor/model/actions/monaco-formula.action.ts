@@ -20,7 +20,7 @@ export class MonacoFormulaAction extends MonacoEditorDomainAction {
      * @param editor The editor in which to toggle formula text.
      */
     run(editor: monaco.editor.ICodeEditor) {
-        this.toggleDelimiterAroundSelection(editor, FORMULA_OPEN_DELIMITER, FORMULA_CLOSE_DELIMITER, MonacoFormulaAction.DEFAULT_FORMULA);
+        this.toggleDelimiterAroundSelection(editor, this.getOpeningIdentifier(), FORMULA_CLOSE_DELIMITER, MonacoFormulaAction.DEFAULT_FORMULA);
         editor.focus();
     }
 
