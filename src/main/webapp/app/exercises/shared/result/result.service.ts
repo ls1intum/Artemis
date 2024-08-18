@@ -223,10 +223,6 @@ export class ResultService implements IResultService {
         );
     }
 
-    getFeedbackDetailsForExercise(exerciseId: number): Observable<HttpResponse<FeedbackDetailsWithResultIdsDTO>> {
-        return this.http.get<FeedbackDetailsWithResultIdsDTO>(`${this.exerciseResourceUrl}/${exerciseId}/feedback-details`, { observe: 'response' });
-    }
-
     public convertResultDatesFromClient(result: Result): Result {
         return Object.assign({}, result, {
             completionDate: convertDateFromClient(result.completionDate),

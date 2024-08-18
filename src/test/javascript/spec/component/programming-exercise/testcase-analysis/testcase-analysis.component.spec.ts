@@ -4,13 +4,15 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TestcaseAnalysisComponent } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.component';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
 import { HttpResponse } from '@angular/common/http';
 
 describe('TestcaseAnalysisComponent', () => {
-    let component: TestcaseAnalysisComponent;
     let fixture: ComponentFixture<TestcaseAnalysisComponent>;
+    let component: TestcaseAnalysisComponent;
+    let testcaseAnalysisService: TestcaseAnalysisService;
+    let getSimplifiedTasksSpy: jest.SpyInstance;
+    let getFeedbackDetailsSpy: jest.SpyInstance;
 
     const feedbackMock = [
         { detailText: 'Test feedback 1 detail', testCaseName: 'test1' },
@@ -28,71 +30,126 @@ describe('TestcaseAnalysisComponent', () => {
     });
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                TranslateModule.forRoot(),
-                TestcaseAnalysisComponent, // Import the standalone component here
+        return TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), TestcaseAnalysisComponent],
+            providers: [
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                TestcaseAnalysisService,
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, ResultService, TestcaseAnalysisService],
-        }).compileComponents();
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(TestcaseAnalysisComponent);
+                component = fixture.componentInstance;
+                component.exerciseId = 1;
 
-        fixture = TestBed.createComponent(TestcaseAnalysisComponent);
-        component = fixture.componentInstance;
-        component.exerciseId = 1;
+                testcaseAnalysisService = fixture.debugElement.injector.get(TestcaseAnalysisService);
 
-        // Mock the methods within the component itself
-        jest.spyOn(component, 'loadTasks').mockReturnValue(of(tasksMock));
-        jest.spyOn(component, 'loadFeedbackDetails').mockReturnValue(of(feedbackDetailsResponseMock));
+                getSimplifiedTasksSpy = jest.spyOn(testcaseAnalysisService, 'getSimplifiedTasks').mockReturnValue(of(tasksMock));
+                getFeedbackDetailsSpy = jest.spyOn(testcaseAnalysisService, 'getFeedbackDetailsForExercise').mockReturnValue(of(feedbackDetailsResponseMock));
+            });
     });
 
-    //TODO: Fix the following test
-    /*
-    it('should initialize and load feedback details correctly', () => {
-        component.ngOnInit();
-        fixture.detectChanges();
+    describe('ngOnInit', () => {
+        it('should call loadTasks and loadFeedbackDetails when exerciseId is provided', () => {
+            component.ngOnInit();
 
-        // Assertions to ensure loadTasks and loadFeedbackDetails were called
-        expect(component.loadTasks).toHaveBeenCalledWith(component.exerciseId);
-        expect(component.loadFeedbackDetails).toHaveBeenCalledWith(component.exerciseId);
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    expect(getSimplifiedTasksSpy).toHaveBeenCalledWith(1);
+                    expect(getFeedbackDetailsSpy).toHaveBeenCalledWith(1);
+                    expect(component.tasks).toEqual(tasksMock);
+                    expect(component.resultIds).toEqual([1, 2]);
+                    resolve();
+                }, 0);
+            });
+        });
 
-        // Further assertions to check if the component's state is updated correctly
-        expect(component.resultIds).toEqual([1, 2]);
-        expect(component.feedback).toHaveLength(2);
-        expect(component.feedback[0].detailText).toBe('Test feedback 1 detail');
-        expect(component.feedback[1].detailText).toBe('Test feedback 2 detail');
+        it('should not call loadTasks and loadFeedbackDetails if exerciseId is not provided', () => {
+            component.exerciseId = undefined;
+            component.ngOnInit();
+
+            expect(getSimplifiedTasksSpy).not.toHaveBeenCalled();
+            expect(getFeedbackDetailsSpy).not.toHaveBeenCalled();
+        });
     });
 
-     */
+    describe('loadTasks', () => {
+        it('should load tasks and update the component state', () => {
+            return component
+                .loadTasks(1)
+                .toPromise()
+                .then(() => {
+                    expect(component.tasks).toEqual(tasksMock);
+                });
+        });
 
-    it('should handle errors when loading feedback details', () => {
-        // Mock loadFeedbackDetails to simulate an error
-        jest.spyOn(component, 'loadFeedbackDetails').mockReturnValue(throwError('Error'));
+        it('should handle error while loading tasks', () => {
+            getSimplifiedTasksSpy.mockReturnValue(throwError(() => new Error('Error loading tasks')));
 
-        component.loadFeedbackDetails(1);
-
-        expect(component.loadFeedbackDetails).toHaveBeenCalled();
-        expect(component.feedback).toHaveLength(0);
+            return component
+                .loadTasks(1)
+                .toPromise()
+                .catch(() => {
+                    expect(component.tasks).toEqual([]);
+                });
+        });
     });
 
-    it('should save feedbacks and sort them by count', () => {
-        component.saveFeedback(feedbackMock);
+    describe('loadFeedbackDetails', () => {
+        it('should load feedback details and update the component state', () => {
+            return component
+                .loadFeedbackDetails(1)
+                .toPromise()
+                .then(() => {
+                    expect(component.resultIds).toEqual([1, 2]);
+                    expect(component.feedback).toHaveLength(2); // feedbackMap will merge two entries with the same detailText and testCaseName
+                });
+        });
 
-        expect(component.feedback).toHaveLength(2);
-        expect(component.feedback[0].count).toBe(2);
-        expect(component.feedback[1].count).toBe(1);
-        expect(component.feedback[0].detailText).toBe('Test feedback 1 detail');
+        it('should handle error while loading feedback details', () => {
+            getFeedbackDetailsSpy.mockReturnValue(throwError(() => new Error('Error loading feedback details')));
+
+            return component
+                .loadFeedbackDetails(1)
+                .toPromise()
+                .catch(() => {
+                    expect(component.feedback).toEqual([]);
+                    expect(component.resultIds).toEqual([]);
+                });
+        });
     });
 
-    it('should find task index for a given test case', () => {
-        component.tasks = tasksMock;
-        const index = component.findTaskIndexForTestCase('test1');
-        expect(index).toBe(1);
+    describe('saveFeedback', () => {
+        it('should save feedbacks and sort them by count', () => {
+            component.saveFeedback(feedbackMock);
 
-        const zeroIndex = component.findTaskIndexForTestCase('test3');
-        expect(zeroIndex).toBe(0);
+            expect(component.feedback).toHaveLength(2); // Only 2 unique feedbacks
+            expect(component.feedback[0].count).toBe(2); // The first feedback should have count 2
+            expect(component.feedback[1].count).toBe(1); // The second feedback should have count 1
+        });
+    });
 
-        const undefinedIndex = component.findTaskIndexForTestCase('');
-        expect(undefinedIndex).toBe(-1);
+    describe('findTaskIndexForTestCase', () => {
+        it('should find the correct task index for a given test case', () => {
+            component.tasks = tasksMock;
+
+            const index1 = component.findTaskIndexForTestCase('test1');
+            expect(index1).toBe(1);
+
+            const index2 = component.findTaskIndexForTestCase('test2');
+            expect(index2).toBe(2);
+
+            const nonExistingIndex = component.findTaskIndexForTestCase('non-existing');
+            expect(nonExistingIndex).toBe(0); // No task found, should return 0
+        });
+
+        it('should return -1 if testCaseName is not provided', () => {
+            const index = component.findTaskIndexForTestCase('');
+            expect(index).toBe(-1);
+        });
     });
 });

@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SimplifiedTask, TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
 import { concatMap } from 'rxjs/operators';
@@ -26,10 +25,7 @@ export class TestcaseAnalysisComponent implements OnInit {
     tasks: SimplifiedTask[] = [];
     feedback: FeedbackDetail[] = [];
 
-    constructor(
-        private resultService: ResultService,
-        private simplifiedProgrammingExerciseTaskService: TestcaseAnalysisService,
-    ) {}
+    constructor(private simplifiedProgrammingExerciseTaskService: TestcaseAnalysisService) {}
 
     ngOnInit(): void {
         if (this.exerciseId) {
@@ -48,7 +44,7 @@ export class TestcaseAnalysisComponent implements OnInit {
     }
 
     private loadFeedbackDetails(exerciseId: number) {
-        return this.resultService.getFeedbackDetailsForExercise(exerciseId).pipe(
+        return this.simplifiedProgrammingExerciseTaskService.getFeedbackDetailsForExercise(exerciseId).pipe(
             tap((response) => {
                 this.resultIds = response.body?.resultIds || [];
                 const feedbackArray = response.body?.feedbackDetails || [];

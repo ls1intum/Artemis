@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { FeedbackDetailsWithResultIdsDTO } from 'app/exercises/shared/result/result.service';
 
 export interface SimplifiedTask {
     taskName: string;
@@ -11,9 +12,14 @@ export interface SimplifiedTask {
 
 @Injectable()
 export class TestcaseAnalysisService {
-    public resourceUrl = 'api/programming-exercises';
+    private resourceUrl = 'api/programming-exercises';
+    private exerciseResourceUrl = 'api/exercises';
 
     constructor(private http: HttpClient) {}
+
+    getFeedbackDetailsForExercise(exerciseId: number): Observable<HttpResponse<FeedbackDetailsWithResultIdsDTO>> {
+        return this.http.get<FeedbackDetailsWithResultIdsDTO>(`${this.exerciseResourceUrl}/${exerciseId}/feedback-details`, { observe: 'response' });
+    }
 
     public getSimplifiedTasks(exerciseId: number): Observable<SimplifiedTask[]> {
         return this.http.get<ProgrammingExerciseServerSideTask[]>(`${this.resourceUrl}/${exerciseId}/tasks-with-unassigned-test-cases`).pipe(
