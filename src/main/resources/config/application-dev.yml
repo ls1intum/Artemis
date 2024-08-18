@@ -136,5 +136,7 @@ theia:
 # Telemetry service: disabled for development
 artemis:
   telemetry:
-    enabled: false # Set to false for the dev profile, as we only want to receive telemetry data from production deployments
+    enabled: false # Disable sending any telemetry information to the telemetry service by setting this to false
+    sendAdminDetails: false # Include the admins email and name in the telemetry data. Set to false to disable
     destination: telemetry.artemis.cit.tum.de
+

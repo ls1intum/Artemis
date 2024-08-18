@@ -36,6 +36,9 @@ public class TelemetryService {
     @Value("${artemis.telemetry.enabled}")
     public boolean useTelemetry;
 
+    @Value("${artemis.telemetry.sendAdminDetails}")
+    private boolean sendAdminDetails;
+
     @Value("${artemis.telemetry.destination}")
     private String destination;
 
@@ -80,8 +83,13 @@ public class TelemetryService {
 
     public void sendTelemetryByPostRequest() throws Exception {
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-
-        TelemetryData telemetryData = new TelemetryData(version, serverUrl, universityName, contact, activeProfiles, universityAdminName);
+        TelemetryData telemetryData;
+        if (sendAdminDetails) {
+            telemetryData = new TelemetryData(version, serverUrl, universityName, contact, activeProfiles, universityAdminName);
+        }
+        else {
+            telemetryData = new TelemetryData(version, serverUrl, universityName, null, activeProfiles, null);
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

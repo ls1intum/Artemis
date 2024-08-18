@@ -64,6 +64,7 @@ artemis:
         conversion-service-url: http://localhost:8080
     telemetry:
         enabled: true
+        sendAdminDetails: true
         destination: http://localhost:8081
     plagiarism-checks:
         plagiarism-results-limit: 100
