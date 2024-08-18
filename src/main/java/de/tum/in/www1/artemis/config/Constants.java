@@ -92,6 +92,8 @@ public final class Constants {
     // Used to cut off CI specific path segments when receiving static code analysis reports
     public static final String ASSIGNMENT_DIRECTORY = "/" + ASSIGNMENT_REPO_NAME + "/";
 
+    public static final String TEST_WORKING_DIRECTORY = "test";
+
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
 

@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -34,15 +35,15 @@ public class LocalCIBuildConfigurationService {
      */
     public String createBuildScript(ProgrammingExercise programmingExercise) {
 
-        StringBuilder buildScript = new StringBuilder();
-        buildScript.append("#!/bin/bash\n");
-        buildScript.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir\n");
+        StringBuilder buildScriptBuilder = new StringBuilder();
+        buildScriptBuilder.append("#!/bin/bash\n");
+        buildScriptBuilder.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir\n");
 
         ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
         String customScript = buildConfig.getBuildScript();
         // Todo: get default script if custom script is null before trying to get actions from windfile
         if (customScript != null) {
-            buildScript.append(customScript);
+            buildScriptBuilder.append(customScript);
         }
         else {
             List<ScriptAction> actions;
@@ -62,16 +63,18 @@ public class LocalCIBuildConfigurationService {
             actions.forEach(action -> {
                 String workdir = action.getWorkdir();
                 if (workdir != null) {
-                    buildScript.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
+                    buildScriptBuilder.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
                 }
-                buildScript.append(action.getScript()).append("\n");
+                buildScriptBuilder.append(action.getScript()).append("\n");
                 if (workdir != null) {
-                    buildScript.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir\n");
+                    buildScriptBuilder.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir\n");
                 }
             });
 
         }
-        return buildScript.toString();
+        String buildScript = buildScriptBuilder.toString();
+        buildScript = buildScript.replace("${studentParentWorkingDirectory}", Constants.ASSIGNMENT_REPO_NAME);
+        return buildScript;
     }
 
 }
