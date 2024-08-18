@@ -17,12 +17,13 @@
         transition: 0.15s;
         background-color: var(--background-color-for-hover) !important;
 
-        &:hover {
-            background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
-        }
         display: flex;
         cursor: pointer;
         height: 100px;
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
+        }
 
         > div {
             flex: 0 1 auto;
@@ -210,7 +211,11 @@
 
 @media screen and (max-width: 850px) {
     .card {
+        height: unset;
         .card-heading {
+            height: unset;
+            max-height: 135px;
+
             .card-header-left {
                 flex-direction: column;
                 max-width: 110px;
@@ -244,12 +249,7 @@
                 display: flex;
                 align-content: center;
             }
-
-            height: unset;
-            max-height: 135px;
         }
-
-        height: unset;
     }
 }
 
