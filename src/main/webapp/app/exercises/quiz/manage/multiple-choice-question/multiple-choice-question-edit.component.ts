@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -13,16 +13,21 @@ import { MonacoWrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/
 import { MonacoCorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-correct-multiple-choice-answer.action';
 import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
     templateUrl: './multiple-choice-question-edit.component.html',
     styleUrls: ['../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestionEdit {
     @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorMonacoComponent;
+
+    @ViewChild('visual', { static: false })
+    visualChild: MultipleChoiceVisualQuestionComponent;
 
     @Input()
     question: MultipleChoiceQuestion;
@@ -129,12 +134,13 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      * to get the newest values in the editor to update the question attributes
      */
     prepareForSave(): void {
-        if (this.markdownEditor.inVisualMode) {
-            // TODO visual mode this.markdownEditor.markdown = this.markdownEditor.visualChild.parseQuestion();
-        }
-
         this.cleanupQuestion();
         this.markdownEditor.parseMarkdown();
+    }
+
+    onLeaveVisualTab(): void {
+        this.markdownEditor.markdown = this.visualChild.parseQuestion();
+        this.prepareForSave();
     }
 
     /**

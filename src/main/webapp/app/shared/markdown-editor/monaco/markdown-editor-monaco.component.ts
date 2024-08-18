@@ -183,9 +183,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Output()
     onDefaultPreviewHtmlChanged = new EventEmitter<SafeHtml | undefined>();
 
+    @Output()
+    onLeaveVisualTab = new EventEmitter<void>();
+
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
     inVisualMode = false;
+    inEditMode = true;
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
     targetWrapperHeight?: number;
@@ -382,6 +386,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onNavChanged(event: NgbNavChangeEvent) {
         this.inPreviewMode = event.nextId === 'editor_preview';
+        this.inVisualMode = event.nextId === 'editor_visual';
+        this.inEditMode = event.nextId === 'editor_edit';
         if (!this.inPreviewMode) {
             // TODO: necessary?
             this.onContentHeightChanged(this.monacoEditor.getContentHeight());
@@ -391,8 +397,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.onPreviewSelect.emit();
         }
 
-        // Parse the markdown when switching away from the edit tab
-        if (event.activeId === 'editor_edit') {
+        if (event.activeId === 'editor_visual') {
+            this.onLeaveVisualTab.emit();
+        }
+
+        // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.
+        if (event.activeId === 'editor_edit' || (event.activeId === 'editor_visual' && this.inPreviewMode)) {
             this.parseMarkdown();
         }
     }

@@ -102,6 +102,7 @@
                     [domainActions]="multipleChoiceActions"
                     (markdownChange)="changesInMarkdown()"
                     (textWithDomainActionsFound)="domainActionsFound($event)"
+                    (onLeaveVisualTab)="onLeaveVisualTab()"
                     [showDefaultPreview]="false"
                     class="h-auto"
                 >
@@ -114,9 +115,9 @@
                     </ng-container>
                     <!-- End of Preview-->
                     <!-- Visual -->
-                    <ng-container id="visual" #visual>
+                    <ng-container id="visual">
                         @if (showMultipleChoiceQuestionVisual) {
-                            <jhi-multiple-choice-visual-question [question]="question" (questionChanged)="changesInVisualMode()" />
+                            <jhi-multiple-choice-visual-question #visual [question]="question" (questionChanged)="changesInVisualMode()" />
                         }
                     </ng-container>
                     <!-- End of Visual -->
