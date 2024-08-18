@@ -3,7 +3,7 @@ from ${studentParentWorkingDirectoryName} import sorting_algorithms
 from ${studentParentWorkingDirectoryName} import sort_strategy
 from ${studentParentWorkingDirectoryName} import context
 from ${studentParentWorkingDirectoryName} import policy
-from ${studentParentWorkingDirectoryName} import structural_helpers
+from structural import structural_helpers
 
 
 class TestSortingStructural(unittest.TestCase):
