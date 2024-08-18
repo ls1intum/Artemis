@@ -1,8 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SimplifiedTask, TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
-import { concatMap } from 'rxjs/operators';
-import { tap } from 'rxjs/operators';
+import { concatMap, tap } from 'rxjs/operators';
 
 type FeedbackDetail = {
     count: number;
