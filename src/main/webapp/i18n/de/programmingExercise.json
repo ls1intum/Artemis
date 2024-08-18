@@ -313,7 +313,7 @@
                     "occurrence": "Häufigkeit",
                     "testCaseFeedback": "Testfall Feedback",
                     "task": "Aufgabe",
-                    "testcase": "Testfalll",
+                    "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
                     "totalItems": "Insgesamt {{count}} Elemente"
                 },

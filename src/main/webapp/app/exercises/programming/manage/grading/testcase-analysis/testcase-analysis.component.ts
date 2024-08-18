@@ -1,7 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { SimplifiedTask, TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
+import { FeedbackDetailsWithResultIdsDTO, SimplifiedTask, TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
+import { Observable } from 'rxjs';
 import { concatMap, tap } from 'rxjs/operators';
+import { HttpResponse } from '@angular/common/http';
 
 type FeedbackDetail = {
     count: number;
@@ -34,7 +36,7 @@ export class TestcaseAnalysisComponent implements OnInit {
         }
     }
 
-    loadTasks(exerciseId: number) {
+    loadTasks(exerciseId: number): Observable<SimplifiedTask[]> {
         return this.simplifiedProgrammingExerciseTaskService.getSimplifiedTasks(exerciseId).pipe(
             tap((tasks) => {
                 this.tasks = tasks;
@@ -42,7 +44,7 @@ export class TestcaseAnalysisComponent implements OnInit {
         );
     }
 
-    loadFeedbackDetails(exerciseId: number) {
+    loadFeedbackDetails(exerciseId: number): Observable<HttpResponse<FeedbackDetailsWithResultIdsDTO>> {
         return this.simplifiedProgrammingExerciseTaskService.getFeedbackDetailsForExercise(exerciseId).pipe(
             tap((response) => {
                 this.resultIds = response.body?.resultIds || [];
