@@ -57,7 +57,7 @@ describe('TestcaseAnalysisComponent', () => {
         it('should call loadTasks and loadFeedbackDetails when exerciseId is provided', () => {
             component.ngOnInit();
 
-            return new Promise((resolve) => {
+            return new Promise<void>((resolve) => {
                 setTimeout(() => {
                     expect(getSimplifiedTasksSpy).toHaveBeenCalledWith(1);
                     expect(getFeedbackDetailsSpy).toHaveBeenCalledWith(1);

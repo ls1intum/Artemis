@@ -35,7 +35,7 @@ export class TestcaseAnalysisComponent implements OnInit {
         }
     }
 
-    private loadTasks(exerciseId: number) {
+    loadTasks(exerciseId: number) {
         return this.simplifiedProgrammingExerciseTaskService.getSimplifiedTasks(exerciseId).pipe(
             tap((tasks) => {
                 this.tasks = tasks;
@@ -43,7 +43,7 @@ export class TestcaseAnalysisComponent implements OnInit {
         );
     }
 
-    private loadFeedbackDetails(exerciseId: number) {
+    loadFeedbackDetails(exerciseId: number) {
         return this.simplifiedProgrammingExerciseTaskService.getFeedbackDetailsForExercise(exerciseId).pipe(
             tap((response) => {
                 this.resultIds = response.body?.resultIds || [];
@@ -53,7 +53,7 @@ export class TestcaseAnalysisComponent implements OnInit {
         );
     }
 
-    private saveFeedback(feedbackArray: { detailText: string; testCaseName: string }[]): void {
+    saveFeedback(feedbackArray: { detailText: string; testCaseName: string }[]): void {
         const feedbackMap: Map<string, FeedbackDetail> = new Map();
 
         feedbackArray.forEach((feedback) => {
@@ -77,7 +77,7 @@ export class TestcaseAnalysisComponent implements OnInit {
         this.feedback = Array.from(feedbackMap.values()).sort((a, b) => b.count - a.count);
     }
 
-    private findTaskIndexForTestCase(testCaseName: string): number {
+    findTaskIndexForTestCase(testCaseName: string): number {
         if (!testCaseName) {
             return -1;
         }
