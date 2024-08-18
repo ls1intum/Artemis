@@ -12,8 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
@@ -30,8 +28,6 @@ import de.tum.in.www1.artemis.service.telemetry.TelemetryService;
 
 @ExtendWith(MockitoExtension.class)
 public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
-
-    private static final Logger log = LoggerFactory.getLogger(TelemetryServiceTest.class);
 
     @Value("${artemis.telemetry.destination}")
     private String destination;
