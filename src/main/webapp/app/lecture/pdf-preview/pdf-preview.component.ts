@@ -154,8 +154,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         container.appendChild(canvas);
         container.appendChild(overlay);
 
-        container.addEventListener('mouseenter', () => (overlay.style.opacity = '1'));
-        container.addEventListener('mouseleave', () => (overlay.style.opacity = '0'));
+        container.addEventListener('mouseenter', () => {
+            overlay.style.opacity = '1';
+        });
+        container.addEventListener('mouseleave', () => {
+            overlay.style.opacity = '0';
+        });
         overlay.addEventListener('click', () => this.displayEnlargedCanvas(canvas, pageIndex));
 
         return container;

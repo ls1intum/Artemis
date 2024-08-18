@@ -68,6 +68,10 @@ describe('PdfPreviewComponent', () => {
             ],
         }).compileComponents();
 
+        const pdfContainerElement = document.createElement('div');
+        Object.defineProperty(pdfContainerElement, 'clientWidth', { value: 800 });
+        Object.defineProperty(pdfContainerElement, 'clientHeight', { value: 600 });
+
         fixture = TestBed.createComponent(PdfPreviewComponent);
         component = fixture.componentInstance;
         component.pdfContainer = new ElementRef(document.createElement('div'));
@@ -79,13 +83,13 @@ describe('PdfPreviewComponent', () => {
         jest.clearAllMocks();
     });
 
-    it('should load attachment file when attachment data is available', () => {
+    it('hould load attachment file and verify service calls when attachment data is available', () => {
         component.ngOnInit();
         expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
         expect(attachmentUnitServiceMock.getAttachmentFile).not.toHaveBeenCalled();
     });
 
-    it('should load attachment unit file when attachment unit data is available', () => {
+    it('should load attachment unit file and verify service calls when attachment unit data is available', () => {
         routeMock.data = of({
             course: { id: 1, name: 'Example Course' },
             attachmentUnit: { id: 1, name: 'Chapter 1' },
@@ -95,7 +99,7 @@ describe('PdfPreviewComponent', () => {
         expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalled();
     });
 
-    it('should handle errors when loading an attachment file fails', () => {
+    it('should handle errors and trigger alert when loading an attachment file fails', () => {
         const errorResponse = new HttpErrorResponse({
             status: 404,
             statusText: 'Not Found',
@@ -112,7 +116,7 @@ describe('PdfPreviewComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
-    it('should handle errors when loading an attachment unit file fails', () => {
+    it('should handle errors and trigger alert when loading an attachment unit file fails', () => {
         routeMock.data = of({
             course: { id: 1, name: 'Example Course' },
             attachmentUnit: { id: 1, name: 'Chapter 1' },
@@ -133,7 +137,7 @@ describe('PdfPreviewComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
-    it('should load and render PDF pages', () => {
+    it('should load PDF and verify rendering of pages', () => {
         const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
 
         attachmentServiceMock.getAttachmentFile.mockReturnValue(of(mockBlob));
@@ -144,7 +148,7 @@ describe('PdfPreviewComponent', () => {
         expect(component.totalPages).toBeGreaterThan(0);
     });
 
-    it('should handle keyboard navigation for enlarged view', () => {
+    it('should navigate through pages using keyboard in enlarged view', () => {
         component.isEnlargedView = true;
         component.totalPages = 5;
         component.currentPage = 3;
@@ -159,7 +163,7 @@ describe('PdfPreviewComponent', () => {
         expect(component.currentPage).toBe(3);
     });
 
-    it('should toggle enlarged view on and off', () => {
+    it('should toggle enlarged view state', () => {
         const mockCanvas = document.createElement('canvas');
         component.displayEnlargedCanvas(mockCanvas, 1);
         expect(component.isEnlargedView).toBeTrue();
@@ -172,7 +176,7 @@ describe('PdfPreviewComponent', () => {
         expect(component.isEnlargedView).toBeFalse();
     });
 
-    it('should prevent scrolling when enlarged view is open', () => {
+    it('should prevent scrolling when enlarged view is active', () => {
         component.toggleBodyScroll(true);
         expect(component.pdfContainer.nativeElement.style.overflow).toBe('hidden');
 
@@ -180,34 +184,47 @@ describe('PdfPreviewComponent', () => {
         expect(component.pdfContainer.nativeElement.style.overflow).toBe('auto');
     });
 
-    it('should resize canvas correctly on window resize', () => {
-        const adjustCanvasSizeSpy = jest.spyOn(component, 'adjustCanvasSize');
-        window.dispatchEvent(new Event('resize'));
-        expect(adjustCanvasSizeSpy).toHaveBeenCalled();
-        adjustCanvasSizeSpy.mockRestore();
+    it('should not update canvas size if not in enlarged view', () => {
+        component.isEnlargedView = false;
+        component.currentPage = 3;
+
+        const spy = jest.spyOn(component, 'updateEnlargedCanvas');
+        component.adjustCanvasSize();
+
+        expect(spy).not.toHaveBeenCalled();
     });
 
-    it('should not navigate to the next page if already at last page', () => {
+    it('should not update canvas size if the current page canvas does not exist', () => {
+        component.isEnlargedView = true;
+        component.currentPage = 10;
+
+        const spy = jest.spyOn(component, 'updateEnlargedCanvas');
+        component.adjustCanvasSize();
+
+        expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should prevent navigation beyond last page', () => {
         component.currentPage = component.totalPages = 5;
         component.handleKeyboardEvents(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
 
         expect(component.currentPage).toBe(5);
     });
 
-    it('should not navigate to the previous page if already at first page', () => {
+    it('should prevent navigation before first page', () => {
         component.currentPage = 1;
         component.handleKeyboardEvents(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
 
         expect(component.currentPage).toBe(1);
     });
 
-    it('should unsubscribe from attachment subscription on destroy', () => {
+    it('should unsubscribe attachment subscription during component destruction', () => {
         const spySub = jest.spyOn(component.attachmentSub, 'unsubscribe');
         component.ngOnDestroy();
         expect(spySub).toHaveBeenCalled();
     });
 
-    it('should unsubscribe from attachmentUnit subscription on destroy', () => {
+    it('should unsubscribe attachmentUnit subscription during component destruction', () => {
         routeMock.data = of({
             course: { id: 1, name: 'Example Course' },
             attachmentUnit: { id: 1, name: 'Chapter 1' },
@@ -218,5 +235,21 @@ describe('PdfPreviewComponent', () => {
         const spySub = jest.spyOn(component.attachmentUnitSub, 'unsubscribe');
         component.ngOnDestroy();
         expect(spySub).toHaveBeenCalled();
+    });
+
+    it('should stop event propagation and navigate pages', () => {
+        const navigateSpy = jest.spyOn(component, 'navigatePages');
+        const eventMock = { stopPropagation: jest.fn() } as unknown as MouseEvent;
+
+        component.handleNavigation('next', eventMock);
+
+        expect(eventMock.stopPropagation).toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledWith('next');
+    });
+
+    it('should call adjustCanvasSize when window is resized', () => {
+        const adjustCanvasSizeSpy = jest.spyOn(component, 'adjustCanvasSize');
+        window.dispatchEvent(new Event('resize'));
+        expect(adjustCanvasSizeSpy).toHaveBeenCalled();
     });
 });
