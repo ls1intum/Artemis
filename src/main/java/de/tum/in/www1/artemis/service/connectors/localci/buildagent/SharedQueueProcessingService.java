@@ -114,6 +114,7 @@ public class SharedQueueProcessingService {
 
     @PreDestroy
     public void removeListener() {
+        // Remove the build agent from the map to avoid issues
         this.buildAgentInformation.remove(getBuildAgentName());
         this.queue.removeListener(this.listenerIdAdd);
         this.queue.removeListener(this.listenerIdRemove);
@@ -124,7 +125,7 @@ public class SharedQueueProcessingService {
      * Wait 1 minute after startup and then every 1 minute update the build agent information of the local cluster member.
      * This is necessary because the build agent information is not updated automatically when a node joins the cluster.
      */
-    @Scheduled(initialDelay = 10000, fixedRate = 5000) // 1 minute initial delay, 1 minute fixed rate
+    @Scheduled(initialDelay = 600000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
     public void updateBuildAgentInformation() {
         // Remove build agent information of offline nodes
         removeOfflineNodes();
@@ -263,10 +264,9 @@ public class SharedQueueProcessingService {
     }
 
     private void removeOfflineNodes() {
-        log.info("Current redis client name: {}", redisClient.getConfig().getClientName());
+        log.debug("Current redis client name: {}", redisClient.getConfig().getClientName());
         redisClient.connect().async(RedisCommands.CLIENT_LIST).thenAccept(clientList -> {
-            log.info("Build agent information: {}", buildAgentInformation.keySet());
-            // log.info("Redis client list: {}", clientList);
+            log.debug("Build agent information: {}", buildAgentInformation.keySet());
 
             List<String> clients = (List<String>) clientList;
 
@@ -281,7 +281,7 @@ public class SharedQueueProcessingService {
                 // Optional: Apply more complex logic here to choose the most relevant connection
             }
 
-            log.info("Redis client list based on names: {}", uniqueClients.keySet());
+            log.debug("Redis client list based on names: {}", uniqueClients.keySet());
 
             // Compare the client names with the build agent information
             for (String key : new HashSet<>(buildAgentInformation.keySet())) {
