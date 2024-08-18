@@ -77,6 +77,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    admin/database
    admin/knownIssues
    admin/benchmarking-tool
+   admin/telemetry
 
 
 .. toctree::
