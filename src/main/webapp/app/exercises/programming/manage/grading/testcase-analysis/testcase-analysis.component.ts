@@ -81,6 +81,6 @@ export class TestcaseAnalysisComponent implements OnInit {
         if (!testCaseName) {
             return -1;
         }
-        return this.tasks.findIndex((tasks) => tasks.testCases && tasks.testCases.some((tc) => tc.testName === testCaseName)) + 1;
+        return this.tasks.findIndex((tasks) => tasks.testCases?.some((tc) => tc.testName === testCaseName)) + 1;
     }
 }
