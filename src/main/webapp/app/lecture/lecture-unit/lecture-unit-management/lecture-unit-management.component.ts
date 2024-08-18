@@ -34,7 +34,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lecture: Lecture;
     isLoading = false;
     updateOrderSubject: Subject<any>;
-    viewButtonAvailable = new Map<number, boolean>();
+    viewButtonAvailable: Record<number, boolean> = {};
 
     updateOrderSubjectSubscription: Subscription;
     navigationEndSubscription: Subscription;
@@ -109,7 +109,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     if (lecture?.lectureUnits) {
                         this.lectureUnits = lecture?.lectureUnits;
                         this.lectureUnits.forEach((lectureUnit) => {
-                            this.viewButtonAvailable.set(lectureUnit.id!, this.isViewButtonAvailable(lectureUnit));
+                            this.viewButtonAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
                         });
                     } else {
                         this.lectureUnits = [];
@@ -193,7 +193,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    isViewButtonAvailable(lectureUnit: LectureUnit) {
+    isViewButtonAvailable(lectureUnit: LectureUnit): boolean {
         switch (lectureUnit!.type) {
             case LectureUnitType.ATTACHMENT: {
                 const attachmentUnit = <AttachmentUnit>lectureUnit;

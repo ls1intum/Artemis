@@ -457,6 +457,7 @@ public class FileResource {
      * GET files/courses/{courseId}/attachments/{attachmenUnitId}/file : Returns the file associated with the
      * given attachmentUnit ID as a downloadable resource
      *
+     * @param courseId         The ID of the course that the Attachment belongs to
      * @param attachmentUnitId the ID of the attachment to retrieve
      * @return ResponseEntity containing the file as a resource
      */

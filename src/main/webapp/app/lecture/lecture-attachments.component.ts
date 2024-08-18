@@ -31,7 +31,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     notificationText?: string;
     erroredFile?: File;
     errorMessage?: string;
-    viewButtonAvailable = new Map<number, boolean>();
+    viewButtonAvailable: Record<number, boolean> = {};
 
     // A human-readable list of allowed file extensions
     readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
@@ -78,7 +78,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
             this.attachments = attachmentsResponse.body!;
             this.attachments.forEach((attachment) => {
-                this.viewButtonAvailable.set(attachment.id!, this.isViewButtonAvailable(attachment.link!));
+                this.viewButtonAvailable[attachment.id!] = this.isViewButtonAvailable(attachment.link!);
             });
         });
     }

@@ -45,13 +45,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.course = data.course;
             if ('attachment' in data) {
                 this.attachment = data.attachment;
-                this.attachmentSub = this.attachmentService.getAttachmentFile(this.course?.id!, this.attachment?.id!).subscribe({
+                this.attachmentSub = this.attachmentService.getAttachmentFile(this.course!.id!, this.attachment!.id!).subscribe({
                     next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit = data.attachmentUnit;
-                this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course?.id!, this.attachmentUnit?.id!).subscribe({
+                this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course!.id!, this.attachmentUnit!.id!).subscribe({
                     next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -212,7 +212,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      *
      * @param {HTMLCanvasElement} originalCanvas The original canvas element from which the image data is sourced.
      */
-    private updateEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
+    updateEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         requestAnimationFrame(() => {
             if (this.isEnlargedView) {
                 const enlargedCanvas = this.enlargedCanvas.nativeElement;
