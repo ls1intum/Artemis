@@ -55,7 +55,7 @@ export class AdminUserService {
 
     /**
      * Submit a query for all logins of not enrolled users (no admins)
-     * @return Observable<HttpResponse<string[]>> with the list of all logins of not enrolled users
+     * @return Observable<HttpResponse<string[]>> with the sorted list of all logins of not enrolled users
      */
     queryNotEnrolledUsers(): Observable<HttpResponse<string[]>> {
         return this.http.get<string[]>(`${this.resourceUrl}/not-enrolled`, { observe: 'response' });

@@ -243,7 +243,7 @@ public class AdminUserResource {
     }
 
     /**
-     * GET users/not-enrolled : get all logins of not enrolled users (no admins)
+     * GET users/not-enrolled : get all logins of not enrolled users as a sorted list (no admins)
      *
      * @return the ResponseEntity with status 200 (OK) and with body all logins of not enrolled users
      */
