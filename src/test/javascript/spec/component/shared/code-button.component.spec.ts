@@ -162,7 +162,7 @@ describe('CodeButtonComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.useVersionControlAccessToken).toBeTrue();
+        expect(component.accessTokensEnabled).toBeTrue();
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).toHaveBeenCalled();
@@ -177,7 +177,7 @@ describe('CodeButtonComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.useVersionControlAccessToken).toBeTrue();
+        expect(component.accessTokensEnabled).toBeTrue();
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).not.toHaveBeenCalled();
@@ -207,7 +207,7 @@ describe('CodeButtonComponent', () => {
         component.participations = [participation];
         component.useSsh = true;
         component.isTeamParticipation = false;
-        component.useVersionControlAccessToken = true;
+        component.accessTokensEnabled = true;
         component.useToken = true;
         component.ngOnInit();
         component.ngOnChanges();
@@ -259,7 +259,7 @@ describe('CodeButtonComponent', () => {
         component.useSsh = false;
         component.useToken = true;
         component.isTeamParticipation = false;
-        component.useVersionControlAccessToken = true;
+        component.accessTokensEnabled = true;
         component.ngOnInit();
         component.ngOnChanges();
 
@@ -289,7 +289,7 @@ describe('CodeButtonComponent', () => {
         component.useSsh = false;
         component.useToken = true;
         component.isTeamParticipation = false;
-        component.useVersionControlAccessToken = true;
+        component.accessTokensEnabled = true;
         component.ngOnInit();
         component.ngOnChanges();
 

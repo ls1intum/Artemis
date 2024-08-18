@@ -26,6 +26,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     @Input()
     loading = false;
     @Input()
+    useParticipationVcsAccessToken = false;
+    @Input()
     smallButtons: boolean;
     @Input()
     repositoryUri?: string;
@@ -43,7 +45,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     sshTemplateUrl?: string;
     repositoryPassword?: string;
     versionControlUrl: string;
-    useVersionControlAccessToken?: boolean;
+    accessTokensEnabled?: boolean;
     localVCEnabled = false;
     gitlabVCEnabled = false;
     showCloneUrlWithoutToken = true;
@@ -74,7 +76,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             .then((user) => {
                 this.user = user!;
             })
-            .then(() => this.loadVcsAccessTokens());
+            .then(() => this.loadParticipationVcsAccessTokens());
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -85,7 +87,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
-            this.useVersionControlAccessToken = profileInfo.useVersionControlAccessToken ?? false;
+            this.accessTokensEnabled = profileInfo.useVersionControlAccessToken ?? false;
             this.showCloneUrlWithoutToken = profileInfo.showCloneUrlWithoutToken ?? true;
             this.useToken = !this.showCloneUrlWithoutToken;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
@@ -112,7 +114,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         } else if (this.repositoryUri) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
-        this.loadVcsAccessTokens();
+        this.loadParticipationVcsAccessTokens();
     }
 
     public useSshUrl() {
@@ -147,8 +149,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         return this.addCredentialsToHttpUrl(this.getRepositoryUri(), insertPlaceholder);
     }
 
-    loadVcsAccessTokens() {
-        if (this.useVersionControlAccessToken && this.localVCEnabled) {
+    loadParticipationVcsAccessTokens() {
+        if (this.accessTokensEnabled && this.localVCEnabled && this.useParticipationVcsAccessToken) {
             this.participations?.forEach((participation) => {
                 if (participation?.id && !participation.vcsAccessToken) {
                     this.loadVcsAccessToken(participation);
@@ -208,7 +210,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
     private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
-        const includeToken = this.useVersionControlAccessToken && this.user.vcsAccessToken && this.useToken;
+        const includeToken = this.accessTokensEnabled && this.user.vcsAccessToken && this.useToken;
         const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
         const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
