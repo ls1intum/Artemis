@@ -17,3 +17,13 @@ Artemis collects the following data at the startup of an instance:
 * The server's URL
 * The university's name
 * The used profiles (e.g. Gitlab, Jenkins, LocalVC, Aeolus, ...)
+
+Example configuration in `application-prod.yml`:
+
+.. code-block:: yaml
+
+    artemis:
+        telemetry:
+            enabled: true
+            sendAdminDetails: false
+            destination: telemetry.artemis.cit.tum.de
