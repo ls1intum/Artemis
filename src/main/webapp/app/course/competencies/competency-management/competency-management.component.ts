@@ -11,9 +11,8 @@ import {
     dtoToCompetencyRelation,
     getIcon,
 } from 'app/entities/competency.model';
-import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, Subscription, forkJoin } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -24,7 +23,6 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,
@@ -64,7 +62,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     // Injected services
     private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
     private readonly courseCompetencyApiService: CourseCompetencyApiService = inject(CourseCompetencyApiService);
-    private readonly courseCompetencyService: CourseCompetencyService = inject(CourseCompetencyService);
     private readonly alertService: AlertService = inject(AlertService);
     private readonly modalService: NgbModal = inject(NgbModal);
     private readonly profileService: ProfileService = inject(ProfileService);
@@ -73,10 +70,10 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private readonly featureToggleService: FeatureToggleService = inject(FeatureToggleService);
 
     ngOnInit(): void {
-        this.activatedRoute.parent!.params.subscribe((params) => {
+        this.activatedRoute.parent!.params.subscribe(async (params) => {
             this.courseId = params['courseId'];
             if (this.courseId) {
-                this.loadData();
+                await this.loadData();
                 this.loadIrisEnabled();
             }
         });
@@ -111,23 +108,18 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     /**
      * Loads all data for the competency management: Prerequisites, competencies (with average course progress) and competency relations
      */
-    loadData() {
-        this.isLoading = true;
-        const relationsObservable = this.courseCompetencyService.getCompetencyRelations(this.courseId);
-        const courseCompetenciesObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
-
-        forkJoin([relationsObservable, courseCompetenciesObservable]).subscribe({
-            next: ([competencyRelations, courseCompetencies]) => {
-                const courseCompetenciesResponse = courseCompetencies.body ?? [];
-                this.competencies = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY);
-                this.prerequisites = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE);
-                this.courseCompetencies = courseCompetenciesResponse;
-                this.relations = (competencyRelations.body ?? []).map((relationDTO) => dtoToCompetencyRelation(relationDTO));
-
-                this.isLoading = false;
-            },
-            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-        });
+    async loadData() {
+        try {
+            this.isLoading = true;
+            this.relations = await this.courseCompetencyApiService.getCourseCompetencyRelations(this.courseId);
+            this.courseCompetencies = await this.courseCompetencyApiService.getCourseCompetenciesByCourseId(this.courseId);
+            this.competencies = this.courseCompetencies.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY);
+            this.prerequisites = this.courseCompetencies.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE);
+        } catch (error) {
+            onError(this.alertService, error);
+        } finally {
+            this.isLoading = false;
+        }
     }
 
     /**
@@ -217,13 +209,13 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      *
      * @param relationId the given id
      */
-    private removeRelation(relationId: number) {
-        this.courseCompetencyService.removeCompetencyRelation(relationId, this.courseId).subscribe({
-            next: () => {
-                this.relations = this.relations.filter((relation) => relation.id !== relationId);
-            },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
+    private async removeRelation(relationId: number) {
+        try {
+            await this.courseCompetencyApiService.deleteCourseCompetencyRelation(this.courseId, relationId);
+            this.relations = this.relations.filter((relation) => relation.id !== relationId);
+        } catch (error) {
+            onError(this.alertService, error);
+        }
     }
 
     onRemoveCompetency(competencyId: number) {
