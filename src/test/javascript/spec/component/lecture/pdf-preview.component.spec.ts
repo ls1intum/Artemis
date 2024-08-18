@@ -83,7 +83,7 @@ describe('PdfPreviewComponent', () => {
         jest.clearAllMocks();
     });
 
-    it('hould load attachment file and verify service calls when attachment data is available', () => {
+    it('should load attachment file and verify service calls when attachment data is available', () => {
         component.ngOnInit();
         expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
         expect(attachmentUnitServiceMock.getAttachmentFile).not.toHaveBeenCalled();
