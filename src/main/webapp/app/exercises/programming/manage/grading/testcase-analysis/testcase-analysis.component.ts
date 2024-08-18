@@ -1,10 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
-import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { SimplifiedTask, TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
+import { concatMap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 
 type FeedbackDetail = {
     count: number;
@@ -18,52 +17,63 @@ type FeedbackDetail = {
     templateUrl: './testcase-analysis.component.html',
     standalone: true,
     imports: [ArtemisSharedModule],
+    providers: [TestcaseAnalysisService],
 })
 export class TestcaseAnalysisComponent implements OnInit {
     @Input() exerciseTitle?: string;
+    @Input() exerciseId?: number;
     resultIds: number[] = [];
-    tasks: ProgrammingExerciseTask[] = [];
+    tasks: SimplifiedTask[] = [];
     feedback: FeedbackDetail[] = [];
 
     constructor(
         private resultService: ResultService,
-        private programmingExerciseTaskService: ProgrammingExerciseTaskService,
+        private simplifiedProgrammingExerciseTaskService: TestcaseAnalysisService,
     ) {}
 
     ngOnInit(): void {
-        const exerciseId = this.programmingExerciseTaskService.exercise?.id;
-        if (exerciseId) {
-            this.loadFeedbackDetails(exerciseId);
+        if (this.exerciseId) {
+            this.loadTasks(this.exerciseId)
+                .pipe(concatMap(() => this.loadFeedbackDetails(this.exerciseId!)))
+                .subscribe();
         }
-        this.tasks = this.programmingExerciseTaskService.updateTasks();
     }
 
-    loadFeedbackDetails(exerciseId: number): void {
-        this.resultService.getFeedbackDetailsForExercise(exerciseId).subscribe((response) => {
-            this.resultIds = response.body?.resultIds || [];
-            const feedbackArray = response.body?.feedback || [];
-            const negativeFeedbackArray = feedbackArray.filter((feedback) => !feedback.positive);
-            this.saveFeedback(negativeFeedbackArray);
-        });
+    private loadTasks(exerciseId: number) {
+        return this.simplifiedProgrammingExerciseTaskService.getSimplifiedTasks(exerciseId).pipe(
+            tap((tasks) => {
+                this.tasks = tasks;
+            }),
+        );
     }
 
-    saveFeedback(feedbackArray: Feedback[]): void {
+    private loadFeedbackDetails(exerciseId: number) {
+        return this.resultService.getFeedbackDetailsForExercise(exerciseId).pipe(
+            tap((response) => {
+                this.resultIds = response.body?.resultIds || [];
+                const feedbackArray = response.body?.feedbackDetails || [];
+                this.saveFeedback(feedbackArray);
+            }),
+        );
+    }
+
+    private saveFeedback(feedbackArray: { detailText: string; testCaseName: string }[]): void {
         const feedbackMap: Map<string, FeedbackDetail> = new Map();
 
         feedbackArray.forEach((feedback) => {
             const feedbackText = feedback.detailText ?? '';
-            const testcase = feedback.testCase?.testName ?? '';
+            const testcase = feedback.testCaseName ?? '';
             const key = `${feedbackText}_${testcase}`;
 
             const existingFeedback = feedbackMap.get(key);
             if (existingFeedback) {
                 existingFeedback.count += 1;
             } else {
-                const task = this.findTaskIndexForTestCase(feedback.testCase);
+                const task = this.findTaskIndexForTestCase(testcase);
                 feedbackMap.set(key, {
                     count: 1,
-                    detailText: feedback.detailText ?? '',
-                    testcase: feedback.testCase?.testName ?? '',
+                    detailText: feedbackText,
+                    testcase: testcase,
                     task: task,
                 });
             }
@@ -71,10 +81,10 @@ export class TestcaseAnalysisComponent implements OnInit {
         this.feedback = Array.from(feedbackMap.values()).sort((a, b) => b.count - a.count);
     }
 
-    findTaskIndexForTestCase(testCase?: ProgrammingExerciseTestCase): number {
-        if (!testCase) {
+    private findTaskIndexForTestCase(testCaseName: string): number {
+        if (!testCaseName) {
             return -1;
         }
-        return this.tasks.findIndex((task) => task.testCases.some((tc) => tc.testName === testCase.testName)) + 1;
+        return this.tasks.findIndex((tasks) => tasks.testCases && tasks.testCases.some((tc) => tc.testName === testCaseName)) + 1;
     }
 }

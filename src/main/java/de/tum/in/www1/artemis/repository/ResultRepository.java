@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -198,24 +197,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") long resultId);
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.results r
-                LEFT JOIN FETCH r.submission s
-                LEFT JOIN FETCH p.submissions
-                LEFT JOIN FETCH r.assessmentNote
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    r.id = (SELECT MAX(p_r.id) FROM p.results p_r)
-                    OR r.assessmentType <> de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
-                    OR r IS NULL
-                )
-            """)
-    Set<StudentParticipation> findByExerciseIdWithLatestResultAndFeedback(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT r
@@ -855,18 +836,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
         return getValueElseThrow(findByIdWithEagerFeedbacks(resultId), resultId);
-    }
-
-    /**
-     * Get the latest results and their feedbacks for a given exercise ID from the database.
-     * The results are loaded together with their feedbacks.
-     * Throws an EntityNotFoundException if no results could be found for the given exercise ID.
-     *
-     * @param exerciseId the ID of the exercise for which the latest results and feedbacks should be loaded from the database
-     * @return the set of student participations containing the latest results and their feedbacks
-     */
-    default Set<StudentParticipation> findByExerciseIdWithLatestResultAndFeedbackElseThrow(long exerciseId) {
-        return getArbitraryValueElseThrow(Optional.of(findByExerciseIdWithLatestResultAndFeedback(exerciseId)), "Results with Feedback for: " + exerciseId);
     }
 
     /**

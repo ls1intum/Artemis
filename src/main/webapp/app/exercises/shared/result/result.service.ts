@@ -46,8 +46,8 @@ export interface IResultService {
     triggerDownloadCSV: (rows: string[], csvFileName: string) => void;
 }
 
-interface FeedbackDetailsResponse {
-    feedback: Feedback[];
+export interface FeedbackDetailsWithResultIdsDTO {
+    feedbackDetails: { detailText: string; testCaseName: string }[];
     resultIds: number[];
 }
 
@@ -223,8 +223,8 @@ export class ResultService implements IResultService {
         );
     }
 
-    getFeedbackDetailsForExercise(exerciseId: number): Observable<HttpResponse<FeedbackDetailsResponse>> {
-        return this.http.get<FeedbackDetailsResponse>(`${this.exerciseResourceUrl}/${exerciseId}/feedback-details`, { observe: 'response' });
+    getFeedbackDetailsForExercise(exerciseId: number): Observable<HttpResponse<FeedbackDetailsWithResultIdsDTO>> {
+        return this.http.get<FeedbackDetailsWithResultIdsDTO>(`${this.exerciseResourceUrl}/${exerciseId}/feedback-details`, { observe: 'response' });
     }
 
     public convertResultDatesFromClient(result: Result): Result {

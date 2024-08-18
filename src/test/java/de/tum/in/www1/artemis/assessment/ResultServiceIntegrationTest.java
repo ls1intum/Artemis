@@ -71,8 +71,9 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.web.rest.ResultResource;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
+import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
+import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailsWithResultIdsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -730,13 +731,22 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
         Result result = participationUtilService.addResultToParticipation(null, null, participation);
-        participationUtilService.addSampleFeedbackToResults(result);
 
-        ResultResource.FeedbackDetailsResponse response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
-                ResultResource.FeedbackDetailsResponse.class);
+        Feedback feedback = new Feedback();
+        feedback.setPositive(false);
+        feedback.setDetailText("Some feedback");
+        feedback.setTestCase(null);
+        participationUtilService.addFeedbackToResult(feedback, result);
 
-        assertThat(response.feedback()).isNotEmpty();
+        FeedbackDetailsWithResultIdsDTO response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
+                FeedbackDetailsWithResultIdsDTO.class);
+
+        assertThat(response.feedbackDetails()).isNotEmpty();
         assertThat(response.resultIds()).containsExactly(result.getId());
+
+        FeedbackDetailDTO feedbackDetail = response.feedbackDetails().getFirst();
+        assertThat(feedbackDetail.detailText()).isEqualTo("Some feedback");
+        assertThat(feedbackDetail.testCaseName()).isNull();
     }
 
     @Test
@@ -746,10 +756,10 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
         Result result = participationUtilService.addResultToParticipation(null, null, participation);
 
-        ResultResource.FeedbackDetailsResponse response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
-                ResultResource.FeedbackDetailsResponse.class);
+        FeedbackDetailsWithResultIdsDTO response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
+                FeedbackDetailsWithResultIdsDTO.class);
 
-        assertThat(response.feedback()).isEmpty();
+        assertThat(response.feedbackDetails()).isEmpty();
         assertThat(response.resultIds()).containsExactly(result.getId());
     }
 
@@ -758,10 +768,10 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void testGetAllFeedbackDetailsForExercise_NoParticipations() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
-        ResultResource.FeedbackDetailsResponse response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
-                ResultResource.FeedbackDetailsResponse.class);
+        FeedbackDetailsWithResultIdsDTO response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
+                FeedbackDetailsWithResultIdsDTO.class);
 
-        assertThat(response.feedback()).isEmpty();
+        assertThat(response.feedbackDetails()).isEmpty();
         assertThat(response.resultIds()).isEmpty();
     }
 

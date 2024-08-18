@@ -261,7 +261,7 @@
         </div>
         <div class="grading-body-container mt-3">
             @if (activeTab === 'testcase-analysis') {
-                <jhi-testcase-analysis [exerciseTitle]="programmingExercise.title"></jhi-testcase-analysis>
+                <jhi-testcase-analysis [exerciseTitle]="programmingExercise.title" [exerciseId]="programmingExercise.id"></jhi-testcase-analysis>
             }
         </div>
     }

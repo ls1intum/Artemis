@@ -52,6 +52,8 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
+import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
+import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailsWithResultIdsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -279,30 +281,37 @@ public class ResultResource {
     }
 
     /**
-     * GET exercises/:exerciseId/feedback-details : Retrieves all feedback details and the latest result IDs for a given exercise.
+     * GET exercises/:exerciseId/feedback-details : Retrieves all negative feedback details and the latest result IDs for a given exercise.
      *
      * @param exerciseId The ID of the exercise for which feedback details and result IDs should be retrieved.
      * @return A ResponseEntity containing a list of all feedback details and the corresponding result IDs for the exercise.
      */
     @GetMapping("exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastTutor
-    public ResponseEntity<FeedbackDetailsResponse> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<FeedbackDetailsWithResultIdsDTO> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
 
-        Set<StudentParticipation> participations = resultRepository.findByExerciseIdWithLatestResultAndFeedbackElseThrow(exerciseId);
+        Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestResultAndFeedbackAndTestcasesElseThrow(exerciseId);
         removeSubmissionAndExerciseData(participations);
 
-        List<Feedback> allFeedback = new ArrayList<>();
+        List<FeedbackDetailDTO> allFeedbackDetails = new ArrayList<>();
         List<Long> resultIds = new ArrayList<>();
 
         participations.forEach(participation -> {
             participation.getResults().forEach(result -> {
                 resultIds.add(result.getId());
-                allFeedback.addAll(result.getFeedbacks());
+                result.getFeedbacks().forEach(feedback -> {
+                    if (Boolean.FALSE.equals(feedback.isPositive())) {
+                        String detailText = feedback.getDetailText();
+                        String testCaseName = feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : null;
+                        FeedbackDetailDTO feedbackDetailDTO = new FeedbackDetailDTO(detailText, testCaseName);
+                        allFeedbackDetails.add(feedbackDetailDTO);
+                    }
+                });
             });
         });
 
-        FeedbackDetailsResponse response = new FeedbackDetailsResponse(allFeedback, resultIds);
+        FeedbackDetailsWithResultIdsDTO response = new FeedbackDetailsWithResultIdsDTO(allFeedbackDetails, resultIds);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -312,9 +321,6 @@ public class ResultResource {
             participation.setSubmissions(null);
             participation.setExercise(null);
         });
-    }
-
-    public record FeedbackDetailsResponse(List<Feedback> feedback, List<Long> resultIds) {
     }
 
 }

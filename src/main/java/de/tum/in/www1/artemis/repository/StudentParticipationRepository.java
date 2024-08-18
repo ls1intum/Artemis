@@ -1210,4 +1210,34 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.presentationScore IS NOT NULL
             """)
     double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH r.assessmentNote
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+            WHERE p.exercise.id = :exerciseId
+                AND (
+                    r.id = (SELECT MAX(p_r.id) FROM p.results p_r)
+                    OR r.assessmentType <> de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                    OR r IS NULL
+                )
+            """)
+    Set<StudentParticipation> findByExerciseIdWithLatestResultAndFeedbackAndTestcases(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Get the latest results and their feedbacks for a given exercise ID from the database (independant of if the correction was manual or automatic).
+     * The results are loaded together with their feedback and testcases.
+     * Throws an EntityNotFoundException if no results could be found for the given exercise ID.
+     *
+     * @param exerciseId the ID of the exercise for which the latest results and feedbacks should be loaded from the database
+     * @return the set of student participations containing the latest results and their feedbacks
+     */
+    default Set<StudentParticipation> findByExerciseIdWithLatestResultAndFeedbackAndTestcasesElseThrow(long exerciseId) {
+        return getArbitraryValueElseThrow(Optional.of(findByExerciseIdWithLatestResultAndFeedbackAndTestcases(exerciseId)), "Results with Feedback for: " + exerciseId);
+    }
+
 }
