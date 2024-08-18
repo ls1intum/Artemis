@@ -188,7 +188,7 @@ public class PyrisPipelineService {
                             competencyJol == null ? null : CompetencyJolDTO.of(competencyJol),
                             pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                             new PyrisUserDTO(session.getUser()),
-                            executionDto.settings(),                                                                                                            // flatten the execution dto here
+                            executionDto.settings(), // flatten the execution dto here
                             executionDto.initialStages()
                     );
                 },
