@@ -12,7 +12,6 @@ import {
     getIcon,
 } from 'app/entities/competency.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription, forkJoin } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -183,21 +182,13 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      *
      * @param relation the given competency relation
      */
-    createRelation(relation: CompetencyRelation) {
-        this.courseCompetencyService
-            .createCompetencyRelation(relation, this.courseId)
-            .pipe(
-                filter((res) => res.ok),
-                map((res) => res.body),
-            )
-            .subscribe({
-                next: (relation) => {
-                    if (relation) {
-                        this.relations = this.relations.concat(dtoToCompetencyRelation(relation));
-                    }
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+    async createRelation(relation: CompetencyRelation) {
+        try {
+            const createdRelation = await this.courseCompetencyApiService.createCourseCompetencyRelation(this.courseId, relation);
+            this.relations = this.relations.concat(dtoToCompetencyRelation(createdRelation));
+        } catch (error) {
+            onError(this.alertService, error);
+        }
     }
 
     /**
