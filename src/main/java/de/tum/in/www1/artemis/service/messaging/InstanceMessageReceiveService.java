@@ -6,13 +6,11 @@ import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -61,15 +59,14 @@ public class InstanceMessageReceiveService {
 
     private final UserRepository userRepository;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private final QuizScheduleService quizScheduleService;
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, ExerciseRepository exerciseRepository,
-            Optional<AthenaScheduleService> athenaScheduleService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, UserRepository userRepository,
-            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService,
-            QuizScheduleService quizScheduleService) {
+            Optional<AthenaScheduleService> athenaScheduleService, RedissonClient redissonClient, UserRepository userRepository, UserScheduleService userScheduleService,
+            NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaScheduleService = athenaScheduleService;
@@ -80,7 +77,7 @@ public class InstanceMessageReceiveService {
         this.userScheduleService = userScheduleService;
         this.notificationScheduleService = notificationScheduleService;
         this.participantScoreScheduleService = participantScoreScheduleService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
         this.quizScheduleService = quizScheduleService;
     }
 
@@ -89,110 +86,111 @@ public class InstanceMessageReceiveService {
      */
     @PostConstruct
     public void init() {
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExercise((message.getMessageObject()));
-            processSchedulePotentialAthenaExercise((message.getMessageObject()));
+            processScheduleProgrammingExercise((message));
+            processSchedulePotentialAthenaExercise((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE_CANCEL.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExerciseCancel(message.getMessageObject());
-            processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
+            processScheduleProgrammingExerciseCancel(message);
+            processPotentialAthenaExerciseScheduleCancel(message);
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.MODELING_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.MODELING_EXERCISE_SCHEDULE.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleModelingExercise((message.getMessageObject()));
+            processScheduleModelingExercise((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.MODELING_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.MODELING_EXERCISE_SCHEDULE_CANCEL.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleModelingExerciseCancel(message.getMessageObject());
+            processScheduleModelingExerciseCancel(message);
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.MODELING_EXERCISE_INSTANT_CLUSTERING.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.MODELING_EXERCISE_INSTANT_CLUSTERING.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processModelingExerciseInstantClustering((message.getMessageObject()));
+            processModelingExerciseInstantClustering((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processSchedulePotentialAthenaExercise(message.getMessageObject());
+            processSchedulePotentialAthenaExercise(message);
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE_CANCEL.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
+            processPotentialAthenaExerciseScheduleCancel(message);
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processUnlockAllRepositories((message.getMessageObject()));
+            processUnlockAllRepositories((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processUnlockAllRepositoriesAndParticipations((message.getMessageObject()));
+            processUnlockAllRepositoriesAndParticipations((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
-                .addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
+                .addListener(Long.class, (channel, message) -> {
                     SecurityUtils.setAuthorizationObject();
-                    processUnlockAllRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate((message.getMessageObject()));
+                    processUnlockAllRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate((message));
                 });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
-                .addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString()).addListener(Long.class,
+                (channel, message) -> {
                     SecurityUtils.setAuthorizationObject();
-                    processUnlockAllRepositoriesWithEarlierStartDateAndLaterDueDate((message.getMessageObject()));
+                    processUnlockAllRepositoriesWithEarlierStartDateAndLaterDueDate((message));
                 });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
-                .addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString()).addListener(Long.class,
+                (channel, message) -> {
                     SecurityUtils.setAuthorizationObject();
-                    processUnlockAllParticipationsWithEarlierStartDateAndLaterDueDate((message.getMessageObject()));
+                    processUnlockAllParticipationsWithEarlierStartDateAndLaterDueDate((message));
                 });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processLockAllRepositoriesAndParticipations((message.getMessageObject()));
+            processLockAllRepositoriesAndParticipations((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processLockAllRepositories((message.getMessageObject()));
+            processLockAllRepositories((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_DUE_DATE.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_DUE_DATE.toString()).addListener(Long.class,
+                (channel, message) -> {
+                    SecurityUtils.setAuthorizationObject();
+                    processLockAllRepositoriesAndParticipationsWithEarlierDueDate((message));
+                });
+        redissonClient.getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_PARTICIPATIONS_WITH_EARLIER_DUE_DATE.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processLockAllRepositoriesAndParticipationsWithEarlierDueDate((message.getMessageObject()));
+            processLockAllParticipationsWithEarlierDueDate((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_PARTICIPATIONS_WITH_EARLIER_DUE_DATE.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processLockAllParticipationsWithEarlierDueDate((message.getMessageObject()));
+            processRemoveNonActivatedUser((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USERS.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processRemoveNonActivatedUser((message.getMessageObject()));
+            processCancelRemoveNonActivatedUser((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.EXERCISE_RELEASED_SCHEDULE.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processCancelRemoveNonActivatedUser((message.getMessageObject()));
+            processScheduleExerciseReleasedNotification((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.EXERCISE_RELEASED_SCHEDULE.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.ASSESSED_EXERCISE_SUBMISSION_SCHEDULE.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleExerciseReleasedNotification((message.getMessageObject()));
+            processScheduleAssessedExerciseSubmittedNotification((message));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.ASSESSED_EXERCISE_SUBMISSION_SCHEDULE.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleAssessedExerciseSubmittedNotification((message.getMessageObject()));
+            processRescheduleExamDuringConduction(message);
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processRescheduleExamDuringConduction(message.getMessageObject());
+            processStudentExamIndividualWorkingTimeChangeDuringConduction(message);
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addListener(Long[].class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processStudentExamIndividualWorkingTimeChangeDuringConduction(message.getMessageObject());
+            processScheduleParticipantScore(message[0], message[1], message[2]);
         });
-        hazelcastInstance.<Long[]>getTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.QUIZ_EXERCISE_START_SCHEDULE.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleParticipantScore(message.getMessageObject()[0], message.getMessageObject()[1], message.getMessageObject()[2]);
+            processScheduleQuizStart(message);
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.QUIZ_EXERCISE_START_SCHEDULE.toString()).addMessageListener(message -> {
+        redissonClient.getTopic(MessageTopic.QUIZ_EXERCISE_START_CANCEL.toString()).addListener(Long.class, (channel, message) -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleQuizStart(message.getMessageObject());
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.QUIZ_EXERCISE_START_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processCancelQuizStart(message.getMessageObject());
+            processCancelQuizStart(message);
         });
     }
 

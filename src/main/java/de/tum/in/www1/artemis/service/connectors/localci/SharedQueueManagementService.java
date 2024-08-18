@@ -14,9 +14,12 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
+import org.redisson.api.RMap;
+import org.redisson.api.RPriorityQueue;
+import org.redisson.api.RTopic;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -24,12 +27,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.cp.lock.FencedLock;
-import com.hazelcast.map.IMap;
-import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
@@ -51,31 +48,26 @@ public class SharedQueueManagementService {
 
     private final BuildJobRepository buildJobRepository;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private final ProfileService profileService;
 
-    private IQueue<BuildJobQueueItem> queue;
+    private RPriorityQueue<BuildJobQueueItem> queue;
 
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private RMap<String, BuildJobQueueItem> processingJobs;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private RMap<String, BuildAgentInformation> buildAgentInformation;
 
-    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
+    private RMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    /**
-     * Lock to prevent multiple nodes from processing the same build job.
-     */
-    private FencedLock sharedLock;
+    private RTopic canceledBuildJobsTopic;
 
-    private ITopic<String> canceledBuildJobsTopic;
-
-    public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProfileService profileService) {
+    public SharedQueueManagementService(BuildJobRepository buildJobRepository, RedissonClient redissonClient, ProfileService profileService) {
         this.buildJobRepository = buildJobRepository;
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
         this.profileService = profileService;
     }
 
@@ -84,12 +76,11 @@ public class SharedQueueManagementService {
      */
     @PostConstruct
     public void init() {
-        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
-        this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
-        this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
-        this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
-        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
+        this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
+        this.processingJobs = this.redissonClient.getMap("processingJobs");
+        this.queue = this.redissonClient.getPriorityQueue("buildJobQueue");
+        this.canceledBuildJobsTopic = this.redissonClient.getTopic("canceledBuildJobsTopic");
+        this.dockerImageCleanupInfo = this.redissonClient.getMap("dockerImageCleanupInfo");
     }
 
     /**
@@ -148,28 +139,22 @@ public class SharedQueueManagementService {
      * @param buildJobId id of the build job to cancel
      */
     public void cancelBuildJob(String buildJobId) {
-        sharedLock.lock();
-        try {
-            // Remove build job if it is queued
-            if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
-                List<BuildJobQueueItem> toRemove = new ArrayList<>();
-                for (BuildJobQueueItem job : queue) {
-                    if (Objects.equals(job.id(), buildJobId)) {
-                        toRemove.add(job);
-                    }
-                }
-                queue.removeAll(toRemove);
-            }
-            else {
-                // Cancel build job if it is currently being processed
-                BuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
-                if (buildJob != null) {
-                    triggerBuildJobCancellation(buildJobId);
+        // Remove build job if it is queued
+        if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
+            List<BuildJobQueueItem> toRemove = new ArrayList<>();
+            for (BuildJobQueueItem job : queue) {
+                if (Objects.equals(job.id(), buildJobId)) {
+                    toRemove.add(job);
                 }
             }
+            queue.removeAll(toRemove);
         }
-        finally {
-            sharedLock.unlock();
+        else {
+            // Cancel build job if it is currently being processed
+            BuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
+            if (buildJob != null) {
+                triggerBuildJobCancellation(buildJobId);
+            }
         }
     }
 
@@ -188,30 +173,17 @@ public class SharedQueueManagementService {
      * Cancel all queued build jobs.
      */
     public void cancelAllQueuedBuildJobs() {
-        sharedLock.lock();
-        try {
-            log.debug("Cancelling all queued build jobs");
-            queue.clear();
-        }
-        finally {
-            sharedLock.unlock();
-        }
+        log.debug("Cancelling all queued build jobs");
+        queue.clear();
     }
 
     /**
      * Cancel all running build jobs.
      */
     public void cancelAllRunningBuildJobs() {
-        sharedLock.lock();
-        try {
-            for (BuildJobQueueItem buildJob : processingJobs.values()) {
-                cancelBuildJob(buildJob.id());
-            }
+        for (BuildJobQueueItem buildJob : processingJobs.values()) {
+            cancelBuildJob(buildJob.id());
         }
-        finally {
-            sharedLock.unlock();
-        }
-
     }
 
     /**
@@ -220,13 +192,8 @@ public class SharedQueueManagementService {
      * @param agentName name of the agent
      */
     public void cancelAllRunningBuildJobsForAgent(String agentName) {
-        sharedLock.lock();
-        try {
-            processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), agentName)).forEach(job -> cancelBuildJob(job.id()));
-        }
-        finally {
-            sharedLock.unlock();
-        }
+        // TODO: implement better filtering based on predicates to avoid retrieving all values
+        processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), agentName)).forEach(job -> cancelBuildJob(job.id()));
     }
 
     /**
@@ -235,19 +202,14 @@ public class SharedQueueManagementService {
      * @param courseId id of the course
      */
     public void cancelAllQueuedBuildJobsForCourse(long courseId) {
-        sharedLock.lock();
-        try {
-            List<BuildJobQueueItem> toRemove = new ArrayList<>();
-            for (BuildJobQueueItem job : queue) {
-                if (job.courseId() == courseId) {
-                    toRemove.add(job);
-                }
+        // TODO: implement better searching based on predicates to avoid retrieving all values
+        List<BuildJobQueueItem> toRemove = new ArrayList<>();
+        for (BuildJobQueueItem job : queue) {
+            if (job.courseId() == courseId) {
+                toRemove.add(job);
             }
-            queue.removeAll(toRemove);
         }
-        finally {
-            sharedLock.unlock();
-        }
+        queue.removeAll(toRemove);
     }
 
     /**
@@ -269,25 +231,21 @@ public class SharedQueueManagementService {
      * @param participationId id of the participation
      */
     public void cancelAllJobsForParticipation(long participationId) {
-        sharedLock.lock();
-        try {
-            List<BuildJobQueueItem> toRemove = new ArrayList<>();
-            for (BuildJobQueueItem queuedJob : queue) {
-                if (queuedJob.participationId() == participationId) {
-                    toRemove.add(queuedJob);
-                }
+        // TODO: implement better searching based on predicates to avoid retrieving all values
+        List<BuildJobQueueItem> toRemove = new ArrayList<>();
+        for (BuildJobQueueItem queuedJob : queue) {
+            if (queuedJob.participationId() == participationId) {
+                toRemove.add(queuedJob);
             }
-            queue.removeAll(toRemove);
+        }
+        queue.removeAll(toRemove);
 
-            for (BuildJobQueueItem runningJob : processingJobs.values()) {
-                if (runningJob.participationId() == participationId) {
-                    cancelBuildJob(runningJob.id());
-                }
+        for (BuildJobQueueItem runningJob : processingJobs.values()) {
+            if (runningJob.participationId() == participationId) {
+                cancelBuildJob(runningJob.id());
             }
         }
-        finally {
-            sharedLock.unlock();
-        }
+
     }
 
     /**

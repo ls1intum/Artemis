@@ -345,10 +345,7 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate6:${fasterxml_version}"
     // Support XML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${fasterxml_version}"
-
-    implementation "com.hazelcast:hazelcast:${hazelcast_version}"
-    implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
-    implementation "com.hazelcast:hazelcast-hibernate53:5.2.0"
+    // Support for YAML format
 
     // Hazelcast replacement to enable caching and communication between server nodes
     implementation "org.redisson:redisson:3.34.1"

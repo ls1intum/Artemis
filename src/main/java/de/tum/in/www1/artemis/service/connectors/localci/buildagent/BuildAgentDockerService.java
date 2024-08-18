@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import org.redisson.api.RMap;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,8 +37,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.PullResponseItem;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
@@ -55,7 +55,7 @@ public class BuildAgentDockerService {
 
     private final DockerClient dockerClient;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private final BuildJobContainerService buildJobContainerService;
 
@@ -88,10 +88,10 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 
-    public BuildAgentDockerService(DockerClient dockerClient, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
-            BuildJobContainerService buildJobContainerService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+    public BuildAgentDockerService(DockerClient dockerClient, RedissonClient redissonClient, BuildJobContainerService buildJobContainerService,
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.dockerClient = dockerClient;
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
         this.buildJobContainerService = buildJobContainerService;
         this.taskScheduler = taskScheduler;
     }
@@ -313,7 +313,7 @@ public class BuildAgentDockerService {
         Set<String> imageNames = getUnusedDockerImages();
 
         // Get map of docker images and their last build dates
-        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+        RMap<String, ZonedDateTime> dockerImageCleanupInfo = redissonClient.getMap("dockerImageCleanupInfo");
 
         // Delete images that have not been used for more than imageExpiryDays days
         for (String dockerImage : dockerImageCleanupInfo.keySet()) {
@@ -356,7 +356,7 @@ public class BuildAgentDockerService {
             }
 
             // Get map of docker images and their last build dates
-            IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+            RMap<String, ZonedDateTime> dockerImageCleanupInfo = redissonClient.getMap("dockerImageCleanupInfo");
 
             // Get unused images
             Set<String> unusedImages = getUnusedDockerImages();

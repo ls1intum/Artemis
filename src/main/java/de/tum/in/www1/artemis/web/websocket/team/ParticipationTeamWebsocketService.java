@@ -12,9 +12,9 @@ import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
 
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -29,8 +29,6 @@ import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
-
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -72,7 +70,7 @@ public class ParticipationTeamWebsocketService {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private Map<String, String> destinationTracker;
 
@@ -82,7 +80,7 @@ public class ParticipationTeamWebsocketService {
 
     public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, TextSubmissionService textSubmissionService,
-            ModelingSubmissionService modelingSubmissionService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            ModelingSubmissionService modelingSubmissionService, RedissonClient redissonClient) {
         this.websocketMessagingService = websocketMessagingService;
         this.simpUserRegistry = simpUserRegistry;
         this.userRepository = userRepository;
@@ -90,7 +88,7 @@ public class ParticipationTeamWebsocketService {
         this.exerciseRepository = exerciseRepository;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
     }
 
     /**
@@ -99,11 +97,11 @@ public class ParticipationTeamWebsocketService {
     @PostConstruct
     public void init() {
         // participationId-username -> timestamp
-        this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
+        this.lastTypingTracker = redissonClient.getMap("lastTypingTracker");
         // participationId-username -> timestamp
-        this.lastActionTracker = hazelcastInstance.getMap("lastActionTracker");
+        this.lastActionTracker = redissonClient.getMap("lastActionTracker");
         // sessionId -> destination
-        this.destinationTracker = hazelcastInstance.getMap("destinationTracker");
+        this.destinationTracker = redissonClient.getMap("destinationTracker");
     }
 
     /**

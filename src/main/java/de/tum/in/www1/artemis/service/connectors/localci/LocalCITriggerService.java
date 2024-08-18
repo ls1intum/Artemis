@@ -12,15 +12,13 @@ import java.util.Optional;
 import jakarta.annotation.PostConstruct;
 
 import org.hibernate.Hibernate;
+import org.redisson.api.RMap;
+import org.redisson.api.RPriorityQueue;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
@@ -71,7 +69,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private final AeolusTemplateService aeolusTemplateService;
 
@@ -91,19 +89,18 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    private IQueue<BuildJobQueueItem> queue;
+    private RPriorityQueue<BuildJobQueueItem> queue;
 
-    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
+    private RMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
     private final ExerciseDateService exerciseDateService;
 
-    public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+    public LocalCITriggerService(RedissonClient redissonClient, AeolusTemplateService aeolusTemplateService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService,
+            Optional<VersionControlService> versionControlService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -118,8 +115,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     @PostConstruct
     public void init() {
-        this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
+        this.queue = this.redissonClient.getPriorityQueue("buildJobQueue");
+        this.dockerImageCleanupInfo = this.redissonClient.getMap("dockerImageCleanupInfo");
     }
 
     /**

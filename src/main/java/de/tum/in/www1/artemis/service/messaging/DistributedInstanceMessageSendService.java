@@ -4,13 +4,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
 
 /**
  * This service is only active on a node that does not run with the 'scheduling' profile.
@@ -24,10 +22,10 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     private final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
-    public DistributedInstanceMessageSendService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    public DistributedInstanceMessageSendService(RedissonClient redissonClient) {
+        this.redissonClient = redissonClient;
     }
 
     @Override
@@ -183,10 +181,10 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     // NOTE: Don't remove any of the following methods despite the warning.
     private void sendMessageDelayed(MessageTopic topic, Long payload) {
-        exec.schedule(() -> hazelcastInstance.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
+        exec.schedule(() -> redissonClient.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
     }
 
     private void sendMessageDelayed(MessageTopic topic, Long... payload) {
-        exec.schedule(() -> hazelcastInstance.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
+        exec.schedule(() -> redissonClient.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
     }
 }

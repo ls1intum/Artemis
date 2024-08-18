@@ -3,31 +3,30 @@ package de.tum.in.www1.artemis.service.plagiarism.cache;
 import static de.tum.in.www1.artemis.config.Constants.HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.Set;
+
 import jakarta.annotation.PostConstruct;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.redisson.api.RedissonClient;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.collection.ISet;
-import com.hazelcast.core.HazelcastInstance;
 
 @Profile(PROFILE_CORE)
 @Service
 public class PlagiarismCacheService {
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     // Every course in this set is currently doing a plagiarism check
-    private ISet<Long> activePlagiarismChecksPerCourse;
+    private Set<Long> activePlagiarismChecksPerCourse;
 
-    public PlagiarismCacheService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    public PlagiarismCacheService(RedissonClient redissonClient) {
+        this.redissonClient = redissonClient;
     }
 
     @PostConstruct
     public void init() {
-        this.activePlagiarismChecksPerCourse = hazelcastInstance.getSet(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE);
+        this.activePlagiarismChecksPerCourse = redissonClient.getSet(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE);
     }
 
     /**

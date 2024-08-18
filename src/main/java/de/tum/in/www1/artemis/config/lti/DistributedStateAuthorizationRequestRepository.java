@@ -10,6 +10,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -17,8 +18,6 @@ import org.springframework.security.oauth2.client.web.AuthorizationRequestReposi
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
-
-import com.hazelcast.core.HazelcastInstance;
 
 /**
  * A specialized {@link AuthorizationRequestRepository} that uses Hazelcast to store OAuth2 authorization requests.
@@ -37,7 +36,7 @@ class DistributedStateAuthorizationRequestRepository implements AuthorizationReq
      */
     private final Executor delayedExecutor = CompletableFuture.delayedExecutor(2L, TimeUnit.MINUTES);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private Map<String, OAuth2AuthorizationRequest> store;
 
@@ -47,13 +46,13 @@ class DistributedStateAuthorizationRequestRepository implements AuthorizationReq
      */
     private boolean limitIpAddress = true;
 
-    DistributedStateAuthorizationRequestRepository(HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    DistributedStateAuthorizationRequestRepository(RedissonClient redissonClient) {
+        this.redissonClient = redissonClient;
     }
 
     @PostConstruct
     void init() {
-        this.store = hazelcastInstance.getMap("ltiStateAuthorizationRequestStore");
+        this.store = redissonClient.getMap("ltiStateAuthorizationRequestStore");
     }
 
     public void setLimitIpAddress(boolean limitIpAddress) {

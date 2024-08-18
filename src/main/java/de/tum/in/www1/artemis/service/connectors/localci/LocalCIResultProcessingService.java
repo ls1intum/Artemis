@@ -4,24 +4,19 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CancellationException;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.redisson.api.RMap;
+import org.redisson.api.RQueue;
+import org.redisson.api.RedissonClient;
+import org.redisson.api.listener.ListAddListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.collection.ItemEvent;
-import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.cp.lock.FencedLock;
-import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
@@ -53,7 +48,7 @@ public class LocalCIResultProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -69,18 +64,16 @@ public class LocalCIResultProcessingService {
 
     private final BuildLogEntryService buildLogEntryService;
 
-    private IQueue<ResultQueueItem> resultQueue;
+    private RQueue<ResultQueueItem> resultQueue;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private RMap<String, BuildAgentInformation> buildAgentInformation;
 
-    private FencedLock resultQueueLock;
+    private int listenerId;
 
-    private UUID listenerId;
-
-    public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
+    public LocalCIResultProcessingService(RedissonClient redissonClient, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService) {
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -95,15 +88,14 @@ public class LocalCIResultProcessingService {
      */
     @PostConstruct
     public void init() {
-        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
-        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
-        this.resultQueueLock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
-        this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
+        this.resultQueue = this.redissonClient.getQueue("buildResultQueue");
+        this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
+        this.listenerId = resultQueue.addListener((ListAddListener) item -> processResult());
     }
 
     @PreDestroy
     public void removeListener() {
-        this.resultQueue.removeItemListener(this.listenerId);
+        this.resultQueue.removeListener(this.listenerId);
     }
 
     /**
@@ -112,9 +104,7 @@ public class LocalCIResultProcessingService {
     public void processResult() {
 
         // set lock to prevent multiple nodes from processing the same build job
-        resultQueueLock.lock();
         ResultQueueItem resultQueueItem = resultQueue.poll();
-        resultQueueLock.unlock();
 
         if (resultQueueItem == null) {
             return;
@@ -211,24 +201,17 @@ public class LocalCIResultProcessingService {
      * @param result   the result of the build job
      */
     private void addResultToBuildAgentsRecentBuildJobs(BuildJobQueueItem buildJob, Result result) {
-        try {
-            buildAgentInformation.lock(buildJob.buildAgentAddress());
-            BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
-            if (buildAgent != null) {
-                List<BuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
-                for (int i = 0; i < recentBuildJobs.size(); i++) {
-                    if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
-                        recentBuildJobs.set(i, new BuildJobQueueItem(buildJob, ResultDTO.of(result)));
-                        break;
-                    }
+        BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
+        if (buildAgent != null) {
+            List<BuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
+            for (int i = 0; i < recentBuildJobs.size(); i++) {
+                if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
+                    recentBuildJobs.set(i, new BuildJobQueueItem(buildJob, ResultDTO.of(result)));
+                    break;
                 }
-                buildAgentInformation.put(buildJob.buildAgentAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
             }
+            buildAgentInformation.put(buildJob.buildAgentAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
         }
-        finally {
-            buildAgentInformation.unlock(buildJob.buildAgentAddress());
-        }
-
     }
 
     /**
@@ -248,20 +231,6 @@ public class LocalCIResultProcessingService {
         catch (Exception e) {
             log.error("Could not save build job to database", e);
             return null;
-        }
-    }
-
-    public class ResultQueueListener implements ItemListener<ResultQueueItem> {
-
-        @Override
-        public void itemAdded(ItemEvent<ResultQueueItem> event) {
-            log.debug("Result of build job with id {} added to queue", event.getItem().buildJobQueueItem().id());
-            processResult();
-        }
-
-        @Override
-        public void itemRemoved(ItemEvent<ResultQueueItem> event) {
-
         }
     }
 

@@ -6,13 +6,11 @@ import java.util.concurrent.TimeUnit;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.redisson.api.RMapCache;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
@@ -30,9 +28,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Profile("iris")
 public class PyrisJobService {
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
-    private IMap<String, PyrisJob> jobMap;
+    private RMapCache<String, PyrisJob> jobMap;
 
     @Value("${server.url}")
     private String serverUrl;
@@ -43,8 +41,8 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
 
-    public PyrisJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    public PyrisJobService(RedissonClient redissonClient) {
+        this.redissonClient = redissonClient;
     }
 
     /**
@@ -53,22 +51,20 @@ public class PyrisJobService {
      */
     @PostConstruct
     public void init() {
-        var mapConfig = hazelcastInstance.getConfig().getMapConfig("pyris-job-map");
-        mapConfig.setTimeToLiveSeconds(jobTimeout);
-        jobMap = hazelcastInstance.getMap("pyris-job-map");
+        jobMap = redissonClient.getMapCache("pyris-job-map");
     }
 
     public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId);
-        jobMap.put(token, job);
+        jobMap.put(token, job, jobTimeout, TimeUnit.SECONDS);
         return token;
     }
 
     public String addCourseChatJob(Long courseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new CourseChatJob(token, courseId, sessionId);
-        jobMap.put(token, job);
+        jobMap.put(token, job, jobTimeout, TimeUnit.SECONDS);
         return token;
     }
 
@@ -110,8 +106,6 @@ public class PyrisJobService {
      * 1. Reads the authentication token from the request headers.
      * 2. Retrieves the PyrisJob object associated with the provided token.
      * 3. Throws an AccessForbiddenException if the token is invalid or not provided.
-     * <p>
-     * The token was previously generated via {@link #addJob(Long, Long, Long)}
      *
      * @param request the HttpServletRequest object representing the incoming request
      * @return the PyrisJob object associated with the token

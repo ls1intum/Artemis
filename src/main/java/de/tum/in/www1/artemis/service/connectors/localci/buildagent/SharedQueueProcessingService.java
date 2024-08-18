@@ -21,6 +21,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.redisson.api.RMap;
+import org.redisson.api.RPriorityQueue;
 import org.redisson.api.RQueue;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.listener.ListAddListener;
@@ -65,7 +66,7 @@ public class SharedQueueProcessingService {
 
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
-    private RQueue<BuildJobQueueItem> queue;
+    private RPriorityQueue<BuildJobQueueItem> queue;
 
     private RQueue<ResultQueueItem> resultQueue;
 
@@ -103,7 +104,7 @@ public class SharedQueueProcessingService {
     public void init() {
         this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
         this.processingJobs = this.redissonClient.getMap("processingJobs");
-        this.queue = this.redissonClient.getQueue("buildJobQueue");
+        this.queue = this.redissonClient.getPriorityQueue("buildJobQueue");
         this.resultQueue = this.redissonClient.getQueue("buildResultQueue");
         this.listenerIdAdd = this.queue.addListener((ListAddListener) name -> {
             log.debug("CIBuildJobQueueItem added to queue: {}", name);

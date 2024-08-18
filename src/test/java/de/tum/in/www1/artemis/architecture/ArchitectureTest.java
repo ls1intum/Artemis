@@ -42,6 +42,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
@@ -246,12 +246,13 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void testNoHazelcastUsageInConstructors() {
+    void testNoRedissonUsageInConstructors() {
         // CacheHandler and QuizCache are exceptions because these classes are not created during startup
         var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
-        var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
+        var notUseRedissonInConstructor = methods().that().areDeclaredIn(RedissonClient.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
                 .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
-        notUseHazelcastInConstructor.check(allClassesWithHazelcast);
+        notUseRedissonInConstructor.check(allClassesWithRedisson);
+        // TODO: also check for RedisClient
     }
 
     @Test

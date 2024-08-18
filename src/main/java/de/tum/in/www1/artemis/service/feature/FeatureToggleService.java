@@ -7,12 +7,10 @@ import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
@@ -27,13 +25,13 @@ public class FeatureToggleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, RedissonClient redissonClient) {
         this.websocketMessagingService = websocketMessagingService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
     }
 
     /**
@@ -42,7 +40,7 @@ public class FeatureToggleService {
     @PostConstruct
     public void init() {
         // The map will automatically be distributed between all instances by Hazelcast.
-        features = hazelcastInstance.getMap("features");
+        features = redissonClient.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
         // This ensures that all features (except the Science API) are enabled once the system starts up
