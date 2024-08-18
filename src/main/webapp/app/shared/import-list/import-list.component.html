@@ -55,11 +55,12 @@
                         </td>
                     }
                     <td class="col-1">
-                        <button class="btn btn-sm btn-outline-secondary" (click)="selectRow(entity.id!)">Select</button>
+                        <button class="btn btn-sm btn-outline-secondary" (click)="selectRow(entity)">Select</button>
                     </td>
                 </tr>
             } @empty {
                 <tr>
+                    <!--                  TODO: Translations-->
                     <td [colSpan]="columns().length + 2" class="text-center text-secondary"><em>No courses found</em></td>
                 </tr>
             }

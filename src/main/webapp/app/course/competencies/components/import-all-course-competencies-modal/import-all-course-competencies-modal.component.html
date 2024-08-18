@@ -9,7 +9,7 @@
     <div class="p-3">
         <jhi-import-course-competencies-settings [(importSettings)]="importSettings" />
         <div class="mt-4">
-            <jhi-import-list [columns]="tableColumns" [disabledIds]="disabledIds()" (onRowSelection)="selectCourse($event)" />
+            <jhi-import-list entityName="competency" [columns]="tableColumns" [disabledIds]="disabledIds()" (onRowSelection)="selectCourse($event)" />
         </div>
     </div>
 </div>
