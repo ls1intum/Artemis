@@ -156,6 +156,7 @@ describe('CodeButtonComponent', () => {
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));
         stubServices();
         participation.id = 1;
+        component.useParticipationVcsAccessToken = true;
         component.participations = [participation];
         component.ngOnChanges();
         tick();
@@ -171,6 +172,7 @@ describe('CodeButtonComponent', () => {
     it('should not create new vcsAccessToken when it exists', fakeAsync(() => {
         participation.id = 1;
         component.participations = [participation];
+        component.useParticipationVcsAccessToken = true;
         stubServices();
         component.ngOnChanges();
         tick();
@@ -418,7 +420,7 @@ describe('CodeButtonComponent', () => {
                 guidedTourSettings: [],
                 login: 'edx_userLogin',
                 internal: true,
-                vcsAccessToken: 'token',
+                vcsAccessToken: vcsToken,
             }),
         );
 
