@@ -665,6 +665,7 @@ public class ProgrammingExerciseRepositoryService {
         replacements.put("${exerciseName}", programmingExercise.getTitle());
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
         replacements.put("${studentParentWorkingDirectoryName}", Constants.ASSIGNMENT_REPO_NAME);
+        replacements.put("${testWorkingDirectory}", Constants.TEST_REPO_NAME);
         replacements.put("${packaging}", programmingExercise.getBuildConfig().hasSequentialTestRuns() ? "pom" : "jar");
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }

@@ -74,6 +74,7 @@ public class LocalCIBuildConfigurationService {
         }
         String buildScript = buildScriptBuilder.toString();
         buildScript = buildScript.replace("${studentParentWorkingDirectoryName}", Constants.ASSIGNMENT_REPO_NAME);
+        buildScript = buildScript.replace("${testWorkingDirectory}", Constants.TEST_REPO_NAME);
         return buildScript;
     }
 
