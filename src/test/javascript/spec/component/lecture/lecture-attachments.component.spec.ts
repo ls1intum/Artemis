@@ -155,7 +155,7 @@ describe('LectureAttachmentsComponent', () => {
         fixture.detectChanges();
         tick();
         expect(comp.attachments).toHaveLength(3);
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(2);
     }));
 
     it('should not accept too large file', fakeAsync(() => {
