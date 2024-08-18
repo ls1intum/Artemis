@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { SimplifiedTask, TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
-import { FeedbackDetailsWithResultIdsDTO } from 'app/exercises/shared/result/result.service';
+import { FeedbackDetailsWithResultIdsDTO, SimplifiedTask, TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 
 describe('TestcaseAnalysisService', () => {
