@@ -16,10 +16,10 @@
                             <canvas #enlargedCanvas></canvas>
                             <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
                             @if (currentPage !== 1) {
-                                <button class="btn btn-secondary nav-button left" (click)="handleNavigation(prevDirection, $event)">←</button>
+                                <button class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)">←</button>
                             }
                             @if (currentPage !== totalPages) {
-                                <button class="btn btn-secondary nav-button right" (click)="handleNavigation(nextDirection, $event)">→</button>
+                                <button class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)">→</button>
                             }
                             <div class="page-number-display">{{ currentPage }}</div>
                         </div>

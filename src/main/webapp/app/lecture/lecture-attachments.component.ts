@@ -145,6 +145,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
                     this.attachmentFile = undefined;
                     this.attachmentToBeCreated = undefined;
                     this.attachmentBackup = undefined;
+                    this.loadAttachments();
                 },
                 error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });

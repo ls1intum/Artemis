@@ -11,10 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 
-enum NavigationDirection {
-    Next = 'next',
-    Previous = 'prev',
-}
+type NavigationDirection = 'next' | 'prev';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
@@ -32,13 +29,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     isEnlargedView = false;
     currentPage = 1;
     totalPages = 0;
-    nextDirection = NavigationDirection.Next;
-    prevDirection = NavigationDirection.Previous;
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
 
     constructor(
-        private route: ActivatedRoute,
+        public route: ActivatedRoute,
         private attachmentService: AttachmentService,
         private attachmentUnitService: AttachmentUnitService,
         private alertService: AlertService,
@@ -74,9 +69,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     handleKeyboardEvents(event: KeyboardEvent) {
         if (this.isEnlargedView) {
             if (event.key === 'ArrowRight' && this.currentPage < this.totalPages) {
-                this.navigatePages(NavigationDirection.Next);
+                this.navigatePages('next');
             } else if (event.key === 'ArrowLeft' && this.currentPage > 1) {
-                this.navigatePages(NavigationDirection.Previous);
+                this.navigatePages('prev');
             }
         }
     }
@@ -101,7 +96,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 1 });
+                const viewport = page.getViewport({ scale: 2 });
                 const canvas = this.createCanvas(viewport);
                 const context = canvas.getContext('2d');
                 if (context) {
@@ -287,7 +282,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param direction The navigation direction (next or previous).
      */
     navigatePages(direction: NavigationDirection) {
-        const nextPageIndex = direction === NavigationDirection.Next ? this.currentPage + 1 : this.currentPage - 1;
+        const nextPageIndex = direction === 'next' ? this.currentPage + 1 : this.currentPage - 1;
         if (nextPageIndex > 0 && nextPageIndex <= this.totalPages) {
             this.currentPage = nextPageIndex;
             const canvas = this.pdfContainer.nativeElement.querySelectorAll('.pdf-page-container canvas')[this.currentPage - 1] as HTMLCanvasElement;

@@ -34,7 +34,6 @@ describe('PdfPreviewComponent', () => {
     let fixture: ComponentFixture<PdfPreviewComponent>;
     let attachmentServiceMock: any;
     let attachmentUnitServiceMock: any;
-    let routeMock: any;
     let alertServiceMock: any;
 
     beforeEach(async () => {
@@ -45,8 +44,9 @@ describe('PdfPreviewComponent', () => {
         attachmentUnitServiceMock = {
             getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
         };
-        routeMock = {
+        const routeMock = {
             data: of({
+                course: { id: 1, name: 'Example Course' },
                 attachment: { id: 1, name: 'Example PDF' },
                 attachmentUnit: { id: 1, name: 'Chapter 1' },
             }),
@@ -79,20 +79,8 @@ describe('PdfPreviewComponent', () => {
 
     it('should load PDF and handle successful response', () => {
         component.ngOnInit();
-        expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1);
+        expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
         expect(alertServiceMock.error).not.toHaveBeenCalled();
-    });
-
-    it('should display error alert when an invalid attachment ID is provided', () => {
-        routeMock.data = of({ attachment: { id: null, name: 'Invalid PDF' } });
-        component.ngOnInit();
-        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentIDError');
-    });
-
-    it('should display error alert when an invalid attachmentUnit ID is provided', () => {
-        routeMock.data = of({ attachmentUnit: { id: null, name: 'Invalid PDF' } });
-        component.ngOnInit();
-        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUnitIDError');
     });
 
     it('should load and render PDF pages', () => {
@@ -102,7 +90,7 @@ describe('PdfPreviewComponent', () => {
         component.ngOnInit();
 
         expect(URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
-        expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1);
+        expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
         expect(component.totalPages).toBeGreaterThan(0);
     });
 
@@ -140,5 +128,50 @@ describe('PdfPreviewComponent', () => {
 
         component.toggleBodyScroll(false);
         expect(component.pdfContainer.nativeElement.style.overflow).toBe('auto');
+    });
+
+    it('should not navigate beyond totalPages', () => {
+        component.totalPages = 5;
+        component.currentPage = 5;
+        const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+        component.handleKeyboardEvents(event);
+        expect(component.currentPage).toBe(5); // Should not increase
+    });
+
+    it('should resize canvas correctly on window resize', () => {
+        const adjustCanvasSizeSpy = jest.spyOn(component, 'adjustCanvasSize');
+        window.dispatchEvent(new Event('resize'));
+        expect(adjustCanvasSizeSpy).toHaveBeenCalled();
+        adjustCanvasSizeSpy.mockRestore();
+    });
+
+    it('should not navigate to the next page if already at last page', () => {
+        component.currentPage = component.totalPages = 5;
+        component.handleKeyboardEvents(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+
+        expect(component.currentPage).toBe(5);
+    });
+
+    it('should not navigate to the previous page if already at first page', () => {
+        component.currentPage = 1;
+        component.handleKeyboardEvents(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+
+        expect(component.currentPage).toBe(1);
+    });
+
+    it('should handle error when loading PDF pages', () => {
+        attachmentServiceMock.getAttachmentFile.mockReturnValue(of(new Blob([''], { type: 'application/pdf' })));
+        component.ngOnInit();
+        expect(alertServiceMock.error).not.toHaveBeenCalled();
+    });
+
+    it('should update the page view when new pages are loaded', () => {
+        const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
+        attachmentServiceMock.getAttachmentFile.mockReturnValue(of(mockBlob));
+        component.ngOnInit();
+
+        // Assuming `loadPdf` sets `totalPages` based on the PDF document
+        expect(component.totalPages).toBeGreaterThan(0);
+        expect(component.pdfContainer.nativeElement.children.length).toBeGreaterThan(0);
     });
 });

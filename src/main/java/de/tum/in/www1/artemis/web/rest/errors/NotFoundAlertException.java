@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.web.rest.errors;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.lang.Nullable;
-import org.springframework.web.server.ResponseStatusException;
+import java.net.URI;
 
-public class NotFoundAlertException extends ResponseStatusException {
+import org.zalando.problem.Status;
 
-    public NotFoundAlertException(@Nullable String reason) {
-        super(HttpStatus.NOT_FOUND, reason);
+public class NotFoundAlertException extends HttpStatusException {
+
+    public NotFoundAlertException(String defaultMessage, String entityName, String errorKey) {
+        this(ErrorConstants.ENTITY_NOT_FOUND_TYPE, defaultMessage, entityName, errorKey, false);
+    }
+
+    public NotFoundAlertException(URI type, String defaultMessage, String entityName, String errorKey, boolean skipAlert) {
+        super(type, defaultMessage, Status.NOT_FOUND, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
     }
 
 }
