@@ -817,15 +817,15 @@ public class UserTestService {
 
         // adding invalid key should fail
         String invalidSshKey = "invalid key";
-        request.putWithResponseBody("/api/users/sshpublickey", invalidSshKey, String.class, HttpStatus.BAD_REQUEST, true);
+        request.putWithResponseBody("/api/account/ssh-public-key", invalidSshKey, String.class, HttpStatus.BAD_REQUEST, true);
 
         // adding valid key should work correctly
         String validSshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
-        request.putWithResponseBody("/api/users/sshpublickey", validSshKey, String.class, HttpStatus.OK, true);
+        request.putWithResponseBody("/api/account/ssh-public-key", validSshKey, String.class, HttpStatus.OK, true);
         assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(validSshKey);
 
         // deleting the key shoul work correctly
-        request.delete("/api/users/sshpublickey", HttpStatus.OK);
+        request.delete("/api/account/ssh-public-key", HttpStatus.OK);
         assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(null);
     }
 
