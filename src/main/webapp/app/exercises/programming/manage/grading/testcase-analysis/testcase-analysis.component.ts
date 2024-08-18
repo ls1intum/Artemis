@@ -64,7 +64,7 @@ export class TestcaseAnalysisComponent implements OnInit {
             if (existingFeedback) {
                 existingFeedback.count += 1;
             } else {
-                const task = this.findTaskIndexForTestCase(testcase);
+                const task = this.taskIndex(testcase);
                 feedbackMap.set(key, {
                     count: 1,
                     detailText: feedbackText,
@@ -76,9 +76,9 @@ export class TestcaseAnalysisComponent implements OnInit {
         this.feedback = Array.from(feedbackMap.values()).sort((a, b) => b.count - a.count);
     }
 
-    findTaskIndexForTestCase(testCaseName: string): number {
+    taskIndex(testCaseName: string): number {
         if (!testCaseName) {
-            return -1;
+            return 0;
         }
         return this.tasks.findIndex((tasks) => tasks.testCases?.some((tc) => tc.testName === testCaseName)) + 1;
     }

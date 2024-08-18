@@ -309,13 +309,13 @@
                 },
                 "testAnalysis": {
                     "titleHeader": "Test Analyse",
-                    "title": "Fehler Analyse für {{exerciseTitle}}",
+                    "title": "Fehleranalyse für {{exerciseTitle}}",
                     "occurrence": "Häufigkeit",
-                    "testCaseFeedback": "Test Fall Feedback",
+                    "testCaseFeedback": "Testfall Feedback",
                     "task": "Aufgabe",
-                    "testcase": "Test Fall",
-                    "errorCategory": "Fehler Kategorie",
-                    "totalItems": "Insgesamt {{count}} stück"
+                    "testcase": "Testfalll",
+                    "errorCategory": "Fehlerkategorie",
+                    "totalItems": "Insgesamt {{count}} Elemente"
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",

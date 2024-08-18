@@ -1216,7 +1216,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission s
-                LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
             WHERE p.exercise.id = :exerciseId
@@ -1226,7 +1225,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     OR r IS NULL
                 )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestResultAndFeedbackAndTestcases(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestResultsAndFeedbackAndTestcases(@Param("exerciseId") long exerciseId);
 
     /**
      * Get the latest results and their feedbacks for a given exercise ID from the database (independant of if the correction was manual or automatic).
@@ -1236,8 +1235,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param exerciseId the ID of the exercise for which the latest results and feedbacks should be loaded from the database
      * @return the set of student participations containing the latest results and their feedbacks
      */
-    default Set<StudentParticipation> findByExerciseIdWithLatestResultAndFeedbackAndTestcasesElseThrow(long exerciseId) {
-        return getArbitraryValueElseThrow(Optional.of(findByExerciseIdWithLatestResultAndFeedbackAndTestcases(exerciseId)), "Results with Feedback for: " + exerciseId);
+    default Set<StudentParticipation> findByExerciseIdWithLatestResultsAndFeedbackAndTestcasesElseThrow(long exerciseId) {
+        return getArbitraryValueElseThrow(Optional.of(findByExerciseIdWithLatestResultsAndFeedbackAndTestcases(exerciseId)), "Results with Feedback for: " + exerciseId);
     }
 
 }

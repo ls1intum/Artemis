@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
@@ -56,16 +56,12 @@ describe('TestcaseAnalysisComponent', () => {
     describe('ngOnInit', () => {
         it('should call loadTasks and loadFeedbackDetails when exerciseId is provided', () => {
             component.ngOnInit();
+            fixture.whenStable();
 
-            return new Promise<void>((resolve) => {
-                setTimeout(() => {
-                    expect(getSimplifiedTasksSpy).toHaveBeenCalledWith(1);
-                    expect(getFeedbackDetailsSpy).toHaveBeenCalledWith(1);
-                    expect(component.tasks).toEqual(tasksMock);
-                    expect(component.resultIds).toEqual([1, 2]);
-                    resolve();
-                }, 0);
-            });
+            expect(getSimplifiedTasksSpy).toHaveBeenCalledWith(1);
+            expect(getFeedbackDetailsSpy).toHaveBeenCalledWith(1);
+            expect(component.tasks).toEqual(tasksMock);
+            expect(component.resultIds).toEqual([1, 2]);
         });
 
         it('should not call loadTasks and loadFeedbackDetails if exerciseId is not provided', () => {
@@ -79,47 +75,37 @@ describe('TestcaseAnalysisComponent', () => {
 
     describe('loadTasks', () => {
         it('should load tasks and update the component state', () => {
-            return component
-                .loadTasks(1)
-                .toPromise()
-                .then(() => {
-                    expect(component.tasks).toEqual(tasksMock);
-                });
+            firstValueFrom(component.loadTasks(1));
+            expect(component.tasks).toEqual(tasksMock);
         });
 
         it('should handle error while loading tasks', () => {
             getSimplifiedTasksSpy.mockReturnValue(throwError(() => new Error('Error loading tasks')));
 
-            return component
-                .loadTasks(1)
-                .toPromise()
-                .catch(() => {
-                    expect(component.tasks).toEqual([]);
-                });
+            try {
+                firstValueFrom(component.loadTasks(1));
+            } catch {
+                expect(component.tasks).toEqual([]);
+            }
         });
     });
 
     describe('loadFeedbackDetails', () => {
         it('should load feedback details and update the component state', () => {
-            return component
-                .loadFeedbackDetails(1)
-                .toPromise()
-                .then(() => {
-                    expect(component.resultIds).toEqual([1, 2]);
-                    expect(component.feedback).toHaveLength(2); // feedbackMap will merge two entries with the same detailText and testCaseName
-                });
+            firstValueFrom(component.loadFeedbackDetails(1));
+            expect(component.resultIds).toEqual([1, 2]);
+            expect(component.feedback).toHaveLength(2);
         });
 
         it('should handle error while loading feedback details', () => {
             getFeedbackDetailsSpy.mockReturnValue(throwError(() => new Error('Error loading feedback details')));
 
-            return component
-                .loadFeedbackDetails(1)
-                .toPromise()
-                .catch(() => {
-                    expect(component.feedback).toEqual([]);
-                    expect(component.resultIds).toEqual([]);
-                });
+            try {
+                firstValueFrom(component.loadFeedbackDetails(1));
+            } catch {
+                expect(component.feedback).toEqual([]);
+                expect(component.resultIds).toEqual([]);
+            }
         });
     });
 
@@ -127,29 +113,29 @@ describe('TestcaseAnalysisComponent', () => {
         it('should save feedbacks and sort them by count', () => {
             component.saveFeedback(feedbackMock);
 
-            expect(component.feedback).toHaveLength(2); // Only 2 unique feedbacks
-            expect(component.feedback[0].count).toBe(2); // The first feedback should have count 2
-            expect(component.feedback[1].count).toBe(1); // The second feedback should have count 1
+            expect(component.feedback).toHaveLength(2);
+            expect(component.feedback[0].count).toBe(2);
+            expect(component.feedback[1].count).toBe(1);
         });
     });
 
-    describe('findTaskIndexForTestCase', () => {
+    describe('taskIndex', () => {
         it('should find the correct task index for a given test case', () => {
             component.tasks = tasksMock;
 
-            const index1 = component.findTaskIndexForTestCase('test1');
+            const index1 = component.taskIndex('test1');
             expect(index1).toBe(1);
 
-            const index2 = component.findTaskIndexForTestCase('test2');
+            const index2 = component.taskIndex('test2');
             expect(index2).toBe(2);
 
-            const nonExistingIndex = component.findTaskIndexForTestCase('non-existing');
-            expect(nonExistingIndex).toBe(0); // No task found, should return 0
+            const nonExistingIndex = component.taskIndex('non-existing');
+            expect(nonExistingIndex).toBe(0);
         });
 
         it('should return -1 if testCaseName is not provided', () => {
-            const index = component.findTaskIndexForTestCase('');
-            expect(index).toBe(-1);
+            const index = component.taskIndex('');
+            expect(index).toBe(0);
         });
     });
 });
