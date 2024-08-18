@@ -66,12 +66,13 @@
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
                 }
                 <ng-template ngbNavContent>
-                    <ng-content class="overflow-auto p-1" select="[#previewMonaco]">
-                        @if (showDefaultPreview) {
-                            <div class="p-0 m-1 background-editor-high markdown-preview" [style.min-height.px]="previewHeight" [innerHTML]="defaultPreviewHtml"></div>
-                        }
-                    </ng-content>
-                    <!-- TODO preview handling for other exercise types -->
+                    <div class="pt-1 mb-2 mx-3 overflow-auto">
+                        <ng-content class="overflow-auto p-1" select="[#previewMonaco]">
+                            @if (showDefaultPreview) {
+                                <div class="p-0 m-1 background-editor-high markdown-preview" [style.min-height.px]="previewHeight" [innerHTML]="defaultPreviewHtml"></div>
+                            }
+                        </ng-content>
+                    </div>
                 </ng-template>
             </ng-container>
             @if (inEditMode) {
