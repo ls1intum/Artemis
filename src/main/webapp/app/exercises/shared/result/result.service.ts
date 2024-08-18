@@ -46,11 +46,6 @@ export interface IResultService {
     triggerDownloadCSV: (rows: string[], csvFileName: string) => void;
 }
 
-export interface FeedbackDetailsWithResultIdsDTO {
-    feedbackDetails: { detailText: string; testCaseName: string }[];
-    resultIds: number[];
-}
-
 @Injectable({ providedIn: 'root' })
 export class ResultService implements IResultService {
     private exerciseResourceUrl = 'api/exercises';

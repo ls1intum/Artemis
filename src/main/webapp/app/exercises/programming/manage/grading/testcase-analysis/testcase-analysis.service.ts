@@ -3,11 +3,15 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
-import { FeedbackDetailsWithResultIdsDTO } from 'app/exercises/shared/result/result.service';
 
 export interface SimplifiedTask {
     taskName: string;
     testCases: ProgrammingExerciseServerSideTask['testCases'];
+}
+
+export interface FeedbackDetailsWithResultIdsDTO {
+    feedbackDetails: { detailText: string; testCaseName: string }[];
+    resultIds: number[];
 }
 
 @Injectable()
