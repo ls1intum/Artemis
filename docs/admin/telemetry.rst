@@ -27,3 +27,6 @@ Example configuration in `application-prod.yml`:
             enabled: true
             sendAdminDetails: false
             destination: telemetry.artemis.cit.tum.de
+
+We collect this data to enhance Artemis by understanding how it is used, ensuring compatibility with different configurations, and providing better support to our users.
+Collecting admin contact information allows us to communicate important updates or address critical issues directly.
