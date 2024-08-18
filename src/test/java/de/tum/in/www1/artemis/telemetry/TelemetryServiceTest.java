@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.service.telemetry.TelemetryService;
 
 @ExtendWith(MockitoExtension.class)
-public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
+class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Value("${artemis.telemetry.destination}")
     private String destination;
@@ -45,14 +45,14 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
     private TelemetryService telemetryServiceSpy;
 
     @BeforeEach
-    public void init() {
+    void init() {
         telemetryServiceSpy = spy(telemetryService);
         mockServer = MockRestServiceServer.createServer(restTemplate);
         telemetryServiceSpy.useTelemetry = true;
     }
 
     @Test
-    public void testSendTelemetry_TelemetryEnabled() throws Exception {
+    void testSendTelemetry_TelemetryEnabled() throws Exception {
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
         telemetryServiceSpy.sendTelemetry();
@@ -60,7 +60,7 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    public void testSendTelemetry_TelemetryDisabled() throws Exception {
+    void testSendTelemetry_TelemetryDisabled() throws Exception {
         mockServer.expect(ExpectedCount.never(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
         telemetryServiceSpy.useTelemetry = false;
@@ -69,7 +69,7 @@ public class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    public void testSendTelemetry_ExceptionHandling() throws Exception {
+    void testSendTelemetry_ExceptionHandling() throws Exception {
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withServerError().body(mapper.writeValueAsString("Failure!")));
         telemetryServiceSpy.sendTelemetry();

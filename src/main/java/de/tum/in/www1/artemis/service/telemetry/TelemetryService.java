@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.telemetry;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -7,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
@@ -21,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 @Service
+@Profile(PROFILE_SCHEDULING)
 public class TelemetryService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
