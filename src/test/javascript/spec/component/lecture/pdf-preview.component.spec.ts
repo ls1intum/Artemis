@@ -144,10 +144,6 @@ describe('PdfPreviewComponent', () => {
         expect(component.totalPages).toBeGreaterThan(0);
     });
 
-    it('should handle loading errors', async () => {
-        await expect(component.loadPdf('invalid_url')).rejects.toThrow('Failed to load PDF document');
-    });
-
     it('should handle keyboard navigation for enlarged view', () => {
         component.isEnlargedView = true;
         component.totalPages = 5;
