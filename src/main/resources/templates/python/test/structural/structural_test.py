@@ -1,9 +1,9 @@
 import unittest
-from assignment import sorting_algorithms
-from assignment import sort_strategy
-from assignment import context
-from assignment import policy
-from structural import structural_helpers
+from ${studentParentWorkingDirectoryName} import sorting_algorithms
+from ${studentParentWorkingDirectoryName} import sort_strategy
+from ${studentParentWorkingDirectoryName} import context
+from ${studentParentWorkingDirectoryName} import policy
+from ${studentParentWorkingDirectoryName} import structural_helpers
 
 
 class TestSortingStructural(unittest.TestCase):
