@@ -3,8 +3,10 @@ import logging
 import sys
 import json
 
+translation_file_dir = './src/main/webapp/i18n'
 languages = ['en', 'de']
-exclude_files = ['participationState.json', 'ltiOutcomeUrl.json', 'dragAndDropAssignment.json'] # todo recheck this
+exclude_files = ['participationState.json', 'ltiOutcomeUrl.json', 'dragAndDropAssignment.json']  # todo recheck this
+
 
 def find_translation_files_in_directory(directory):
     translation_files = []
@@ -16,11 +18,13 @@ def find_translation_files_in_directory(directory):
 
     return translation_files
 
+
 def find_translation_files():
     translation_files = {}
     for language in languages:
         translation_files[language] = find_translation_files_in_directory(f'./src/main/webapp/i18n/{language}')
     return translation_files
+
 
 def find_missing_translation_files(translation_files):
     all_files = set()
@@ -34,6 +38,7 @@ def find_missing_translation_files(translation_files):
                 missing_files[language].append(file)
 
     return missing_files
+
 
 def check_if_file_exists_for_all_languages(translation_files):
     logging.info('Checking if translation files exist for all languages')
@@ -51,6 +56,7 @@ def check_if_file_exists_for_all_languages(translation_files):
     if not passed:
         sys.exit(1)
 
+
 def read_translation_files_in_directory(directory):
     translation_data = {}
 
@@ -65,6 +71,7 @@ def read_translation_files_in_directory(directory):
 
     return translation_data
 
+
 def get_keys(json):
     keys = []
     for key in json.keys():
@@ -74,11 +81,13 @@ def get_keys(json):
             keys.append(key)
     return keys
 
+
 def get_all_keys(translation_data, file):
     all_keys = set()
     for language in languages:
         all_keys.update(get_keys(translation_data[language][file]))
     return all_keys
+
 
 def get_value(translation_data, language, file, key):
     keys = key.split('.')
@@ -87,11 +96,13 @@ def get_value(translation_data, language, file, key):
         value = value[key]
     return value
 
-def read_translation_files(directory):
+
+def read_translation_files():
     translation_data = {}
     for language in languages:
-        translation_data[language] = read_translation_files_in_directory(f'./src/main/webapp/i18n/{language}')
+        translation_data[language] = read_translation_files_in_directory(f'{translation_file_dir}/{language}')
     return translation_data
+
 
 def check_consistency_of_translation_for_file(translation_data, file):
     passed = True
@@ -112,6 +123,7 @@ def check_consistency_of_translation_for_file(translation_data, file):
 
     return passed
 
+
 def check_consistency_of_translation_files(translation_data):
     logging.info('Checking consistency of translation files')
 
@@ -124,6 +136,7 @@ def check_consistency_of_translation_files(translation_data):
     if not passed:
         sys.exit(1)
 
+
 def check_duplicate_values_for_file(translation_data, language, file):
     values = {}
     keys = get_keys(translation_data[language][file])
@@ -131,10 +144,12 @@ def check_duplicate_values_for_file(translation_data, language, file):
     for key in keys:
         value = get_value(translation_data, language, file, key)
         if value in values:
-            logging.error(f'Duplicate value {value} for key {key} and {values[value]} in {language} translation file {file}')
+            logging.error(
+                f'Duplicate value {value} for key {key} and {values[value]} in {language} translation file {file}')
             passed = False
         values[value] = key
     return passed
+
 
 def get_value_to_key_map(translation_data, language, file):
     keys = get_keys(translation_data[language][file])
@@ -144,15 +159,18 @@ def get_value_to_key_map(translation_data, language, file):
         value_to_key_map[value] = key
     return value_to_key_map
 
+
 def check_duplicate_values_for_files(translation_data, language, file1, file2):
     value_to_key_map1 = get_value_to_key_map(translation_data, language, file1)
     value_to_key_map2 = get_value_to_key_map(translation_data, language, file2)
     passed = False
     for value in value_to_key_map1.keys():
         if value in value_to_key_map2:
-            logging.error(f'Duplicate value {value} for keys {value_to_key_map1[value]} and {value_to_key_map2[value]} in {language} translation files {file1} and {file2}')
+            logging.error(
+                f'Duplicate value {value} for keys {value_to_key_map1[value]} and {value_to_key_map2[value]} in {language} translation files {file1} and {file2}')
             passed = False
     return passed
+
 
 def check_duplicate_values_for_language(translation_data, language):
     passed = True
@@ -166,6 +184,7 @@ def check_duplicate_values_for_language(translation_data, language):
 
     return passed
 
+
 def check_duplicate_values(translation_data):
     logging.info('Checking for duplicate values in translation files')
     passed = True
@@ -175,13 +194,17 @@ def check_duplicate_values(translation_data):
     if not passed:
         sys.exit(1)
 
+
 def main():
     translation_files = find_translation_files()
 
+    print(translation_files)
+
     check_if_file_exists_for_all_languages(translation_files)
-    translation_data = read_translation_files('./src/main/webapp/i18n')
+    translation_data = read_translation_files()
     check_consistency_of_translation_files(translation_data)
     check_duplicate_values(translation_data)
+
 
 if __name__ == "__main__":
     main()
