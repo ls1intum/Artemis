@@ -7,6 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 
 type FeedbackDetail = {
     count: number;
+    relativeCount: number;
     detailText: string;
     testcase: string;
     task: number;
@@ -22,6 +23,7 @@ type FeedbackDetail = {
 export class TestcaseAnalysisComponent implements OnInit {
     @Input() exerciseTitle?: string;
     @Input() exerciseId?: number;
+    @Input() isAtLeastEditor!: undefined | boolean;
     resultIds: number[] = [];
     tasks: SimplifiedTask[] = [];
     feedback: FeedbackDetail[] = [];
@@ -29,10 +31,15 @@ export class TestcaseAnalysisComponent implements OnInit {
     constructor(private simplifiedProgrammingExerciseTaskService: TestcaseAnalysisService) {}
 
     ngOnInit(): void {
-        if (this.exerciseId) {
-            this.loadTasks(this.exerciseId)
-                .pipe(concatMap(() => this.loadFeedbackDetails(this.exerciseId!)))
-                .subscribe();
+        if (this.isAtLeastEditor) {
+            this.simplifiedProgrammingExerciseTaskService.isAtLeastEditor = this.isAtLeastEditor;
+            if (this.exerciseId) {
+                this.loadTasks(this.exerciseId)
+                    .pipe(concatMap(() => this.loadFeedbackDetails(this.exerciseId!)))
+                    .subscribe();
+            }
+        } else {
+            this.simplifiedProgrammingExerciseTaskService.isAtLeastEditor = false;
         }
     }
 
@@ -65,10 +72,12 @@ export class TestcaseAnalysisComponent implements OnInit {
             const existingFeedback = feedbackMap.get(key);
             if (existingFeedback) {
                 existingFeedback.count += 1;
+                existingFeedback.relativeCount = this.getRelativeCount(existingFeedback.count);
             } else {
                 const task = this.taskIndex(testcase);
                 feedbackMap.set(key, {
                     count: 1,
+                    relativeCount: this.getRelativeCount(1),
                     detailText: feedbackText,
                     testcase: testcase,
                     task: task,
@@ -83,5 +92,9 @@ export class TestcaseAnalysisComponent implements OnInit {
             return 0;
         }
         return this.tasks.findIndex((tasks) => tasks.testCases?.some((tc) => tc.testName === testCaseName)) + 1;
+    }
+
+    getRelativeCount(count: number): number {
+        return (count / this.resultIds.length) * 100;
     }
 }

@@ -1,6 +1,6 @@
-<div class="container m-3">
+<div class="m-3">
     <h2 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle }"></h2>
-    <table class="table mb-3">
+    <table class="table table-striped mb-3">
         <thead>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.occurrence"></th>
@@ -13,7 +13,7 @@
         <tbody class="table-group-divider">
             @for (item of feedback; track item) {
                 <tr>
-                    <td class="text-center">{{ item.count }} ({{ (this.resultIds.length > 0 ? item.count / this.resultIds.length : 0) * 100 | number: '1.0-0' }}%)</td>
+                    <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
                     <td>{{ item.detailText }}</td>
                     <td class="text-center">{{ item.task }}</td>
                     <td>{{ item.testcase }}</td>

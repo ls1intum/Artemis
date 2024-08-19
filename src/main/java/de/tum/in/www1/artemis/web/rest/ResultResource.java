@@ -46,7 +46,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -288,7 +288,7 @@ public class ResultResource {
      * @return A ResponseEntity containing a list of all feedback details and the corresponding result IDs for the exercise.
      */
     @GetMapping("exercises/{exerciseId}/feedback-details")
-    @EnforceAtLeastTutorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<FeedbackDetailsWithResultIdsDTO> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
 
@@ -296,22 +296,12 @@ public class ResultResource {
                 .findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(exerciseId);
         removeSubmissionAndExerciseData(participations);
 
-        List<FeedbackDetailDTO> allFeedbackDetails = new ArrayList<>();
         List<Long> resultIds = new ArrayList<>();
 
-        participations.forEach(participation -> {
-            participation.getResults().forEach(result -> {
-                resultIds.add(result.getId());
-                result.getFeedbacks().forEach(feedback -> {
-                    if (Boolean.FALSE.equals(feedback.isPositive())) {
-                        String detailText = feedback.getDetailText();
-                        String testCaseName = feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : null;
-                        FeedbackDetailDTO feedbackDetailDTO = new FeedbackDetailDTO(detailText, testCaseName);
-                        allFeedbackDetails.add(feedbackDetailDTO);
-                    }
-                });
-            });
-        });
+        List<FeedbackDetailDTO> allFeedbackDetails = new ArrayList<>(participations.stream().filter(participation -> !participation.isPracticeMode())
+                .flatMap(participation -> participation.getResults().stream()).peek(result -> resultIds.add(result.getId())).flatMap(result -> result.getFeedbacks().stream())
+                .filter(feedback -> Boolean.FALSE.equals(feedback.isPositive()))
+                .map(feedback -> new FeedbackDetailDTO(feedback.getDetailText(), (feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : null))).toList());
 
         FeedbackDetailsWithResultIdsDTO response = new FeedbackDetailsWithResultIdsDTO(allFeedbackDetails, resultIds);
         return ResponseEntity.ok(response);

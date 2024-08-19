@@ -1210,5 +1210,4 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.presentationScore IS NOT NULL
             """)
     double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
-
 }

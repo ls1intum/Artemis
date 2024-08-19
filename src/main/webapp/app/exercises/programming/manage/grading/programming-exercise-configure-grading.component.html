@@ -16,9 +16,11 @@
                 <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab === 'submission-policy' ? 'active' : ''">
                     <b jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title"></b>
                 </div>
-                <div class="tab-item testcase-analysis" (click)="selectTab('testcase-analysis')" [ngClass]="activeTab === 'testcase-analysis' ? 'active' : ''">
-                    <b jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.titleHeader"></b>
-                </div>
+                @if (programmingExercise.isAtLeastEditor) {
+                    <div class="tab-item testcase-analysis" (click)="selectTab('testcase-analysis')" [ngClass]="activeTab === 'testcase-analysis' ? 'active' : ''">
+                        <b jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.titleHeader"></b>
+                    </div>
+                }
             </div>
             <ng-template>
                 <div></div>
@@ -261,7 +263,11 @@
         </div>
         <div class="grading-body-container mt-3">
             @if (activeTab === 'testcase-analysis') {
-                <jhi-testcase-analysis [exerciseTitle]="programmingExercise.title" [exerciseId]="programmingExercise.id"></jhi-testcase-analysis>
+                <jhi-testcase-analysis
+                    [exerciseTitle]="programmingExercise.title"
+                    [exerciseId]="programmingExercise.id"
+                    [isAtLeastEditor]="programmingExercise.isAtLeastEditor"
+                ></jhi-testcase-analysis>
             }
         </div>
     }
