@@ -45,7 +45,7 @@ import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
-import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, STANDARD_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
+import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 
 interface MarkdownActionsByGroup {
     standard: MonacoEditorAction[];
@@ -295,7 +295,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             });
 
         if (this.useDefaultMarkdownEditorOptions) {
-            this.monacoEditor.applyOptionPreset(STANDARD_MARKDOWN_EDITOR_OPTIONS);
+            this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
     }
 
