@@ -44,13 +44,13 @@ else
 fi
 
 # check for symlink is the submission
-find ../assignment/ -type l | grep -q . && echo "Cannot build with symlinks in submission." && exit 0
+find ../${studentParentWorkingDirectoryName}/ -type l | grep -q . && echo "Cannot build with symlinks in submission." && exit 0
 
 # include solution and assignment in the tests
 # this will only pick up *.ml files in the /src folders if other files are required for the tests this needs to be adjusted
-cp_code solution
-echo 'include Assignment' > solution/solution.ml
-cp_code assignment
+cp_code ${solutionWorkingDirectory}
+echo 'include Assignment' > ${solutionWorkingDirectory}/solution.ml
+cp_code ${studentParentWorkingDirectoryName}
 
 # select if tests are run by generated source code as student toplevel code may run before the tests and be able to spoof a runtime signal
 echo "let runHidden = $RUN_HIDDEN" > test/runHidden.ml
@@ -85,13 +85,13 @@ fi
 cd "$BUILD_ROOT" || exit
 
 # copy the test executable into the project root
-mv -f tests/test/test.exe ./
+mv -f ${testWorkingDirectory}/test/test.exe ./
 
 # to then delete all source code, to prevent access to it while running the code
 if $SAFE; then
-    rm -rf assignment
-    rm -rf solution
-    rm -rf tests
+    rm -rf ${studentParentWorkingDirectoryName}
+    rm -rf ${solutionWorkingDirectory}
+    rm -rf ${testWorkingDirectory}
 fi;
 
 # running the test executable without arguments to cause them to exit without actually running any tests

@@ -3,7 +3,7 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 build_and_test_the_code () {
   echo '⚙️ executing build_and_test_the_code'
-  cd "tests"
+  cd "${testWorkingDirectory}"
   # the build process is specified in `run.sh` in the test repository
   chmod +x run.sh
   ./run.sh -s
