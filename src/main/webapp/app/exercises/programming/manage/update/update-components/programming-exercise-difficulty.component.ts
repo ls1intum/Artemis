@@ -10,13 +10,15 @@ import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-f
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseDifficultyComponent {
-    @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    protected readonly ProjectType = ProjectType;
+
+    protected readonly faQuestionCircle = faQuestionCircle;
+
+    @Input({ required: true }) programmingExercise: ProgrammingExercise;
+
+    @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+
     @ViewChild(TeamConfigFormGroupComponent) teamConfigComponent: TeamConfigFormGroupComponent;
 
     @Output() triggerValidation = new EventEmitter<void>();
-
-    protected readonly ProjectType = ProjectType;
-
-    readonly faQuestionCircle = faQuestionCircle;
 }

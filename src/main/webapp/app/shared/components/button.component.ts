@@ -46,8 +46,11 @@ export enum TooltipPlacement {
 @Component({
     selector: 'jhi-button',
     templateUrl: './button.component.html',
+    standalone: true,
 })
 export class ButtonComponent {
+    protected readonly faCircleNotch = faCircleNotch;
+
     @Input() btnType = ButtonType.PRIMARY;
     @Input() btnSize = ButtonSize.MEDIUM;
     // Fa-icon name.
@@ -65,7 +68,4 @@ export class ButtonComponent {
     @Input() shouldToggle = false;
 
     @Output() onClick = new EventEmitter<MouseEvent>();
-
-    // Icons
-    readonly faCircleNotch = faCircleNotch;
 }

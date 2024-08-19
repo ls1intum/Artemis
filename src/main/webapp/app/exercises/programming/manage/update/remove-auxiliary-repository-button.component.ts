@@ -1,9 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-remove-auxiliary-repository-button',
@@ -11,20 +10,19 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [icon]="faTrash" [title]="'entity.action.remove'" (onClick)="removeAuxiliaryRepository()" />
     `,
     standalone: true,
-    imports: [ArtemisSharedComponentModule],
+    imports: [ButtonComponent],
 })
 export class RemoveAuxiliaryRepositoryButtonComponent {
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
-    @Input() programmingExercise: ProgrammingExercise;
+    protected readonly faTrash = faTrash;
 
-    @Input() row: AuxiliaryRepository;
+    @Input({ required: true }) programmingExercise: ProgrammingExercise;
+
+    @Input({ required: true }) row: AuxiliaryRepository;
 
     @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
-
-    // Icons
-    readonly faTrash = faTrash;
 
     /**
      * Removes the auxiliary repository of the selected row from the respective programming exercise.

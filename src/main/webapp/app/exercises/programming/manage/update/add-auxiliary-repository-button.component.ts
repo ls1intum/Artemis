@@ -20,21 +20,20 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     imports: [ArtemisSharedComponentModule],
 })
 export class AddAuxiliaryRepositoryButtonComponent {
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
-    @Input() programmingExercise: ProgrammingExercise;
+    protected readonly faPlus = faPlus;
+
+    @Input({ required: true }) programmingExercise: ProgrammingExercise;
 
     @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
-
-    // Icons
-    readonly faPlus = faPlus;
 
     /**
      * Adds a new auxiliary repository, which is displayed as a new row, to the respective programming exercise and activates the angular change detection.
      */
     addAuxiliaryRepositoryRow() {
-        if (this.programmingExercise.auxiliaryRepositories === undefined) {
+        if (!this.programmingExercise.auxiliaryRepositories) {
             this.programmingExercise.auxiliaryRepositories = [];
         }
         const newAuxiliaryRepository = new AuxiliaryRepository();

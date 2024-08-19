@@ -10,11 +10,13 @@ import { Subject, Subscription } from 'rxjs';
     styleUrls: ['../../programming-exercise-form.scss', 'programming-exercise-information.component.scss'],
 })
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnDestroy {
-    @Input() isImport: boolean;
-    @Input() isExamMode: boolean;
-    @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
-    @Input() isLocal: boolean;
+    protected readonly ProjectType = ProjectType;
+
+    @Input() isImport: boolean = false;
+    @Input() isExamMode: boolean = false;
+    @Input({ required: true }) programmingExercise: ProgrammingExercise;
+    @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    @Input() isLocal: boolean = false;
 
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelComponent: ExerciseTitleChannelNameComponent;
 
@@ -22,8 +24,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     formValidChanges = new Subject<boolean>();
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
-
-    protected readonly ProjectType = ProjectType;
 
     ngAfterViewInit() {
         this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
@@ -36,7 +36,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     calculateFormValid() {
-        this.formValid = Boolean(this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValid);
+        this.formValid = this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValid;
         this.formValidChanges.next(this.formValid);
     }
 }

@@ -16,9 +16,9 @@ import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/ex
     imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule, ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
 })
 export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
-    @Input() programmingExercise: ProgrammingExercise;
+    @Input({ required: true }) programmingExercise: ProgrammingExercise;
     @Input() programmingLanguage?: ProgrammingLanguage;
-    @Input() isLocal: boolean;
+    @Input() isLocal: boolean = false;
     @Input() checkoutSolutionRepository?: boolean = true;
 
     constructor(private programmingExerciseService: ProgrammingExerciseService) {}

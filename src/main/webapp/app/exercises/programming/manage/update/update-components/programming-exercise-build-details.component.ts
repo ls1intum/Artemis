@@ -32,6 +32,8 @@ import { ImportOptions } from 'app/types/programming-exercises';
     ],
 })
 export class ProgrammingExerciseBuildDetailsComponent implements AfterViewInit {
+    protected readonly ProjectType = ProjectType;
+
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
 
@@ -59,22 +61,18 @@ export class ProgrammingExerciseBuildDetailsComponent implements AfterViewInit {
     }
 
     calculateFormValid() {
-        this.formValid = Boolean(
+        this.formValid =
             !this.shortNameField.invalid &&
-                this.isCheckoutSolutionRepositoryValid() &&
-                this.areAuxiliaryRepositoriesValid() &&
-                this.isRecreateBuildPlansValid() &&
-                this.isUpdateTemplateFilesValid(),
-        );
+            this.isCheckoutSolutionRepositoryValid() &&
+            this.areAuxiliaryRepositoriesValid() &&
+            this.isRecreateBuildPlansValid() &&
+            this.isUpdateTemplateFilesValid();
         this.formValidChanges.next(this.formValid);
     }
 
     private areAuxiliaryRepositoriesValid(): boolean {
         return (
-            (every(
-                this.tableEditableFields?.map((field) => field.editingInput.valid),
-                Boolean,
-            ) &&
+            (every(this.tableEditableFields?.map((field) => field.editingInput.valid)) &&
                 !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateDirectories &&
                 !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateNames) ||
             !this.programmingExercise.auxiliaryRepositories?.length
@@ -82,11 +80,11 @@ export class ProgrammingExerciseBuildDetailsComponent implements AfterViewInit {
     }
 
     private isCheckoutSolutionRepositoryValid(): boolean {
-        return Boolean(
+        return (
             this.checkoutSolutionRepositoryField?.valid ||
-                this.programmingExercise.id ||
-                !this.programmingExercise.programmingLanguage ||
-                !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
+            this.programmingExercise.id !== undefined ||
+            !this.programmingExercise.programmingLanguage ||
+            !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed
         );
     }
 
@@ -102,6 +100,4 @@ export class ProgrammingExerciseBuildDetailsComponent implements AfterViewInit {
     private isRecreateBuildPlansValid(): boolean {
         return this.recreateBuildPlansField?.valid || !this.programmingExerciseCreationConfig.isImportFromExistingExercise;
     }
-
-    protected readonly ProjectType = ProjectType;
 }
