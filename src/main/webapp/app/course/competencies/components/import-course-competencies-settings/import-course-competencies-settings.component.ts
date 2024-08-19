@@ -40,7 +40,7 @@ export class ImportCourseCompetenciesSettingsComponent {
         }));
     }
 
-    protected setReferenceDate(dateEvent: any): void {
+    public setReferenceDate(dateEvent?: HTMLInputElement): void {
         this.importSettings.update((settings) => ({
             ...settings,
             referenceDate: dateEvent ? new Date(dateEvent.value) : undefined,
