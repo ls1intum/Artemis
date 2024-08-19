@@ -115,7 +115,7 @@ public class SAML2Service {
         if (user.isEmpty()) {
             // create User if not exists
             user = Optional.of(createUser(username, principal));
-            auditEventRepository.add(new AuditEvent(Constants.SYSTEM_ACCOUNT, "ACCOUNT_CREATE_SAML2", "user=" + user.get().getLogin()));
+            auditEventRepository.add(new AuditEvent(Constants.SYSTEM_ACCOUNT, "SAML2_ACCOUNT_CREATE", "user=" + user.get().getLogin()));
 
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 log.debug("Sending SAML2 creation mail");
@@ -134,7 +134,7 @@ public class SAML2Service {
         }
 
         auth = new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
-        auditEventRepository.add(new AuditEvent(Instant.now(), user.get().getLogin(), "AUTHENTICATION_SUCCESS", Map.of("details", auth.getDetails())));
+        auditEventRepository.add(new AuditEvent(Instant.now(), user.get().getLogin(), "SAML2_AUTHENTICATION_SUCCESS", Map.of()));
         return auth;
     }
 

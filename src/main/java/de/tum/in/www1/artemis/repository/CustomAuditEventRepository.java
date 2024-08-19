@@ -28,6 +28,8 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private final ProfileService profileService;
 
+    private static final String AUTHORIZATION_SUCCESS = "AUTHORIZATION_SUCCESS";
+
     private static final String AUTHORIZATION_FAILURE = "AUTHORIZATION_FAILURE";
 
     /**
@@ -56,8 +58,8 @@ public class CustomAuditEventRepository implements AuditEventRepository {
     @Override
     public void add(AuditEvent event) {
         if (!AUTHORIZATION_FAILURE.equals(event.getType())) {
-            if (profileService.isSaml2Active() && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // If authentication is null, and SAML2 profile is active => SAML2 authentication is running.
+            if (profileService.isSaml2Active() && AUTHORIZATION_SUCCESS.equals(event.getType()) && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // If authentication is null, Auth is success, and SAML2 profile is active => SAML2 authentication is running.
                 // Logging is handled manually.
                 return;
             }
