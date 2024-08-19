@@ -15,7 +15,6 @@
             },
             "releaseDate": "Release Date",
             "details": {
-                "title": "Properties",
                 "releaseDateNotSet": "No release date set!",
                 "releaseDateSet": "Release date: ",
                 "attachmentVersion": "Attachment version: "
