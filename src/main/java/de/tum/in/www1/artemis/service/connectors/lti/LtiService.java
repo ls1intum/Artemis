@@ -11,7 +11,6 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -42,9 +41,6 @@ import tech.jhipster.security.RandomUtil;
 @Service
 @Profile("lti")
 public class LtiService {
-
-    @Value("${artemis.lti.trustExternalLTISystems:false}")
-    private boolean trustExternalLTISystems;
 
     public static final String LTI_GROUP_NAME = "lti";
 
