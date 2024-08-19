@@ -63,7 +63,9 @@ export class ProgrammingExerciseBuildConfig {
     public buildPlanConfiguration?: string;
     public buildScript?: string;
     public checkoutSolutionRepository?: boolean;
-    public checkoutPath?: string;
+    public assignmentCheckoutPath?: string;
+    public testCheckoutPath?: string;
+    public solutionCheckoutPath?: string;
     public timeoutSeconds?: number;
     public dockerFlags?: string;
     public windFile?: WindFile;
@@ -172,7 +174,9 @@ export function resetProgrammingForImport(exercise: ProgrammingExercise) {
 export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExerciseBuildConfig): ProgrammingExerciseBuildConfig {
     const buildConfig = new ProgrammingExerciseBuildConfig();
     buildConfig.sequentialTestRuns = exerciseJson.sequentialTestRuns ?? false;
-    buildConfig.checkoutPath = exerciseJson.checkoutPath ?? '';
+    buildConfig.assignmentCheckoutPath = exerciseJson.assignmentCheckoutPath ?? '';
+    buildConfig.solutionCheckoutPath = exerciseJson.solutionCheckoutPath ?? '';
+    buildConfig.testCheckoutPath = exerciseJson.testCheckoutPath ?? '';
     buildConfig.buildPlanConfiguration = exerciseJson.buildPlanConfiguration ?? '';
     buildConfig.checkoutSolutionRepository = exerciseJson.checkoutSolutionRepository ?? false;
     buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;
