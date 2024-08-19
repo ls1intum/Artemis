@@ -117,6 +117,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     showEditButton = true;
 
+    /**
+     * If set to true, the editor will grow and shrink to fit its content. However, the height will still be constrained by {@link resizableMinHeight} and {@link resizableMaxHeight}.
+     * In particular, an empty editor will have the height of {@link resizableMinHeight} upon initialization, no matter what value {@link initialEditorHeight} has.
+     */
     @Input()
     linkEditorHeightToContentHeight = false;
 
