@@ -92,11 +92,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should parse answer options but not question titles', () => {
         component.domainActionsFound([
-            ['text1', new MonacoTestCaseAction()],
-            ['text2', new MonacoCorrectMultipleChoiceAnswerAction()],
-            ['text3', new MonacoWrongMultipleChoiceAnswerAction()],
-            ['text4', new MonacoQuizExplanationAction()],
-            ['text5', new MonacoQuizHintAction()],
+            { text: 'text1', action: new MonacoTestCaseAction() },
+            { text: 'text2', action: new MonacoCorrectMultipleChoiceAnswerAction() },
+            { text: 'text3', action: new MonacoWrongMultipleChoiceAnswerAction() },
+            { text: 'text4', action: new MonacoQuizExplanationAction() },
+            { text: 'text5', action: new MonacoQuizHintAction() },
         ]);
 
         const expected: MultipleChoiceQuestion = {
@@ -130,11 +130,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should parse answer options with question titles', () => {
         component.domainActionsFound([
-            ['text1', new MonacoQuizExplanationAction()],
-            ['text2', new MonacoQuizHintAction()],
-            ['text3', new MonacoTestCaseAction()],
-            ['text4', new MonacoCorrectMultipleChoiceAnswerAction()],
-            ['text5', new MonacoWrongMultipleChoiceAnswerAction()],
+            { text: 'text1', action: new MonacoQuizExplanationAction() },
+            { text: 'text2', action: new MonacoQuizHintAction() },
+            { text: 'text3', action: new MonacoTestCaseAction() },
+            { text: 'text4', action: new MonacoCorrectMultipleChoiceAnswerAction() },
+            { text: 'text5', action: new MonacoWrongMultipleChoiceAnswerAction() },
         ]);
 
         const expected: MultipleChoiceQuestion = {
@@ -165,7 +165,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should parse question titles', () => {
-        component.domainActionsFound([['text1', undefined]]);
+        component.domainActionsFound([{ text: 'text1', action: undefined }]);
 
         const expected: MultipleChoiceQuestion = {
             id: question.id,

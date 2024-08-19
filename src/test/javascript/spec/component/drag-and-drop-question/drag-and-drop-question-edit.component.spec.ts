@@ -24,9 +24,8 @@ import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
@@ -606,31 +605,31 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.question.text = 'text';
         component.question.explanation = 'explanation';
         component.question.hint = 'hint';
-        let domainAction: [string, MonacoEditorDomainAction | undefined];
+        let textWithDomainAction: TextWithDomainAction;
 
         // explanation
         let action = new MonacoQuizExplanationAction();
         let text = 'take this as an explanationCommand';
-        domainAction = [text, action];
+        textWithDomainAction = { text, action };
 
-        component.domainActionsFound([domainAction]);
+        component.domainActionsFound([textWithDomainAction]);
 
         expect(component.question.explanation).toBe(text);
 
         // hint
         action = new MonacoQuizHintAction();
         text = 'take this as a hintCommand';
-        domainAction = [text, action];
+        textWithDomainAction = { text, action };
 
-        component.domainActionsFound([domainAction]);
+        component.domainActionsFound([textWithDomainAction]);
 
         expect(component.question.hint).toBe(text);
 
         // text
         text = 'take this null as a command';
-        domainAction = [text, undefined];
+        textWithDomainAction = { text, action: undefined };
 
-        component.domainActionsFound([domainAction]);
+        component.domainActionsFound([textWithDomainAction]);
 
         expect(component.question.text).toBe(text);
     });
