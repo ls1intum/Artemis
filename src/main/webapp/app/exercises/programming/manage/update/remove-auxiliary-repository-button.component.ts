@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-remove-auxiliary-repository-button',
@@ -10,7 +11,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
         <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [icon]="faTrash" [title]="'entity.action.remove'" (onClick)="removeAuxiliaryRepository()" />
     `,
     standalone: true,
-    imports: [ButtonComponent],
+    imports: [ArtemisSharedComponentModule],
 })
 export class RemoveAuxiliaryRepositoryButtonComponent {
     protected readonly ButtonType = ButtonType;

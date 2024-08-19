@@ -46,7 +46,6 @@ export enum TooltipPlacement {
 @Component({
     selector: 'jhi-button',
     templateUrl: './button.component.html',
-    standalone: true,
 })
 export class ButtonComponent {
     protected readonly faCircleNotch = faCircleNotch;

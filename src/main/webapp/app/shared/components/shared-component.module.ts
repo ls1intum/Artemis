@@ -24,8 +24,9 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule, ButtonComponent],
+    imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
     declarations: [
+        ButtonComponent,
         HelpIconComponent,
         ConfirmAutofocusButtonComponent,
         ConfirmAutofocusModalComponent,
