@@ -109,16 +109,6 @@ public class LtiService {
         // 2. Case: Lookup user with the LTI email address and make sure it's not in use
         if (artemisAuthenticationProvider.getUsernameForEmail(email).isPresent() || userRepository.findOneByEmailIgnoreCase(email).isPresent()) {
             log.info("User with email {} already exists. Email is already in use.", email);
-
-            if (trustExternalLTISystems) {
-                // If the email is already in use, but we trust external LTI systems, we authenticate the user with the email
-                log.info("Trusting external LTI system. Authenticating user with email: {}", email);
-                User user = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email).orElseThrow();
-                SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
-                // TODO: Do we need to set a login cookie?
-                return;
-            }
-
             throw new LtiEmailAlreadyInUseException();
         }
 
@@ -193,8 +183,6 @@ public class LtiService {
      * @param response             the response to add the JWT cookie to
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
-        // TODO SK: why do we logout the user here if it was already activated? +1
-
         User user = userRepository.getUser();
 
         if (!user.getActivated()) {
@@ -206,13 +194,6 @@ public class LtiService {
         log.info("Add/Update JWT cookie so the user will be logged in");
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-
-        // TODO: Decide what to do with this logout
-        // else {
-        // log.info("User is activated. Adding JWT cookie for logout.");
-        // prepareLogoutCookie(response);
-        // uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
-        // }
     }
 
     /**
