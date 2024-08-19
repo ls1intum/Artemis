@@ -12,14 +12,7 @@
             "allLoaded": "Keine weiteren Mitteilungen vorhanden.",
             "liveExamExerciseUpdateNotification": "Aktualisierte Klausuraufgabenstellung!",
             "showAllSavedNotifications": "Zeige alle gespeicherten Benachrichtigungen",
-            "hideAllCurrentlyDisplayedNotifications": "Verstecke alle aktuell dargestellten Benachrichtigungen",
-            "target": {
-                "newAnswerPost": "Antwort ansehen",
-                "newPost": "Beitrag ansehen",
-                "exerciseCreated": "Übung ansehen",
-                "exerciseUpdated": "Übung ansehen",
-                "attachmentUpdated": "Vorlesung ansehen"
-            }
+            "hideAllCurrentlyDisplayedNotifications": "Verstecke alle aktuell dargestellten Benachrichtigungen"
         },
         "systemNotification": {
             "systemNotification": "Systemmitteilung",
