@@ -2,7 +2,6 @@
     "artemisApp": {
         "modelingAssessment": {
             "points": "Punkte",
-            "conflicts": "Konflikte",
             "assessor": "Bewertet von: {{firstName}} {{lastName}}",
             "noModel": "Kein Modell zum Darstellen gefunden.",
             "invalidAssessments": "Deine Bewertung ist nicht gültig!",
