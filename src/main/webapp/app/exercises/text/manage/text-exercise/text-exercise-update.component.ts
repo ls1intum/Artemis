@@ -7,7 +7,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/entities/exercise.model';
-import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { NgForm, NgModel } from '@angular/forms';
@@ -57,7 +56,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     isExamMode: boolean;
     isImport = false;
     goBackAfterSaving = false;
-    EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     isAthenaEnabled$: Observable<boolean> | undefined;
 
@@ -299,6 +297,4 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         }
         this.isSaving = false;
     }
-
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }

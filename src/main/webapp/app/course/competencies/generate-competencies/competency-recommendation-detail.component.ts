@@ -4,7 +4,6 @@ import { faChevronRight, faPencilAlt, faSave, faTrash, faWrench } from '@fortawe
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormGroup, Validators } from '@angular/forms';
 import { CompetencyFormControlsWithViewed } from 'app/course/competencies/generate-competencies/generate-competencies.component';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-competency-recommendation',
@@ -107,6 +106,4 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
     get viewedControl() {
         return this.form.controls.viewed;
     }
-
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }

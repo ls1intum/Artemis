@@ -17,7 +17,6 @@ import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.mo
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
@@ -176,6 +175,4 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
             }
         }
     }
-
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
