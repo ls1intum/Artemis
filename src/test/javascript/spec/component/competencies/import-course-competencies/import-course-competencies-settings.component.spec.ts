@@ -49,15 +49,34 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
         expect(component.importSettings()[setting as keyof CourseCompetencyImportSettings]).toBeFalse();
     });
 
-    // it('should set reference date', () => {
-    //     fixture.detectChanges();
-    //     const referenceDateTypeSelect = fixture.debugElement.nativeElement.querySelector('#reference-date-type-select');
-    //     fixture.detectChanges();
-    //     expect(referenceDateTypeSelect.disabled).toBeTrue();
-    //
-    //     const referenceDateInput = fixture.debugElement.nativeElement.querySelector('#reference-date-field');
-    //     referenceDateInput.value = '2022-01-01';
-    //     referenceDateInput.dispatchEvent(new Event('input'));
-    //     expect(component.importSettings().referenceDate).toEqual(new Date('2022-01-01'));
-    // });
+    it('should set reference date', () => {
+        fixture.detectChanges();
+
+        const referenceDateTypeSelect = fixture.debugElement.nativeElement.querySelector('#reference-date-type-select');
+        fixture.detectChanges();
+
+        expect(referenceDateTypeSelect.disabled).toBeTrue();
+
+        const date = new Date(2022, 0, 1);
+        const dateEvent = { value: date.toDateString() } as HTMLInputElement;
+        component.setReferenceDate(dateEvent);
+
+        expect(component.importSettings().referenceDate).toEqual(date);
+        expect(component.importSettings().isReleaseDate).toBeTrue();
+    });
+
+    it('should set reference date type', () => {
+        fixture.detectChanges();
+
+        const referenceDateTypeSelect = fixture.debugElement.nativeElement.querySelector('#reference-date-type-select');
+        referenceDateTypeSelect.value = 'true';
+        referenceDateTypeSelect.dispatchEvent(new Event('change'));
+
+        expect(component.importSettings().isReleaseDate).toBeTrue();
+
+        referenceDateTypeSelect.value = 'false';
+        referenceDateTypeSelect.dispatchEvent(new Event('change'));
+
+        expect(component.importSettings().isReleaseDate).toBeFalse();
+    });
 });

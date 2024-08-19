@@ -15,9 +15,11 @@
                 <input
                     class="form-control position-relative ps-5"
                     id="reference-date-field"
+                    type="text"
                     [value]="referenceDate()"
                     [owlDateTime]="dt"
-                    (dateTimeChange)="setReferenceDate($event)"
+                    [owlDateTimeTrigger]="dt"
+                    (dateTimeChange)="setReferenceDate($event.value)"
                     name="datePicker"
                 />
                 <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
