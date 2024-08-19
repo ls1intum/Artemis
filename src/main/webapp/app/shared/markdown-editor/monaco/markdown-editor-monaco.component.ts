@@ -338,9 +338,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Adjusts the height of the element when the content height changes.
      * @param newContentHeight The new height of the content in the editor.
      */
-    onContentHeightChanged(newContentHeight: number): void {
+    onContentHeightChanged(newContentHeight: number | undefined): void {
         if (this.linkEditorHeightToContentHeight) {
-            const totalHeight = newContentHeight + this.getElementClientHeight(this.fileUploadFooter) + this.getElementClientHeight(this.actionPalette);
+            const totalHeight = (newContentHeight ?? 0) + this.getElementClientHeight(this.fileUploadFooter) + this.getElementClientHeight(this.actionPalette);
             // Clamp the height so it is between the minimum and maximum height.
             this.targetWrapperHeight = Math.max(this.resizableMinHeight, Math.min(this.resizableMaxHeight, totalHeight));
         }
@@ -390,6 +390,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.inVisualMode = event.nextId === 'editor_visual';
         this.inEditMode = event.nextId === 'editor_edit';
         if (this.inEditMode) {
+            this.adjustEditorDimensions();
             this.monacoEditor.focus();
             this.onEditSelect.emit();
         } else if (this.inPreviewMode) {

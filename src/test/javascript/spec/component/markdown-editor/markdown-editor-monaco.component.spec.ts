@@ -87,7 +87,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
         const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
-        comp.onNavChanged({ nextId: 'editor', activeId: 'editor_preview', preventDefault: jest.fn() });
+        comp.onNavChanged({ nextId: 'editor_edit', activeId: 'editor_preview', preventDefault: jest.fn() });
         expect(adjustEditorDimensionsSpy).toHaveBeenCalledOnce();
         expect(focusSpy).toHaveBeenCalledOnce();
     });
@@ -214,11 +214,9 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should react to content height changes if the height is linked to the editor', () => {
         comp.linkEditorHeightToContentHeight = true;
-        comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
-        comp.resizableMinHeight = MarkdownEditorHeight.SMALL;
         comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
         fixture.detectChanges();
-        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.MEDIUM);
+        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.SMALL);
         comp.onContentHeightChanged(1500);
         expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.LARGE);
         comp.onContentHeightChanged(20);
