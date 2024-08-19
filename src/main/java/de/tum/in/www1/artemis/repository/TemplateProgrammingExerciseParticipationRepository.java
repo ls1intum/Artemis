@@ -35,20 +35,21 @@ public interface TemplateProgrammingExerciseParticipationRepository
     @Query("""
             SELECT p
             FROM TemplateProgrammingExerciseParticipation p
-                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH p.programmingExercise e
             WHERE p.buildPlanId = :buildPlanId
             """)
     Optional<TemplateProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "submissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions.results" })
     Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndSubmissionsByProgrammingExerciseId(long exerciseId);
 
     default TemplateProgrammingExerciseParticipation findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "submissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions.results.feedbacks.testCase" })
     Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(long exerciseId);
 
     @NotNull

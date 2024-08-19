@@ -287,7 +287,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM StudentParticipation p
-                JOIN p.results r
+                JOIN p.submissions s
+                JOIN s.results r
                 JOIN p.exercise e
             WHERE e.id = :exerciseId
                 AND p.testRun = FALSE
@@ -358,7 +359,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM Participation p
-                JOIN p.results r
+                JOIN p.submissions s
+                JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.assessmentType IN :types
@@ -371,7 +373,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM Participation p
-                JOIN p.results r
+                JOIN p.submissions s
+                JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.assessmentType IN :types

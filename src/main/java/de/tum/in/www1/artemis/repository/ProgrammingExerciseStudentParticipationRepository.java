@@ -29,20 +29,19 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT p
             FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.results pr
-                LEFT JOIN FETCH pr.feedbacks f
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
-                LEFT JOIN FETCH pr.submission
             WHERE p.id = :participationId
-                AND (pr.id = (
-                    SELECT MAX(prr.id)
-                    FROM p.results prr
-                    WHERE (prr.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
-                        OR (prr.completionDate IS NOT NULL
+                AND (r.id = (SELECT MAX(id)
+                    FROM r
+                    WHERE (r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                        OR (r.completionDate IS NOT NULL
                             AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime)
                         )
                     )
-                ) OR pr.id IS NULL)
+                ) OR r.id IS NULL)
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
@@ -50,12 +49,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.results pr
-                LEFT JOIN FETCH p.submissions
-            WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
-                        OR (pr.completionDate IS NOT NULL
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+            WHERE p.id = :participationId AND ((r.assessmentType = 'AUTOMATIC'
+                        OR (r.completionDate IS NOT NULL
                             AND (p.exercise.assessmentDueDate IS NULL
-                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
+                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR r.id IS NULL)
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
@@ -66,7 +65,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.results
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
             WHERE p.buildPlanId IS NOT NULL
                 AND (p.student IS NOT NULL OR p.team IS NOT NULL)
             """)

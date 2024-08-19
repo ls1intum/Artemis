@@ -27,7 +27,6 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
     @Query("""
             SELECT DISTINCT p
             FROM Participation p
-                LEFT JOIN FETCH p.results
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
             WHERE p.id = :participationId

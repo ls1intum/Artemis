@@ -327,6 +327,8 @@ public class ProgrammingPlagiarismDetectionService {
      * @return an unmodifiable list containing the latest text submission for every participation
      */
     public List<ProgrammingExerciseParticipation> filterStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
+        // TODO: potentially reconnect participation.submission.result.submission
+        // Note that participation.results is not available
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
         return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())

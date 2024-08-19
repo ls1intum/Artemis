@@ -225,6 +225,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
     Optional<Exam> findWithStudentExamsExercisesById(long id);
 
+    // TODO: we should not load template and solution participation in the same query, also we should split this based on exercise types
     @Query("""
             SELECT e
             FROM Exam e
@@ -232,12 +233,16 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 LEFT JOIN FETCH exg.exercises ex
                 LEFT JOIN FETCH ex.quizQuestions
                 LEFT JOIN FETCH ex.templateParticipation tp
+                LEFT JOIN FETCH tp.submissions ts
+                LEFT JOIN FETCH ts.results tr
                 LEFT JOIN FETCH ex.solutionParticipation sp
-                LEFT JOIN FETCH tp.results tpr
-                LEFT JOIN FETCH sp.results spr
+                LEFT JOIN FETCH sp.submissions ss
+                LEFT JOIN FETCH ss.results sr
             WHERE e.id = :examId
-                AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
-                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+                AND (ts.id = (SELECT MAX(id) FROM ts) OR ts.id IS NULL)
+                AND (ss.id = (SELECT MAX(id) FROM ss) OR ss.id IS NULL)
+                AND (tr.id = (SELECT MAX(id) FROM tr) OR tr.id IS NULL)
+                AND (sr.id = (SELECT MAX(id) FROM sr) OR sr.id IS NULL)
             """)
     Optional<Exam> findWithExerciseGroupsAndExercisesAndDetailsById(@Param("examId") long examId);
 

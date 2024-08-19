@@ -50,17 +50,22 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @param courseId the course the returned programming exercises belong to.
      * @return all exercises for the given course with only the latest results for solution and template each (if present).
      */
+    // TODO: we should not join template and solution participations in the same query
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.templateParticipation tp
                 LEFT JOIN FETCH pe.solutionParticipation sp
-                LEFT JOIN FETCH tp.results tpr
-                LEFT JOIN FETCH sp.results spr
+                LEFT JOIN FETCH tp.submissions ts
+                LEFT JOIN FETCH ts.results tr
+                LEFT JOIN FETCH sp.submissions ss
+                LEFT JOIN FETCH ss.results sr
                 LEFT JOIN FETCH pe.categories
             WHERE pe.course.id = :courseId
-                AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
-                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+                AND (ts.id = (SELECT MAX(id) FROM ts) OR ts.id IS NULL)
+                AND (ss.id = (SELECT MAX(id) FROM ss) OR ss.id IS NULL)
+                AND (tr.id = (SELECT MAX(id) FROM tr) OR tr.id IS NULL)
+                AND (sr.id = (SELECT MAX(id) FROM sr) OR sr.id IS NULL)
             """)
     List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") long courseId);
 
@@ -152,12 +157,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.templateParticipation tp
-                LEFT JOIN FETCH tp.results AS tpr
-                LEFT JOIN FETCH tpr.feedbacks tf
+                LEFT JOIN FETCH tp.submissions ts
+                LEFT JOIN FETCH ts.results tr
+                LEFT JOIN FETCH tr.feedbacks tf
                 LEFT JOIN FETCH tf.testCase
-                LEFT JOIN FETCH tpr.submission
             WHERE pe.id = :exerciseId
-                AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
+                AND (ts.id = (SELECT MAX(id) FROM ts) OR ts.id IS NULL)
+                AND (tr.id = (SELECT MAX(id) FROM tr) OR tr.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithTemplateParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
 
@@ -173,12 +179,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.solutionParticipation sp
-                LEFT JOIN FETCH sp.results AS spr
-                LEFT JOIN FETCH spr.feedbacks sf
+                LEFT JOIN FETCH sp.submissions ss
+                LEFT JOIN FETCH ss.results sr
+                LEFT JOIN FETCH sr.feedbacks sf
                 LEFT JOIN FETCH sf.testCase
-                LEFT JOIN FETCH spr.submission
             WHERE pe.id = :exerciseId
-                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+                AND (ss.id = (SELECT MAX(id) FROM ss) OR ss.id IS NULL)
+                AND (sr.id = (SELECT MAX(id) FROM sr) OR sr.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithSolutionParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
 
@@ -447,11 +454,12 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @Query("""
             SELECT COUNT (DISTINCT p)
             FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN p.results r
+                LEFT JOIN p.submissions s
+                LEFT JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
-                AND r.submission.submitted = TRUE
-                AND (r.submission.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR r.submission.type IS NULL)
+                AND s.submitted = TRUE
+                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND r.assessor IS NOT NULL
                 AND r.completionDate IS NOT NULL
             """)
