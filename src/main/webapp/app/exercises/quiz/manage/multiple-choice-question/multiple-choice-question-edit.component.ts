@@ -157,13 +157,13 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     }
 
     /**
-     * 1. Gets a tuple of text and domain action identifiers and assigns text values according to the domain action identifiers a
+     * 1. Gets a tuple of text and domain action identifiers and assigns text values according to the domain actions a
      *    multiple choice question the to the multiple choice question attributes.
      *   (question text, explanation, hint, answerOption (correct/wrong)
      * 2. The tuple order is the same as the order of the actions in the markdown text inserted by the user
      * 3. resetMultipleChoicePreview() is triggered to notify the parent component
      *    about the changes within the question and to cacheValidation() since the assigned values have changed
-     * @param textWithDomainActions containing tuples of [text, domain action identifier]
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     domainActionsFound(textWithDomainActions: TextWithDomainAction[]): void {
         this.cleanupQuestion();

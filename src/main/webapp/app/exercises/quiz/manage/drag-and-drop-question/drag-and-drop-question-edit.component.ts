@@ -836,10 +836,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * 1. Gets the {array} containing the text with the domain action identifier and creates a new drag and drop problem statement
-     * by assigning the text according to the domain action identifier to the drag and drop attributes.
-     * (question text, explanation, hint)
-     * @param textWithDomainActions - containing markdownText with the corresponding domain action identifier
+     * Creates the drag and drop problem statement from the parsed markdown text, assigning the question text, explanation, and hint according to the domain actions found.
+     * @param textWithDomainActions The parsed markdown text with the corresponding domain actions.
      */
     domainActionsFound(textWithDomainActions: TextWithDomainAction[]): void {
         this.cleanupQuestion();

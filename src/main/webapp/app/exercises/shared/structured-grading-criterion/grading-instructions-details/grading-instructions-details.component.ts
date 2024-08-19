@@ -218,12 +218,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * @function createSubInstructionActions
-     * @desc 1. divides the input: domainActions into two subarrays:
-     *          instructionActions, which consists of all stand-alone instructions
-     *          criterionActions, which consists of instructions that belong to a criterion
-     *       2. for each subarray, a method is called to create the criterion and instruction objects
-     * @param textWithDomainActions containing tuples of [text, domainActionIdentifier]
+     * Creates criterion and instruction objects based on the parsed markdown text.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     createSubInstructionActions(textWithDomainActions: TextWithDomainAction[]): void {
         let instructionActions;
@@ -252,9 +248,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * @function setParentForInstructionsWithNoCriterion
-     * @desc 1. creates a dummy criterion object for each stand-alone instruction
-     * @param textWithDomainActions containing tuples of [text, domain action identifier]
+     * Creates a dummy grading criterion object for each instruction that does not belong to a criterion and assigns the instruction to it.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     setParentForInstructionsWithNoCriterion(textWithDomainActions: TextWithDomainAction[]): void {
         for (const { action } of textWithDomainActions) {
@@ -273,10 +268,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * @function groupInstructionsToCriteria
-     * @desc 1. creates a criterion for each MonacoGradingCriterionAction found in the domainActions array
-     *          and creates the instruction objects of this criterion then assigns them to their parent criterion
-     * @param textWithDomainActions containing tuples of [text, domain action identifier]
+     * Creates a grading criterion object for each criterion action found in the parsed markdown text and assigns the corresponding grading instructions to it.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     groupInstructionsToCriteria(textWithDomainActions: TextWithDomainAction[]): void {
         const initialCriterionActions = textWithDomainActions;
@@ -310,11 +303,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * @function setInstructionParameters
-     * @desc 1. Gets a tuple of text and domain action identifiers (not including MonacoGradingCriterionAction) and assigns text values according to the domain action identifiers
-     *       2. The tuple order is the same as the order of the actions in the markdown text inserted by the user
-     *       instruction objects must be created before the method gets triggered
-     * @param textWithDomainActions containing tuples of [text, domain action identifier]
+     * Sets the parameters of the GradingInstruction objects based on the parsed markdown text. Note that the instruction objects must be created before this method is called.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     setInstructionParameters(textWithDomainActions: TextWithDomainAction[]): void {
         let index = 0;
@@ -338,10 +328,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * @function onDomainActionsFound
-     * @desc 1. Gets a tuple of text and domain action identifiers and assigns text values according to the domain action identifiers
-     *       2. The tuple order is the same as the order of the actions in the markdown text inserted by the user
-     * @param textWithDomainActions containing tuples of [text, domain action identifier]
+     * Updates the grading instructions of the exercise based on the parsed markdown text.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     onDomainActionsFound(textWithDomainActions: TextWithDomainAction[]): void {
         this.instructions = [];
@@ -350,13 +338,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.createSubInstructionActions(textWithDomainActions);
     }
 
-    /**
-     * @function onInstructionChange
-     * @desc 1. Gets a tuple of text and domain action identifiers and assigns text values according to the domain action identifiers
-     *       2. The tuple order is the same as the order of the actions in the markdown text inserted by the user
-     * @param textWithDomainActions containing tuples of [text, domain action identifier]
-     * @param {GradingInstruction} instruction
-     */
     onInstructionChange(textWithDomainActions: TextWithDomainAction[], instruction: GradingInstruction): void {
         this.instructions = [instruction];
         this.setInstructionParameters(textWithDomainActions);
@@ -419,9 +400,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * @function addNewInstruction
-     * @desc Adds new grading instruction for desired grading criteria
-     * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be inserted
+     * Adds a new grading instruction for the specified grading criterion.
+     * @param criterion The grading criterion that contains the instruction to insert.
      */
     addNewInstruction(criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
@@ -434,10 +414,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.initializeMarkdown();
     }
 
-    /**
-     * @function addNewGradingCriteria
-     * @desc Adds new grading criteria for the exercise
-     */
     addNewGradingCriterion() {
         const criterion = new GradingCriterion();
         criterion.structuredGradingInstructions = [];
@@ -449,21 +425,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         }
     }
 
-    /**
-     * @function onCriteriaTitleChange
-     * @desc Detects changes for grading criteria title
-     * @param {GradingCriterion} criterion the criteria, which includes title that will be changed
-     */
     onCriterionTitleChange($event: any, criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         this.exercise.gradingCriteria![criterionIndex].title = $event.target.value;
     }
 
-    /**
-     * @function resetCriteriaTitle
-     * @desc Resets the whole grading criteria title
-     * @param criterion {GradingCriterion} the criteria, which includes title that will be reset
-     */
     resetCriterionTitle(criterion: GradingCriterion) {
         const criterionIndex = this.findCriterionIndex(criterion, this.exercise);
         const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
@@ -474,20 +440,14 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         }
     }
 
-    /**
-     * @function deleteGradingCriteria
-     * @desc Deletes the grading criteria with sub-grading instructions
-     * @param criterion {GradingCriterion} the criteria, which will be deleted
-     */
     deleteGradingCriterion(criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         this.exercise.gradingCriteria!.splice(criterionIndex, 1);
     }
 
     /**
-     * @function setExerciseGradingInstructionText
-     * @desc Gets a tuple of text and domain action identifiers and assigns text values as grading instructions of exercise
-     * @param textWithDomainActions The domain action identifiers along with their text values
+     * Extracts the exercise grading instruction text from the start of the parsed markdown text.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     setExerciseGradingInstructionText(textWithDomainActions: TextWithDomainAction[]): void {
         if (!textWithDomainActions.length) {
@@ -508,12 +468,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.markdownEditorText = this.generateMarkdown();
     }
 
-    /**
-     * Updates given grading instruction in exercise
-     *
-     * @param instruction needs to be updated
-     * @param criterion includes instruction needs to be updated
-     */
     updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
