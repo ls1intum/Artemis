@@ -24,9 +24,14 @@
     }
 }
 
-@media screen and (min-width: 910px) {
+@media screen and (min-width: 830px) {
     .col-md-6 {
         width: 50% !important;
+    }
+
+    .px-sm-4 {
+        padding-right: 1rem !important;
+        padding-left: 1rem !important;
     }
 }
 

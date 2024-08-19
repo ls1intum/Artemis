@@ -35,9 +35,9 @@
     <div class="row">
         <h4 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.recentlyAccessed"></h4>
     </div>
-    <div class="row mx-1 mx-sm-3">
+    <div class="row mx-1 mx-lg-3">
         @for (course of recentlyAccessedCourses; track course) {
-            <jhi-overview-course-card class="col-sm-12 col-md-6 col-lg-4 col-xl-3 px-2 px-sm-4 pb-4" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
+            <jhi-overview-course-card class="col-sm-12 col-md-6 col-lg-4 col-xl-3 px-2 px-lg-4 pb-4" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
         }
     </div>
     @if (regularCourses.length > 0) {
@@ -54,9 +54,9 @@
         </div>
     </div>
 } @else {
-    <div class="row mx-1 mx-sm-3" [ngClass]="{ 'mt-5': recentlyAccessedCourses.length === 0 }">
+    <div class="row mx-1 mx-lg-3" [ngClass]="{ 'mt-5': recentlyAccessedCourses.length === 0 }">
         @for (course of regularCourses; track course) {
-            <jhi-overview-course-card class="col-sm-12 col-md-6 col-lg-4 col-xl-3 px-2 px-sm-4 pb-4" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
+            <jhi-overview-course-card class="col-sm-12 col-md-6 col-lg-4 col-xl-3 px-2 px-lg-4 pb-4" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
         }
     </div>
 }
