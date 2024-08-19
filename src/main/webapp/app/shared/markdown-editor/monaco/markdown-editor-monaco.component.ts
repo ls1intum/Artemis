@@ -193,7 +193,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
     targetWrapperHeight?: number;
-    previewHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
     isResizing = false;
     displayedActions: MarkdownActionsByGroup = {
@@ -377,7 +376,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     adjustEditorDimensions(): void {
         const editorHeight = this.getEditorHeight();
         this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), editorHeight);
-        this.previewHeight = 0.9 * editorHeight;
     }
 
     /**

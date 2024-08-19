@@ -69,7 +69,7 @@
                     <div class="pt-1 mb-2 mx-3 overflow-auto">
                         <ng-content class="overflow-auto p-1" select="[#previewMonaco]">
                             @if (showDefaultPreview) {
-                                <div class="p-0 m-1 background-editor-high markdown-preview" [style.min-height.px]="previewHeight" [innerHTML]="defaultPreviewHtml"></div>
+                                <div class="p-0 m-1 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml"></div>
                             }
                         </ng-content>
                     </div>
