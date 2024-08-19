@@ -12,10 +12,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.config.audit.AuditEventConverter;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
+import de.tum.in.www1.artemis.service.ProfileService;
 
 /**
  * An implementation of Spring Boot's {@link AuditEventRepository}.
@@ -23,6 +25,8 @@ import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 @Profile(PROFILE_CORE)
 @Repository
 public class CustomAuditEventRepository implements AuditEventRepository {
+
+    private final ProfileService profileService;
 
     private static final String AUTHORIZATION_FAILURE = "AUTHORIZATION_FAILURE";
 
@@ -37,9 +41,10 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private static final Logger log = LoggerFactory.getLogger(CustomAuditEventRepository.class);
 
-    public CustomAuditEventRepository(PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter) {
+    public CustomAuditEventRepository(PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter, ProfileService profileService) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
+        this.profileService = profileService;
     }
 
     @Override
@@ -51,6 +56,11 @@ public class CustomAuditEventRepository implements AuditEventRepository {
     @Override
     public void add(AuditEvent event) {
         if (!AUTHORIZATION_FAILURE.equals(event.getType())) {
+            if (profileService.isSaml2Active() && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // If authentication is null, and SAML2 profile is active => SAML2 authentication is running.
+                // Logging is handled manually.
+                return;
+            }
 
             PersistentAuditEvent persistentAuditEvent = new PersistentAuditEvent();
             persistentAuditEvent.setPrincipal(event.getPrincipal());

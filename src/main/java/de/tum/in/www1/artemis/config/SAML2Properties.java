@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
  */
 @Profile(PROFILE_CORE)
 @Component
-@ConfigurationProperties("saml2")
+@ConfigurationProperties(Constants.PROFILE_SAML2)
 public class SAML2Properties {
 
     /**

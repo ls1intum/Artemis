@@ -311,6 +311,11 @@ public final class Constants {
      */
     public static final String PROFILE_LTI = "lti";
 
+    /**
+     * The name of the Spring profile used for activating SAML2 in Artemis, see {@link de.tum.in.www1.artemis.service.connectors.SAML2Service}.
+     */
+    public static final String PROFILE_SAML2 = "saml2";
+
     public static final String PROFILE_SCHEDULING = "scheduling";
 
     /**

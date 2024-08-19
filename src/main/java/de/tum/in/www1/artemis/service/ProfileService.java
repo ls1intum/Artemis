@@ -130,4 +130,13 @@ public class ProfileService {
     public boolean isProductionActive() {
         return isProfileActive(JHipsterConstants.SPRING_PROFILE_PRODUCTION);
     }
+
+    /**
+     * Checks if the saml2 profile is active
+     *
+     * @return true if the saml2 profile is active, false otherwise
+     */
+    public boolean isSaml2Active() {
+        return isProfileActive(Constants.PROFILE_SAML2);
+    }
 }
