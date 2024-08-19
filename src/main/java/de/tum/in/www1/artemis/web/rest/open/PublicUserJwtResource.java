@@ -116,7 +116,7 @@ public class PublicUserJwtResource {
         log.debug("SAML2 authentication: {}", authentication);
 
         try {
-            authentication = saml2Service.get().handleAuthentication(principal);
+            authentication = saml2Service.get().handleAuthentication(authentication, principal);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         catch (UserNotActivatedException e) {
