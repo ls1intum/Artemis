@@ -31,7 +31,6 @@
             "readSuccessfully": "Du hast die Beispielabgabe erfolgreich gelesen und verstanden.",
             "createNew": "Neu erstellen",
             "pageHeader": "Beispiel für eine Textvorlage zur Übung",
-            "usedForTutorial": "In Bewertungstraining verwenden",
             "assessmentTraining": "Bewertungstraining",
             "selectModel": "Wähle eine Bewertungstraining-Modus aus",
             "selectModelExplanation": "Wähle eine Bewertungstraining-Modus aus. Dieser bestimmt wie die Tutor:innen nachweisen, dass sie die Beispielbewertung verstanden haben.",

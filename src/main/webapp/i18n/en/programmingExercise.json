@@ -66,7 +66,6 @@
                 "steps": {
                     "generalInfoStepTitle": "Information",
                     "difficultyStepTitle": "Mode",
-                    "buildPlansTitle": "Build Plans",
                     "languageStepTitle": "Language",
                     "gradingStepTitle": "Grading",
                     "problemStepTitle": "Problem",
@@ -76,7 +75,6 @@
                     "generalInfoStepTitle": "General",
                     "generalInfoStepMessage": "Input essential information that forms the foundation of your programming exercise",
                     "difficultyStepTitle": "Mode",
-                    "buildPlansTitle": "Build Plans",
                     "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
                     "languageStepTitle": "Language",
                     "languageStepMessage": "Configure the specific details related to the programming language and build mechanism used in the exercise",
@@ -476,12 +474,10 @@
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
                 "description": "Description",
-                "invalidRepositoryName": "A repository with that name already exists in this exercise!",
                 "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
                 "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
                 "warning": "Auxiliary repositories can be added, edited and removed. Edit-Changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
                 "editedWarning": "You changed the auxiliary repositories. These changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
-                "editedWarningLocalCI": "You changed the auxiliary repositories. These changes in Artemis do not carry over to the VCS and the build script must be adjusted manually.",
                 "repositoryNameRequired": {
                     "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'. Names might not contain special characters other than '-' and '_'."
                 },
