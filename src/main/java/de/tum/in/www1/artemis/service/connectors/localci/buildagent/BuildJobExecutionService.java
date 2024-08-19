@@ -285,10 +285,9 @@ public class BuildJobExecutionService {
             if (solutionRepositoryUri != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {
                 deleteCloneRepo(solutionRepositoryUri, assignmentRepoCommitHash, buildJob.id(), solutionRepositoryPath);
             }
-            int index = 0;
-            for (VcsRepositoryUri auxiliaryRepositoryUri : auxiliaryRepositoriesUris) {
-                deleteCloneRepo(auxiliaryRepositoryUri, assignmentRepoCommitHash, buildJob.id(), auxiliaryRepositoriesPaths[index]);
-                index++;
+
+            for (int i = 0; i < auxiliaryRepositoriesUris.length; i++) {
+                deleteCloneRepo(auxiliaryRepositoriesUris[i], assignmentRepoCommitHash, buildJob.id(), auxiliaryRepositoriesPaths[i]);
             }
 
             try {
@@ -459,12 +458,10 @@ public class BuildJobExecutionService {
     }
 
     private Path cloneRepository(VcsRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
-        int attempt = 0;
         Repository repository = null;
 
-        while (attempt < MAX_CLONE_RETRIES) {
+        for (int attempt = 1; attempt <= MAX_CLONE_RETRIES; attempt++) {
             try {
-                attempt++;
                 // Generate a random folder name for the repository parent folder if the commit hash is null. This is to avoid conflicts when cloning multiple repositories.
                 String repositoryParentFolder = commitHash != null ? commitHash : UUID.randomUUID().toString();
                 // Clone the assignment repository into a temporary directory
