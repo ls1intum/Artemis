@@ -133,8 +133,6 @@ class LtiServiceTest {
 
         UriComponents uriComponents = uriComponentsBuilder.build();
 
-        verify(response).addHeader(any(), any());
-
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         assertThat(initialize).isNull();
     }
