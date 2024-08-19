@@ -18,5 +18,5 @@ export class ProgrammingExerciseDifficultyComponent {
 
     protected readonly ProjectType = ProjectType;
 
-    faQuestionCircle = faQuestionCircle;
+    readonly faQuestionCircle = faQuestionCircle;
 }
