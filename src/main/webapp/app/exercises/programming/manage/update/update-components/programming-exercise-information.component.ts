@@ -7,6 +7,8 @@ import { Subject, Subscription } from 'rxjs';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { every } from 'lodash-es';
 import { ImportOptions } from 'app/types/programming-exercises';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-info',
@@ -34,6 +36,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
     protected readonly ProjectType = ProjectType;
+
+    ButtonType = ButtonType;
+    ButtonSize = ButtonSize;
+    faPlus = faPlus;
 
     ngAfterViewInit() {
         this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
@@ -100,5 +106,9 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 !this.programmingExercise.programmingLanguage ||
                 !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
         );
+    }
+
+    editRepositoryCheckoutPath() {
+        // TODO: Implement this method
     }
 }

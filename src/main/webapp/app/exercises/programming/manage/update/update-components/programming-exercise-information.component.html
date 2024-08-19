@@ -127,6 +127,13 @@
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
                         </ngb-alert>
                     }
+                    <jhi-button
+                        [btnType]="ButtonType.WARNING"
+                        [btnSize]="ButtonSize.SMALL"
+                        [icon]="faPlus"
+                        [title]="'artemisApp.programmingExercise.checkoutPath.edit'"
+                        (onClick)="editRepositoryCheckoutPath()"
+                    />
                     <jhi-add-auxiliary-repository-button
                         [programmingExercise]="programmingExercise"
                         (onRefresh)="programmingExerciseCreationConfig.refreshAuxiliaryRepositoryChecks()"
