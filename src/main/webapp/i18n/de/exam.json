@@ -211,7 +211,7 @@
         },
         "examScores": {
             "xAxes": "Ergebnis in %",
-            "xAxesSuffix": " + {Notenname}",
+            "xAxesSuffixNoBonus": " + {Notenname}",
             "xAxesSuffixBonus": " + {Bonuspunkte}",
             "yAxes": "Anzahl Teilnehmende",
             "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagram hervor: {{ median }}%",
@@ -318,6 +318,7 @@
             "notSynced": "Aufgabe nicht gespeichert",
             "notStarted": "Aufgabe nicht gestartet",
             "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
+            "submittedSubmissionLimitReached": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst nicht erneut abgeben, da du das Limit erreicht hast.",
             "notSubmitted": "Aufgabe nicht eingereicht",
             "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind.",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
@@ -469,7 +470,6 @@
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "exampleSolutionPublicationDateTooltip": "Studierende können die Beispiellösungen für alle Aufgaben in der Klausur ab diesem Zeitpunkt einsehen, wenn sie an der Klausur teilgenommen haben. Zum Deaktivieren leer lassen.",
-            "studentReviewEnabled": "Klausureinsicht ist möglich",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl. Dies wirkt sich auch auf die Noten aller Studierenden in der Prüfung aus!"

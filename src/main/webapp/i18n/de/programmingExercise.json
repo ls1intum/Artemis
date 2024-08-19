@@ -421,8 +421,6 @@
                 "allowFeedbackRequestsTooltip": "Studierende können vor dem Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen.",
                 "manualFeedbackRequests": "Anfragen nach manuellem Feedback",
                 "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Einreichungsfrist anfragen, um Feedback zu erhalten.",
-                "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
-                "feedbackRequestsDisabled": "Korrekturanfragen sind nicht möglich",
                 "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
                 "complaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen, die ein Tutor danach bewerten kann.",
                 "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
