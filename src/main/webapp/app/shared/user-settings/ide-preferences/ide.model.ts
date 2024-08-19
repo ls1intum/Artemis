@@ -5,7 +5,7 @@ export interface Ide {
     deepLink: string;
 }
 
-export function ideEqual(a: Ide | undefined, b: Ide | undefined): boolean {
+export function ideEquals(a: Ide | undefined, b: Ide | undefined): boolean {
     if (!a || !b) {
         return false;
     }
