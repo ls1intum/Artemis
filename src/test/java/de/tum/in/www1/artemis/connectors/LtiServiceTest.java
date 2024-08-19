@@ -125,6 +125,7 @@ class LtiServiceTest {
     void addLtiQueryParamsExistingUser() {
         when(userRepository.getUser()).thenReturn(user);
         user.setActivated(true);
+        when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -133,6 +134,7 @@ class LtiServiceTest {
 
         UriComponents uriComponents = uriComponentsBuilder.build();
 
+        verify(jwtCookieService).buildLoginCookie(true);
         verify(response).addHeader(any(), any());
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");

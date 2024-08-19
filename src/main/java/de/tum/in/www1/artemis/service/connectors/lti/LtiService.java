@@ -11,6 +11,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -41,6 +42,9 @@ import tech.jhipster.security.RandomUtil;
 @Service
 @Profile("lti")
 public class LtiService {
+
+    @Value("${artemis.lti.trustExternalLTISystems:false}")
+    private boolean trustExternalLTISystems;
 
     public static final String LTI_GROUP_NAME = "lti";
 
@@ -105,6 +109,15 @@ public class LtiService {
         // 2. Case: Lookup user with the LTI email address and make sure it's not in use
         if (artemisAuthenticationProvider.getUsernameForEmail(email).isPresent() || userRepository.findOneByEmailIgnoreCase(email).isPresent()) {
             log.info("User with email {} already exists. Email is already in use.", email);
+
+            if (trustExternalLTISystems) {
+                // If the email is already in use, but we trust external LTI systems, we authenticate the user with the email
+                log.info("Trusting external LTI system. Authenticating user with email: {}", email);
+                User user = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email).orElseThrow();
+                SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
+                return;
+            }
+
             throw new LtiEmailAlreadyInUseException();
         }
 
@@ -182,13 +195,13 @@ public class LtiService {
         User user = userRepository.getUser();
 
         if (!user.getActivated()) {
-            log.info("User is not activated. Adding JWT cookie for activation.");
-            log.info("Add JWT cookie so the newly created user will be logged in");
-            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
-            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-
+            log.info("User is not activated. Adding initialize parameter to query.");
             uriComponentsBuilder.queryParam("initialize", "");
         }
+
+        log.info("Add/Update JWT cookie so the user will be logged in");
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
 
     /**
