@@ -13,20 +13,26 @@ repositories {
 evaluationDependsOn(':')
 
 dependencies {
-    implementation rootProject.ext.qDoxVersionReusable
+    implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.26.0'
+    implementation 'com.github.javaparser:javaparser-core:3.26.0'
+    implementation 'com.github.javaparser:javaparser-core-serialization:3.26.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
     implementation rootProject.ext.springBootStarterWeb
+    implementation 'org.slf4j:slf4j-api:1.7.32'
+    implementation 'ch.qos.logback:logback-classic:1.2.6'
 }
 
-test {
-    useJUnitPlatform()
+task runEndpointParser(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'de.tum.cit.endpointanalysis.EndpointParser'
 }
 
-application {
-    mainClassName = 'de.tum.cit.endpointanalysis.AnalysisOfEndpointConnections'
+task runEndpointAnalysis(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'de.tum.cit.endpointanalysis.EndpointAnalyzer'
 }
 
-run {
-    if (project.hasProperty('appArgs')) {
-        args = project.appArgs.split(' ')
-    }
+task runRestCallAnalysis(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'de.tum.cit.endpointanalysis.RestCallAnalyzer'
 }
