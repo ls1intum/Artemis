@@ -27,13 +27,18 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.science.ScienceEvent;
 import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.exercise.programming.MockDelegate;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -106,6 +111,15 @@ public class UserTestService {
 
     private static final int NUMBER_OF_INSTRUCTORS = 1;
 
+    @Autowired
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
+    @Autowired
+    private ParticipationRepository participationRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
@@ -126,6 +140,8 @@ public class UserTestService {
     }
 
     public void tearDown() throws IOException {
+        // participationVCSAccessTokenRepository.deleteAll();
+        // var b = participationVCSAccessTokenRepository.findAll();
         userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
     }
 
@@ -827,6 +843,26 @@ public class UserTestService {
         // deleting the key shoul work correctly
         request.delete("/api/account/ssh-public-key", HttpStatus.OK);
         assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(null);
+    }
+
+    // Test
+    public void getUserVcsAccessToken() throws Exception {
+        // try to get token for non existent participation
+        request.get("/api/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
+
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        var course = courseUtilService.addEmptyCourse();
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        courseRepository.save(course);
+
+        var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
+        // request existing token
+        request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        submissionRepository.delete(submission);
+        participationVCSAccessTokenRepository.deleteAll();
+        participationRepository.deleteById(submission.getParticipation().getId());
     }
 
     public UserRepository getUserRepository() {
