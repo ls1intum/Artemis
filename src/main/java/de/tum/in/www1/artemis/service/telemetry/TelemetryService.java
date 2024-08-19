@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 public class TelemetryService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TelemetryData(String version, String serverUrl, String universityName, String contact, List<String> profiles, String mainAdminName) {
+    public record TelemetryData(String version, String serverUrl, String universityName, String contact, List<String> profiles, String adminName) {
     }
 
     private static final Logger log = LoggerFactory.getLogger(TelemetryService.class);
@@ -52,11 +52,11 @@ public class TelemetryService {
     @Value("${server.url}")
     private String serverUrl;
 
-    @Value("${info.universityName}")
-    private String universityName;
+    @Value("${info.operatorName}")
+    private String operatorName;
 
-    @Value("${info.universityAdminName}")
-    private String universityAdminName;
+    @Value("${info.operatorAdminName}")
+    private String operatorAdminName;
 
     @Value("${info.contact}")
     private String contact;
@@ -89,10 +89,10 @@ public class TelemetryService {
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         TelemetryData telemetryData;
         if (sendAdminDetails) {
-            telemetryData = new TelemetryData(version, serverUrl, universityName, contact, activeProfiles, universityAdminName);
+            telemetryData = new TelemetryData(version, serverUrl, operatorName, contact, activeProfiles, operatorAdminName);
         }
         else {
-            telemetryData = new TelemetryData(version, serverUrl, universityName, null, activeProfiles, null);
+            telemetryData = new TelemetryData(version, serverUrl, operatorName, null, activeProfiles, null);
         }
 
         HttpHeaders headers = new HttpHeaders();

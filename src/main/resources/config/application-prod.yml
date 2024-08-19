@@ -129,6 +129,6 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false in production
     text-assessment-analytics-enabled: false
-    universityName: # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service
-    universityAdminName: # Can be set before starting the application in production. Shown in the about us page and used by the telemetry service
+    operatorName: # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service (e.g. university or school)
+    operatorAdminName: # Can be set before starting the application in production. Shown in the about us page and used by the telemetry service
     contact: # The admins contact email address, shown in the about us page, and sent to the telemetry service

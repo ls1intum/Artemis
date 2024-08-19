@@ -1,7 +1,7 @@
 {
     "artemisApp": {
-        "universityInfo": {
-            "title": "University",
+        "operatorInfo": {
+            "title": "Operator",
             "name": "Name",
             "admin": "Administrator",
             "adminEmail": "Contact Email"

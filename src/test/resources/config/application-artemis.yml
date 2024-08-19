@@ -70,7 +70,7 @@ artemis:
         plagiarism-results-limit: 100
 
 info:
-    universityName: Some University # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
-    universityAdminName: Some Universities Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
+    operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
+    operatorAdminName: Some Universities Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
 

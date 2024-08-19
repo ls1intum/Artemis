@@ -116,8 +116,8 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for development environment
     text-assessment-analytics-enabled: true
-    universityName: Some University # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service
-    universityAdminName: Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
+    operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service
+    operatorAdminName: Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
 
 # Eureka configuration

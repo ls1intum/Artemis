@@ -61,8 +61,8 @@ export class ProfileService {
                         profileInfo.externalUserManagementURL = data.externalUserManagementURL ?? '';
 
                         profileInfo.contact = data.contact;
-                        profileInfo.universityName = data.universityName;
-                        profileInfo.universityAdminName = data.universityAdminName;
+                        profileInfo.operatorName = data.operatorName;
+                        profileInfo.operatorAdminName = data.operatorAdminName;
                         profileInfo.registrationEnabled = data.registrationEnabled;
                         profileInfo.needsToAcceptTerms = data.needsToAcceptTerms;
                         profileInfo.allowedEmailPattern = data.allowedEmailPattern;

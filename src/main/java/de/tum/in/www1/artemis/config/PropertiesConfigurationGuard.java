@@ -15,14 +15,14 @@ public class PropertiesConfigurationGuard implements InitializingBean {
 
     private static final Logger log = LoggerFactory.getLogger(PropertiesConfigurationGuard.class);
 
-    @Value("${info.universityName:#{null}}")
-    private String universityName;
+    @Value("${info.operatorName:#{null}}")
+    private String operatorName;
 
     public void afterPropertiesSet() {
-        if (this.universityName == null || this.universityName.isEmpty()) {
+        if (this.operatorName == null || this.operatorName.isEmpty()) {
             log.error(
-                    "The name of the university and the name of the main admin are not configured in the application-prod.yml! These are needed to be displayed in the /about page, and for the telemetry service.");
-            throw new IllegalArgumentException("The name of the University, and the name of the main admin must be configured! "); // exists the application
+                    "The name of the operator (University) is not configured in the application-prod.yml! It is needed to be displayed in the /about page, and for the telemetry service.");
+            throw new IllegalArgumentException("The name of the operator (university) must be configured, but is not!"); // exists the application
         }
     }
 }
