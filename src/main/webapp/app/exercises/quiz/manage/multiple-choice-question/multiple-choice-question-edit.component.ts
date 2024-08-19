@@ -163,13 +163,13 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      * 2. The tuple order is the same as the order of the actions in the markdown text inserted by the user
      * 3. resetMultipleChoicePreview() is triggered to notify the parent component
      *    about the changes within the question and to cacheValidation() since the assigned values have changed
-     * @param domainActions containing tuples of [text, domain action identifier]
+     * @param textWithDomainActions containing tuples of [text, domain action identifier]
      */
-    domainActionsFound(domainActions: TextWithDomainAction[]): void {
+    domainActionsFound(textWithDomainActions: TextWithDomainAction[]): void {
         this.cleanupQuestion();
         let currentAnswerOption;
 
-        for (const [text, action] of domainActions) {
+        for (const { text, action } of textWithDomainActions) {
             if (action === undefined && text.length > 0) {
                 this.question.text = text;
             }

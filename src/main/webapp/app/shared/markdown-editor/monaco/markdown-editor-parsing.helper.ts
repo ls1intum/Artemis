@@ -15,7 +15,7 @@ export function parseMarkdownForDomainActions(markdown: string, domainActions: M
         .map((identifier) => identifier.replace('[', '').replace(']', ''))
         .map(escapeStringForUseInRegex)
         .join('|');
-    const actionTextsMappedToActionIdentifiers: TextWithDomainAction[] = [];
+    const textMappedToActionIdentifiers: TextWithDomainAction[] = [];
 
     /*
      * The following regex is used to split the text into parts, each part associated with the domain action it belongs to. It is structured as follows:
@@ -34,10 +34,10 @@ export function parseMarkdownForDomainActions(markdown: string, domainActions: M
         const [textWithActionIdentifier] = remainingText.split(regex, 1);
         remainingText = remainingText.substring(textWithActionIdentifier.length);
         const textWithDomainAction = parseLineForDomainAction(textWithActionIdentifier.trim(), domainActions);
-        actionTextsMappedToActionIdentifiers.push(textWithDomainAction);
+        textMappedToActionIdentifiers.push(textWithDomainAction);
     }
 
-    return actionTextsMappedToActionIdentifiers;
+    return textMappedToActionIdentifiers;
 }
 
 /**
@@ -54,8 +54,8 @@ function parseLineForDomainAction(text: string, domainActions: MonacoEditorDomai
         ];
         if (possibleOpeningIdentifiers.some((identifier) => text.indexOf(identifier) !== -1)) {
             const trimmedLineWithoutIdentifier = possibleOpeningIdentifiers.reduce((line, identifier) => line.replace(identifier, ''), text).trim();
-            return [trimmedLineWithoutIdentifier, domainAction];
+            return { text: trimmedLineWithoutIdentifier, action: domainAction };
         }
     }
-    return [text.trim(), undefined];
+    return { text: text.trim() };
 }

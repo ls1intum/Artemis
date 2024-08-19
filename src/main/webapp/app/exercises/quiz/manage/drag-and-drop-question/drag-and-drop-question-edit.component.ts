@@ -839,11 +839,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * 1. Gets the {array} containing the text with the domain action identifier and creates a new drag and drop problem statement
      * by assigning the text according to the domain action identifier to the drag and drop attributes.
      * (question text, explanation, hint)
-     * @param domainActions - containing markdownText with the corresponding domain action identifier
+     * @param textWithDomainActions - containing markdownText with the corresponding domain action identifier
      */
-    domainActionsFound(domainActions: TextWithDomainAction[]): void {
+    domainActionsFound(textWithDomainActions: TextWithDomainAction[]): void {
         this.cleanupQuestion();
-        for (const [text, action] of domainActions) {
+        for (const { text, action } of textWithDomainActions) {
             if (action === undefined && text.length > 0) {
                 this.question.text = text;
             }

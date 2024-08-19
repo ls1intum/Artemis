@@ -137,7 +137,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
     it('should change grading instruction', () => {
         const newDescription = 'new text';
-        const domainActions = [[newDescription, new MonacoGradingDescriptionAction()]] as TextWithDomainAction[];
+        const domainActions = [{ text: newDescription, action: new MonacoGradingDescriptionAction() }] as TextWithDomainAction[];
 
         component.exercise.gradingCriteria = [gradingCriterion];
         component.onInstructionChange(domainActions, gradingInstruction);
@@ -156,7 +156,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
     it('should set grading instruction text for exercise', () => {
         const markdownText = 'new text';
-        const domainActions = [[markdownText, undefined]] as TextWithDomainAction[];
+        const domainActions = [{ text: markdownText, action: undefined }] as TextWithDomainAction[];
 
         component.setExerciseGradingInstructionText(domainActions);
         fixture.detectChanges();
@@ -174,13 +174,13 @@ describe('GradingInstructionsDetailsComponent', () => {
         const criterionAction = new MonacoGradingCriterionAction(instructionAction);
 
         return [
-            ['testCriteria', criterionAction],
-            ['', instructionAction],
-            ['1', creditsAction],
-            ['scale', scaleAction],
-            ['description', descriptionAction],
-            ['feedback', feedbackAction],
-            ['0', usageCountAction],
+            { text: 'testCriteria', action: criterionAction },
+            { text: '', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'scale', action: scaleAction },
+            { text: 'description', action: descriptionAction },
+            { text: 'feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
         ] as TextWithDomainAction[];
     };
 

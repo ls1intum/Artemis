@@ -60,7 +60,7 @@ interface MarkdownActionsByGroup {
     meta: MonacoEditorAction[];
 }
 
-export type TextWithDomainAction = [string, MonacoEditorDomainAction | undefined];
+export type TextWithDomainAction = { text: string; action?: MonacoEditorDomainAction };
 
 const EXTERNAL_HEIGHT = 'external';
 
