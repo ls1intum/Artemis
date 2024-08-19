@@ -12,7 +12,6 @@ import { CategorySelectorComponent } from 'app/shared/category-selector/category
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 
 describe('ProgrammingExerciseInformationComponent', () => {
@@ -59,11 +58,9 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
     it('should should calculate Form Sections correctly', () => {
         const calculateFormValidSpy = jest.spyOn(comp, 'calculateFormValid');
-        const editableField = { editingInput: { valueChanges: new Subject(), valid: true } } as any as TableEditableFieldComponent;
         comp.exerciseTitleChannelComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), formValid: true } } as ExerciseTitleChannelNameComponent;
         comp.ngAfterViewInit();
         comp.exerciseTitleChannelComponent.titleChannelNameComponent.formValidChanges.next(false);
-        (editableField.editingInput.valueChanges as Subject<boolean>).next(false);
         expect(calculateFormValidSpy).toHaveBeenCalledOnce();
     });
 });
