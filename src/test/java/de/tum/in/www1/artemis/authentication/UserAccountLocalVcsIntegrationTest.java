@@ -9,7 +9,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.user.UserTestService;
 
-class AccountLocalVcIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class UserAccountLocalVcsIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "userlvc"; // shorter prefix as user's name is limited to 50 chars
 
@@ -34,7 +34,13 @@ class AccountLocalVcIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getUserVcsAccessToken() throws Exception {
-        userTestService.getUserVcsAccessToken();
+    void getAndCreateParticipationVcsAccessTokenByUser() throws Exception {
+        userTestService.getAndCreateParticipationVcsAccessToken();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createAndDeleteUserVcsAccessTokenByUser() throws Exception {
+        userTestService.createAndDeleteUserVcsAccessToken();
     }
 }

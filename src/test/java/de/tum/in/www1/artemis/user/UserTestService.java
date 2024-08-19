@@ -846,11 +846,11 @@ public class UserTestService {
     }
 
     // Test
-    public void getUserVcsAccessToken() throws Exception {
+    public void getAndCreateParticipationVcsAccessToken() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
         // try to get token for non existent participation
         request.get("/api/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
-
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         var course = courseUtilService.addEmptyCourse();
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -859,10 +859,38 @@ public class UserTestService {
         var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
         // request existing token
-        request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        var token = request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        assertThat(token).isNotNull();
+
+        // delete all tokens
+        participationVCSAccessTokenRepository.deleteAll();
+
+        // check that token was deleted
+        request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
+        var newToken = request.putWithResponseBody("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
+                HttpStatus.OK);
+        assertThat(newToken).isNotEqualTo(token);
+
         submissionRepository.delete(submission);
         participationVCSAccessTokenRepository.deleteAll();
         participationRepository.deleteById(submission.getParticipation().getId());
+    }
+
+    // Test
+    public void createAndDeleteUserVcsAccessToken() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(user.getVcsAccessToken()).isNull();
+        ZonedDateTime expiryDate = ZonedDateTime.now().plusMonths(1);
+
+        var userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
+        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(user.getVcsAccessToken()).isEqualTo(userDTO.getVcsAccessToken());
+        assertThat(user.getVcsAccessTokenExpiryDate()).isEqualTo(userDTO.getVcsAccessTokenExpiryDate());
+
+        request.delete("/api/account/user-vcs-access-token", HttpStatus.OK);
+        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(user.getVcsAccessToken()).isNull();
+        assertThat(user.getVcsAccessTokenExpiryDate()).isNull();
     }
 
     public UserRepository getUserRepository() {
