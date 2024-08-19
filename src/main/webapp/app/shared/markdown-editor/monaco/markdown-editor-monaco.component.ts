@@ -193,6 +193,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
     targetWrapperHeight?: number;
+    minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
     isResizing = false;
     displayedActions: MarkdownActionsByGroup = {
@@ -238,6 +239,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ngAfterContentInit(): void {
         // Affects the template - done in this method to avoid ExpressionChangedAfterItHasBeenCheckedErrors.
         this.targetWrapperHeight = this.initialEditorHeight !== EXTERNAL_HEIGHT ? this.initialEditorHeight.valueOf() : undefined;
+        this.minWrapperHeight = this.resizableMinHeight.valueOf();
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
             standard: this.filterDisplayedActions(this.defaultActions),
@@ -374,6 +376,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Adjust the dimensions of the editor to fit the available space.
      */
     adjustEditorDimensions(): void {
+        this.onContentHeightChanged(this.monacoEditor.getContentHeight());
         const editorHeight = this.getEditorHeight();
         this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), editorHeight);
     }
@@ -386,12 +389,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.inPreviewMode = event.nextId === 'editor_preview';
         this.inVisualMode = event.nextId === 'editor_visual';
         this.inEditMode = event.nextId === 'editor_edit';
-        if (!this.inPreviewMode) {
-            // TODO: necessary?
-            this.onContentHeightChanged(this.monacoEditor.getContentHeight());
-            this.adjustEditorDimensions();
+        if (this.inEditMode) {
             this.monacoEditor.focus();
-        } else {
+            this.onEditSelect.emit();
+        } else if (this.inPreviewMode) {
             this.onPreviewSelect.emit();
         }
 
