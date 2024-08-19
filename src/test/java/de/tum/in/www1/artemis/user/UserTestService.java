@@ -880,13 +880,20 @@ public class UserTestService {
     public void createAndDeleteUserVcsAccessToken() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(user.getVcsAccessToken()).isNull();
-        ZonedDateTime expiryDate = ZonedDateTime.now().plusMonths(1);
 
-        var userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
+        // Set expiry date to already past date -> Bad Request
+        ZonedDateTime expiryDate = ZonedDateTime.now().minusMonths(1);
+        var userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.BAD_REQUEST);
+        assertThat(userDTO).isNull();
+
+        // Correct expiry date -> OK
+        expiryDate = ZonedDateTime.now().plusMonths(1);
+        userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(user.getVcsAccessToken()).isEqualTo(userDTO.getVcsAccessToken());
         assertThat(user.getVcsAccessTokenExpiryDate()).isEqualTo(userDTO.getVcsAccessTokenExpiryDate());
 
+        // Delete token
         request.delete("/api/account/user-vcs-access-token", HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(user.getVcsAccessToken()).isNull();
