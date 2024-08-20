@@ -58,7 +58,7 @@ describe('PdfPreviewComponent', () => {
     let routeMock: any;
     let mockCanvasElement: HTMLCanvasElement;
     let mockEnlargedCanvas: HTMLCanvasElement;
-    let mockContainer: HTMLElement;
+    let mockContext: any;
 
     beforeEach(async () => {
         global.URL.createObjectURL = jest.fn().mockReturnValue('mocked_blob_url');
@@ -109,9 +109,11 @@ describe('PdfPreviewComponent', () => {
         mockEnlargedCanvas.classList.add('enlarged-canvas');
         component.enlargedCanvas = new ElementRef(mockEnlargedCanvas);
 
-        mockContainer = document.createElement('div');
-        mockContainer.style.width = '800px';
-        mockContainer.style.height = '600px';
+        mockContext = {
+            clearRect: jest.fn(),
+            drawImage: jest.fn(),
+        } as unknown as CanvasRenderingContext2D;
+        jest.spyOn(mockCanvasElement, 'getContext').mockReturnValue(mockContext);
 
         jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
             cb(0);
@@ -324,5 +326,42 @@ describe('PdfPreviewComponent', () => {
         component.closeIfOutside(mockEvent as unknown as MouseEvent);
 
         expect(closeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should calculate the correct scale factor based on container and canvas dimensions', () => {
+        Object.defineProperty(component.pdfContainer.nativeElement, 'clientWidth', { value: 1000, configurable: true });
+        Object.defineProperty(component.pdfContainer.nativeElement, 'clientHeight', { value: 800, configurable: true });
+
+        mockCanvasElement.width = 500;
+        mockCanvasElement.height = 400;
+
+        const scaleFactor = component.calculateScaleFactor(mockCanvasElement);
+        expect(scaleFactor).toBe(2);
+    });
+
+    it('should resize the canvas based on the given scale factor', () => {
+        mockCanvasElement.width = 500;
+        mockCanvasElement.height = 400;
+        component.resizeCanvas(mockCanvasElement, 2);
+
+        expect(component.enlargedCanvas.nativeElement.width).toBe(1000);
+        expect(component.enlargedCanvas.nativeElement.height).toBe(800);
+    });
+
+    it('should clear and redraw the canvas with the new dimensions', () => {
+        mockCanvasElement.width = 500;
+        mockCanvasElement.height = 400;
+
+        jest.spyOn(mockContext, 'clearRect');
+        jest.spyOn(mockContext, 'drawImage');
+
+        component.resizeCanvas(mockCanvasElement, 2);
+        component.redrawCanvas(mockCanvasElement, 2);
+
+        expect(component.enlargedCanvas.nativeElement.width).toBe(1000); // 500 * 2
+        expect(component.enlargedCanvas.nativeElement.height).toBe(800); // 400 * 2
+
+        expect(mockContext.clearRect).toHaveBeenCalledWith(0, 0, 1000, 800);
+        expect(mockContext.drawImage).toHaveBeenCalledWith(mockCanvasElement, 0, 0, 1000, 800);
     });
 });
