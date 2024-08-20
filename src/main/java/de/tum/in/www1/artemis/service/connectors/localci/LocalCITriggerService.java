@@ -25,6 +25,7 @@ import com.hazelcast.map.IMap;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -34,6 +35,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -87,6 +89,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final GitService gitService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private IQueue<BuildJobQueueItem> queue;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
@@ -97,7 +101,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService) {
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -107,6 +112,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.gitService = gitService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseDateService = exerciseDateService;
     }
 
@@ -178,9 +184,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null);
 
-        RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo);
+        var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
 
-        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash);
+        RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig);
+
+        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig);
 
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId, programmingExercise.getId(),
                 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
@@ -208,7 +216,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @param triggeredByPushTo type of the repository that was pushed to and triggered the build job
      * @return the repository information for the given participation
      */
-    private RepositoryInfo getRepositoryInfo(ProgrammingExerciseParticipation participation, RepositoryType triggeredByPushTo) {
+    private RepositoryInfo getRepositoryInfo(ProgrammingExerciseParticipation participation, RepositoryType triggeredByPushTo, ProgrammingExerciseBuildConfig buildConfig) {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
@@ -228,7 +236,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String[] auxiliaryRepositoryUris = auxiliaryRepositories.stream().map(AuxiliaryRepository::getRepositoryUri).toArray(String[]::new);
         String[] auxiliaryRepositoryCheckoutDirectories1 = auxiliaryRepositories.stream().map(AuxiliaryRepository::getCheckoutDirectory).toArray(String[]::new);
 
-        if (programmingExercise.getCheckoutSolutionRepository()) {
+        if (buildConfig.getCheckoutSolutionRepository()) {
             ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
             if (programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
                 var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(participation.getProgrammingExercise().getId());
@@ -264,7 +272,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     }
 
-    private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash) {
+    private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash,
+            ProgrammingExerciseBuildConfig buildConfig) {
         String branch;
         try {
             branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
@@ -277,13 +286,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
-        boolean sequentialTestRunsEnabled = programmingExercise.hasSequentialTestRuns();
-        boolean testwiseCoverageEnabled = programmingExercise.isTestwiseCoverageEnabled();
+        boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
+        boolean testwiseCoverageEnabled = buildConfig.isTestwiseCoverageEnabled();
 
         Windfile windfile;
         String dockerImage;
         try {
-            windfile = programmingExercise.getWindfile();
+            windfile = buildConfig.getWindfile();
             dockerImage = windfile.getMetadata().docker().getFullImageName();
         }
         catch (NullPointerException e) {
@@ -295,10 +304,15 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         List<String> resultPaths = getTestResultPaths(windfile);
 
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
-        String buildScript = localCIBuildConfigurationService.createBuildScript(participation);
+        programmingExercise.setBuildConfig(buildConfig);
+        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
+    }
+
+    private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
+        return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise);
     }
 
     /**
