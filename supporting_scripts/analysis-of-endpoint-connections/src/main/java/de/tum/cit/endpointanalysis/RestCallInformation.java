@@ -1,6 +1,6 @@
 package de.tum.cit.endpointanalysis;
 
-public record RestCallInformation(String method, String url, int line, String fileName) {
+public record RestCallInformation(String method, String url, String filePath, int line) {
 
     public String buildCompleteRestCallURI() {
         return this.url.replace("`", "");
@@ -12,6 +12,9 @@ public record RestCallInformation(String method, String url, int line, String fi
 
         // Remove query parameters
         result = result.split("\\?")[0];
+        if (result.startsWith("/")) {
+            result = result.substring(1);
+        }
 
         return result;
     }

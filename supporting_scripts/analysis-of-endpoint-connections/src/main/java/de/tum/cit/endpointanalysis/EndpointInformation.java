@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public record EndpointInformation(String requestMapping, String endpoint, String httpMethodAnnotation, String URI, String className, int line, List<String> otherAnnotations) {
+public record EndpointInformation(String requestMapping, String endpoint, String httpMethodAnnotation, String uri, String className, int line, List<String> otherAnnotations) {
 
     public String buildCompleteEndpointURI() {
         StringBuilder result = new StringBuilder();
@@ -13,7 +13,7 @@ public record EndpointInformation(String requestMapping, String endpoint, String
             result.append(this.requestMapping.replace("\"", ""));
         }
         // Remove quotes from the URI as they are used to define the String in the source code but are not part of the URI
-        result.append(this.URI.replace("\"", ""));
+        result.append(this.uri.replace("\"", ""));
         return result.toString();
     }
 

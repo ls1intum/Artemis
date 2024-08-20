@@ -50,14 +50,16 @@ function parseTypeScriptFile(filePath: string): TSESTree.Program | null {
     }
 }
 
-const clientDirPath = resolve('src/main/webapp/app');
+console.log("Working directory: ", process.cwd());
+const clientDirPath = resolve('../../../../../src/main/webapp/app');
+console.log("Client directory path: ", clientDirPath);
 
 const tsFiles = collectTypeScriptFiles(clientDirPath);
 
 // create and store Syntax Tree for each file
 const astMap = new Map<string, TSESTree.Program>;
 tsFiles.forEach((filePath) => {
-    const ast =  parseTypeScriptFile(filePath);
+    const ast =  parseTypeScriptFile("../../../../../" + filePath);
     if (ast) {
         astMap.set(filePath, ast);
     }
@@ -82,7 +84,7 @@ Array.from(astMap.keys()).forEach((filePath) => {
 });
 
 try {
-    writeFileSync('supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
+    writeFileSync('restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
 } catch (error) {
     console.error('Failed to write REST calls to file:', error);
 }

@@ -28,7 +28,7 @@ interface Attribute {
 
 export class Preprocessor {
     public static PREPROCESSING_RESULTS = new Map<string, SuperClass>();
-    private readonly directoryPrefix = 'src/main/webapp/';
+    private readonly directoryPrefix = '../../../../../src/main/webapp/';
     private ast: TSESTree.Program;
 
     private memberVariables: Map<string, Attribute> = new Map<string, Attribute>();
