@@ -62,10 +62,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH ss.results sr
                 LEFT JOIN FETCH pe.categories
             WHERE pe.course.id = :courseId
-                AND (ts.id = (SELECT MAX(id) FROM ts) OR ts.id IS NULL)
-                AND (ss.id = (SELECT MAX(id) FROM ss) OR ss.id IS NULL)
-                AND (tr.id = (SELECT MAX(id) FROM tr) OR tr.id IS NULL)
-                AND (sr.id = (SELECT MAX(id) FROM sr) OR sr.id IS NULL)
+                AND (ts.id = (SELECT MAX(sub1.id) FROM tp.submissions sub1) OR ts.id IS NULL)
+                AND (ss.id = (SELECT MAX(sub2.id) FROM sp.submissions sub2) OR ss.id IS NULL)
+                AND (tr.id = (SELECT MAX(res1.id) FROM ts.results res1) OR tr.id IS NULL)
+                AND (sr.id = (SELECT MAX(res2.id) FROM ss.results res2) OR sr.id IS NULL)
             """)
     List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") long courseId);
 
@@ -162,8 +162,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH tr.feedbacks tf
                 LEFT JOIN FETCH tf.testCase
             WHERE pe.id = :exerciseId
-                AND (ts.id = (SELECT MAX(id) FROM ts) OR ts.id IS NULL)
-                AND (tr.id = (SELECT MAX(id) FROM tr) OR tr.id IS NULL)
+                AND (ts.id = (SELECT MAX(sub.id) FROM tp.submissions sub) OR ts.id IS NULL)
+                AND (tr.id = (SELECT MAX(res.id) FROM ts.results res) OR tr.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithTemplateParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
 
@@ -184,8 +184,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH sr.feedbacks sf
                 LEFT JOIN FETCH sf.testCase
             WHERE pe.id = :exerciseId
-                AND (ss.id = (SELECT MAX(id) FROM ss) OR ss.id IS NULL)
-                AND (sr.id = (SELECT MAX(id) FROM sr) OR sr.id IS NULL)
+                AND (ss.id = (SELECT MAX(sub.id) FROM sp.submissions sub) OR ss.id IS NULL)
+                AND (sr.id = (SELECT MAX(res.id) FROM ss.results res) OR sr.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithSolutionParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
 

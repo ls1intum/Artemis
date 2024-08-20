@@ -34,10 +34,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
             WHERE p.id = :participationId
-                AND (r.id = (SELECT MAX(id)
-                    FROM r
-                    WHERE (r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
-                        OR (r.completionDate IS NOT NULL
+                AND (r.id = (SELECT MAX(res.id)
+                    FROM s.results res
+                    WHERE (res.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                        OR (res.completionDate IS NOT NULL
                             AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime)
                         )
                     )

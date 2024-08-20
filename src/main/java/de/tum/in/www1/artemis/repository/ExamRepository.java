@@ -239,10 +239,10 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 LEFT JOIN FETCH sp.submissions ss
                 LEFT JOIN FETCH ss.results sr
             WHERE e.id = :examId
-                AND (ts.id = (SELECT MAX(id) FROM ts) OR ts.id IS NULL)
-                AND (ss.id = (SELECT MAX(id) FROM ss) OR ss.id IS NULL)
-                AND (tr.id = (SELECT MAX(id) FROM tr) OR tr.id IS NULL)
-                AND (sr.id = (SELECT MAX(id) FROM sr) OR sr.id IS NULL)
+                AND (ts.id = (SELECT MAX(sub1.id) FROM tp.submissions sub1) OR ts.id IS NULL)
+                AND (ss.id = (SELECT MAX(sub2.id) FROM sp.submissions sub2) OR ss.id IS NULL)
+                AND (tr.id = (SELECT MAX(res1.id) FROM ts.results res1) OR tr.id IS NULL)
+                AND (sr.id = (SELECT MAX(res2.id) FROM ss.results res2) OR sr.id IS NULL)
             """)
     Optional<Exam> findWithExerciseGroupsAndExercisesAndDetailsById(@Param("examId") long examId);
 
