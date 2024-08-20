@@ -49,8 +49,11 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             }
         }
         if (this.shouldReplacePlaceholders()) {
-            this.programmingExercise.buildConfig!.buildScript = this.replacePlaceholders(this.originalBuildScript);
-            this.codeChanged(this.programmingExercise.buildConfig?.buildScript || '');
+            const updatedBuildScript = this.replacePlaceholders(this.originalBuildScript);
+            if (updatedBuildScript) {
+                this.programmingExercise.buildConfig!.buildScript = updatedBuildScript;
+                this.codeChanged(this.programmingExercise.buildConfig?.buildScript || '');
+            }
         }
     }
 
@@ -68,9 +71,10 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     shouldReplacePlaceholders(): boolean {
         return (
             (!!this.programmingExercise.buildConfig?.assignmentCheckoutPath && this.programmingExercise.buildConfig?.assignmentCheckoutPath !== '') ||
-            (!!this.programmingExercise.buildConfig?.testCheckoutPath && this.programmingExercise.buildConfig?.testCheckoutPath !== '') ||
-            !!this.programmingExercise.buildConfig?.buildScript?.includes('${studentParentWorkingDirectoryName}') ||
-            !!this.programmingExercise.buildConfig?.buildScript?.includes('${testWorkingDirectory}')
+            (!!this.programmingExercise.buildConfig?.testCheckoutPath &&
+                this.programmingExercise.buildConfig?.testCheckoutPath !== '' &&
+                (!!this.programmingExercise.buildConfig?.buildScript?.includes('${studentParentWorkingDirectoryName}') ||
+                    !!this.programmingExercise.buildConfig?.buildScript?.includes('${testWorkingDirectory}')))
         );
     }
 
