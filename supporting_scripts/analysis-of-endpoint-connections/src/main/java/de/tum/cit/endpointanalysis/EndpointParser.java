@@ -32,9 +32,9 @@ import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 
 public class EndpointParser {
 
-    static final String ENDPOINT_PARSING_RESULT_PATH = "supporting_scripts/analysis-of-endpoint-connections/endpoints.json";
+    static final String ENDPOINT_PARSING_RESULT_PATH = "endpoints.json";
 
-    static final String REST_CALL_PARSING_RESULT_PATH = "supporting_scripts/analysis-of-endpoint-connections/restCalls.json";
+    static final String REST_CALL_PARSING_RESULT_PATH = "restCalls.json";
 
     private static final Logger log = LoggerFactory.getLogger(EndpointParser.class);
 

@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class EndpointAnalyzer {
 
-    private static String ENDPOINT_ANALYSIS_RESULT_PATH = "supporting_scripts/analysis-of-endpoint-connections/endpointAnalysisResult.json";
+    private static String ENDPOINT_ANALYSIS_RESULT_PATH = "endpointAnalysisResult.json";
 
     private static final Logger log = LoggerFactory.getLogger(EndpointAnalyzer.class);
 
