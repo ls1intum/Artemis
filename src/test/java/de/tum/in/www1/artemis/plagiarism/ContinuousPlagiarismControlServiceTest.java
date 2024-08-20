@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.plagiarism;
+package de.tum.in.www1.artemis.plagiarism;
 
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
@@ -17,6 +17,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.service.plagiarism.*;
 import org.junit.jupiter.api.Test;
 
 import de.jplag.exceptions.BasecodeException;

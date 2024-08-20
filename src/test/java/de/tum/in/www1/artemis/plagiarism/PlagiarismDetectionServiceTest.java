@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.plagiarism;
+package de.tum.in.www1.artemis.plagiarism;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.service.plagiarism.*;
 import org.junit.jupiter.api.Test;
 
 import de.jplag.exceptions.ExitException;

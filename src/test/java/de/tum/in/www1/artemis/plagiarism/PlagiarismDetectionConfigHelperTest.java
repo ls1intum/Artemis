@@ -1,10 +1,11 @@
-package de.tum.in.www1.artemis.service.plagiarism;
+package de.tum.in.www1.artemis.plagiarism;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionConfigHelper;
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.domain.Course;
