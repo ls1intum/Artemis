@@ -340,6 +340,24 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     }
 
     /**
+     * Clears the current selection in the given editor, but preserves the cursor position.
+     * @param editor The editor to clear the selection in.
+     */
+    clearSelection(editor: monaco.editor.ICodeEditor): void {
+        const position = this.getPosition(editor);
+        this.setSelection(editor, new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column));
+    }
+
+    /**
+     * Adjusts the cursor position so it is at the end of the current line.
+     * @param editor The editor to adjust the cursor position in.
+     */
+    moveCursorToEndOfLine(editor: monaco.editor.ICodeEditor): void {
+        const position: monaco.IPosition = { ...this.getPosition(editor), column: Number.POSITIVE_INFINITY };
+        this.setPosition(editor, position);
+    }
+
+    /**
      * Toggles the fullscreen mode of the given element. If no element is provided, the editor's DOM node is used.
      * @param editor The editor to toggle the fullscreen mode for.
      * @param element The element to toggle the fullscreen mode for.
