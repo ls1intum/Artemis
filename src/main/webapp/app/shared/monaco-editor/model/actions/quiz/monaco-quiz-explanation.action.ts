@@ -11,7 +11,7 @@ export class MonacoQuizExplanationAction extends MonacoEditorDomainAction {
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        this.insertTextAtPosition(editor, this.getPosition(editor), `\n\t${this.getOpeningIdentifier()} ${MonacoQuizExplanationAction.TEXT}`);
+        this.addTextWithDomainActionIdentifier(editor, MonacoQuizExplanationAction.TEXT, true);
     }
 
     getOpeningIdentifier(): string {

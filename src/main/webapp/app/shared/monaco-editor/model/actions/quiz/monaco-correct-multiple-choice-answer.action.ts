@@ -11,9 +11,7 @@ export class MonacoCorrectMultipleChoiceAnswerAction extends MonacoEditorDomainA
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        this.insertTextAtPosition(editor, this.getPosition(editor), `\n${this.getOpeningIdentifier()} ${MonacoCorrectMultipleChoiceAnswerAction.TEXT}`);
-        editor.focus();
-        this.setPosition(editor, this.getPosition(editor), true);
+        this.addTextWithDomainActionIdentifier(editor, MonacoCorrectMultipleChoiceAnswerAction.TEXT);
     }
 
     getOpeningIdentifier(): string {
