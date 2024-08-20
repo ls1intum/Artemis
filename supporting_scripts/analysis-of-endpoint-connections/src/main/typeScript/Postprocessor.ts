@@ -5,7 +5,7 @@ interface RestCall {
     method: string;
     url: string;
     line: number;
-    fileName: string;
+    filePath: string;
 }
 
 enum ParsingResultType {
@@ -38,17 +38,17 @@ class ParsingResult {
 }
 
 export class Postprocessor {
-    static filesWithRestCalls: { fileName: string, restCalls: RestCall[] }[] = [];
+    static filesWithRestCalls: { filePath: string, restCalls: RestCall[] }[] = [];
     private readonly restCalls: RestCall[] = [];
-    private readonly fileName: string;
+    private readonly filePath: string;
     private readonly ast: TSESTree.Program;
 
     /**
-     * @param fileName - The name of the file being processed.
+     * @param filePath - The name of the file being processed.
      * @param ast - The abstract syntax tree (AST) of the processed file.
      */
-    constructor(fileName: string, ast: TSESTree.Program) {
-        this.fileName = fileName;
+    constructor(filePath: string, ast: TSESTree.Program) {
+        this.filePath = filePath;
         this.ast = ast;
     }
 
@@ -61,7 +61,7 @@ export class Postprocessor {
             }
         });
         if (this.restCalls.length > 0) {
-            Postprocessor.filesWithRestCalls.push( {fileName: this.fileName, restCalls: this.restCalls} );
+            Postprocessor.filesWithRestCalls.push( {filePath: this.filePath, restCalls: this.restCalls} );
         }
     }
 
@@ -108,10 +108,10 @@ export class Postprocessor {
                                         urlEvaluationResult = this.evaluateUrl(node.arguments[0], methodDefinition, node, classBody);
                                     }
 
-                                    const fileName = this.fileName;
+                                    const filePath = this.filePath;
                                     if (urlEvaluationResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
                                         for (let url of urlEvaluationResult.result) {
-                                            this.restCalls.push({ method, url, line, fileName });
+                                            this.restCalls.push({ method, url, line, filePath: filePath });
                                         }
                                     }
                                 }
@@ -619,7 +619,7 @@ export class Postprocessor {
                 for (let i = 0; i < superConstructorCallArguments.arguments.length; i++) {
                     let constructorArgument = constructorArguments[i];
                     if (superConstructorCallArguments.arguments[i] !== '' && constructorArgument.type === 'TSParameterProperty'
-                    && constructorArgument.parameter.type === 'Identifier' && constructorArgument.parameter.name === memberExprKey) {
+                        && constructorArgument.parameter.type === 'Identifier' && constructorArgument.parameter.name === memberExprKey) {
                         memberExpressionResult.push(superConstructorCallArguments.arguments[i]);
                         resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_SUCCESS;
                     }
