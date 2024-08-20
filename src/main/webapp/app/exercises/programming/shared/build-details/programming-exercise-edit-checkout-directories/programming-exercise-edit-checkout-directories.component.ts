@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import type { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/build-plan-checkout-directories-dto';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -10,11 +10,13 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     imports: [ArtemisSharedComponentModule, ArtemisSharedComponentModule, ArtemisSharedCommonModule],
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
 })
-export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnInit, OnChanges {
+export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnChanges {
     @Input() programmingExercise: ProgrammingExercise;
+    @Input() programmingLanguage: ProgrammingLanguage;
     @Input() submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
-    @Input() buildConfigCheckoutPaths: BuildPlanCheckoutDirectoriesDTO;
-    @Output() buildConfigCheckoutPathsEvent = new EventEmitter<BuildPlanCheckoutDirectoriesDTO>();
+    @Output() assignmentCheckoutPathEvent = new EventEmitter<string>();
+    @Output() testCheckoutPathEvent = new EventEmitter<string>();
+    @Output() solutionCheckoutPathEvent = new EventEmitter<string>();
 
     assignmentCheckoutPath: string;
     testCheckoutPath: string;
@@ -24,16 +26,13 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnIn
     isTestRepositoryEditable: boolean = false;
     isSolutionRepositoryEditable: boolean = false;
 
-    ngOnInit() {
-        this.reset();
-    }
-
     ngOnChanges(changes: SimpleChanges) {
-        console.log(changes.programmingExercise);
-        const isProgrammingLanguageUpdated =
-            changes.programmingExerciseCreationConfig?.currentValue?.selectedProgrammingLanguage !==
-            changes.programmingExerciseCreationConfig?.previousValue?.selectedProgrammingLanguage;
+        const isSubmissionBuildPlanCheckoutRepositoriesChanged = this.isSubmissionBuildPlanCheckoutRepositoriesChanged();
+        const isProgrammingLanguageUpdated = !changes.programmingLanguage?.firstChange && changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
         if (isProgrammingLanguageUpdated) {
+            this.resetProgrammingExerciseBuildCheckoutPaths();
+        }
+        if (isSubmissionBuildPlanCheckoutRepositoriesChanged) {
             this.reset();
         }
     }
@@ -57,26 +56,32 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnIn
         }
     }
 
+    resetProgrammingExerciseBuildCheckoutPaths() {
+        this.programmingExercise.buildConfig!.assignmentCheckoutPath = '';
+        this.programmingExercise.buildConfig!.testCheckoutPath = '';
+        this.programmingExercise.buildConfig!.solutionCheckoutPath = '';
+    }
+
     onAssigmentRepositoryCheckoutPathChange(event: any) {
-        this.programmingExercise.buildConfig!.assignmentCheckoutPath = event.target.value;
-        this.emitBuildConfigCheckoutPathsEvent();
+        this.assignmentCheckoutPath = event.target.value;
+        this.assignmentCheckoutPathEvent.emit(this.assignmentCheckoutPath);
     }
 
     onTestRepositoryCheckoutPathChange(event: any) {
-        this.programmingExercise.buildConfig!.testCheckoutPath = event.target.value;
-        this.emitBuildConfigCheckoutPathsEvent();
+        this.testCheckoutPath = event.target.value;
+        this.testCheckoutPathEvent.emit(this.testCheckoutPath);
     }
 
     onSolutionRepositoryCheckoutPathChange(event: any) {
-        this.programmingExercise.buildConfig!.solutionCheckoutPath = event.target.value;
-        this.emitBuildConfigCheckoutPathsEvent();
+        this.solutionCheckoutPath = event.target.value;
+        this.solutionCheckoutPathEvent.emit(this.solutionCheckoutPath);
     }
 
-    private emitBuildConfigCheckoutPathsEvent() {
-        this.buildConfigCheckoutPathsEvent.emit({
-            solutionCheckoutDirectory: this.programmingExercise.buildConfig!.solutionCheckoutPath,
-            testCheckoutDirectory: this.programmingExercise.buildConfig!.testCheckoutPath || '/',
-            exerciseCheckoutDirectory: this.programmingExercise.buildConfig!.assignmentCheckoutPath,
-        });
+    isSubmissionBuildPlanCheckoutRepositoriesChanged(): boolean {
+        return (
+            this.assignmentCheckoutPath !== this.submissionBuildPlanCheckoutRepositories?.exerciseCheckoutDirectory ||
+            this.testCheckoutPath !== this.submissionBuildPlanCheckoutRepositories?.testCheckoutDirectory ||
+            this.solutionCheckoutPath !== this.submissionBuildPlanCheckoutRepositories?.solutionCheckoutDirectory
+        );
     }
 }

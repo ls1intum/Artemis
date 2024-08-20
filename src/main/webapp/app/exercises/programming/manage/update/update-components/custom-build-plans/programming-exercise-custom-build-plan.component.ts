@@ -46,6 +46,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                 this.loadAeolusTemplate();
             }
         }
+        if (this.shouldReplacePlaceholders()) {
+            this.programmingExercise.buildConfig!.buildScript = this.replacePlaceholders(this.programmingExercise.buildConfig?.buildScript || '');
+        }
     }
 
     shouldReloadTemplate(): boolean {
@@ -56,6 +59,17 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                 this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
                 this.programmingExercise.buildConfig!.sequentialTestRuns !== this.sequentialTestRuns ||
                 this.programmingExercise.buildConfig!.testwiseCoverageEnabled !== this.testwiseCoverageEnabled)
+        );
+    }
+
+    shouldReplacePlaceholders(): boolean {
+        return (
+            (!!this.programmingExercise.buildConfig?.assignmentCheckoutPath &&
+                this.programmingExercise.buildConfig?.assignmentCheckoutPath !== '' &&
+                !!this.programmingExercise.buildConfig?.testCheckoutPath &&
+                this.programmingExercise.buildConfig?.testCheckoutPath !== '') ||
+            !!this.programmingExercise.buildConfig?.buildScript?.includes('${studentParentWorkingDirectoryName}') ||
+            !!this.programmingExercise.buildConfig?.buildScript?.includes('${testWorkingDirectory}')
         );
     }
 
@@ -101,6 +115,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
             .subscribe({
                 next: (file: string) => {
+                    file = this.replacePlaceholders(file);
                     this.codeChanged(file);
                     this.editor?.setText(file);
                 },
@@ -110,8 +125,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             });
         if (!this.programmingExercise.buildConfig?.buildScript) {
             this.resetCustomBuildPlan();
-        } else {
-            this.programmingExercise.buildConfig!.buildScript = this.replacePlaceholders(this.programmingExercise.buildConfig?.buildScript);
         }
         if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
             this.programmingExercise.buildConfig!.timeoutSeconds = 0;

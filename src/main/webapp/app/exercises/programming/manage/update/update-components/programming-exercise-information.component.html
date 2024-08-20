@@ -57,13 +57,15 @@
                 [isLocal]="isLocal"
                 [checkoutSolutionRepository]="programmingExercise.buildConfig?.checkoutSolutionRepository"
                 (submissionBuildPlanEvent)="updateSubmissionBuildPlanCheckoutDirectories($event)"
-                [buildConfigCheckoutPaths]="buildConfigCheckoutPaths"
             />
             @if (editRepositoryCheckoutPath && isLocal) {
                 <jhi-programming-exercise-edit-checkout-directories
                     [programmingExercise]="programmingExercise"
+                    [programmingLanguage]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
                     [submissionBuildPlanCheckoutRepositories]="submissionBuildPlanCheckoutRepositories"
-                    (buildConfigCheckoutPathsEvent)="onBuildConfigCheckoutPathsChange($event)"
+                    (assignmentCheckoutPathEvent)="onAssigmentRepositoryCheckoutPathChange($event)"
+                    (testCheckoutPathEvent)="onTestRepositoryCheckoutPathChange($event)"
+                    (solutionCheckoutPathEvent)="onSolutionRepositoryCheckoutPathChange($event)"
                 />
             }
             @if (!programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExerciseCreationConfig.auxiliaryRepositoriesSupported) {
