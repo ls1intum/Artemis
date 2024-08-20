@@ -4,7 +4,7 @@
         "divider": "or",
         "form": {
             "password": "Password",
-            "password.placeholder": "Your password",
+            "password.placeholder": "Password",
             "rememberme": "Remember me",
             "acceptTerms": "Accept terms",
             "button": "Sign in"

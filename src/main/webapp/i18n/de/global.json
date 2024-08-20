@@ -122,21 +122,22 @@
             "continueTutorial": "Tutorial fortsetzen"
         },
         "form": {
-            "username": "Login",
+            "username": "Login oder Email",
             "firstname": "Vorname",
             "firstname.placeholder": "Vorname",
             "lastname": "Nachname",
             "lastname.placeholder": "Nachname",
-            "username.placeholder": "Login",
+            "username.placeholder": "Login oder Email",
+            "username.tumPlaceholder": "z.B. go42tum / example@tum.de",
             "currentpassword": "Aktuelles Passwort",
             "currentpassword.placeholder": "Aktuelles Passwort",
             "newpassword": "Neues Passwort",
             "newpassword.placeholder": "Neues Passwort",
             "confirmpassword": "Neues Passwort bestätigen",
             "confirmpassword.placeholder": "Bestätige dein neues Passwort",
-            "email": "E-Mail-Adresse",
-            "email.placeholder": "E-Mail-Adresse",
-            "email.pattern": "Bitte nutze eine E-Mail nach folgendem Muster:",
+            "email": "Email-Adresse",
+            "email.placeholder": "Email-Adresse",
+            "email.pattern": "Bitte nutze eine Email nach folgendem Muster:",
             "cancel": "Abbruch",
             "confirm": "Bestätigen",
             "refresh": "Aktualisieren",
@@ -173,11 +174,11 @@
                     "maxlength": "Das bestätigte Passwort darf nicht länger als {{max}} Zeichen sein"
                 },
                 "email": {
-                    "required": "Deine E-Mail-Adresse wird benötigt.",
-                    "invalid": "Deine E-Mail-Adresse ist ungültig.",
-                    "minlength": "Deine E-Mail-Adresse muss mindestens 5 Zeichen lang sein",
-                    "maxlength": "Deine E-Mail-Adresse darf nicht länger als 100 Zeichen sein",
-                    "pattern": "Deine E-Mail-Adresse entspricht nicht dem geforderten Muster."
+                    "required": "Deine Email-Adresse wird benötigt.",
+                    "invalid": "Deine Email-Adresse ist ungültig.",
+                    "minlength": "Deine Email-Adresse muss mindestens 5 Zeichen lang sein",
+                    "maxlength": "Deine Email-Adresse darf nicht länger als 100 Zeichen sein",
+                    "pattern": "Deine Email-Adresse entspricht nicht dem geforderten Muster."
                 }
             }
         },
@@ -312,8 +313,8 @@
             "pattern": "Dieses Feld muss das Muster {{pattern}} erfüllen.",
             "number": "Dieses Feld muss eine Zahl sein.",
             "datetimelocal": "Dieses Feld muss eine Datums- und Zeitangabe enthalten.",
-            "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
-            "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
+            "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und Email-Adressen enthalten.",
+            "invalidPattern": "Dieses Feld beinhaltet ein ungültiges Email Muster."
         },
         "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone.",
         "dateMissingOrNotValid": "'{{labelName}}' fehlt/ungültig",

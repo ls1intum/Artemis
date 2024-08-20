@@ -33,7 +33,7 @@
                 "text": "<a href={{ communicationUrl }}>Kommunikation:</a> Ankündigungen veröffentlichen. Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Fragen filtern. Kursteilnehmer privat anschreiben."
             },
             "notifications": {
-                "text": "<a href = {{ notificationsURL }}>Benachrichtigungen:</a> Anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
+                "text": "<a href = {{ notificationsURL }}>Benachrichtigungen:</a> Anpassbare Web- und Email-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
             },
             "teamExercises": {
                 "text": "<a href={{ teamExercisesUrl }}>Gruppenaufgaben</a> mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe."

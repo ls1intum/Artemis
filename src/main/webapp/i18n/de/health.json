@@ -17,7 +17,7 @@
             "configServer": "Microservice Config Server",
             "hystrix": "Hystrix",
             "diskSpace": "Festplattenspeicher",
-            "mail": "E-Mail",
+            "mail": "Email",
             "db": "Datenbank",
             "ping": "Ping",
             "livenessState": "Lebendigkeit",

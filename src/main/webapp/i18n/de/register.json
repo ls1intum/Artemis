@@ -13,12 +13,12 @@
                     "pattern": "Dein Login darf nur Kleinbuchstaben und Ziffern enthalten"
                 }
             },
-            "success": "<strong>Registrierung gespeichert!</strong> Bitte überprüfe deine E-Mails für die Bestätigung.",
+            "success": "<strong>Registrierung gespeichert!</strong> Bitte überprüfe deine Emails für die Bestätigung.",
             "error": {
                 "fail": "<strong>Registrierung fehlgeschlagen!</strong> Bitte versuche es später nochmal.",
                 "userExists": "<strong>Login bereits vergeben!</strong> Bitte wähle einen anderen aus.",
-                "emailExists": "<strong>E-Mail wird bereits verwendet!</strong> Bitte wähle eine andere aus.",
-                "blocked": "<strong>Die Registrierung für die E-Mail bzw. den Login ist gesperrt!</strong> Bitte versuche es später noch einmal."
+                "emailExists": "<strong>Email wird bereits verwendet!</strong> Bitte wähle eine andere aus.",
+                "blocked": "<strong>Die Registrierung für die Email bzw. den Login ist gesperrt!</strong> Bitte versuche es später noch einmal."
             }
         }
     }

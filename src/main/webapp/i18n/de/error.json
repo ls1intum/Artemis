@@ -57,7 +57,7 @@
         "NotNull": "Feld {{fieldName}} darf nicht leer sein!",
         "size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Längenanforderungen!",
         "userExists": "Login bereits vergeben!",
-        "emailExists": "E-Mail wird bereits verwendet!",
+        "emailExists": "Email wird bereits verwendet!",
         "idExists": "Ein neuer {{entityName}} kann noch keine ID haben",
         "ambiguousContext": "Ein neuer {{entityName}} muss einen eindeutigen Kontext haben",
         "invalid": {

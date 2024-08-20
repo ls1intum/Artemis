@@ -197,7 +197,7 @@
                 "login": "Login",
                 "registrationNumber": "Matrikelnummer",
                 "name": "Name",
-                "email": "E-Mail",
+                "email": "Email",
                 "removeFromGroup": {
                     "modalQuestion": "Soll der Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 }
