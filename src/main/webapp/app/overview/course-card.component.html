@@ -38,11 +38,11 @@
                         <hr />
                         <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardNextUnit"></div>
                         @if (nextRelevantExercise) {
-                            <a class="fw-bold btn-exercise exercise-title" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]">
+                            <a class="fw-bold btn-exercise exercise-title exercise-guided-tour" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]">
                                 {{ nextRelevantExercise.title }}
                             </a>
                         } @else {
-                            <div class="fw-bold mb-3">
+                            <div class="fw-bold mb-3 exercise-guided-tour">
                                 <span jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></span>
                             </div>
                         }
