@@ -3,11 +3,11 @@
 Telemetry
 =========
 
-To help to improve Artemis, we collect some data, once at the application startup.
+To help to improve Artemis, we collect some data when the application starts.
 This feature can be disabled by setting `telemetry.enabled` in the `application-prod.yml` to `false`.
 When this is set to false, no data is sent to Artemis.
 By setting `telemetry.sendAdminDetails` to false, personal information of the instance's admin is excluded from the telemetry data.
-This includes the contact email and the admins name.
+This includes the contact email and the administrator's name.
 
 Artemis collects the following data at the startup of an instance:
 
