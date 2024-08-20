@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { FeedbackAnalysisService, FeedbackDetailsWithResultIdsDTO, SimplifiedTask } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.service';
+import { FeedbackAnalysisService, FeedbackDetailsWithResultIdsDTO, SimplifiedTask } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 
 describe('FeedbackAnalysisService', () => {

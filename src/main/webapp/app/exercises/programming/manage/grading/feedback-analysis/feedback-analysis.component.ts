@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { concatMap, tap } from 'rxjs/operators';
 
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { FeedbackAnalysisService, FeedbackDetailsWithResultIdsDTO, SimplifiedTask } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.service';
+import { FeedbackAnalysisService, FeedbackDetailsWithResultIdsDTO, SimplifiedTask } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { AlertService } from 'app/core/util/alert.service';
 
 export interface FeedbackDetail {

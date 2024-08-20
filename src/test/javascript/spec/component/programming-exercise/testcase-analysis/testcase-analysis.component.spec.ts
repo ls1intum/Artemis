@@ -3,10 +3,10 @@ import { firstValueFrom, of, throwError } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.component';
-import { FeedbackAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.service';
+import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
+import { FeedbackAnalysisService } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { HttpResponse } from '@angular/common/http';
-import { FeedbackDetail } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.component';
+import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 
 describe('FeedbackAnalysisComponent', () => {
     let fixture: ComponentFixture<FeedbackAnalysisComponent>;

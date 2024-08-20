@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
-import { FeedbackDetail } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.component';
+import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 
 export interface SimplifiedTask {
     taskName: string;
