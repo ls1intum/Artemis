@@ -1,9 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { FeedbackAnalysisService, FeedbackDetailsWithResultIdsDTO, SimplifiedTask } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.service';
+import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { concatMap, tap } from 'rxjs/operators';
-import { HttpResponse } from '@angular/common/http';
+
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FeedbackAnalysisService, FeedbackDetailsWithResultIdsDTO, SimplifiedTask } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.service';
 import { AlertService } from 'app/core/util/alert.service';
 
 export interface FeedbackDetail {
@@ -22,9 +23,9 @@ export interface FeedbackDetail {
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent implements OnInit {
-    @Input() readonly exerciseTitle?: string;
-    @Input() readonly exerciseId?: number;
-    @Input() readonly isAtLeastEditor!: undefined | boolean;
+    @Input() exerciseTitle?: string;
+    @Input() exerciseId?: number;
+    @Input() isAtLeastEditor!: undefined | boolean;
     resultIds: number[] = [];
     tasks: SimplifiedTask[] = [];
     feedbackDetails: FeedbackDetail[] = [];
