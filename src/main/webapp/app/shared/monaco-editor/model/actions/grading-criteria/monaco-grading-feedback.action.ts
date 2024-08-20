@@ -15,6 +15,6 @@ export class MonacoGradingFeedbackAction extends MonacoEditorDomainAction {
     }
 
     getOpeningIdentifier(): string {
-        return '[feedback]';
+        return MonacoGradingFeedbackAction.IDENTIFIER;
     }
 }
