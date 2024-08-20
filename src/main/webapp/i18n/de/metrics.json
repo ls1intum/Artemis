@@ -79,8 +79,16 @@
             "title": "Cache Statistiken",
             "cachename": "Cache Name",
             "hits": "Treffer",
-            "misses": "Keine Treffer",
-            "evictions": "Anzahl entfernter Objekte"
+            "misses": "Fehltreffer",
+            "gets": "Cache Abrufe",
+            "puts": "Cache Schreiben",
+            "removals": "Cache Löschung",
+            "evictions": "Anzahl entfernter Objekte",
+            "hitPercent": "Cache Treffer %",
+            "missPercent": "Cache Fehltreffer %",
+            "averageGetTime": "Durchschnittliche Abrufzeit (µs)",
+            "averagePutTime": "Durchschnittliche Schreibzeit (µs)",
+            "averageRemoveTime": "Durchschnittliche Löschzeit (µs)"
         },
         "datasource": {
             "usage": "Usage",
