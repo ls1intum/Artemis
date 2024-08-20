@@ -66,7 +66,7 @@ public class EndpointParser {
     private static void parseServerEndpoints(String[] filePaths) {
         List<EndpointClassInformation> endpointClasses = new ArrayList<>();
         final Set<String> httpMethodClasses = Set.of(GetMapping.class.getSimpleName(), PostMapping.class.getSimpleName(), PutMapping.class.getSimpleName(),
-            DeleteMapping.class.getSimpleName(), PatchMapping.class.getSimpleName(), RequestMapping.class.getSimpleName());
+                DeleteMapping.class.getSimpleName(), PatchMapping.class.getSimpleName(), RequestMapping.class.getSimpleName());
         List<String> filesFailedToParse = new ArrayList<>();
 
         for (String filePath : filePaths) {
@@ -111,11 +111,11 @@ public class EndpointParser {
      */
     private static List<EndpointInformation> extractAnnotationPathValues(ClassOrInterfaceDeclaration javaClass, Set<String> httpMethodClasses, String classRequestMappingString) {
         return javaClass.getMethods().stream()
-            .flatMap(method -> method.getAnnotations().stream().filter(annotation -> httpMethodClasses.contains(annotation.getNameAsString()))
-                .flatMap(annotation -> extractPathsFromAnnotation(annotation).stream()
-                    .map(path -> new EndpointInformation(classRequestMappingString, method.getNameAsString(), annotation.getNameAsString(), path,
-                        javaClass.getNameAsString(), method.getBegin().get().line, method.getAnnotations().stream().map(AnnotationExpr::toString).toList()))))
-            .toList();
+                .flatMap(method -> method.getAnnotations().stream().filter(annotation -> httpMethodClasses.contains(annotation.getNameAsString()))
+                        .flatMap(annotation -> extractPathsFromAnnotation(annotation).stream()
+                                .map(path -> new EndpointInformation(classRequestMappingString, method.getNameAsString(), annotation.getNameAsString(), path,
+                                        javaClass.getNameAsString(), method.getBegin().get().line, method.getAnnotations().stream().map(AnnotationExpr::toString).toList()))))
+                .toList();
     }
 
     /**
@@ -158,23 +158,23 @@ public class EndpointParser {
      */
     private static String extractClassRequestMapping(ClassOrInterfaceDeclaration javaClass, Set<String> httpMethodClasses) {
         boolean hasEndpoint = javaClass.getMethods().stream().flatMap(method -> method.getAnnotations().stream())
-            .anyMatch(annotation -> httpMethodClasses.contains(annotation.getNameAsString()));
+                .anyMatch(annotation -> httpMethodClasses.contains(annotation.getNameAsString()));
 
         if (!hasEndpoint) {
             return "";
         }
 
         String classRequestMapping = javaClass.getAnnotations().stream().filter(annotation -> annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())).findFirst()
-            .map(annotation -> {
-                if (annotation instanceof SingleMemberAnnotationExpr singleMemberAnnotationExpr) {
-                    return singleMemberAnnotationExpr.getMemberValue().toString();
-                }
-                else if (annotation instanceof NormalAnnotationExpr normalAnnotationExpr) {
-                    return normalAnnotationExpr.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).map(pair -> pair.getValue().toString()).findFirst()
-                        .orElse("");
-                }
-                return "";
-            }).orElse("");
+                .map(annotation -> {
+                    if (annotation instanceof SingleMemberAnnotationExpr singleMemberAnnotationExpr) {
+                        return singleMemberAnnotationExpr.getMemberValue().toString();
+                    }
+                    else if (annotation instanceof NormalAnnotationExpr normalAnnotationExpr) {
+                        return normalAnnotationExpr.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).map(pair -> pair.getValue().toString()).findFirst()
+                                .orElse("");
+                    }
+                    return "";
+                }).orElse("");
 
         return classRequestMapping;
     }

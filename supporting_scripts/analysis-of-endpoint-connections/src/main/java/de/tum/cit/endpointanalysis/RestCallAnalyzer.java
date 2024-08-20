@@ -37,8 +37,8 @@ public class RestCallAnalyzer {
 
         try {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.ENDPOINT_PARSING_RESULT_PATH),
-                new TypeReference<List<EndpointClassInformation>>() {
-                });
+                    new TypeReference<List<EndpointClassInformation>>() {
+                    });
             List<RestCallFileInformation> restCalls = mapper.readValue(new File(EndpointParser.REST_CALL_PARSING_RESULT_PATH), new TypeReference<List<RestCallFileInformation>>() {
             });
 
@@ -63,7 +63,7 @@ public class RestCallAnalyzer {
                     checkForWildcardMatches(restCall, endpointsWithMatchingUri, restCallURI, endpointMap);
 
                     List<EndpointInformation> endpointsWithMatchingHttpMethod = endpointsWithMatchingUri.stream()
-                        .filter(endpoint -> endpoint.getHttpMethod().toLowerCase().equals(restCall.method().toLowerCase())).toList();
+                            .filter(endpoint -> endpoint.getHttpMethod().toLowerCase().equals(restCall.method().toLowerCase())).toList();
 
                     if (endpointsWithMatchingHttpMethod.isEmpty()) {
                         restCallsWithoutMatchingEndpoint.add(restCall);
@@ -98,11 +98,11 @@ public class RestCallAnalyzer {
      * @param endpointMap       The map of endpoint URIs to their corresponding information.
      */
     private static void checkForWildcardMatches(RestCallInformation restCall, List<EndpointInformation> matchingEndpoints, String restCallURI,
-                                                Map<String, List<EndpointInformation>> endpointMap) {
+            Map<String, List<EndpointInformation>> endpointMap) {
         if (matchingEndpoints.isEmpty() && restCallURI.endsWith("*")) {
             for (String uri : endpointMap.keySet()) {
                 if (uri.startsWith(restCallURI.substring(0, restCallURI.length() - 1))
-                    && endpointMap.get(uri).get(0).getHttpMethod().toLowerCase().equals(restCall.method().toLowerCase())) {
+                        && endpointMap.get(uri).get(0).getHttpMethod().toLowerCase().equals(restCall.method().toLowerCase())) {
                     matchingEndpoints.addAll(endpointMap.get(uri));
                 }
             }

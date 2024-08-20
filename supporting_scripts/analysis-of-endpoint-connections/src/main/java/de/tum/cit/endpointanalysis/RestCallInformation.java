@@ -5,6 +5,7 @@ public record RestCallInformation(String method, String url, String filePath, in
     public String buildCompleteRestCallURI() {
         return this.url.replace("`", "");
     }
+
     public String buildComparableRestCallUri() {
         // Replace arguments with placeholder
         String result = this.buildCompleteRestCallURI().replaceAll("\\$\\{.*?\\}", ":param:");

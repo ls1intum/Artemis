@@ -37,11 +37,11 @@ public class EndpointAnalyzer {
 
         try {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.ENDPOINT_PARSING_RESULT_PATH),
-                new TypeReference<List<EndpointClassInformation>>() {
-                });
+                    new TypeReference<List<EndpointClassInformation>>() {
+                    });
             List<RestCallFileInformation> restCallFiles = mapper.readValue(new File(EndpointParser.REST_CALL_PARSING_RESULT_PATH),
-                new TypeReference<List<RestCallFileInformation>>() {
-                });
+                    new TypeReference<List<RestCallFileInformation>>() {
+                    });
 
             List<UsedEndpoints> endpointsAndMatchingRestCalls = new ArrayList<>();
             List<EndpointInformation> unusedEndpoints = new ArrayList<>();
@@ -62,7 +62,7 @@ public class EndpointAnalyzer {
                     String endpointURI = endpoint.buildComparableEndpointUri();
                     List<RestCallInformation> restCallsWithMatchingURI = restCallMap.getOrDefault(endpointURI, new ArrayList<>());
                     List<RestCallInformation> matchingRestCalls = restCallsWithMatchingURI.stream()
-                        .filter(restCall -> restCall.method().toLowerCase().equals(endpoint.getHttpMethod().toLowerCase())).toList();
+                            .filter(restCall -> restCall.method().toLowerCase().equals(endpoint.getHttpMethod().toLowerCase())).toList();
 
                     // Check for wildcard endpoints if no exact match is found
                     checkForWildcardEndpoints(endpoint, matchingRestCalls, endpointURI, restCallMap);
@@ -98,11 +98,11 @@ public class EndpointAnalyzer {
      * @param restCallMap       The map of rest call URIs to their corresponding information.
      */
     private static void checkForWildcardEndpoints(EndpointInformation endpoint, List<RestCallInformation> matchingRestCalls, String endpointURI,
-                                                  Map<String, List<RestCallInformation>> restCallMap) {
+            Map<String, List<RestCallInformation>> restCallMap) {
         if (matchingRestCalls.isEmpty() && endpointURI.endsWith("*")) {
             for (String uri : restCallMap.keySet()) {
                 if (uri.startsWith(endpoint.buildComparableEndpointUri().substring(0, endpoint.buildComparableEndpointUri().length() - 1))
-                    && endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).method().toLowerCase())) {
+                        && endpoint.getHttpMethod().toLowerCase().equals(restCallMap.get(uri).get(0).method().toLowerCase())) {
                     matchingRestCalls.addAll(restCallMap.get(uri));
                 }
             }
