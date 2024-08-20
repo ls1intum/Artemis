@@ -18,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.IngestionState;
+import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.IngestionState;
 
 @Entity
 @DiscriminatorValue("A")

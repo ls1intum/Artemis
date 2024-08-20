@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.pyris.dto.status;
+package de.tum.in.www1.artemis.service.connectors.pyris.domain.status;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

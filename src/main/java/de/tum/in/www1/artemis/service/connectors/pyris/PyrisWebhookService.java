@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutio
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.IngestionState;
+import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.IngestionState;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
@@ -147,7 +147,7 @@ public class PyrisWebhookService {
                 }
             }
             catch (Exception e) {
-                log.error(e.getMessage());
+                log.error("Error occurred while sending lecture unit {} to Pyris", attachmentUnit.getId(), e);
                 if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentUnit.getAttachment().getLink().endsWith(".pdf")) {
                     attachmentUnit.setPyrisIngestionState(IngestionState.ERROR);
                     lectureUnitRepository.save(attachmentUnit);

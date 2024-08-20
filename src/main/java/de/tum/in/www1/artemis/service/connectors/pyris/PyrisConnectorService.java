@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.IngestionState;
+import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.IngestionState;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
@@ -119,7 +119,7 @@ public class PyrisConnectorService {
     }
 
     private void setIngestionStateToError(PyrisWebhookLectureIngestionExecutionDTO executionDTO, RuntimeException e) {
-        log.error("Failed to send lectures to Pyris", e);
+        log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
         if (executionDTO != null) {
             Optional<LectureUnit> optionalUnit = lectureUnitRepository.findById(executionDTO.pyrisLectureUnit().lectureUnitId());
             optionalUnit.ifPresent(unit -> {
