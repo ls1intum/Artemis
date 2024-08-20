@@ -20,6 +20,25 @@ jest.mock('pdfjs-dist/build/pdf.worker', () => {
     return {};
 });
 
+function createMouseEvent(target: Element): MouseEvent {
+    return new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+        relatedTarget: target,
+    });
+}
+
+function createMockEvent(target: Element, eventType: string = 'click'): MouseEvent {
+    const event = new MouseEvent(eventType, {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+    });
+    Object.defineProperty(event, 'target', { value: target, writable: false });
+    return event;
+}
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -37,6 +56,9 @@ describe('PdfPreviewComponent', () => {
     let attachmentUnitServiceMock: any;
     let alertServiceMock: any;
     let routeMock: any;
+    let mockCanvasElement: HTMLCanvasElement;
+    let mockEnlargedCanvas: HTMLCanvasElement;
+    let mockContainer: HTMLElement;
 
     beforeEach(async () => {
         global.URL.createObjectURL = jest.fn().mockReturnValue('mocked_blob_url');
@@ -74,6 +96,30 @@ describe('PdfPreviewComponent', () => {
 
         fixture = TestBed.createComponent(PdfPreviewComponent);
         component = fixture.componentInstance;
+
+        mockCanvasElement = document.createElement('canvas');
+        mockCanvasElement.width = 800;
+        mockCanvasElement.height = 600;
+
+        jest.spyOn(component, 'updateEnlargedCanvas').mockImplementation(() => {
+            component.enlargedCanvas.nativeElement = mockCanvasElement;
+        });
+
+        mockEnlargedCanvas = document.createElement('canvas');
+        mockEnlargedCanvas.classList.add('enlarged-canvas');
+        component.enlargedCanvas = new ElementRef(mockEnlargedCanvas);
+
+        mockContainer = document.createElement('div');
+        mockContainer.style.width = '800px';
+        mockContainer.style.height = '600px';
+
+        jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+            cb(0);
+            return 0;
+        });
+
+        fixture.detectChanges();
+
         component.pdfContainer = new ElementRef(document.createElement('div'));
         component.enlargedCanvas = new ElementRef(document.createElement('canvas'));
         fixture.detectChanges();
@@ -251,5 +297,32 @@ describe('PdfPreviewComponent', () => {
         const adjustCanvasSizeSpy = jest.spyOn(component, 'adjustCanvasSize');
         window.dispatchEvent(new Event('resize'));
         expect(adjustCanvasSizeSpy).toHaveBeenCalled();
+    });
+
+    it('should close the enlarged view if click is outside the canvas within the enlarged container', () => {
+        const target = document.createElement('div');
+        target.classList.add('enlarged-container');
+        const mockEvent = createMockEvent(target);
+
+        component.isEnlargedView = true;
+        const closeSpy = jest.spyOn(component, 'closeEnlargedView');
+
+        component.closeIfOutside(mockEvent);
+
+        expect(closeSpy).toHaveBeenCalled();
+        expect(component.isEnlargedView).toBeFalse();
+    });
+
+    it('should not close the enlarged view if the click is on the canvas itself', () => {
+        const mockEvent = createMouseEvent(mockEnlargedCanvas);
+        Object.defineProperty(mockEvent, 'target', { value: mockEnlargedCanvas, writable: false });
+
+        component.isEnlargedView = true;
+
+        const closeSpy = jest.spyOn(component, 'closeEnlargedView');
+
+        component.closeIfOutside(mockEvent as unknown as MouseEvent);
+
+        expect(closeSpy).not.toHaveBeenCalled();
     });
 });
