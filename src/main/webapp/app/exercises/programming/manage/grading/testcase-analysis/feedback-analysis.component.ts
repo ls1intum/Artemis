@@ -15,16 +15,16 @@ export interface FeedbackDetail {
 }
 
 @Component({
-    selector: 'jhi-testcase-analysis',
+    selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
     standalone: true,
     imports: [ArtemisSharedModule],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent implements OnInit {
-    @Input() exerciseTitle?: string;
-    @Input() exerciseId?: number;
-    @Input() isAtLeastEditor!: undefined | boolean;
+    @Input() readonly exerciseTitle?: string;
+    @Input() readonly exerciseId?: number;
+    @Input() readonly isAtLeastEditor!: undefined | boolean;
     resultIds: number[] = [];
     tasks: SimplifiedTask[] = [];
     feedbackDetails: FeedbackDetail[] = [];

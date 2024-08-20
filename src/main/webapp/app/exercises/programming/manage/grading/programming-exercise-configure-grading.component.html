@@ -17,8 +17,8 @@
                     <b jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title"></b>
                 </div>
                 @if (programmingExercise.isAtLeastEditor) {
-                    <div class="tab-item testcase-analysis" (click)="selectTab('testcase-analysis')" [ngClass]="activeTab === 'testcase-analysis' ? 'active' : ''">
-                        <b jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.titleHeader"></b>
+                    <div class="tab-item testcase-analysis" (click)="selectTab('feedback-analysis')" [ngClass]="activeTab === 'feedback-analysis' ? 'active' : ''">
+                        <b jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.titleHeader"></b>
                     </div>
                 }
             </div>
@@ -34,7 +34,7 @@
                         [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
                     />
                 }
-                @if (programmingExercise.isAtLeastInstructor && activeTab !== 'testcase-analysis') {
+                @if (programmingExercise.isAtLeastInstructor && activeTab !== 'feedback-analysis') {
                     <jhi-programming-exercise-configure-grading-actions
                         [exercise]="programmingExercise"
                         [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
@@ -262,12 +262,12 @@
             }
         </div>
         <div class="grading-body-container mt-3">
-            @if (activeTab === 'testcase-analysis') {
-                <jhi-testcase-analysis
+            @if (activeTab === 'feedback-analysis') {
+                <jhi-feedback-analysis
                     [exerciseTitle]="programmingExercise.title"
                     [exerciseId]="programmingExercise.id"
                     [isAtLeastEditor]="programmingExercise.isAtLeastEditor"
-                ></jhi-testcase-analysis>
+                ></jhi-feedback-analysis>
             }
         </div>
     }

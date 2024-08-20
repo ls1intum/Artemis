@@ -17,8 +17,8 @@ export interface FeedbackDetailsWithResultIdsDTO {
 
 @Injectable()
 export class FeedbackAnalysisService {
-    private resourceUrl = 'api/programming-exercises';
-    private exerciseResourceUrl = 'api/exercises';
+    private readonly resourceUrl = 'api/programming-exercises';
+    private readonly exerciseResourceUrl = 'api/exercises';
 
     constructor(private http: HttpClient) {}
 

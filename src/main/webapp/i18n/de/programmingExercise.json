@@ -307,11 +307,11 @@
                     "testType": "Type",
                     "passedPercent": "Bestanden %"
                 },
-                "testAnalysis": {
-                    "titleHeader": "Test Analyse",
+                "feedbackAnalysis": {
+                    "titleHeader": "Feedback Analyse",
                     "title": "Fehleranalyse für {{exerciseTitle}}",
                     "occurrence": "Häufigkeit",
-                    "testCaseFeedback": "Testfall Feedback",
+                    "feedback": "Feedback",
                     "task": "Aufgabe",
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
