@@ -4,7 +4,8 @@ singleServerConfig:
   timeout: 3000
   retryAttempts: 3
   retryInterval: 1500
-  password: null
+  username: artemis
+  password: artemis
   subscriptionsPerConnection: 5
   clientName: null
   address: "redis://localhost:6379"
