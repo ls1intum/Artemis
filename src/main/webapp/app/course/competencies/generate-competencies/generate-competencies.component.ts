@@ -182,7 +182,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      * Saves the competency recommendations as competencies and navigates back
      */
     save() {
-        const competenciesToSave = this.competencies.getRawValue().map((c) => c.competency as Competency);
+        const competenciesToSave = this.competencies.getRawValue().map((c) => Object.assign(new Competency(), c.competency));
         this.competencyService.createBulk(competenciesToSave, this.courseId).subscribe({
             next: () => {
                 this.submitted = true;
