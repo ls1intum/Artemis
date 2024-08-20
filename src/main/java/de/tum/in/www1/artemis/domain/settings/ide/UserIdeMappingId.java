@@ -13,8 +13,9 @@ public class UserIdeMappingId implements Serializable {
 
     private ProgrammingLanguage programmingLanguage;
 
-    protected UserIdeMappingId() {
+    public UserIdeMappingId() {
         // empty constructor for Jackson
+        // public for server tests
     }
 
     public UserIdeMappingId(Long user, ProgrammingLanguage programmingLanguage) {

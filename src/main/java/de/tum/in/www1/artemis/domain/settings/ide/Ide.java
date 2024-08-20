@@ -28,8 +28,9 @@ public class Ide extends DomainObject {
     @OneToMany(mappedBy = "ide")
     private Set<UserIdeMapping> userIdeMappings;
 
-    protected Ide() {
+    public Ide() {
         // empty constructor for Jackson
+        // public for server tests
     }
 
     public Ide(String name, String deepLink) {
