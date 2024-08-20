@@ -64,7 +64,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         private alertService: AlertService,
         private modalService: NgbModal,
         private translateService: TranslateService,
-        private cdRef: ChangeDetectorRef,
+        private changeDetectorRef: ChangeDetectorRef,
     ) {
         super();
     }
@@ -87,7 +87,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                 });
 
                 this.isLoading = false;
-                this.cdRef.detectChanges();
+                this.changeDetectorRef.detectChanges();
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
@@ -133,7 +133,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                     this.isEditing = false;
                     this.selectedKnowledgeArea = undefined;
                 }
-                this.cdRef.detectChanges();
+                this.changeDetectorRef.detectChanges();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -156,7 +156,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         if (!(this.selectedKnowledgeArea?.id || this.selectedCompetency) && !this.isEditing) {
                             this.selectedKnowledgeArea = resultKnowledgeArea;
                         }
-                        this.cdRef.detectChanges();
+                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -172,7 +172,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         if (resultKnowledgeArea.id === this.selectedKnowledgeArea?.id) {
                             this.selectedKnowledgeArea = resultKnowledgeArea;
                         }
-                        this.cdRef.detectChanges();
+                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -211,7 +211,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                     this.isEditing = false;
                     this.selectedCompetency = undefined;
                 }
-                this.cdRef.detectChanges();
+                this.changeDetectorRef.detectChanges();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -234,7 +234,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         if (!(this.selectedCompetency?.id || this.selectedKnowledgeArea) && !this.isEditing) {
                             this.selectedCompetency = resultCompetency;
                         }
-                        this.cdRef.detectChanges();
+                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -252,7 +252,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         if (resultCompetency.id === this.selectedCompetency?.id) {
                             this.selectedCompetency = resultCompetency;
                         }
-                        this.cdRef.detectChanges();
+                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
