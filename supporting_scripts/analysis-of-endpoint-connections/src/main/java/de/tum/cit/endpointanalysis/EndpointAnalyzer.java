@@ -61,11 +61,12 @@ public class EndpointAnalyzer {
 
                     String endpointURI = endpoint.buildComparableEndpointUri();
                     List<RestCallInformation> restCallsWithMatchingURI = restCallMap.getOrDefault(endpointURI, new ArrayList<>());
-                    List<RestCallInformation> matchingRestCalls = restCallsWithMatchingURI.stream()
-                            .filter(restCall -> restCall.method().toLowerCase().equals(endpoint.getHttpMethod().toLowerCase())).toList();
 
                     // Check for wildcard endpoints if no exact match is found
-                    checkForWildcardEndpoints(endpoint, matchingRestCalls, endpointURI, restCallMap);
+                    checkForWildcardEndpoints(endpoint, restCallsWithMatchingURI, endpointURI, restCallMap);
+
+                    List<RestCallInformation> matchingRestCalls = restCallsWithMatchingURI.stream()
+                            .filter(restCall -> restCall.method().toLowerCase().equals(endpoint.getHttpMethod().toLowerCase())).toList();
 
                     if (matchingRestCalls.isEmpty()) {
                         unusedEndpoints.add(endpoint);
