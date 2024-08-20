@@ -72,4 +72,8 @@ public class VcsAccessLog extends DomainObject {
 
     public VcsAccessLog() {
     }
+
+    public void setCommitHash(String commitHash) {
+        this.commitHash = commitHash;
+    }
 }

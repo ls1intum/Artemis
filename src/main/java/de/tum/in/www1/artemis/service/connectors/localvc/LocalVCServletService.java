@@ -246,7 +246,7 @@ public class LocalVCServletService {
 
         var authenticationMechanism = resolveAuthenticationMechanism(authorizationHeader, user);
         var ipAddress = request.getRemoteAddr();
-        authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, authenticationMechanism, ipAddress, localVCRepositoryUri.isPracticeRepository());
+        authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, authenticationMechanism, ipAddress, localVCRepositoryUri);
 
         request.setAttribute("user", user);
 
@@ -407,11 +407,11 @@ public class LocalVCServletService {
      * @param user                     The user that wants to access the repository.
      * @param exercise                 The exercise the repository belongs to.
      * @param repositoryActionType     The type of the action the user wants to perform.
-     * @param isPracticeRepository     Whether the repository is a practice repository.
+     * @param localVCRepositoryUri     The URI of the local repository.
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository.
      */
     public void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType,
-            AuthenticationMechanism authenticationMechanism, String ipAddress, boolean isPracticeRepository) throws LocalVCForbiddenException {
+            AuthenticationMechanism authenticationMechanism, String ipAddress, LocalVCRepositoryUri localVCRepositoryUri) throws LocalVCForbiddenException {
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
             // Test and auxiliary repositories are only accessible by instructors and higher.
@@ -426,7 +426,8 @@ public class LocalVCServletService {
 
         ProgrammingExerciseParticipation participation;
         try {
-            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, isPracticeRepository, false);
+            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUri.isPracticeRepository(),
+                    false);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(
@@ -435,11 +436,22 @@ public class LocalVCServletService {
 
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, repositoryActionType);
-            vcsAccessLogService.storeAccessLog(user, participation, repositoryActionType, authenticationMechanism, ipAddress);
         }
         catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException(e);
         }
+        String commitHash = null;
+        try {
+            if (repositoryActionType == RepositoryActionType.READ) {
+                commitHash = getLatestCommitHash(repositories.get(localVCRepositoryUri.getRelativeRepositoryPath().toString()));
+            }
+        }
+        catch (GitAPIException e) {
+            log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
+        }
+        // Write a access log entry to the database
+        vcsAccessLogService.storeAccessLog(user, participation, repositoryActionType, authenticationMechanism, commitHash, ipAddress);
+
     }
 
     /**
@@ -506,6 +518,9 @@ public class LocalVCServletService {
 
             // Process push to any repository other than the test repository.
             processNewPushToRepository(participation, commit);
+
+            // For push the correct commitHash is only available here, therefore the preliminary null value is overwritten
+            vcsAccessLogService.updateCommitHash(participation, commitHash);
         }
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.

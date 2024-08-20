@@ -33,13 +33,27 @@ public class VcsAccessLogService {
      * @param user                    The user accessing the repository
      * @param participation           The participation which owns the repository
      * @param actionType              The action type: READ or WRITE
-     * @param authenticationMechanism The used authentication mechanism: password, token or SSH
+     * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation) or SSH
      */
     public void storeAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
-            String ipAddress) {
+            String commitHash, String ipAddress) {
         log.debug("Storing access operation for user {}", user);
 
-        VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, null, ipAddress);
+        VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash,
+                ipAddress);
         vcsAccessLogRepository.save(accessLogEntry);
+    }
+
+    /**
+     * Updates the commit hash after a successful push
+     *
+     * @param participation The participation to which the repository belongs to
+     * @param commitHash    The newest commit hash which should get set for the access log entry
+     */
+    public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
+        vcsAccessLogRepository.findByParticipationIdWhereCommitHashIsNull(participation.getId()).ifPresent(entry -> {
+            entry.setCommitHash(commitHash);
+            vcsAccessLogRepository.save(entry);
+        });
     }
 }
