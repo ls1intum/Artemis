@@ -19,6 +19,8 @@ logging:
         de.tum.in.www1.artemis: DEBUG
         tech.jhipster: DEBUG
         liquibase: ERROR
+        org.redisson.command.RedisExecutor: INFO
+        org.redisson.connection.DNSMonitor: INFO
 
 spring:
     devtools:

@@ -11,7 +11,7 @@ services:
       "redis-server",
       "/usr/local/etc/redis/redis.conf",
       "--requirepass ${REDIS_PASSWORD:-artemis}",
-      "--user artemis on >${REDIS_PASSWORD:-artemis} ~* allcommands",
+      "--user artemis on >${REDIS_PASSWORD:-artemis} +@all &* ~*",
       "--user default off nopass nocommands",
       "--protected-mode no" # Needed, as redis does not detect that the default user has a password if it is disabled
     ]

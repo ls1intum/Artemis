@@ -146,12 +146,14 @@ spring:
             import-check:
                 enabled: false
     data:
-      jpa:
+        jpa:
             repositories:
                 bootstrap-mode: deferred
-      redis:
-          host: localhost
-          port: 6379
+        redis:
+            host: localhost
+            port: 6379
+            username: artemis
+            password: artemis
     jpa:
         open-in-view: false
         show-sql: false

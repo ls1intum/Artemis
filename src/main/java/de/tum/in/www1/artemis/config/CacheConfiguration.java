@@ -63,14 +63,17 @@ public class CacheConfiguration {
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
-    @Value("${spring.hazelcast.interface:}")
-    private String hazelcastInterface;
+    @Value("${spring.data.redis.host}")
+    private String redisHost;
 
-    @Value("${spring.hazelcast.port:5701}")
-    private int hazelcastPort;
+    @Value("${spring.data.redis.port}")
+    private int redisPort;
 
-    @Value("${spring.hazelcast.localInstances:true}")
-    private boolean hazelcastLocalInstances;
+    @Value("${spring.data.redis.username}")
+    private String redisUsername;
+
+    @Value("${spring.data.redis.password}")
+    private String redisPassword;
 
     // NOTE: the registration is optional
     public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient, ApplicationContext applicationContext,
@@ -102,7 +105,9 @@ public class CacheConfiguration {
     @Bean
     public RedisClient redisClient() {
         RedisClientConfig config = new RedisClientConfig();
-        config.setAddress("redis://localhost:6379");    // TODO: read from yml
+        config.setAddress("redis://" + redisHost + ":" + redisPort);
+        config.setUsername(redisUsername);
+        config.setPassword(redisPassword);
         config.setClientName("build-agent-1");          // TODO: read from yml
         this.redisClient = RedisClient.create(config);
         return this.redisClient;
