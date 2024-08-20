@@ -64,7 +64,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @return result that was saved in the database
      */
     private Result saveManualAssessment(Result result, User assessor) {
-        var participation = result.getParticipation();
+        var submission = result.getSubmission();
 
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
@@ -72,7 +72,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
         Result finalResult = resultService.storeFeedbackInResult(result, result.getFeedbacks(), true);
 
-        finalResult.setParticipation(participation);
+        finalResult.setSubmission(submission);
         return finalResult;
     }
 
@@ -101,9 +101,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().orElse(false));
         newManualResult = saveManualAssessment(newManualResult, assessor);
 
-        if (submission.getParticipation() == null) {
-            newManualResult.setParticipation(submission.getParticipation());
-        }
         Result savedResult = resultRepository.save(newManualResult);
         savedResult.setSubmission(submission);
 
@@ -132,7 +129,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
         sendFeedbackToAthena(exercise, submission, newManualResult.getFeedbacks());
         handleResolvedFeedbackRequest(participation);
-        newManualResult.setParticipation(participation);
 
         return newManualResult;
     }

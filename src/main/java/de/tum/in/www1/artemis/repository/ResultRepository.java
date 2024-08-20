@@ -224,7 +224,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 LEFT JOIN FETCH r.feedbacks
                 LEFT JOIN FETCH r.assessor
                 LEFT JOIN FETCH r.assessmentNote
-                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH s.participation p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE r.id = :resultId
@@ -709,7 +709,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         // Workaround to prevent the assessor or participant turning into a proxy object after saving
         savedResult.setAssessor(result.getAssessor());
         // Workaround to prevent the team students of a student participation turning into a proxy object after saving
-        savedResult.setParticipation(result.getParticipation());
+        savedResult.setSubmission(result.getSubmission());
         return savedResult;
     }
 
