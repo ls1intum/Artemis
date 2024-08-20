@@ -10,10 +10,5 @@
             "jsx": true
         }
     },
-    "rules": {},
-    "settings": {
-        "react": {
-            "version": "detect"
-        }
-    }
+    "rules": {}
 }
