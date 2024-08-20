@@ -663,11 +663,29 @@ public class ProgrammingExerciseRepositoryService {
 
         replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replace(" ", "-")); // Used e.g. in artifactId
         replacements.put("${exerciseName}", programmingExercise.getTitle());
-        replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
-        replacements.put("${studentParentWorkingDirectoryName}", Constants.ASSIGNMENT_REPO_NAME);
-        replacements.put("${testWorkingDirectory}", Constants.TEST_REPO_NAME);
-        replacements.put("${solutionWorkingDirectory}", Constants.SOLUTION_REPO_NAME);
         replacements.put("${packaging}", programmingExercise.getBuildConfig().hasSequentialTestRuns() ? "pom" : "jar");
+
+        var buildConfig = programmingExercise.getBuildConfig();
+        String studentWorkingDirectory = buildConfig.getAssignmentCheckoutPath() != null && !buildConfig.getAssignmentCheckoutPath().isBlank()
+                ? buildConfig.getAssignmentCheckoutPath()
+                : Constants.ASSIGNMENT_REPO_NAME;
+        if (studentWorkingDirectory.startsWith("/")) {
+            studentWorkingDirectory = studentWorkingDirectory.substring(1);
+        }
+        String testWorkingDirectory = buildConfig.getTestCheckoutPath() != null && !buildConfig.getTestCheckoutPath().isBlank() ? buildConfig.getTestCheckoutPath()
+                : Constants.TEST_REPO_NAME;
+        String solutionWorkingDirectory = buildConfig.getSolutionCheckoutPath() != null && !buildConfig.getSolutionCheckoutPath().isBlank() ? buildConfig.getSolutionCheckoutPath()
+                : Constants.SOLUTION_REPO_NAME;
+
+        replacements.put("${studentWorkingDirectory}", "/" + studentWorkingDirectory + "/src");
+        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            replacements.put("${studentParentWorkingDirectoryName}", studentWorkingDirectory.replace("/", "."));
+        }
+        else {
+            replacements.put("${studentParentWorkingDirectoryName}", studentWorkingDirectory);
+        }
+        replacements.put("${testWorkingDirectory}", testWorkingDirectory);
+        replacements.put("${solutionWorkingDirectory}", solutionWorkingDirectory);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }
 

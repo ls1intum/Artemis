@@ -8,7 +8,6 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -72,10 +71,7 @@ public class LocalCIBuildConfigurationService {
             });
 
         }
-        String buildScript = buildScriptBuilder.toString();
-        buildScript = buildScript.replace("${studentParentWorkingDirectoryName}", Constants.ASSIGNMENT_REPO_NAME);
-        buildScript = buildScript.replace("${testWorkingDirectory}", Constants.TEST_REPO_NAME);
-        return buildScript;
+        return buildScriptBuilder.toString();
     }
 
 }

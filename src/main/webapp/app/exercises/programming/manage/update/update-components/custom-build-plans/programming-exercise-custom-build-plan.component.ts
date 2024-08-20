@@ -24,6 +24,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     sequentialTestRuns?: boolean;
     testwiseCoverageEnabled?: boolean;
 
+    originalBuildScript: string = '';
+
     constructor(private aeolusService: AeolusService) {}
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
@@ -47,7 +49,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             }
         }
         if (this.shouldReplacePlaceholders()) {
-            this.programmingExercise.buildConfig!.buildScript = this.replacePlaceholders(this.programmingExercise.buildConfig?.buildScript || '');
+            this.programmingExercise.buildConfig!.buildScript = this.replacePlaceholders(this.originalBuildScript);
+            this.codeChanged(this.programmingExercise.buildConfig?.buildScript || '');
         }
     }
 
@@ -64,10 +67,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     shouldReplacePlaceholders(): boolean {
         return (
-            (!!this.programmingExercise.buildConfig?.assignmentCheckoutPath &&
-                this.programmingExercise.buildConfig?.assignmentCheckoutPath !== '' &&
-                !!this.programmingExercise.buildConfig?.testCheckoutPath &&
-                this.programmingExercise.buildConfig?.testCheckoutPath !== '') ||
+            (!!this.programmingExercise.buildConfig?.assignmentCheckoutPath && this.programmingExercise.buildConfig?.assignmentCheckoutPath !== '') ||
+            (!!this.programmingExercise.buildConfig?.testCheckoutPath && this.programmingExercise.buildConfig?.testCheckoutPath !== '') ||
             !!this.programmingExercise.buildConfig?.buildScript?.includes('${studentParentWorkingDirectoryName}') ||
             !!this.programmingExercise.buildConfig?.buildScript?.includes('${testWorkingDirectory}')
         );
@@ -115,6 +116,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
             .subscribe({
                 next: (file: string) => {
+                    this.originalBuildScript = file;
                     file = this.replacePlaceholders(file);
                     this.codeChanged(file);
                     this.editor?.setText(file);
@@ -139,6 +141,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     codeChanged(code: string): void {
         this.code = code;
+        this.editor?.setText(code);
         this.programmingExercise.buildConfig!.buildScript = code;
     }
 
@@ -166,8 +169,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     replacePlaceholders(buildScript: string): string {
         const assignmentRepoName = this.programmingExercise.buildConfig?.assignmentCheckoutPath || ASSIGNMENT_REPO_NAME;
         const testRepoName = this.programmingExercise.buildConfig?.testCheckoutPath || TEST_REPO_NAME;
-        buildScript = buildScript.replace('${studentParentWorkingDirectoryName}', assignmentRepoName);
-        buildScript = buildScript.replace('${testWorkingDirectory}', testRepoName);
+        buildScript = buildScript.replaceAll('${studentParentWorkingDirectoryName}', assignmentRepoName);
+        buildScript = buildScript.replaceAll('${testWorkingDirectory}', testRepoName);
         return buildScript;
     }
 }

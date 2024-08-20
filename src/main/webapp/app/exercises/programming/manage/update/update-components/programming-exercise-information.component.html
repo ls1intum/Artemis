@@ -66,6 +66,7 @@
                     (assignmentCheckoutPathEvent)="onAssigmentRepositoryCheckoutPathChange($event)"
                     (testCheckoutPathEvent)="onTestRepositoryCheckoutPathChange($event)"
                     (solutionCheckoutPathEvent)="onSolutionRepositoryCheckoutPathChange($event)"
+                    [pattern]="programmingExerciseCreationConfig.invalidDirectoryNamePattern"
                 />
             }
             @if (!programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExerciseCreationConfig.auxiliaryRepositoriesSupported) {

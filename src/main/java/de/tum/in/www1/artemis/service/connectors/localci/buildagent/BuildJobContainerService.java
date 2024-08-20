@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -277,9 +278,12 @@ public class BuildJobContainerService {
      * @param programmingLanguage                    The programming language of the repositories, which influences directory naming conventions.
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
-            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage) {
-        String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-        String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, String assignmentCheckoutPath,
+            String testCheckoutPath, String solutionCheckoutPath) {
+
+        assignmentCheckoutPath = (assignmentCheckoutPath != null && !assignmentCheckoutPath.isEmpty()) ? assignmentCheckoutPath
+                : RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+        testCheckoutPath = (testCheckoutPath != null && !testCheckoutPath.isEmpty()) ? testCheckoutPath : RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
 
         // Make sure to create the working directory in case it does not exist.
         // In case the test checkout path is the working directory, we only create up to the parent, as the working directory is created below.
@@ -292,7 +296,8 @@ public class BuildJobContainerService {
         // Copy the assignment repository to the container and move it to the assignment checkout path
         addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
         if (solutionRepositoryPath != null) {
-            String solutionCheckoutPath = RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+            solutionCheckoutPath = (solutionCheckoutPath != null && !solutionCheckoutPath.isEmpty()) ? solutionCheckoutPath
+                    : RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
             addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
         }
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
@@ -309,6 +314,7 @@ public class BuildJobContainerService {
 
     private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName) {
         copyToContainer(repositoryPath.toString(), containerId);
+        addDirectory(containerId, getParentFolderPath(newDirectoryName), true);
         renameDirectoryOrFile(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
@@ -427,5 +433,18 @@ public class BuildJobContainerService {
     private Container getContainerForName(String containerName) {
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
         return containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst().orElse(null);
+    }
+
+    private String getParentFolderPath(String path) {
+        // Remove trailing slash if it exists
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+
+        // Split the path by slash
+        String[] parts = path.split("/");
+
+        // Join the parts up to the second-to-last element
+        return String.join("/", Arrays.copyOfRange(parts, 0, parts.length - 1));
     }
 }

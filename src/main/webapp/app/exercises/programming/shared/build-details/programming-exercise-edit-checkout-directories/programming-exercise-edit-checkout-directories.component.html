@@ -8,7 +8,8 @@
             class="form-control"
             name="assignmentRepositoryCheckoutPath"
             id="field_assignmentRepositoryCheckoutPath"
-            [value]="assignmentCheckoutPath"
+            [pattern]="pattern"
+            [(ngModel)]="assignmentCheckoutPath"
             (change)="onAssigmentRepositoryCheckoutPathChange($event)"
         />
     }
@@ -21,8 +22,9 @@
             class="form-control"
             name="testRepositoryCheckoutPath"
             id="field_testRepositoryCheckoutPath"
-            [value]="testCheckoutPath"
+            [(ngModel)]="testCheckoutPath"
             (change)="onTestRepositoryCheckoutPathChange($event)"
+            [pattern]="pattern"
         />
     }
     @if (isSolutionRepositoryEditable) {
@@ -34,8 +36,9 @@
             class="form-control"
             name="solutionRepositoryCheckoutPath"
             id="field_solutionRepositoryCheckoutPath"
-            [value]="solutionCheckoutPath"
+            [(ngModel)]="solutionCheckoutPath"
             (change)="onSolutionRepositoryCheckoutPathChange($event)"
+            [pattern]="pattern"
         />
     }
 </div>

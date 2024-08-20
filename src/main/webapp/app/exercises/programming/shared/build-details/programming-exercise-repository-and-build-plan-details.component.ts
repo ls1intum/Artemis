@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { ProgrammingExercise, ProgrammingExerciseBuildConfig, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Subscription } from 'rxjs';
 import type { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
@@ -48,17 +48,24 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
             this.checkoutDirectories = {
                 solutionBuildPlanCheckoutDirectories: {
                     solutionCheckoutDirectory:
-                        this.programmingExercise.buildConfig?.assignmentCheckoutPath || this.checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory,
+                        this.addLeadingSlash(this.programmingExercise.buildConfig?.assignmentCheckoutPath) ||
+                        this.checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory,
                     testCheckoutDirectory:
-                        this.programmingExercise.buildConfig?.testCheckoutPath || this.checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.testCheckoutDirectory || '/',
+                        this.addLeadingSlash(this.programmingExercise.buildConfig?.testCheckoutPath) ||
+                        this.checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.testCheckoutDirectory ||
+                        '/',
                 },
                 submissionBuildPlanCheckoutDirectories: {
                     exerciseCheckoutDirectory:
-                        this.programmingExercise.buildConfig?.assignmentCheckoutPath || this.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.exerciseCheckoutDirectory,
+                        this.addLeadingSlash(this.programmingExercise.buildConfig?.assignmentCheckoutPath) ||
+                        this.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.exerciseCheckoutDirectory,
                     solutionCheckoutDirectory:
-                        this.programmingExercise.buildConfig?.solutionCheckoutPath || this.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory,
+                        this.addLeadingSlash(this.programmingExercise.buildConfig?.solutionCheckoutPath) ||
+                        this.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory,
                     testCheckoutDirectory:
-                        this.programmingExercise.buildConfig?.testCheckoutPath || this.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.testCheckoutDirectory || '/',
+                        this.addLeadingSlash(this.programmingExercise.buildConfig?.testCheckoutPath) ||
+                        this.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.testCheckoutDirectory ||
+                        '/',
                 },
             };
         }
@@ -91,11 +98,10 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         this.courseShortName = getCourseFromExercise(this.programmingExercise)?.shortName;
     }
 
-    private isBuildConfigCheckoutPathsUpdated(newValue?: ProgrammingExerciseBuildConfig, oldValue?: ProgrammingExerciseBuildConfig): boolean {
-        return (
-            newValue?.assignmentCheckoutPath !== oldValue?.assignmentCheckoutPath ||
-            newValue?.testCheckoutPath !== oldValue?.testCheckoutPath ||
-            newValue?.solutionCheckoutPath !== oldValue?.solutionCheckoutPath
-        );
+    private addLeadingSlash(path?: string): string | undefined {
+        if (!path) {
+            return undefined;
+        }
+        return path.startsWith('/') ? path : `/${path}`;
     }
 }

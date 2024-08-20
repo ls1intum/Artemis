@@ -9,10 +9,12 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     standalone: true,
     imports: [ArtemisSharedComponentModule, ArtemisSharedComponentModule, ArtemisSharedCommonModule],
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
+    styleUrls: ['../../../manage/programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnChanges {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingLanguage: ProgrammingLanguage;
+    @Input() pattern: RegExp;
     @Input() submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
     @Output() assignmentCheckoutPathEvent = new EventEmitter<string>();
     @Output() testCheckoutPathEvent = new EventEmitter<string>();
@@ -42,17 +44,18 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
         this.isAssigmentRepositoryEditable =
             !!submissionBuildPlan?.exerciseCheckoutDirectory && submissionBuildPlan?.exerciseCheckoutDirectory !== '' && submissionBuildPlan?.exerciseCheckoutDirectory !== '/';
         if (this.isAssigmentRepositoryEditable) {
-            this.assignmentCheckoutPath = this.programmingExercise.buildConfig?.assignmentCheckoutPath || submissionBuildPlan?.exerciseCheckoutDirectory || '';
+            this.assignmentCheckoutPath =
+                this.programmingExercise.buildConfig?.assignmentCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.exerciseCheckoutDirectory) || '';
         }
         this.isTestRepositoryEditable =
             !!submissionBuildPlan?.testCheckoutDirectory && submissionBuildPlan?.testCheckoutDirectory !== '' && submissionBuildPlan?.testCheckoutDirectory !== '/';
         if (this.isTestRepositoryEditable) {
-            this.testCheckoutPath = this.programmingExercise.buildConfig?.testCheckoutPath || submissionBuildPlan?.testCheckoutDirectory || '';
+            this.testCheckoutPath = this.programmingExercise.buildConfig?.testCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.testCheckoutDirectory) || '';
         }
         this.isSolutionRepositoryEditable =
             !!submissionBuildPlan?.solutionCheckoutDirectory && submissionBuildPlan?.solutionCheckoutDirectory !== '' && submissionBuildPlan?.solutionCheckoutDirectory !== '/';
         if (this.isSolutionRepositoryEditable) {
-            this.solutionCheckoutPath = this.programmingExercise.buildConfig?.solutionCheckoutPath || submissionBuildPlan?.solutionCheckoutDirectory || '';
+            this.solutionCheckoutPath = this.programmingExercise.buildConfig?.solutionCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.solutionCheckoutDirectory) || '';
         }
     }
 
@@ -83,5 +86,9 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
             this.testCheckoutPath !== this.submissionBuildPlanCheckoutRepositories?.testCheckoutDirectory ||
             this.solutionCheckoutPath !== this.submissionBuildPlanCheckoutRepositories?.solutionCheckoutDirectory
         );
+    }
+
+    removeLeadingSlash(path?: string): string | undefined {
+        return path?.replace(/^\//, '');
     }
 }

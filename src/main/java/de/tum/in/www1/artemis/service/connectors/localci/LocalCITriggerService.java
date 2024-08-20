@@ -308,7 +308,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, buildConfig.getTimeoutSeconds());
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, buildConfig.getTimeoutSeconds(),
+                buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath());
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {

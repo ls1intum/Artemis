@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildConfig(String buildScript, String dockerImage, String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch,
         ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean scaEnabled, boolean sequentialTestRunsEnabled, boolean testwiseCoverageEnabled,
-        List<String> resultPaths, int timeoutSeconds) implements Serializable {
+        List<String> resultPaths, int timeoutSeconds, String assignmentCheckoutPath, String testCheckoutPath, String solutionCheckoutPath) implements Serializable {
 
     @Override
     public String dockerImage() {
