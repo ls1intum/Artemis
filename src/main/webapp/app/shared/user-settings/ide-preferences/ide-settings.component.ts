@@ -32,7 +32,7 @@ export class IdeSettingsComponent implements OnInit {
 
             // initialize remaining programming languages
             this.remainingProgrammingLanguages = Array.from(
-                Object.values(ProgrammingLanguage).filter((x) => !this.assignedProgrammingLanguages.includes(x) || x === ProgrammingLanguage.EMPTY),
+                Object.values(ProgrammingLanguage).filter((x) => !this.assignedProgrammingLanguages.includes(x) && x !== ProgrammingLanguage.EMPTY),
             );
         });
     }
@@ -64,7 +64,7 @@ export class IdeSettingsComponent implements OnInit {
         });
     }
 
-    isIdeOfProgrammingLanguage(programmingLanguage: ProgrammingLanguage, ide: Ide) {
+    isIdeOfProgrammingLanguage(programmingLanguage: ProgrammingLanguage, ide: Ide): boolean {
         return ideEquals(this.programmingLanguageToIde().get(programmingLanguage), ide);
     }
 

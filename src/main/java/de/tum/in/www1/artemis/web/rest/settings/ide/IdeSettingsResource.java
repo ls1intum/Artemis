@@ -123,7 +123,7 @@ public class IdeSettingsResource {
         var ideMapping = userIdeMappingRepository.findById(new UserIdeMappingId(user.getId(), programmingLanguage)).orElse(null);
         if (ideMapping == null) {
             log.error("No IDE found for user {} with programming language {}", user.getLogin(), programmingLanguage);
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.notFound().build();
         }
 
         userIdeMappingRepository.deleteById(new UserIdeMappingId(user.getId(), programmingLanguage));
