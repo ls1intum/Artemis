@@ -5,6 +5,7 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -109,6 +110,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             });
         if (!this.programmingExercise.buildConfig?.buildScript) {
             this.resetCustomBuildPlan();
+        } else {
+            this.programmingExercise.buildConfig!.buildScript = this.replacePlaceholders(this.programmingExercise.buildConfig?.buildScript);
         }
         if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
             this.programmingExercise.buildConfig!.timeoutSeconds = 0;
@@ -145,5 +148,13 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     setTimeout(timeout: number) {
         this.programmingExercise.buildConfig!.timeoutSeconds = timeout;
+    }
+
+    replacePlaceholders(buildScript: string): string {
+        const assignmentRepoName = this.programmingExercise.buildConfig?.assignmentCheckoutPath || ASSIGNMENT_REPO_NAME;
+        const testRepoName = this.programmingExercise.buildConfig?.testCheckoutPath || TEST_REPO_NAME;
+        buildScript = buildScript.replace('${studentParentWorkingDirectoryName}', assignmentRepoName);
+        buildScript = buildScript.replace('${testWorkingDirectory}', testRepoName);
+        return buildScript;
     }
 }

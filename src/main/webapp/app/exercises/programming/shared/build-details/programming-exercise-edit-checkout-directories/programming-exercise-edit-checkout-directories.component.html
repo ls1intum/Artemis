@@ -1,0 +1,41 @@
+<div class="form-group">
+    @if (isAssigmentRepositoryEditable) {
+        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.assignment"></label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
+        <input
+            required
+            type="text"
+            class="form-control"
+            name="assignmentRepositoryCheckoutPath"
+            id="field_assignmentRepositoryCheckoutPath"
+            [value]="assignmentCheckoutPath"
+            (change)="onAssigmentRepositoryCheckoutPathChange($event)"
+        />
+    }
+    @if (isTestRepositoryEditable) {
+        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.test"></label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
+        <input
+            required
+            type="text"
+            class="form-control"
+            name="testRepositoryCheckoutPath"
+            id="field_testRepositoryCheckoutPath"
+            [value]="testCheckoutPath"
+            (change)="onTestRepositoryCheckoutPathChange($event)"
+        />
+    }
+    @if (isSolutionRepositoryEditable) {
+        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.solution"></label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
+        <input
+            required
+            type="text"
+            class="form-control"
+            name="solutionRepositoryCheckoutPath"
+            id="field_solutionRepositoryCheckoutPath"
+            [value]="solutionCheckoutPath"
+            (change)="onSolutionRepositoryCheckoutPathChange($event)"
+        />
+    }
+</div>

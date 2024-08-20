@@ -10,6 +10,7 @@ import { ImportOptions } from 'app/types/programming-exercises';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/build-plan-checkout-directories-dto';
 
 @Component({
     selector: 'jhi-programming-exercise-info',
@@ -43,9 +44,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     faPlus = faPlus;
 
     editRepositoryCheckoutPath: boolean = false;
-    isAssigmentRepositoryEditable: boolean = false;
-    isTestRepositoryEditable: boolean = false;
-    isSolutionRepositoryEditable: boolean = false;
+    submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
+    buildConfigCheckoutPaths: BuildPlanCheckoutDirectoriesDTO;
 
     constructor(private programmingExerciseService: ProgrammingExerciseService) {}
 
@@ -118,32 +118,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     toggleEditRepositoryCheckoutPath() {
         this.editRepositoryCheckoutPath = !this.editRepositoryCheckoutPath;
-        if (!this.editRepositoryCheckoutPath) {
-            return;
-        }
-
-        this.programmingExerciseService
-            .getCheckoutDirectoriesForProgrammingLanguage(
-                this.programmingExerciseCreationConfig.selectedProgrammingLanguage,
-                this.programmingExercise.buildConfig?.checkoutSolutionRepository ?? true,
-            )
-            .subscribe((checkoutDirectories) => {
-                const solutionBuildPlan = checkoutDirectories.solutionBuildPlanCheckoutDirectories;
-                this.isAssigmentRepositoryEditable = solutionBuildPlan?.exerciseCheckoutDirectory !== '' && solutionBuildPlan?.exerciseCheckoutDirectory !== '/';
-                this.isTestRepositoryEditable = solutionBuildPlan?.testCheckoutDirectory !== '' && solutionBuildPlan?.testCheckoutDirectory !== '/';
-                this.isSolutionRepositoryEditable = solutionBuildPlan?.solutionCheckoutDirectory !== '' && solutionBuildPlan?.solutionCheckoutDirectory !== '/';
-            });
     }
 
-    onAssigmentRepositoryCheckoutPathChange(event: any) {
-        this.programmingExercise.buildConfig!.assignmentCheckoutPath = event.target.value;
+    updateSubmissionBuildPlanCheckoutDirectories(buildPlanCheckoutDirectoriesDTO: BuildPlanCheckoutDirectoriesDTO) {
+        this.submissionBuildPlanCheckoutRepositories = buildPlanCheckoutDirectoriesDTO;
     }
 
-    onTestRepositoryCheckoutPathChange(event: any) {
-        this.programmingExercise.buildConfig!.testCheckoutPath = event.target.value;
-    }
-
-    onSolutionRepositoryCheckoutPathChange(event: any) {
-        this.programmingExercise.buildConfig!.solutionCheckoutPath = event.target.value;
+    onBuildConfigCheckoutPathsChange(buildPlanCheckoutDirectoriesDTO: BuildPlanCheckoutDirectoriesDTO) {
+        this.buildConfigCheckoutPaths = buildPlanCheckoutDirectoriesDTO;
     }
 }
