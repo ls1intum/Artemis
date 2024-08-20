@@ -7,7 +7,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-custom-exercise-category-badge',
     templateUrl: './custom-exercise-category-badge.component.html',
-    styleUrls: ['./exercise-categories.component.scss'],
+    styleUrls: ['custom-exercise-category-badge.component.scss'],
     standalone: true,
     imports: [CommonModule, FontAwesomeModule],
 })
