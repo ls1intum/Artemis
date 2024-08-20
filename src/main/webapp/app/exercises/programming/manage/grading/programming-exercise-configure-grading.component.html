@@ -262,12 +262,8 @@
             }
         </div>
         <div class="grading-body-container mt-3">
-            @if (activeTab === 'feedback-analysis') {
-                <jhi-feedback-analysis
-                    [exerciseTitle]="programmingExercise.title"
-                    [exerciseId]="programmingExercise.id"
-                    [isAtLeastEditor]="programmingExercise.isAtLeastEditor"
-                ></jhi-feedback-analysis>
+            @if (activeTab === 'feedback-analysis' && programmingExercise.isAtLeastEditor) {
+                <jhi-feedback-analysis [exerciseTitle]="programmingExercise.title" [exerciseId]="programmingExercise.id"></jhi-feedback-analysis>
             }
         </div>
     }

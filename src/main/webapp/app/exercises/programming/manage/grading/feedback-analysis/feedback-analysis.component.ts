@@ -25,7 +25,6 @@ export interface FeedbackDetail {
 export class FeedbackAnalysisComponent implements OnInit {
     @Input() exerciseTitle?: string;
     @Input() exerciseId?: number;
-    @Input() isAtLeastEditor!: undefined | boolean;
     resultIds: number[] = [];
     tasks: SimplifiedTask[] = [];
     feedbackDetails: FeedbackDetail[] = [];
@@ -36,14 +35,10 @@ export class FeedbackAnalysisComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        if (this.isAtLeastEditor) {
-            if (this.exerciseId) {
-                this.loadTasks(this.exerciseId)
-                    .pipe(concatMap(() => this.loadFeedbackDetails(this.exerciseId!)))
-                    .subscribe();
-            }
-        } else {
-            this.alertService.error('Permission Denied');
+        if (this.exerciseId) {
+            this.loadTasks(this.exerciseId)
+                .pipe(concatMap(() => this.loadFeedbackDetails(this.exerciseId!)))
+                .subscribe();
         }
     }
 
