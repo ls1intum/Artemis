@@ -56,7 +56,6 @@ describe('FeedbackAnalysisComponent', () => {
 
     describe('ngOnInit', () => {
         it('should call loadTasks and loadFeedbackDetails when exerciseId is provided', async () => {
-            component.isAtLeastEditor = true;
             component.ngOnInit();
             await fixture.whenStable();
 
@@ -68,14 +67,6 @@ describe('FeedbackAnalysisComponent', () => {
 
         it('should not call loadTasks and loadFeedbackDetails if exerciseId is not provided', () => {
             component.exerciseId = undefined;
-            component.ngOnInit();
-
-            expect(getSimplifiedTasksSpy).not.toHaveBeenCalled();
-            expect(getFeedbackDetailsSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not call loadTasks and loadFeedbackDetails if user is not at least editor', () => {
-            component.isAtLeastEditor = false;
             component.ngOnInit();
 
             expect(getSimplifiedTasksSpy).not.toHaveBeenCalled();
