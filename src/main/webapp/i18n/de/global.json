@@ -32,6 +32,7 @@
                 "quizExercise": "Quiz Aufgabe",
                 "lecture": "Vorlesung",
                 "competency": "Kompetenz",
+                "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
                 "multipleChoiceQuestion": "Multiple-Choice Question",
