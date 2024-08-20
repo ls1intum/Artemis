@@ -17,7 +17,7 @@
                     <b jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title"></b>
                 </div>
                 @if (programmingExercise.isAtLeastEditor) {
-                    <div class="tab-item testcase-analysis" (click)="selectTab('feedback-analysis')" [ngClass]="activeTab === 'feedback-analysis' ? 'active' : ''">
+                    <div class="tab-item" (click)="selectTab('feedback-analysis')" [ngClass]="activeTab === 'feedback-analysis' ? 'active' : ''">
                         <b jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.titleHeader"></b>
                     </div>
                 }
