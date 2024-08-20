@@ -239,7 +239,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
                     criterionActions = textWithDomainActions.slice(endOfInstructionsAction - 1);
                     if (criterionActions.length !== 0) {
                         this.instructions = []; // resets the instructions array to be filled with the instructions of the criteria
-                        this.groupInstructionsToCriteria(criterionActions); // creates criterion object for each criterion and their corresponding instruction objects
+                        this.groupInstructionsToCriteria(criterionActions);
                     }
                     break;
                 }
