@@ -235,6 +235,7 @@ export class UserManagementUpdateComponent implements OnInit {
             activatedInput: ['', []],
             langKeyInput: ['', []],
             authorityInput: ['', []],
+            internalInput: [{ value: this.user.internal, disabled: true }],
         });
     }
 

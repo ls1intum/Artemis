@@ -19,7 +19,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseContentCount;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the Lecture entity.
@@ -139,22 +138,22 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
 
     @NotNull
     default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {
-        return findByIdWithLectureUnitsAndCompetencies(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+        return getValueElseThrow(findByIdWithLectureUnitsAndCompetencies(lectureId), lectureId);
     }
 
     @NotNull
     default Lecture findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(Long lectureId) {
-        return findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletions(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+        return getValueElseThrow(findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletions(lectureId), lectureId);
     }
 
     @NotNull
     default Lecture findByIdWithLectureUnitsAndAttachmentsElseThrow(Long lectureId) {
-        return findByIdWithLectureUnitsAndAttachments(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+        return getValueElseThrow(findByIdWithLectureUnitsAndAttachments(lectureId), lectureId);
     }
 
     @NotNull
     default Lecture findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(long lectureId) {
-        return findByIdWithLectureUnitsAndSlidesAndAttachments(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+        return getValueElseThrow(findByIdWithLectureUnitsAndSlidesAndAttachments(lectureId), lectureId);
     }
 
     @Query("""

@@ -45,10 +45,10 @@ class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCI
 
     @Test
     void testGetBuildPlanSuccess() throws Exception {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(programmingExerciseId);
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(exercise, BUILD_PLAN);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("secret", exercise.getBuildPlanAccessSecret());
+        params.add("secret", exercise.getBuildConfig().getBuildPlanAccessSecret());
 
         String actualBuildPlan = request.get("/api/public/programming-exercises/" + exercise.getId() + "/build-plan", HttpStatus.OK, String.class, params);
 
@@ -57,7 +57,7 @@ class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCI
 
     @Test
     void testGetBuildPlanInvalidSecret() throws Exception {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(programmingExerciseId);
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(exercise, BUILD_PLAN);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("secret", "invalid-secret");

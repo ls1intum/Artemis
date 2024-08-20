@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -43,15 +44,19 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    protected final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     protected final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     public AbstractVersionControlService(GitService gitService, UriService uriService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.gitService = gitService;
         this.uriService = uriService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -182,16 +187,18 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getBranch() == null) {
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
+
+        if (programmingExercise.getBuildConfig().getBranch() == null) {
             if (!Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
                 programmingExercise.setTemplateParticipation(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(programmingExercise.getId()));
             }
             String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUri());
-            programmingExercise.setBranch(branch);
-            programmingExerciseRepository.save(programmingExercise);
+            programmingExercise.getBuildConfig().setBranch(branch);
+            programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         }
 
-        return programmingExercise.getBranch();
+        return programmingExercise.getBuildConfig().getBranch();
     }
 
     @Override

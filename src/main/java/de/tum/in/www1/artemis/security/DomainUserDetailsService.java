@@ -31,15 +31,26 @@ public class DomainUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(final String login) {
-        log.debug("Authenticating {}", login);
-        String lowercaseLogin = login.toLowerCase(Locale.ENGLISH);
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(lowercaseLogin, true)
-                .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLogin + " was not found in the database"));
-        if (!user.isInternal()) {
-            throw new UsernameNotFoundException("User " + lowercaseLogin + " is an external user and thus was not found as an internal user.");
+    public UserDetails loadUserByUsername(final String loginOrEmail) {
+        log.debug("Authenticating {}", loginOrEmail);
+        String lowercaseLoginOrEmail = loginOrEmail.toLowerCase(Locale.ENGLISH);
+
+        User user;
+        if (SecurityUtils.isEmail(lowercaseLoginOrEmail)) {
+            // It's an email, try to find the user based on the email
+            user = userRepository.findOneWithGroupsAndAuthoritiesByEmailAndIsInternal(lowercaseLoginOrEmail, true)
+                    .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found in the database"));
         }
-        return createSpringSecurityUser(lowercaseLogin, user);
+        else {
+            // It's a login, try to find the user based on the login
+            user = userRepository.findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(lowercaseLoginOrEmail, true)
+                    .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found in the database"));
+        }
+
+        if (!user.isInternal()) {
+            throw new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " is an external user and thus was not found as an internal user.");
+        }
+        return createSpringSecurityUser(lowercaseLoginOrEmail, user);
     }
 
     private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, User user) {

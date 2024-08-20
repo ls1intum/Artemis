@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -40,6 +41,9 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
@@ -58,6 +62,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
     }
@@ -115,6 +120,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
                     something else""";
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
         programmingExercise.setProjectType(null);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         String actualFeedback = createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false);
         assertThat(actualFeedback).isEqualTo("""
@@ -350,7 +356,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     void shouldMapNonJavaTestsToDefaultTestCaseType() {
         Set<ProgrammingExerciseTestCase> testCases;
 
-        for (ProgrammingLanguage language : ProgrammingLanguage.values()) {
+        for (ProgrammingLanguage language : ProgrammingLanguage.getEnabledLanguages()) {
             if (language == ProgrammingLanguage.JAVA) {
                 continue;
             }
@@ -370,7 +376,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         final List<Feedback> scaFeedbacks = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(List.of(scaReport));
         assertThat(scaFeedbacks).hasSize(1);
 
-        final Feedback scaFeedback = scaFeedbacks.get(0);
+        final Feedback scaFeedback = scaFeedbacks.getFirst();
         assertThat(scaFeedback.getHasLongFeedbackText()).isFalse();
         assertThat(scaFeedback.getLongFeedback()).isEmpty();
         assertThat(scaFeedback.getDetailText()).hasSizeGreaterThan(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH)

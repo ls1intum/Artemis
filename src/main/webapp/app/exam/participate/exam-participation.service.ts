@@ -1,22 +1,22 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
-import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { catchError, map, tap } from 'rxjs/operators';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs/esm';
-import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
-import { cloneDeep } from 'lodash-es';
-import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { captureException } from '@sentry/angular';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { SidebarCardElement } from 'app/types/sidebar';
+import { Injectable } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { captureException } from '@sentry/angular';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { SidebarCardElement } from 'app/types/sidebar';
+import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -32,8 +32,6 @@ export class ExamParticipationService {
 
     private examEndViewSubject = new BehaviorSubject<boolean>(false);
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
-
-    private examExerciseIds: number[];
 
     public getResourceURL(courseId: number, examId: number): string {
         return `api/courses/${courseId}/exams/${examId}`;
@@ -113,16 +111,15 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param userId the id of the student if the current caller is an instructor, the grade info for current user's exam will be retrieved if this argument is empty
-     * @param isTestRun
+     * @param studentExamId the id of the student exam
      */
-    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number, isTestRun?: boolean): Observable<StudentExamWithGradeDTO> {
+    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, studentExamId: number, userId?: number): Observable<StudentExamWithGradeDTO> {
         let params = new HttpParams();
         if (userId) {
             params = params.set('userId', userId.toString());
         }
-        params = params.append('isTestRun', !!isTestRun);
 
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/grade-summary';
+        const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/grade-summary`;
         return this.httpClient.get<StudentExamWithGradeDTO>(url, { params });
     }
 
@@ -346,14 +343,6 @@ export class ExamParticipationService {
         }
     }
 
-    public getExamExerciseIds(): number[] {
-        return this.examExerciseIds;
-    }
-
-    public setExamExerciseIds(examExerciseIds: number[]) {
-        this.examExerciseIds = examExerciseIds;
-    }
-
     setEndView(isEndView: boolean) {
         this.examEndViewSubject.next(isEndView);
     }
@@ -374,13 +363,12 @@ export class ExamParticipationService {
     }
 
     mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
-        const exerciseCardItem: SidebarCardElement = {
-            title: exercise.title ?? '',
+        return {
+            title: exercise.exerciseGroup?.title ?? '',
             id: exercise.id ?? '',
             icon: getIcon(exercise.type),
             rightIcon: faLightbulb,
             size: 'M',
         };
-        return exerciseCardItem;
     }
 }

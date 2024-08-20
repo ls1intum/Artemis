@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
@@ -100,13 +101,18 @@ public class ParticipationService {
 
     private final ProfileService profileService;
 
+    private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
+
+    private final CompetencyProgressService competencyProgressService;
+
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService) {
+            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, CompetencyProgressService competencyProgressService) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -126,6 +132,8 @@ public class ParticipationService {
         this.teamScoreRepository = teamScoreRepository;
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.profileService = profileService;
+        this.participationVCSAccessTokenService = participationVCSAccessTokenService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -224,7 +232,13 @@ public class ParticipationService {
         participation.setExercise(exercise);
         participation.setParticipant(participant);
 
-        return studentParticipationRepository.saveAndFlush(participation);
+        participation = studentParticipationRepository.saveAndFlush(participation);
+
+        if (exercise instanceof ProgrammingExercise && participant instanceof User user && profileService.isLocalVcsActive()) {
+            participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
+        }
+
+        return participation;
     }
 
     /**
@@ -314,6 +328,9 @@ public class ParticipationService {
             participation.setParticipant(participant);
             participation.setPracticeMode(true);
             participation = studentParticipationRepository.saveAndFlush(participation);
+            if (participant instanceof User user) {
+                participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
+            }
         }
         else {
             // make sure participation and exercise are connected
@@ -684,6 +701,7 @@ public class ParticipationService {
      * @return the list of programming exercise participations belonging to exercise and student
      */
     public List<StudentParticipation> findByExerciseAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
+        // TODO: do we really need to fetch all this information here?
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
             return optionalTeam
@@ -806,6 +824,8 @@ public class ParticipationService {
             }
             // delete local repository cache
             gitService.deleteLocalRepository(repositoryUri);
+
+            participationVCSAccessTokenService.deleteByParticipationId(participationId);
         }
 
         // If local CI is active, remove all queued jobs for participation
@@ -856,19 +876,24 @@ public class ParticipationService {
     /**
      * Delete all participations belonging to the given exercise
      *
-     * @param exerciseId       the id of the exercise
-     * @param deleteBuildPlan  specify if build plan should be deleted
-     * @param deleteRepository specify if repository should be deleted
+     * @param exercise                      the exercise
+     * @param deleteBuildPlan               specify if build plan should be deleted
+     * @param deleteRepository              specify if repository should be deleted
+     * @param recalculateCompetencyProgress specify if the competency progress should be recalculated
      */
-    public void deleteAllByExerciseId(long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
-        var participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
-        log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exerciseId);
+    public void deleteAllByExercise(Exercise exercise, boolean deleteBuildPlan, boolean deleteRepository, boolean recalculateCompetencyProgress) {
+        var participationsToDelete = studentParticipationRepository.findByExerciseId(exercise.getId());
+        log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exercise.getId());
 
         // First remove all participant scores, as we are deleting all participations for the exercise
-        participantScoreRepository.deleteAllByExerciseId(exerciseId);
+        participantScoreRepository.deleteAllByExerciseId(exercise.getId());
 
         for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository, false);
+        }
+
+        if (recalculateCompetencyProgress) {
+            competencyProgressService.updateProgressByLearningObjectAsync(exercise);
         }
     }
 

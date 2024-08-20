@@ -98,6 +98,7 @@ describe('ExamDetailComponent', () => {
                 MockDirective(FeatureToggleLinkDirective),
                 ExamEditWorkingTimeComponent,
                 MockComponent(ExamLiveAnnouncementCreateButtonComponent),
+                MockDirective(ExerciseDetailDirective),
             ],
             providers: [
                 {

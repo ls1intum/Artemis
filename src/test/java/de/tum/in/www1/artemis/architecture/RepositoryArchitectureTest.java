@@ -10,14 +10,17 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -29,6 +32,9 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.repository.base.RepositoryImpl;
 
 /**
  * This class contains architecture tests for the persistence layer.
@@ -130,7 +136,7 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
         // Method <de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService.importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)>
         // Method <de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService.onTimeZoneUpdate(Course)>
         var result = transactionalRule.evaluate(allClasses);
-        Assertions.assertThat(result.getFailureReport().getDetails()).hasSize(3);
+        assertThat(result.getFailureReport().getDetails()).hasSize(3);
     }
 
     @Test
@@ -139,5 +145,17 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
                 .beAnnotatedWith(jakarta.transaction.Transactional.class)
                 .because("Only Spring's Transactional annotation should be used as the usage of the other two is not reliable.");
         onlySpringTransactionalAnnotation.check(allClasses);
+    }
+
+    @Test
+    void repositoriesImplementArtemisJpaRepository() {
+        classes().that().areAssignableTo(JpaRepository.class).and().doNotBelongToAnyOf(RepositoryImpl.class).should().beAssignableTo(ArtemisJpaRepository.class).check(allClasses);
+    }
+
+    @Test
+    void orElseThrowShouldNotBeCalled() {
+        noClasses().that().areAssignableTo(ArtemisJpaRepository.class).should().callMethod(Optional.class, "orElseThrow").orShould()
+                .callMethod(Optional.class, "orElseThrow", Supplier.class).because("ArtemisJpaRepository offers the method getValueElseThrow for this use case").check(allClasses);
+
     }
 }

@@ -8,11 +8,9 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
@@ -20,9 +18,6 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iriscompetencyintegration";
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private Course course;
 
@@ -58,7 +53,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
          */
         fail("This test is not yet implemented. Implement it and remove the fail call.");
 
-        List<Competency> competencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/generate-from-description", courseDescription,
+        List<Competency> competencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/course-competencies/generate-from-description", courseDescription,
                 Competency.class, HttpStatus.OK);
         Competency actualCompetency = competencies.getFirst();
 
@@ -79,6 +74,6 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     void testAllPreAuthorize() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/competencies/generate-from-description", "a", HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/course-competencies/generate-from-description", "a", HttpStatus.FORBIDDEN);
     }
 }

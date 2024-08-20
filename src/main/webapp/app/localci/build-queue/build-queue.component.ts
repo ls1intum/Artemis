@@ -4,22 +4,20 @@ import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/en
 import { faAngleDown, faAngleRight, faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { take } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, switchMap, take, tap } from 'rxjs/operators';
 import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/entities/statistics.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { HttpParams } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 export class FinishedBuildJobFilter {
@@ -131,7 +129,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
-    predicate = 'build_completion_date';
+    predicate = 'buildCompletionDate';
     ascending = false;
     buildDurationInterval: ReturnType<typeof setInterval>;
     isCollapsed = false;
@@ -390,9 +388,11 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * View the build logs of a specific build job
      * @param resultId The id of the build job
      */
-    viewBuildLogs(resultId: number): void {
-        const url = `/api/build-log/${resultId}`;
-        window.open(url, '_blank');
+    viewBuildLogs(resultId: string | undefined): void {
+        if (resultId) {
+            const url = `/api/build-log/${resultId}`;
+            window.open(url, '_blank');
+        }
     }
 
     /**
@@ -404,7 +404,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                 if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
                     const start = dayjs(buildJob.buildStartDate);
                     const end = dayjs(buildJob.buildCompletionDate);
-                    buildJob.buildDuration = end.diff(start, 'milliseconds') / 1000;
+                    buildJob.buildDuration = (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's';
                 }
             }
         }
@@ -489,8 +489,10 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      */
     loadFilterFromLocalStorage() {
         this.finishedBuildJobFilter.numberOfAppliedFilters = 0;
+
         // Iterate over all keys of the filter and load the values from the local storage if they exist.
-        for (const key in FinishedBuildJobFilterStorageKey) {
+        const keys = Object.keys(FinishedBuildJobFilterStorageKey) as Array<keyof typeof FinishedBuildJobFilterStorageKey>;
+        for (const key of keys) {
             const value = this.localStorage.retrieve(FinishedBuildJobFilterStorageKey[key]);
             if (value) {
                 this.finishedBuildJobFilter[key] = key.includes('Date') ? dayjs(value) : value;

@@ -72,28 +72,29 @@ public class SshGitCommand extends GitPackCommand {
 
             Path rootDir = resolveRootDirectory(command, args);
             RepositoryCache.FileKey key = RepositoryCache.FileKey.lenient(rootDir.toFile(), FS.DETECTED);
-            Repository repository = key.open(true /* must exist */);
-            User user = getServerSession().getAttribute(SshConstants.USER_KEY);
+            try (Repository repository = key.open(true /* must exist */)) {
+                User user = getServerSession().getAttribute(SshConstants.USER_KEY);
 
-            String subCommand = args[0];
-            if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(subCommand)) {
-                UploadPack uploadPack = new UploadPack(repository);
-                Environment environment = getEnvironment();
-                Map<String, String> envVars = environment.getEnv();
-                String protocol = MapEntryUtils.isEmpty(envVars) ? null : envVars.get(GitProtocolConstants.PROTOCOL_ENVIRONMENT_VARIABLE);
-                if (GenericUtils.isNotBlank(protocol)) {
-                    uploadPack.setExtraParameters(Collections.singleton(protocol));
+                String subCommand = args[0];
+                if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(subCommand)) {
+                    UploadPack uploadPack = new UploadPack(repository);
+                    Environment environment = getEnvironment();
+                    Map<String, String> envVars = environment.getEnv();
+                    String protocol = MapEntryUtils.isEmpty(envVars) ? null : envVars.get(GitProtocolConstants.PROTOCOL_ENVIRONMENT_VARIABLE);
+                    if (GenericUtils.isNotBlank(protocol)) {
+                        uploadPack.setExtraParameters(Collections.singleton(protocol));
+                    }
+                    uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
                 }
-                uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
-            }
-            else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
-                var receivePack = new ReceivePack(repository);
-                receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
-                receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
-            }
-            else {
-                throw new IllegalArgumentException("Unknown git command: " + command);
+                else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
+                    var receivePack = new ReceivePack(repository);
+                    receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
+                    receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
+                    receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
+                }
+                else {
+                    throw new IllegalArgumentException("Unknown git command: " + command);
+                }
             }
 
             onExit(0);

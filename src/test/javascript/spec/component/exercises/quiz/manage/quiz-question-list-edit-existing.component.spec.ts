@@ -30,6 +30,7 @@ import { ChangeDetectorRef, EventEmitter } from '@angular/core';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FileService } from 'app/shared/http/file.service';
+import JSZip from 'jszip';
 
 const createValidMCQuestion = () => {
     const question = new MultipleChoiceQuestion();
@@ -341,7 +342,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(generateFileReaderStub).toHaveBeenCalledOnce();
             const addQuestionSpy = jest.spyOn(component, 'addQuestions').mockImplementation();
             await component.onFileLoadImport(reader);
-            expect(addQuestionSpy).toHaveBeenCalledWith(questions);
+            expect(addQuestionSpy).toHaveBeenCalledWith(questions, new Map());
             expect(component.importFile).toBeUndefined();
             expect(component.importFileName).toBe('');
             expect(getElementStub).toHaveBeenCalledOnce();
@@ -445,6 +446,41 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(onQuestionsAddedSpy).toHaveBeenCalledOnce();
             expect(onFilesAddedSpy).toHaveBeenCalledOnce();
             expect(getFileMock).toHaveBeenCalledTimes(3);
+        });
+
+        it('should correctly differentiate between JSON and ZIP files', async () => {
+            const handleJsonFileSpy = jest.spyOn(component, 'handleJsonFile');
+            const handleZipFileSpy = jest.spyOn(component, 'handleZipFile');
+            const jsonFile = new File(['{}'], 'quiz.json', { type: 'application/json' });
+            component.importFile = jsonFile;
+            await component.importQuiz();
+            expect(handleJsonFileSpy).toHaveBeenCalledWith();
+            const zipFile = new File([], 'quiz.zip', { type: 'application/zip' });
+            component.importFile = zipFile;
+            await component.importQuiz();
+            expect(handleZipFileSpy).toHaveBeenCalledWith();
+        });
+
+        it('should correctly extract images from a ZIP file', async () => {
+            const extractImagesFromZipSpy = jest.spyOn(component, 'extractImagesFromZip');
+            const zip = new JSZip();
+            zip.file('image1.png', 'fakeImageData1');
+            zip.file('image2.jpg', 'fakeImageData2');
+            zip.file('data.json', '{}');
+            const zipContent = await zip.generateAsync({ type: 'blob' });
+
+            component.importFile = new File([zipContent], 'quiz.zip', { type: 'application/zip' });
+            const extractedImages = new Map();
+            extractedImages.set('image1', new File(['fakeImageData1'], 'image1.png'));
+            extractedImages.set('image2', new File(['fakeImageData2'], 'image2.jpg'));
+            jest.spyOn(JSZip.prototype, 'loadAsync').mockResolvedValue(zip);
+            jest.spyOn(zip.files['image1.png'], 'async').mockResolvedValue(new Blob(['fakeImageData1']));
+            jest.spyOn(zip.files['image2.jpg'], 'async').mockResolvedValue(new Blob(['fakeImageData2']));
+            const result = await component.extractImagesFromZip(zip);
+            expect(extractImagesFromZipSpy).toHaveBeenCalledWith(zip);
+            expect(result.size).toBe(2);
+            expect(result.has('image1')).toBeTrue();
+            expect(result.has('image2')).toBeTrue();
         });
     });
 });

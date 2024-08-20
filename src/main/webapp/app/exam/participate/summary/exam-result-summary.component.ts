@@ -151,6 +151,9 @@ export class ExamResultSummaryComponent implements OnInit {
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
         this.testExamConduction = this.isTestExam && !this.studentExam.submitted;
         this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
+        if (!this.studentExam?.id) {
+            throw new Error('studentExam.id should be present to fetch grade info');
+        }
         if (!this.studentExam?.exam?.id) {
             throw new Error('studentExam.exam.id should be present to fetch grade info');
         }
@@ -160,7 +163,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
         if (isExamResultPublished(this.isTestRun, this.studentExam.exam, this.serverDateService)) {
             this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id, this.isTestRun)
+                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.id, this.studentExam.user.id)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
                     studentExamWithGrade.studentExam = this.studentExam;
                     this.studentExamGradeInfoDTO = studentExamWithGrade;

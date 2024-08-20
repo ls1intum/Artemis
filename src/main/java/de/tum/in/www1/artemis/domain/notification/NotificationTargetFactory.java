@@ -107,7 +107,7 @@ public class NotificationTargetFactory {
         NotificationTarget target = new NotificationTarget(EXAMS_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), COURSES_TEXT);
         target.setProblemStatement(exercise.getProblemStatement());
         target.setExerciseId(exercise.getId());
-        target.setExamId(exercise.getExamViaExerciseGroupOrCourseMember().getId());
+        target.setExamId(exercise.getExam().getId());
         return target;
     }
 

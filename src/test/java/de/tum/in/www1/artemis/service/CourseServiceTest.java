@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -43,9 +42,6 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private CourseService courseService;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -288,7 +284,7 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         String userName = TEST_PREFIX + user + "100";
 
         // setup mocks
-        var ldapUser1Dto = new LdapUserDto().firstName(userName).lastName(userName).username(userName).email(userName + "@tum.de");
+        var ldapUser1Dto = new LdapUserDto().firstName(userName).lastName(userName).login(userName).email(userName + "@tum.de");
 
         StudentDTO dto1 = switch (user) {
             case "tutor" -> new StudentDTO(null, userName, userName, "1000001", null);
@@ -298,10 +294,10 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         };
 
         if (dto1.login() != null) {
-            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(dto1.login());
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByLogin(dto1.login());
         }
         else if (dto1.email() != null) {
-            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByEmail(dto1.email());
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByAnyEmail(dto1.email());
         }
         else {
             doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByRegistrationNumber(dto1.registrationNumber());

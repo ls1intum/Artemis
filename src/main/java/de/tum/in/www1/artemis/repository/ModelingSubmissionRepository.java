@@ -14,7 +14,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the ModelingSubmission entity.
@@ -73,7 +72,7 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
      * @return the modeling submission with the given id
      */
     default ModelingSubmission findByIdWithEagerResultAndFeedbackElseThrow(Long submissionId) {
-        return findByIdWithEagerResultAndAssessorAndFeedback(submissionId).orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
+        return getValueElseThrow(findByIdWithEagerResultAndAssessorAndFeedback(submissionId), submissionId);
     }
 
     /**
@@ -85,7 +84,6 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
      * @return the modeling submission with the given id
      */
     default ModelingSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(Long submissionId) {
-        return findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
+        return getValueElseThrow(findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId), submissionId);
     }
 }

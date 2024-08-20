@@ -11,6 +11,9 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
+import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
+import { Exam } from 'app/entities/exam.model';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 describe('ExamBarComponent', () => {
     let fixture: ComponentFixture<ExamBarComponent>;
@@ -26,12 +29,19 @@ describe('ExamBarComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
+        // Required because exam bar uses the ResizeObserver for height calculations
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
 
         fixture = TestBed.createComponent(ExamBarComponent);
         comp = fixture.componentInstance;
 
+        comp.exam = new Exam();
+        comp.exam.title = 'Test Exam';
+        comp.studentExam = new StudentExam();
         comp.endDate = dayjs();
-        comp.exercises = [
+        const exercises = [
             {
                 id: 0,
                 type: ExerciseType.PROGRAMMING,
@@ -44,6 +54,7 @@ describe('ExamBarComponent', () => {
             { id: 1, type: ExerciseType.TEXT } as Exercise,
             { id: 2, type: ExerciseType.MODELING } as Exercise,
         ];
+        comp.studentExam.exercises = exercises;
     });
 
     beforeEach(() => {

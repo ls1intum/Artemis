@@ -4,6 +4,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from '../sidebar-event.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
+
 @Component({
     selector: 'jhi-small-sidebar-card',
     templateUrl: './sidebar-card-small.component.html',
@@ -32,9 +33,11 @@ export class SidebarCardSmallComponent {
 
     refreshChildComponent(): void {
         this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
-            this.itemSelected
-                ? this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route })
-                : this.router.navigate([this.location.path(), this.sidebarItem?.id], { replaceUrl: true });
+            if (this.itemSelected) {
+                this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
+            } else {
+                this.router.navigate([this.location.path(), this.sidebarItem?.id], { replaceUrl: true });
+            }
         });
     }
 }

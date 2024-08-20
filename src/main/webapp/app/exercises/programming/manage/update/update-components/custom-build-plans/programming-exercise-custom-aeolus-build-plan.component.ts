@@ -2,9 +2,9 @@ import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/
 import { BuildAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction } from 'app/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
@@ -29,9 +29,9 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     active?: BuildAction = undefined;
     isScriptAction: boolean = false;
 
-    private _editor?: AceEditorComponent;
+    private _editor?: MonacoEditorComponent;
 
-    @ViewChild('editor', { static: false }) set editor(value: AceEditorComponent) {
+    @ViewChild('editor', { static: false }) set editor(value: MonacoEditorComponent) {
         this._editor = value;
         if (this._editor) {
             this.setupEditor();
@@ -52,8 +52,8 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
             this.programmingExercise.programmingLanguage !== this.programmingLanguage ||
             this.programmingExercise.projectType !== this.projectType ||
             this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
-            this.programmingExercise.sequentialTestRuns !== this.sequentialTestRuns ||
-            this.programmingExercise.testwiseCoverageEnabled !== this.testwiseCoverageEnabled
+            this.programmingExercise.buildConfig?.sequentialTestRuns !== this.sequentialTestRuns ||
+            this.programmingExercise.buildConfig?.testwiseCoverageEnabled !== this.testwiseCoverageEnabled
         );
     }
 
@@ -62,8 +62,8 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
      * @private
      */
     resetCustomBuildPlan() {
-        this.programmingExercise.windFile = undefined;
-        this.programmingExercise.buildPlanConfiguration = undefined;
+        this.programmingExercise.buildConfig!.windFile = undefined;
+        this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
     }
 
     /**
@@ -73,9 +73,9 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
      */
     loadAeolusTemplate() {
         if (this.programmingExercise?.id) {
-            if (!this.programmingExerciseCreationConfig.buildPlanLoaded && !this.programmingExercise.windFile) {
-                if (this.programmingExercise.buildPlanConfiguration) {
-                    this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+            if (!this.programmingExerciseCreationConfig.buildPlanLoaded && !this.programmingExercise.buildConfig?.windFile) {
+                if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
+                    this.programmingExercise.buildConfig!.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig?.buildPlanConfiguration);
                 }
                 this.programmingExerciseCreationConfig.buildPlanLoaded = true;
             }
@@ -88,29 +88,29 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         this.programmingLanguage = this.programmingExercise.programmingLanguage;
         this.projectType = this.programmingExercise.projectType;
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
-        this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
-        this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
+        this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
+        this.testwiseCoverageEnabled = this.programmingExercise.buildConfig?.testwiseCoverageEnabled;
         this.aeolusService
             .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
             .subscribe({
                 next: (file) => {
-                    this.programmingExercise.windFile = this.aeolusService.parseWindFile(file);
+                    this.programmingExercise.buildConfig!.windFile = this.aeolusService.parseWindFile(file);
                 },
                 error: () => {
-                    this.programmingExercise.windFile = undefined;
+                    this.programmingExercise.buildConfig!.windFile = undefined;
                 },
             });
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
     }
 
-    get editor(): AceEditorComponent | undefined {
+    get editor(): MonacoEditorComponent | undefined {
         return this._editor;
     }
 
     faQuestionCircle = faQuestionCircle;
 
     protected getActionScript(action: string): string {
-        const foundAction: BuildAction | undefined = this.programmingExercise.windFile?.actions.find((a) => a.name === action);
+        const foundAction: BuildAction | undefined = this.programmingExercise.buildConfig?.windFile?.actions.find((a) => a.name === action);
         if (foundAction && foundAction instanceof ScriptAction) {
             return (foundAction as ScriptAction).script;
         }
@@ -118,12 +118,12 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     changeActiveAction(action: string): void {
-        if (!this.programmingExercise.windFile) {
+        if (!this.programmingExercise.buildConfig?.windFile) {
             return;
         }
 
         this.code = this.getActionScript(action);
-        this.active = this.programmingExercise.windFile.actions.find((a) => a.name === action);
+        this.active = this.programmingExercise.buildConfig?.windFile.actions.find((a) => a.name === action);
         this.isScriptAction = this.active instanceof ScriptAction;
         if (this.isScriptAction && this.editor) {
             this.editor.setText(this.code);
@@ -131,8 +131,8 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     deleteAction(action: string): void {
-        if (this.programmingExercise.windFile) {
-            this.programmingExercise.windFile.actions = this.programmingExercise.windFile.actions.filter((a) => a.name !== action);
+        if (this.programmingExercise.buildConfig?.windFile) {
+            this.programmingExercise.buildConfig!.windFile.actions = this.programmingExercise.buildConfig?.windFile.actions.filter((a) => a.name !== action);
             if (this.active?.name === action) {
                 this.active = undefined;
                 this.code = '';
@@ -141,12 +141,12 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     addAction(action: string): void {
-        if (this.programmingExercise.windFile) {
+        if (this.programmingExercise.buildConfig?.windFile) {
             const newAction = new ScriptAction();
             newAction.script = '#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0';
             newAction.name = action;
             newAction.runAlways = false;
-            this.programmingExercise.windFile.actions.push(newAction);
+            this.programmingExercise.buildConfig?.windFile.actions.push(newAction);
             this.changeActiveAction(action);
         }
     }
@@ -184,31 +184,19 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     /**
-     * Sets up an ace editor for the template or solution file.
+     * Sets up a monaco editor for the template or solution file.
      */
     setupEditor(): void {
         if (!this._editor) {
             return;
         }
-        this._editor.getEditor().setOptions({
-            animatedScroll: true,
-            maxLines: 20,
-            showPrintMargin: false,
-            readOnly: false,
-            highlightActiveLine: false,
-            highlightGutterLine: false,
-            minLines: 20,
-            mode: 'ace/mode/sh',
-        });
-        this._editor.getEditor().renderer.setOptions({
-            showFoldWidgets: false,
-        });
+        this._editor.changeModel('build-script.sh', '');
     }
 
     setDockerImage(dockerImage: string) {
-        if (!this.programmingExercise.windFile || !this.programmingExercise.windFile.metadata.docker) {
+        if (!this.programmingExercise.buildConfig?.windFile || !this.programmingExercise.buildConfig?.windFile.metadata.docker) {
             return;
         }
-        this.programmingExercise.windFile.metadata.docker.image = dockerImage.trim();
+        this.programmingExercise.buildConfig!.windFile.metadata.docker.image = dockerImage.trim();
     }
 }

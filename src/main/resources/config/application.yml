@@ -163,7 +163,7 @@ spring:
             hibernate.generate_statistics: false
             hibernate.order_inserts: true
             hibernate.order_updates: true
-#            hibernate.query.fail_on_pagination_over_collection_fetch: true  # not appropriate in our case: https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch/
+            hibernate.query.fail_on_pagination_over_collection_fetch: true  # prevents issues, see https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch
             hibernate.query.in_clause_parameter_padding: true
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
@@ -182,9 +182,9 @@ spring:
     messages:
         basename: i18n/messages
     main:
-        allow-bean-definition-overriding: true
-        lazy-initialization: false
+        allow-bean-definition-overriding: false
         allow-circular-references: false
+        lazy-initialization: false # cannot set this to true (even if we would want, because then LocalCI does not process build results correctly)
     task:
         execution:
             thread-name-prefix: artemis-task-

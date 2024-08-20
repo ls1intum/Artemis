@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
  * @param type      the type of the learning object
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LearningPathNavigationObjectDTO(Long id, boolean completed, String name, LearningObjectType type) {
+public record LearningPathNavigationObjectDTO(long id, boolean completed, String name, long competencyId, LearningObjectType type, boolean unreleased) {
 
     /**
      * Create a navigation object DTO from a learning object.
@@ -24,12 +24,27 @@ public record LearningPathNavigationObjectDTO(Long id, boolean completed, String
      * @param completed      whether the learning object is completed by the user
      * @return the navigation object DTO
      */
-    public static LearningPathNavigationObjectDTO of(LearningObject learningObject, boolean completed) {
-        return switch (learningObject) {
-            case LectureUnit lectureUnit -> new LearningPathNavigationObjectDTO(lectureUnit.getId(), completed, lectureUnit.getName(), LearningObjectType.LECTURE);
-            case Exercise exercise -> new LearningPathNavigationObjectDTO(learningObject.getId(), completed, exercise.getTitle(), LearningObjectType.EXERCISE);
+    public static LearningPathNavigationObjectDTO of(LearningObject learningObject, boolean completed, long competencyId) {
+        long id = learningObject.getId();
+        String name;
+        LearningObjectType type;
+        boolean unreleased = !learningObject.isVisibleToStudents();
+
+        switch (learningObject) {
+            case LectureUnit lectureUnit -> {
+                name = lectureUnit.getName();
+                type = LearningObjectType.LECTURE;
+            }
+            case Exercise exercise -> {
+                name = exercise.getTitle();
+                type = LearningObjectType.EXERCISE;
+            }
             default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
-        };
+        }
+
+        name = unreleased ? "" : name;
+
+        return new LearningPathNavigationObjectDTO(id, completed, name, competencyId, type, unreleased);
     }
 
     public enum LearningObjectType {

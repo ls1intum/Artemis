@@ -1,9 +1,9 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/entities/metis/post.model';
 import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
@@ -12,11 +12,13 @@ import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
 })
 export class ConversationThreadSidebarComponent implements AfterViewInit {
+    @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;
+
     @Input()
     readOnlyMode = false;
     @Input()
-    set activeConversation(conversation: ConversationDTO) {
-        this.conversation = conversation;
+    set activeConversation(conversation: ConversationDTO | Conversation) {
+        this.conversation = conversation as ConversationDTO;
         this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
     }
     @Input()
@@ -76,5 +78,12 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
+    }
+
+    scrollEditorIntoView(): void {
+        this.scrollBody?.nativeElement?.scrollTo({
+            top: this.scrollBody.nativeElement.scrollHeight,
+            behavior: 'instant',
+        });
     }
 }

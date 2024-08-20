@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -48,8 +50,9 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
@@ -81,13 +84,13 @@ public class ProgrammingExerciseResultTestService {
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
-    private BuildLogEntryRepository buildLogEntryRepository;
 
     @Autowired
     private ProgrammingExerciseGradingService gradingService;
@@ -125,6 +128,9 @@ public class ProgrammingExerciseResultTestService {
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
     private Course course;
 
     private ProgrammingExercise programmingExercise;
@@ -158,13 +164,29 @@ public class ProgrammingExerciseResultTestService {
                 .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
     }
 
+    public void setupProgrammingExerciseForExam(boolean isExamOver) {
+        var now = ZonedDateTime.now();
+        // We are either in the middle of the 2h exam or at the end of the exam
+        var startDate = now.minusHours(isExamOver ? 2 : 1);
+        var endDate = now.plusHours(isExamOver ? 0 : 1);
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), startDate, endDate,
+                now.plusHours(10), userPrefix + "student1", 120 * 60);
+        course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+    }
+
     public void tearDown() {
     }
 
     // Test
     public void shouldUpdateFeedbackInSemiAutomaticResult(AbstractBuildResultNotificationDTO buildResultNotification, String loginName) throws Exception {
         // Make sure we only have one participation
-        participationRepository.deleteAll(participationRepository.findByExerciseId(programmingExercise.getId()));
+        var participations = participationRepository.findByExerciseId(programmingExercise.getId());
+        for (ProgrammingExerciseStudentParticipation participation : participations) {
+            participationVCSAccessTokenRepository.deleteByParticipationId(participation.getId());
+        }
+        participationRepository.deleteAll(participations);
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, loginName);
 
         // Add a student submission with two manual results and a semi automatic result
@@ -203,7 +225,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
         assertThat(semiAutoResult.getFeedbacks()).hasSize(2);
-        assertThat(semiAutoResult.getFeedbacks().get(0).getType()).isEqualTo(FeedbackType.MANUAL);
+        assertThat(semiAutoResult.getFeedbacks().getFirst().getType()).isEqualTo(FeedbackType.MANUAL);
         assertThat(semiAutoResult.getFeedbacks().get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
     }
 
@@ -355,7 +377,8 @@ public class ProgrammingExerciseResultTestService {
     // Test
     public void shouldGenerateTestwiseCoverageFileReports(AbstractBuildResultNotificationDTO resultNotification) throws GitAPIException {
         // set testwise coverage analysis for programming exercise
-        programmingExercise.setTestwiseCoverageEnabled(true);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         solutionProgrammingExerciseRepository.save(solutionParticipation);
@@ -412,7 +435,8 @@ public class ProgrammingExerciseResultTestService {
 
     // Test
     public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, AbstractBuildResultNotificationDTO resultNotification) {
-        programmingExercise.setBranch(defaultBranch);
+        programmingExercise.getBuildConfig().setBranch(defaultBranch);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
@@ -441,9 +465,24 @@ public class ProgrammingExerciseResultTestService {
             if (resultDTO.feedbacks().size() != 1) {
                 return false;
             }
-            var feedback = resultDTO.feedbacks().get(0);
+            var feedback = resultDTO.feedbacks().getFirst();
             return feedback.id() != null && feedback.positive();
         }));
+    }
+
+    // Test
+    public void shouldNotNotifyStudentsAboutNewResults(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
+            throws Exception {
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+
+        var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
+        programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+
+        postResult(resultNotification);
+
+        // Verify that the websocket service does not send a message to the user within 2 seconds
+        verify(websocketMessagingService, after(2000).never()).sendMessageToUser(eq(userPrefix + "student1"), any(), any());
     }
 
     // Test
@@ -457,7 +496,7 @@ public class ProgrammingExerciseResultTestService {
 
         // ensure that the test case is set but the name does not get send to the student
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC),
-                argThat(arg -> arg instanceof ResultDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().get(0).testCase().testName() == null));
+                argThat(arg -> arg instanceof ResultDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().getFirst().testCase().testName() == null));
     }
 
     // Test

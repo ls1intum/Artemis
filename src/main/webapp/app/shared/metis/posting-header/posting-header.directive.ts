@@ -14,7 +14,7 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
-    todayFlag: string | undefined;
+    todayFlag?: string;
     userAuthority: string;
     userRoleBadge: string;
     userAuthorityTooltip: string;
@@ -27,11 +27,9 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
      * determines icon and tooltip for authority type of the author
      */
     ngOnInit(): void {
-        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting);
         this.postingIsOfToday = dayjs().isSame(this.posting.creationDate, 'day');
         this.todayFlag = this.getTodayFlag();
-        this.setUserAuthorityIconAndTooltip();
+        this.setUserProperties();
     }
 
     /**
@@ -46,7 +44,21 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     }
 
     /**
-     * assigns suitable icon and tooltip for the author's most privileged authority type
+     * Sets various user properties related to the posting and course.
+     * Checks if the current user is the author of the posting and sets the `isAuthorOfPosting` flag accordingly.
+     * Checks if the current user has at least a tutor role in the course and sets the `isAtLeastTutorInCourse` flag accordingly.
+     * Calls `setUserAuthorityIconAndTooltip()` to set the user's authority icon and tooltip based on their role.
+     *
+     * @returns {void}
+     */
+    setUserProperties(): void {
+        this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting);
+        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.setUserAuthorityIconAndTooltip();
+    }
+
+    /**
+     * assigns suitable icon and tooltip for the author's authority type
      */
     setUserAuthorityIconAndTooltip(): void {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
@@ -63,7 +75,7 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
         } else if (this.posting.authorRole === UserRole.TUTOR) {
             this.userAuthority = 'tutor';
             this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
-            this.userAuthorityTooltip += toolTipTranslationPath + this.userAuthority;
+            this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
         }
     }
 

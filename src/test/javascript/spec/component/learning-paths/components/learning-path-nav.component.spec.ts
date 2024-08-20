@@ -13,6 +13,7 @@ describe('LearningPathStudentNavComponent', () => {
     let fixture: ComponentFixture<LearningPathNavComponent>;
     let learningPathApiService: LearningPathApiService;
     let getLearningPathNavigationSpy: jest.SpyInstance;
+    let getRelativeLearningPathNavigationSpy: jest.SpyInstance;
 
     const navigationDto: LearningPathNavigationDTO = {
         predecessorLearningObject: {
@@ -20,18 +21,24 @@ describe('LearningPathStudentNavComponent', () => {
             name: 'Exercise 1',
             type: LearningObjectType.EXERCISE,
             completed: true,
+            competencyId: 1,
+            unreleased: false,
         },
         currentLearningObject: {
             id: 2,
             name: 'Lecture 2',
             type: LearningObjectType.LECTURE,
             completed: false,
+            competencyId: 2,
+            unreleased: false,
         },
         successorLearningObject: {
             id: 3,
             name: 'Exercise 3',
             type: LearningObjectType.EXERCISE,
             completed: false,
+            competencyId: 2,
+            unreleased: false,
         },
         progress: 50,
     };
@@ -58,6 +65,7 @@ describe('LearningPathStudentNavComponent', () => {
 
         learningPathApiService = TestBed.inject(LearningPathApiService);
         getLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(navigationDto);
+        getRelativeLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getRelativeLearningPathNavigation');
 
         fixture = TestBed.createComponent(LearningPathNavComponent);
         component = fixture.componentInstance;
@@ -84,7 +92,7 @@ describe('LearningPathStudentNavComponent', () => {
         expect(progressBar.nativeElement.style.width).toBe('50%');
     });
 
-    it('should navigation with back and previous button', async () => {
+    it('should navigate with next and previous button', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -98,7 +106,37 @@ describe('LearningPathStudentNavComponent', () => {
         expect(nextButton).toBeTruthy();
     });
 
-    it('should show navigation with only previous button', async () => {
+    it('should set current to previous unit on complete button', async () => {
+        const navigationDto = {
+            predecessorLearningObject: {
+                id: 1,
+                name: 'Exercise',
+                type: LearningObjectType.EXERCISE,
+                completed: true,
+            },
+            currentLearningObject: {
+                id: 2,
+                name: 'Lecture',
+                type: LearningObjectType.LECTURE,
+                completed: false,
+            },
+            progress: 95,
+        };
+        getLearningPathNavigationSpy.mockResolvedValue(navigationDto);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const completeButton = fixture.debugElement.query(By.css('#complete-button'));
+        completeButton.nativeElement.click();
+
+        expect(component.predecessorLearningObject()).toBe(navigationDto.currentLearningObject);
+        expect(component.currentLearningObject()).toBeUndefined();
+        expect(component.learningPathProgress()).toBe(100);
+    });
+
+    it('should show navigation with previous and complete button', async () => {
         const navigationDto = {
             predecessorLearningObject: {
                 id: 1,
@@ -129,6 +167,9 @@ describe('LearningPathStudentNavComponent', () => {
 
         const nextButton = fixture.debugElement.query(By.css('#next-button'));
         expect(nextButton).toBeFalsy();
+
+        const completeButton = fixture.debugElement.query(By.css('#complete-button'));
+        expect(completeButton).toBeTruthy();
     });
 
     it('should show navigation with only next button', async () => {
@@ -165,9 +206,7 @@ describe('LearningPathStudentNavComponent', () => {
     });
 
     it('should show navigation overview on click', async () => {
-        const setShowNavigationOverviewSpy = jest.spyOn(component, 'setShowNavigationOverview');
-        const loadCompetenciesSpy = jest.spyOn(component.navOverview(), 'loadCompetencies');
-
+        const setIsDropdownOpen = jest.spyOn(component, 'setIsDropdownOpen');
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -177,8 +216,7 @@ describe('LearningPathStudentNavComponent', () => {
         fixture.detectChanges();
         const navOverview = fixture.debugElement.query(By.directive(LearningPathNavOverviewComponent));
         expect(navOverview).toBeTruthy();
-        expect(setShowNavigationOverviewSpy).toHaveBeenCalledWith(true);
-        expect(loadCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
+        expect(setIsDropdownOpen).toHaveBeenCalledWith(true);
     });
 
     it('should call select learning object on previous click', async () => {
@@ -193,7 +231,8 @@ describe('LearningPathStudentNavComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getLearningPathNavigationSpy).toHaveBeenCalledTimes(2);
+        expect(getLearningPathNavigationSpy).toHaveBeenCalledOnce();
+        expect(getRelativeLearningPathNavigationSpy).toHaveBeenCalledOnce();
         expect(selectLearningObjectSpy).toHaveBeenCalledWith(navigationDto.predecessorLearningObject);
     });
 });

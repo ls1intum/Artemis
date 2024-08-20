@@ -37,15 +37,7 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
     }
 
     &.exam-wrapper {
-        height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height);
-
-        &.exam-height-dev {
-            height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
-        }
-
-        @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height) !important;
-        }
+        height: 100vh !important;
     }
 
     .mat-drawer {
@@ -76,15 +68,7 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
             margin-left 0.2s ease-in-out !important;
 
         &.exam-wrapper {
-            height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height);
-
-            &.exam-height-dev {
-                height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
-            }
-
-            @media (max-width: 768px) {
-                height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height) !important;
-            }
+            height: 100vh !important;
         }
 
         &.sidenav-height-dev {
@@ -124,10 +108,6 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
             margin-left: $menu-width-closed !important;
         }
     }
-}
-
-.exam-end-view {
-    overflow-y: auto !important;
 }
 
 a:not(.btn):not(.tab-link):hover {
@@ -189,10 +169,12 @@ a:not(.btn):not(.tab-link):hover {
     font-size: xx-small;
 }
 
-.newMessage:after {
+.newMessage:after,
+.dropdown-content > .nav-item > .newMessage:after {
     @extend %message-block;
     margin-left: 0.25rem;
 }
+
 .collapsed.newMessage:after {
     @extend %message-block;
     margin-left: -0.9rem;
@@ -287,11 +269,10 @@ jhi-secured-image {
     position: absolute;
     background-color: var(--dropdown-bg);
     border: 1px solid var(--border-color);
-    z-index: 1000000;
+    z-index: 3000;
     border-radius: 4px;
     &.fixedContentSize {
-        bottom: 0px;
-        max-height: 91px; // To avoid cut offs in the dropdown menu content
+        max-height: 171px; // To avoid cut offs in the dropdown menu content (4 items)
     }
 }
 
@@ -306,4 +287,18 @@ jhi-secured-image {
 
 .dropdown-toggle::after {
     display: none;
+}
+
+@media print {
+    mat-sidenav {
+        display: none; /* Hide the sidebar */
+    }
+
+    .mat-drawer-container,
+    .mat-drawer-container.container-closed {
+        .mat-drawer-content {
+            margin-left: 0 !important; /* Remove any left margin or padding if necessary */
+            width: 100% !important; /* Make the content full width */
+        }
+    }
 }

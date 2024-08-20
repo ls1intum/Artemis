@@ -75,10 +75,12 @@ public class FileUploadExerciseUtilService {
     /**
      * Creates and saves a new Course and an Exam with one mandatory FileUploadExercise.
      *
+     * @param startDateBeforeCurrentTime True, if the start date of the created Exam with one mandatory FileUploadExercis should be before the current time, needed for
+     *                                       examLiveEvent tests
      * @return The created FileUploadExercise
      */
-    public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+    public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise(boolean startDateBeforeCurrentTime) {
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, startDateBeforeCurrentTime);
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
         return exerciseRepo.save(fileUploadExercise);
     }
@@ -117,7 +119,7 @@ public class FileUploadExerciseUtilService {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
         assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
         exerciseRepo.saveAll(fileUploadExercises);
-        long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
+        long courseId = fileUploadExercises.getFirst().getCourseViaExerciseGroupOrCourseMember().getId();
         Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
         List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
         assertThat(exercises).as("three exercises got stored").hasSize(3);

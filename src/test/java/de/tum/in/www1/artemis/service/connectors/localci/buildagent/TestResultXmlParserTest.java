@@ -158,4 +158,54 @@ class TestResultXmlParserTest {
         assertThat(failedTests).isEmpty();
         assertThat(successfulTests).isEmpty();
     }
+
+    @Test
+    void testOutputInvalidXMLCharacters() throws IOException {
+        String input = """
+                <?xml version='1.0' encoding='us-ascii'?>
+                <testsuites>
+                <testsuite name="GBS-Tester-1.36">
+                <testcase name="CompileLinkedList" time="1.90495">
+                <failure message="Build for directory ../assignment/build failed. Returncode is 2.">Build for directory ../assignment/build failed. Returncode is 2.
+                ======================stdout======================
+                [ 50%] [32mBuilding CXX object CMakeFiles/linked-list-iterator-test.dir/linked-list-iterator-test.cpp.o[0m
+
+
+                ======================stderr======================
+                /var/tmp/testing-dir/tests/linked-list-iterator-test.cpp:52:5: error: &#8216;linked_list&#8217; was not declared in this scope
+                   52 |     linked_list&lt;TestType&gt; list;
+                      |     ^~~~~~~~~~~
+                /var/tmp/testing-dir/tests/linked-list-iterator-test.cpp:52:25: error: expected primary-expression before &#8216;&gt;&#8217; token
+                   52 |     linked_list&lt;TestType&gt; list;
+                      |                         ^
+                </failure></testcase></testsuite></testsuites>
+                """;
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+        assertThat(successfulTests).isEmpty();
+        assertThat(failedTests).hasSize(1);
+        var test = failedTests.getFirst();
+        assertThat(test.getName()).isEqualTo("CompileLinkedList");
+        assertThat(test.getTestMessages().getFirst()).isEqualTo("Build for directory ../assignment/build failed. Returncode is 2.");
+    }
+
+    @Test
+    void testEmptyTestMessage() throws IOException {
+        String input = """
+                <testsuites>
+                    <testsuite package="mwe-package" id="0" name="mwe-suite-name" timestamp="2024-08-09T12:34:56"
+                    hostname="localhost" tests="1" failures="1" errors="0" time="0">
+                        <properties></properties>
+                            <testcase name="mwe-name" classname="mwe-class" time="0">
+                                <failure type="empty"></failure>
+                        </testcase>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+        assertThat(failedTests).hasSize(1);
+        var test = failedTests.getFirst();
+        assertThat(test.getName()).isEqualTo("mwe-name");
+        assertThat(test.getTestMessages()).hasSize(1).contains("");
+    }
 }

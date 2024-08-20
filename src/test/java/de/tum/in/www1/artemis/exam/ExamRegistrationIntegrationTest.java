@@ -19,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -27,16 +26,13 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -44,9 +40,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private static final String TEST_PREFIX = "examregistrationtest";
 
     public static final String STUDENT_111 = TEST_PREFIX + "student111";
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private ExamRepository examRepository;
@@ -61,16 +54,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private PasswordService passwordService;
 
     @Autowired
-    private ExamAccessService examAccessService;
-
-    @Autowired
     private ChannelRepository channelRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -116,9 +100,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
         User student42 = userUtilService.getUserByLogin(TEST_PREFIX + "student42");
 
-        Set<User> studentsInCourseBefore = userRepo.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
+        Set<User> studentsInCourseBefore = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
-        Set<User> studentsInCourseAfter = userRepo.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
+        Set<User> studentsInCourseAfter = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
     }
@@ -144,7 +128,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         List<String> registrationNumbers = Arrays.asList("1111111", "1111112", "1111113");
         List<User> students = userUtilService.setRegistrationNumberOfStudents(registrationNumbers, TEST_PREFIX);
 
-        User student1 = students.get(0);
+        User student1 = students.getFirst();
         User student2 = students.get(1);
         User student3 = students.get(2);
 
@@ -159,14 +143,14 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(emptyRegistrationNumber);
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber4WithTypo);
 
-        var ldapUser111Dto = new LdapUserDto().registrationNumber(registrationNumber111).firstName(STUDENT_111).lastName(STUDENT_111).username(STUDENT_111)
+        var ldapUser111Dto = new LdapUserDto().registrationNumber(registrationNumber111).firstName(STUDENT_111).lastName(STUDENT_111).login(STUDENT_111)
                 .email(STUDENT_111 + "@tum.de");
         doReturn(Optional.of(ldapUser111Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber111);
 
         userUtilService.createAndSaveUser("student99"); // not registered for the course
         userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
 
-        User student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
+        User student99 = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
         assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
 
         // Note: student111 is not yet a user of Artemis and should be retrieved from the LDAP
@@ -217,7 +201,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         for (var examUser : storedExam.getExamUsers()) {
             // all registered users must have access to the course
-            var user = userRepo.findOneWithGroupsAndAuthoritiesByLogin(examUser.getUser().getLogin()).orElseThrow();
+            var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(examUser.getUser().getLogin()).orElseThrow();
             assertThat(user.getGroups()).contains(course1.getStudentGroupName());
         }
 
@@ -234,13 +218,13 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         String student300 = TEST_PREFIX + "student300";
 
         // setup mocks
-        var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).username(student100).registrationNumber("100000").email(student100 + "@tum.de");
-        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(student100);
+        var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).login(student100).registrationNumber("100000").email(student100 + "@tum.de");
+        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByLogin(student100);
 
-        var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).username(student200).registrationNumber("200000").email(student200 + "@tum.de");
-        doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByEmail(student200 + "@tum.de");
+        var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).login(student200).registrationNumber("200000").email(student200 + "@tum.de");
+        doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByAnyEmail(student200 + "@tum.de");
 
-        var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).username(student300).registrationNumber("3000000").email(student300 + "@tum.de");
+        var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).login(student300).registrationNumber("3000000").email(student300 + "@tum.de");
         doReturn(Optional.of(ldapUser3Dto)).when(ldapUserService).findByRegistrationNumber("3000000");
 
         // user with login
@@ -285,7 +269,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testAddAllRegisteredUsersToExam() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         Channel channel = examUtilService.addExamChannel(exam, "testchannel");
-        int numberOfStudentsInCourse = userRepo.findAllByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName()).size();
+        int numberOfStudentsInCourse = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName()).size();
 
         User student99 = userUtilService.createAndSaveUser(TEST_PREFIX + "student99"); // not registered for the course
         student99.setGroups(Collections.singleton("tumuser"));

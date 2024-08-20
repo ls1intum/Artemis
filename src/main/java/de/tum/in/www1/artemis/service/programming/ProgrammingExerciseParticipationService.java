@@ -178,6 +178,18 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     * Tries to retrieve a student participation for the given team exercise and user
+     *
+     * @param exercise the exercise for which to find a participation.
+     * @param user     the user who is member of the team to which the participation belongs.
+     * @return the participation for the given exercise and user.
+     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
+     */
+    public Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseAndUser(ProgrammingExercise exercise, User user) {
+        return studentParticipationRepository.findTeamParticipationByExerciseIdAndStudentId(exercise.getId(), user.getId());
+    }
+
+    /**
      * Tries to retrieve a student participation for the given exercise and username and test run flag.
      *
      * @param exercise        the exercise for which to find a participation.
@@ -240,6 +252,19 @@ public class ProgrammingExerciseParticipationService {
             throw new EntityNotFoundException("participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
         }
         return participation.get();
+    }
+
+    /**
+     * Tries to retrieve all student participation for the given exercise id and username.
+     *
+     * @param exercise the exercise for which to find a participation
+     * @param username of the user to which the participation belongs.
+     * @return the participations for the given exercise and user.
+     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
+     */
+    @NotNull
+    public List<ProgrammingExerciseStudentParticipation> findStudentParticipationsByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
+        return studentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**

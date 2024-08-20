@@ -18,42 +18,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
-    private CourseRepository courseRepo;
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
-
-    @Autowired
     private TeamRepository teamRepo;
-
-    @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private TeamUtilService teamUtilService;
@@ -118,15 +94,15 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
         // Make both source and destination exercise team exercises
         sourceExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
         sourceExercise.setMode(ExerciseMode.TEAM);
-        sourceExercise = exerciseRepo.save(sourceExercise);
+        sourceExercise = exerciseRepository.save(sourceExercise);
         destinationExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         destinationExercise.setMode(ExerciseMode.TEAM);
-        destinationExercise = exerciseRepo.save(destinationExercise);
+        destinationExercise = exerciseRepository.save(destinationExercise);
         Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("import", TEST_PREFIX + "student", REGISTRATION_NUMBER_PREFIX + "R");
         importedTeams = importedTeamsWithBody.getFirst();
         importedTeamsBody = importedTeamsWithBody.getSecond();
         // Select a tutor for the teams
-        tutor = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
     }
 
     private void testImportTeamsIntoExercise(ImportType type, TeamImportStrategyType importStrategyType, List<Team> body, List<Team> addedTeams) throws Exception {
@@ -282,14 +258,14 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
         // If the destination exercise is not a team exercise, the request should fail
         destinationExercise.setMode(ExerciseMode.INDIVIDUAL);
-        exerciseRepo.save(destinationExercise);
+        exerciseRepository.save(destinationExercise);
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.BAD_REQUEST);
 
         destinationExercise.setMode(ExerciseMode.TEAM);
-        exerciseRepo.save(destinationExercise);
+        exerciseRepository.save(destinationExercise);
         // If the source exercise is not a team exercise, the request should fail
         sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
-        exerciseRepo.save(sourceExercise);
+        exerciseRepository.save(sourceExercise);
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.BAD_REQUEST);
     }
 
@@ -298,10 +274,10 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void testImportTeamsFromListBadRequests() throws Exception {
         // If the destination exercise is not a team exercise, the request should fail
         destinationExercise.setMode(ExerciseMode.INDIVIDUAL);
-        exerciseRepo.save(destinationExercise);
+        exerciseRepository.save(destinationExercise);
         request.put(importFromListUrl(), importedTeamsBody, HttpStatus.BAD_REQUEST);
         destinationExercise.setMode(ExerciseMode.TEAM);
-        exerciseRepo.save(destinationExercise);
+        exerciseRepository.save(destinationExercise);
 
         // If user with given registration number does not exist, the request should fail
         List<Team> teams = new ArrayList<>();
@@ -314,7 +290,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
         request.put(importFromListUrl(), getTeamsIntoLoginOnlyTeams(teams), HttpStatus.BAD_REQUEST);
 
         // If user does not have an identifier: registration number or login, the request should fail
-        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
+        userRepository.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
         request.put(importFromListUrl(), getTeamsIntoOneIdentifierTeams(teams, null), HttpStatus.BAD_REQUEST);
 
         // If user's registration number points to same user with a login in request, it should fail
@@ -338,7 +314,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
         course.setInstructorGroupName("Different group name");
-        courseRepo.save(course);
+        courseRepository.save(course);
 
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.FORBIDDEN);
     }
@@ -348,7 +324,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void testImportTeamsFromListForbiddenAsInstructorOfOtherCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
         course.setInstructorGroupName("Different group name");
-        courseRepo.save(course);
+        courseRepository.save(course);
 
         request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
     }
@@ -376,7 +352,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
                 registrationPrefix);
         var users = generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
         users.forEach(u -> userUtilService.cleanUpRegistrationNumberForUser(u));
-        userRepo.saveAll(users);
+        userRepository.saveAll(users);
         List<Team> teamsWithLogins = getTeamsIntoLoginOnlyTeams(generatedTeams.subList(0, 2));
         List<Team> teamsWithRegistrationNumbers = getTeamsIntoRegistrationNumberOnlyTeams(generatedTeams.subList(2, 3));
         List<Team> body = Stream.concat(teamsWithLogins.stream(), teamsWithRegistrationNumbers.stream()).toList();

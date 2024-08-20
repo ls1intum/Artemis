@@ -109,7 +109,7 @@ spring:
             hibernate.generate_statistics: false
             hibernate.order_inserts: true
             hibernate.order_updates: true
-#            hibernate.query.fail_on_pagination_over_collection_fetch: true  # not appropriate in our case: https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch/
+            hibernate.query.fail_on_pagination_over_collection_fetch: true  # prevents issues, see https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch
             hibernate.query.in_clause_parameter_padding: true
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
@@ -129,8 +129,8 @@ spring:
     mail:
         host: localhost
     main:
-        allow-bean-definition-overriding: true
-        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
+        allow-bean-definition-overriding: true # TODO: we should deactivate this in the future
+        allow-circular-references: true # TODO: we should deactivate this in the future
     messages:
         basename: i18n/messages
         cache-duration: PT1S # 1 second, see the ISO 8601 standard

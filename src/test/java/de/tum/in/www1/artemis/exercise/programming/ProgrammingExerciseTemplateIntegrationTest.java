@@ -52,7 +52,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -74,9 +73,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -277,7 +273,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
         if (testwiseCoverageAnalysis) {
-            exercise.setTestwiseCoverageEnabled(true);
+            exercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         }
         request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 

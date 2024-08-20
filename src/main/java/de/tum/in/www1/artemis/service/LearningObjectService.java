@@ -3,10 +3,8 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -16,12 +14,13 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
 
 /**
@@ -45,12 +44,15 @@ public class LearningObjectService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     public LearningObjectService(ParticipantScoreService participantScoreService, ExerciseRepository exerciseRepository, LectureUnitRepository lectureUnitRepository,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, SubmissionRepository submissionRepository) {
         this.participantScoreService = participantScoreService;
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -63,22 +65,27 @@ public class LearningObjectService {
     public boolean isCompletedByUser(@NotNull LearningObject learningObject, @NotNull User user) {
         return switch (learningObject) {
             case LectureUnit lectureUnit -> lectureUnit.isCompletedFor(user);
-            case Exercise exercise -> participantScoreService.getStudentAndTeamParticipations(user, Set.of(exercise)).anyMatch(score -> score.getLastScore() >= MIN_SCORE_GREEN);
+            case Exercise exercise -> isCompletedByUser(exercise, user);
             default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         };
     }
 
     /**
-     * Get the completed learning objects for the given user and competencies.
+     * Checks if the user has completed the exercise.
+     * For manually assessed exercises the user cannot get more feedback usually, so we have to assume all submissions as completed for now
+     * For other exercises the user can get more assessments and achieve high enough scores to surpass the {@link MIN_SCORE_GREEN} threshold
      *
-     * @param user         the user for which to get the completed learning objects
-     * @param competencies the competencies for which to get the completed learning objects
-     * @return the completed learning objects for the given user and competencies
+     * @param exercise the exercise
+     * @param user     the user for which to check the completion status
+     * @return true if the user has completed the exercise
      */
-    public Stream<LearningObject> getCompletedLearningObjectsForUserAndCompetencies(User user, Set<Competency> competencies) {
-        return Stream.concat(competencies.stream().map(Competency::getLectureUnits), competencies.stream().map(Competency::getExercises)).flatMap(Set::stream)
-                .filter(learningObject -> learningObject.getCompletionDate(user).isPresent())
-                .sorted(Comparator.comparing(learningObject -> learningObject.getCompletionDate(user).orElseThrow())).map(LearningObject.class::cast);
+    private boolean isCompletedByUser(Exercise exercise, User user) {
+        if (exercise.getAssessmentType() == AssessmentType.MANUAL) {
+            return submissionRepository.existsByExerciseIdAndParticipantIdAndSubmitted(exercise.getId(), user.getId());
+        }
+        else {
+            return participantScoreService.getStudentAndTeamParticipations(user, Set.of(exercise)).anyMatch(score -> score.getLastScore() >= MIN_SCORE_GREEN);
+        }
     }
 
     /**

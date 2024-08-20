@@ -97,8 +97,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\n\npublic class Test {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("package test;\n\npublic class Test {\n    \n}");
     }
 
     @Test
@@ -118,8 +118,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\n\npublic class Test {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("package test;\n\npublic class Test {\n    \n}");
     }
 
     @Test
@@ -141,8 +141,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\n\n@TestA1(value=123)\n@TestA2(test=\"Test String\")\npublic class Test {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("package test;\n\n@TestA1(value=123)\n@TestA2(test=\"Test String\")\npublic class Test {\n    \n}");
     }
 
     @Test
@@ -165,8 +165,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\n\nprivate abstract class Test extends Test2 implements TestI1, TestI2 {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("package test;\n\nprivate abstract class Test extends Test2 implements TestI1, TestI2 {\n    \n}");
     }
 
     @Test
@@ -188,8 +188,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\n\nprivate abstract class Test extends Test2 implements TestI1, TestI2 {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("package test;\n\nprivate abstract class Test extends Test2 implements TestI1, TestI2 {\n    \n}");
     }
 
     @Test
@@ -209,8 +209,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\n\npublic class Test<T, E extends List<T>> {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("package test;\n\npublic class Test<T, E extends List<T>> {\n    \n}");
     }
 
     @Test
@@ -231,8 +231,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\n\npublic interface Test {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("package test;\n\npublic interface Test {\n    \n}");
     }
 
     @Test
@@ -257,8 +257,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\n\npublic enum Test {\n    CASE1, CASE2\n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("package test;\n\npublic enum Test {\n    CASE1, CASE2\n}");
     }
 
     @Test
@@ -283,8 +283,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("private String attributeName;");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("private String attributeName;");
     }
 
     @Test
@@ -311,8 +311,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("@TestA1(value=123)\n@TestA2(test=\"Test String\")\nprivate String attributeName;");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("@TestA1(value=123)\n@TestA2(test=\"Test String\")\nprivate String attributeName;");
     }
 
     @Test
@@ -337,8 +337,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("private String attributeName;");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("private String attributeName;");
     }
 
     @Test
@@ -364,8 +364,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("protected static final List<Date> attributeName;");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("protected static final List<Date> attributeName;");
     }
 
     @Test
@@ -389,8 +389,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("public Test() {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("public Test() {\n    \n}");
     }
 
     @Test
@@ -416,8 +416,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("@TestA1(value=123)\n@TestA2(test=\"Test String\")\npublic Test() {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("@TestA1(value=123)\n@TestA2(test=\"Test String\")\npublic Test() {\n    \n}");
     }
 
     @Test
@@ -442,8 +442,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("protected Test(String s1, List<Date> dates) {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("protected Test(String s1, List<Date> dates) {\n    \n}");
     }
 
     @Test
@@ -469,8 +469,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("public void foo() {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("public void foo() {\n    \n}");
     }
 
     @Test
@@ -498,8 +498,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("@TestA1(value=123)\n@TestA2(test=\"Test String\")\npublic void foo() {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("@TestA1(value=123)\n@TestA2(test=\"Test String\")\npublic void foo() {\n    \n}");
     }
 
     @Test
@@ -526,8 +526,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("protected static List<Date> foo(List<Object> list, String s) {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("protected static List<Date> foo(List<Object> list, String s) {\n    \n}");
     }
 
     @Test
@@ -554,8 +554,8 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
         var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
         assertThat(solutionEntries).hasSize(1);
-        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
-        assertThat(solutionEntries.get(0).getCode()).isEqualTo("public <T, E extends List<T>> E foo(T[] arr) {\n    \n}");
+        assertThat(solutionEntries.getFirst().getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.getFirst().getCode()).isEqualTo("public <T, E extends List<T>> E foo(T[] arr) {\n    \n}");
     }
 
     @Test

@@ -1,10 +1,10 @@
-import { Component, InputSignal, OnInit, OutputEmitterRef, Signal, WritableSignal, inject, input, output, signal } from '@angular/core';
+import { Component, InputSignal, OnInit, OutputEmitterRef, Signal, WritableSignal, computed, inject, input, output, signal } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
-import { IconDefinition, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle, faLock } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -17,17 +17,24 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 })
 export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
+    protected readonly faLock: IconDefinition = faLock;
 
     private readonly alertService: AlertService = inject(AlertService);
     private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
 
-    readonly learningPathId: InputSignal<number> = input.required<number>();
-    readonly competencyId: InputSignal<number> = input.required<number>();
+    readonly learningPathId: InputSignal<number> = input.required();
+    readonly competencyId: InputSignal<number> = input.required();
+    // competency id of current competency of learning path (not the one of the selected learning object)
+    readonly currentCompetencyIdOnPath: InputSignal<number | undefined> = input.required();
     readonly currentLearningObject: Signal<LearningPathNavigationObjectDTO | undefined> = this.learningPathNavigationService.currentLearningObject;
 
     readonly isLoading: WritableSignal<boolean> = signal(false);
     readonly learningObjects: WritableSignal<LearningPathNavigationObjectDTO[] | undefined> = signal(undefined);
+
+    readonly nextLearningObjectOnPath: Signal<LearningPathNavigationObjectDTO | undefined> = computed(() =>
+        this.competencyId() === this.currentCompetencyIdOnPath() ? this.learningObjects()?.find((learningObject) => !learningObject.completed) : undefined,
+    );
 
     readonly onLearningObjectSelected: OutputEmitterRef<void> = output();
 
@@ -51,7 +58,9 @@ export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     }
 
     selectLearningObject(learningObject: LearningPathNavigationObjectDTO): void {
-        this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
-        this.onLearningObjectSelected.emit();
+        if (!learningObject.unreleased) {
+            this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
+            this.onLearningObjectSelected.emit();
+        }
     }
 }

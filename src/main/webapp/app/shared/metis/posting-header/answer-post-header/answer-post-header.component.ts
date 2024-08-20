@@ -32,17 +32,12 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
 
     ngOnInit() {
         super.ngOnInit();
-        // determines if the current user is the author of the original post, that the answer belongs to
-        this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting.post!);
-        this.isAnswerOfAnnouncement = getAsChannelDTO(this.posting.post?.conversation)?.isAnnouncementChannel ?? false;
-        const isCourseWideChannel = getAsChannelDTO(this.posting.post?.conversation)?.isCourseWide ?? false;
-        const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const mayEditOrDeleteOtherUsersAnswer =
-            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+        this.setMayEditOrDelete();
     }
 
     ngOnChanges() {
+        this.setUserProperties();
+        this.setMayEditOrDelete();
         this.setUserAuthorityIconAndTooltip();
     }
 
@@ -62,5 +57,16 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
             this.posting.resolvesPost = !this.posting.resolvesPost;
             this.metisService.updateAnswerPost(this.posting).subscribe();
         }
+    }
+
+    setMayEditOrDelete(): void {
+        // determines if the current user is the author of the original post, that the answer belongs to
+        this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting.post!);
+        this.isAnswerOfAnnouncement = getAsChannelDTO(this.posting.post?.conversation)?.isAnnouncementChannel ?? false;
+        const isCourseWideChannel = getAsChannelDTO(this.posting.post?.conversation)?.isCourseWide ?? false;
+        const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
+        const mayEditOrDeleteOtherUsersAnswer =
+            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
+        this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 }

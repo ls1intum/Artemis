@@ -41,7 +41,8 @@
                 },
                 "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
                 "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfe sorgfältig, ob dies die gewünschte Aktion ist, bevor du den Vorgang fortsetzt.",
-                "recreateBuildPlans": "Erstelle Build Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
+                "recreateBuildPlans": "Erstelle Build Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe alle vorherigen Änderungen.",
+                "recreateCustomizedBuildPlans": "Setze die angepassten Build Pläne der Aufgabe auf die Standardversion aus der neuesten Übungsvorlage zurück und überschreibe dabei alle vorherigen Änderungen.",
                 "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um deine Auswahl zu bestätigen, gebe bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
                 "successMessage": "Das Zurücksetzen war erfolgreich.",
                 "errorMessage": "Das Zurücksetzen war nicht erfolgreich."
@@ -101,7 +102,6 @@
             "templateBuildPlanId": "Vorlagen-Build-Plan-Id",
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
-            "openRepository": "Repository Öffnen",
             "buildplans": "Build-Pläne",
             "buildplan": "Build-Plan",
             "buildConfiguration": "Build Konfiguration",
@@ -370,7 +370,8 @@
                 "successMessageRepo": "Das Repository wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
                 "successMessageRepos": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
                 "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
-                "notFoundMessageRepos": "Keine Repositories heruntergeladen für Aufgabe {{exerciseId}}: Es sind noch keine Abgaben der angegebenen Studenten vorhanden."
+                "notFoundMessageRepos": "Keine Repositories heruntergeladen für Aufgabe {{exerciseId}}: Es sind noch keine Abgaben der angegebenen Studenten vorhanden.",
+                "errorMessageRepo": "Das Repository konnte nicht exportiert werden. Die angefragte Datei existiert nicht."
             },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button, um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
@@ -477,7 +478,7 @@
                 "description": "Beschreibung",
                 "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
                 "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
-                "warning": "Hilfs-Repositories können hinzugefügt, editiert und gelöscht werden. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
+                "warning": "Hilfs-Repositories können hinzugefügt, editiert und gelöscht werden. Editierungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "editedWarning": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "repositoryNameRequired": {
                     "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
@@ -622,6 +623,7 @@
             "commitInfo": {
                 "title": "Commit-Informationen",
                 "commitHash": "Commit-Hash",
+                "commits": "Commits",
                 "author": "Autor",
                 "date": "Datum",
                 "message": "Nachricht",

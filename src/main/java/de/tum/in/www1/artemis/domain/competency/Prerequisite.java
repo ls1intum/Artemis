@@ -16,6 +16,22 @@ public class Prerequisite extends CourseCompetency {
         super(title, description, softDueDate, masteryThreshold, taxonomy, optional);
     }
 
+    public Prerequisite(CourseCompetency courseCompetency) {
+        super(courseCompetency.getTitle(), courseCompetency.getDescription(), courseCompetency.getSoftDueDate(), courseCompetency.getMasteryThreshold(),
+                courseCompetency.getTaxonomy(), courseCompetency.isOptional());
+        if (courseCompetency instanceof Competency) {
+            setLinkedCourseCompetency(courseCompetency);
+        }
+        else {
+            setLinkedCourseCompetency(courseCompetency.getLinkedCourseCompetency());
+        }
+    }
+
     public Prerequisite() {
+    }
+
+    @Override
+    public String getType() {
+        return "prerequisite";
     }
 }

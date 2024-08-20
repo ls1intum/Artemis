@@ -20,6 +20,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -34,10 +35,10 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.IdToPresentationScoreSum;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -660,30 +661,51 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
-    @Query(value = """
-            SELECT p
+    @Query("""
+            SELECT p.id
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH p.results r
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    p.student.firstName LIKE %:partialStudentName%
-                    OR p.student.lastName LIKE %:partialStudentName%
-                ) AND r.completionDate IS NOT NULL
-            """, countQuery = """
-            SELECT COUNT(p)
-            FROM StudentParticipation p
-                LEFT JOIN p.submissions s
-                LEFT JOIN p.results r
+                JOIN Result r ON r.participation.id = p.id
             WHERE p.exercise.id = :exerciseId
                 AND (
                     p.student.firstName LIKE %:partialStudentName%
                     OR p.student.lastName LIKE %:partialStudentName%
                 ) AND r.completionDate IS NOT NULL
             """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName,
-            Pageable pageable);
+    List<Long> findIdsByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results" })
+    List<StudentParticipation> findStudentParticipationWithSubmissionsAndResultsByIdIn(List<Long> ids);
+
+    @Query("""
+            SELECT COUNT(p)
+            FROM StudentParticipation p
+                JOIN Result r ON r.participation.id = p.id
+            WHERE p.exercise.id = :exerciseId
+                AND (
+                    p.student.firstName LIKE %:partialStudentName%
+                    OR p.student.lastName LIKE %:partialStudentName%
+                ) AND r.completionDate IS NOT NULL
+            """)
+    long countByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName);
+
+    /**
+     * Retrieves a paginated list of {@link StudentParticipation} entities associated with a specific exercise,
+     * and optionally filtered by a partial student name. The entities are fetched with eager loading of submissions and results.
+     *
+     * @param exerciseId         the ID of the exercise.
+     * @param partialStudentName the partial name of the student to filter by (can be empty or null to include all students).
+     * @param pageable           the pagination information.
+     * @return a paginated list of {@link StudentParticipation} entities associated with the specified exercise and student name filter.
+     *         If no entities are found, returns an empty page.
+     */
+    default Page<StudentParticipation> findAllWithEagerSubmissionsAndResultsByExerciseId(long exerciseId, String partialStudentName, Pageable pageable) {
+        List<Long> ids = findIdsByExerciseIdAndStudentName(exerciseId, partialStudentName, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<StudentParticipation> result = findStudentParticipationWithSubmissionsAndResultsByIdIn(ids);
+        return new PageImpl<>(result, pageable, countByExerciseIdAndStudentName(exerciseId, partialStudentName));
+    }
 
     @Query("""
             SELECT DISTINCT p
@@ -889,22 +911,22 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     @NotNull
     default StudentParticipation findByIdWithResultsElseThrow(long participationId) {
-        return findWithEagerResultsById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
+        return getValueElseThrow(findWithEagerResultsById(participationId), participationId);
     }
 
     @NotNull
     default StudentParticipation findByIdWithLegalSubmissionsResultsFeedbackElseThrow(long participationId) {
-        return findWithEagerLegalSubmissionsResultsFeedbacksById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
+        return getValueElseThrow(findWithEagerLegalSubmissionsResultsFeedbacksById(participationId), participationId);
     }
 
     @NotNull
     default StudentParticipation findByIdWithLegalSubmissionsElseThrow(long participationId) {
-        return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        return getValueElseThrow(findWithEagerLegalSubmissionsById(participationId), participationId);
     }
 
     @NotNull
     default StudentParticipation findByIdWithEagerTeamStudentsElseThrow(long participationId) {
-        return findByIdWithEagerTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        return getValueElseThrow(findByIdWithEagerTeamStudents(participationId), participationId);
     }
 
     /**
@@ -1188,14 +1210,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return a set of id to presentation score sum mappings
      */
     @Query("""
-            SELECT COALESCE(p.student.id, ts.id) AS id,
-                COALESCE(SUM(p.presentationScore), 0) AS presentationScoreSum
+            SELECT new de.tum.in.www1.artemis.domain.participation.IdToPresentationScoreSum(
+                COALESCE(p.student.id, ts.id),
+                COALESCE(SUM(p.presentationScore), 0)
+            )
             FROM StudentParticipation p
                 LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
                 AND p.presentationScore IS NOT NULL
                 AND (p.student.id IN :studentIds OR ts.id IN :studentIds)
-            GROUP BY id
+            GROUP BY COALESCE(p.student.id, ts.id)
             """)
     Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
 
@@ -1208,16 +1232,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
 
     /**
-     * Helper interface to map the result of the {@link #sumPresentationScoreByStudentIdsAndCourseId(long, Set)} query to a map.
-     */
-    interface IdToPresentationScoreSum {
-
-        long getId();
-
-        double getPresentationScoreSum();
-    }
-
-    /**
      * Maps all given studentIds to their presentation score sum for the given course.
      *
      * @param courseId   the id of the course
@@ -1225,8 +1239,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return a map of studentId to presentation score sum
      */
     default Map<Long, Double> mapStudentIdToPresentationScoreSumByCourseIdAndStudentIds(long courseId, Set<Long> studentIds) {
-        return sumPresentationScoreByStudentIdsAndCourseId(courseId, studentIds).stream()
-                .collect(toMap(IdToPresentationScoreSum::getId, IdToPresentationScoreSum::getPresentationScoreSum));
+        if (studentIds == null || studentIds.isEmpty()) {
+            return Map.of();
+        }
+        var studentIdToPresentationScoreSum = sumPresentationScoreByStudentIdsAndCourseId(courseId, studentIds);
+        return studentIdToPresentationScoreSum.stream().collect(toMap(IdToPresentationScoreSum::participantId, IdToPresentationScoreSum::presentationScoreSum));
     }
 
     /**

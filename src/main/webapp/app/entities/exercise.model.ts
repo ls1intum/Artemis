@@ -12,7 +12,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { Team } from 'app/entities/team.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Competency } from 'app/entities/competency.model';
+import { CourseCompetency } from 'app/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
@@ -105,7 +105,7 @@ export abstract class Exercise implements BaseEntity {
     public posts?: Post[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
-    public competencies?: Competency[];
+    public competencies?: CourseCompetency[];
 
     public plagiarismDetectionConfig?: PlagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG; // default value
 
@@ -270,7 +270,7 @@ export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
     }
 }
 
-export function resetDates(exercise: Exercise) {
+export function resetForImport(exercise: Exercise) {
     exercise.releaseDate = undefined;
     exercise.startDate = undefined;
     exercise.dueDate = undefined;
@@ -280,4 +280,6 @@ export function resetDates(exercise: Exercise) {
     // without dates set, they can only be false
     exercise.allowComplaintsForAutomaticAssessments = false;
     exercise.allowFeedbackRequests = false;
+
+    exercise.competencies = [];
 }

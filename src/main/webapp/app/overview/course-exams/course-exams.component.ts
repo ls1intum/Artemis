@@ -12,6 +12,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
+import { lastValueFrom } from 'rxjs';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -38,6 +39,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private studentExamTestExamUpdateSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
     private studentExams: StudentExam[];
+    private studentExamsForRealExams = new Map<number, StudentExam>();
     public expandAttemptsMap = new Map<number, boolean>();
     public realExamsOfCourse: Exam[] = [];
     public testExamsOfCourse: Exam[] = [];
@@ -136,6 +138,16 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
+            // get student exams for real exams
+            const studentExamPromisesForRealExams = this.realExamsOfCourse.map((realExam) =>
+                lastValueFrom(this.examParticipationService.getOwnStudentExam(this.courseId, realExam.id!)).then((studentExam) => {
+                    this.studentExamsForRealExams.set(realExam.id!, studentExam);
+                }),
+            );
+            // Ensure that we prepare sidebardata after all studentexams are loaded
+            Promise.all(studentExamPromisesForRealExams).then(() => {
+                this.prepareSidebarData();
+            });
         }
     }
 
@@ -207,7 +219,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const realExam of realExams) {
-            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam);
+            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, this.studentExamsForRealExams.get(realExam.id!));
             groupedExamGroups['real'].entityData.push(examCardItem);
         }
         testExams.forEach((testExam) => {
@@ -264,7 +276,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.testExamMap.set(testExam.id!, submittedAttempts);
         }
 
-        const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams);
+        const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams, this.getAllStudentExamsForRealExams());
         const sidebarTestExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedTestExams);
         const allStudentExams = this.getAllStudentExams();
         const sidebarTestExamAttempts = this.courseOverviewService.mapTestExamAttemptsToSidebarCardElements(
@@ -283,6 +295,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             return;
         }
         this.navigateToExam();
+    }
+
+    getAllStudentExamsForRealExams(): StudentExam[] {
+        return [...this.studentExamsForRealExams.values()];
     }
 
     // Method to iterate through the map and get all student exams

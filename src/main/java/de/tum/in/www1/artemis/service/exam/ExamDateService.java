@@ -90,7 +90,7 @@ public class ExamDateService {
         if (!exercise.isExamExercise()) {
             throw new IllegalArgumentException("This function should only be used for exam exercises");
         }
-        Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
+        Exam exam = exercise.getExam();
         if (exam.isTestExam()) {
             return isIndividualExerciseWorkingPeriodOver(exam, studentParticipation);
         }

@@ -14,8 +14,7 @@ import {
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { ElementRef, NgZone } from '@angular/core';
+import { ElementRef, Renderer2 } from '@angular/core';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,6 +23,8 @@ import { programmingExerciseCreationConfigMock } from './update-components/progr
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { PROFILE_AEOLUS } from 'app/app.constants';
 import { Observable } from 'rxjs';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -38,6 +39,8 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let cleanBuildAction: ScriptAction = new ScriptAction();
     let platformAction: PlatformAction = new PlatformAction();
     let mockAeolusService: AeolusService;
+    let renderer2: Renderer2;
+    let translateService: TranslateService;
 
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
@@ -63,11 +66,16 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         actions.push(cleanBuildAction);
         actions.push(platformAction);
         windFile.actions = actions;
-        programmingExercise.windFile = windFile;
+        programmingExercise.buildConfig!.windFile = windFile;
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseCustomAeolusBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(AceEditorComponent)],
+            declarations: [
+                ProgrammingExerciseCustomAeolusBuildPlanComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(MonacoEditorComponent),
+            ],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()
@@ -77,6 +85,9 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
             });
 
         const fixture = TestBed.createComponent(ProgrammingExerciseCustomAeolusBuildPlanComponent);
+        // These are not directly injected into the component, but are needed for the tests.
+        renderer2 = fixture.debugElement.injector.get(Renderer2);
+        translateService = fixture.debugElement.injector.get(TranslateService);
         comp = fixture.componentInstance;
 
         comp.programmingExercise = programmingExercise;
@@ -103,26 +114,25 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should delete action', () => {
         comp.deleteAction('gradle');
-        const size = programmingExercise.windFile?.actions.length;
+        const size = programmingExercise.buildConfig?.windFile?.actions.length;
         expect(size).toBeDefined();
         const realSize = size!;
-        expect(programmingExercise.windFile?.actions.length).toBe(realSize);
+        expect(programmingExercise.buildConfig?.windFile?.actions.length).toBe(realSize);
         comp.deleteAction('clean');
-        expect(programmingExercise.windFile?.actions.length).toBe(realSize - 1);
+        expect(programmingExercise.buildConfig?.windFile?.actions.length).toBe(realSize - 1);
     });
 
     it('should add action', () => {
-        const size = programmingExercise.windFile?.actions.length;
+        const size = programmingExercise.buildConfig?.windFile?.actions.length;
         expect(size).toBeDefined();
         comp.addAction('gradle clean');
-        expect(programmingExercise.windFile?.actions.length).toBe(size! + 1);
+        expect(programmingExercise.buildConfig?.windFile?.actions.length).toBe(size! + 1);
     });
 
     it('should accept editor', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        const zone: NgZone = new NgZone({});
         expect(comp.editor).toBeUndefined();
-        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         expect(comp.editor).toBeDefined();
     });
 
@@ -142,7 +152,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should do nothing without a Windfile', () => {
-        comp.programmingExercise.windFile = undefined;
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         comp.code = 'this should not change';
         comp.changeActiveAction('');
         expect(comp.code).toBe('this should not change');
@@ -172,38 +182,37 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should set editor text', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        const zone: NgZone = new NgZone({});
-        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         comp.changeActiveAction('gradle');
-        expect(comp.editor.text).toBe(gradleBuildAction.script);
+        expect(comp.editor?.getText()).toBe(gradleBuildAction.script);
     });
 
     it('should return false to reload template', () => {
         comp.programmingLanguage = programmingExercise.programmingLanguage;
         comp.projectType = programmingExercise.projectType;
-        comp.sequentialTestRuns = programmingExercise.sequentialTestRuns;
+        comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         comp.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
-        comp.testwiseCoverageEnabled = programmingExercise.testwiseCoverageEnabled;
+        comp.testwiseCoverageEnabled = programmingExercise.buildConfig?.testwiseCoverageEnabled;
         expect(comp.shouldReloadTemplate()).toBeFalse();
     });
 
     it('should return true to reload template', () => {
         comp.programmingLanguage = ProgrammingLanguage.JAVA;
         comp.projectType = ProjectType.PLAIN_GRADLE;
-        comp.sequentialTestRuns = programmingExercise.sequentialTestRuns;
+        comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         comp.staticCodeAnalysisEnabled = true;
         comp.testwiseCoverageEnabled = true;
         expect(comp.shouldReloadTemplate()).toBeTrue();
     });
 
     it('should reset buildplan', () => {
-        programmingExercise.windFile = windFile;
-        programmingExercise.buildPlanConfiguration = 'some build plan';
-        expect(programmingExercise.windFile).toBeDefined();
-        expect(programmingExercise.buildPlanConfiguration).toBeDefined();
+        programmingExercise.buildConfig!.windFile = windFile;
+        programmingExercise.buildConfig!.buildPlanConfiguration = 'some build plan';
+        expect(programmingExercise.buildConfig?.windFile).toBeDefined();
+        expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeDefined();
         comp.resetCustomBuildPlan();
-        expect(programmingExercise.windFile).toBeUndefined();
-        expect(programmingExercise.buildPlanConfiguration).toBeUndefined();
+        expect(programmingExercise.buildConfig?.windFile).toBeUndefined();
+        expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
     });
 
     it('should do nothing without a programming language', () => {
@@ -224,9 +233,9 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.loadAeolusTemplate();
         expect(comp.programmingLanguage).toBe(programmingExercise.programmingLanguage);
         expect(comp.projectType).toBe(programmingExercise.projectType);
-        expect(comp.sequentialTestRuns).toBe(programmingExercise.sequentialTestRuns);
+        expect(comp.sequentialTestRuns).toBe(programmingExercise.buildConfig?.sequentialTestRuns);
         expect(comp.staticCodeAnalysisEnabled).toBe(programmingExercise.staticCodeAnalysisEnabled);
-        expect(comp.testwiseCoverageEnabled).toBe(programmingExercise.testwiseCoverageEnabled);
+        expect(comp.testwiseCoverageEnabled).toBe(programmingExercise.buildConfig?.testwiseCoverageEnabled);
     });
 
     it('should not call loadAeolusTemplate', () => {
@@ -255,23 +264,23 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should update windfile', () => {
-        comp.programmingExercise.windFile = undefined;
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
         comp.loadAeolusTemplate();
-        expect(comp.programmingExercise.windFile).toBeDefined();
-        expect(comp.programmingExercise.windFile).toEqual(windFile);
+        expect(comp.programmingExercise.buildConfig?.windFile).toBeDefined();
+        expect(comp.programmingExercise.buildConfig?.windFile).toEqual(windFile);
     });
 
     it('should call this.resetCustomBuildPlan', () => {
-        comp.programmingExercise.windFile = undefined;
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         const resetSpy = jest.spyOn(comp, 'resetCustomBuildPlan');
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
         comp.loadAeolusTemplate();
-        expect(comp.programmingExercise.windFile).toBeUndefined();
+        expect(comp.programmingExercise.buildConfig?.windFile).toBeUndefined();
         expect(resetSpy).toHaveBeenCalled();
     });
 
@@ -332,12 +341,12 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should set docker image correctly', () => {
-        comp.programmingExercise.windFile = windFile;
-        comp.programmingExercise.windFile.metadata.docker.image = 'old';
+        comp.programmingExercise.buildConfig!.windFile = windFile;
+        comp.programmingExercise.buildConfig!.windFile.metadata.docker.image = 'old';
         comp.setDockerImage('testImage');
-        expect(comp.programmingExercise.windFile?.metadata.docker.image).toBe('testImage');
-        comp.programmingExercise.windFile = undefined;
+        expect(comp.programmingExercise.buildConfig?.windFile?.metadata.docker.image).toBe('testImage');
+        comp.programmingExercise.buildConfig!.windFile = undefined;
         comp.setDockerImage('testImage');
-        expect(comp.programmingExercise.windFile).toBeUndefined();
+        expect(comp.programmingExercise.buildConfig?.windFile).toBeUndefined();
     });
 });

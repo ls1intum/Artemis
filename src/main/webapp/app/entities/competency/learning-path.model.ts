@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { User, UserNameAndLoginDTO } from 'app/core/user/user.model';
-import { Competency, CompetencyRelationType } from 'app/entities/competency.model';
+import { CompetencyRelationType, CourseCompetency } from 'app/entities/competency.model';
 import { Edge, Node, NodeDimension } from '@swimlane/ngx-graph';
 import { faCheckCircle, faCircle, faFlag, faFlagCheckered, faPlayCircle, faSignsPost } from '@fortawesome/free-solid-svg-icons';
 
@@ -10,7 +10,7 @@ export class LearningPath implements BaseEntity {
     public progress?: number;
     public user?: User;
     public course?: Course;
-    public competencies?: Competency[];
+    public competencies?: CourseCompetency[];
 
     constructor() {}
 }
@@ -35,13 +35,15 @@ export interface LearningPathCompetencyDTO {
 export interface LearningPathNavigationObjectDTO {
     id: number;
     completed: boolean;
-    name: string;
+    name?: string;
+    competencyId: number;
     type: LearningObjectType;
+    unreleased: boolean;
 }
 
 export interface LearningPathNavigationDTO {
     predecessorLearningObject?: LearningPathNavigationObjectDTO;
-    currentLearningObject: LearningPathNavigationObjectDTO;
+    currentLearningObject?: LearningPathNavigationObjectDTO;
     successorLearningObject?: LearningPathNavigationObjectDTO;
     progress: number;
 }
@@ -50,13 +52,16 @@ export interface LearningPathNavigationOverviewDTO {
     learningObjects: LearningPathNavigationObjectDTO[];
 }
 
+export enum CompetencyGraphNodeValueType {
+    MASTERY_PROGRESS = 'MASTERY_PROGRESS',
+}
+
 export interface CompetencyGraphNodeDTO {
     id: string;
     label: string;
     softDueDate: Date;
-    progress: number;
-    confidence: number;
-    masteryProgress: number;
+    value: number;
+    valueType: CompetencyGraphNodeValueType;
     dimension?: NodeDimension;
 }
 

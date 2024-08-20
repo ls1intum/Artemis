@@ -3,140 +3,138 @@ package de.tum.in.www1.artemis.service.competency;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import jakarta.ws.rs.BadRequestException;
+import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
+import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
+import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.LectureUnitService;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 
 /**
- * Service for managing {@link Prerequisite} competencies.
+ * Service for managing prerequisites.
  */
 @Profile(PROFILE_CORE)
 @Service
-public class PrerequisiteService {
+public class PrerequisiteService extends CourseCompetencyService {
 
     private final PrerequisiteRepository prerequisiteRepository;
 
-    private final CourseRepository courseRepository;
-
-    private final CourseCompetencyRepository courseCompetencyRepository;
-
-    private final UserRepository userRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
-
-    public PrerequisiteService(PrerequisiteRepository prerequisiteRepository, CourseRepository courseRepository, CourseCompetencyRepository courseCompetencyRepository,
-            UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
+    public PrerequisiteService(PrerequisiteRepository prerequisiteRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
+            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService,
+            CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService) {
+        super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, lectureUnitService,
+                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository);
         this.prerequisiteRepository = prerequisiteRepository;
-        this.courseRepository = courseRepository;
-        this.courseCompetencyRepository = courseCompetencyRepository;
-        this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
-     * Creates a new prerequisite with the given values in the given course
+     * Imports the given prerequisites and relations into a course
      *
-     * @param prerequisiteValues the values of the prerequisite to create
-     * @param courseId           the id of the course to create the prerequisite in
-     * @return the created prerequisite
+     * @param course        the course to import into
+     * @param prerequisites the prerequisites to import
+     * @return The set of imported prerequisites, each also containing the relations for which it is the tail prerequisite for.
      */
-    public Prerequisite createPrerequisite(PrerequisiteRequestDTO prerequisiteValues, long courseId) {
-        var course = courseRepository.findByIdElseThrow(courseId);
+    public Set<CompetencyWithTailRelationDTO> importPrerequisitesAndRelations(Course course, Collection<? extends CourseCompetency> prerequisites) {
+        var idToImportedPrerequisite = new HashMap<Long, CompetencyWithTailRelationDTO>();
 
-        var prerequisiteToCreate = new Prerequisite(prerequisiteValues.title(), prerequisiteValues.description(), prerequisiteValues.softDueDate(),
-                prerequisiteValues.masteryThreshold(), prerequisiteValues.taxonomy(), prerequisiteValues.optional());
-        prerequisiteToCreate.setCourse(course);
+        for (var prerequisite : prerequisites) {
+            Prerequisite importedPrerequisite = new Prerequisite(prerequisite);
+            importedPrerequisite.setCourse(course);
 
-        return prerequisiteRepository.save(prerequisiteToCreate);
+            importedPrerequisite = prerequisiteRepository.save(importedPrerequisite);
+            idToImportedPrerequisite.put(prerequisite.getId(), new CompetencyWithTailRelationDTO(importedPrerequisite, new ArrayList<>()));
+        }
+
+        return importCourseCompetenciesAndRelations(course, idToImportedPrerequisite);
     }
 
     /**
-     * Updates an existing prerequisite with the given values if it is part of the given course
+     * Imports the standardized prerequisites with the given ids as prerequisites into a course
      *
-     * @param prerequisiteValues the new prerequisite values
-     * @param prerequisiteId     the id of the prerequisite to update
-     * @param courseId           the id of the course the prerequisite is part of
-     * @return the updated prerequisite
+     * @param prerequisiteIdsToImport the ids of the standardized prerequisites to import
+     * @param course                  the course to import into
+     * @return the list of imported prerequisites
      */
-    public Prerequisite updatePrerequisite(PrerequisiteRequestDTO prerequisiteValues, long prerequisiteId, long courseId) {
-        var existingPrerequisite = prerequisiteRepository.findByIdAndCourseIdElseThrow(prerequisiteId, courseId);
-
-        existingPrerequisite.setTitle(prerequisiteValues.title());
-        existingPrerequisite.setDescription(prerequisiteValues.description());
-        existingPrerequisite.setTaxonomy(prerequisiteValues.taxonomy());
-        existingPrerequisite.setSoftDueDate(prerequisiteValues.softDueDate());
-        existingPrerequisite.setMasteryThreshold(prerequisiteValues.masteryThreshold());
-        existingPrerequisite.setOptional(prerequisiteValues.optional());
-
-        return prerequisiteRepository.save(existingPrerequisite);
+    public List<CourseCompetency> importStandardizedPrerequisites(List<Long> prerequisiteIdsToImport, Course course) {
+        return super.importStandardizedCompetencies(prerequisiteIdsToImport, course, Prerequisite::new);
     }
 
     /**
-     * Deletes an existing prerequisite if it is part of the given course or throws an EntityNotFoundException
+     * Imports the given course prerequisites into a course
      *
-     * @param prerequisiteId the id of the prerequisite to delete
-     * @param courseId       the id of the course the prerequisite is part of
-     */
-    public void deletePrerequisite(long prerequisiteId, long courseId) {
-        prerequisiteRepository.findByIdAndCourseIdElseThrow(prerequisiteId, courseId);
-        prerequisiteRepository.deleteById(prerequisiteId);
-    }
-
-    /**
-     * Imports the courseCompetencies with the given ids as prerequisites into a course
-     *
-     * @param courseId            the course to import into
-     * @param courseCompetencyIds the ids of the courseCompetencies to import
+     * @param course        the course to import into
+     * @param prerequisites the course prerequisites to import
      * @return The list of imported prerequisites
      */
-    public List<Prerequisite> importPrerequisites(long courseId, List<Long> courseCompetencyIds) {
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        List<CourseCompetency> courseCompetenciesToImport;
-        if (authorizationCheckService.isAdmin(user)) {
-            courseCompetenciesToImport = courseCompetencyRepository.findAllByIdElseThrow(courseCompetencyIds);
-        }
-        else {
-            // only allow the user to import from courses where they are at least editor
-            courseCompetenciesToImport = courseCompetencyRepository.findAllByIdAndUserIsAtLeastEditorInCourseElseThrow(courseCompetencyIds, user.getGroups());
-        }
+    public Set<CompetencyWithTailRelationDTO> importPrerequisites(Course course, Collection<? extends CourseCompetency> prerequisites) {
+        return importCourseCompetencies(course, prerequisites, Prerequisite::new);
+    }
 
-        var courseIds = courseCompetenciesToImport.stream().map(c -> c.getCourse().getId()).collect(Collectors.toSet());
-        if (courseIds.contains(course.getId())) {
-            throw new BadRequestException("You may not import a competency as prerequisite into the same course!");
-        }
+    /**
+     * Creates a new prerequisite and links it to a course and lecture units.
+     *
+     * @param prerequisite the prerequisite to create
+     * @param course       the course to link the prerequisite to
+     * @return the persisted prerequisite
+     */
+    public Prerequisite createPrerequisite(CourseCompetency prerequisite, Course course) {
+        Prerequisite prerequisiteToCreate = new Prerequisite(prerequisite);
+        return createCourseCompetency(prerequisiteToCreate, course);
+    }
 
-        var prerequisitesToImport = new ArrayList<Prerequisite>();
-        for (var competency : courseCompetenciesToImport) {
-            var prerequisiteToImport = new Prerequisite();
-            prerequisiteToImport.setTitle(competency.getTitle());
-            prerequisiteToImport.setDescription(competency.getDescription());
-            prerequisiteToImport.setTaxonomy(competency.getTaxonomy());
-            prerequisiteToImport.setOptional(competency.isOptional());
-            prerequisiteToImport.setMasteryThreshold(competency.getMasteryThreshold());
-            // do not set due date
-            prerequisiteToImport.setLinkedCourseCompetency(competency);
-            prerequisiteToImport.setCourse(course);
+    /**
+     * Creates a list of new prerequisites and links them to a course and lecture units.
+     *
+     * @param prerequisites the prerequisites to create
+     * @param course        the course to link the prerequisites to
+     * @return the persisted prerequisites
+     */
+    public List<Prerequisite> createPrerequisites(List<Prerequisite> prerequisites, Course course) {
+        return createCourseCompetencies(prerequisites, course, Prerequisite::new);
+    }
 
-            prerequisitesToImport.add(prerequisiteToImport);
-        }
+    /**
+     * Finds a prerequisite by its id and fetches its lecture units, exercises and progress for the provided user. It also fetches the lecture unit progress for the same user.
+     * <p>
+     * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
+     *
+     * @param prerequisiteId The id of the prerequisite to find
+     * @param userId         The id of the user for which to fetch the progress
+     * @return The found prerequisite
+     */
+    public Prerequisite findPrerequisiteWithExercisesAndLectureUnitsAndProgressForUser(Long prerequisiteId, Long userId) {
+        Prerequisite prerequisite = prerequisiteRepository.findByIdWithLectureUnitsAndExercisesElseThrow(prerequisiteId);
+        return findProgressAndLectureUnitCompletionsForUser(prerequisite, userId);
+    }
 
-        // TODO: link to learning paths once we support them for prerequisites.
-        // TODO: import relations once we support them for prerequisites.
-
-        return prerequisiteRepository.saveAll(prerequisitesToImport);
+    /**
+     * Finds prerequisites within a course and fetch progress for the provided user.
+     * <p>
+     * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
+     *
+     * @param courseId The id of the course for which to fetch the prerequisites
+     * @param userId   The id of the user for which to fetch the progress
+     * @return The found prerequisite
+     */
+    public List<Prerequisite> findPrerequisitesWithProgressForUserByCourseId(Long courseId, Long userId) {
+        List<Prerequisite> prerequisites = prerequisiteRepository.findByCourseIdOrderById(courseId);
+        return findProgressForCompetenciesAndUser(prerequisites, userId);
     }
 }
