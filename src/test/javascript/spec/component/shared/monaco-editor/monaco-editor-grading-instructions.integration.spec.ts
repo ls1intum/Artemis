@@ -69,6 +69,6 @@ describe('MonacoEditorActionGradingInstructionsIntegration', () => {
         comp.triggerKeySequence(generalInstructionText);
         const actions = setupActions();
         actions.criterionAction.executeInCurrentEditor();
-        expect(comp.getText()).toBe(generalInstructionText + '\n[criterion] Add criterion title (only visible to tutors)' + expectedInstructionTextWithoutCriterion);
+        expect(comp.getText()).toBe(`${generalInstructionText}\n[criterion] Add criterion title (only visible to tutors)${expectedInstructionTextWithoutCriterion}`);
     });
 });
