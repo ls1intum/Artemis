@@ -1,8 +1,9 @@
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Preprocessor } from './Preprocessor';
 import { Postprocessor } from './Postprocessor';
 import { writeFileSync } from 'node:fs';
+import { parse, TSESTree } from '@typescript-eslint/typescript-estree';
 
 /**
  * Recursively collects all TypeScript files in a directory.
@@ -26,20 +27,58 @@ function collectTypeScriptFiles(dir: string, files: string[] = []) : string[] {
     return files;
 }
 
+/**
+ * Parses a TypeScript file and returns its Abstract Syntax Tree (AST).
+ *
+ * @param filePath - The path to the TypeScript file to be parsed.
+ * @returns The TSESTree of the parsed TypeScript file.
+ */
+function parseTypeScriptFile(filePath: string): TSESTree.Program | null {
+    const code = readFileSync(filePath, 'utf8');
+    try {
+        return parse(code, {
+            loc: true,
+            comment: true,
+            tokens: true,
+            ecmaVersion: 2020,
+            sourceType: 'module',
+        });
+    } catch (error) {
+        console.error(`Failed to parse TypeScript file at ${filePath}:`, error);
+        console.error('Please make sure the file is valid TypeScript code.');
+        return null;
+    }
+}
+
 const clientDirPath = resolve('src/main/webapp/app');
 
 const tsFiles = collectTypeScriptFiles(clientDirPath);
 
-// preprocess each file
+// create and store Syntax Tree for each file
+const astMap = new Map<string, TSESTree.Program>;
 tsFiles.forEach((filePath) => {
-    const preProcessor = new Preprocessor(filePath);
-    preProcessor.preprocessFile();
+    const ast =  parseTypeScriptFile(filePath);
+    if (ast) {
+        astMap.set(filePath, ast);
+    }
+});
+
+// preprocess each file
+Array.from(astMap.keys()).forEach((filePath: string) => {
+    const ast = astMap.get(filePath);
+    if (ast) {
+        const preProcessor = new Preprocessor(ast);
+        preProcessor.preprocessFile();
+    }
 });
 
 // postprocess each file
-tsFiles.forEach((filePath) => {
-    const postProcessor = new Postprocessor(filePath);
-    postProcessor.extractRestCalls();
+Array.from(astMap.keys()).forEach((filePath) => {
+    const ast = astMap.get(filePath);
+    if (ast) {
+        const postProcessor = new Postprocessor(filePath, ast);
+        postProcessor.extractRestCallsFromProgram();
+    }
 });
 
 try {
