@@ -102,15 +102,16 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         List<User> expected = userRepository
                 .saveAll(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(), 1, 3));
         // Should not find administrators
-        userRepository.saveAll(
+        List<User> unexpected = userRepository.saveAll(
                 userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.ADMIN_AUTHORITY), 4, 4));
         // Should not find deleted users
         List<User> deleted = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(), 5, 6);
         deleted.forEach(user -> user.setDeleted(true));
-        userRepository.saveAll(deleted);
+        unexpected.addAll(userRepository.saveAll(deleted));
 
         final List<String> actual = userRepository.findAllNotEnrolledUsers();
 
-        assertThat(actual).isEqualTo(expected.stream().map(User::getLogin).toList());
+        assertThat(actual).doesNotContainAnyElementsOf(unexpected.stream().map(User::getLogin).toList());
+        assertThat(actual).containsAll(expected.stream().map(User::getLogin).toList());
     }
 }
