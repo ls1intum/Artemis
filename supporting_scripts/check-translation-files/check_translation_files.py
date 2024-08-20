@@ -48,10 +48,10 @@ def check_if_file_exists_for_all_languages(translation_files):
 
     for language, files in missing_files.items():
         if len(files) > 0:
-            logging.error(f'Missing translation files for {language}: {files}')
+            logging.error(f'Missing translation files for "{language}": {files}')
             passed = False
         else:
-            logging.info(f'All translation files for {language} exist')
+            logging.info(f'All translation files for "{language}" exist')
 
     if not passed:
         sys.exit(1)
@@ -113,12 +113,12 @@ def check_consistency_of_translation_for_file(translation_data, file):
         keys = get_keys(translation_data[language][file])
         for key in all_keys:
             if key not in keys:
-                logging.error(f'Missing key {key} in {language} translation file {file}')
+                logging.error(f'Missing key "{key}" in "{language}" translation file "{file}"')
                 passed = False
         if len(keys) != len(all_keys):
             for key in keys:
                 if key not in all_keys:
-                    logging.error(f'Extra key {key} in {language} translation file {file}')
+                    logging.error(f'Extra key "{key}" in "{language}" translation file "{file}"')
                     passed = False
 
     return passed
@@ -145,7 +145,7 @@ def check_duplicate_values_for_file(translation_data, language, file):
         value = get_value(translation_data, language, file, key)
         if value in values:
             logging.error(
-                f'Duplicate value {value} for key {key} and {values[value]} in {language} translation file {file}')
+                f'Duplicate value "{value}" for key "{key}" and "{values[value]}" in "{language}" translation file "{file}"')
             passed = False
         values[value] = key
     return passed
@@ -167,7 +167,7 @@ def check_duplicate_values_for_files(translation_data, language, file1, file2):
     for value in value_to_key_map1.keys():
         if value in value_to_key_map2:
             logging.error(
-                f'Duplicate value {value} for keys {value_to_key_map1[value]} and {value_to_key_map2[value]} in {language} translation files {file1} and {file2}')
+                f'Duplicate value "{value}" for keys "{value_to_key_map1[value]}" and "{value_to_key_map2[value]}" in "{language}" translation files "{file1}" and "{file2}"')
             passed = False
     return passed
 
@@ -189,7 +189,7 @@ def check_duplicate_values(translation_data):
     logging.info('Checking for duplicate values in translation files')
     passed = True
     for language in languages:
-        check_duplicate_values_for_language(translation_data, language);
+        check_duplicate_values_for_language(translation_data, language)
 
     if not passed:
         sys.exit(1)
