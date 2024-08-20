@@ -800,7 +800,7 @@ public class SubmissionService {
      * @param complaint the complaint which gets prepared
      */
     private void prepareComplaintAndSubmission(Complaint complaint, Submission submission) {
-        StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+        StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
         studentParticipation.setParticipant(null);
         studentParticipation.setExercise(null);
         complaint.setParticipant(null);

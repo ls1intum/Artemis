@@ -84,9 +84,9 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 LEFT JOIN FETCH c.result r
                 LEFT JOIN FETCH r.assessor
-                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH s.participation p
                 LEFT JOIN FETCH p.exercise e
-                LEFT JOIN FETCH r.submission
             WHERE e.id = :exerciseId
                 AND c.complaintType = :complaintType
             """)
@@ -105,7 +105,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT
                 AND c.student.id = :studentId
-                AND c.result.participation.exercise.course.id = :courseId
+                AND c.result.submission.participation.exercise.course.id = :courseId
                 AND (c.accepted = FALSE OR c.accepted IS NULL)
             """)
     long countUnacceptedComplaintsByStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
@@ -123,7 +123,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT
                 AND c.team.shortName = :teamShortName
-                AND c.result.participation.exercise.course.id = :courseId
+                AND c.result.submission.participation.exercise.course.id = :courseId
                 AND (c.accepted = FALSE OR c.accepted IS NULL)
             """)
     long countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(@Param("teamShortName") String teamShortName, @Param("courseId") Long courseId);
@@ -138,7 +138,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     @Query("""
             SELECT COUNT(c)
             FROM Complaint c
-            WHERE c.result.participation.exercise.id = :exerciseId
+            WHERE c.result.submission.participation.exercise.id = :exerciseId
                 AND c.complaintType = :complaintType
             """)
     long countComplaintsByExerciseIdAndComplaintType(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
@@ -152,13 +152,13 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                c.result.participation.exercise.id,
+                c.result.submission.participation.exercise.id,
                 COUNT(DISTINCT c)
             )
             FROM Complaint c
-            WHERE c.result.participation.exercise.id IN :exerciseIds
+            WHERE c.result.submission.participation.exercise.id IN :exerciseIds
                 AND c.complaintType = :complaintType
-            GROUP BY c.result.participation.exercise.id
+            GROUP BY c.result.submission.participation.exercise.id
             """)
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
@@ -171,14 +171,14 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                c.result.participation.exercise.id,
+                c.result.submission.participation.exercise.id,
                 COUNT(DISTINCT c)
             )
             FROM Complaint c
-            WHERE c.result.participation.exercise.id IN :exerciseIds
+            WHERE c.result.submission.participation.exercise.id IN :exerciseIds
                 AND c.complaintType = :complaintType
-                AND c.result.participation.testRun = FALSE
-            GROUP BY c.result.participation.exercise.id
+                AND c.result.submission.participation.testRun = FALSE
+            GROUP BY c.result.submission.participation.exercise.id
             """)
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
             @Param("complaintType") ComplaintType complaintType);
@@ -195,8 +195,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             SELECT COUNT(c)
             FROM Complaint c
             WHERE c.complaintType = :complaintType
-                AND c.result.participation.testRun = FALSE
-                AND c.result.participation.exercise.id = :exerciseId
+                AND c.result.submission.participation.testRun = FALSE
+                AND c.result.submission.participation.exercise.id = :exerciseId
             """)
     long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
 
@@ -215,7 +215,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param assessorId - the id of the assessor
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
     List<Complaint> getAllByResult_Assessor_Id(Long assessorId);
 
     /**
@@ -224,7 +224,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param exerciseId - the id of the exercise
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
     List<Complaint> getAllByResult_Participation_Exercise_Id(Long exerciseId);
 
     /**
@@ -233,7 +233,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param courseId - the id of the course
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
     List<Complaint> getAllByResult_Participation_Exercise_Course_Id(Long courseId);
 
     /**
@@ -242,7 +242,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param examId - the id of the course
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
     List<Complaint> getAllByResult_Participation_Exercise_ExerciseGroup_Exam_Id(Long examId);
 
     /**
@@ -252,7 +252,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param exerciseId - the id of the exercise
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
     List<Complaint> getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(Long assessorId, Long exerciseId);
 
     /**
@@ -262,7 +262,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param courseId   - the id of the course
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
     List<Complaint> getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(Long assessorId, Long courseId);
 
     // Valid JPQL syntax. Only SCA fails to properly detect the types.
@@ -281,7 +281,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT
                 AND e.course.id = :courseId
@@ -307,7 +308,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT
                 AND e.id = :exerciseId
@@ -333,7 +335,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN e.exerciseGroup eg
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT
@@ -359,7 +362,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT
                 AND e.course.id = :courseId
@@ -384,7 +388,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT
                 AND e.id = :exerciseId
@@ -409,7 +414,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN e.exerciseGroup eg
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT
@@ -436,7 +442,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK
                 AND e.course.id = :courseId
@@ -461,7 +468,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE
                 c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK
@@ -486,7 +494,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK
                 AND e.course.id = :courseId
@@ -511,7 +520,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK
                 AND e.id = :exerciseId

@@ -55,7 +55,7 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
     @Query("""
             SELECT COUNT (DISTINCT cr)
             FROM ComplaintResponse cr
-            WHERE cr.complaint.result.participation.exercise.id = :exerciseId
+            WHERE cr.complaint.result.submission.participation.exercise.id = :exerciseId
                 AND cr.complaint.complaintType = :complaintType
                 AND cr.submittedTime IS NOT NULL
             """)
@@ -70,15 +70,15 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                cr.complaint.result.participation.exercise.id,
+                cr.complaint.result.submission.participation.exercise.id,
                 COUNT(DISTINCT cr)
             )
             FROM ComplaintResponse cr
-            WHERE cr.complaint.result.participation.exercise.id IN :exerciseIds
+            WHERE cr.complaint.result.submission.participation.exercise.id IN :exerciseIds
                 AND cr.submittedTime IS NOT NULL
                 AND cr.complaint.complaintType = :complaintType
-                AND cr.complaint.result.participation.testRun = FALSE
-            GROUP BY cr.complaint.result.participation.exercise.id
+                AND cr.complaint.result.submission.participation.testRun = FALSE
+            GROUP BY cr.complaint.result.submission.participation.exercise.id
             """)
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
             @Param("complaintType") ComplaintType complaintType);
@@ -92,14 +92,14 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                cr.complaint.result.participation.exercise.id,
+                cr.complaint.result.submission.participation.exercise.id,
                 COUNT(DISTINCT cr)
             )
             FROM ComplaintResponse cr
-            WHERE cr.complaint.result.participation.exercise.id IN :exerciseIds
+            WHERE cr.complaint.result.submission.participation.exercise.id IN :exerciseIds
                 AND cr.submittedTime IS NOT NULL
                 AND cr.complaint.complaintType = :complaintType
-            GROUP BY cr.complaint.result.participation.exercise.id
+            GROUP BY cr.complaint.result.submission.participation.exercise.id
             """)
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 

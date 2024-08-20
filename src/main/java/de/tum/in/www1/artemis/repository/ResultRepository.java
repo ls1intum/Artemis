@@ -68,11 +68,13 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT DISTINCT r
             FROM Result r
-                LEFT JOIN TREAT (r.participation AS ProgrammingExerciseStudentParticipation) sp
+                LEFT JOIN r.submission s
+                LEFT JOIN TREAT (s.participation AS ProgrammingExerciseStudentParticipation) sp
             WHERE r.completionDate = (
                     SELECT MAX(rr.completionDate)
                     FROM Result rr
-                        LEFT JOIN TREAT (rr.participation AS ProgrammingExerciseStudentParticipation) sp2
+                    LEFT JOIN rr.submission ss
+                        LEFT JOIN TREAT (ss.participation AS ProgrammingExerciseStudentParticipation) sp2
                     WHERE rr.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
                         AND sp2.exercise.id = :exerciseId
                         AND sp2.student = sp.student
@@ -240,7 +242,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount(r.rated, COUNT(r))
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
             WHERE r.completionDate IS NOT NULL
                 AND r.assessor IS NOT NULL
                 AND p.exercise.id IN :exerciseIds
@@ -259,7 +262,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             FROM Result r
                 LEFT JOIN FETCH r.submission
                 LEFT JOIN FETCH r.feedbacks
-                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH s.participation p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE r.id = :resultId
@@ -611,7 +615,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN r.assessor a
                 LEFT JOIN FETCH Rating rating ON rating.result = r
@@ -634,7 +639,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN r.assessor a
                 LEFT JOIN FETCH Rating rating ON rating.result = r
@@ -654,7 +660,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN e.exerciseGroup eg
                 JOIN eg.exam ex

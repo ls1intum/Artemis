@@ -60,7 +60,7 @@ public class LongFeedbackTextResource {
             throw new BadRequestAlertException("resultId of the path does not correspond to feedbackId", "result", "invalidResultId");
         }
 
-        final Participation participation = result.getParticipation();
+        final Participation participation = result.getSubmission().getParticipation();
         participationAuthorizationCheckService.checkCanAccessParticipationElseThrow(participation);
     }
 }

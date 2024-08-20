@@ -153,12 +153,13 @@ public class ResultService {
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
+            var participation = savedResult.getSubmission().getParticipation();
 
-            if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiNewResultService.isPresent()) {
-                ltiNewResultService.get().onNewResult((StudentParticipation) savedResult.getParticipation());
+            if (participation instanceof ProgrammingExerciseStudentParticipation && ltiNewResultService.isPresent()) {
+                ltiNewResultService.get().onNewResult((StudentParticipation) participation);
             }
 
-            resultWebsocketService.broadcastNewResult(savedResult.getParticipation(), savedResult);
+            resultWebsocketService.broadcastNewResult(participation, savedResult);
         }
         return savedResult;
     }
