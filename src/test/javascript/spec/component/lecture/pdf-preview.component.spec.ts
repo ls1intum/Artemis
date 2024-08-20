@@ -29,7 +29,7 @@ function createMouseEvent(target: Element): MouseEvent {
     });
 }
 
-function createMockEvent(target: Element, eventType: string = 'click'): MouseEvent {
+function createMockEvent(target: Element, eventType = 'click'): MouseEvent {
     const event = new MouseEvent(eventType, {
         view: window,
         bubbles: true,
