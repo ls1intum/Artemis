@@ -13,7 +13,7 @@
                 "delete": {
                     "cancel": "No not enrolled users found to delete.",
                     "caption": "Delete not enrolled users",
-                    "question": "Are you sure you want to permanently delete this users? <br> {{ users }} <br> This are <strong>{{ title }}</strong> users! This action can NOT be undone!"
+                    "question": "Are you sure you want to permanently delete this users? <br> {{ users }} <br> These are <strong>{{ title }}</strong> users! This action can NOT be undone!"
                 }
             },
             "filter": {
