@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -11,6 +11,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subscription } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -20,6 +21,8 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -49,11 +52,15 @@ type CompetencyGenerationStatusUpdate = {
     standalone: true,
     imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
 })
-export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
+export class GenerateCompetenciesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    @ViewChild(CourseDescriptionFormComponent) courseDescriptionForm: CourseDescriptionFormComponent;
+
     courseId: number;
     isLoading = false;
     submitted: boolean = false;
     form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
+
+    private courseSub?: Subscription;
 
     //Icons
     protected readonly faTimes = faTimes;
@@ -65,6 +72,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     readonly documentationType: DocumentationType = 'GenerateCompetencies';
 
     constructor(
+        private courseManagementService: CourseManagementService,
         private courseCompetencyService: CourseCompetencyService,
         private competencyService: CompetencyService,
         private alertService: AlertService,
@@ -80,7 +88,20 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
+            this.courseSub = this.courseManagementService.find(this.courseId).subscribe({
+                next: (course) => {
+                    const courseDescription = course.body!.description ?? '';
+                    this.courseDescriptionForm.setCourseDescription(courseDescription);
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
         });
+    }
+
+    ngOnDestroy(): void {
+        if (this.courseSub) {
+            this.courseSub.unsubscribe();
+        }
     }
 
     /**
