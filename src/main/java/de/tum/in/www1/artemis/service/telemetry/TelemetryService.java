@@ -66,6 +66,11 @@ public class TelemetryService {
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Sends telemetry to the server specified in artemis.telemetry.destination.
+     * This function runs once, at the startup of the application.
+     * If telemetry is disabled in artemis.telemetry.enabled, no data is sent.
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
         if (!useTelemetry) {
@@ -85,6 +90,11 @@ public class TelemetryService {
 
     }
 
+    /**
+     * Assembles the telemetry data, and sends it to the external telemetry server.
+     *
+     * @throws Exception if the writing the telemetry data to a json format fails, or the connection to the telemetry server fails
+     */
     public void sendTelemetryByPostRequest() throws Exception {
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         TelemetryData telemetryData;
