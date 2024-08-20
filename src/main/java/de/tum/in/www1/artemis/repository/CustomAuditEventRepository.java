@@ -20,7 +20,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.audit.AuditEventConverter;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
-import de.tum.in.www1.artemis.service.ProfileService;
 
 /**
  * An implementation of Spring Boot's {@link AuditEventRepository}.
@@ -29,7 +28,7 @@ import de.tum.in.www1.artemis.service.ProfileService;
 @Repository
 public class CustomAuditEventRepository implements AuditEventRepository {
 
-    private final Environment environment;
+    private final boolean isSaml2Active;
 
     private static final String AUTHENTICATION_SUCCESS = "AUTHENTICATION_SUCCESS";
 
@@ -46,11 +45,10 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private static final Logger log = LoggerFactory.getLogger(CustomAuditEventRepository.class);
 
-    public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter,
-            ProfileService profileService) {
+    public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
-        this.environment = environment;
+        this.isSaml2Active = Set.of(environment.getActiveProfiles()).contains(Constants.PROFILE_SAML2);
     }
 
     @Override
@@ -62,7 +60,7 @@ public class CustomAuditEventRepository implements AuditEventRepository {
     @Override
     public void add(AuditEvent event) {
         if (!AUTHORIZATION_FAILURE.equals(event.getType())) {
-            if (isSaml2Active() && AUTHENTICATION_SUCCESS.equals(event.getType()) && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (isSaml2Active && AUTHENTICATION_SUCCESS.equals(event.getType()) && SecurityContextHolder.getContext().getAuthentication() == null) {
                 // If authentication is null, Auth is success, and SAML2 profile is active => SAML2 authentication is running.
                 // Logging is handled manually.
                 return;
@@ -76,10 +74,6 @@ public class CustomAuditEventRepository implements AuditEventRepository {
             persistentAuditEvent.setData(truncate(eventData));
             persistenceAuditEventRepository.save(persistentAuditEvent);
         }
-    }
-
-    private boolean isSaml2Active() {
-        return Set.of(this.environment.getActiveProfiles()).contains(Constants.PROFILE_SAML2);
     }
 
     /**
