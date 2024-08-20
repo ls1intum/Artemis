@@ -115,9 +115,10 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
         Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLatestResult(), fileUploadExercise, assessmentUpdate);
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
+        if (result.getSubmission() != null && result.getSubmission().getParticipation() != null
+                && result.getSubmission().getParticipation() instanceof StudentParticipation studentParticip
                 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
-            ((StudentParticipation) result.getParticipation()).setParticipant(null);
+            studentParticip.setParticipant(null);
         }
 
         return ResponseEntity.ok(result);

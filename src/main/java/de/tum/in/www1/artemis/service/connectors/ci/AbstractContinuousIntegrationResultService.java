@@ -65,7 +65,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
      */
     private void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
         final var jobs = buildResult.getBuildJobs();
-        final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
+        final var programmingExercise = (ProgrammingExercise) result.getSubmission().getParticipation().getExercise();
 
         // 1) add feedback for failed and passed test cases
         addTestCaseFeedbacksToResult(result, jobs, programmingExercise);

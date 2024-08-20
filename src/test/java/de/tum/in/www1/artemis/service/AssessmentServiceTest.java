@@ -250,7 +250,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         if (isDueDateIndividual) {
             // participation has exact same individual due date as submission time, submission should still be rated
-            Participation participation = result.getParticipation();
+            Participation participation = result.getSubmission().getParticipation();
             participation.setIndividualDueDate(submissionWithoutResult.getSubmissionDate());
             result.setParticipation(participationRepository.save(participation));
 

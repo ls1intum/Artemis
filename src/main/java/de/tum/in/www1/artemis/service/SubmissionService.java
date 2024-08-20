@@ -498,9 +498,6 @@ public class SubmissionService {
      */
     public Result saveNewResult(Submission submission, final Result result) {
         result.setSubmission(null);
-        if (result.getParticipation() == null) {
-            result.setParticipation(submission.getParticipation());
-        }
         var savedResult = resultRepository.save(result);
         savedResult.setSubmission(submission);
         submission.addResult(savedResult);

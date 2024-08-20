@@ -383,7 +383,7 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.setPassedTestCaseCount(newAutomaticResult.getPassedTestCaseCount());
         latestSemiAutomaticResult.setCodeIssueCount(newAutomaticResult.getCodeIssueCount());
 
-        Exercise exercise = latestSemiAutomaticResult.getParticipation().getExercise();
+        Exercise exercise = latestSemiAutomaticResult.getSubmission().getParticipation().getExercise();
         latestSemiAutomaticResult.setScore(latestSemiAutomaticResult.calculateTotalPointsForProgrammingExercises(), exercise.getMaxPoints(),
                 exercise.getCourseViaExerciseGroupOrCourseMember());
 
@@ -578,7 +578,7 @@ public class ProgrammingExerciseGradingService {
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
     private Set<ProgrammingExerciseTestCase> filterRelevantTestCasesForStudent(Set<ProgrammingExerciseTestCase> testCases, Result result) {
-        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(result.getParticipation());
+        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(result.getSubmission().getParticipation());
 
         return filterTestCasesForStudents(testCases, isBeforeDueDate);
     }
@@ -615,7 +615,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         public Participation participation() {
-            return result.getParticipation();
+            return result.getSubmission().getParticipation();
         }
     }
 

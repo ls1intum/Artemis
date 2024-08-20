@@ -172,7 +172,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(updatedResult.getScore()).isEqualTo(80);
-        assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(((StudentParticipation) updatedResult.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
 
         // Check that result and submission are properly connected
         var submissionFromDb = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(programmingSubmission.getId());
@@ -311,7 +311,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
 
-        assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
+        assertThat(response.getSubmission().getParticipation()).isEqualTo(manualResult.getSubmission().getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
     }
 
@@ -322,7 +322,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
                 Result.class, HttpStatus.OK);
 
         assertThat(response.getSubmission()).isNotNull();
-        assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
+        assertThat(response.getSubmission().getParticipation()).isEqualTo(manualResult.getSubmission().getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
         assertThat(response.isRated()).isEqualTo(Boolean.TRUE);
         var now = ZonedDateTime.now();
@@ -343,7 +343,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(10.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        manualResult.getParticipation().setExercise(programmingExercise);
+        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
 
         // setting up student submission
         List<Feedback> feedbacks = new ArrayList<>();
@@ -366,7 +366,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        manualResult.getParticipation().setExercise(programmingExercise);
+        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
         setupStudentSubmissions();
 
     }
@@ -390,7 +390,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        manualResult.getParticipation().setExercise(programmingExercise);
+        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
 
         // setting up student submission
         setupStudentSubmissions();
@@ -404,7 +404,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        manualResult.getParticipation().setExercise(programmingExercise);
+        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
 
         // setting up student submission
         setupStudentSubmissions();
@@ -539,7 +539,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
         Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(2);
-        assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
+        assertThat(response.getSubmission().getParticipation()).isEqualTo(manualResult.getSubmission().getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
 
         // Submission in response is lazy loaded therefore, we fetch submission and check if relation is correct
@@ -564,7 +564,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
-        assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
+        assertThat(response.getSubmission().getParticipation()).isEqualTo(manualResult.getSubmission().getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
     }
 
@@ -696,7 +696,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         User user = userRepository.getUser();
         manualResult.setAssessor(user);
 
-        manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
+        manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getSubmission().getParticipation().getId() + "/manual-results", manualResult, Result.class,
+                HttpStatus.OK);
         manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(manualResult.getId());
         assessmentNote = manualResult.getAssessmentNote();
         assertThat(assessmentNote.getCreatedDate()).isNotNull();
@@ -832,7 +833,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         // verify that the result contains the relationship
         assertThat(firstSubmittedManualResult).isNotNull();
         assertThat(firstSubmittedManualResult.getSubmission()).isEqualTo(submissionWithoutFirstAssessment);
-        assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
+        assertThat(firstSubmittedManualResult.getSubmission().getParticipation()).isEqualTo(studentParticipation);
 
         // verify that the relationship between student participation,
         var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
@@ -1025,7 +1026,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         params.add("submit", "true");
         var response = request.putWithResponseBodyAndParams("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK, params);
 
-        var responseParticipation = (ProgrammingExerciseStudentParticipation) response.getParticipation();
+        var responseParticipation = (ProgrammingExerciseStudentParticipation) response.getSubmission().getParticipation();
         assertThat(responseParticipation.getIndividualDueDate()).isNull();
         assertThat(responseParticipation.isLocked()).isFalse();
 

@@ -304,7 +304,8 @@ public class SubmissionPolicyService {
         if (submissions == allowedSubmissions) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository
                     .findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(lockRepositoryPolicy.getProgrammingExercise().getId());
-            programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) result.getParticipation());
+            programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise,
+                    (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation());
         }
         // This is the fallback behavior in case the VCS does not lock the repository for whatever reason when the
         // submission limit is reached.
@@ -372,7 +373,7 @@ public class SubmissionPolicyService {
      */
     public void createFeedbackForPenaltyPolicy(Result result, SubmissionPenaltyPolicy penaltyPolicy) {
         if (penaltyPolicy != null && penaltyPolicy.isActive()) {
-            int presentSubmissions = getParticipationSubmissionCount(result.getParticipation());
+            int presentSubmissions = getParticipationSubmissionCount(result.getSubmission().getParticipation());
             int illegalSubmissionCount = presentSubmissions - penaltyPolicy.getSubmissionLimit();
             if (illegalSubmissionCount > 0) {
                 double deduction = illegalSubmissionCount * penaltyPolicy.getExceedingPenalty();

@@ -171,7 +171,7 @@ public class QuizSubmissionResource {
 
         quizExercise.setQuizPointStatistic(null);
 
-        resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
+        resultWebsocketService.broadcastNewResult(result.getSubmission().getParticipation(), result);
 
         quizExercise.setCourse(null);
         // return result with quizSubmission, participation and quiz exercise (including the solution)

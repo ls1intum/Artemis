@@ -478,9 +478,8 @@ public class TeamResource {
             submissionService.reduceParticipationSubmissionsToLatest(participations, false);
         }
         else {
-            // for other tutors and for students: submissions not needed, hide results
+            // for other tutors and for students: submissions not needed, results are lazy and hence hidden
             participations = studentParticipationRepository.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
-            participations.forEach(participation -> participation.setResults(null));
         }
 
         // Set the submission count for all participations

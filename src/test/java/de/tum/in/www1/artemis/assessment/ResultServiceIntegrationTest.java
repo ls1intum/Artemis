@@ -186,8 +186,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         // Set programming exercise due date in future.
         exerciseUtilService.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
 
-        List<Feedback> feedbacks = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
-                Feedback.class);
+        List<Feedback> feedbacks = request.getList("/api/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details",
+                HttpStatus.OK, Feedback.class);
 
         assertThat(feedbacks).isEqualTo(result.getFeedbacks());
     }
@@ -198,7 +198,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
         result = participationUtilService.addSampleFeedbackToResults(result);
 
-        request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
+        request.getList("/api/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
+                Feedback.class);
     }
 
     @Test
@@ -206,7 +207,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_studentForbidden() throws Exception {
         Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
         result = participationUtilService.addSampleFeedbackToResults(result);
-        request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
+        request.getList("/api/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
+                Feedback.class);
     }
 
     @Test
@@ -214,8 +216,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void shouldReturnNotFoundForNonExistingResult() throws Exception {
         Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
         participationUtilService.addSampleFeedbackToResults(result);
-        request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + UUID.randomUUID().getMostSignificantBits() + "/details", HttpStatus.NOT_FOUND,
-                Feedback.class);
+        request.getList("/api/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + UUID.randomUUID().getMostSignificantBits() + "/details",
+                HttpStatus.NOT_FOUND, Feedback.class);
     }
 
     @Test

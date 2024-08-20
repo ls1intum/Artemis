@@ -1035,7 +1035,7 @@ public class CourseTestService {
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
         resultRepo.save(gradedResult);
-        StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getParticipation();
+        StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getSubmission().getParticipation();
         gradedParticipation.setInitializationState(InitializationState.FINISHED);
         participationRepository.save(gradedParticipation);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");

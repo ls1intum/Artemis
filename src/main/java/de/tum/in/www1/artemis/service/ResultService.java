@@ -247,7 +247,7 @@ public class ResultService {
      * @return the list of filtered feedbacks
      */
     public List<Feedback> filterFeedbackForClient(Result result) {
-        this.filterSensitiveInformationIfNecessary(result.getParticipation(), result);
+        this.filterSensitiveInformationIfNecessary(result.getSubmission().getParticipation(), result);
 
         return result.getFeedbacks().stream() //
                 .map(feedback -> feedback.result(null)) // remove unnecessary data to keep the json payload smaller
@@ -403,13 +403,6 @@ public class ResultService {
             results.removeIf(result -> result.getSubmission() == null || !result.getSubmission().isSubmitted());
         }
 
-        // remove unnecessary elements in the json response
-        results.forEach(result -> {
-            result.getParticipation().setResults(null);
-            result.getParticipation().setSubmissions(null);
-            result.getParticipation().setExercise(null);
-        });
-
         return results;
     }
 
@@ -423,7 +416,7 @@ public class ResultService {
      */
     public Result getResultForParticipationAndCheckAccess(Long participationId, Long resultId, Role role) {
         Result result = resultRepository.findByIdElseThrow(resultId);
-        Participation participation = result.getParticipation();
+        Participation participation = result.getSubmission().getParticipation();
         if (!participation.getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + "!",
                     "Participation", "400");

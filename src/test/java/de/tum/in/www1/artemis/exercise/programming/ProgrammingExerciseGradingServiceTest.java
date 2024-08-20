@@ -580,7 +580,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
         // Set programming exercise due date in the past.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().minusHours(10));
-        result.getParticipation().setExercise(programmingExercise);
+        result.getSubmission().getParticipation().setExercise(programmingExercise);
 
         var tests = getTestCases(programmingExercise);
         List<Feedback> feedbacks = new ArrayList<>();
@@ -755,7 +755,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         // four student results + template + solution
         assertThat(updated).hasSize(6);
 
-        final var updatedParticipationIds = updated.stream().map(result -> result.getParticipation().getId()).collect(Collectors.toSet());
+        final var updatedParticipationIds = updated.stream().map(result -> result.getSubmission().getParticipation().getId()).collect(Collectors.toSet());
         assertThat(updatedParticipationIds).hasSize(5).allMatch(participationId -> !Objects.equals(participationId, participationWithIndividualDueDateId));
     }
 
@@ -781,11 +781,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // even though the test case weights are all zero, the solution should receive a score
         // => every test case is weighted with 1.0 in that case
-        final var updatedSolution = updatedResults.stream().filter(result -> result.getParticipation() instanceof SolutionProgrammingExerciseParticipation).findFirst()
-                .orElseThrow();
+        final var updatedSolution = updatedResults.stream().filter(result -> result.getSubmission().getParticipation() instanceof SolutionProgrammingExerciseParticipation)
+                .findFirst().orElseThrow();
         assertThat(updatedSolution.getScore()).isCloseTo(66.7, Offset.offset(offsetByTenThousandth));
 
-        final var updatedStudentResults = updatedResults.stream().filter(result -> result.getParticipation() instanceof StudentParticipation).toList();
+        final var updatedStudentResults = updatedResults.stream().filter(result -> result.getSubmission().getParticipation() instanceof StudentParticipation).toList();
         assertThat(updatedStudentResults).hasSize(5);
 
         for (final var result : updatedStudentResults) {
@@ -1455,7 +1455,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         assertThat(result.getFeedbacks()).hasSize(feedbackSize);
         assertThat(result.getAssessmentType()).isEqualTo(assessmentType);
 
-        Exercise exercise = result.getParticipation().getExercise();
+        Exercise exercise = result.getSubmission().getParticipation().getExercise();
         double calculatedScore = result.calculateTotalPointsForProgrammingExercises() / exercise.getMaxPoints() * 100.;
         calculatedScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculatedScore, exercise.getCourseViaExerciseGroupOrCourseMember());
         assertThat(calculatedScore).isEqualTo(score);

@@ -874,7 +874,8 @@ public class ParticipationUtilService {
             VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
         String templateRepoName;
         if (useGradedParticipationOfResult) {
-            templateRepoName = uriService.getRepositorySlugFromRepositoryUri(((ProgrammingExerciseStudentParticipation) gradedResult.getParticipation()).getVcsRepositoryUri());
+            templateRepoName = uriService
+                    .getRepositorySlugFromRepositoryUri(((ProgrammingExerciseStudentParticipation) gradedResult.getSubmission().getParticipation()).getVcsRepositoryUri());
         }
         else {
             templateRepoName = uriService.getRepositorySlugFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri());

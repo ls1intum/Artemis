@@ -301,7 +301,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
-        assertThat(storedResult.getParticipation()).isNotNull();
+        assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
     }
 
     @Test
@@ -330,7 +330,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
-        assertThat(storedResult.getParticipation()).isNotNull();
+        assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
 
         Course course = request.get("/api/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
         Exercise exercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
@@ -352,7 +352,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
-        assertThat(storedResult.getParticipation()).isNotNull();
+        assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
     }
 
     @Test
@@ -385,7 +385,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
-        assertThat(storedResult.getParticipation()).isNotNull();
+        assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
     }
 
     @Test
@@ -410,7 +410,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
-        assertThat(storedResult.getParticipation()).isNotNull();
+        assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1339,7 +1339,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         // verify that the result contains the relationship
         assertThat(firstSubmittedManualResult).isNotNull();
-        assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
+        assertThat(firstSubmittedManualResult.getSubmission().getParticipation()).isEqualTo(studentParticipation);
 
         // verify that the relationship between student participation,
         var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());

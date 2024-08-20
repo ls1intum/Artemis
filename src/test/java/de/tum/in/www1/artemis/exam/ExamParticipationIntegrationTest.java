@@ -1121,7 +1121,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         Team team1 = teamRepository.findById(team1Id).orElseThrow();
         var result = participationUtilService.createParticipationSubmissionAndResult(teamTextExerciseId, team1, 10.0, 10.0, 40, true);
         // Creating a second results for team1 to test handling multiple results.
-        participationUtilService.createSubmissionAndResult((StudentParticipation) result.getParticipation(), 50, true);
+        participationUtilService.createSubmissionAndResult((StudentParticipation) result.getSubmission().getParticipation(), 50, true);
 
         var student2Result = participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student2, 10.0, 10.0, 50, true);
 
@@ -1133,13 +1133,13 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         // Adding plagiarism cases
         var bonusPlagiarismCase = new PlagiarismCase();
         bonusPlagiarismCase.setStudent(student3);
-        bonusPlagiarismCase.setExercise(student3Result.getParticipation().getExercise());
+        bonusPlagiarismCase.setExercise(student3Result.getSubmission().getParticipation().getExercise());
         bonusPlagiarismCase.setVerdict(PlagiarismVerdict.PLAGIARISM);
         plagiarismCaseRepository.save(bonusPlagiarismCase);
 
         var bonusPlagiarismCase2 = new PlagiarismCase();
         bonusPlagiarismCase2.setStudent(student2);
-        bonusPlagiarismCase2.setExercise(student2Result.getParticipation().getExercise());
+        bonusPlagiarismCase2.setExercise(student2Result.getSubmission().getParticipation().getExercise());
         bonusPlagiarismCase2.setVerdict(PlagiarismVerdict.POINT_DEDUCTION);
         bonusPlagiarismCase2.setVerdictPointDeduction(50);
         plagiarismCaseRepository.save(bonusPlagiarismCase2);

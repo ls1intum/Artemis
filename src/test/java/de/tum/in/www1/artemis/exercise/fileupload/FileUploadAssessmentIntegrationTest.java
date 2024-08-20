@@ -218,7 +218,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
-        assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(((StudentParticipation) updatedResult.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(updatedResult.getFeedbacks()).hasSize(3);
     }
 
@@ -233,7 +233,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(result.isRated()).isNull();
-        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -251,7 +251,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
-        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(result.getFeedbacks()).hasSize(3);
         assertThat(result.getFeedbacks().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
@@ -490,7 +490,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
 
         // verify that the result contains the relationship
         assertThat(firstSubmittedManualResult).isNotNull();
-        assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
+        assertThat(firstSubmittedManualResult.getSubmission().getParticipation()).isEqualTo(studentParticipation);
 
         // verify that the relationship between student participation,
         var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());

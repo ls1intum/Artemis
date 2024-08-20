@@ -253,7 +253,7 @@ public class Result extends DomainObject implements Comparable<Result> {
             return;
         }
         var dueDate = optionalDueDate.get();
-        if (getParticipation().getExercise() instanceof ProgrammingExercise) {
+        if (getSubmission().getParticipation().getExercise() instanceof ProgrammingExercise) {
             dueDate = dueDate.plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS);
         }
         this.rated = !submissionDate.isAfter(dueDate);
@@ -662,7 +662,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     public Double calculateTotalPointsForProgrammingExercises() {
         double totalPoints = 0.0;
         double scoreAutomaticTests = 0.0;
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) getParticipation().getExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) getSubmission().getParticipation().getExercise();
         List<Feedback> feedbacks = getFeedbacks();
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
