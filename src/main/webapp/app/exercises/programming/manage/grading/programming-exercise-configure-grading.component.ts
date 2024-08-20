@@ -231,7 +231,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.isLoading = false;
             }
 
-            if (params['tab'] === 'test-cases' || params['tab'] === 'code-analysis' || params['tab'] === 'submission-policy' || params['tab'] === 'testcase-analysis') {
+            const gradingTabs: GradingTab[] = ['test-cases', 'code-analysis', 'submission-policy', 'testcase-analysis'];
+            if (gradingTabs.includes(params['tab'])) {
                 this.selectTab(params['tab']);
             } else {
                 this.selectTab('test-cases');

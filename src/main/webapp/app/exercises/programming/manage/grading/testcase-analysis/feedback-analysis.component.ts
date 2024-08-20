@@ -1,45 +1,48 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { FeedbackDetailsWithResultIdsDTO, SimplifiedTask, TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
+import { FeedbackAnalysisService, FeedbackDetailsWithResultIdsDTO, SimplifiedTask } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.service';
 import { Observable } from 'rxjs';
 import { concatMap, tap } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
 
-type FeedbackDetail = {
+export interface FeedbackDetail {
     count: number;
     relativeCount: number;
     detailText: string;
-    testcase: string;
+    testCaseName: string;
     task: number;
-};
+}
 
 @Component({
     selector: 'jhi-testcase-analysis',
-    templateUrl: './testcase-analysis.component.html',
+    templateUrl: './feedback-analysis.component.html',
     standalone: true,
     imports: [ArtemisSharedModule],
-    providers: [TestcaseAnalysisService],
+    providers: [FeedbackAnalysisService],
 })
-export class TestcaseAnalysisComponent implements OnInit {
+export class FeedbackAnalysisComponent implements OnInit {
     @Input() exerciseTitle?: string;
     @Input() exerciseId?: number;
     @Input() isAtLeastEditor!: undefined | boolean;
     resultIds: number[] = [];
     tasks: SimplifiedTask[] = [];
-    feedback: FeedbackDetail[] = [];
+    feedbackDetails: FeedbackDetail[] = [];
 
-    constructor(private simplifiedProgrammingExerciseTaskService: TestcaseAnalysisService) {}
+    constructor(
+        private simplifiedProgrammingExerciseTaskService: FeedbackAnalysisService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         if (this.isAtLeastEditor) {
-            this.simplifiedProgrammingExerciseTaskService.isAtLeastEditor = this.isAtLeastEditor;
             if (this.exerciseId) {
                 this.loadTasks(this.exerciseId)
                     .pipe(concatMap(() => this.loadFeedbackDetails(this.exerciseId!)))
                     .subscribe();
             }
         } else {
-            this.simplifiedProgrammingExerciseTaskService.isAtLeastEditor = false;
+            this.alertService.error('Permission Denied');
         }
     }
 
@@ -55,43 +58,43 @@ export class TestcaseAnalysisComponent implements OnInit {
         return this.simplifiedProgrammingExerciseTaskService.getFeedbackDetailsForExercise(exerciseId).pipe(
             tap((response) => {
                 this.resultIds = response.body?.resultIds || [];
-                const feedbackArray = response.body?.feedbackDetails || [];
-                this.saveFeedback(feedbackArray);
+                const feedbackDetails = response.body?.feedbackDetails || [];
+                this.saveFeedback(feedbackDetails);
             }),
         );
     }
 
-    saveFeedback(feedbackArray: { detailText: string; testCaseName: string }[]): void {
+    saveFeedback(feedbackDetails: FeedbackDetail[]): void {
         const feedbackMap: Map<string, FeedbackDetail> = new Map();
 
-        feedbackArray.forEach((feedback) => {
+        feedbackDetails.forEach((feedback) => {
             const feedbackText = feedback.detailText ?? '';
-            const testcase = feedback.testCaseName ?? '';
-            const key = `${feedbackText}_${testcase}`;
+            const testCaseName = feedback.testCaseName ?? '';
+            const key = `${feedbackText}_${testCaseName}`;
 
             const existingFeedback = feedbackMap.get(key);
             if (existingFeedback) {
                 existingFeedback.count += 1;
                 existingFeedback.relativeCount = this.getRelativeCount(existingFeedback.count);
             } else {
-                const task = this.taskIndex(testcase);
+                const task = this.taskIndex(testCaseName);
                 feedbackMap.set(key, {
                     count: 1,
                     relativeCount: this.getRelativeCount(1),
                     detailText: feedbackText,
-                    testcase: testcase,
+                    testCaseName: testCaseName,
                     task: task,
                 });
             }
         });
-        this.feedback = Array.from(feedbackMap.values()).sort((a, b) => b.count - a.count);
+        this.feedbackDetails = Array.from(feedbackMap.values()).sort((a, b) => b.count - a.count);
     }
 
     taskIndex(testCaseName: string): number {
         if (!testCaseName) {
             return 0;
         }
-        return this.tasks.findIndex((tasks) => tasks.testCases?.some((tc) => tc.testName === testCaseName)) + 1;
+        return this.tasks.findIndex((tasks) => tasks.testCases?.some((testCase) => testCase.testName === testCaseName)) + 1;
     }
 
     getRelativeCount(count: number): number {

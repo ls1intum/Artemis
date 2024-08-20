@@ -3,21 +3,22 @@ import { firstValueFrom, of, throwError } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { TestcaseAnalysisComponent } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.component';
-import { TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
+import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.component';
+import { FeedbackAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.service';
 import { HttpResponse } from '@angular/common/http';
+import { FeedbackDetail } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.component';
 
-describe('TestcaseAnalysisComponent', () => {
-    let fixture: ComponentFixture<TestcaseAnalysisComponent>;
-    let component: TestcaseAnalysisComponent;
-    let testcaseAnalysisService: TestcaseAnalysisService;
+describe('FeedbackAnalysisComponent', () => {
+    let fixture: ComponentFixture<FeedbackAnalysisComponent>;
+    let component: FeedbackAnalysisComponent;
+    let testcaseAnalysisService: FeedbackAnalysisService;
     let getSimplifiedTasksSpy: jest.SpyInstance;
     let getFeedbackDetailsSpy: jest.SpyInstance;
 
-    const feedbackMock = [
-        { detailText: 'Test feedback 1 detail', testCaseName: 'test1' },
-        { detailText: 'Test feedback 2 detail', testCaseName: 'test2' },
-        { detailText: 'Test feedback 1 detail', testCaseName: 'test1' },
+    const feedbackMock: FeedbackDetail[] = [
+        { detailText: 'Test feedback 1 detail', testCaseName: 'test1', count: 0, relativeCount: 0, task: 0 },
+        { detailText: 'Test feedback 2 detail', testCaseName: 'test2', count: 0, relativeCount: 0, task: 0 },
+        { detailText: 'Test feedback 1 detail', testCaseName: 'test1', count: 0, relativeCount: 0, task: 0 },
     ];
 
     const tasksMock = [
@@ -31,22 +32,22 @@ describe('TestcaseAnalysisComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), TestcaseAnalysisComponent],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), FeedbackAnalysisComponent],
             providers: [
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
-                TestcaseAnalysisService,
+                FeedbackAnalysisService,
             ],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(TestcaseAnalysisComponent);
+                fixture = TestBed.createComponent(FeedbackAnalysisComponent);
                 component = fixture.componentInstance;
                 component.exerciseId = 1;
 
-                testcaseAnalysisService = fixture.debugElement.injector.get(TestcaseAnalysisService);
+                testcaseAnalysisService = fixture.debugElement.injector.get(FeedbackAnalysisService);
 
                 getSimplifiedTasksSpy = jest.spyOn(testcaseAnalysisService, 'getSimplifiedTasks').mockReturnValue(of(tasksMock));
                 getFeedbackDetailsSpy = jest.spyOn(testcaseAnalysisService, 'getFeedbackDetailsForExercise').mockReturnValue(of(feedbackDetailsResponseMock));
@@ -54,9 +55,10 @@ describe('TestcaseAnalysisComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        it('should call loadTasks and loadFeedbackDetails when exerciseId is provided', () => {
+        it('should call loadTasks and loadFeedbackDetails when exerciseId is provided', async () => {
+            component.isAtLeastEditor = true;
             component.ngOnInit();
-            fixture.whenStable();
+            await fixture.whenStable();
 
             expect(getSimplifiedTasksSpy).toHaveBeenCalledWith(1);
             expect(getFeedbackDetailsSpy).toHaveBeenCalledWith(1);
@@ -71,19 +73,27 @@ describe('TestcaseAnalysisComponent', () => {
             expect(getSimplifiedTasksSpy).not.toHaveBeenCalled();
             expect(getFeedbackDetailsSpy).not.toHaveBeenCalled();
         });
+
+        it('should not call loadTasks and loadFeedbackDetails if user is not at least editor', () => {
+            component.isAtLeastEditor = false;
+            component.ngOnInit();
+
+            expect(getSimplifiedTasksSpy).not.toHaveBeenCalled();
+            expect(getFeedbackDetailsSpy).not.toHaveBeenCalled();
+        });
     });
 
     describe('loadTasks', () => {
-        it('should load tasks and update the component state', () => {
-            firstValueFrom(component.loadTasks(1));
+        it('should load tasks and update the component state', async () => {
+            await firstValueFrom(component.loadTasks(1));
             expect(component.tasks).toEqual(tasksMock);
         });
 
-        it('should handle error while loading tasks', () => {
+        it('should handle error while loading tasks', async () => {
             getSimplifiedTasksSpy.mockReturnValue(throwError(() => new Error('Error loading tasks')));
 
             try {
-                firstValueFrom(component.loadTasks(1));
+                await firstValueFrom(component.loadTasks(1));
             } catch {
                 expect(component.tasks).toEqual([]);
             }
@@ -91,19 +101,19 @@ describe('TestcaseAnalysisComponent', () => {
     });
 
     describe('loadFeedbackDetails', () => {
-        it('should load feedback details and update the component state', () => {
-            firstValueFrom(component.loadFeedbackDetails(1));
+        it('should load feedback details and update the component state', async () => {
+            await firstValueFrom(component.loadFeedbackDetails(1));
             expect(component.resultIds).toEqual([1, 2]);
-            expect(component.feedback).toHaveLength(2);
+            expect(component.feedbackDetails).toHaveLength(2);
         });
 
-        it('should handle error while loading feedback details', () => {
+        it('should handle error while loading feedback details', async () => {
             getFeedbackDetailsSpy.mockReturnValue(throwError(() => new Error('Error loading feedback details')));
 
             try {
-                firstValueFrom(component.loadFeedbackDetails(1));
+                await firstValueFrom(component.loadFeedbackDetails(1));
             } catch {
-                expect(component.feedback).toEqual([]);
+                expect(component.feedbackDetails).toEqual([]);
                 expect(component.resultIds).toEqual([]);
             }
         });
@@ -113,9 +123,9 @@ describe('TestcaseAnalysisComponent', () => {
         it('should save feedbacks and sort them by count', () => {
             component.saveFeedback(feedbackMock);
 
-            expect(component.feedback).toHaveLength(2);
-            expect(component.feedback[0].count).toBe(2);
-            expect(component.feedback[1].count).toBe(1);
+            expect(component.feedbackDetails).toHaveLength(2);
+            expect(component.feedbackDetails[0].count).toBe(2);
+            expect(component.feedbackDetails[1].count).toBe(1);
         });
     });
 
@@ -133,7 +143,7 @@ describe('TestcaseAnalysisComponent', () => {
             expect(nonExistingIndex).toBe(0);
         });
 
-        it('should return -1 if testCaseName is not provided', () => {
+        it('should return 0 if testCaseName is not provided', () => {
             const index = component.taskIndex('');
             expect(index).toBe(0);
         });

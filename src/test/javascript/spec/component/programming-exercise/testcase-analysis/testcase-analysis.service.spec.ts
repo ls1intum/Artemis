@@ -1,16 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { FeedbackDetailsWithResultIdsDTO, SimplifiedTask, TestcaseAnalysisService } from 'app/exercises/programming/manage/grading/testcase-analysis/testcase-analysis.service';
+import { FeedbackAnalysisService, FeedbackDetailsWithResultIdsDTO, SimplifiedTask } from 'app/exercises/programming/manage/grading/testcase-analysis/feedback-analysis.service';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 
-describe('TestcaseAnalysisService', () => {
-    let service: TestcaseAnalysisService;
+describe('FeedbackAnalysisService', () => {
+    let service: FeedbackAnalysisService;
     let httpMock: HttpTestingController;
 
     const feedbackDetailsMock: FeedbackDetailsWithResultIdsDTO = {
         feedbackDetails: [
-            { detailText: 'Feedback 1', testCaseName: 'test1' },
-            { detailText: 'Feedback 2', testCaseName: 'test2' },
+            { detailText: 'Feedback 1', testCaseName: 'test1', count: 0, relativeCount: 0, task: 0 },
+            { detailText: 'Feedback 2', testCaseName: 'test2', count: 0, relativeCount: 0, task: 0 },
         ],
         resultIds: [1, 2],
     };
@@ -23,10 +23,10 @@ describe('TestcaseAnalysisService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [TestcaseAnalysisService],
+            providers: [FeedbackAnalysisService],
         });
 
-        service = TestBed.inject(TestcaseAnalysisService);
+        service = TestBed.inject(FeedbackAnalysisService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 

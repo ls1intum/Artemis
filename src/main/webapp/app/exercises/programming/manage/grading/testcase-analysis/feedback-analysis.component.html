@@ -11,17 +11,17 @@
             </tr>
         </thead>
         <tbody class="table-group-divider">
-            @for (item of feedback; track item) {
+            @for (item of feedbackDetails; track item) {
                 <tr>
                     <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
                     <td>{{ item.detailText }}</td>
                     <td class="text-center">{{ item.task }}</td>
-                    <td>{{ item.testcase }}</td>
+                    <td>{{ item.testCaseName }}</td>
                     <td>Student Error</td>
                     <!-- This is a placeholder, will be covered in follow up PRs -->
                 </tr>
             }
         </tbody>
     </table>
-    <div jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.totalItems" [translateValues]="{ count: feedback.length }"></div>
+    <div jhiTranslate="artemisApp.programmingExercise.configureGrading.testAnalysis.totalItems" [translateValues]="{ count: feedbackDetails.length }"></div>
 </div>

@@ -309,13 +309,13 @@
                     "testType": "Type",
                     "passedPercent": "Passed %"
                 },
-                "testAnalysis": {
-                    "titleHeader": "Test Analysis",
-                    "title": "Error Analysis for {{exerciseTitle}}",
+                "feedbackAnalysis": {
+                    "titleHeader": "Feedback Analysis",
+                    "title": "Feedback Analysis for {{exerciseTitle}}",
                     "occurrence": "Occurrence",
-                    "testCaseFeedback": "Test Case Feedback",
+                    "feedback": "Feedback",
                     "task": "Task",
-                    "testcase": "Testcase",
+                    "testcase": "Test Case",
                     "errorCategory": "Error Category",
                     "totalItems": "In total {{count}} items"
                 },
