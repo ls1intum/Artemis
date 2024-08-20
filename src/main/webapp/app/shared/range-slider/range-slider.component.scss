@@ -1,23 +1,21 @@
-@import 'src/main/webapp/content/scss/themes/default-variables';
-
 $height: 0.5rem;
 $border-radius: 0.5rem;
 
 $slider-thumb-size: 1.2rem;
 $slider-thumb-border-radius: 50%;
-$slider-thumb-color: $primary;
+$slider-thumb-color: var(--primary);
 
 .slider {
     height: $height;
     border-radius: $border-radius;
-    background: #ddd;
+    background: var(--gray-400);
 }
 
 .slider .progress {
     height: $height;
     border-radius: $border-radius;
     position: absolute;
-    background: $primary;
+    background: var(--primary);
 }
 
 .range-input {
@@ -33,6 +31,7 @@ $slider-thumb-color: $primary;
     -webkit-appearance: none;
 }
 
+/* Covers Chrome and Safari */
 [type='range']::-webkit-slider-thumb {
     height: $slider-thumb-size;
     width: $slider-thumb-size;
@@ -43,6 +42,7 @@ $slider-thumb-color: $primary;
     cursor: pointer;
 }
 
+/* covers Mozilla Firefox */
 [type='range']::-moz-range-thumb {
     height: $slider-thumb-size;
     width: $slider-thumb-size;
@@ -57,7 +57,7 @@ $slider-thumb-color: $primary;
     position: absolute;
     bottom: -2.2rem;
     pointer-events: none; // we do not want to click the label but the range-thumb
-    color: $secondary;
+    color: var(--secondary);
     text-align: center;
     justify-content: center;
     align-content: center;

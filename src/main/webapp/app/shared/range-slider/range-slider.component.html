@@ -16,6 +16,7 @@
             class="range-min"
             [step]="step"
             (change)="onSelectedMinValueChanged($event)"
+            (input)="updateMinPercentage()"
         />
         <input
             type="range"
@@ -25,6 +26,7 @@
             class="range-max"
             [step]="step"
             (change)="onSelectedMaxValueChanged($event)"
+            (input)="updateMaxPercentage()"
         />
     </div>
 </div>

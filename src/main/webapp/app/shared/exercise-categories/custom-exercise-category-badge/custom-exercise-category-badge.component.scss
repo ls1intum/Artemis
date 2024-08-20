@@ -1,7 +1,5 @@
-@import 'src/main/webapp/content/scss/themes/default-variables';
-
 .remove-button {
-    color: $white;
+    color: var(--white);
     background: transparent !important;
     border: none !important;
 

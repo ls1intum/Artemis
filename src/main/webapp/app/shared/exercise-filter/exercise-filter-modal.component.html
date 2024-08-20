@@ -75,15 +75,17 @@
         <!--            TODO: Implement Date Range Picker (follow up PR @FlorianGlombik)-->
         <!--        </div>-->
 
+        <!--    On typescript version 5.5.4 the explicit check for difficultyFilter is needed,
+        as otherwise typescript thinks it could be undefined in the loop (the client would not start in this case) -->
         @if (difficultyFilter?.isDisplayed && difficultyFilter) {
             <div class="form-group">
                 <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
                 <div id="difficulty-filter-selection">
-                    @for (difficultyFilter of difficultyFilter.options; track difficultyFilter) {
+                    @for (difficultyFilterOption of difficultyFilter.options; track difficultyFilterOption) {
                         <div class="form-check form-check-inline no-left-margin-padding">
                             <label class="pointer">
-                                <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" class="pointer" />
-                                <span [jhiTranslate]="difficultyFilter.name" class="ms-1"></span>
+                                <input type="checkbox" [(ngModel)]="difficultyFilterOption.checked" [name]="difficultyFilterOption.value" class="pointer" />
+                                <span [jhiTranslate]="difficultyFilterOption.name" class="ms-1"></span>
                             </label>
                         </div>
                     }
@@ -91,7 +93,9 @@
             </div>
         }
 
-        @if (achievedScore && achievedScore.isDisplayed) {
+        <!--    On typescript version 5.5.4 the explicit check for achievedScore is needed,
+        as otherwise typescript thinks achievedScore could be undefined (the client would not start in this case) -->
+        @if (achievedScore && achievedScore?.isDisplayed) {
             <div class="form-group">
                 <label class="form-control-label h6" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
                 <jhi-range-slider
@@ -106,6 +110,8 @@
             </div>
         }
 
+        <!--    On typescript version 5.5.4 the explicit check for achievablePoints is needed,
+        as otherwise typescript thinks achievablePoints could be undefined (the client would not start in this case) -->
         @if (achievablePoints && achievablePoints.isDisplayed) {
             <div class="form-group">
                 <label class="form-control-label h6" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>

@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output }
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 const DEFAULT_STEP = 1;
+const PROGRESS_BAR_FULL_PERCENTAGE = 100;
 
 @Component({
     selector: 'jhi-range-slider',
@@ -26,13 +27,10 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     rangeInputElements?: NodeList;
     eventListeners: { element: HTMLInputElement; listener: (event: Event) => void }[] = [];
 
-    get sliderMinPercentage(): number {
-        return ((this.selectedMinValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
-    }
+    sliderMinPercentage: number;
+    sliderMaxPercentage: number;
 
-    get sliderMaxPercentage(): number {
-        return 100 - ((this.selectedMaxValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
-    }
+    valueRange: number;
 
     /** Ensures that the label is placed centered underneath the range thumb */
     LABEL_MARGIN = 0.4;
@@ -65,14 +63,39 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
             input.addEventListener('input', listener);
             this.eventListeners.push({ element: input, listener });
         });
+        this.valueRange = this.generalMaxValue - this.generalMinValue;
 
         this.LABEL_MARGIN = this.getLabelMargin();
+
+        this.updateMinPercentage();
+        this.updateMaxPercentage();
     }
 
     ngOnDestroy() {
         this.eventListeners.forEach(({ element, listener }) => {
             element.removeEventListener('input', listener);
         });
+    }
+
+    updateMinPercentage() {
+        const newPercentage = ((this.selectedMinValue - this.generalMinValue) / this.valueRange) * 100;
+
+        const progressBarWouldExtendBeyondSelectableRangeOrOverlap = newPercentage + this.sliderMaxPercentage >= PROGRESS_BAR_FULL_PERCENTAGE;
+        if (progressBarWouldExtendBeyondSelectableRangeOrOverlap) {
+            return;
+        }
+        this.sliderMinPercentage = newPercentage;
+    }
+
+    updateMaxPercentage() {
+        const newMaxPercentage = 100 - ((this.selectedMaxValue - this.generalMinValue) / this.valueRange) * 100;
+
+        const progressBarWouldExtendBeyondSelectableRangeOrOverlap = newMaxPercentage + this.sliderMinPercentage >= PROGRESS_BAR_FULL_PERCENTAGE;
+        if (progressBarWouldExtendBeyondSelectableRangeOrOverlap) {
+            return;
+        }
+
+        this.sliderMaxPercentage = newMaxPercentage;
     }
 
     onSelectedMinValueChanged(event: Event): void {
