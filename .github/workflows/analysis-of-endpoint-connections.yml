@@ -2,7 +2,13 @@ name: Analysis of Endpoint Connections
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - 'src/main/java/**'
+      - 'src/main/webapp/**'
 
 # Keep in sync with build.yml and test.yml and codeql-analysis.yml
 env:
