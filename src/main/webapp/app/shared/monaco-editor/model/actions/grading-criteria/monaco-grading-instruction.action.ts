@@ -21,14 +21,12 @@ export class MonacoGradingInstructionAction extends MonacoEditorDomainAction {
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        this.insertTextAtPosition(editor, this.getPosition(editor), this.getOpeningIdentifier() + '\n');
+        this.addTextWithDomainActionIdentifier(editor, '', false, false);
         this.creditsAction.executeInCurrentEditor();
         this.scaleAction.executeInCurrentEditor();
         this.descriptionAction.executeInCurrentEditor();
         this.feedbackAction.executeInCurrentEditor();
         this.usageCountAction.executeInCurrentEditor();
-        editor.focus();
-        this.setPosition(editor, this.getPosition(editor), true);
     }
 
     getOpeningIdentifier(): string {

@@ -11,7 +11,7 @@ export class MonacoGradingDescriptionAction extends MonacoEditorDomainAction {
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        this.insertTextAtPosition(editor, this.getPosition(editor), `\t${this.getOpeningIdentifier()} ${MonacoGradingDescriptionAction.TEXT}\n`);
+        this.addTextWithDomainActionIdentifier(editor, MonacoGradingDescriptionAction.TEXT, true, false);
     }
 
     getOpeningIdentifier(): string {

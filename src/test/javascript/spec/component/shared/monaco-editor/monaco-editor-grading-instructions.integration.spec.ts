@@ -48,23 +48,27 @@ describe('MonacoEditorActionGradingInstructionsIntegration', () => {
         return { creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction, instructionAction, criterionAction };
     };
 
-    const expectedTextWithoutCriterion =
-        '[instruction]\n' +
-        '\t[credits] 0\n' +
-        '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
-        '\t[description] Add grading instruction here (only visible for tutors)\n' +
-        '\t[feedback] Add feedback for students here (visible for students)\n' +
-        '\t[maxCountInScore] 0\n';
+    const expectedInstructionTextWithoutCriterion =
+        '\n[instruction]' +
+        '\n\t[credits] 0' +
+        '\n\t[gradingScale] Add instruction grading scale here (only visible for tutors)' +
+        '\n\t[description] Add grading instruction here (only visible for tutors)' +
+        '\n\t[feedback] Add feedback for students here (visible for students)' +
+        '\n\t[maxCountInScore] 0';
+
+    const generalInstructionText = 'These are some general instructions for the tutors.';
 
     it('should insert grading instructions', () => {
+        comp.triggerKeySequence(generalInstructionText);
         const actions = setupActions();
         actions.instructionAction.executeInCurrentEditor();
-        expect(comp.getText()).toBe(expectedTextWithoutCriterion);
+        expect(comp.getText()).toBe(generalInstructionText + expectedInstructionTextWithoutCriterion);
     });
 
     it('should insert grading criterion', () => {
+        comp.triggerKeySequence(generalInstructionText);
         const actions = setupActions();
         actions.criterionAction.executeInCurrentEditor();
-        expect(comp.getText()).toBe('[criterion] Add criterion title (only visible to tutors)\n' + expectedTextWithoutCriterion);
+        expect(comp.getText()).toBe(generalInstructionText + '\n[criterion] Add criterion title (only visible to tutors)' + expectedInstructionTextWithoutCriterion);
     });
 });

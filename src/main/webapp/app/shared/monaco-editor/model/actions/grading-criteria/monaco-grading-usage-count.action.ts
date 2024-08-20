@@ -11,7 +11,7 @@ export class MonacoGradingUsageCountAction extends MonacoEditorDomainAction {
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        this.insertTextAtPosition(editor, this.getPosition(editor), `\t${this.getOpeningIdentifier()} ${MonacoGradingUsageCountAction.TEXT}\n`);
+        this.addTextWithDomainActionIdentifier(editor, MonacoGradingUsageCountAction.TEXT, true, false);
     }
 
     getOpeningIdentifier(): string {

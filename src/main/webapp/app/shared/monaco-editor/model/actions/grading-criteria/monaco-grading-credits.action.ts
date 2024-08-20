@@ -11,7 +11,7 @@ export class MonacoGradingCreditsAction extends MonacoEditorDomainAction {
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        this.insertTextAtPosition(editor, this.getPosition(editor), `\t${this.getOpeningIdentifier()} ${MonacoGradingCreditsAction.TEXT}\n`);
+        this.addTextWithDomainActionIdentifier(editor, MonacoGradingCreditsAction.TEXT, true, false);
     }
 
     getOpeningIdentifier(): string {

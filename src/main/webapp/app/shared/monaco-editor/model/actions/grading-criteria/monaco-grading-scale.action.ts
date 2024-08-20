@@ -11,7 +11,7 @@ export class MonacoGradingScaleAction extends MonacoEditorDomainAction {
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
-        this.insertTextAtPosition(editor, this.getPosition(editor), `\t${this.getOpeningIdentifier()} ${MonacoGradingScaleAction.TEXT}\n`);
+        this.addTextWithDomainActionIdentifier(editor, MonacoGradingScaleAction.TEXT, true, false);
     }
 
     getOpeningIdentifier(): string {
