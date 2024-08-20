@@ -222,15 +222,22 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     colorSignal: Signal<string[]> = computed(() => [...this.colorToClassMap.keys()]);
 
+    static readonly TAB_EDIT = 'editor_edit';
+    static readonly TAB_PREVIEW = 'editor_preview';
+    static readonly TAB_VISUAL = 'editor_visual';
     readonly colorPickerMarginTop = 35;
     readonly colorPickerHeight = 110;
     // Icons
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faGripLines = faGripLines;
     protected readonly faAngleDown = faAngleDown;
-    // Types exposed to the template
+    // Types and values exposed to the template
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ReferenceType = ReferenceType;
+    // We cannot reference these static fields in the template, so we expose them here.
+    protected readonly TAB_EDIT = MarkdownEditorMonacoComponent.TAB_EDIT;
+    protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
+    protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
     constructor(
         private alertService: AlertService,
@@ -390,9 +397,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param event The event that contains the new active tab.
      */
     onNavChanged(event: NgbNavChangeEvent) {
-        this.inPreviewMode = event.nextId === 'editor_preview';
-        this.inVisualMode = event.nextId === 'editor_visual';
-        this.inEditMode = event.nextId === 'editor_edit';
+        this.inPreviewMode = event.nextId === this.TAB_PREVIEW;
+        this.inVisualMode = event.nextId === this.TAB_VISUAL;
+        this.inEditMode = event.nextId === this.TAB_EDIT;
         if (this.inEditMode) {
             this.adjustEditorDimensions();
             this.monacoEditor.focus();
@@ -401,12 +408,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.onPreviewSelect.emit();
         }
 
-        if (event.activeId === 'editor_visual') {
+        // Some components need to know when the user leaves the visual tab, as it might make changes to the underlying data.
+        if (event.activeId === this.TAB_VISUAL) {
             this.onLeaveVisualTab.emit();
         }
 
         // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.
-        if (event.activeId === 'editor_edit' || (event.activeId === 'editor_visual' && this.inPreviewMode)) {
+        if (event.activeId === this.TAB_EDIT || (event.activeId === this.TAB_VISUAL && this.inPreviewMode)) {
             this.parseMarkdown();
         }
     }

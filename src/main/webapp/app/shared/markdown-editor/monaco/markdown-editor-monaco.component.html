@@ -8,7 +8,7 @@
         [style.min-height.px]="minWrapperHeight"
     >
         <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
-            <ng-container ngbNavItem="editor_edit">
+            <ng-container [ngbNavItem]="TAB_EDIT">
                 @if (showEditButton) {
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
                 }
@@ -50,7 +50,7 @@
                     </div>
                 </ng-template>
             </ng-container>
-            <ng-container ngbNavItem="editor_visual">
+            <ng-container [ngbNavItem]="TAB_VISUAL">
                 @if (showVisualButton) {
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" jhiTranslate="entity.action.visual"></a>
                 }
@@ -60,7 +60,7 @@
                     </div>
                 </ng-template>
             </ng-container>
-            <ng-container ngbNavItem="editor_preview">
+            <ng-container [ngbNavItem]="TAB_PREVIEW">
                 @if (showPreviewButton) {
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
                 }

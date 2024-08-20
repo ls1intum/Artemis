@@ -87,9 +87,26 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
         const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
-        comp.onNavChanged({ nextId: 'editor_edit', activeId: 'editor_preview', preventDefault: jest.fn() });
+        comp.onNavChanged({ nextId: MarkdownEditorMonacoComponent.TAB_EDIT, activeId: MarkdownEditorMonacoComponent.TAB_PREVIEW, preventDefault: jest.fn() });
         expect(adjustEditorDimensionsSpy).toHaveBeenCalledOnce();
         expect(focusSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should emit when leaving the visual tab', () => {
+        const emitSpy = jest.spyOn(comp.onLeaveVisualTab, 'emit');
+        fixture.detectChanges();
+        comp.onNavChanged({ nextId: MarkdownEditorMonacoComponent.TAB_EDIT, activeId: MarkdownEditorMonacoComponent.TAB_VISUAL, preventDefault: jest.fn() });
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+        { tab: MarkdownEditorMonacoComponent.TAB_EDIT, flags: [true, false, false] },
+        { tab: MarkdownEditorMonacoComponent.TAB_PREVIEW, flags: [false, true, false] },
+        { tab: MarkdownEditorMonacoComponent.TAB_VISUAL, flags: [false, false, true] },
+    ])(`should set the correct flags when navigating to $tab`, ({ tab, flags }) => {
+        fixture.detectChanges();
+        comp.onNavChanged({ nextId: tab, activeId: MarkdownEditorMonacoComponent.TAB_EDIT, preventDefault: jest.fn() });
+        expect([comp.inEditMode, comp.inPreviewMode, comp.inVisualMode]).toEqual(flags);
     });
 
     it('should embed manually uploaded files', () => {
