@@ -302,6 +302,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
 
         List<String> resultPaths = getTestResultPaths(windfile);
+        resultPaths = localCIBuildConfigurationService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
         programmingExercise.setBuildConfig(buildConfig);

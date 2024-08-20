@@ -677,15 +677,15 @@ public class ProgrammingExerciseRepositoryService {
         String solutionWorkingDirectory = buildConfig.getSolutionCheckoutPath() != null && !buildConfig.getSolutionCheckoutPath().isBlank() ? buildConfig.getSolutionCheckoutPath()
                 : Constants.SOLUTION_REPO_NAME;
 
-        replacements.put("${studentWorkingDirectory}", "/" + studentWorkingDirectory + "/src");
         if (programmingLanguage == ProgrammingLanguage.PYTHON) {
-            replacements.put("${studentParentWorkingDirectoryName}", studentWorkingDirectory.replace("/", "."));
+            replacements.put(Constants.ASSIGNMENT_REPO_PARENT_PLACEHOLDER, studentWorkingDirectory.replace("/", "."));
         }
         else {
-            replacements.put("${studentParentWorkingDirectoryName}", studentWorkingDirectory);
+            replacements.put(Constants.ASSIGNMENT_REPO_PARENT_PLACEHOLDER, studentWorkingDirectory);
         }
-        replacements.put("${testWorkingDirectory}", testWorkingDirectory);
-        replacements.put("${solutionWorkingDirectory}", solutionWorkingDirectory);
+        replacements.put(Constants.ASSIGNMENT_REPO_PLACEHOLDER, "/" + studentWorkingDirectory + "/src");
+        replacements.put(Constants.TEST_REPO_PLACEHOLDER, testWorkingDirectory);
+        replacements.put(Constants.SOLUTION_REPO_PLACEHOLDER, solutionWorkingDirectory);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }
 

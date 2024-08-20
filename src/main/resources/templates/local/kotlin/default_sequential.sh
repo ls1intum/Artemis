@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
-build_and_test_the_code () {
-  echo '⚙️ executing build_and_test_the_code'
-  cd "tests"
-  # the build process is specified in `run.sh` in the test repository
-  chmod +x run.sh
-  ./run.sh -s
+structural () {
+  echo '⚙️ executing structural'
+  cd "structural"
+  mvn clean test
+}
+
+behavior () {
+  echo '⚙️ executing behavior'
+  cd "behavior"
+  mvn clean test
 }
 
 junit () {
@@ -30,7 +34,9 @@ main () {
   trap final_aeolus_post_action EXIT
 
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing; build_and_test_the_code"
+  bash -c "source ${_script_name} aeolus_sourcing; structural"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; behavior"
 }
 
 main "${@}"

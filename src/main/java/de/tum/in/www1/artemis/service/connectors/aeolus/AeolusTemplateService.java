@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 
@@ -45,13 +46,16 @@ public class AeolusTemplateService {
 
     private final BuildScriptProviderService buildScriptProviderService;
 
+    private final ProfileService profileService;
+
     private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
-            BuildScriptProviderService buildScriptProviderService) {
+            BuildScriptProviderService buildScriptProviderService, ProfileService profileService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
         this.buildScriptProviderService = buildScriptProviderService;
+        this.profileService = profileService;
     }
 
     /**
@@ -63,14 +67,16 @@ public class AeolusTemplateService {
     @EventListener(ApplicationReadyEvent.class)
     public void cacheOnBoot() {
         // load all scripts into the cache
-        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));
+        String templateDirectory = profileService.isLocalCiActive() ? "local" : "aeolus";
+        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", templateDirectory));
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
                 if (filename == null || !filename.endsWith(".yaml")) {
                     continue;
                 }
-                String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
+                String pathPrefix = "templates/" + templateDirectory + "/";
+                String directory = resource.getURL().getPath().split(pathPrefix)[1].split("/")[0];
                 Optional<ProjectType> optionalProjectType = extractProjectType(filename);
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());

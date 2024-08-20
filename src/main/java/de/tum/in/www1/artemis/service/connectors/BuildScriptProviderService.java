@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 
@@ -39,14 +40,17 @@ public class BuildScriptProviderService {
 
     private final Map<String, String> scriptCache = new ConcurrentHashMap<>();
 
+    private final ProfileService profileService;
+
     /**
      * Constructor for BuildScriptProvider, which loads all scripts into the cache to speed up retrieval
      * during the runtime of the application
      *
      * @param resourceLoaderService resourceLoaderService
      */
-    public BuildScriptProviderService(ResourceLoaderService resourceLoaderService) {
+    public BuildScriptProviderService(ResourceLoaderService resourceLoaderService, ProfileService profileService) {
         this.resourceLoaderService = resourceLoaderService;
+        this.profileService = profileService;
     }
 
     /**
@@ -58,14 +62,16 @@ public class BuildScriptProviderService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void cacheOnBoot() {
-        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));
+        String templateDirectory = profileService.isLocalCiActive() ? "local" : "aeolus";
+        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", templateDirectory));
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
                 if (filename == null || filename.endsWith(".yaml")) {
                     continue;
                 }
-                String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
+                String pathPrefix = "templates/" + templateDirectory + "/";
+                String directory = resource.getURL().getPath().split(pathPrefix)[1].split("/")[0];
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
                 String script = new String(fileContent, StandardCharsets.UTF_8);

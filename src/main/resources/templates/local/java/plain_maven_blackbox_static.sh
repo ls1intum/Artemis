@@ -9,9 +9,9 @@ build () {
 checkers () {
   echo '⚙️ executing checkers'
   # all java files in the assignment folder should have maximal line length 80
-  pipeline-helper line-length -l 80 -s assignment/ -e java
+  pipeline-helper line-length -l 80 -s ${studentParentWorkingDirectoryName}/ -e java
   # checks that the file exists and is not empty for non gui programs
-  pipeline-helper file-exists assignment/Tests.txt
+  pipeline-helper file-exists ${studentParentWorkingDirectoryName}/Tests.txt
 
   main_checker_output=$(pipeline-helper main-method -s target/classes)
 
@@ -81,6 +81,13 @@ advancedtests () {
   pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
 }
 
+staticcodeanalysis () {
+  echo '⚙️ executing staticcodeanalysis'
+  mvn -B checkstyle:checkstyle
+  mkdir -p staticCodeAnalysisReports
+  cp target/checkstyle-result.xml staticCodeAnalysisReports
+}
+
 main () {
   if [[ "${1}" == "aeolus_sourcing" ]]; then
     return 0 # just source to use the methods in the subshell, no execution
@@ -97,6 +104,8 @@ main () {
   bash -c "source ${_script_name} aeolus_sourcing; publictests"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; advancedtests"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; staticcodeanalysis"
 }
 
 main "${@}"

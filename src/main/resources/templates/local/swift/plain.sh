@@ -4,12 +4,12 @@ set -e
 build_and_test_the_code () {
   echo '⚙️ executing build_and_test_the_code'
   # copy test files
-  cp -R Tests assignment
-  cp Package.swift assignment
+  cp -R Tests ${studentParentWorkingDirectoryName}
+  cp Package.swift ${studentParentWorkingDirectoryName}
 
-  # In order to get the correct console output we need to execute the command within the assignment directory
+  # In order to get the correct console output we need to execute the command within the ${studentParentWorkingDirectoryName} directory
   # swift build
-  cd assignment
+  cd ${studentParentWorkingDirectoryName}
   swift build || error=true
 
   if [ ! $error ]

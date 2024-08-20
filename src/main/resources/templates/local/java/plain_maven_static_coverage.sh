@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
 set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
-build_and_test_the_code () {
-  echo '⚙️ executing build_and_test_the_code'
-  cd "tests"
-  # the build process is specified in `run.sh` in the test repository
-  chmod +x run.sh
-  ./run.sh -s
+maven () {
+  echo '⚙️ executing maven'
+  mvn clean test -Pcoverage
 }
 
-junit () {
-  echo '⚙️ executing junit'
-  #empty script action, just for the results
+move_report_file () {
+  echo '⚙️ executing move_report_file'
+  mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json
+}
+
+maven_1 () {
+  echo '⚙️ executing maven_1'
+  mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
 }
 
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  junit
+  maven_1
 }
 
 main () {
@@ -30,7 +32,9 @@ main () {
   trap final_aeolus_post_action EXIT
 
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing; build_and_test_the_code"
+  bash -c "source ${_script_name} aeolus_sourcing; maven"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; move_report_file"
 }
 
 main "${@}"

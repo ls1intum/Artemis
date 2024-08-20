@@ -1,24 +1,22 @@
 #!/usr/bin/env bash
 set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
-build_and_test_the_code () {
-  echo '⚙️ executing build_and_test_the_code'
-  cd "tests"
-  # the build process is specified in `run.sh` in the test repository
-  chmod +x run.sh
-  ./run.sh -s
+gradle () {
+  echo '⚙️ executing gradle'
+  chmod +x ./gradlew
+  ./gradlew clean test
 }
 
-junit () {
-  echo '⚙️ executing junit'
-  #empty script action, just for the results
+static_code_analysis () {
+  echo '⚙️ executing static_code_analysis'
+  ./gradlew check -x test
 }
 
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  junit
+  static_code_analysis
 }
 
 main () {
@@ -30,7 +28,7 @@ main () {
   trap final_aeolus_post_action EXIT
 
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing; build_and_test_the_code"
+  bash -c "source ${_script_name} aeolus_sourcing; gradle"
 }
 
 main "${@}"

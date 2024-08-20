@@ -366,6 +366,14 @@ public final class Constants {
      */
     public static final int MIN_SCORE_ORANGE = 40;
 
+    public static final String ASSIGNMENT_REPO_PLACEHOLDER = "${studentWorkingDirectory}";
+
+    public static final String TEST_REPO_PLACEHOLDER = "${testWorkingDirectory}";
+
+    public static final String SOLUTION_REPO_PLACEHOLDER = "${solutionWorkingDirectory}";
+
+    public static final String ASSIGNMENT_REPO_PARENT_PLACEHOLDER = "${studentParentWorkingDirectoryName}";
+
     private Constants() {
     }
 }
