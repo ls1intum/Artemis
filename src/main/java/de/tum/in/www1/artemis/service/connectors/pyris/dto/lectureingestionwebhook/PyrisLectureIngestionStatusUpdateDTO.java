@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

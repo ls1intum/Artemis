@@ -56,12 +56,12 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     };
 
     // Icons
-    faTrash = faTrash;
-    faPencilAlt = faPencilAlt;
-    sendToIris = faFileExport;
-    resendToIris = faRepeat;
-    done = faCheckCircle;
-    loading = faSpinner;
+    readonly faTrash = faTrash;
+    readonly faPencilAlt = faPencilAlt;
+    readonly faFileExport = faFileExport;
+    readonly faRepeat = faRepeat;
+    readonly faCheckCircle = faCheckCircle;
+    readonly faSpinner = faSpinner;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -247,6 +247,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return undefined;
         }
     }
+
     onIngestButtonClicked(lectureUnitId: number) {
         this.lectureUnitService.ingestLectureUnitInPyris(lectureUnitId, this.lecture.id!).subscribe({
             error: (error) => console.error('Failed to send Ingestion request', error),
@@ -256,15 +257,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getIcon(attachmentUnit: AttachmentUnit): IconDefinition {
         switch (attachmentUnit.pyrisIngestionState) {
             case IngestionState.NOT_STARTED:
-                return this.sendToIris;
+                return this.faFileExport;
             case IngestionState.IN_PROGRESS:
-                return this.loading;
+                return this.faSpinner;
             case IngestionState.DONE:
-                return this.done;
+                return this.faCheckCircle;
             case IngestionState.ERROR:
-                return this.resendToIris;
+                return this.faRepeat;
             default:
-                return this.sendToIris;
+                return this.faFileExport;
         }
     }
 }

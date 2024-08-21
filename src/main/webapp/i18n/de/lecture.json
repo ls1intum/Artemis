@@ -31,7 +31,7 @@
             "endDate": "Ende",
             "visibleDate": "Sichtbar ab",
             "course": "Kurs",
-            "ingestionState": "Vorlesungsimport in Pyris",
+            "ingestionState": "Vorlesungsimport Zustand in Pyris",
             "detail": {
                 "title": "Vorlesung",
                 "sections": {

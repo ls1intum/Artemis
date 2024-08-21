@@ -22,31 +22,23 @@ export class Lecture implements BaseEntity {
     channelName?: string;
     isAtLeastEditor?: boolean;
     isAtLeastInstructor?: boolean;
-    ingested?: IngestionState;
+    ingested: IngestionState;
 
     constructor() {
-        this.ingested = this.checkIngestionState ? this.checkIngestionState() : undefined;
+        this.updateIngestionState();
     }
 
-    private checkIngestionState?(): IngestionState {
-        if (!this.lectureUnits) {
-            return IngestionState.NOT_STARTED;
-        }
-
-        const attachmentUnits = this.lectureUnits.filter((unit) => unit.type === 'attachment') as AttachmentUnit[];
-        const allDone = attachmentUnits.every((unit) => unit.pyrisIngestionState === IngestionState.DONE);
-        const allNotStarted = attachmentUnits.every((unit) => unit.pyrisIngestionState === IngestionState.NOT_STARTED);
-        const allFailed = attachmentUnits.every((unit) => unit.pyrisIngestionState === IngestionState.ERROR);
-
-        if (allDone) return IngestionState.DONE;
-        if (allFailed) return IngestionState.ERROR;
-        if (allNotStarted) return IngestionState.NOT_STARTED;
-
-        return IngestionState.PARTIALLY_INGESTED;
-    }
-    public updateIngestionState?(): void {
-        if (this.checkIngestionState) {
-            this.ingested = this.checkIngestionState();
+    public updateIngestionState(): void {
+        this.ingested = IngestionState.NOT_STARTED;
+        if (this.lectureUnits) {
+            const attachmentUnits = this.lectureUnits.filter((unit) => unit.type === 'attachment') as AttachmentUnit[];
+            const allDone = attachmentUnits.every((unit) => unit.pyrisIngestionState === IngestionState.DONE);
+            const allNotStarted = attachmentUnits.every((unit) => unit.pyrisIngestionState === IngestionState.NOT_STARTED);
+            const allFailed = attachmentUnits.every((unit) => unit.pyrisIngestionState === IngestionState.ERROR);
+            this.ingested = IngestionState.PARTIALLY_INGESTED;
+            if (allDone) this.ingested = IngestionState.DONE;
+            if (allFailed) this.ingested = IngestionState.ERROR;
+            if (allNotStarted) this.ingested = IngestionState.NOT_STARTED;
         }
     }
 }

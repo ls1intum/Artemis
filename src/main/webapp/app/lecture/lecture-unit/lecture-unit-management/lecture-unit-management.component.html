@@ -82,8 +82,8 @@
                                     type="button"
                                     class="btn btn-primary btn-sm flex-grow-1"
                                     [ngClass]="{
-                                        error: getIcon(lectureUnit) === resendToIris,
-                                        'btn-success': getIcon(lectureUnit) === done,
+                                        error: getIcon(lectureUnit) === faRepeat,
+                                        'btn-success': getIcon(lectureUnit) === faCheckCircle,
                                     }"
                                     (click)="onIngestButtonClicked(lectureUnit.id!)"
                                     [ngbTooltip]="'entity.action.sendToIris' | artemisTranslate"

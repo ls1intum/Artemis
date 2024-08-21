@@ -6,11 +6,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.IngestionState;
+import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.IngestionState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
@@ -91,17 +91,18 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(IngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
         if (removeJobIfTerminated(statusUpdate.stages(), job.jobId())) {
-                attachmentUnitRepository.findById(statusUpdate.id()).ifPresent(unit -> {
-                    PyrisStageState lastState = statusUpdate.stages().getLast().state();
+            attachmentUnitRepository.findById(statusUpdate.id()).ifPresent(unit -> {
+                PyrisStageState lastState = statusUpdate.stages().getLast().state();
 
-                    if (lastState == PyrisStageState.DONE) {
-                        unit.setPyrisIngestionState(IngestionState.DONE);
-                    } else if (lastState == PyrisStageState.ERROR || lastState == PyrisStageState.SKIPPED) {
-                        unit.setPyrisIngestionState(IngestionState.ERROR);
-                    }
+                if (lastState == PyrisStageState.DONE) {
+                    unit.setPyrisIngestionState(IngestionState.DONE);
+                }
+                else if (lastState == PyrisStageState.ERROR || lastState == PyrisStageState.SKIPPED) {
+                    unit.setPyrisIngestionState(IngestionState.ERROR);
+                }
 
-                    attachmentUnitRepository.save(unit);
-                });
+                attachmentUnitRepository.save(unit);
+            });
         }
     }
 

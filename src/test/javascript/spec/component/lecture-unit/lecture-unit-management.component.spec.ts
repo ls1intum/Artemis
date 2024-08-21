@@ -202,6 +202,7 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.getActionType(new VideoUnit())).toEqual(ActionType.Delete);
         expect(lectureUnitManagementComponent.getActionType(new OnlineUnit())).toEqual(ActionType.Delete);
     });
+
     it('should call onIngestButtonClicked when button is clicked', () => {
         const ingestLectureUnitInPyris = jest.spyOn(lectureUnitService, 'ingestLectureUnitInPyris');
         const returnValue = of(new HttpResponse<void>({ status: 200 }));
@@ -229,17 +230,18 @@ describe('LectureUnitManagementComponent', () => {
 
     it('should update the icon based on ingestion state', () => {
         const attachmentUnit = { pyrisIngestionState: 'NOT_STARTED' } as any;
-        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.sendToIris);
+        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.faFileExport);
 
         attachmentUnit.pyrisIngestionState = 'IN_PROGRESS';
-        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.loading);
+        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.faSpinner);
 
         attachmentUnit.pyrisIngestionState = 'DONE';
-        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.done);
+        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.faCheckCircle);
 
         attachmentUnit.pyrisIngestionState = 'ERROR';
-        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.resendToIris);
+        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.faRepeat);
     });
+
     it('should initialize profile info and check for Iris settings', () => {
         const mockCourse: Course = { id: 1, title: 'Test Course' };
         lectureUnitManagementComponent.lecture = { id: 2, course: mockCourse } as Lecture;
