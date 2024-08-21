@@ -276,6 +276,12 @@ public class BuildJobContainerService {
      * @param auxiliaryRepositoriesPaths             An array of paths for auxiliary repositories to be included in the build process.
      * @param auxiliaryRepositoryCheckoutDirectories An array of directory names within the container where each auxiliary repository should be checked out.
      * @param programmingLanguage                    The programming language of the repositories, which influences directory naming conventions.
+     * @param assignmentCheckoutPath                 The directory within the container where the assignment repository should be checked out; can be null if not applicable,
+     *                                                   default would be used.
+     * @param testCheckoutPath                       The directory within the container where the test repository should be checked out; can be null if not applicable, default
+     *                                                   would be used.
+     * @param solutionCheckoutPath                   The directory within the container where the solution repository should be checked out; can be null if not applicable, default
+     *                                                   would be used.
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
             Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, String assignmentCheckoutPath,

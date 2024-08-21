@@ -76,6 +76,13 @@ public class LocalCIBuildConfigurationService {
         return replacePlaceholders(buildScriptBuilder.toString(), programmingExercise.getBuildConfig());
     }
 
+    /**
+     * Replaces placeholders in the given result paths with the actual paths.
+     *
+     * @param resultPaths the result paths to replace the placeholders in
+     * @param buildConfig the build configuration containing the actual paths
+     * @return the result paths with the placeholders replaced
+     */
     public List<String> replaceResultPathsPlaceholders(List<String> resultPaths, ProgrammingExerciseBuildConfig buildConfig) {
         List<String> replacedResultPaths = new ArrayList<>();
         for (String resultPath : resultPaths) {
