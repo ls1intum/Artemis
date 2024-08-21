@@ -11,7 +11,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { firstValueFrom, map } from 'rxjs';
+import { Observable, firstValueFrom, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -99,7 +99,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
         const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
-        this.getCurrentCompetenciesAndSuggestions().then((currentCompetencySuggestions) => {
+        this.getCurrentCompetenciesAndSuggestions().subscribe((currentCompetencySuggestions) => {
             this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencySuggestions).subscribe({
                 next: () => {
                     this.jhiWebsocketService.subscribe(websocketTopic);
@@ -140,18 +140,19 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      * and the competency recommendations that are currently in the form.
      * @private
      */
-    private getCurrentCompetenciesAndSuggestions(): Promise<CompetencyRecommendation[]> {
+    private getCurrentCompetenciesAndSuggestions(): Observable<CompetencyRecommendation[]> {
         const currentCompetencySuggestions = this.competencies.getRawValue().map((c) => c.competency);
         const competenciesObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
         if (competenciesObservable) {
-            return firstValueFrom(
-                competenciesObservable.pipe(
-                    map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
-                    map((competencies) => currentCompetencySuggestions.concat(competencies ?? [])),
-                ),
+            return competenciesObservable.pipe(
+                map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
+                map((competencies) => currentCompetencySuggestions.concat(competencies ?? [])),
             );
         }
-        return Promise.resolve(currentCompetencySuggestions);
+        return new Observable<CompetencyRecommendation[]>((subscriber) => {
+            subscriber.next(currentCompetencySuggestions);
+            subscriber.complete();
+        });
     }
 
     /**
