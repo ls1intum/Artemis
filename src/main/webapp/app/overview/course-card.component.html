@@ -26,7 +26,15 @@
                             <div class="align-self-center">
                                 <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
                                 <div class="fw-bold">
-                                    <div>{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points ({{ totalRelativeScore }}%)</div>
+                                    <!-- <div>{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points ({{ totalRelativeScore }}%)</div> -->
+                                    <div
+                                        jhiTranslate="artemisApp.studentDashboard.points"
+                                        [translateValues]="{
+                                            totalAbsoluteScore: totalAbsoluteScore,
+                                            totalReachableScore: totalReachableScore,
+                                            totalRelativeScore: totalRelativeScore,
+                                        }"
+                                    ></div>
                                 </div>
                             </div>
                         } @else {
@@ -36,7 +44,7 @@
                             </div>
                         }
                         <hr />
-                        <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardNextUnit"></div>
+                        <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></div>
                         @if (nextRelevantExercise) {
                             <a class="fw-bold btn-exercise exercise-title exercise-guided-tour" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]">
                                 {{ nextRelevantExercise.title }}

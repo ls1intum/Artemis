@@ -11,8 +11,8 @@
             "cardTitle": "Your overall points:",
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
-            "cardExerciseLabel": "Next Exercise:",
-            "cardNextUnit": "Next Unit",
+            "cardExerciseLabel": "Next Exercise",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points ({{ totalRelativeScore }}%)",
             "cardScore": "Score",
             "cardManageCourse": "Manage Course",
             "enroll": {
