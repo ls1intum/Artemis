@@ -59,7 +59,7 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         actions.push(cleanBuildAction);
         actions.push(platformAction);
         windFile.actions = actions;
-        programmingExercise.buildConfig!.windFile = windFile;
+        programmingExercise.buildConfig!.windfile = windFile;
 
         await TestBed.configureTestingModule({
             imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
