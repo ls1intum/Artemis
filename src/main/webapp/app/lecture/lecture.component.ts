@@ -160,7 +160,9 @@ export class LectureComponent implements OnInit, OnDestroy {
                     this.lectures = res.map((lectureData) => {
                         const lecture = new Lecture();
                         Object.assign(lecture, lectureData);
-                        lecture.updateIngestionState();
+                        if (lecture.updateIngestionState) {
+                            lecture.updateIngestionState();
+                        }
                         return lecture;
                     });
                     this.applyFilters();
