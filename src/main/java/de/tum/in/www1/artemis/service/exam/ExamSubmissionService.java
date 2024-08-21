@@ -153,7 +153,7 @@ public class ExamSubmissionService {
      */
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not an exam submission or if it is a programming exercise or if it is a test exam exercise
-        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || exercise.getExamViaExerciseGroupOrCourseMember().isTestExam()) {
+        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || exercise.getExam().isTestExam()) {
             return submission;
         }
 

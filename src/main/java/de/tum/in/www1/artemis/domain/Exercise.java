@@ -371,7 +371,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @JsonIgnore
     public boolean isTestExamExercise() {
-        return isExamExercise() && this.getExamViaExerciseGroupOrCourseMember().isTestExam();
+        return isExamExercise() && this.getExam().isTestExam();
     }
 
     /**

@@ -178,7 +178,8 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsElseThrow(studentExamId);
+        // TODO Michal Kawka rename repository method because submission policy doesn't really exist
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(studentExamId);
 
         examService.loadQuizExercisesForStudentExam(studentExam);
 

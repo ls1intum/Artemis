@@ -223,7 +223,11 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             groupedExamGroups['real'].entityData.push(examCardItem);
         }
         testExams.forEach((testExam) => {
-            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(testExam, this.getNumberOfAttemptsForTestExam(testExam));
+            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(
+                testExam,
+                this.studentExamsForRealExams.get(testExam.id!),
+                this.getNumberOfAttemptsForTestExam(testExam),
+            );
             groupedExamGroups['test'].entityData.push(examCardItem);
             const testExamAttempts = this.testExamMap.get(testExam.id!);
             if (testExamAttempts) {

@@ -82,10 +82,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return getValueElseThrow(findByExerciseIdAndStudentLogin(exerciseId, username));
     }
 
-    // TODO Michal Kawka
     default ProgrammingExerciseStudentParticipation findFirstByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username)
-                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
+        return getValueElseThrow(findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
@@ -100,8 +98,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     // TODO Michal Kawka
     default ProgrammingExerciseStudentParticipation findFirstWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username)
-                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
+        return getValueElseThrow(findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username));
     }
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
