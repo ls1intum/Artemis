@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -32,13 +33,12 @@ import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 
 public class EndpointParser {
 
-    static final String ENDPOINT_PARSING_RESULT_PATH = "endpoints.json";
-
-    static final String REST_CALL_PARSING_RESULT_PATH = "restCalls.json";
-
     private static final Logger log = LoggerFactory.getLogger(EndpointParser.class);
 
+    private static final Config CONFIG = readConfig();
+
     public static void main(String[] args) {
+
         final Path absoluteDirectoryPath = Path.of("../../src/main/java").toAbsolutePath().normalize();
 
         StaticJavaParser.getParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
@@ -52,6 +52,17 @@ public class EndpointParser {
         }
 
         parseServerEndpoints(filesToParse);
+    }
+
+    static Config readConfig() {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        try {
+            return mapper.readValue(new File("analysisOfEndpointConnections.config.yml"), Config.class);
+        }
+        catch (IOException e) {
+            System.err.println("Failed to read config file: " + e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -208,7 +219,7 @@ public class EndpointParser {
      */
     private static void writeEndpointsToFile(List<EndpointClassInformation> endpointClasses) {
         try {
-            new ObjectMapper().writeValue(new File(ENDPOINT_PARSING_RESULT_PATH), endpointClasses);
+            new ObjectMapper().writeValue(new File(CONFIG.endpointParsingResultPath()), endpointClasses);
         }
         catch (IOException e) {
             log.error("Failed to write endpoint information to file", e);
