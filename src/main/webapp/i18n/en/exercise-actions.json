@@ -70,6 +70,7 @@
             "uploadFile": "Upload a file",
             "viewTeam": "Team",
             "sshKeyTip": "To use ssh, you need to add an ssh key to your account {link:here}.",
+            "vcsTokenTip": "To access the repository with a VCS access token, thou first need to add one to your account {link:here}.",
             "startExerciseBeforeStartDate": "You cannot participate before the start date of the exercise.",
             "deleteMultipleExercisesQuestion": "Are you sure you want to delete the selected exercises?"
         }

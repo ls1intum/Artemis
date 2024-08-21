@@ -45,17 +45,17 @@ export const userSettingsState: Routes = [
                 },
             },
             {
-                path: 'sshSettings',
+                path: 'ssh',
                 component: SshUserSettingsComponent,
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
                 },
             },
             {
-                path: 'vcsAccessTokensSettings',
+                path: 'vcs-token',
                 component: VcsAccessTokensSettingsComponent,
                 data: {
-                    pageTitle: 'artemisApp.userSettings.categories.VCS_ACCESS_TOKENS_SETTINGS',
+                    pageTitle: 'artemisApp.userSettings.categories.VCS_TOKEN_SETTINGS',
                 },
             },
         ],

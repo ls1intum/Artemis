@@ -40,15 +40,17 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
     useSsh = false;
     useToken = false;
-    setupSshKeysUrl?: string;
     sshEnabled = false;
     sshTemplateUrl?: string;
+    setupSshKeysUrl?: string;
+    vcsToekenSettingsUrl?: string;
     repositoryPassword?: string;
     versionControlUrl: string;
     accessTokensEnabled?: boolean;
     localVCEnabled = false;
     gitlabVCEnabled = false;
     showCloneUrlWithoutToken = true;
+    copyEnabled? = true;
 
     user: User;
     cloneHeadline: string;
@@ -93,14 +95,21 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
             if (this.localVCEnabled) {
-                this.setupSshKeysUrl = `${window.location.origin}/user-settings/sshSettings`;
+                this.setupSshKeysUrl = `${window.location.origin}/user-settings/ssh`;
+                this.vcsToekenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
             } else {
                 this.setupSshKeysUrl = profileInfo.sshKeysURL;
             }
         });
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
+        this.useToken = this.localStorage.retrieve('useToken') || false;
+        if (!this.localStorage.retrieve('copyEnabled')) {
+            this.copyEnabled = !this.useSsh && !this.useToken;
+        }
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+        this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
+        this.localStorage.observe('copyEnabled').subscribe((copyEnabled) => (this.copyEnabled = copyEnabled || false));
     }
 
     ngOnChanges() {
@@ -120,19 +129,28 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     public useSshUrl() {
         this.useSsh = true;
         this.useToken = false;
-        this.localStorage.store('useSsh', this.useSsh);
+        this.copyEnabled = this.useSsh && (!!this.user.sshPublicKey || this.gitlabVCEnabled);
+        this.storeToLocalStorage();
     }
 
     public useHttpsUrlWithToken() {
         this.useSsh = false;
         this.useToken = true;
-        this.localStorage.store('useSsh', this.useSsh);
+        this.copyEnabled = !!(this.accessTokensEnabled && this.useToken && (!!this.user.vcsAccessToken || this.useParticipationVcsAccessToken));
+        this.storeToLocalStorage();
     }
 
     public useHttpsUrlWithoutToken() {
         this.useSsh = false;
         this.useToken = false;
+        this.copyEnabled = true;
+        this.storeToLocalStorage();
+    }
+
+    public storeToLocalStorage() {
         this.localStorage.store('useSsh', this.useSsh);
+        this.localStorage.store('useToken', this.useToken);
+        this.localStorage.store('copyEnabled', this.copyEnabled);
     }
 
     private getRepositoryUri() {
@@ -251,6 +269,13 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      */
     getSshKeyTip() {
         return this.translateService.instant('artemisApp.exerciseActions.sshKeyTip').replace(/{link:(.*)}/, '<a href="' + this.setupSshKeysUrl + '" target="_blank">$1</a>');
+    }
+
+    /**
+     * Inserts the correct link to the translated ssh tip.
+     */
+    getVcsTokenTip() {
+        return this.translateService.instant('artemisApp.exerciseActions.vcsTokenTip').replace(/{link:(.*)}/, '<a href="' + this.setupSshKeysUrl + '" target="_blank">$1</a>');
     }
 
     /**
