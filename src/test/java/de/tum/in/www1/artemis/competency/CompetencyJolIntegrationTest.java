@@ -68,7 +68,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
     class SetJudgementOfLearning {
 
         private String apiURL(long competencyId, int jolValue) {
-            return "/api/courses/" + courseId + "/competencies/" + competencyId + "/jol/" + jolValue;
+            return "/api/courses/" + courseId + "/course-competencies/" + competencyId + "/jol/" + jolValue;
         }
 
         private void sendRequest(long competencyId, short jolValue, HttpStatus status) throws Exception {
@@ -123,7 +123,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
     class GetLatestJudgementOfLearningForCompetency {
 
         private String apiURL(long competencyId) {
-            return "/api/courses/" + courseId + "/competencies/" + competencyId + "/jol";
+            return "/api/courses/" + courseId + "/course-competencies/" + competencyId + "/jol";
         }
 
         private CompetencyJolPairDTO sendRequest(long competencyId, HttpStatus status) throws Exception {
@@ -171,7 +171,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
     class GetLatestJudgementOfLearningForCourse {
 
         private String apiURL() {
-            return "/api/courses/" + courseId + "/competencies/jol";
+            return "/api/courses/" + courseId + "/course-competencies/jol";
         }
 
         private Map<Long, CompetencyJolPairDTO> sendRequest(HttpStatus status) throws Exception {

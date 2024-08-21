@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the ExampleSubmission entity.
@@ -68,7 +67,7 @@ public interface ExampleSubmissionRepository extends ArtemisJpaRepository<Exampl
      * @return list of feedback for an example submission
      */
     default List<Feedback> getFeedbackForExampleSubmission(long exampleSubmissionId) {
-        var exampleSubmission = findByIdWithResultsAndFeedback(exampleSubmissionId).orElseThrow(() -> new EntityNotFoundException("Example Submission", exampleSubmissionId));
+        var exampleSubmission = getValueElseThrow(findByIdWithResultsAndFeedback(exampleSubmissionId), exampleSubmissionId);
         var submission = exampleSubmission.getSubmission();
 
         if (submission == null) {
@@ -86,11 +85,11 @@ public interface ExampleSubmissionRepository extends ArtemisJpaRepository<Exampl
     }
 
     default ExampleSubmission findByIdWithEagerResultAndFeedbackElseThrow(long exampleSubmissionId) {
-        return findByIdWithResultsAndFeedback(exampleSubmissionId).orElseThrow(() -> new EntityNotFoundException("Example Submission", exampleSubmissionId));
+        return getValueElseThrow(findByIdWithResultsAndFeedback(exampleSubmissionId), exampleSubmissionId);
     }
 
     default ExampleSubmission findBySubmissionIdWithResultsElseThrow(long submissionId) {
-        return findWithResultsBySubmissionId(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));
+        return getValueElseThrow(findWithResultsBySubmissionId(submissionId), submissionId);
     }
 
 }

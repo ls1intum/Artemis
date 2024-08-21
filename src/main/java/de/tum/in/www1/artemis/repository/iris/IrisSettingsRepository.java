@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisGlobalSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the IrisSettings entity.
@@ -30,7 +29,7 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
     Set<IrisGlobalSettings> findAllGlobalSettings();
 
     default IrisGlobalSettings findGlobalSettingsElseThrow() {
-        return findAllGlobalSettings().stream().max(Comparator.comparingLong(IrisGlobalSettings::getId)).orElseThrow(() -> new EntityNotFoundException("Iris Global Settings"));
+        return getValueElseThrow(findAllGlobalSettings().stream().max(Comparator.comparingLong(IrisGlobalSettings::getId)));
     }
 
     @Query("""

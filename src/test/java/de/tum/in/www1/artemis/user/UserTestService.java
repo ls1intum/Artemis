@@ -17,7 +17,9 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -806,6 +808,25 @@ public class UserTestService {
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isFalse();
+    }
+
+    // Test
+    public void addAndDeleteSshPublicKey() throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+
+        // adding invalid key should fail
+        String invalidSshKey = "invalid key";
+        request.putWithResponseBody("/api/users/sshpublickey", invalidSshKey, String.class, HttpStatus.BAD_REQUEST, true);
+
+        // adding valid key should work correctly
+        String validSshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
+        request.putWithResponseBody("/api/users/sshpublickey", validSshKey, String.class, HttpStatus.OK, true);
+        assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(validSshKey);
+
+        // deleting the key shoul work correctly
+        request.delete("/api/users/sshpublickey", HttpStatus.OK);
+        assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(null);
     }
 
     public UserRepository getUserRepository() {

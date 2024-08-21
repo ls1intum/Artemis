@@ -20,7 +20,6 @@ export enum CompetencyTaxonomy {
 }
 
 export enum CompetencyRelationType {
-    RELATES = 'RELATES',
     ASSUMES = 'ASSUMES',
     EXTENDS = 'EXTENDS',
     MATCHES = 'MATCHES',
@@ -190,7 +189,7 @@ export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelatio
 }
 
 export class CompetencyWithTailRelationDTO {
-    competency?: Competency;
+    competency?: CourseCompetency;
     tailRelations?: CompetencyRelationDTO[];
 
     constructor() {}

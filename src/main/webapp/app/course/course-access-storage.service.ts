@@ -20,7 +20,7 @@ export class CourseAccessStorageService {
 
         if (Object.keys(courseAccessMap).length > maxAccessedCourses) {
             const oldestEntry = Object.entries(courseAccessMap).reduce((prev, curr) => (prev[1] < curr[1] ? prev : curr));
-            delete courseAccessMap[oldestEntry[0]];
+            delete courseAccessMap[Number(oldestEntry[0])];
         }
 
         this.localStorage.store(storageKey, courseAccessMap);
