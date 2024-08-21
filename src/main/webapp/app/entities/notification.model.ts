@@ -79,7 +79,7 @@ export const EXAM_ARCHIVE_FAILED_TITLE = 'artemisApp.groupNotification.title.exa
 
 export const PROGRAMMING_TEST_CASES_CHANGED_TITLE = 'artemisApp.groupNotification.title.programmingTestCasesChanged';
 
-export const PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE = 'artemisApp.groupNotification.title.programmingExamTestCasesChanged';
+export const PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE = 'artemisApp.groupNotification.title.programmingTestCasesChanged';
 
 export const NEW_MANUAL_FEEDBACK_REQUEST_TITLE = 'artemisApp.groupNotification.title.newManualFeedbackRequest';
 
