@@ -2,8 +2,6 @@ import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Column, ImportListComponent } from 'app/shared/import-list/import-list.component';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Course } from 'app/entities/course.model';
 import { Observable, of } from 'rxjs';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
@@ -39,8 +37,6 @@ describe('ImportListComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ImportListComponent],
             providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
