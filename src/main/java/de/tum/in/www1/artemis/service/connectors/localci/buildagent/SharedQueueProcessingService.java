@@ -4,11 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -26,8 +25,6 @@ import org.redisson.api.RQueue;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.listener.ListAddListener;
 import org.redisson.api.listener.ListRemoveListener;
-import org.redisson.client.RedisClient;
-import org.redisson.client.protocol.RedisCommands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +40,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
+import de.tum.in.www1.artemis.service.connectors.redis.RedisClientListResolver;
 
 /**
  * Includes functionality for processing build jobs from the shared build job queue.
@@ -54,8 +52,6 @@ public class SharedQueueProcessingService {
     private static final Logger log = LoggerFactory.getLogger(SharedQueueProcessingService.class);
 
     private final RedissonClient redissonClient;
-
-    private final RedisClient redisClient;
 
     private final ThreadPoolExecutor localCIBuildExecutorService;
 
@@ -90,15 +86,16 @@ public class SharedQueueProcessingService {
     @Value("${spring.data.redis.client-name}")
     private String redisClientName;     // this is used as build agent name
 
-    public SharedQueueProcessingService(RedissonClient redissonClient, RedisClient redisClient, ExecutorService localCIBuildExecutorService,
-            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService) {
+    private final RedisClientListResolver redisClientListResolver;
+
+    public SharedQueueProcessingService(RedissonClient redissonClient, ExecutorService localCIBuildExecutorService, BuildJobManagementService buildJobManagementService,
+            BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, RedisClientListResolver redisClientListResolver) {
         this.redissonClient = redissonClient;
-        // TODO: we use redissonClient for a few aspects, double check if it also uses the build agent name
-        this.redisClient = redisClient;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
+        this.redisClientListResolver = redisClientListResolver;
     }
 
     /**
@@ -268,44 +265,17 @@ public class SharedQueueProcessingService {
     }
 
     private void removeOfflineNodes() {
-        log.debug("Current redis client name: {}", redisClient.getConfig().getClientName());
-        redisClient.connect().async(RedisCommands.CLIENT_LIST).thenAccept(clientList -> {
-            log.debug("Build agent information: {}", buildAgentInformation.keySet());
+        Set<String> uniqueClients = redisClientListResolver.getUniqueClients();
 
-            List<String> clients = (List<String>) clientList;
+        log.debug("Redis client list based on names: {}", uniqueClients);
 
-            // Parse the Redis client list to extract names and filter duplicates
-            Map<String, String> uniqueClients = new HashMap<>();
-
-            for (String clientInfo : clients) {
-                String clientName = extractClientNameFromClientInfo(clientInfo);
-                if (clientName != null && !uniqueClients.containsKey(clientName)) {
-                    uniqueClients.put(clientName, clientInfo); // Keep the first occurrence
-                }
-                // Optional: Apply more complex logic here to choose the most relevant connection
-            }
-
-            log.debug("Redis client list based on names: {}", uniqueClients.keySet());
-
-            // Compare the client names with the build agent information
-            for (String key : new HashSet<>(buildAgentInformation.keySet())) {
-                if (!uniqueClients.containsKey(key)) {
-                    buildAgentInformation.remove(key);
-                    log.info("Removed offline build agent: {}", key);
-                }
-            }
-        });
-    }
-
-    // Helper method to extract the 'name' field from the Redis client info
-    private String extractClientNameFromClientInfo(String clientInfo) {
-        String[] parts = clientInfo.split(" ");
-        for (String part : parts) {
-            if (part.startsWith("name=")) {
-                return part.substring(5); // Extract the client name
+        // Compare the client names with the build agent information
+        for (String key : new HashSet<>(buildAgentInformation.keySet())) {
+            if (!uniqueClients.contains(key)) {
+                buildAgentInformation.remove(key);
+                log.info("Removed offline build agent: {}", key);
             }
         }
-        return null; // Return null if no name is found
     }
 
     /**

@@ -40,6 +40,10 @@ public class CacheConfiguration {
 
     private final RedissonClient redissonClient;
 
+    /**
+     * We need this, because the redissonClient (either directly or through redisConnectionFactory) does not support the client list command yet,
+     * also see RedissonConnection.getClientList() throws UnsupportedOperationException
+     */
     private RedisClient redisClient;    // lazy init
 
     @Value("${spring.data.redis.host}")

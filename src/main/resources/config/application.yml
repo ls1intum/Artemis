@@ -22,6 +22,7 @@ logging:
         org.springframework.web.socket.config: INFO
         liquibase: INFO
         de.jplag.Submission: ERROR
+        org.redisson.connection.DNSMonitor: ERROR
     logback:
         rollingpolicy:
             max-history: 90
@@ -161,7 +162,7 @@ spring:
             timeout: 3000
             retry-attempts: 3
             retry-interval: 1500
-            client-name: build-agent-1
+            client-name: artemis-build-agent-1
             subscriptions-per-connection: 5
             subscription-connection-minimum-idle-size: 1
             subscription-connection-pool-size: 50
