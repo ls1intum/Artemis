@@ -356,7 +356,7 @@ describe('PdfPreviewComponent', () => {
         jest.spyOn(mockContext, 'drawImage');
 
         component.resizeCanvas(mockCanvasElement, 2);
-        component.redrawCanvas(mockCanvasElement, 2);
+        component.redrawCanvas(mockCanvasElement);
 
         expect(component.enlargedCanvas.nativeElement.width).toBe(1000); // 500 * 2
         expect(component.enlargedCanvas.nativeElement.height).toBe(800); // 400 * 2
