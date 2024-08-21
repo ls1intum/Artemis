@@ -121,7 +121,13 @@ public class GroupNotificationFactory {
         String title;
         String text;
         boolean textIsPlaceholder;
-        String[] placeholderValues = createPlaceholderExerciseNotification(exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle());
+        String[] placeholderValues;
+        if (exercise.isExamExercise()) {
+            placeholderValues = createPlaceholderExamExerciseNotification(exercise.getExam().getTitle(), exercise.getTitle());
+        }
+        else {
+            placeholderValues = createPlaceholderExerciseNotification(exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle());
+        }
         NotificationPriority priority = MEDIUM;
 
         switch (notificationType) {
@@ -157,8 +163,8 @@ public class GroupNotificationFactory {
                 textIsPlaceholder = true;
             }
             case PROGRAMMING_EXAM_TEST_CASES_CHANGED -> {
-                title = NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE;
-                text = NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TEXT;
+                title = NotificationConstants.PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE;
+                text = NotificationConstants.PROGRAMMING_EXAM_TEST_CASES_CHANGED_TEXT;
                 textIsPlaceholder = true;
                 priority = HIGH;
             }
@@ -210,6 +216,7 @@ public class GroupNotificationFactory {
                 notification.setTransientAndStringTarget(createExamExerciseTargetWithExerciseUpdate(exercise));
                 notification.setPriority(HIGH);
             }
+
             else if (exercise instanceof ProgrammingExercise programmingExercise) {
                 notification.setTransientAndStringTarget(createExamProgrammingExerciseOrTestCaseTarget(programmingExercise, NotificationTargetFactory.EXERCISE_UPDATED_TEXT));
             }
@@ -231,6 +238,12 @@ public class GroupNotificationFactory {
             PROGRAMMING_EXAM_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST, DUPLICATE_TEST_CASE, PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_BUILD_RUN_UPDATE, ILLEGAL_SUBMISSION })
     public static String[] createPlaceholderExerciseNotification(String courseTitle, String exerciseTitle) {
         return new String[] { courseTitle, exerciseTitle };
+    }
+
+    @NotificationPlaceholderCreator(values = { EXERCISE_RELEASED, EXERCISE_PRACTICE, QUIZ_EXERCISE_STARTED, EXERCISE_UPDATED, PROGRAMMING_TEST_CASES_CHANGED,
+            PROGRAMMING_EXAM_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST, DUPLICATE_TEST_CASE, PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_BUILD_RUN_UPDATE, ILLEGAL_SUBMISSION })
+    public static String[] createPlaceholderExamExerciseNotification(String examTitle, String exerciseTitle) {
+        return new String[] { examTitle, exerciseTitle };
     }
 
     /**

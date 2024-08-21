@@ -14,6 +14,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.ILLEGAL
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_ANNOUNCEMENT_POST;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_MANUAL_FEEDBACK_REQUEST;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_EXAM_TEST_CASES_CHANGED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.QUIZ_EXERCISE_STARTED;
@@ -137,10 +138,10 @@ public class GroupNotificationService {
                 case EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED ->
                     createNotification((Exam) notificationSubject, author, group, notificationType, (List<String>) typeSpecificInformation);
                 // Critical Types
-                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_BUILD_RUN_UPDATE ->
+                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_BUILD_RUN_UPDATE, PROGRAMMING_EXAM_TEST_CASES_CHANGED ->
                     createNotification((Exercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 // Additional Types
-                case PROGRAMMING_TEST_CASES_CHANGED, PROGRAMMING_EXAM_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST ->
+                case PROGRAMMING_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST ->
                     createNotification((Exercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };
@@ -224,6 +225,15 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
+    }
+
+    /**
+     * Notify editor and instructor groups about changed test cases for an exam programming exercise.
+     *
+     * @param exercise that has been updated
+     */
+    public void notifyEditorInstructorGroupsAboutChangedTestCasesForExamProgrammingExercise(ProgrammingExercise exercise) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_EXAM_TEST_CASES_CHANGED, exercise, null, null);
     }
 
     /**
