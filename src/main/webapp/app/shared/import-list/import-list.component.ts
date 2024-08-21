@@ -7,6 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 
 /**
  * An abstract component intended for cases where a resource needs to be imported from one course into another.
@@ -64,7 +65,7 @@ export class ImportListComponent<T extends BaseEntity> {
     });
 
     constructor() {
-        const debouncedDataLoad = this.debounce(this.loadData.bind(this), 300);
+        const debouncedDataLoad = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
 
         effect(() => {
             // Debounce loading data whenever search term changes
@@ -97,18 +98,6 @@ export class ImportListComponent<T extends BaseEntity> {
         } finally {
             this.isLoading.set(false);
         }
-    }
-
-    private debounce(callback: (searchState: Partial<SearchTermPageableSearch>, searchTerm: string) => Promise<void>, delay: number) {
-        let timer: NodeJS.Timeout | undefined;
-        return function (searchState: Partial<SearchTermPageableSearch>, searchTerm: string) {
-            if (timer) {
-                clearTimeout(timer);
-            }
-            timer = setTimeout(async () => {
-                await callback(searchState, searchTerm);
-            }, delay);
-        };
     }
 
     private filterSearchResult(searchResults: SearchResult<T>): SearchResult<T> {
