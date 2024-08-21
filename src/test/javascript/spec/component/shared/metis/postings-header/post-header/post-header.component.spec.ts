@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisModule } from 'app/shared/metis/metis.module';
 import { DebugElement } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
@@ -28,7 +29,7 @@ describe('PostHeaderComponent', () => {
     let metisServiceDeletePostMock: jest.SpyInstance;
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip), MockModule(MetisModule)],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostHeaderComponent,
@@ -62,7 +63,7 @@ describe('PostHeaderComponent', () => {
 
     it('should set date information correctly for post of today', () => {
         fixture.detectChanges();
-        expect(getElement(debugElement, '.today-flag')).toBeDefined();
+        expect(getElement(debugElement, '#today-flag')).toBeDefined();
     });
 
     it('should display resolved icon on resolved post header', () => {

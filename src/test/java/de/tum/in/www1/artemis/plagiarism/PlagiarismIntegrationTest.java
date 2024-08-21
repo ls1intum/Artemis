@@ -68,7 +68,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
         course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
-        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise);
         var textSubmission = ParticipationFactory.generateTextSubmission("", Language.GERMAN, true);
 
@@ -219,7 +219,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeletePlagiarismComparisons_instructor() throws Exception {
         request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=false", HttpStatus.OK);
-        var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        var result = plagiarismResultRepository.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         assertThat(result).isNotNull();
         assertThat(result.getComparisons()).hasSize(1);
     }
@@ -228,7 +228,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeletePlagiarismComparisons_instructor_deleteAll() throws Exception {
         request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=true", HttpStatus.OK);
-        var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        var result = plagiarismResultRepository.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         assertThat(result).isNull();
     }
 

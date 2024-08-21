@@ -13,10 +13,12 @@ import { cloneDeep } from 'lodash-es';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { faBullhorn, faHashtag } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -72,8 +74,9 @@ export class CourseOverviewService {
         private conversationService: ConversationService,
     ) {}
 
-    faBullhorn = faBullhorn;
-    faHashtag = faHashtag;
+    readonly faBullhorn = faBullhorn;
+    readonly faHashtag = faHashtag;
+    readonly faLock = faLock;
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
         if (tutorialGroups && tutorialGroups.length) {
@@ -238,8 +241,8 @@ export class CourseOverviewService {
     mapExercisesToSidebarCardElements(exercises: Exercise[]) {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
     }
-    mapExamsToSidebarCardElements(exams: Exam[]) {
-        return exams.map((exam) => this.mapExamToSidebarCardElement(exam));
+    mapExamsToSidebarCardElements(exams: Exam[], studentExams?: StudentExam[]) {
+        return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
     }
 
     mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
@@ -292,18 +295,30 @@ export class CourseOverviewService {
         return exerciseCardItem;
     }
 
-    mapExamToSidebarCardElement(exam: Exam): SidebarCardElement {
+    mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam): SidebarCardElement {
         const examCardItem: SidebarCardElement = {
             title: exam.title ?? '',
             id: exam.id ?? '',
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
-            workingTime: exam.workingTime ?? 0,
+            workingTime: exam.workingTime,
+            studentExam: studentExam,
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
         };
         return examCardItem;
+    }
+
+    private getChannelIcon(conversation: ConversationDTO): IconDefinition {
+        const channelDTO = getAsChannelDTO(conversation);
+        if (channelDTO?.isPublic === false) {
+            return this.faLock;
+        } else if (channelDTO?.name === 'announcement') {
+            return this.faBullhorn;
+        } else {
+            return this.faHashtag;
+        }
     }
 
     mapConversationToSidebarCardElement(conversation: ConversationDTO): SidebarCardElement {
@@ -311,7 +326,7 @@ export class CourseOverviewService {
             title: this.conversationService.getConversationName(conversation) ?? '',
             id: conversation.id ?? '',
             type: conversation.type,
-            icon: getAsChannelDTO(conversation)?.name === 'announcement' ? this.faBullhorn : this.faHashtag,
+            icon: this.getChannelIcon(conversation),
             conversation: conversation,
             size: 'S',
         };

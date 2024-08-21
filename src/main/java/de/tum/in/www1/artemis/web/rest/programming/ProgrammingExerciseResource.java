@@ -102,10 +102,10 @@ public class ProgrammingExerciseResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
-    private final ChannelRepository channelRepository;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    private final ChannelRepository channelRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -291,14 +291,16 @@ public class ProgrammingExerciseResource {
 
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(updatedProgrammingExercise.getId());
+        var programmingExerciseBeforeUpdate = programmingExerciseRepository
+                .findByIdWithAuxiliaryRepositoriesCompetenciesAndBuildConfigElseThrow(updatedProgrammingExercise.getId());
         if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
         if (!Objects.equals(programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled(), updatedProgrammingExercise.isStaticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        if (!Objects.equals(programmingExerciseBeforeUpdate.isTestwiseCoverageEnabled(), updatedProgrammingExercise.isTestwiseCoverageEnabled())) {
+        if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().isTestwiseCoverageEnabled(),
+                updatedProgrammingExercise.getBuildConfig().isTestwiseCoverageEnabled())) {
             throw new BadRequestAlertException("Testwise coverage enabled flag must not be changed", ENTITY_NAME, "testwiseCoverageCannotChange");
         }
         if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
@@ -320,14 +322,18 @@ public class ProgrammingExerciseResource {
         athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
         // Ignore changes to the default branch
-        updatedProgrammingExercise.setBranch(programmingExerciseBeforeUpdate.getBranch());
+        updatedProgrammingExercise.getBuildConfig().setBranch(programmingExerciseBeforeUpdate.getBuildConfig().getBranch());
 
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
             // make sure the default value is set properly
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }
 
+        // Update the auxiliary repositories in the DB and ProgrammingExercise instance
         auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        // Update the auxiliary repositories in the VCS. This needs to be decoupled to break circular dependencies.
+        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             // make sure the default value is set properly
@@ -342,6 +348,7 @@ public class ProgrammingExerciseResource {
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
         return ResponseEntity.ok(savedProgrammingExercise);
     }
 
@@ -418,11 +425,11 @@ public class ProgrammingExerciseResource {
     private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
         if (includePlagiarismDetectionConfig) {
             var programmingExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exerciseId);
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(exerciseId);
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, programmingExerciseRepository);
             return programmingExercise;
         }
-        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(exerciseId);
+        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(exerciseId);
     }
 
     /**
@@ -516,7 +523,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "true") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -561,7 +568,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
@@ -576,7 +583,7 @@ public class ProgrammingExerciseResource {
         try {
             String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
             // Atm we only have one folder that can have structural tests, but this could change.
-            testsPath = programmingExercise.hasSequentialTestRuns() ? Path.of("structural", testsPath).toString() : testsPath;
+            testsPath = programmingExercise.getBuildConfig().hasSequentialTestRuns() ? Path.of("structural", testsPath).toString() : testsPath;
             boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
 
             if (didGenerateOracle) {
@@ -675,7 +682,7 @@ public class ProgrammingExerciseResource {
      * 1. deleteBuildPlans: Deleting all student build plans (except BASE/SOLUTION).
      * 2. deleteRepositories: Deleting all student repositories (requires: 1. deleteBuildPlans == true).
      * 3. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results.
-     * 4. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans.
+     * 4. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
      *
      * @param exerciseId                         - Id of the programming exercise to reset.
      * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
@@ -687,7 +694,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO)
             throws JsonProcessingException {
         log.debug("REST request to reset programming exercise {} with options {}", exerciseId, programmingExerciseResetOptionsDTO);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(exerciseId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {

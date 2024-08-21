@@ -10,7 +10,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the DragItem entity.
@@ -23,6 +22,6 @@ public interface DragItemRepository extends ArtemisJpaRepository<DragItem, Long>
     Optional<DragItem> findWithEagerQuestionById(Long id);
 
     default DragItem findWithEagerQuestionByIdElseThrow(Long dragItemId) {
-        return findWithEagerQuestionById(dragItemId).orElseThrow(() -> new EntityNotFoundException("DragItem", dragItemId));
+        return getValueElseThrow(findWithEagerQuestionById(dragItemId), dragItemId);
     }
 }

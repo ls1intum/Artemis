@@ -3,6 +3,7 @@ import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noDate';
@@ -19,11 +20,9 @@ export type ChannelGroupCategory =
     | 'directMessages'
     | 'examChannels'
     | 'hiddenChannels';
-export type CollapseState =
-    | Record<TimeGroupCategory, boolean>
-    | Record<ChannelGroupCategory, boolean>
-    | Record<ExamGroupCategory, boolean>
-    | Record<TutorialGroupCategory, boolean>;
+export type CollapseState = {
+    [key: string]: boolean;
+} & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
 export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
 export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
 
@@ -112,6 +111,10 @@ export interface SidebarCardElement {
      * Set for Exam, shows the working time
      */
     workingTime?: number;
+    /**
+     * Set for Exam, represents the student exam of a real exam to obtain individual working time
+     */
+    studentExam?: StudentExam;
     /**
      * Set for Exam, shows the maximum attainable Points
      */

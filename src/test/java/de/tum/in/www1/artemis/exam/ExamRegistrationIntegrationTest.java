@@ -128,7 +128,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         List<String> registrationNumbers = Arrays.asList("1111111", "1111112", "1111113");
         List<User> students = userUtilService.setRegistrationNumberOfStudents(registrationNumbers, TEST_PREFIX);
 
-        User student1 = students.get(0);
+        User student1 = students.getFirst();
         User student2 = students.get(1);
         User student3 = students.get(2);
 
@@ -143,7 +143,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(emptyRegistrationNumber);
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber4WithTypo);
 
-        var ldapUser111Dto = new LdapUserDto().registrationNumber(registrationNumber111).firstName(STUDENT_111).lastName(STUDENT_111).username(STUDENT_111)
+        var ldapUser111Dto = new LdapUserDto().registrationNumber(registrationNumber111).firstName(STUDENT_111).lastName(STUDENT_111).login(STUDENT_111)
                 .email(STUDENT_111 + "@tum.de");
         doReturn(Optional.of(ldapUser111Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber111);
 
@@ -218,13 +218,13 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         String student300 = TEST_PREFIX + "student300";
 
         // setup mocks
-        var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).username(student100).registrationNumber("100000").email(student100 + "@tum.de");
-        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(student100);
+        var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).login(student100).registrationNumber("100000").email(student100 + "@tum.de");
+        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByLogin(student100);
 
-        var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).username(student200).registrationNumber("200000").email(student200 + "@tum.de");
-        doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByEmail(student200 + "@tum.de");
+        var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).login(student200).registrationNumber("200000").email(student200 + "@tum.de");
+        doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByAnyEmail(student200 + "@tum.de");
 
-        var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).username(student300).registrationNumber("3000000").email(student300 + "@tum.de");
+        var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).login(student300).registrationNumber("3000000").email(student300 + "@tum.de");
         doReturn(Optional.of(ldapUser3Dto)).when(ldapUserService).findByRegistrationNumber("3000000");
 
         // user with login

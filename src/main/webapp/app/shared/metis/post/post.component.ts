@@ -1,9 +1,21 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+    AfterContentChecked,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    ViewChild,
+    ViewContainerRef,
+} from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ContextInformation, PageType, RouteComponents } from '../metis.util';
+import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
@@ -19,6 +31,7 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
     selector: 'jhi-post',
     templateUrl: './post.component.html',
     styleUrls: ['./post.component.scss', './../metis.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
     @Input() lastReadDate?: dayjs.Dayjs;
@@ -44,6 +57,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     pageType: PageType;
     contextInformation: ContextInformation;
     readonly PageType = PageType;
+    readonly DisplayPriority = DisplayPriority;
 
     // Icons
     faBullhorn = faBullhorn;

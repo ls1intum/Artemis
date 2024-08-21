@@ -110,7 +110,11 @@ describe('StandardizedCompetencyEditComponent', () => {
 
         compareFormValues(component['form'].getRawValue(), competency);
         expect(component.isEditing).toBeFalse();
-        shouldClose ? expect(closeSpy).toHaveBeenCalled() : expect(closeSpy).not.toHaveBeenCalled();
+        if (shouldClose) {
+            expect(closeSpy).toHaveBeenCalled();
+        } else {
+            expect(closeSpy).not.toHaveBeenCalled();
+        }
     });
 
     it('should delete', () => {
@@ -136,7 +140,7 @@ describe('StandardizedCompetencyEditComponent', () => {
     function compareFormValues(formValues: any, competency: StandardizedCompetencyDTO) {
         for (const key in formValues) {
             //needed to ensure null becomes undefined
-            expect(formValues[key] ?? undefined).toEqual(competency[key]);
+            expect(formValues[key] ?? undefined).toEqual(competency[key as keyof StandardizedCompetencyDTO]);
         }
     }
 });

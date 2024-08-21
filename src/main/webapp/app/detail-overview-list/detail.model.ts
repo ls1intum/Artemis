@@ -48,17 +48,17 @@ export interface TextDetail extends DetailBase {
     data: { text?: string | number };
 }
 
-interface DateDetail extends DetailBase {
+export interface DateDetail extends DetailBase {
     type: DetailType.Date;
     data: { date?: dayjs.Dayjs };
 }
 
-interface LinkDetail extends DetailBase {
+export interface LinkDetail extends DetailBase {
     type: DetailType.Link;
     data: { text?: string | number; href?: string | false; routerLink?: (string | number | undefined)[]; queryParams?: Record<string, string | number | undefined> };
 }
 
-interface BooleanDetail extends DetailBase {
+export interface BooleanDetail extends DetailBase {
     type: DetailType.Boolean;
     data: { boolean?: boolean };
 }
@@ -83,19 +83,18 @@ interface ProgrammingIrisEnabledDetail extends DetailBase {
     data: { exercise?: ProgrammingExercise; course?: Course; disabled: boolean; subSettingsType: IrisSubSettingsType };
 }
 
-interface ProgrammingRepositoryButtonsDetail extends DetailBase {
+export interface ProgrammingRepositoryButtonsDetail extends DetailBase {
     type: DetailType.ProgrammingRepositoryButtons;
     data: {
         exerciseId?: number;
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
-        showOpenLink?: boolean;
         type: ProgrammingExerciseInstructorRepositoryType;
     };
 }
 
-interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase {
+export interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase {
     type: DetailType.ProgrammingAuxiliaryRepositoryButtons;
-    data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number; showOpenLink?: boolean };
+    data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number };
 }
 
 interface ProgrammingTestStatusDetail extends DetailBase {

@@ -336,7 +336,7 @@ public class CourseResource {
 
         // if learning paths got enabled, generate learning paths for students
         if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled()) {
-            Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesByIdElseThrow(result.getId());
+            Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
             learningPathService.generateLearningPaths(courseWithCompetencies);
         }
 
@@ -439,8 +439,8 @@ public class CourseResource {
     @PostMapping("courses/{courseId}/enroll")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<String>> enrollInCourse(@PathVariable Long courseId) {
-        Course course = courseRepository.findWithEagerOrganizationsAndCompetenciesAndLearningPathsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        Course course = courseRepository.findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPathsElseThrow(courseId);
         log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
         courseService.enrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok(user.getGroups());
@@ -1058,7 +1058,7 @@ public class CourseResource {
             groups.add(course.getInstructorGroupName());
         }
         User searchingUser = userRepository.getUser();
-        var originalPage = userRepository.searchAllByLoginOrNameInGroupsNotUserId(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
+        var originalPage = userRepository.searchAllWithGroupsByLoginOrNameInGroupsNotUserId(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
 
         var resultDTOs = new ArrayList<UserPublicInfoDTO>();
         for (var user : originalPage) {
@@ -1152,7 +1152,7 @@ public class CourseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
-        List<UserNameAndLoginDTO> searchResults = userRepository.searchAllByLoginOrNameInCourse(Pageable.ofSize(10), searchTerm, course.getId()).stream()
+        List<UserNameAndLoginDTO> searchResults = userRepository.searchAllWithGroupsByLoginOrNameInCourseAndReturnList(Pageable.ofSize(10), searchTerm, course.getId()).stream()
                 .map(UserNameAndLoginDTO::of).toList();
 
         return ResponseEntity.ok().body(searchResults);
@@ -1252,7 +1252,7 @@ public class CourseResource {
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group);
             if (role == Role.STUDENT && course.getLearningPathsEnabled()) {
-                Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
+                Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
                 learningPathService.generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());
             }
             return ResponseEntity.ok().body(null);

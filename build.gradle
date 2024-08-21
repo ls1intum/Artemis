@@ -19,7 +19,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "io.spring.dependency-management" version "1.1.5"
+    id "io.spring.dependency-management" version "1.1.6"
     id "com.google.cloud.tools.jib" version "3.4.3"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
@@ -27,12 +27,12 @@ plugins {
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "10.0.1"
+    id "org.owasp.dependencycheck" version "10.0.3"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.4.2"
+version = "7.5.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -284,7 +284,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.5"
+    implementation "net.sourceforge.plantuml:plantuml:1.2024.6"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -312,8 +312,8 @@ dependencies {
     // required by Saml2
     implementation "org.apache.santuario:xmlsec:4.0.2"
 
-    implementation "org.jsoup:jsoup:1.17.2"
-    implementation "commons-codec:commons-codec:1.17.0"   // needed for spring security saml2
+    implementation "org.jsoup:jsoup:1.18.1"
+    implementation "commons-codec:commons-codec:1.17.1"   // needed for spring security saml2
 
     implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
     implementation "com.vdurmont:semver4j:3.1.0"
@@ -322,7 +322,7 @@ dependencies {
     implementation "com.github.docker-java:docker-java-transport-httpclient5:${docker_java_version}"
 
     // use newest version of commons-compress to avoid security issues through outdated dependencies
-    implementation "org.apache.commons:commons-compress:1.26.2"
+    implementation "org.apache.commons:commons-compress:1.27.1"
 
 
     // import JHipster dependencies BOM
@@ -331,7 +331,7 @@ dependencies {
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.micrometer:micrometer-registry-prometheus:1.12.6"
-    implementation "net.logstash.logback:logstash-logback-encoder:7.4"
+    implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
     implementation "com.fasterxml.jackson.core:jackson-core:${fasterxml_version}"
@@ -348,7 +348,7 @@ dependencies {
 
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
-    implementation "com.hazelcast:hazelcast-hibernate53:5.1.0"
+    implementation "com.hazelcast:hazelcast-hibernate53:5.2.0"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
     implementation "com.zaxxer:HikariCP:5.1.0"
@@ -373,21 +373,21 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:3.2.4"
-    implementation "org.springframework.data:spring-data-ldap:3.3.1"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.6"
+    implementation "org.springframework.data:spring-data-ldap:3.3.3"
 
-    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.2") {
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.3") {
         // NOTE: these modules contain security vulnerabilities and are not needed
         exclude module: "commons-jxpath"
         exclude module: "woodstox-core"
     }
-    implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.2"
-    implementation "org.springframework.cloud:spring-cloud-commons:4.1.3"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.3"
+    implementation "org.springframework.cloud:spring-cloud-commons:4.1.4"
 
-    implementation "io.netty:netty-all:4.1.111.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.20"
-    implementation "org.springframework:spring-messaging:6.1.10"
-    implementation "org.springframework.retry:spring-retry:2.0.6"
+    implementation "io.netty:netty-all:4.1.112.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.1.22"
+    implementation "org.springframework:spring-messaging:6.1.12"
+    implementation "org.springframework.retry:spring-retry:2.0.8"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -427,8 +427,8 @@ dependencies {
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
     implementation "com.ibm.icu:icu4j-charset:75.1"
     implementation "com.github.seancfoley:ipaddress:5.5.0"
-    implementation "org.apache.maven:maven-model:3.9.8"
-    // NOTE: 3.0.2 is broken for splitting lecture PDFs
+    implementation "org.apache.maven:maven-model:3.9.9"
+    // NOTE: 3.0.2 is broken for splitting lecture specific PDFs
     implementation "org.apache.pdfbox:pdfbox:3.0.1"
     implementation "org.apache.commons:commons-csv:1.11.0"
     implementation "org.commonmark:commonmark:0.22.0"
@@ -436,7 +436,7 @@ dependencies {
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.2.1-jre"
+    implementation "com.google.guava:guava:33.3.0-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
@@ -467,14 +467,14 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.26.0"
+    testImplementation "org.assertj:assertj-core:3.26.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.174"
-    testImplementation "org.awaitility:awaitility:4.2.1"
+    testImplementation "io.github.classgraph:classgraph:4.8.175"
+    testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.8"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.3.0"
+    testImplementation "org.gradle:gradle-tooling-api:8.10"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.4.0"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
         exclude group: "org.testcontainers", module: "mariadb"
@@ -486,9 +486,11 @@ dependencies {
     }
     testImplementation("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.17"
+            strictly "1.14.19"
         }
     }
+    // cannot update due to "Syntax error in SQL statement "WITH ids_to_delete"
+//    testImplementation "com.h2database:h2:2.3.230"
     testImplementation "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
@@ -507,7 +509,7 @@ tasks.register("cleanResources", Delete) {
     delete "build/resources"
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-Xlint:deprecation'
 }
 
@@ -556,7 +558,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.8"
+    gradleVersion = "8.10"
 }
 
 tasks.register("stage") {

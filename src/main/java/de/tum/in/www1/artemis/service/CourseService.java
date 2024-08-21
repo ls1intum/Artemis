@@ -520,7 +520,7 @@ public class CourseService {
 
     private void deleteLecturesOfCourse(Course course) {
         for (Lecture lecture : course.getLectures()) {
-            lectureService.delete(lecture);
+            lectureService.delete(lecture, false);
         }
     }
 
@@ -589,7 +589,7 @@ public class CourseService {
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
         var course = courseRepository.findByIdElseThrow(courseId);
         if (course.getLearningPathsEnabled()) {
-            course = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
+            course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
         }
         String courseGroupName = course.defineCourseGroupName(courseGroup);
         Role courseGroupRole = Role.fromString(courseGroup);

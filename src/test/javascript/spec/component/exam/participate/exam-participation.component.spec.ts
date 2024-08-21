@@ -1,11 +1,19 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
+import { UMLDiagramType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
+import { ExamPage } from 'app/entities/exam-page.model';
 import { Exam } from 'app/entities/exam.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -15,11 +23,18 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { Submission } from 'app/entities/submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
+import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
 import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover/exam-participation-cover.component';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
+import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
+import { ExamLiveEvent, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
@@ -28,36 +43,21 @@ import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-re
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
-import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
-import { By } from '@angular/platform-browser';
-import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
-import { AlertService } from 'app/core/util/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ExamLiveEvent, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
+import { Subject, of, throwError } from 'rxjs';
 import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/service/mock-exam-participation-live-events.service';
-import { ExamPage } from 'app/entities/exam-page.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { UMLDiagramType } from '@ls1intum/apollon';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
-import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -77,7 +77,7 @@ describe('ExamParticipationComponent', () => {
     let examManagementService: ExamManagementService;
 
     function setupActivatedRouteMock() {
-        const activatedRouteMock = {
+        return {
             parent: {
                 parent: {
                     parent: {
@@ -89,7 +89,6 @@ describe('ExamParticipationComponent', () => {
             },
             params: of({ examId: '2', testRunId: '3' }),
         };
-        return activatedRouteMock;
     }
 
     beforeEach(() => {
@@ -762,7 +761,8 @@ describe('ExamParticipationComponent', () => {
 
         it('should call translateService', () => {
             const translateServiceSpy = jest.spyOn(translateService, 'instant');
-            comp.canDeactivateWarning;
+            const canDeactivate = comp.canDeactivateWarning;
+            expect(canDeactivate).toBeUndefined();
             expect(translateServiceSpy).toHaveBeenCalledOnce();
         });
     });
@@ -1144,5 +1144,106 @@ describe('ExamParticipationComponent', () => {
         comp.onExamEndConfirmed();
 
         expect(examLayoutStub).toHaveBeenCalledOnce();
+    });
+
+    it('should display exam bar and timer during working time', () => {
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        const exercise0 = new QuizExercise(undefined, undefined);
+        exercise0.id = 5;
+        const exercise1 = new ProgrammingExercise(undefined, undefined);
+        exercise1.id = 6;
+        comp.studentExam = new StudentExam();
+        comp.studentExam.submitted = false;
+        comp.studentExam.exercises = [exercise0, exercise1];
+        comp.examStartConfirmed = true;
+        jest.spyOn(comp, 'isActive').mockReturnValue(true);
+        jest.spyOn(comp, 'isOver').mockReturnValue(false);
+        comp.activeExamPage = new ExamPage();
+        comp.activeExamPage.exercise = exercise1;
+        jest.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(false);
+
+        fixture.detectChanges();
+        expect(fixture).toBeTruthy();
+        const examBarDebugElement = fixture.debugElement.query(By.directive(ExamBarComponent));
+        expect(examBarDebugElement).toBeTruthy();
+    });
+
+    it('should not display exam bar and timer when exam was not submitted', () => {
+        jest.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(true);
+
+        fixture.detectChanges();
+
+        const examBarDebugElement = fixture.debugElement.query(By.directive(ExamBarComponent));
+        expect(examBarDebugElement).toBeFalsy();
+    });
+
+    it('should get whether student failed to submit', () => {
+        comp.studentExam = new StudentExam();
+        comp.testRunId = 1;
+
+        expect(comp.studentFailedToSubmit).toBeFalse();
+
+        comp.testRunId = 0;
+        const startDate = dayjs();
+        const now = dayjs();
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        comp.exam.startDate = startDate.subtract(2, 'hours');
+        comp.exam.testExam = false;
+        comp.studentExam.workingTime = 3600;
+        comp.exam.gracePeriod = 1;
+        comp.studentExam.submitted = false;
+        expect(comp.studentFailedToSubmit).toBeTrue();
+    });
+
+    it('should get whether student failed to submit a TestExam', () => {
+        comp.studentExam = new StudentExam();
+        comp.testRunId = 0;
+        comp.exam.testExam = true;
+
+        comp.studentExam.started = false;
+        expect(comp.studentFailedToSubmit).toBeFalse();
+
+        comp.studentExam.started = true;
+        comp.studentExam.startedDate = undefined;
+        expect(comp.studentFailedToSubmit).toBeFalse();
+
+        const now = dayjs();
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        comp.studentExam.startedDate = now.subtract(2, 'hours');
+        comp.studentExam.workingTime = 3600;
+        comp.exam.gracePeriod = 1;
+        comp.studentExam.submitted = false;
+        expect(comp.studentFailedToSubmit).toBeTrue();
+
+        comp.studentExam.startedDate = now.subtract(1, 'hours');
+        comp.studentExam.workingTime = 3600;
+        comp.exam.gracePeriod = 1;
+        comp.studentExam.submitted = false;
+        expect(comp.studentFailedToSubmit).toBeFalse();
+    });
+
+    it('should initialize individualStudentEndDateWithGracePeriod', () => {
+        let now = dayjs();
+        comp.studentExam = new StudentExam();
+
+        // Case test run
+        comp.studentExam.workingTime = 1;
+        comp.exam.gracePeriod = 1;
+        comp.exam.startDate = now;
+        comp.studentExam.testRun = true;
+        comp.initIndividualEndDates(now);
+
+        expect(comp.individualStudentEndDateWithGracePeriod).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
+
+        // Case test exam
+        now = dayjs();
+        comp.studentExam.workingTime = 1;
+        comp.exam.testExam = true;
+        comp.exam.gracePeriod = 1;
+        comp.exam.startDate = dayjs().subtract(4, 'hours');
+
+        comp.initIndividualEndDates(now);
+
+        expect(comp.individualStudentEndDateWithGracePeriod).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
     });
 });

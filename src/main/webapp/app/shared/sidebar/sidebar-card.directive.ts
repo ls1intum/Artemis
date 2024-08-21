@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, EventEmitter, Input, OnDestroy, OnInit, Output, ViewContainerRef } from '@angular/core';
+import { ComponentRef, Directive, EventEmitter, Input, OnDestroy, OnInit, Output, Type, ViewContainerRef } from '@angular/core';
 import { SidebarCardSmallComponent } from 'app/shared/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large/sidebar-card-large.component';
@@ -21,10 +21,10 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
     constructor(public viewContainerRef: ViewContainerRef) {}
 
     ngOnInit() {
-        const cards = {
-            ['S']: SidebarCardSmallComponent,
-            ['M']: SidebarCardMediumComponent,
-            ['L']: SidebarCardLargeComponent,
+        const cards: { [key: string]: Type<SidebarCardSmallComponent | SidebarCardMediumComponent | SidebarCardLargeComponent> } = {
+            S: SidebarCardSmallComponent,
+            M: SidebarCardMediumComponent,
+            L: SidebarCardLargeComponent,
         };
 
         const cardType = cards[this.size];

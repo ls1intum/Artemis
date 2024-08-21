@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -46,6 +47,9 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
 
     @Autowired
     private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ExamRepository examRepository;
@@ -78,7 +82,7 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
         course1 = courseUtilService.addEmptyCourse();
         exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
         exam2 = examUtilService.addExamWithExerciseGroup(course1, true);
-        exerciseGroup1 = exam1.getExerciseGroups().get(0);
+        exerciseGroup1 = exam1.getExerciseGroups().getFirst();
         var textEx = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup1);
         textExercise1 = textExerciseRepository.save(textEx);
     }
@@ -149,9 +153,9 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
         List<ExerciseGroup> result = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.OK, ExerciseGroup.class);
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getExercises()).hasSize(1);
-        assertThat(result.get(0).getExercises()).contains(textExercise1);
-        assertThat(result.get(0).getExam()).isEqualTo(exam1);
+        assertThat(result.getFirst().getExercises()).hasSize(1);
+        assertThat(result.getFirst().getExercises()).contains(textExercise1);
+        assertThat(result.getFirst().getExam()).isEqualTo(exam1);
     }
 
     @Test
@@ -173,7 +177,7 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExerciseGroup_programmingExerciseSameShortNameOrTitle(String shortName1, String shortName2, String title1, String title2) throws Exception {
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
         ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
 
@@ -275,6 +279,7 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
         exam = examRepository.save(exam);
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
+        programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
         exerciseRepository.save(programming);
 
         doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
@@ -306,14 +311,14 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
 
         List<ExerciseGroup> savedExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).orElseThrow().getExerciseGroups();
-        assertThat(savedExerciseGroups.get(0).getTitle()).isEqualTo("second");
+        assertThat(savedExerciseGroups.getFirst().getTitle()).isEqualTo("second");
         assertThat(savedExerciseGroups.get(1).getTitle()).isEqualTo("third");
         assertThat(savedExerciseGroups.get(2).getTitle()).isEqualTo("first");
 
         // Exercises should be preserved
         Exam savedExam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
         ExerciseGroup savedExerciseGroup1 = savedExam.getExerciseGroups().get(2);
-        ExerciseGroup savedExerciseGroup2 = savedExam.getExerciseGroups().get(0);
+        ExerciseGroup savedExerciseGroup2 = savedExam.getExerciseGroups().getFirst();
         ExerciseGroup savedExerciseGroup3 = savedExam.getExerciseGroups().get(1);
         assertThat(savedExerciseGroup1.getExercises()).containsExactlyInAnyOrder(exercise1_1, exercise1_2);
         assertThat(savedExerciseGroup2.getExercises()).containsExactlyInAnyOrder(exercise2_1);

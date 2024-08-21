@@ -6,3 +6,11 @@
 .form-control.is-invalid {
     background-image: none;
 }
+
+.visible-date-warning {
+    color: var(--bs-body-color) !important;
+}
+
+.border-warning {
+    border-color: var(--warning) !important;
+}

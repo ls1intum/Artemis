@@ -36,7 +36,7 @@
             <!-- HEADER INFORMATION END -->
             <!-- LECTURE START -->
             <div class="row mt-2">
-                <div class="col pe-0 flex-grow-1">
+                <div class="col pe-0 pb-3 flex-grow-1">
                     @if (lecture.description) {
                         <div class="row mb-2 mt-2 align-items-baseline">
                             <div class="col-auto">
@@ -61,23 +61,23 @@
                         </div>
                     }
                     @for (lectureUnit of lectureUnits; track lectureUnit) {
-                        <div class="row m-0 d-flex flex-nowrap">
-                            <div class="col-lg-11 col-10">
+                        <div class="row m-0 mt-3 d-flex flex-nowrap">
+                            <div class="col-lg-11 p-0 col-10">
                                 @switch (lectureUnit.type) {
                                     @case (LectureUnitType.EXERCISE) {
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!" />
                                     }
                                     @case (LectureUnitType.ATTACHMENT) {
-                                        <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.VIDEO) {
-                                        <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.TEXT) {
-                                        <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.ONLINE) {
-                                        <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                 }
                             </div>

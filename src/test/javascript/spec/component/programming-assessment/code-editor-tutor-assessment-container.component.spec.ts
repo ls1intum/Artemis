@@ -307,7 +307,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(browserComponent.filesTreeViewItem).toHaveLength(1);
 
         const codeEditorMonacoComp: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
-        codeEditorMonacoComp.isLoading = false;
+        codeEditorMonacoComp.loadingCount = 0;
         const highlightedLines: MonacoEditorLineHighlight[] = await firstValueFrom(codeEditorMonacoComp.onHighlightLines);
         expect(highlightedLines).toHaveLength(1);
 

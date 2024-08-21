@@ -45,7 +45,9 @@ describe('BuildQueueComponent', () => {
     const mockLocalStorageService = new MockLocalStorageService();
     mockLocalStorageService.clear = (key?: string) => {
         if (key) {
-            delete mockLocalStorageService.storage[key];
+            if (key in mockLocalStorageService.storage) {
+                delete mockLocalStorageService.storage[key];
+            }
         } else {
             mockLocalStorageService.storage = {};
         }
@@ -251,7 +253,7 @@ describe('BuildQueueComponent', () => {
     const request = {
         page: 1,
         pageSize: 50,
-        sortedColumn: 'build_completion_date',
+        sortedColumn: 'buildCompletionDate',
         sortingOrder: SortingOrder.DESCENDING,
         searchTerm: '',
     };
@@ -574,7 +576,7 @@ describe('BuildQueueComponent', () => {
         for (const finishedBuildJob of component.finishedBuildJobs) {
             const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
             if (buildDuration && buildCompletionDate && buildStartDate) {
-                expect(buildDuration).toEqual(buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000);
+                expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
             }
         }
     });

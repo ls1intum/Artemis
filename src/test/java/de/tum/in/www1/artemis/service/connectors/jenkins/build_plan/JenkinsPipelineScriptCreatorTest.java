@@ -12,9 +12,11 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
 class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -29,6 +31,9 @@ class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsG
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
     private CourseUtilService courseUtilService;
 
     private ProgrammingExercise programmingExercise;
@@ -39,13 +44,16 @@ class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsG
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setSequentialTestRuns(false);
-        programmingExercise.setTestwiseCoverageEnabled(false);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(false);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
 
+        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 

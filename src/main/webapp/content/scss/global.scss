@@ -52,6 +52,10 @@ a {
     cursor: pointer;
 }
 
+.cursor-default {
+    cursor: default !important;
+}
+
 a:not(.btn):not(.tab-link):hover {
     text-decoration: underline !important;
 }

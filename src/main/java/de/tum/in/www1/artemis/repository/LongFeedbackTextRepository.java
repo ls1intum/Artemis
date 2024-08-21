@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.LongFeedbackText;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFeedbackText, Long> {
 
@@ -38,6 +37,6 @@ public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFee
     Optional<LongFeedbackText> findWithFeedbackAndResultAndParticipationByFeedbackId(@Param("feedbackId") final Long feedbackId);
 
     default LongFeedbackText findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(final Long feedbackId) {
-        return findWithFeedbackAndResultAndParticipationByFeedbackId(feedbackId).orElseThrow(() -> new EntityNotFoundException("long feedback text", feedbackId));
+        return getValueElseThrow(findWithFeedbackAndResultAndParticipationByFeedbackId(feedbackId), feedbackId);
     }
 }

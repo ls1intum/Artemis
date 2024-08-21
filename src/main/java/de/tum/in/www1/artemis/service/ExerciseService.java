@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static java.time.ZonedDateTime.now;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -38,7 +39,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
@@ -542,7 +543,7 @@ public class ExerciseService {
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
         // We only display the latest five past exercises in the client, only calculate statistics for those
-        List<Exercise> pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
+        List<Exercise> pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, now());
 
         Comparator<Exercise> exerciseDateComparator = Comparator.comparing(
                 exercise -> exercise.getAssessmentDueDate() != null ? exercise.getAssessmentDueDate() : exercise.getDueDate(), Comparator.nullsLast(Comparator.naturalOrder()));
@@ -558,7 +559,7 @@ public class ExerciseService {
         }
 
         // Fill statistics for all exercises potentially displayed on the client
-        var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
+        var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, now());
         exercisesForManagementOverview.addAll(lastFivePastExercises);
         return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
     }
@@ -758,7 +759,7 @@ public class ExerciseService {
      * @param exercises  set of exercises
      * @param competency competency to remove
      */
-    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
+    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull CourseCompetency competency) {
         exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
         exerciseRepository.saveAll(exercises);
     }
@@ -775,8 +776,11 @@ public class ExerciseService {
         if (originalExercise.isCourseExercise()) {
             groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
         }
-        else if (originalExercise.isExamExercise() && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+        // start sending problem statement updates within the last 5 minutes before the exam starts
+        else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
+                && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+            User instructor = userRepository.getUser();
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
         }
     }
 }

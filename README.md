@@ -43,12 +43,13 @@ Artemis brings interactive learning to life with instant, individual feedback on
 15. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
 16. **[Learning analytics](https://docs.artemis.cit.tum.de/user/learning-analytics/)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and competencies.
 17. **[Adaptive learning](https://docs.artemis.cit.tum.de/user/adaptive-learning/)**: Artemis allows instructors and students to define and track competencies. Students can monitor their progress towards these goals, while instructors can provide tailored feedback. This approach integrates lectures and exercises under overarching learning objectives.
-18. **[Tutorial groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis support the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
-19. **[Iris](https://artemis.cit.tum.de/about-iris)**: Artemis integrates Iris, a chatbot that supports students and instructors with common questions and tasks.
-20. **[Scalable](https://docs.artemis.cit.tum.de/admin/scaling/)**: Artemis scales to multiple courses with thousands of students simultaneously using it. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
-21. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
-22. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
-23. **[Open-source](https://docs.artemis.cit.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
+18. **[Learning paths](https://docs.artemis.cit.tum.de/user/adaptive-learning/adaptive-learning-student.html#learning-paths)**: Based on the competency model and students' individual progress, Artemis creates learning paths that guide students through the course content.
+19. **[Tutorial groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis supports the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
+20. **[Iris](https://artemis.cit.tum.de/about-iris)**: Artemis integrates Iris, a chatbot that supports students and instructors with common questions and tasks.
+21. **[Scalable](https://docs.artemis.cit.tum.de/admin/scaling/)**: Artemis scales to multiple courses with thousands of students simultaneously using it. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
+22. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
+23. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
+24. **[Open-source](https://docs.artemis.cit.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
 
 ## Roadmap
 
@@ -119,7 +120,7 @@ The following members of the project management team are responsible for specifi
 | Communication                  | [@rabeatwork](https://github.com/rabeatwork)                                                        |
 | Notifications                  | [@rabeatwork](https://github.com/rabeatwork)                                                        |
 | Team Exercises                 | [@krusche](https://github.com/krusche)                                                              |
-| Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner)     |
+| Lectures                       | [@maximiliananzinger](https://github.com/maximiliananzinger)     |
 | Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner)     |
 | Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                                  |
 | Learning analytics             | [@bassner](https://github.com/bassner)                                                              |
@@ -158,7 +159,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.4.2.war
+./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.5.1.war
 ```
 
 ## Architecture

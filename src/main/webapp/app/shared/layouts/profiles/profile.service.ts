@@ -31,7 +31,7 @@ export class ProfileService {
                         const data = res.body!;
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
-                        const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
+                        const displayRibbonOnProfiles = data.ribbonEnv?.split(',') ?? [];
 
                         this.mapGuidedTourConfig(data, profileInfo);
                         this.mapAllowedOrionVersions(data, profileInfo);
@@ -49,7 +49,7 @@ export class ProfileService {
                         profileInfo.ribbonEnv = profileInfo.ribbonEnv ?? '';
 
                         profileInfo.sentry = data.sentry;
-                        profileInfo.postHog = data['post-hog'];
+                        profileInfo.postHog = data.postHog;
                         profileInfo.features = data.features;
                         profileInfo.buildPlanURLTemplate = data.buildPlanURLTemplate;
                         profileInfo.commitHashURLTemplate = data.commitHashURLTemplate;
@@ -70,11 +70,12 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.versionControlName = data.versionControlName;
-                        profileInfo.versionControlAccessToken = data.versionControlAccessToken;
+                        profileInfo.showCloneUrlWithoutToken = data.showCloneUrlWithoutToken;
+                        profileInfo.useVersionControlAccessToken = data.useVersionControlAccessToken;
                         profileInfo.continuousIntegrationName = data.continuousIntegrationName;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
-                        profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];
-                        profileInfo.studentExamStoreSessionData = data['student-exam-store-session-data'];
+                        profileInfo.textAssessmentAnalyticsEnabled = data.textAssessmentAnalyticsEnabled;
+                        profileInfo.studentExamStoreSessionData = data.studentExamStoreSessionData;
 
                         profileInfo.useExternal = data.useExternal;
                         profileInfo.externalCredentialProvider = data.externalCredentialProvider;

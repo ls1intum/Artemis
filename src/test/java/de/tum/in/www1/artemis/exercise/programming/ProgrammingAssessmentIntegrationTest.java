@@ -54,6 +54,7 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -72,6 +73,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ComplaintRepository complaintRepo;
@@ -746,8 +750,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         exam = examRepository.save(exam);
 
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
-        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
 
@@ -767,7 +772,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
             assertThat(submission.getResults()).isNotNull();
             assertThat(submission.getLatestResult()).isNotNull();
             assertThat(submission.getResults()).hasSize(1);
-            assertThat(submission.getResults().get(0).getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+            assertThat(submission.getResults().getFirst().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
         }
 
         // request to manually assess latest submission (correction round: 0)
@@ -792,8 +797,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
         var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
@@ -815,8 +820,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(firstSubmittedManualResult);
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(firstSubmittedManualResult);
 
         // change the user here, so that for the next query the result will show up again.
         // set to true, if a tutor is only able to assess a submission if he has not assessed it any prior correction rounds
@@ -841,7 +846,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the latest automatic result, and the lock for the manual result
@@ -876,7 +881,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(3);
@@ -903,8 +908,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
                 paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1)).isEqualTo(manualResultLockedSecondRound);
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(1)).isEqualTo(manualResultLockedSecondRound);
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
@@ -1041,9 +1046,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"));
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
-        Submission submission = submissions.get(0);
+        Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(5);
-        Result firstResult = submission.getResults().get(0);
+        Result firstResult = submission.getResults().getFirst();
         Result midResult = submission.getResults().get(2);
         Result firstSemiAutomaticResult = submission.getResults().get(3);
 
@@ -1053,7 +1058,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(4);
-        assertThat(submission.getResults().get(0)).isEqualTo(firstResult);
+        assertThat(submission.getResults().getFirst()).isEqualTo(firstResult);
         assertThat(submission.getResults().get(2)).isEqualTo(firstSemiAutomaticResult);
         assertThat(submission.getResults().get(3)).isEqualTo(submission.getLatestResult()).isEqualTo(lastResult);
     }

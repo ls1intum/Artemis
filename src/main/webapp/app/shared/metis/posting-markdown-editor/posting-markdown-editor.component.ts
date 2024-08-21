@@ -1,23 +1,36 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, forwardRef } from '@angular/core';
-import { Command } from 'app/shared/markdown-editor/commands/command';
-import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
-import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
-import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.command';
-import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
-import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
-import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
-import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
+import {
+    AfterContentChecked,
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    ViewChild,
+    ViewEncapsulation,
+    forwardRef,
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
-import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { LectureService } from 'app/lecture/lecture.service';
-import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ChannelMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/channelMentionCommand';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { isCommunicationEnabled } from 'app/entities/course.model';
+import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
+import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
+import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
+import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/monaco-quote.action';
+import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
+import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MonacoChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-channel-reference.action';
+import { MonacoUserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-user-mention.action';
+import { MonacoExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-exercise-reference.action';
+import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-lecture-attachment-reference.action';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -30,15 +43,22 @@ import { isCommunicationEnabled } from 'app/entities/course.model';
         },
     ],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked {
+export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
+    @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
+
     @Input() maxContentLength: number;
-    @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.SMALL;
+    @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
     @Input() isInputLengthDisplayed = true;
+    @Input() suppressNewlineOnEnter = true;
     @Output() valueChange = new EventEmitter();
-    defaultCommands: Command[];
+    lectureAttachmentReferenceAction: MonacoLectureAttachmentReferenceAction;
+    defaultActions: MonacoEditorAction[];
     content?: string;
     previewMode = false;
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     constructor(
         private cdref: ChangeDetectorRef,
@@ -52,22 +72,26 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
      */
     ngOnInit(): void {
-        const messagingOnlyCommands = isCommunicationEnabled(this.metisService.getCourse())
-            ? [new UserMentionCommand(this.courseManagementService, this.metisService), new ChannelMentionCommand(this.channelService, this.metisService)]
+        const messagingOnlyActions = isCommunicationEnabled(this.metisService.getCourse())
+            ? [new MonacoUserMentionAction(this.courseManagementService, this.metisService), new MonacoChannelReferenceAction(this.metisService, this.channelService)]
             : [];
 
-        this.defaultCommands = [
-            new BoldCommand(),
-            new ItalicCommand(),
-            new UnderlineCommand(),
-            new ReferenceCommand(),
-            new CodeCommand(),
-            new CodeBlockCommand(),
-            new LinkCommand(),
-            ...messagingOnlyCommands,
-            new ExerciseReferenceCommand(this.metisService),
-            new LectureAttachmentReferenceCommand(this.metisService, this.lectureService),
+        this.defaultActions = [
+            new MonacoBoldAction(),
+            new MonacoItalicAction(),
+            new MonacoUnderlineAction(),
+            new MonacoQuoteAction(),
+            new MonacoCodeAction(),
+            new MonacoCodeBlockAction(),
+            ...messagingOnlyActions,
+            new MonacoExerciseReferenceAction(this.metisService),
         ];
+
+        this.lectureAttachmentReferenceAction = new MonacoLectureAttachmentReferenceAction(this.metisService, this.lectureService);
+    }
+
+    ngAfterViewInit(): void {
+        this.markdownEditor.enableTextFieldMode();
     }
 
     /**
@@ -97,9 +121,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * @param value
      */
     writeValue(value: any): void {
-        if (value !== undefined) {
-            this.content = value;
-        }
+        this.content = value ?? '';
     }
 
     /**
@@ -123,5 +145,12 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         this.content = newValue;
         this.onChange(this.content);
         this.valueChanged();
+    }
+
+    onKeyDown(event: KeyboardEvent) {
+        // Prevent a newline from being added to the text when pressing enter
+        if (this.suppressNewlineOnEnter && event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+        }
     }
 }

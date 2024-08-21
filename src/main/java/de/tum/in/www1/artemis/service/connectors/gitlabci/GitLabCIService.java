@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -33,6 +34,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
@@ -84,6 +86,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
@@ -103,12 +107,13 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private String gitlabToken;
 
     public GitLabCIService(GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.gitlab = gitlab;
         this.uriService = uriService;
         this.buildPlanRepository = buildPlanRepository;
         this.buildPlanService = buildPlanService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
@@ -122,6 +127,9 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private void setupGitLabCIConfiguration(VcsRepositoryUri repositoryUri, ProgrammingExercise exercise, String buildPlanId) {
         final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         ProjectApi projectApi = gitlab.getProjectApi();
+
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
+
         try {
             Project project = projectApi.getProject(repositoryPath);
 
@@ -140,7 +148,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
         try {
             // TODO: Reduce the number of API calls
-
+            ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             updateVariable(repositoryPath, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
                     programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())));
             updateVariable(repositoryPath, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log");
@@ -150,8 +158,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             updateVariable(repositoryPath, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage);
             updateVariable(repositoryPath, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue);
             updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH);
-            updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch());
-            updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch());
+            updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, buildConfig.getBranch());
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, buildConfig.getBranch());
             updateVariable(repositoryPath, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, uriService.getRepositorySlugFromRepositoryUriString(exercise.getTestRepositoryUri()));
             // TODO: Use a token that is only valid for the test repository for each programming exercise
             updateVariable(repositoryPath, VARIABLE_TEST_GIT_TOKEN, gitlabToken);
