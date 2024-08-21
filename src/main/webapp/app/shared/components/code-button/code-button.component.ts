@@ -41,9 +41,11 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
     useSsh = false;
     useToken = false;
+    tokenExpired = false;
+    tokenMissing = false;
     sshEnabled = false;
     sshTemplateUrl?: string;
-    setupSshKeysUrl?: string;
+    sshSettingsUrl?: string;
     vcsTokenSettingsUrl?: string;
     repositoryPassword?: string;
     versionControlUrl: string;
@@ -52,6 +54,10 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     gitlabVCEnabled = false;
     showCloneUrlWithoutToken = true;
     copyEnabled? = true;
+
+    sshKeyMissingTip: string;
+    tokenMissingTip: string;
+    tokenExpiredTip: string;
 
     user: User;
     cloneHeadline: string;
@@ -78,12 +84,26 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             .identity()
             .then((user) => {
                 this.user = user!;
+                this.refreshTokenState();
+
+                this.copyEnabled = true;
+                this.useSsh = this.localStorage.retrieve('useSsh') || false;
+                this.useToken = this.localStorage.retrieve('useToken') || false;
+                this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+                this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
+
+                if (this.useSsh) {
+                    this.useSshUrl();
+                }
+                if (this.useToken) {
+                    this.useHttpsUrlWithToken();
+                }
             })
             .then(() => this.loadParticipationVcsAccessTokens());
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.setupSshKeysUrl = profileInfo.sshKeysURL;
+            this.sshSettingsUrl = profileInfo.sshKeysURL;
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
             this.sshEnabled = !!this.sshTemplateUrl;
@@ -96,21 +116,15 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
             if (this.localVCEnabled) {
-                this.setupSshKeysUrl = `${window.location.origin}/user-settings/ssh`;
+                this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
                 this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
+                this.tokenMissingTip = this.formatTip('artemisApp.exerciseActions.vcsTokenTip', this.vcsTokenSettingsUrl);
+                this.tokenExpiredTip = this.formatTip('artemisApp.exerciseActions.vcsTokenExpiredTip', this.vcsTokenSettingsUrl);
             } else {
-                this.setupSshKeysUrl = profileInfo.sshKeysURL;
+                this.sshSettingsUrl = profileInfo.sshKeysURL;
             }
+            this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
         });
-
-        this.useSsh = this.localStorage.retrieve('useSsh') || false;
-        this.useToken = this.localStorage.retrieve('useToken') || false;
-        if (!this.localStorage.retrieve('copyEnabled')) {
-            this.copyEnabled = !this.useSsh && !this.useToken;
-        }
-        this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-        this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
-        this.localStorage.observe('copyEnabled').subscribe((copyEnabled) => (this.copyEnabled = copyEnabled || false));
     }
 
     ngOnChanges() {
@@ -137,11 +151,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     public useHttpsUrlWithToken() {
         this.useSsh = false;
         this.useToken = true;
-        this.copyEnabled = !!(
-            this.accessTokensEnabled &&
-            this.useToken &&
-            ((!!this.user.vcsAccessToken && this.isDateAfterNow(this.user.vcsAccessTokenExpiryDate)) || this.useParticipationVcsAccessToken)
-        );
+        this.copyEnabled = !!(this.accessTokensEnabled && this.useToken && ((!!this.user.vcsAccessToken && !this.isTokenExpired()) || this.useParticipationVcsAccessToken));
+        this.refreshTokenState();
         this.storeToLocalStorage();
     }
 
@@ -155,13 +166,19 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     public storeToLocalStorage() {
         this.localStorage.store('useSsh', this.useSsh);
         this.localStorage.store('useToken', this.useToken);
-        this.localStorage.store('copyEnabled', this.copyEnabled);
     }
 
-    public isDateAfterNow(isoDateString?: string): boolean {
-        const date = dayjs(isoDateString);
-        const now = dayjs().add(1, 'minutes');
-        return date.isAfter(now);
+    public refreshTokenState() {
+        this.tokenMissing = !this.user.vcsAccessToken;
+        this.tokenExpired = this.isTokenExpired();
+    }
+
+    public formatTip(translationKey: string, url: string): string {
+        return this.translateService.instant(translationKey).replace(/{link:(.*)}/, `<a href="${url}" target="_blank">$1</a>`);
+    }
+
+    public isTokenExpired(): boolean {
+        return dayjs().isAfter(dayjs(this.user.vcsAccessTokenExpiryDate));
     }
 
     private getRepositoryUri() {
@@ -273,20 +290,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      */
     private getSshCloneUrl(url?: string) {
         return url?.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
-    }
-
-    /**
-     * Inserts the correct link to the translated ssh tip.
-     */
-    getSshKeyTip() {
-        return this.translateService.instant('artemisApp.exerciseActions.sshKeyTip').replace(/{link:(.*)}/, '<a href="' + this.setupSshKeysUrl + '" target="_blank">$1</a>');
-    }
-
-    /**
-     * Inserts the correct link to the translated ssh tip.
-     */
-    getVcsTokenTip() {
-        return this.translateService.instant('artemisApp.exerciseActions.vcsTokenTip').replace(/{link:(.*)}/, '<a href="' + this.vcsTokenSettingsUrl + '" target="_blank">$1</a>');
     }
 
     /**

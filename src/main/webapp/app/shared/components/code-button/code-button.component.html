@@ -15,10 +15,13 @@
     ></button>
     <ng-template #popContent>
         @if (useSsh && !copyEnabled) {
-            <div class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
+            <div class="alert alert-warning" [innerHTML]="sshKeyMissingTip"></div>
         }
-        @if (useToken && !copyEnabled) {
-            <div class="alert alert-warning" [innerHTML]="getVcsTokenTip()"></div>
+        @if (useToken && !copyEnabled && tokenMissing) {
+            <div class="alert alert-warning" [innerHTML]="tokenMissingTip"></div>
+        }
+        @if (useToken && !copyEnabled && tokenExpired) {
+            <div class="alert alert-warning" [innerHTML]="tokenExpiredTip"></div>
         }
         @if (participations && participations.length > 1) {
             <div class="form-check form-switch">

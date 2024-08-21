@@ -145,7 +145,7 @@ describe('CodeButtonComponent', () => {
 
         component.ngOnInit();
         tick();
-        expect(component.setupSshKeysUrl).toBe(`${window.location.origin}/user-settings/ssh`);
+        expect(component.sshSettingsUrl).toBe(`${window.location.origin}/user-settings/ssh`);
         expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
         expect(component.sshEnabled).toBe(!!info.sshCloneURLTemplate);
         expect(component.versionControlUrl).toBe(info.versionControlUrl);
