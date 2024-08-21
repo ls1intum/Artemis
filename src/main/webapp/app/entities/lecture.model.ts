@@ -25,10 +25,10 @@ export class Lecture implements BaseEntity {
     ingested?: IngestionState;
 
     constructor() {
-        this.ingested = this.checkIngestionState();
+        this.ingested = this.checkIngestionState?.();
     }
 
-    private checkIngestionState(): IngestionState {
+    private checkIngestionState?(): IngestionState {
         if (!this.lectureUnits) {
             return IngestionState.NOT_STARTED;
         }
@@ -46,7 +46,7 @@ export class Lecture implements BaseEntity {
     }
     public updateIngestionState?(): void {
         if (this.checkIngestionState) {
-            this.ingested = this.checkIngestionState();
+            this.ingested = this.checkIngestionState?.();
         }
     }
 }
