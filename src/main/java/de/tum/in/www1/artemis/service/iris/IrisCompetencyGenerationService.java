@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CompetencyExtractionJob;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisWebsocketService;
@@ -35,17 +36,18 @@ public class IrisCompetencyGenerationService {
     /**
      * Executes the competency extraction pipeline on Pyris for a given course, user and course description
      *
-     * @param user              the user for which the pipeline should be executed
-     * @param course            the course for which the pipeline should be executed
-     * @param courseDescription the description of the course
+     * @param user                the user for which the pipeline should be executed
+     * @param course              the course for which the pipeline should be executed
+     * @param courseDescription   the description of the course
+     * @param currentCompetencies the current competencies of the course (to avoid re-extraction)
      */
-    public void executeCompetencyExtractionPipeline(User user, Course course, String courseDescription) {
+    public void executeCompetencyExtractionPipeline(User user, Course course, String courseDescription, PyrisCompetencyRecommendationDTO[] currentCompetencies) {
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
                 "default",
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getLogin())),
-                executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, CompetencyTaxonomy.values(), 10),
+                executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),
                 stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisCompetencyStatusUpdateDTO(stages, null))
         );
         // @formatter:on

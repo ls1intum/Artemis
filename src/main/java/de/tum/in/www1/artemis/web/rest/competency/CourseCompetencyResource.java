@@ -46,6 +46,7 @@ import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
 import de.tum.in.www1.artemis.service.competency.CourseCompetencyService;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.iris.IrisCompetencyGenerationService;
@@ -335,20 +336,20 @@ public class CourseCompetencyResource {
      * POST courses/:courseId/course-competencies/:competencyId/competencies/generate-from-description
      * Generates a list of competencies from a given course description with IRIS.
      *
-     * @param courseId          the id of the current course
-     * @param courseDescription the text description of the course
+     * @param courseId the id of the current course
+     * @param input    the course description and current competencies
      * @return the ResponseEntity with status 202 (Accepted)
      */
     @PostMapping("courses/{courseId}/course-competencies/generate-from-description")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
+    public ResponseEntity<Void> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody PyrisCompetencyExtractionInputDTO input) {
         var competencyGenerationService = irisCompetencyGenerationService.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
 
         // Start the Iris competency generation pipeline for the given course.
         // The generated competencies will be sent async over the websocket on the topic /topic/iris/competencies/{courseId}
-        competencyGenerationService.executeCompetencyExtractionPipeline(user, course, courseDescription);
+        competencyGenerationService.executeCompetencyExtractionPipeline(user, course, input.courseDescription(), input.currentCompetencies());
 
         return ResponseEntity.accepted().build();
     }

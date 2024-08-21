@@ -11,7 +11,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -35,10 +35,10 @@ export type CompetencyFormControls = {
     taxonomy: FormControl<CompetencyTaxonomy | undefined>;
 };
 
-type CompetencyRecommendation = {
-    title: string;
-    description: string;
-    taxonomy: CompetencyTaxonomy;
+export type CompetencyRecommendation = {
+    title?: string;
+    description?: string;
+    taxonomy?: CompetencyTaxonomy;
 };
 
 type CompetencyGenerationStatusUpdate = {
@@ -90,8 +90,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
             this.courseId = Number(params['courseId']);
             this.courseSub = this.courseManagementService.find(this.courseId).subscribe({
                 next: (course) => {
-                    const courseDescription = course.body!.description ?? '';
-                    this.courseDescriptionForm.setCourseDescription(courseDescription);
+                    this.courseDescriptionForm.setCourseDescription(course.body!.description ?? '');
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -111,41 +110,53 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
         const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
-        this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription).subscribe({
-            next: () => {
-                this.jhiWebsocketService.subscribe(websocketTopic);
-                this.jhiWebsocketService.receive(websocketTopic).subscribe({
-                    next: (update: CompetencyGenerationStatusUpdate) => {
-                        if (update.result) {
-                            this.form = new FormGroup({
-                                competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>(this.competencies.controls.filter((c) => c.getRawValue().viewed)),
-                            });
-                            for (const competency of update.result) {
-                                this.addCompetencyToForm(competency);
+        this.getCurrentCompetenciesAndSuggestions().subscribe((currentCompetencySuggestions) => {
+            this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencySuggestions).subscribe({
+                next: () => {
+                    this.jhiWebsocketService.subscribe(websocketTopic);
+                    this.jhiWebsocketService.receive(websocketTopic).subscribe({
+                        next: (update: CompetencyGenerationStatusUpdate) => {
+                            if (update.result) {
+                                for (const competency of update.result) {
+                                    this.addCompetencyToForm(competency);
+                                }
                             }
-                        }
-                        if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
-                            this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
-                        } else if (update.stages.some((stage) => stage.state === IrisStageStateDTO.ERROR)) {
-                            this.alertService.warning('artemisApp.competency.generate.courseDescription.error');
-                        }
-                        if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
+                            if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
+                                this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
+                            } else if (update.stages.some((stage) => stage.state === IrisStageStateDTO.ERROR)) {
+                                this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
+                            }
+                            if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
+                                this.jhiWebsocketService.unsubscribe(websocketTopic);
+                                this.isLoading = false;
+                            }
+                        },
+                        error: (res: HttpErrorResponse) => {
+                            onError(this.alertService, res);
                             this.jhiWebsocketService.unsubscribe(websocketTopic);
                             this.isLoading = false;
-                        }
-                    },
-                    error: (res: HttpErrorResponse) => {
-                        onError(this.alertService, res);
-                        this.jhiWebsocketService.unsubscribe(websocketTopic);
-                        this.isLoading = false;
-                    },
-                });
-            },
-            error: (res: HttpErrorResponse) => {
-                onError(this.alertService, res);
-                this.isLoading = false;
-            },
+                        },
+                    });
+                },
+                error: (res: HttpErrorResponse) => {
+                    onError(this.alertService, res);
+                    this.isLoading = false;
+                },
+            });
         });
+    }
+
+    /**
+     * Returns the title, description, and taxonomy of all current competencies saved in this course,
+     * and the competency recommendations that are currently in the form.
+     * @private
+     */
+    private getCurrentCompetenciesAndSuggestions(): Observable<CompetencyRecommendation[]> {
+        const currentCompetencySuggestions = this.competencies.getRawValue().map((c) => c.competency);
+        return this.courseCompetencyService.getAllForCourse(this.courseId).pipe(
+            map((competencies) => competencies.body!.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
+            map((competencies) => competencies.concat(currentCompetencySuggestions)),
+        );
     }
 
     /**
@@ -154,7 +165,6 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * @private
      */
     private addCompetencyToForm(competency: CompetencyRecommendation) {
-        // @ts-expect-error Type is assignable, but TS doesn't recognize it
         const formGroup: FormGroup<CompetencyFormControlsWithViewed> = this.formBuilder.nonNullable.group({
             competency: this.formBuilder.nonNullable.group({
                 title: [competency.title],
