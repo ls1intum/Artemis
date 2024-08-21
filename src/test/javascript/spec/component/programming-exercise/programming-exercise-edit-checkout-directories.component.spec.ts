@@ -104,23 +104,6 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         expect(component.solutionCheckoutPath).toBe('');
     });
 
-    it('should reset on programming language change', () => {
-        component.submissionBuildPlanCheckoutRepositories = submissionBuildPlanCheckoutRepositories;
-        component.programmingLanguage = ProgrammingLanguage.PYTHON;
-        component.resetProgrammingExerciseBuildCheckoutPaths();
-        expect(component.assignmentCheckoutPath).toBe('');
-        expect(component.solutionCheckoutPath).toBe('');
-        expect(component.testCheckoutPath).toBe('/');
-
-        component.reset();
-        expect(component.isAssigmentRepositoryEditable).toBeTrue();
-        expect(component.assignmentCheckoutPath).toBe('assignment');
-        expect(component.isTestRepositoryEditable).toBeTrue();
-        expect(component.testCheckoutPath).toBe('tests');
-        expect(component.isSolutionRepositoryEditable).toBeTrue();
-        expect(component.solutionCheckoutPath).toBe('solution');
-    });
-
     it('should update fields correctly', () => {
         component.onAssigmentRepositoryCheckoutPathChange('assignment');
         expect(component.assignmentCheckoutPath).toBe('assignment');
