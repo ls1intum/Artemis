@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
@@ -28,6 +28,7 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('GenerateCompetenciesComponent', () => {
     let generateCompetenciesComponentFixture: ComponentFixture<GenerateCompetenciesComponent>;
@@ -63,6 +64,8 @@ describe('GenerateCompetenciesComponent', () => {
                         unsubscribe: jest.fn(),
                     },
                 },
+                MockProvider(CourseDescriptionFormComponent),
+                MockProvider(CourseManagementService),
                 MockProvider(CourseCompetencyService),
                 MockProvider(CompetencyService),
                 MockProvider(AlertService),
@@ -97,6 +100,27 @@ describe('GenerateCompetenciesComponent', () => {
 
         expect(getCompetencyRecommendationsSpy).toHaveBeenCalledOnce();
     });
+
+    it('should initialize the form with the course description', fakeAsync(() => {
+        generateCompetenciesComponentFixture.detectChanges();
+        const courseDescription = 'Course Description';
+
+        const courseDescriptionComponent: CourseDescriptionFormComponent = generateCompetenciesComponentFixture.debugElement.query(
+            By.directive(CourseDescriptionFormComponent),
+        ).componentInstance;
+        const setCourseDescriptionSpy = jest.spyOn(courseDescriptionComponent, 'setCourseDescription');
+
+        // mock the course returned by CourseManagementService
+        const course = { description: courseDescription };
+        const courseManagementService = TestBed.inject(CourseManagementService);
+        const getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+
+        generateCompetenciesComponent.ngOnInit();
+        tick();
+
+        expect(getCourseSpy).toHaveBeenCalledOnce();
+        expect(setCourseDescriptionSpy).toHaveBeenCalledWith(courseDescription);
+    }));
 
     it('should add competency recommendations', () => {
         generateCompetenciesComponentFixture.detectChanges();
