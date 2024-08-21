@@ -10,6 +10,23 @@ export abstract class BaseApiHttpService {
     private readonly baseUrl = 'api';
 
     /**
+     * Debounces a function call to prevent it from being called multiple times in a short period.
+     * @param callback The function to debounce.
+     * @param delay The delay in milliseconds to wait before calling the function.
+     */
+    public static debounce<T extends unknown[]>(callback: (...args: T) => void, delay: number) {
+        let timer: NodeJS.Timeout | undefined;
+        return function (...args: T) {
+            if (timer) {
+                clearTimeout(timer);
+            }
+            timer = setTimeout(() => {
+                callback(...args);
+            }, delay);
+        };
+    }
+
+    /**
      * Handles the error response from the server and throws specific errors
      * which can be handled on service or component level.
      *
