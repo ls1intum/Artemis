@@ -73,7 +73,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     private setCheckoutDirectoriesFromBuildConfig(checkoutDirectories?: CheckoutDirectoriesDto): CheckoutDirectoriesDto | undefined {
-        if (this.programmingExercise.buildConfig && checkoutDirectories) {
+        if (this.programmingExercise.buildConfig || checkoutDirectories) {
             checkoutDirectories = {
                 solutionBuildPlanCheckoutDirectories: {
                     solutionCheckoutDirectory:

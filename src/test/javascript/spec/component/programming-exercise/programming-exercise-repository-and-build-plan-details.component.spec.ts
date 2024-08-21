@@ -207,6 +207,22 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         expect(component.programmingExercise?.buildConfig?.assignmentCheckoutPath).toBeUndefined();
     });
 
+    it('should not call service without language', () => {
+        jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
+
+        component.programmingLanguage = undefined;
+        component.checkoutSolutionRepository = false;
+        component.ngOnChanges({
+            checkoutSolutionRepository: {
+                previousValue: true,
+                currentValue: false,
+            },
+        } as unknown as SimpleChanges);
+
+        // assertion to check if ngOnChanges was executed properly and updated the checkout directories
+        expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).not.toHaveBeenCalledWith(ProgrammingLanguage.OCAML, false);
+    });
+
     it('should update auxiliary repository directories on changes', () => {
         fixture.detectChanges();
 
@@ -228,8 +244,6 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     it('should update component when buildconfig was changed', () => {
         component.programmingExercise!.buildConfig = new ProgrammingExerciseBuildConfig();
         component.programmingExercise!.buildConfig.solutionCheckoutPath = 'solution';
-        component.programmingExercise!.buildConfig.assignmentCheckoutPath = 'assignment';
-        component.programmingExercise!.buildConfig.testCheckoutPath = 'tests';
 
         component.ngOnChanges({
             programmingExercise: {
@@ -238,16 +252,14 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
             },
         } as unknown as SimpleChanges);
 
-        component.checkoutDirectories = {
+        expect(component.checkoutDirectories).toEqual({
             solutionBuildPlanCheckoutDirectories: {
-                solutionCheckoutDirectory: '/assignment',
-                testCheckoutDirectory: '/tests',
+                testCheckoutDirectory: '/',
             },
             submissionBuildPlanCheckoutDirectories: {
-                exerciseCheckoutDirectory: '/assignment',
                 solutionCheckoutDirectory: '/solution',
-                testCheckoutDirectory: '/tests',
+                testCheckoutDirectory: '/',
             },
-        };
+        });
     });
 });
