@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 public class TelemetryService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TelemetryData(String version, String serverUrl, String universityName, String contact, List<String> profiles, String adminName) {
+    public record TelemetryData(String version, String serverUrl, String operatorName, String contact, List<String> profiles, String adminName) {
     }
 
     private static final Logger log = LoggerFactory.getLogger(TelemetryService.class);
