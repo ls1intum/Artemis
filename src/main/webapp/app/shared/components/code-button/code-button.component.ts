@@ -11,6 +11,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
+import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 
@@ -136,7 +137,11 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     public useHttpsUrlWithToken() {
         this.useSsh = false;
         this.useToken = true;
-        this.copyEnabled = !!(this.accessTokensEnabled && this.useToken && (!!this.user.vcsAccessToken || this.useParticipationVcsAccessToken));
+        this.copyEnabled = !!(
+            this.accessTokensEnabled &&
+            this.useToken &&
+            ((!!this.user.vcsAccessToken && this.isDateAfterNow(this.user.vcsAccessTokenExpiryDate)) || this.useParticipationVcsAccessToken)
+        );
         this.storeToLocalStorage();
     }
 
@@ -151,6 +156,12 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.localStorage.store('useSsh', this.useSsh);
         this.localStorage.store('useToken', this.useToken);
         this.localStorage.store('copyEnabled', this.copyEnabled);
+    }
+
+    public isDateAfterNow(isoDateString?: string): boolean {
+        const date = dayjs(isoDateString);
+        const now = dayjs().add(1, 'minutes');
+        return date.isAfter(now);
     }
 
     private getRepositoryUri() {
