@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public record EndpointInformation(String requestMapping, String endpoint, String httpMethodAnnotation, String uri, String className, int line, List<String> otherAnnotations) {
 
-    public String buildCompleteEndpointURI() {
+    String buildCompleteEndpointURI() {
         StringBuilder result = new StringBuilder();
         if (this.requestMapping != null && !this.requestMapping.isEmpty()) {
             // Remove quotes from the requestMapping as they are used to define the String in the source code but are not part of the URI
@@ -23,7 +23,7 @@ public record EndpointInformation(String requestMapping, String endpoint, String
     }
 
     @JsonIgnore
-    public String getHttpMethod() {
+    String getHttpMethod() {
         return switch (this.httpMethodAnnotation) {
             case "GetMapping" -> "get";
             case "PostMapping" -> "post";

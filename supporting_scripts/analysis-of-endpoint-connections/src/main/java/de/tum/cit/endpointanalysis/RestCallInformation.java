@@ -2,11 +2,11 @@ package de.tum.cit.endpointanalysis;
 
 public record RestCallInformation(String method, String url, String filePath, int line) {
 
-    public String buildCompleteRestCallURI() {
+    String buildCompleteRestCallURI() {
         return this.url.replace("`", "");
     }
 
-    public String buildComparableRestCallUri() {
+    String buildComparableRestCallUri() {
         // Replace arguments with placeholder
         String result = this.buildCompleteRestCallURI().replaceAll("\\$\\{.*?\\}", ":param:");
 

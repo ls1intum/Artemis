@@ -110,7 +110,7 @@ export class Postprocessor {
 
                                     const filePath = this.filePath;
                                     if (urlEvaluationResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
-                                        for (let url of urlEvaluationResult.result) {
+                                        for (const url of urlEvaluationResult.result) {
                                             this.restCalls.push({ method, url, line, filePath: filePath });
                                         }
                                     }
@@ -541,7 +541,7 @@ export class Postprocessor {
         simpleTraverse(methodDefinition, {
             enter: (node) => {
                 if (node.type === 'VariableDeclaration') {
-                    for (let decl of node.declarations) {
+                    for (const decl of node.declarations) {
                         if (decl.id.type === 'Identifier' && decl.id.name === name && decl.init) {
                             const tempResult = this.evaluateUrl(decl.init, methodDefinition, restCall, classBody);
                             if (tempResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
@@ -587,7 +587,7 @@ export class Postprocessor {
      * @returns An array of AST nodes representing the parameters of the constructor.
      */
     getConstructorArgumentsFromClassBody(classBody: TSESTree.ClassBody): TSESTree.Parameter[] {
-        for (let node of classBody.body) {
+        for (const node of classBody.body) {
             if (node.type === 'MethodDefinition' && node.key.type === 'Identifier' && node.key.name === 'constructor') {
                 return node.value.params;
             }
@@ -615,7 +615,7 @@ export class Postprocessor {
         const superClass = Preprocessor.PREPROCESSING_RESULTS.get(this.getClassNameFromClassBody(classBody));
         if (superClass) {
             const constructorArguments = this.getConstructorArgumentsFromClassBody(classBody.body);
-            for (let superConstructorCallArguments of superClass.superConstructorCalls) {
+            for (const superConstructorCallArguments of superClass.superConstructorCalls) {
                 for (let i = 0; i < superConstructorCallArguments.arguments.length; i++) {
                     let constructorArgument = constructorArguments[i];
                     if (superConstructorCallArguments.arguments[i] !== '' && constructorArgument.type === 'TSParameterProperty'
