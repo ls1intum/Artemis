@@ -153,10 +153,17 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      */
     private getCurrentCompetenciesAndSuggestions(): Observable<CompetencyRecommendation[]> {
         const currentCompetencySuggestions = this.competencies.getRawValue().map((c) => c.competency);
-        return this.courseCompetencyService.getAllForCourse(this.courseId).pipe(
-            map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
-            map((competencies) => currentCompetencySuggestions.concat(competencies ?? [])),
-        );
+        const competenciesObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
+        if (competenciesObservable) {
+            return competenciesObservable.pipe(
+                map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
+                map((competencies) => currentCompetencySuggestions.concat(competencies ?? [])),
+            );
+        }
+        return new Observable<CompetencyRecommendation[]>((subscriber) => {
+            subscriber.next(currentCompetencySuggestions);
+            subscriber.complete();
+        });
     }
 
     /**
