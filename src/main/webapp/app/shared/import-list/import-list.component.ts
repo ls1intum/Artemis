@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { PageableSearch, SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -48,7 +48,7 @@ export class ImportListComponent<T extends BaseEntity> {
 
     readonly searchTerm = signal<string>('');
     private readonly defaultSortingOrder = SortingOrder.ASCENDING;
-    private readonly searchState = signal<Partial<SearchTermPageableSearch>>({
+    private readonly searchState = signal<PageableSearch>({
         page: 1,
         pageSize: 10,
         sortingOrder: this.defaultSortingOrder,
@@ -59,31 +59,30 @@ export class ImportListComponent<T extends BaseEntity> {
     readonly page = computed(() => this.searchState().page!);
     readonly pageSize = computed(() => this.searchState().pageSize!);
     readonly collectionSize = computed(() => {
-        if (this.resultsOnPage().length <= this.pageSize()) {
-            return this.resultsOnPage().length;
-        } else {
-            return (this.searchResult()?.numberOfPages ?? 1) * this.pageSize();
-        }
+        const numberOfPages = this.searchResult()?.numberOfPages ?? 1;
+        return numberOfPages === 1 ? this.resultsOnPage().length : numberOfPages * this.pageSize();
     });
 
     constructor() {
         const debouncedDataLoad = this.debounce(this.loadData.bind(this), 300);
 
         effect(() => {
-            // Debounce loading data when search term changes
+            // Debounce loading data whenever search term changes
             const searchTerm = this.searchTerm();
             untracked(async () => {
-                debouncedDataLoad(this.searchState(), searchTerm);
+                if (this.searchResult()) {
+                    debouncedDataLoad(this.searchState(), searchTerm);
+                }
             });
         });
         effect(() => {
-            // Load data when search state changes
+            // Load data whenever search state changes
             const searchState = this.searchState();
-            untracked(() => this.loadData(searchState, this.searchTerm()));
+            untracked(async () => await this.loadData(searchState, this.searchTerm()));
         });
     }
 
-    private async loadData(searchState: Partial<SearchTermPageableSearch>, searchTerm: string): Promise<void> {
+    private async loadData(searchState: PageableSearch, searchTerm: string): Promise<void> {
         try {
             this.isLoading.set(true);
             const completeSearchState = <SearchTermPageableSearch>{
@@ -106,8 +105,8 @@ export class ImportListComponent<T extends BaseEntity> {
             if (timer) {
                 clearTimeout(timer);
             }
-            timer = setTimeout(() => {
-                callback(searchState, searchTerm);
+            timer = setTimeout(async () => {
+                await callback(searchState, searchTerm);
             }, delay);
         };
     }
