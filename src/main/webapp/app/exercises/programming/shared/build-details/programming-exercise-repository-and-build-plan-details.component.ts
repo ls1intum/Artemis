@@ -44,31 +44,6 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         if (this.isLocal && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
             this.updateCheckoutDirectories();
         }
-        if (this.isLocal && this.programmingExercise.buildConfig) {
-            this.checkoutDirectories = {
-                solutionBuildPlanCheckoutDirectories: {
-                    solutionCheckoutDirectory:
-                        this.addLeadingSlash(this.programmingExercise.buildConfig?.assignmentCheckoutPath) ||
-                        this.checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory,
-                    testCheckoutDirectory:
-                        this.addLeadingSlash(this.programmingExercise.buildConfig?.testCheckoutPath) ||
-                        this.checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.testCheckoutDirectory ||
-                        '/',
-                },
-                submissionBuildPlanCheckoutDirectories: {
-                    exerciseCheckoutDirectory:
-                        this.addLeadingSlash(this.programmingExercise.buildConfig?.assignmentCheckoutPath) ||
-                        this.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.exerciseCheckoutDirectory,
-                    solutionCheckoutDirectory:
-                        this.addLeadingSlash(this.programmingExercise.buildConfig?.solutionCheckoutPath) ||
-                        this.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory,
-                    testCheckoutDirectory:
-                        this.addLeadingSlash(this.programmingExercise.buildConfig?.testCheckoutPath) ||
-                        this.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.testCheckoutDirectory ||
-                        '/',
-                },
-            };
-        }
     }
 
     ngOnDestroy() {
@@ -86,9 +61,38 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         this.checkoutDirectorySubscription = this.programmingExerciseService
             .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage, this.checkoutSolutionRepository ?? CHECKOUT_SOLUTION_REPOSITORY_DEFAULT)
             .subscribe((checkoutDirectories) => {
-                this.checkoutDirectories = checkoutDirectories;
+                this.checkoutDirectories = this.setCheckoutDirectories(checkoutDirectories);
                 this.submissionBuildPlanEvent.emit(checkoutDirectories.submissionBuildPlanCheckoutDirectories!);
             });
+    }
+
+    private setCheckoutDirectories(checkoutDirectories: CheckoutDirectoriesDto) {
+        if (this.programmingExercise.buildConfig) {
+            checkoutDirectories = {
+                solutionBuildPlanCheckoutDirectories: {
+                    solutionCheckoutDirectory:
+                        this.addLeadingSlash(this.programmingExercise.buildConfig?.assignmentCheckoutPath) ||
+                        checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory,
+                    testCheckoutDirectory:
+                        this.addLeadingSlash(this.programmingExercise.buildConfig?.testCheckoutPath) ||
+                        checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.testCheckoutDirectory ||
+                        '/',
+                },
+                submissionBuildPlanCheckoutDirectories: {
+                    exerciseCheckoutDirectory:
+                        this.addLeadingSlash(this.programmingExercise.buildConfig?.assignmentCheckoutPath) ||
+                        checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.exerciseCheckoutDirectory,
+                    solutionCheckoutDirectory:
+                        this.addLeadingSlash(this.programmingExercise.buildConfig?.solutionCheckoutPath) ||
+                        checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory,
+                    testCheckoutDirectory:
+                        this.addLeadingSlash(this.programmingExercise.buildConfig?.testCheckoutPath) ||
+                        checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.testCheckoutDirectory ||
+                        '/',
+                },
+            };
+        }
+        return checkoutDirectories;
     }
 
     private updateCourseShortName() {

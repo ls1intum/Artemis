@@ -9,8 +9,8 @@ import { every } from 'lodash-es';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/build-plan-checkout-directories-dto';
+import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 
 @Component({
     selector: 'jhi-programming-exercise-info',
@@ -31,6 +31,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
     @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
+    @ViewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent) programmingExerciseEditCheckoutDirectories?: ProgrammingExerciseEditCheckoutDirectoriesComponent;
 
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
@@ -45,9 +46,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     editRepositoryCheckoutPath: boolean = false;
     submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
-    buildConfigCheckoutPaths: BuildPlanCheckoutDirectoriesDTO;
-
-    constructor(private programmingExerciseService: ProgrammingExerciseService) {}
 
     ngAfterViewInit() {
         this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
@@ -55,6 +53,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.updateTemplateFilesField?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.programmingExerciseEditCheckoutDirectories?.formValidChanges.subscribe(() => this.calculateFormValid()));
         this.tableEditableFields?.changes.subscribe((fields: QueryList<TableEditableFieldComponent>) => {
             fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput.valueChanges?.subscribe(() => this.calculateFormValid())));
         });
@@ -71,13 +70,15 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const isRecreateBuildPlansValid = this.isRecreateBuildPlansValid();
         const isUpdateTemplateFilesValid = this.isUpdateTemplateFilesValid();
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
+        const areCheckoutPathsValid = this.areCheckoutPathsValid();
         this.formValid = Boolean(
             this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValid &&
                 !this.shortNameField.invalid &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
                 isUpdateTemplateFilesValid &&
-                areAuxiliaryRepositoriesValid,
+                areAuxiliaryRepositoriesValid &&
+                areCheckoutPathsValid,
         );
         this.formValidChanges.next(this.formValid);
     }
@@ -113,6 +114,18 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 this.programmingExercise.id ||
                 !this.programmingExercise.programmingLanguage ||
                 !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
+        );
+    }
+
+    areCheckoutPathsValid(): boolean {
+        return Boolean(
+            !this.programmingExerciseEditCheckoutDirectories ||
+                (this.programmingExerciseEditCheckoutDirectories.formValid &&
+                    this.programmingExerciseEditCheckoutDirectories.areValuesUnique([
+                        this.programmingExercise.buildConfig?.assignmentCheckoutPath,
+                        this.programmingExercise.buildConfig?.testCheckoutPath,
+                        this.programmingExercise.buildConfig?.solutionCheckoutPath,
+                    ])),
         );
     }
 

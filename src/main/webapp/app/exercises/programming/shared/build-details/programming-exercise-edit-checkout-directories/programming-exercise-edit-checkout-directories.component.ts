@@ -1,8 +1,10 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/build-plan-checkout-directories-dto';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { Subject, Subscription } from 'rxjs';
+import { NgModel } from '@angular/forms';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-checkout-directories',
@@ -11,7 +13,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
     styleUrls: ['../../../manage/programming-exercise-form.scss'],
 })
-export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnChanges {
+export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnChanges, OnDestroy {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingLanguage: ProgrammingLanguage;
     @Input() pattern: RegExp;
@@ -28,6 +30,18 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
     isTestRepositoryEditable: boolean = false;
     isSolutionRepositoryEditable: boolean = false;
 
+    formValid: boolean = true;
+    formValidChanges = new Subject();
+
+    // subscriptions
+    fieldAssignmentSubscription?: Subscription;
+    fieldTestSubscription?: Subscription;
+    fieldSolutionSubscription?: Subscription;
+
+    @ViewChild('field_assignmentRepositoryCheckoutPath') field_assignmentRepositoryCheckoutPath: NgModel;
+    @ViewChild('field_testRepositoryCheckoutPath') field_testRepositoryCheckoutPath?: NgModel;
+    @ViewChild('field_solutionRepositoryCheckoutPath') field_solutionRepositoryCheckoutPath?: NgModel;
+
     ngOnChanges(changes: SimpleChanges) {
         const isSubmissionBuildPlanCheckoutRepositoriesChanged = this.isSubmissionBuildPlanCheckoutRepositoriesChanged();
         const isProgrammingLanguageUpdated = !changes.programmingLanguage?.firstChange && changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
@@ -37,6 +51,12 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
         if (isSubmissionBuildPlanCheckoutRepositoriesChanged) {
             this.reset();
         }
+    }
+
+    ngOnDestroy() {
+        this.fieldAssignmentSubscription?.unsubscribe();
+        this.fieldTestSubscription?.unsubscribe();
+        this.fieldSolutionSubscription?.unsubscribe();
     }
 
     reset() {
@@ -65,19 +85,22 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
         this.programmingExercise.buildConfig!.solutionCheckoutPath = '';
     }
 
-    onAssigmentRepositoryCheckoutPathChange(event: any) {
-        this.assignmentCheckoutPath = event.target.value;
+    onAssigmentRepositoryCheckoutPathChange(event: string) {
+        this.assignmentCheckoutPath = event;
         this.assignmentCheckoutPathEvent.emit(this.assignmentCheckoutPath);
+        this.calculateFormValid();
     }
 
-    onTestRepositoryCheckoutPathChange(event: any) {
-        this.testCheckoutPath = event.target.value;
+    onTestRepositoryCheckoutPathChange(event: string) {
+        this.testCheckoutPath = event;
         this.testCheckoutPathEvent.emit(this.testCheckoutPath);
+        this.calculateFormValid();
     }
 
-    onSolutionRepositoryCheckoutPathChange(event: any) {
-        this.solutionCheckoutPath = event.target.value;
+    onSolutionRepositoryCheckoutPathChange(event: string) {
+        this.solutionCheckoutPath = event;
         this.solutionCheckoutPathEvent.emit(this.solutionCheckoutPath);
+        this.calculateFormValid();
     }
 
     isSubmissionBuildPlanCheckoutRepositoriesChanged(): boolean {
@@ -90,5 +113,21 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
 
     removeLeadingSlash(path?: string): string | undefined {
         return path?.replace(/^\//, '');
+    }
+
+    calculateFormValid(): void {
+        const isFormValid = Boolean(
+            (!this.field_assignmentRepositoryCheckoutPath || this.field_assignmentRepositoryCheckoutPath?.valid) &&
+                (!this.field_testRepositoryCheckoutPath || this.field_testRepositoryCheckoutPath?.valid) &&
+                (!this.field_solutionRepositoryCheckoutPath || this.field_solutionRepositoryCheckoutPath?.valid),
+        );
+        this.formValid = isFormValid && this.areValuesUnique([this.assignmentCheckoutPath, this.testCheckoutPath, this.solutionCheckoutPath]);
+        this.formValidChanges.next(this.formValid);
+    }
+
+    areValuesUnique(values: (string | undefined)[]): boolean {
+        const filteredValues = values.filter((value): value is string => value !== undefined && value !== '');
+        const uniqueValues = new Set(filteredValues);
+        return filteredValues.length === uniqueValues.size;
     }
 }

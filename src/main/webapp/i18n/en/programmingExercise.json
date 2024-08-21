@@ -131,11 +131,12 @@
             "checkoutPath": {
                 "title": "Checkout Path",
                 "customize": "You can customize the checkout path where the repositories are cloned inside the Docker container. Make sure to provide a valid absolute UNIX path. The default path is /var/tmp.",
-                "alert": "The checkout path must be a valid absolute UNIX path.",
+                "alert": "Checkout paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character. The paths must be different for each repository.",
                 "edit": "Edit repositories checkout path",
                 "assignment": "Assignment Repository Checkout Path",
                 "solution": "Solution Repository Checkout Path",
-                "tests": "Tests Repository Checkout Path"
+                "tests": "Tests Repository Checkout Path",
+                "invalid": "Invalid checkout paths"
             },
             "timeout": {
                 "title": "Timeout",

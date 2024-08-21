@@ -858,6 +858,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExerciseSCAMaxPenalty(validationErrorReasons);
         this.validateExerciseSubmissionLimit(validationErrorReasons);
         this.validateTimeout(validationErrorReasons);
+        this.validateCheckoutPaths(validationErrorReasons);
 
         return validationErrorReasons;
     }
@@ -1066,6 +1067,28 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateValues: {},
             });
         }
+    }
+
+    private validateCheckoutPaths(validationErrorReasons: ValidationReason[]): void {
+        const checkoutPaths = [
+            this.programmingExercise.buildConfig?.assignmentCheckoutPath,
+            this.programmingExercise.buildConfig?.solutionCheckoutPath,
+            this.programmingExercise.buildConfig?.testCheckoutPath,
+        ];
+        if (
+            (this.exerciseInfoComponent?.programmingExerciseEditCheckoutDirectories &&
+                !this.exerciseInfoComponent?.programmingExerciseEditCheckoutDirectories?.areValuesUnique(checkoutPaths)) ||
+            !this.testCheckoutPathsPattern(checkoutPaths)
+        ) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+        }
+    }
+
+    private testCheckoutPathsPattern(checkoutPath: (string | undefined)[]): boolean {
+        return checkoutPath.every((path) => path === undefined || path === '' || this.invalidDirectoryNamePattern.test(path));
     }
 
     private createProgrammingExerciseForImportFromFile() {
