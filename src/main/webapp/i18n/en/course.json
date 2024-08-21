@@ -15,6 +15,11 @@
                 "typeNameToConfirm": "Please type in the name of the course to confirm.",
                 "icon": "Remove Icon"
             },
+            "archive": {
+                "title": "Archive",
+                "sort": "Sort",
+                "tip": "The archive enables you to view all your past courses, organized by semester. Click on a semester to expand and see the courses you were enrolled in during that period."
+            },
             "showActive": "Show only active courses",
             "totalScore": "Total Score:",
             "title": "Title",

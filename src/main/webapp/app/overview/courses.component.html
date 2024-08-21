@@ -61,4 +61,13 @@
         }
     </div>
 }
-<a class="d-flex justify-content-center mt-3" [routerLink]="['/courses/archive']">Course Archive</a>
+<!-- <div class="d-flex justify-content-center mt-3 gap-1">
+    <span jhiTranslate="artemisApp.studentDashboard.oldCourses"></span>
+    <a [routerLink]="['/courses/archive']" jhiTranslate="artemisApp.studentDashboard.here"></a>
+</div> -->
+<div class="d-flex justify-content-center mt-3">
+    <div>
+        {{ 'artemisApp.studentDashboard.oldCourses' | artemisTranslate }}
+        <a [routerLink]="['/courses/archive']"> {{ 'artemisApp.studentDashboard.here' | artemisTranslate }}</a>
+    </div>
+</div>

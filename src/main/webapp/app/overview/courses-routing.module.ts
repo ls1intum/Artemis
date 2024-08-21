@@ -33,7 +33,7 @@ const routes: Routes = [
         component: CourseArchiveComponent,
         data: {
             authorities: [Authority.USER],
-            pageTitle: 'Course Archive',
+            pageTitle: 'overview.archive',
         },
         canActivate: [UserRouteAccessService],
     },

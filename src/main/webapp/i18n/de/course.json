@@ -15,6 +15,11 @@
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
                 "icon": "Kursicon löschen"
             },
+            "archive": {
+                "title": "Archiv",
+                "sort": "Sortieren",
+                "tip": "Das Archiv ermöglicht dir, all deine vergangenen Kurse, organisiert nach Semestern, anzusehen. Klicke auf ein Semester, um es zu erweitern und die Kurse zu sehen, in die du in diesem Zeitraum eingeschrieben warst."
+            },
             "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",
             "title": "Titel",

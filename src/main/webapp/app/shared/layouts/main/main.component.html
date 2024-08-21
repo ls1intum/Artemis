@@ -14,7 +14,7 @@
     }
     @if (showSkeleton) {
         <div class="card" style="border-style: none">
-            <div class="card-body">
+            <div class="card-body" [ngClass]="{ 'course-overview': isCourseOverview }">
                 <router-outlet />
             </div>
         </div>

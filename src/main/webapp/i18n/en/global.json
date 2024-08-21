@@ -346,7 +346,8 @@
         "exercises": "Exercises",
         "statistics": "Course statistics",
         "exams": "Exams",
-        "communication": "Communication"
+        "communication": "Communication",
+        "archive": "Course Archive"
     },
     "connectionStatus": {
         "connected": "Connected",

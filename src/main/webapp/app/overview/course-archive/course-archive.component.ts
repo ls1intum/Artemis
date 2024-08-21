@@ -7,9 +7,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subscription } from 'rxjs';
-import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faArrowDownAZ, faArrowUpAZ, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { sortCourses } from 'app/shared/util/course.util';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     standalone: true,
@@ -26,12 +27,18 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     semesterCollapsed: { [key: string]: boolean };
     coursesBySemester: { [key: string]: Course[] };
     courseColor: string;
+    searchCourseText = '';
+    isSortAscending = true;
+    iconSize: SizeProp = 'lg';
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     //Icons
     readonly faAngleDown = faAngleDown;
     readonly faAngleUp = faAngleUp;
+    readonly faArrowDownAZ = faArrowDownAZ;
+    readonly faArrowUpAZ = faArrowUpAZ;
+    readonly faQuestionCircle = faQuestionCircle;
 
     constructor(
         private courseService: CourseManagementService,
@@ -40,6 +47,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.loadArchivedCourses();
+        this.courseService.setCourseOverviewBackground();
     }
 
     /**
@@ -69,5 +77,27 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.archiveCourseSubscription.unsubscribe();
+        this.courseService.resetCourseOverviewBackground();
+    }
+
+    setSearchValue(searchValue: string): void {
+        this.searchCourseText = searchValue;
+        if (searchValue !== '') {
+            this.expandOrCollapseBasedOnSearchValue();
+        }
+    }
+
+    onSort(): void {
+        if (this.semesters) {
+            this.semesters.reverse();
+            this.isSortAscending = !this.isSortAscending;
+        }
+    }
+
+    expandOrCollapseBasedOnSearchValue(): void {
+        for (const semester of this.semesters) {
+            const hasMatchingCourse = this.coursesBySemester[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText.toLowerCase()));
+            this.semesterCollapsed[semester] = !hasMatchingCourse;
+        }
     }
 }
