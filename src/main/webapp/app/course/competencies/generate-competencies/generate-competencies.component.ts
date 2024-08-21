@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -11,7 +11,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, Subscription, map } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -52,15 +52,13 @@ type CompetencyGenerationStatusUpdate = {
     standalone: true,
     imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
 })
-export class GenerateCompetenciesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     @ViewChild(CourseDescriptionFormComponent) courseDescriptionForm: CourseDescriptionFormComponent;
 
     courseId: number;
     isLoading = false;
     submitted: boolean = false;
     form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
-
-    private courseSub?: Subscription;
 
     //Icons
     protected readonly faTimes = faTimes;
@@ -88,19 +86,10 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
-            this.courseSub = this.courseManagementService.find(this.courseId).subscribe({
-                next: (course) => {
-                    this.courseDescriptionForm.setCourseDescription(course.body?.description ?? '');
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            firstValueFrom(this.courseManagementService.find(this.courseId))
+                .then((course) => this.courseDescriptionForm.setCourseDescription(course.body?.description ?? ''))
+                .catch((res: HttpErrorResponse) => onError(this.alertService, res));
         });
-    }
-
-    ngOnDestroy(): void {
-        if (this.courseSub) {
-            this.courseSub.unsubscribe();
-        }
     }
 
     /**
@@ -110,7 +99,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
         const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
-        this.getCurrentCompetenciesAndSuggestions().subscribe((currentCompetencySuggestions) => {
+        this.getCurrentCompetenciesAndSuggestions().then((currentCompetencySuggestions) => {
             this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencySuggestions).subscribe({
                 next: () => {
                     this.jhiWebsocketService.subscribe(websocketTopic);
@@ -151,19 +140,18 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * and the competency recommendations that are currently in the form.
      * @private
      */
-    private getCurrentCompetenciesAndSuggestions(): Observable<CompetencyRecommendation[]> {
+    private getCurrentCompetenciesAndSuggestions(): Promise<CompetencyRecommendation[]> {
         const currentCompetencySuggestions = this.competencies.getRawValue().map((c) => c.competency);
         const competenciesObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
         if (competenciesObservable) {
-            return competenciesObservable.pipe(
-                map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
-                map((competencies) => currentCompetencySuggestions.concat(competencies ?? [])),
+            return firstValueFrom(
+                competenciesObservable.pipe(
+                    map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
+                    map((competencies) => currentCompetencySuggestions.concat(competencies ?? [])),
+                ),
             );
         }
-        return new Observable<CompetencyRecommendation[]>((subscriber) => {
-            subscriber.next(currentCompetencySuggestions);
-            subscriber.complete();
-        });
+        return Promise.resolve(currentCompetencySuggestions);
     }
 
     /**
