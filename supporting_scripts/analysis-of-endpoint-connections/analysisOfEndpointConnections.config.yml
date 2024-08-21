@@ -18,10 +18,43 @@ endpointsParsedIncorrectly:
     line: 1182
 
 excludedRestCallFiles:
+  # Files that contain REST calls that are not yet parsed correctly
+  - 'src/main/webapp/app/assessment/athena.service.ts'
   - 'src/main/webapp/app/shared/statistics-graph/statistics.service.ts'
   - 'src/main/webapp/app/shared/server-date.service.ts'
+  - 'src/main/webapp/app/shared/image/cacheable-image.service.ts'
+  - 'src/main/webapp/app/shared/http/file.service.ts'
+  - 'src/main/webapp/app/lecture/lecture-paging.service.ts'
+  - 'src/main/webapp/app/exercises/shared/manage/exercise-paging.service.ts'
+  - 'src/main/webapp/app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service.ts'
+  - 'api/quiz-exercises/${quizExerciseId}/end-now'
+  - 'api/quiz-exercises/${quizExerciseId}/start-now'
+  - 'api/quiz-exercises/${quizExerciseId}/open-for-practice'
+  - 'src/main/webapp/app/exercises/programming/manage/services/build-plan.service.ts'
+  - 'src/main/webapp/app/exam/manage/exams/exam-import/exam-import-paging.service.ts'
 
 excludedRestCalls:
+#  - '/index.html'
+#  - '/manifest.webapp'
+#  - '/robots.txt'
+#  - '/management/inf'
+#  - '/management/health'
+  - 'api/public/lti13/auth-login'
+  - '${this.resourceUrl}'
+  # The following Endpoints are all from this file: src/main/webapp/app/exercises/shared/course-exercises/course-exercise.service.ts
+  - '${this.resourceUrl}/${courseId}/file-upload-exercises'
+  - '${this.resourceUrl}/${courseId}/text-exercises'
+  - '${this.resourceUrl}/${courseId}/modeling-exercises'
+  - '${this.resourceUrl}/${courseId}/programming-exercises'
+  # The following Endpoints are all from this file: src/main/webapp/app/exercises/quiz/manage/quiz-exercise.service.ts
+  - 'api/quiz-exercises/${quizExerciseId}/set-visible'
+  # this one is not anymore (Not assignable due to edge case in Endpoint definition)
+  - 'api/programming-exercises/${targetExerciseId}/static-code-analysis-categories/import'
+  # Edge case in src/main/webapp/app/exam/manage/exam-management.service.ts
+  - '§{url}'
+  # Edge cases with multilple possible values in src/main/webapp/app/assessment/athena.service.ts
+  - 'api/athena/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/feedback-suggestions'
+  - 'api/athena/courses/${courseId}/${exercise.type}-exercises/available-modules'
   -
 
 restCallsParsedIncorrectly:
