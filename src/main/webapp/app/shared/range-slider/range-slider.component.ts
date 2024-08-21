@@ -2,7 +2,6 @@ import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output }
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 const DEFAULT_STEP = 1;
-const PROGRESS_BAR_FULL_PERCENTAGE = 100;
 
 @Component({
     selector: 'jhi-range-slider',
@@ -78,23 +77,28 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     }
 
     updateMinPercentage() {
-        const newPercentage = ((this.selectedMinValue - this.generalMinValue) / this.valueRange) * 100;
+        let newMinSelection = this.selectedMinValue;
 
-        const progressBarWouldExtendBeyondSelectableRangeOrOverlap = newPercentage + this.sliderMaxPercentage >= PROGRESS_BAR_FULL_PERCENTAGE;
-        if (progressBarWouldExtendBeyondSelectableRangeOrOverlap) {
-            return;
+        const tryingToSelectInvalidValue = this.selectedMinValue >= this.selectedMaxValue;
+        if (tryingToSelectInvalidValue) {
+            newMinSelection = this.selectedMaxValue - this.step;
         }
-        this.sliderMinPercentage = newPercentage;
+
+        // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+        const newMinPercentage = ((newMinSelection - this.generalMinValue) / this.valueRange) * 100;
+        this.sliderMinPercentage = newMinPercentage;
     }
 
     updateMaxPercentage() {
-        const newMaxPercentage = 100 - ((this.selectedMaxValue - this.generalMinValue) / this.valueRange) * 100;
+        let newMaxSelection = this.selectedMaxValue;
 
-        const progressBarWouldExtendBeyondSelectableRangeOrOverlap = newMaxPercentage + this.sliderMinPercentage >= PROGRESS_BAR_FULL_PERCENTAGE;
-        if (progressBarWouldExtendBeyondSelectableRangeOrOverlap) {
-            return;
+        const tryingToSelectInvalidValue = this.selectedMaxValue <= this.selectedMinValue;
+        if (tryingToSelectInvalidValue) {
+            newMaxSelection = this.selectedMinValue + this.step;
         }
 
+        // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+        const newMaxPercentage = 100 - ((newMaxSelection - this.generalMinValue) / this.valueRange) * 100;
         this.sliderMaxPercentage = newMaxPercentage;
     }
 
