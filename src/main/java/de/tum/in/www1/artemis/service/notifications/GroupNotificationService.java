@@ -140,7 +140,7 @@ public class GroupNotificationService {
                 case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_BUILD_RUN_UPDATE ->
                     createNotification((Exercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 // Additional Types
-                case PROGRAMMING_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST ->
+                case PROGRAMMING_TEST_CASES_CHANGED, PROGRAMMING_EXAM_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST ->
                     createNotification((Exercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };

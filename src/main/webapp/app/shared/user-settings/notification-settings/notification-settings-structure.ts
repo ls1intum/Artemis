@@ -14,7 +14,7 @@ export interface NotificationSetting extends Setting {
     // If left undefined emailSupport will count as false/deactivated
     emailSupport?: boolean;
 }
-
+//TODO Michal Kawka
 export const notificationSettingsStructure: UserSettingsStructure<NotificationSetting> = {
     category: UserSettingsCategory.NOTIFICATION_SETTINGS,
     groups: [

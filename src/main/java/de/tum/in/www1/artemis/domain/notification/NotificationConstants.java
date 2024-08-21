@@ -40,6 +40,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_REP
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_EXAM_TEST_CASES_CHANGED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.QUIZ_EXERCISE_STARTED;
@@ -58,6 +59,7 @@ import com.google.common.collect.ImmutableBiMap;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
+// TODO Michal Kawka
 public class NotificationConstants {
 
     // Titles
@@ -116,6 +118,8 @@ public class NotificationConstants {
     public static final String EXAM_ARCHIVE_FAILED_TITLE = "artemisApp.groupNotification.title.examArchiveFailed";
 
     public static final String PROGRAMMING_TEST_CASES_CHANGED_TITLE = "artemisApp.groupNotification.title.programmingTestCasesChanged";
+
+    public static final String PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE = "artemisApp.groupNotification.title.programmingExamTestCasesChanged";
 
     public static final String NEW_MANUAL_FEEDBACK_REQUEST_TITLE = "artemisApp.groupNotification.title.newManualFeedbackRequest";
 
@@ -210,6 +214,8 @@ public class NotificationConstants {
 
     public static final String PROGRAMMING_TEST_CASES_CHANGED_TEXT = "artemisApp.groupNotification.text.programmingTestCasesChanged";
 
+    public static final String PROGRAMMING_EXAM_TEST_CASES_CHANGED_TEXT = "artemisApp.groupNotification.text.programmingExamTestCasesChanged";
+
     public static final String NEW_MANUAL_FEEDBACK_REQUEST_TEXT = "artemisApp.groupNotification.text.newManualFeedbackRequest";
 
     public static final String NEW_PLAGIARISM_CASE_STUDENT_TEXT = "artemisApp.singleUserNotification.text.newPlagiarismCaseStudent";
@@ -292,9 +298,9 @@ public class NotificationConstants {
             .put(NEW_ANNOUNCEMENT_POST, NEW_ANNOUNCEMENT_POST_TITLE).put(COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FINISHED_TITLE)
             .put(COURSE_ARCHIVE_FAILED, COURSE_ARCHIVE_FAILED_TITLE).put(EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED_TITLE).put(EXAM_ARCHIVE_FAILED, EXAM_ARCHIVE_FAILED_TITLE)
             .put(EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FINISHED_TITLE).put(PROGRAMMING_TEST_CASES_CHANGED, PROGRAMMING_TEST_CASES_CHANGED_TITLE)
-            .put(NEW_MANUAL_FEEDBACK_REQUEST, NEW_MANUAL_FEEDBACK_REQUEST_TITLE).put(NEW_PLAGIARISM_CASE_STUDENT, NEW_PLAGIARISM_CASE_STUDENT_TITLE)
-            .put(NEW_CPC_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT_TITLE).put(PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT_TITLE)
-            .put(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE)
+            .put(PROGRAMMING_EXAM_TEST_CASES_CHANGED, PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE).put(NEW_MANUAL_FEEDBACK_REQUEST, NEW_MANUAL_FEEDBACK_REQUEST_TITLE)
+            .put(NEW_PLAGIARISM_CASE_STUDENT, NEW_PLAGIARISM_CASE_STUDENT_TITLE).put(NEW_CPC_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT_TITLE)
+            .put(PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT_TITLE).put(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE)
             .put(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE).put(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE)
             .put(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE).put(TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_DELETED_TITLE)
             .put(TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_UPDATED_TITLE).put(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE)

@@ -64,6 +64,7 @@ import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 
 @Profile(PROFILE_CORE)
 @Service
+// TODO Michal Kawka
 public class NotificationSettingsService {
 
     private final NotificationSettingRepository notificationSettingRepository;

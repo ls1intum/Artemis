@@ -17,6 +17,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.ILLEGAL
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_ANNOUNCEMENT_POST;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_MANUAL_FEEDBACK_REQUEST;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_EXAM_TEST_CASES_CHANGED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.QUIZ_EXERCISE_STARTED;
@@ -155,6 +156,12 @@ public class GroupNotificationFactory {
                 text = NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TEXT;
                 textIsPlaceholder = true;
             }
+            case PROGRAMMING_EXAM_TEST_CASES_CHANGED -> {
+                title = NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE;
+                text = NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TEXT;
+                textIsPlaceholder = true;
+                priority = HIGH;
+            }
             case NEW_MANUAL_FEEDBACK_REQUEST -> {
                 title = NotificationConstants.NEW_MANUAL_FEEDBACK_REQUEST_TITLE;
                 text = NotificationConstants.NEW_MANUAL_FEEDBACK_REQUEST_TEXT;
@@ -221,7 +228,7 @@ public class GroupNotificationFactory {
     }
 
     @NotificationPlaceholderCreator(values = { EXERCISE_RELEASED, EXERCISE_PRACTICE, QUIZ_EXERCISE_STARTED, EXERCISE_UPDATED, PROGRAMMING_TEST_CASES_CHANGED,
-            NEW_MANUAL_FEEDBACK_REQUEST, DUPLICATE_TEST_CASE, PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_BUILD_RUN_UPDATE, ILLEGAL_SUBMISSION })
+            PROGRAMMING_EXAM_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST, DUPLICATE_TEST_CASE, PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_BUILD_RUN_UPDATE, ILLEGAL_SUBMISSION })
     public static String[] createPlaceholderExerciseNotification(String courseTitle, String exerciseTitle) {
         return new String[] { courseTitle, exerciseTitle };
     }
