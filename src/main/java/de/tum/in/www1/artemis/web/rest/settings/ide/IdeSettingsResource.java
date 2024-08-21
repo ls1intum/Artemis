@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.settings.ide.Ide;
 import de.tum.in.www1.artemis.domain.settings.ide.UserIdeMapping;
-import de.tum.in.www1.artemis.domain.settings.ide.UserIdeMappingId;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.settings.IdeRepository;
 import de.tum.in.www1.artemis.repository.settings.UserIdeMappingRepository;
@@ -88,7 +87,7 @@ public class IdeSettingsResource {
             return ResponseEntity.badRequest().build();
         }
 
-        var oldIdeMapping = userIdeMappingRepository.findById(new UserIdeMappingId(user.getId(), programmingLanguage)).orElse(null);
+        var oldIdeMapping = userIdeMappingRepository.findById(new UserIdeMapping.UserIdeMappingId(user.getId(), programmingLanguage)).orElse(null);
 
         // find or create the ide
         var savedIde = ideRepository.findByDeepLink(ide.deepLink()).orElse(null);
@@ -120,13 +119,13 @@ public class IdeSettingsResource {
         User user = userRepository.getUser();
         log.debug("REST request to delete IDE of user {}", user.getLogin());
 
-        var ideMapping = userIdeMappingRepository.findById(new UserIdeMappingId(user.getId(), programmingLanguage)).orElse(null);
+        var ideMapping = userIdeMappingRepository.findById(new UserIdeMapping.UserIdeMappingId(user.getId(), programmingLanguage)).orElse(null);
         if (ideMapping == null) {
             log.error("No IDE found for user {} with programming language {}", user.getLogin(), programmingLanguage);
             return ResponseEntity.notFound().build();
         }
 
-        userIdeMappingRepository.deleteById(new UserIdeMappingId(user.getId(), programmingLanguage));
+        userIdeMappingRepository.deleteById(new UserIdeMapping.UserIdeMappingId(user.getId(), programmingLanguage));
 
         orphanRemoval(ideMapping.getIde());
 

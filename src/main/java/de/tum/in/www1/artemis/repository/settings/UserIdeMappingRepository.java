@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.settings.ide.Ide;
 import de.tum.in.www1.artemis.domain.settings.ide.UserIdeMapping;
-import de.tum.in.www1.artemis.domain.settings.ide.UserIdeMappingId;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
@@ -17,7 +16,7 @@ import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface UserIdeMappingRepository extends ArtemisJpaRepository<UserIdeMapping, UserIdeMappingId> {
+public interface UserIdeMappingRepository extends ArtemisJpaRepository<UserIdeMapping, UserIdeMapping.UserIdeMappingId> {
 
     List<UserIdeMapping> findAllByUserId(Long userId);
 
