@@ -176,6 +176,7 @@ export class Postprocessor {
 
     /**
      * Evaluates a template literal AST node to determine its URL value.
+     * Evaluates a template literal AST node to determine its URL value.
      *
      * This method evaluates the provided template literal node by calling `evaluateTemplateLiteralExpression`.
      * If the evaluation is successful, it returns a ParsingResult indicating success.
@@ -617,7 +618,7 @@ export class Postprocessor {
             const constructorArguments = this.getConstructorArgumentsFromClassBody(classBody.body);
             for (const superConstructorCallArguments of superClass.superConstructorCalls) {
                 for (let i = 0; i < superConstructorCallArguments.arguments.length; i++) {
-                    let constructorArgument = constructorArguments[i];
+                    const constructorArgument = constructorArguments[i];
                     if (superConstructorCallArguments.arguments[i] !== '' && constructorArgument.type === 'TSParameterProperty'
                         && constructorArgument.parameter.type === 'Identifier' && constructorArgument.parameter.name === memberExprKey) {
                         memberExpressionResult.push(superConstructorCallArguments.arguments[i]);
