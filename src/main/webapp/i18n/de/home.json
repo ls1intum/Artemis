@@ -19,7 +19,7 @@
             "failedToLogin": "<span class='bold'>Fehler bei der Anmeldung!</span> Bitte überprüfe deinen Login und dein Passwort und versuche es erneut.",
             "usernameIncorrect": "<p class='text-primary small'>Ungültiger Login</p>",
             "passwordIncorrect": "Das Passwort muss zwischen 8 und 50 Zeichen lang sein.",
-            "tumWarning": "<p class='text-primary small'>An der TUM nutze z.B. <b>go42tum</b> oder <b>example@tum.de</b></p>",
+            "tumWarning": "An der TUM nutze z.B. <b>go42tum</b> oder <b>example@tum.de</b>",
             "loginWarning": "Scheint so, als hättest du Probleme bei der Anmeldung :-(<br />Bitte besuche <a href='{{ url }}'>{{ name }}</a> und versuche dich dort anzumelden.<br />Danach versuche es hier noch einmal.",
             "sessionExpired": "Du wurdest ausgeloggt, da die Sitzung abgelaufen ist. Bitte logge dich erneut ein, um zur vorherigen Seite zurückzukehren."
         }
