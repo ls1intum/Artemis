@@ -6,14 +6,8 @@
             @if (isLoading()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
-            <input
-                id="import-course-competencies-course-search"
-                type="search"
-                class="form-control ms-2 rounded"
-                [placeholder]="'Search'"
-                aria-label="Search"
-                [(ngModel)]="searchTerm"
-            />
+            <!--            TODO Translations:-->
+            <input id="import-objects-search" type="search" class="form-control ms-2 rounded" [placeholder]="'Search'" aria-label="Search" [(ngModel)]="searchTerm" />
         </div>
     </div>
 </div>
