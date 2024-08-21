@@ -42,18 +42,14 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
         const isCheckoutSolutionRepositoryUpdated = changes.checkoutSolutionRepository?.currentValue !== changes.checkoutSolutionRepository?.previousValue;
         if (this.isLocal && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
+            this.resetProgrammingExerciseBuildCheckoutPaths();
             this.updateCheckoutDirectories();
         }
 
-        const isBuildConfigChanged = this.isBuildConfigChanged(
-            changes.programmingExercise?.currentValue?.buildConfig,
-            changes.programmingExercise?.previousValue?.buildConfig,
-            changes.programmingExercise?.firstChange,
-        );
+        const isBuildConfigChanged = this.isBuildConfigAvailable(this.programmingExercise.buildConfig);
         if (this.isLocal && isBuildConfigChanged) {
             this.checkoutDirectories = this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories);
         }
-        console.log(this.programmingExercise.buildConfig);
     }
 
     ngOnDestroy() {
@@ -119,13 +115,12 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         return path.startsWith('/') ? path : `/${path}`;
     }
 
-    private isBuildConfigChanged(newValue?: ProgrammingExerciseBuildConfig, oldValue?: ProgrammingExerciseBuildConfig, firstChange = false): boolean {
+    private isBuildConfigAvailable(buildConfig?: ProgrammingExerciseBuildConfig): boolean {
         return (
-            firstChange ||
-            (oldValue !== undefined &&
-                (newValue?.assignmentCheckoutPath !== oldValue?.assignmentCheckoutPath ||
-                    newValue?.testCheckoutPath !== oldValue?.testCheckoutPath ||
-                    newValue?.solutionCheckoutPath !== oldValue?.solutionCheckoutPath))
+            buildConfig !== undefined &&
+            ((buildConfig.assignmentCheckoutPath !== undefined && buildConfig.assignmentCheckoutPath !== '') ||
+                (buildConfig.testCheckoutPath !== undefined && buildConfig.testCheckoutPath !== '') ||
+                (buildConfig.solutionCheckoutPath !== undefined && buildConfig.solutionCheckoutPath !== ''))
         );
     }
 

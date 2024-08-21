@@ -130,7 +130,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     toggleEditRepositoryCheckoutPath() {
-        this.editRepositoryCheckoutPath = true;
+        this.editRepositoryCheckoutPath = !this.editRepositoryCheckoutPath;
     }
 
     updateSubmissionBuildPlanCheckoutDirectories(buildPlanCheckoutDirectoriesDTO: BuildPlanCheckoutDirectoriesDTO) {
@@ -138,17 +138,20 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     onAssigmentRepositoryCheckoutPathChange(event: string) {
+        this.programmingExercise.buildConfig!.assignmentCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise = { ...this.programmingExercise, buildConfig: { ...this.programmingExercise.buildConfig, assignmentCheckoutPath: event } };
+        this.programmingExercise = { ...this.programmingExercise };
     }
 
     onTestRepositoryCheckoutPathChange(event: string) {
+        this.programmingExercise.buildConfig!.testCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise = { ...this.programmingExercise, buildConfig: { ...this.programmingExercise.buildConfig, testCheckoutPath: event } };
+        this.programmingExercise = { ...this.programmingExercise };
     }
 
     onSolutionRepositoryCheckoutPathChange(event: string) {
+        this.programmingExercise.buildConfig!.solutionCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise = { ...this.programmingExercise, buildConfig: { ...this.programmingExercise.buildConfig, solutionCheckoutPath: event } };
+        this.programmingExercise = { ...this.programmingExercise };
     }
 }
