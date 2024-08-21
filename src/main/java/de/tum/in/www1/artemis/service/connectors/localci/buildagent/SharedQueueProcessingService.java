@@ -30,6 +30,7 @@ import org.redisson.client.RedisClient;
 import org.redisson.client.protocol.RedisCommands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -86,6 +87,9 @@ public class SharedQueueProcessingService {
 
     private int listenerIdRemove;
 
+    @Value("${spring.data.redis.client-name}")
+    private String redisClientName;     // this is used as build agent name
+
     public SharedQueueProcessingService(RedissonClient redissonClient, RedisClient redisClient, ExecutorService localCIBuildExecutorService,
             BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService) {
         this.redissonClient = redissonClient;
@@ -119,7 +123,6 @@ public class SharedQueueProcessingService {
         this.buildAgentInformation.remove(getBuildAgentName());
         this.buildJobQueue.removeListener(this.listenerIdAdd);
         this.buildJobQueue.removeListener(this.listenerIdRemove);
-        // TODO: remove the build agent information from the map
     }
 
     /**
@@ -138,7 +141,7 @@ public class SharedQueueProcessingService {
     }
 
     private String getBuildAgentName() {
-        return "build-agent-1"; // TODO: load from yml
+        return redisClientName;
     }
 
     /**

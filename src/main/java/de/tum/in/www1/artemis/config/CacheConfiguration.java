@@ -14,19 +14,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.KeyGenerator;
-import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.cloud.client.serviceregistry.Registration;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -43,25 +38,9 @@ public class CacheConfiguration {
     @Nullable
     private final BuildProperties buildProperties;
 
-    private final ServerProperties serverProperties;
-
-    // the discovery service client that connects against the registration (jhipster registry) so that multiple server nodes can find each other to synchronize using Hazelcast
-    private final DiscoveryClient discoveryClient;
-
-    // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
-    @Nullable
-    private final Registration registration;
-
-    private final ApplicationContext applicationContext;
-
-    private final Environment env;
-
     private final RedissonClient redissonClient;
 
     private RedisClient redisClient;    // lazy init
-
-    @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
-    private String instanceName;
 
     @Value("${spring.data.redis.host}")
     private String redisHost;
@@ -75,17 +54,14 @@ public class CacheConfiguration {
     @Value("${spring.data.redis.password}")
     private String redisPassword;
 
+    @Value("${spring.data.redis.client-name}")
+    private String redisClientName;
+
     // NOTE: the registration is optional
-    public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient, ApplicationContext applicationContext,
-            @Autowired(required = false) @Nullable Registration registration, @Autowired(required = false) @Nullable GitProperties gitProperties,
-            @Autowired(required = false) @Nullable BuildProperties buildProperties, Environment env, RedissonClient redissonClient) {
-        this.serverProperties = serverProperties;
-        this.discoveryClient = discoveryClient;
-        this.applicationContext = applicationContext;
-        this.registration = registration;
+    public CacheConfiguration(@Autowired(required = false) @Nullable GitProperties gitProperties, @Autowired(required = false) @Nullable BuildProperties buildProperties,
+            RedissonClient redissonClient) {
         this.gitProperties = gitProperties;
         this.buildProperties = buildProperties;
-        this.env = env;
         this.redissonClient = redissonClient;
     }
 
@@ -108,7 +84,7 @@ public class CacheConfiguration {
         config.setAddress("redis://" + redisHost + ":" + redisPort);
         config.setUsername(redisUsername);
         config.setPassword(redisPassword);
-        config.setClientName("build-agent-1");          // TODO: read from yml
+        config.setClientName(redisClientName);
         this.redisClient = RedisClient.create(config);
         return this.redisClient;
     }
@@ -117,6 +93,4 @@ public class CacheConfiguration {
     public KeyGenerator keyGenerator() {
         return new PrefixedKeyGenerator(this.gitProperties, this.buildProperties);
     }
-
-    // TODO: define settings for Redisson here: files, eviction policy, max size, time to live
 }

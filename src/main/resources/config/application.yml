@@ -154,6 +154,25 @@ spring:
             port: 6379
             username: artemis
             password: artemis
+            # custom attributes for Redisson Hibernate
+            server-config: single
+            idle-connection-timeout: 10000
+            connect-timeout: 10000
+            timeout: 3000
+            retry-attempts: 3
+            retry-interval: 1500
+            client-name: build-agent-1
+            subscriptions-per-connection: 5
+            subscription-connection-minimum-idle-size: 1
+            subscription-connection-pool-size: 50
+            connection-minimum-idle-size: 10
+            connection-pool-size: 64
+            database: 0
+            dns-monitoring-interval: 5000
+            threads: 16
+            netty-threads: 32
+            codec: org.redisson.codec.Kryo5Codec
+            transport-mode: "NIO"
     jpa:
         open-in-view: false
         show-sql: false
@@ -172,11 +191,22 @@ spring:
             hibernate.query.in_clause_parameter_padding: true
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
-            hibernate.cache.redisson.config: config/redisson.yml
-            hibernate.cache.region.factory_class: org.redisson.hibernate.RedissonRegionNativeFactory
+            hibernate.cache.region.factory_class: de.tum.in.www1.artemis.config.ArtemisRedissonRegionFactory
             hibernate.cache.use_minimal_puts: true
-            hibernate.cache.hazelcast.instance_name: Artemis
-            hibernate.cache.hazelcast.use_lite_member: true
+            # TODO: why do we need those hazelcast values?
+#            hibernate.cache.hazelcast.instance_name: Artemis
+#            hibernate.cache.hazelcast.use_lite_member: true
+            hibernate.cache.redisson:
+                # TODO: double check those values and adjust them if necessary, also set values for max_entries
+                entity.expiration.time_to_live: 3600
+                localcache.expiration.time_to_live: 3600
+                collection.expiration.time_to_live: 3600
+                naturalid.expiration.time_to_live: 3600
+                naturalid.localcache.time_to_live: 3600
+                query.expiration.time_to_live: 3600
+                query.localcache.time_to_live: 3600
+                timestamps.expiration.time_to_live: 3600
+                timestamps.localcache.time_to_live: 3600
             # modify batch size as necessary
             hibernate.jdbc.batch_size: 25
             hibernate.jdbc.time_zone: UTC
@@ -219,23 +249,9 @@ spring:
             password: guest
             addresses: "" # Comma separated list of hosts and ports of the brokers (e.g. "localhost:61613,localhost:61614")
     hazelcast:
-        interface: "127.0.0.1" # The interface to bind to, if non is set, all interfaces will be bound
-        port: 5701 # The hazelcast port that this instance runs on and where other instances are expected
-        localInstances: false # Whether the other instances are expected locally (in dev mode) or external
-        phone:
-            home:
-                enabled: false
-        slow:
-            operation:
-                detector:
-                    enabled: true
+        enabled: false
     beaninfo:
         ignore: true
-
-hazelcast:
-    phone:
-        home:
-            enabled: false
 
 springdoc:
     api-docs:
@@ -297,10 +313,6 @@ jhipster:
     http:
         cache: # Used by the CachingHttpHeadersFilter
             timeToLiveInDays: 1461
-    cache: # Cache configuration
-        hazelcast: # Hazelcast distributed cache
-            time-to-live-seconds: 3600
-            backup-count: 1
 
 # Eureka configuration
 eureka:

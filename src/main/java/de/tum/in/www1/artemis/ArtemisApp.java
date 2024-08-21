@@ -28,10 +28,14 @@ public class ArtemisApp {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
 
-    private final Environment env;
+    /**
+     * We intentionally use a static field here to make it accessible from everywhere in the application.
+     * This is required so that ArtemisRedissonRegionFactory can access the Environment.
+     */
+    public static Environment env;
 
     public ArtemisApp(Environment env) {
-        this.env = env;
+        ArtemisApp.env = env;
     }
 
     /**
