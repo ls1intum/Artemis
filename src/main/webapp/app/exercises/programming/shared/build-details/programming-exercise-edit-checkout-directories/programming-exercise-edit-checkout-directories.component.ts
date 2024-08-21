@@ -9,7 +9,7 @@ import { NgModel } from '@angular/forms';
 @Component({
     selector: 'jhi-programming-exercise-edit-checkout-directories',
     standalone: true,
-    imports: [ArtemisSharedComponentModule, ArtemisSharedComponentModule, ArtemisSharedCommonModule],
+    imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
     styleUrls: ['../../../manage/programming-exercise-form.scss'],
 })
@@ -47,8 +47,8 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
         const isProgrammingLanguageUpdated = !changes.programmingLanguage?.firstChange && changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
         if (isProgrammingLanguageUpdated) {
             this.resetProgrammingExerciseBuildCheckoutPaths();
-        }
-        if (isSubmissionBuildPlanCheckoutRepositoriesChanged) {
+            this.reset();
+        } else if (isSubmissionBuildPlanCheckoutRepositoriesChanged) {
             this.reset();
         }
     }
@@ -66,20 +66,29 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
         if (this.isAssigmentRepositoryEditable) {
             this.assignmentCheckoutPath =
                 this.programmingExercise.buildConfig?.assignmentCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.exerciseCheckoutDirectory) || '';
+        } else {
+            this.assignmentCheckoutPath = '';
         }
         this.isTestRepositoryEditable =
             !!submissionBuildPlan?.testCheckoutDirectory && submissionBuildPlan?.testCheckoutDirectory !== '' && submissionBuildPlan?.testCheckoutDirectory !== '/';
         if (this.isTestRepositoryEditable) {
             this.testCheckoutPath = this.programmingExercise.buildConfig?.testCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.testCheckoutDirectory) || '';
+        } else {
+            this.testCheckoutPath = '/';
         }
         this.isSolutionRepositoryEditable =
             !!submissionBuildPlan?.solutionCheckoutDirectory && submissionBuildPlan?.solutionCheckoutDirectory !== '' && submissionBuildPlan?.solutionCheckoutDirectory !== '/';
         if (this.isSolutionRepositoryEditable) {
             this.solutionCheckoutPath = this.programmingExercise.buildConfig?.solutionCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.solutionCheckoutDirectory) || '';
+        } else {
+            this.solutionCheckoutPath = '';
         }
     }
 
     resetProgrammingExerciseBuildCheckoutPaths() {
+        this.assignmentCheckoutPath = '';
+        this.testCheckoutPath = '/';
+        this.solutionCheckoutPath = '';
         this.programmingExercise.buildConfig!.assignmentCheckoutPath = '';
         this.programmingExercise.buildConfig!.testCheckoutPath = '';
         this.programmingExercise.buildConfig!.solutionCheckoutPath = '';
@@ -111,7 +120,7 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
         );
     }
 
-    removeLeadingSlash(path?: string): string | undefined {
+    private removeLeadingSlash(path?: string): string | undefined {
         return path?.replace(/^\//, '');
     }
 

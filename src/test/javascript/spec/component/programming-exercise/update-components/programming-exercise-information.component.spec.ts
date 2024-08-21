@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingExerciseBuildConfig } from 'app/entities/programming-exercise.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
@@ -53,6 +53,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
 
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+                comp.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
             });
     });
 
@@ -85,5 +86,14 @@ describe('ProgrammingExerciseInformationComponent', () => {
         (editableField.editingInput.valueChanges as Subject<boolean>).next(false);
         comp.programmingExerciseEditCheckoutDirectories.formValidChanges.next(false);
         expect(calculateFormValidSpy).toHaveBeenCalledTimes(7);
+    });
+
+    it('should update checkout directories', () => {
+        comp.onTestRepositoryCheckoutPathChange('test');
+        expect(comp.programmingExercise.buildConfig?.testCheckoutPath).toBe('test');
+        comp.onSolutionRepositoryCheckoutPathChange('solution');
+        expect(comp.programmingExercise.buildConfig?.solutionCheckoutPath).toBe('solution');
+        comp.onAssigmentRepositoryCheckoutPathChange('assignment');
+        expect(comp.programmingExercise.buildConfig?.assignmentCheckoutPath).toBe('assignment');
     });
 });

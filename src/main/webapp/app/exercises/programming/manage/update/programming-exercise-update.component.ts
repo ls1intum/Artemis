@@ -1075,16 +1075,18 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.buildConfig?.solutionCheckoutPath,
             this.programmingExercise.buildConfig?.testCheckoutPath,
         ];
-        if (
-            (this.exerciseInfoComponent?.programmingExerciseEditCheckoutDirectories &&
-                !this.exerciseInfoComponent?.programmingExerciseEditCheckoutDirectories?.areValuesUnique(checkoutPaths)) ||
-            !this.testCheckoutPathsPattern(checkoutPaths)
-        ) {
+        if (!this.areValuesUnique(checkoutPaths) || !this.testCheckoutPathsPattern(checkoutPaths)) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
                 translateValues: {},
             });
         }
+    }
+
+    private areValuesUnique(values: (string | undefined)[]): boolean {
+        const filteredValues = values.filter((value): value is string => value !== undefined && value !== '');
+        const uniqueValues = new Set(filteredValues);
+        return filteredValues.length === uniqueValues.size;
     }
 
     private testCheckoutPathsPattern(checkoutPath: (string | undefined)[]): boolean {
