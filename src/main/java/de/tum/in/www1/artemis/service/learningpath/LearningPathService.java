@@ -307,8 +307,11 @@ public class LearningPathService {
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, user.getId()).stream()
                 .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
 
-        Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream()
-                .map(competency -> CompetencyGraphNodeDTO.of(competency, Optional.ofNullable(competencyProgresses.get(competency.getId())))).collect(Collectors.toSet());
+        Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream().map(competency -> {
+            var competencyProgressOptional = Optional.ofNullable(competencyProgresses.get(competency.getId()));
+            var masteryProgress = competencyProgressOptional.map(CompetencyProgressService::getMasteryProgress).orElse(0.0);
+            return CompetencyGraphNodeDTO.of(competency, Math.floor(masteryProgress * 100), CompetencyGraphNodeDTO.CompetencyNodeValueType.MASTERY_PROGRESS);
+        }).collect(Collectors.toSet());
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(learningPath.getCourse().getId());
         Set<CompetencyGraphEdgeDTO> relationDTOs = relations.stream().map(CompetencyGraphEdgeDTO::of).collect(Collectors.toSet());
@@ -344,7 +347,7 @@ public class LearningPathService {
      * @return the navigation overview
      */
     public LearningPathNavigationOverviewDTO getLearningPathNavigationOverview(long learningPathId) {
-        var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
+        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");
         }
@@ -352,19 +355,24 @@ public class LearningPathService {
     }
 
     /**
-     * Finds a learning path by its id and eagerly fetches the competencies, linked lecture units and exercises, and the corresponding domain objects storing the progress of the
-     * connected user.
+     * Finds a learning path by its id and eagerly fetches the competencies, linked and released lecture units and exercises, and the corresponding domain objects storing the
+     * progress of the connected user.
      * <p>
      * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
      *
      * @param learningPathId the id of the learning path to fetch
      * @return the learning path with fetched data
      */
-    public LearningPath findWithCompetenciesAndLearningObjectsAndCompletedUsersById(long learningPathId) {
+    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(long learningPathId) {
         LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
-        // Remove exercise units, since they are already retrieved as exercises
-        learningPath.getCompetencies().stream().forEach(competency -> competency
-                .setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet())));
+
+        // Remove exercises that are not visible to students
+        learningPath.getCompetencies()
+                .forEach(competency -> competency.setExercises(competency.getExercises().stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet())));
+        // Remove unreleased lecture units as well as exercise units, since they are already retrieved as exercises
+        learningPath.getCompetencies().forEach(competency -> competency.setLectureUnits(competency.getLectureUnits().stream()
+                .filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit) && lectureUnit.isVisibleToStudents()).collect(Collectors.toSet())));
+
         if (learningPath.getUser() == null) {
             learningPath.getCompetencies().forEach(competency -> {
                 competency.setUserProgress(Collections.emptySet());

@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency, CompetencyProgress, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 @Component({
     selector: 'jhi-competency-node-details',
@@ -21,7 +21,7 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     protected readonly getIcon = getIcon;
 
     constructor(
-        private competencyService: CompetencyService,
+        private courseCompetencyService: CourseCompetencyService,
         private alertService: AlertService,
     ) {}
 
@@ -32,7 +32,7 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     }
     private loadData() {
         this.isLoading = true;
-        this.competencyService.findById(this.competencyId!, this.courseId!).subscribe({
+        this.courseCompetencyService.findById(this.competencyId!, this.courseId!).subscribe({
             next: (resp) => {
                 this.competency = resp.body!;
                 this.isLoading = false;

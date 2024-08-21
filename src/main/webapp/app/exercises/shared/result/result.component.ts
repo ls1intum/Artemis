@@ -23,6 +23,7 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
+import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
 
 @Component({
     selector: 'jhi-result',
@@ -79,6 +80,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         private exerciseService: ExerciseService,
         @Optional() private exerciseCacheService: ExerciseCacheService,
         private resultService: ResultService,
+        private csvDownloadService: CsvDownloadService,
     ) {}
 
     /**
@@ -299,13 +301,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     downloadBuildResult(participationId?: number) {
         if (participationId) {
             this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
-                const fileURL = URL.createObjectURL(artifact.fileContent);
-                const link = document.createElement('a');
-                link.href = fileURL;
-                link.target = '_blank';
-                link.download = artifact.fileName;
-                document.body.appendChild(link);
-                link.click();
+                this.csvDownloadService.downloadArtifact(artifact.fileContent, artifact.fileName);
             });
         }
     }

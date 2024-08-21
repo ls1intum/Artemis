@@ -9,7 +9,9 @@
                 <hr />
                 <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise" [isDetailPage]="true" (loadQuizExercises)="load()" />
                 <hr />
-                <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quizExercise" (loadOne)="load()" (handleNewQuizExercise)="load()" />
+                @if (!isExamMode) {
+                    <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quizExercise" (loadOne)="load()" (handleNewQuizExercise)="load()" />
+                }
                 @if (showStatistics) {
                     <div class="mt-3">
                         <jhi-exercise-detail-statistics

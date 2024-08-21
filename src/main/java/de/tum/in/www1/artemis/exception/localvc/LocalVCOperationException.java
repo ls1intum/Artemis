@@ -12,4 +12,8 @@ public class LocalVCOperationException extends Exception {
     public LocalVCOperationException(Throwable cause) {
         super(cause);
     }
+
+    public LocalVCOperationException(String message) {
+        super(message);
+    }
 }

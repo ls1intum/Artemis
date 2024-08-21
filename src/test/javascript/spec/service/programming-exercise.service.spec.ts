@@ -427,7 +427,11 @@ describe('ProgrammingExercise Service', () => {
     ])('should call correct exercise endpoint', (test) =>
         fakeAsync(() => {
             const exerciseId = 1;
-            service[test.method](exerciseId).subscribe();
+            const functionToCall = service[test.method as keyof ProgrammingExerciseService];
+            if (typeof functionToCall !== 'function') {
+                throw new Error(`Method ${test.method} does not exist on service`);
+            }
+            functionToCall.bind(service, exerciseId).apply().subscribe();
             const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
             const req = httpMock.expectOne({ method: 'GET', url });
             req.flush({});

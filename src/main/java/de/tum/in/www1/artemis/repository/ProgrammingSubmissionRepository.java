@@ -3,12 +3,14 @@ package de.tum.in.www1.artemis.repository;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -17,7 +19,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO;
 
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity.
@@ -45,8 +47,51 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
         return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = "results")
-    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(long participationId);
+    @Query(value = """
+            SELECT new de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(ps.id, ps.submissionDate)
+            FROM ProgrammingSubmission ps
+            WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC
+            """)
+    List<ProgrammingSubmissionIdAndSubmissionDateDTO> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = { "results" })
+    Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
+
+    /**
+     * Finds the first programming submission by participation ID, including its results, ordered by submission date in descending order. To avoid in-memory paging by retrieving
+     * the first submission directly from the database.
+     *
+     * @param programmingSubmissionId the ID of the participation to find the submission for
+     * @return an {@code Optional} containing the first {@code ProgrammingSubmission} with results, ordered by submission date in descending order,
+     *         or an empty {@code Optional} if no submission is found
+     */
+    default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(long programmingSubmissionId) {
+        Pageable pageable = PageRequest.of(0, 1); // fetch the first row
+        // probably is not the prettiest variant, but we need a way to fetch the first row only, as sql limit does not work with JPQL, as the latter is SQL agnostic
+        List<ProgrammingSubmissionIdAndSubmissionDateDTO> result = findFirstIdByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId, pageable);
+        if (result.isEmpty()) {
+            return Optional.empty();
+        }
+        long id = result.getFirst().programmingSubmissionId();
+        return findProgrammingSubmissionWithResultsById(id);
+    }
+
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(s.id, s.submissionDate)
+            FROM ProgrammingSubmission s
+                JOIN s.participation p
+                JOIN p.exercise e
+            WHERE p.id = :participationId
+                AND (s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.INSTRUCTOR
+                    OR s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.TEST
+                    OR e.dueDate IS NULL
+                    OR s.submissionDate <= e.dueDate)
+            ORDER BY s.submissionDate DESC
+            """)
+    List<ProgrammingSubmissionIdAndSubmissionDateDTO> findSubmissionIdsAndDatesByParticipationId(@Param("participationId") long participationId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = { "results" })
+    List<ProgrammingSubmission> findSubmissionsWithResultsByIdIn(List<Long> ids);
 
     /**
      * Provide a list of graded submissions. To be graded a submission must:
@@ -58,23 +103,16 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * @param pageable        Pageable
      * @return ProgrammingSubmission list (can be empty!)
      */
-    @Query("""
-            SELECT s
-            FROM ProgrammingSubmission s
-                LEFT JOIN s.participation p
-                LEFT JOIN p.exercise e
-                LEFT JOIN FETCH s.results r
-            WHERE p.id = :participationId
-                AND (
-                    s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.INSTRUCTOR
-                    OR s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.TEST
-                    OR e.dueDate IS NULL
-                    OR s.submissionDate <= e.dueDate
-                )
-            ORDER BY s.submissionDate DESC
-            """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId, Pageable pageable);
+    default List<ProgrammingSubmission> findGradedByParticipationIdWithResultsOrderBySubmissionDateDesc(long participationId, Pageable pageable) {
+        List<Long> ids = findSubmissionIdsAndDatesByParticipationId(participationId, pageable).stream().map(ProgrammingSubmissionIdAndSubmissionDateDTO::programmingSubmissionId)
+                .toList();
+
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return findSubmissionsWithResultsByIdIn(ids);
+    }
 
     @EntityGraph(type = LOAD, attributePaths = "results.feedbacks")
     Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksById(long submissionId);
@@ -113,11 +151,11 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      */
     @NotNull
     default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
-        return findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Programming Submission", submissionId));
+        return getValueElseThrow(findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId), submissionId);
     }
 
     @NotNull
     default ProgrammingSubmission findByResultIdElseThrow(long resultId) {
-        return findByResultId(resultId).orElseThrow(() -> new EntityNotFoundException("Programming Submission for Result", resultId));
+        return getValueElseThrow(findByResultId(resultId));
     }
 }

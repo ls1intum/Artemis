@@ -54,6 +54,7 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -99,6 +100,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ProgrammingExerciseGradingService gradingService;
@@ -223,6 +227,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             // Adjust settings so that exam and course exercises can use the same tests
             programmingExercise.setMaxPoints(42.0);
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
+            programmingExercise.setBuildConfig(super.programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
             programmingExercise = super.programmingExerciseRepository.save(programmingExercise);
             programmingExercise = super.programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
             programmingExercise = super.programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -1305,7 +1310,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldGetCorrectLatestAutomaticResults() {
         createTestParticipationsWithResults();
-        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
     }
 
@@ -1314,7 +1319,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query
-        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(programmingExerciseSCAEnabled.getId());
         var allResults = resultRepository.findAllByParticipationExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
         assertThat(allResults).hasSize(6);

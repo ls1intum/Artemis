@@ -11,7 +11,7 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco-color.action';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-import { DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDragMove, DragDropModule } from '@angular/cdk/drag-drop';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
 import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
@@ -20,6 +20,7 @@ import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/mona
 import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
 import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
 import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -199,5 +200,53 @@ describe('MarkdownEditorMonacoComponent', () => {
     it('should compute height 0 for a missing element', () => {
         fixture.detectChanges();
         expect(comp.getElementClientHeight(undefined)).toBe(0);
+    });
+
+    it('should not react to content height changes if the height is not liked to the editor size', () => {
+        comp.linkEditorHeightToContentHeight = false;
+        comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
+        fixture.detectChanges();
+        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.MEDIUM);
+        comp.onContentHeightChanged(100);
+        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.MEDIUM);
+    });
+
+    it('should react to content height changes if the height is linked to the editor', () => {
+        comp.linkEditorHeightToContentHeight = true;
+        comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
+        comp.resizableMinHeight = MarkdownEditorHeight.SMALL;
+        comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
+        fixture.detectChanges();
+        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.MEDIUM);
+        comp.onContentHeightChanged(1500);
+        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.LARGE);
+        comp.onContentHeightChanged(20);
+        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.SMALL);
+    });
+
+    it('should adjust the wrapper height when resized manually', () => {
+        const cdkDragMove = { source: { reset: jest.fn() }, pointerPosition: { y: 300 } } as unknown as CdkDragMove;
+        const wrapperTop = 100;
+        const dragElemHeight = 20;
+        fixture.detectChanges();
+        jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(dragElemHeight);
+        jest.spyOn(comp.wrapper.nativeElement, 'getBoundingClientRect').mockReturnValue({ top: wrapperTop } as DOMRect);
+        comp.onResizeMoved(cdkDragMove);
+        expect(comp.targetWrapperHeight).toBe(300 - wrapperTop - dragElemHeight / 2);
+    });
+
+    it('should forward enableTextFieldMode call', () => {
+        fixture.detectChanges();
+        const setTextFieldModeSpy = jest.spyOn(comp.monacoEditor, 'enableTextFieldMode');
+        comp.enableTextFieldMode();
+        expect(setTextFieldModeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should apply option presets to the editor', () => {
+        fixture.detectChanges();
+        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
+        const preset = new MonacoEditorOptionPreset({ lineNumbers: 'off' });
+        comp.applyOptionPreset(preset);
+        expect(applySpy).toHaveBeenCalledExactlyOnceWith(preset);
     });
 });

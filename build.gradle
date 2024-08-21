@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.4.4"
+version = "7.5.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -322,7 +322,7 @@ dependencies {
     implementation "com.github.docker-java:docker-java-transport-httpclient5:${docker_java_version}"
 
     // use newest version of commons-compress to avoid security issues through outdated dependencies
-    implementation "org.apache.commons:commons-compress:1.26.2"
+    implementation "org.apache.commons:commons-compress:1.27.0"
 
 
     // import JHipster dependencies BOM
@@ -331,7 +331,7 @@ dependencies {
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.micrometer:micrometer-registry-prometheus:1.12.6"
-    implementation "net.logstash.logback:logstash-logback-encoder:7.4"
+    implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
     implementation "com.fasterxml.jackson.core:jackson-core:${fasterxml_version}"
@@ -428,7 +428,7 @@ dependencies {
     implementation "com.ibm.icu:icu4j-charset:75.1"
     implementation "com.github.seancfoley:ipaddress:5.5.0"
     implementation "org.apache.maven:maven-model:3.9.8"
-    // NOTE: 3.0.2 is broken for splitting lecture PDFs
+    // NOTE: 3.0.2 is broken for splitting lecture specific PDFs
     implementation "org.apache.pdfbox:pdfbox:3.0.1"
     implementation "org.apache.commons:commons-csv:1.11.0"
     implementation "org.commonmark:commonmark:0.22.0"
@@ -471,7 +471,7 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "io.github.classgraph:classgraph:4.8.174"
-    testImplementation "org.awaitility:awaitility:4.2.1"
+    testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.9"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.3.1"
