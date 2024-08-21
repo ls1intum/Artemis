@@ -286,7 +286,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      * Inserts the correct link to the translated ssh tip.
      */
     getVcsTokenTip() {
-        return this.translateService.instant('artemisApp.exerciseActions.vcsTokenTip').replace(/{link:(.*)}/, '<a href="' + this.setupSshKeysUrl + '" target="_blank">$1</a>');
+        return this.translateService.instant('artemisApp.exerciseActions.vcsTokenTip').replace(/{link:(.*)}/, '<a href="' + this.vcsTokenSettingsUrl + '" target="_blank">$1</a>');
     }
 
     /**
