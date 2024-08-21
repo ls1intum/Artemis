@@ -50,7 +50,7 @@ describe('CodeEditorStatusComponent', () => {
             comp.commitState = commitState as CommitState;
             fixture.detectChanges();
             const commitStateSegment = fixture.debugElement.query(By.css('#commit_state'));
-            showsExactlyOneStatusSegment(commitStateSegment, commitStateToTranslationKey[commitState]);
+            showsExactlyOneStatusSegment(commitStateSegment, commitStateToTranslationKey[commitState as keyof typeof commitStateToTranslationKey]);
         }),
     );
 
