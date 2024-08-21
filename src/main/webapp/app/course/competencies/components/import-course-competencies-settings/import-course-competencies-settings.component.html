@@ -19,7 +19,7 @@
                     [value]="referenceDate()"
                     [owlDateTime]="dt"
                     [owlDateTimeTrigger]="dt"
-                    (dateTimeChange)="setReferenceDate($event.value)"
+                    (dateTimeChange)="setReferenceDate($event)"
                     name="datePicker"
                 />
                 <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
