@@ -75,7 +75,7 @@ def read_translation_files_in_directory(directory):
 def get_keys(json):
     keys = []
     for key in json.keys():
-        if type(json[key]) == dict:
+        if isinstance(json[key], dict):
             keys.extend([f'{key}.{sub_key}' for sub_key in get_keys(json[key])])
         else:
             keys.append(key)
@@ -178,9 +178,9 @@ def check_duplicate_values_for_language(translation_data, language):
         passed &= check_duplicate_values_for_file(translation_data, language, file)
 
     files = list(translation_data[language].keys())
-    for i in range(len(files)):
-        for j in range(i + 1, len(files)):
-            passed &= check_duplicate_values_for_files(translation_data, language, files[i], files[j])
+    for i, file1 in enumerate(files):
+        for file2 in files[i + 1:]:
+            passed &= check_duplicate_values_for_files(translation_data, language, file1, file2)
 
     return passed
 
