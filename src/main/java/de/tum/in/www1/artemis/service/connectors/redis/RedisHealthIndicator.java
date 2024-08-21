@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Profile;
@@ -23,6 +24,18 @@ public class RedisHealthIndicator implements HealthIndicator {
 
     private final RedisClientListResolver redisClientListResolver;
 
+    @Value("${spring.data.redis.host}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port}")
+    private int redisPort;
+
+    @Value("${spring.data.redis.username}")
+    private String redisUsername;
+
+    @Value("${spring.data.redis.client-name}")
+    private String redisClientName;
+
     public RedisHealthIndicator(RedisConnectionFactory redisConnectionFactory, RedisClientListResolver redisClientListResolver) {
         this.redisConnectionFactory = redisConnectionFactory;
         this.redisClientListResolver = redisClientListResolver;
@@ -39,7 +52,10 @@ public class RedisHealthIndicator implements HealthIndicator {
 
             Set<String> uniqueClients = redisClientListResolver.getUniqueClients();
 
-            return Health.up().withDetail("Ping", "Redis is up").withDetail("Unique Artemis clients", uniqueClients.size()).withDetail("Artemis Clients", uniqueClients).build();
+            return Health.up().withDetail("Address", "redis://" + redisHost + ":" + redisPort).withDetail("Ping", "Redis is up")
+                    .withDetail("Unique Artemis clients", uniqueClients.size()).withDetail("Artemis Clients", uniqueClients).withDetail("Username", redisUsername)
+                    .withDetail("This node client name", redisClientName).build();
+
         }
         catch (Exception e) {
             return Health.down(e).withDetail("error", e.getMessage()).build();
