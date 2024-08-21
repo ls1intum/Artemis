@@ -98,10 +98,10 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      */
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
-        const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
-        this.getCurrentCompetenciesAndSuggestions().subscribe((currentCompetencySuggestions) => {
-            this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencySuggestions).subscribe({
+        this.getCurrentCompetencies().subscribe((currentCompetencies) => {
+            this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencies).subscribe({
                 next: () => {
+                    const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
                     this.jhiWebsocketService.subscribe(websocketTopic);
                     this.jhiWebsocketService.receive(websocketTopic).subscribe({
                         next: (update: CompetencyGenerationStatusUpdate) => {
@@ -140,11 +140,11 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      * and the competency recommendations that are currently in the form.
      * @private
      */
-    private getCurrentCompetenciesAndSuggestions(): Observable<CompetencyRecommendation[]> {
+    private getCurrentCompetencies(): Observable<CompetencyRecommendation[]> {
         const currentCompetencySuggestions = this.competencies.getRawValue().map((c) => c.competency);
-        const competenciesObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
-        if (competenciesObservable) {
-            return competenciesObservable.pipe(
+        const courseCompetenciesObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
+        if (courseCompetenciesObservable) {
+            return courseCompetenciesObservable.pipe(
                 map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
                 map((competencies) => currentCompetencySuggestions.concat(competencies ?? [])),
             );
