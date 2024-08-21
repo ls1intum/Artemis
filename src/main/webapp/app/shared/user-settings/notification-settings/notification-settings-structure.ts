@@ -207,6 +207,11 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     descriptionKey: 'programmingTestCasesChangedDescription',
                     settingId: SettingId.NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED,
                 },
+                {
+                    key: 'programmingExamTestCasesChanged',
+                    descriptionKey: 'programmingExamTestCasesChangedDescription',
+                    settingId: SettingId.NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_EXAM_TEST_CASES_CHANGED,
+                },
             ],
         },
         {
