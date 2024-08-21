@@ -10,7 +10,7 @@
             name="assignmentRepositoryCheckoutPath"
             id="field_assignmentRepositoryCheckoutPath"
             [pattern]="pattern"
-            [ngModel]="assignmentCheckoutPath"
+            [(ngModel)]="assignmentCheckoutPath"
             (ngModelChange)="onAssigmentRepositoryCheckoutPathChange($event)"
         />
     }
@@ -24,7 +24,7 @@
             class="form-control"
             name="testRepositoryCheckoutPath"
             id="field_testRepositoryCheckoutPath"
-            [ngModel]="testCheckoutPath"
+            [(ngModel)]="testCheckoutPath"
             (ngModelChange)="onTestRepositoryCheckoutPathChange($event)"
             [pattern]="pattern"
         />
@@ -39,7 +39,7 @@
             class="form-control"
             name="solutionRepositoryCheckoutPath"
             id="field_solutionRepositoryCheckoutPath"
-            [ngModel]="solutionCheckoutPath"
+            [(ngModel)]="solutionCheckoutPath"
             (ngModelChange)="onSolutionRepositoryCheckoutPathChange($event)"
             [pattern]="pattern"
         />

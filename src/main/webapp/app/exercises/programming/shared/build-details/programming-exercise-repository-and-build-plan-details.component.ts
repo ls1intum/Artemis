@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingExerciseBuildConfig, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Subscription } from 'rxjs';
 import type { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
@@ -44,6 +44,15 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         if (this.isLocal && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
             this.updateCheckoutDirectories();
         }
+        const isBuildConfigChanged = this.isBuildConfigChanged(
+            changes.programmingExercise?.currentValue?.buildConfig,
+            changes.programmingExercise?.previousValue?.buildConfig,
+            changes.programmingExercise?.firstChange,
+        );
+        if (this.isLocal && isBuildConfigChanged) {
+            this.checkoutDirectories = this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories);
+        }
+        console.log(this.programmingExercise.buildConfig);
     }
 
     ngOnDestroy() {
@@ -61,13 +70,13 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         this.checkoutDirectorySubscription = this.programmingExerciseService
             .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage, this.checkoutSolutionRepository ?? CHECKOUT_SOLUTION_REPOSITORY_DEFAULT)
             .subscribe((checkoutDirectories) => {
-                this.checkoutDirectories = this.setCheckoutDirectories(checkoutDirectories);
+                this.checkoutDirectories = checkoutDirectories;
                 this.submissionBuildPlanEvent.emit(checkoutDirectories.submissionBuildPlanCheckoutDirectories!);
             });
     }
 
-    private setCheckoutDirectories(checkoutDirectories: CheckoutDirectoriesDto) {
-        if (this.programmingExercise.buildConfig) {
+    private setCheckoutDirectoriesFromBuildConfig(checkoutDirectories?: CheckoutDirectoriesDto): CheckoutDirectoriesDto | undefined {
+        if (this.programmingExercise.buildConfig && checkoutDirectories) {
             checkoutDirectories = {
                 solutionBuildPlanCheckoutDirectories: {
                     solutionCheckoutDirectory:
@@ -107,5 +116,15 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
             return undefined;
         }
         return path.startsWith('/') ? path : `/${path}`;
+    }
+
+    private isBuildConfigChanged(newValue?: ProgrammingExerciseBuildConfig, oldValue?: ProgrammingExerciseBuildConfig, firstChange = false): boolean {
+        return (
+            firstChange ||
+            (oldValue !== undefined &&
+                (newValue?.assignmentCheckoutPath !== oldValue?.assignmentCheckoutPath ||
+                    newValue?.testCheckoutPath !== oldValue?.testCheckoutPath ||
+                    newValue?.solutionCheckoutPath !== oldValue?.solutionCheckoutPath))
+        );
     }
 }

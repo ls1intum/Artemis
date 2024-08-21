@@ -15,7 +15,7 @@ import { NgModel } from '@angular/forms';
 })
 export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnChanges, OnDestroy {
     @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingLanguage: ProgrammingLanguage;
+    @Input() programmingLanguage?: ProgrammingLanguage;
     @Input() pattern: RegExp;
     @Input() submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
     @Output() assignmentCheckoutPathEvent = new EventEmitter<string>();
@@ -43,12 +43,14 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
     @ViewChild('field_solutionRepositoryCheckoutPath') field_solutionRepositoryCheckoutPath?: NgModel;
 
     ngOnChanges(changes: SimpleChanges) {
-        const isSubmissionBuildPlanCheckoutRepositoriesChanged = this.isSubmissionBuildPlanCheckoutRepositoriesChanged();
-        const isProgrammingLanguageUpdated = !changes.programmingLanguage?.firstChange && changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
-        if (isProgrammingLanguageUpdated) {
+        const isSubmissionBuildPlanCheckoutRepositoriesChanged = this.isSubmissionBuildPlanCheckoutRepositoriesChanged(
+            changes.submissionBuildPlanCheckoutRepositories?.currentValue,
+            changes.submissionBuildPlanCheckoutRepositories?.previousValue,
+            changes.submissionBuildPlanCheckoutRepositories?.firstChange,
+        );
+        const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
+        if (isSubmissionBuildPlanCheckoutRepositoriesChanged || isProgrammingLanguageUpdated) {
             this.resetProgrammingExerciseBuildCheckoutPaths();
-            this.reset();
-        } else if (isSubmissionBuildPlanCheckoutRepositoriesChanged) {
             this.reset();
         }
     }
@@ -86,9 +88,6 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
     }
 
     resetProgrammingExerciseBuildCheckoutPaths() {
-        this.assignmentCheckoutPath = '';
-        this.testCheckoutPath = '/';
-        this.solutionCheckoutPath = '';
         this.programmingExercise.buildConfig!.assignmentCheckoutPath = '';
         this.programmingExercise.buildConfig!.testCheckoutPath = '';
         this.programmingExercise.buildConfig!.solutionCheckoutPath = '';
@@ -112,11 +111,12 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
         this.calculateFormValid();
     }
 
-    isSubmissionBuildPlanCheckoutRepositoriesChanged(): boolean {
+    isSubmissionBuildPlanCheckoutRepositoriesChanged(newValue?: BuildPlanCheckoutDirectoriesDTO, oldValue?: BuildPlanCheckoutDirectoriesDTO, firstChange = false): boolean {
         return (
-            this.assignmentCheckoutPath !== this.submissionBuildPlanCheckoutRepositories?.exerciseCheckoutDirectory ||
-            this.testCheckoutPath !== this.submissionBuildPlanCheckoutRepositories?.testCheckoutDirectory ||
-            this.solutionCheckoutPath !== this.submissionBuildPlanCheckoutRepositories?.solutionCheckoutDirectory
+            firstChange ||
+            (oldValue !== undefined && newValue?.exerciseCheckoutDirectory !== oldValue?.exerciseCheckoutDirectory) ||
+            newValue?.testCheckoutDirectory !== oldValue?.testCheckoutDirectory ||
+            newValue?.solutionCheckoutDirectory !== oldValue?.solutionCheckoutDirectory
         );
     }
 
