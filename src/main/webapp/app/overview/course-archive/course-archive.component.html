@@ -1,0 +1,28 @@
+<h3 class="fw-medium">Course Archive</h3>
+@if (courses) {
+    <div class="table-responsive">
+        @for (semester of semesters; track semester) {
+            <div class="course-table-container mb-3">
+                <div class="control-label my-3" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
+                    <fa-icon size="2x" class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />
+                    @if (semester !== '') {
+                        <span style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }} </span>
+                    }
+                </div>
+                @if (!semesterCollapsed[semester]) {
+                    <div>
+                        @for (course of coursesBySemester[semester]; track course) {
+                            <div class="card text-center mb-2">
+                                <div class="course-card card-body" [ngStyle]="{ '--background-color-for-hover': course.color ?? ARTEMIS_DEFAULT_COLOR }">
+                                    <a class="stretched-link" [routerLink]="['/courses', course.id]"></a>
+                                    <h3 class="text-white">{{ course.title }}</h3>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                <div class="collapsed"></div>
+            </div>
+        }
+    </div>
+}

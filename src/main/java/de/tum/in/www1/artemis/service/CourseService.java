@@ -646,6 +646,12 @@ public class CourseService {
         return courseRepository.findAllCoursesByManagementGroupNames(userGroups);
     }
 
+    public List<Course> getAllCoursesForCourseArchive() {
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        List<Course> courses = courseRepository.findAll();
+        return courses.stream().filter(course -> authCheckService.isAtLeastStudentInCourse(course, user) && course.getSemester() != null).collect(Collectors.toList());
+    }
+
     /**
      * Get the active students for these particular exercise ids
      *

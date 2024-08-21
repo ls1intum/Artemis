@@ -340,6 +340,20 @@ export class CourseManagementService {
         );
     }
 
+    getCoursesForArchive(req?: any): Observable<HttpResponse<Course[]>> {
+        const options = createRequestOption(req); // This will handle query params if needed
+        return this.http.get<Course[]>(`${this.resourceUrl}/archive`, { params: options, observe: 'response' }).pipe(
+            tap((res: HttpResponse<Course[]>) => {
+                if (res.body) {
+                    res.body.forEach((course) => {
+                        // If you need to perform any action on each course
+                        console.log(course);
+                    });
+                }
+            }),
+        );
+    }
+
     /**
      * returns the exercise details of the courses for the courses' management dashboard
      * @param onlyActive - if true, only active courses will be considered in the result
@@ -691,5 +705,41 @@ export class CourseManagementService {
     getNumberOfAllowedComplaintsInCourse(courseId: number, teamMode = false): Observable<number> {
         // Note: 0 is the default value in case the server returns something that does not make sense
         return this.http.get<number>(`${this.resourceUrl}/${courseId}/allowed-complaints?teamMode=${teamMode}`) ?? 0;
+    }
+
+    /**
+     * Sorts and returns the semesters by year descending
+     * WS is sorted above SS
+     *
+     * @param coursesWithSemesters the courses to sort the semesters of
+     * @return An array of sorted semester names
+     */
+    getUniqueSemesterNamesSorted(coursesWithSemesters: Course[]): string[] {
+        return (
+            coursesWithSemesters
+                // Test courses get their own section later
+                .filter((course) => !course.testCourse)
+                .map((course) => course.semester ?? '')
+                // Filter down to unique values
+                .filter((course, index, courses) => courses.indexOf(course) === index)
+                .sort((semesterA, semesterB) => {
+                    // Sort last if the semester is unset
+                    if (semesterA === '') {
+                        return 1;
+                    }
+                    if (semesterB === '') {
+                        return -1;
+                    }
+
+                    // Parse years in base 10 by extracting the two digits after the WS or SS prefix
+                    const yearsCompared = parseInt(semesterB.slice(2, 4), 10) - parseInt(semesterA.slice(2, 4), 10);
+                    if (yearsCompared !== 0) {
+                        return yearsCompared;
+                    }
+
+                    // If years are the same, sort WS over SS
+                    return semesterA.slice(0, 2) === 'WS' ? -1 : 1;
+                })
+        );
     }
 }

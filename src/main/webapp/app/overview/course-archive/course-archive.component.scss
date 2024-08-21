@@ -1,0 +1,40 @@
+.course-table {
+    padding: 5px 0;
+    background-color: var(--overview-light-background-color);
+    border-radius: 3px;
+    transition: box-shadow 0.1s linear;
+}
+
+.course-table-container {
+    .control-label {
+        cursor: pointer;
+        margin-bottom: 16px;
+    }
+
+    .container {
+        display: inline-flex;
+    }
+
+    .collapsed {
+        margin-top: 16px;
+        margin-left: -12px;
+        margin-right: -12px;
+        border-bottom: 1px solid var(--overview-light-border-color);
+    }
+}
+
+.table-responsive {
+    overflow-x: hidden;
+}
+
+.course-card {
+    background-color: var(--background-color-for-hover) !important;
+    transition: 0.15s;
+    filter: alpha(opacity = 100);
+    opacity: 1;
+
+    &:hover {
+        transform: scale(1.012);
+        background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
+    }
+}

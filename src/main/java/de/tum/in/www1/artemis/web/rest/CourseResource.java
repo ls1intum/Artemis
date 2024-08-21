@@ -554,6 +554,12 @@ public class CourseResource {
         return ResponseEntity.ok(courseService.getAllCoursesForManagementOverview(onlyActive));
     }
 
+    @GetMapping("courses/archive")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<Course>> getCoursesForArchive() {
+        return ResponseEntity.ok(courseService.getAllCoursesForCourseArchive());
+    }
+
     /**
      * GET /courses/{courseId}/for-enrollment : get a course by id if the course allows enrollment and is currently active.
      *
