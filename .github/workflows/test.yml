@@ -47,7 +47,7 @@ env:
 jobs:
 
   server-tests:
-    runs-on: ase-large-ubuntu
+    runs-on: parma
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v4
@@ -98,7 +98,7 @@ jobs:
 
   server-tests-mysql:
       needs: [ server-tests ]
-      runs-on: ase-large-ubuntu
+      runs-on: parma
       timeout-minutes: 120
       # Limit the number of concurrent mysql tests to one in total
       concurrency:
@@ -157,7 +157,7 @@ jobs:
 
   server-tests-postgres:
       needs: [ server-tests ]
-      runs-on: ase-large-ubuntu
+      runs-on: parma
       timeout-minutes: 150
       # Limit the number of concurrent postgres tests to one in total
       concurrency:
@@ -242,7 +242,7 @@ jobs:
         reporter: java-junit
 
   client-tests:
-    runs-on: ase-large-ubuntu
+    runs-on: parma
     timeout-minutes: 30
     steps:
         - uses: actions/checkout@v4
