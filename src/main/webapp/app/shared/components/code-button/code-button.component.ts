@@ -44,7 +44,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     sshEnabled = false;
     sshTemplateUrl?: string;
     setupSshKeysUrl?: string;
-    vcsToekenSettingsUrl?: string;
+    vcsTokenSettingsUrl?: string;
     repositoryPassword?: string;
     versionControlUrl: string;
     accessTokensEnabled?: boolean;
@@ -97,7 +97,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
             if (this.localVCEnabled) {
                 this.setupSshKeysUrl = `${window.location.origin}/user-settings/ssh`;
-                this.vcsToekenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
+                this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
             } else {
                 this.setupSshKeysUrl = profileInfo.sshKeysURL;
             }
