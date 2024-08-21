@@ -126,7 +126,12 @@ public class ProgrammingMessagingService {
         websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(updatedProgrammingExercise.getId()), testCasesChanged);
         // Send a notification to the client to inform the instructor about the test case update.
         if (testCasesChanged) {
-            groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
+            if (updatedProgrammingExercise.isExamExercise()) {
+                groupNotificationService.notifyEditorInstructorGroupsAboutChangedTestCasesForExamProgrammingExercise(updatedProgrammingExercise);
+            }
+            else {
+                groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
+            }
         }
         else {
             groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
