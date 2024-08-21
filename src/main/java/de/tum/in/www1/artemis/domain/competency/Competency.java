@@ -13,6 +13,11 @@ public class Competency extends CourseCompetency {
         super(title, description, softDueDate, masteryThreshold, taxonomy, optional);
     }
 
+    public Competency(CourseCompetency courseCompetency) {
+        super(courseCompetency.getTitle(), courseCompetency.getDescription(), courseCompetency.getSoftDueDate(), courseCompetency.getMasteryThreshold(),
+                courseCompetency.getTaxonomy(), courseCompetency.isOptional());
+    }
+
     public Competency() {
     }
 

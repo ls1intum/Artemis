@@ -11,7 +11,6 @@ import { CodeAnalysisPagingService } from 'app/exercises/programming/manage/serv
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
 import { ButtonComponent } from 'app/shared/components/button.component';

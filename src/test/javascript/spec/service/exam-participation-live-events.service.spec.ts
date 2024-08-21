@@ -29,8 +29,9 @@ describe('ExamParticipationLiveEventsService', () => {
             retrieve: jest.fn(),
         } as unknown as LocalStorageService;
 
-        mockWebsocketService = new MockWebsocketService() as any as JhiWebsocketService;
-        mockWebsocketService['state'] = websocketConnectionStateSubject.asObservable();
+        const tmpMockWebsocketService = new MockWebsocketService();
+        tmpMockWebsocketService.state = websocketConnectionStateSubject.asObservable();
+        mockWebsocketService = tmpMockWebsocketService as unknown as JhiWebsocketService;
 
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -176,7 +177,7 @@ describe('ExamParticipationLiveEventsService', () => {
         expect(service['events']).toEqual([mockEvent]);
 
         // Expect emission
-        const userEvents = firstValueFrom(service.observeNewEventsAsUser());
+        const userEvents = firstValueFrom(service.observeNewEventsAsUser([], dayjs()));
         const systemEvents = firstValueFrom(service.observeNewEventsAsSystem());
         const allEvents = firstValueFrom(service.observeAllEvents());
 

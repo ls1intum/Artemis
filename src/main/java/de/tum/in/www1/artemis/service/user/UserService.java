@@ -41,6 +41,7 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
@@ -51,6 +52,7 @@ import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
@@ -109,10 +111,13 @@ public class UserService {
 
     private final ScienceEventRepository scienceEventRepository;
 
+    private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository) {
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -126,6 +131,7 @@ public class UserService {
         this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
         this.scienceEventRepository = scienceEventRepository;
+        this.participationVCSAccessTokenService = participationVCSAccessTokenService;
     }
 
     /**
@@ -309,6 +315,7 @@ public class UserService {
             }
             catch (VersionControlException e) {
                 log.error("An error occurred while registering GitLab user {}:", savedNonActivatedUser.getLogin(), e);
+                participationVCSAccessTokenService.deleteAllByUserId(savedNonActivatedUser.getId());
                 userRepository.delete(savedNonActivatedUser);
                 clearUserCaches(savedNonActivatedUser);
                 userRepository.flush();
@@ -365,7 +372,7 @@ public class UserService {
      * @return a new user or null if the LDAP user was not found
      */
     public Optional<User> createUserFromLdapWithLogin(String login) {
-        return findUserInLdap(login, () -> ldapUserService.orElseThrow().findByUsername(login));
+        return findUserInLdap(login, () -> ldapUserService.orElseThrow().findByLogin(login));
     }
 
     /**
@@ -375,7 +382,7 @@ public class UserService {
      * @return a new user or null if the LDAP user was not found
      */
     public Optional<User> createUserFromLdapWithEmail(String email) {
-        return findUserInLdap(email, () -> ldapUserService.orElseThrow().findByEmail(email));
+        return findUserInLdap(email, () -> ldapUserService.orElseThrow().findByAnyEmail(email));
     }
 
     /**
@@ -394,7 +401,7 @@ public class UserService {
      * Note: this method should only be used if the user does not yet exist in the database
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
-     * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByUsername(email)"
+     * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByLogin(email)"
      * @return a new user or null if the LDAP user was not found
      */
     private Optional<User> findUserInLdap(String userIdentifier, Supplier<Optional<LdapUserDto>> userSupplierFunction) {
@@ -405,11 +412,11 @@ public class UserService {
             Optional<LdapUserDto> ldapUserOptional = userSupplierFunction.get();
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
-                log.info("Ldap User {} has login: {}", ldapUser.getFirstName() + " " + ldapUser.getFirstName(), ldapUser.getUsername());
+                log.info("Ldap User {} has login: {}", ldapUser.getFirstName() + " " + ldapUser.getFirstName(), ldapUser.getLogin());
 
                 // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number, or it is wrong
-                if (StringUtils.hasText(ldapUser.getUsername())) {
-                    var existingUser = userRepository.findOneByLogin(ldapUser.getUsername());
+                if (StringUtils.hasText(ldapUser.getLogin())) {
+                    var existingUser = userRepository.findOneByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
                         existingUser.get().setRegistrationNumber(ldapUser.getRegistrationNumber());
                         saveUser(existingUser.get());
@@ -418,7 +425,7 @@ public class UserService {
                 }
 
                 // Use empty password, so that we don't store the credentials of external users in the Artemis DB
-                User user = userCreationService.createUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
+                User user = userCreationService.createUser(ldapUser.getLogin(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
                 return Optional.of(user);
             }
@@ -456,6 +463,7 @@ public class UserService {
      */
     public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
+            participationVCSAccessTokenService.deleteAllByUserId(user.getId());
             user.setDeleted(true);
             anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
@@ -813,5 +821,29 @@ public class UserService {
         }
 
         return notFoundUsers;
+    }
+
+    /**
+     * Get the vcs access token associated with a user and a participation
+     *
+     * @param user            the user associated with the vcs access token
+     * @param participationId the participation's participationId associated with the vcs access token
+     *
+     * @return the users participation vcs access token, or throws an exception if it does not exist
+     */
+    public ParticipationVCSAccessToken getParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
+        return participationVCSAccessTokenService.findByUserIdAndParticipationIdOrElseThrow(user.getId(), participationId);
+    }
+
+    /**
+     * Create a vcs access token associated with a user and a participation, and return it
+     *
+     * @param user            the user associated with the vcs access token
+     * @param participationId the participation's participationId associated with the vcs access token
+     *
+     * @return the users newly created participation vcs access token, or throws an exception if it already existed
+     */
+    public ParticipationVCSAccessToken createParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
+        return participationVCSAccessTokenService.createVcsAccessTokenForUserAndParticipationIdOrElseThrow(user, participationId);
     }
 }

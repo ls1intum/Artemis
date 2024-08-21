@@ -104,7 +104,7 @@ describe('LearningPathStudentPageComponent', () => {
 
     it('should set isLoading correctly during learning path load', async () => {
         jest.spyOn(learningPathApiService, 'getLearningPathId').mockResolvedValue(learningPathId);
-        const loadingSpy = jest.spyOn(component.isLoading, 'set');
+        const loadingSpy = jest.spyOn(component.isLearningPathIdLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -134,7 +134,7 @@ describe('LearningPathStudentPageComponent', () => {
     it('should set isLoading correctly during learning path generation', async () => {
         jest.spyOn(learningPathApiService, 'getLearningPathId').mockRejectedValue(new EntityNotFoundError());
         jest.spyOn(learningPathApiService, 'generateLearningPath').mockResolvedValue(learningPathId);
-        const loadingSpy = jest.spyOn(component.isLoading, 'set');
+        const loadingSpy = jest.spyOn(component.isLearningPathIdLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();

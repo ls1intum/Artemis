@@ -13,6 +13,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { titleRegex } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { takeUntil } from 'rxjs/operators';
+import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
 
 /**
  * Each row is a object with the structure
@@ -21,14 +22,19 @@ import { takeUntil } from 'rxjs/operators';
  * 		"Column Header 2": "bar"
  * 	}
  */
-type ParsedCSVRow = object;
+type ParsedCSVRow = { [header: string]: string };
 
 // ToDo: Idea for future: Let the specify the column names / values in the dialog
-const POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS = ['gruppe', 'titel', 'group', 'title'];
+const POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS = ['gruppe', 'titel', 'group', 'title', 'tutorialgroups'];
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
-const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
+const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername', 'anmeldename'];
 const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
 const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
+const POSSIBLE_CAMPUS_HEADERS = ['campus'];
+const POSSIBLE_CAPACITY_HEADERS = ['capacity'];
+const POSSIBLE_LANGUAGE_HEADERS = ['language', 'sprache'];
+const POSSIBLE_ADDITIONAL_INFO_HEADERS = ['additionalinformation'];
+const POSSIBLE_IS_ONLINE_HEADERS = ['isonline', 'ist Online'];
 
 type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 
@@ -51,6 +57,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     importedRegistrations: TutorialGroupRegistrationImportDTO[] = [];
 
     isCSVParsing = false;
+    protected readonly CsvExample = CsvExample;
     validationErrors: string[] = [];
     isImporting = false;
     isImportDone = false;
@@ -91,6 +98,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         private activeModal: NgbActiveModal,
         private alertService: AlertService,
         private tutorialGroupService: TutorialGroupsService,
+        private csvDownloadService: CsvDownloadService,
     ) {}
 
     ngOnDestroy(): void {
@@ -206,7 +214,8 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             return [];
         }
         // get the used headers from the first csv row object returned by the parser
-        const parsedHeaders = Object.keys(csvRows.first() || []);
+        let parsedHeaders = Object.keys(csvRows.first() || []);
+        parsedHeaders = parsedHeaders.map(this.removeWhitespacesAndUnderscoresFromHeaderName);
 
         // we find out which of the possible values is used in the csv file for the respective properties
         const usedTitleHeader = parsedHeaders.find((value) => POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS.includes(value)) || '';
@@ -214,6 +223,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         const usedLoginHeader = parsedHeaders.find((value) => POSSIBLE_LOGIN_HEADERS.includes(value)) || '';
         const usedFirstNameHeader = parsedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
         const usedLastNameHeader = parsedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
+        const usedCampusHeader = parsedHeaders.find((value) => POSSIBLE_CAMPUS_HEADERS.includes(value)) || '';
+        const usedCapacityHeader = parsedHeaders.find((value) => POSSIBLE_CAPACITY_HEADERS.includes(value)) || '';
+        const usedLanguageHeader = parsedHeaders.find((value) => POSSIBLE_LANGUAGE_HEADERS.includes(value)) || '';
+        const usedAdditionalInfoHeader = parsedHeaders.find((value) => POSSIBLE_ADDITIONAL_INFO_HEADERS.includes(value)) || '';
+        const usedIsOnlineHeader = parsedHeaders.find((value) => POSSIBLE_IS_ONLINE_HEADERS.includes(value)) || '';
 
         // if status header is used filter out those rows that do not have a fixed place
         const statusColumn = cleanString(this.statusHeaderControl?.value);
@@ -232,6 +246,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                     firstName: csvRow[usedFirstNameHeader]?.trim() || '',
                     lastName: csvRow[usedLastNameHeader]?.trim() || '',
                 } as StudentDTO;
+                registration.campus = csvRow[usedCampusHeader]?.trim() || '';
+                registration.capacity = csvRow[usedCapacityHeader] ? Number(csvRow[usedCapacityHeader]) : undefined;
+                registration.language = csvRow[usedLanguageHeader]?.trim() || '';
+                registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
+                registration.isOnline = csvRow[usedIsOnlineHeader]?.trim().toLowerCase() || '';
 
                 return registration;
             })
@@ -244,6 +263,10 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         } else {
             return registrations;
         }
+    }
+
+    removeWhitespacesAndUnderscoresFromHeaderName(header: string) {
+        return header.trim().toLowerCase().replace(/_/g, '-').replace(/\s+/g, '');
     }
 
     resetFileUpload() {
@@ -259,28 +282,25 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         });
     }
 
-    generateCSV(example: number) {
+    generateCSV(example: CsvExample) {
         let csvContent: string;
         switch (example) {
-            case 1:
+            case CsvExample.Example1:
                 csvContent = 'data:text/csv;charset=utf-8,Title\n';
                 break;
-            case 2:
+            case CsvExample.Example2:
                 csvContent = 'data:text/csv;charset=utf-8,Title,Matriculation Number,First Name,Last Name\n';
                 break;
-            case 3:
+            case CsvExample.Example3:
                 csvContent = 'data:text/csv;charset=utf-8,Title,Login,First Name,Last Name\n';
+                break;
+            case CsvExample.Example4:
+                csvContent = 'data:text/csv;charset=utf-8,Title,Registration Number,First Name,Last Name,Campus,Language,Additional Information,Capacity,Is Online\n';
                 break;
             default:
                 csvContent = '';
         }
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `example${example}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        this.csvDownloadService.downloadCSV(csvContent, `example${example}.csv`);
     }
 
     /**
@@ -454,6 +474,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     async parseCSVFile(csvFile: File): Promise<ParseResult<unknown>> {
         return new Promise((resolve, reject) => {
             parse(csvFile, {
+                delimiter: ',',
                 header: true,
                 transformHeader: (header: string) => cleanString(header),
                 skipEmptyLines: true,
@@ -483,4 +504,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 this.registrationsDisplayedInTable = this.notImportedRegistrations;
         }
     }
+}
+
+enum CsvExample {
+    Example1 = 1,
+    Example2 = 2,
+    Example3 = 3,
+    Example4 = 5,
 }
