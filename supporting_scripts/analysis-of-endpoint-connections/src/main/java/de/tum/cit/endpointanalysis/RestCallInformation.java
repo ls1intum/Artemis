@@ -12,6 +12,8 @@ public record RestCallInformation(String method, String url, String filePath, in
 
         // Remove query parameters
         result = result.split("\\?")[0];
+
+        // Some URIs in the artemis client start with a redundant `/`. To be able to compare them to the endpoint URIs, we remove it.
         if (result.startsWith("/")) {
             result = result.substring(1);
         }

@@ -44,7 +44,7 @@ export class Postprocessor {
     private readonly ast: TSESTree.Program;
 
     /**
-     * @param filePath - The name of the file being processed.
+     * @param filePath - The path of the file being processed.
      * @param ast - The abstract syntax tree (AST) of the processed file.
      */
     constructor(filePath: string, ast: TSESTree.Program) {
@@ -61,7 +61,7 @@ export class Postprocessor {
             }
         });
         if (this.restCalls.length > 0) {
-            Postprocessor.filesWithRestCalls.push( {filePath: this.filePath, restCalls: this.restCalls} );
+            Postprocessor.filesWithRestCalls.push({ filePath: this.filePath, restCalls: this.restCalls });
         }
     }
 
@@ -111,7 +111,7 @@ export class Postprocessor {
                                     const filePath = this.filePath;
                                     if (urlEvaluationResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
                                         for (const url of urlEvaluationResult.result) {
-                                            this.restCalls.push({ method, url, line, filePath: filePath });
+                                            this.restCalls.push({ method, url, line, filePath });
                                         }
                                     }
                                 }
