@@ -56,8 +56,8 @@
 </div>
 
 <ng-template #importSettingTemplate let-value="value" let-setting="setting" let-label="label">
-    <div (click)="toggleImportSetting(setting)" class="col p-0 d-flex align-items-center clickable">
-        <input [id]="setting + '-checkbox'" type="checkbox" [checked]="value" />
+    <div class="col p-0 d-flex align-items-center clickable">
+        <input [id]="setting + '-checkbox'" type="checkbox" [checked]="value" (click)="toggleImportSetting(setting)" />
         <label [for]="setting + '-checkbox'" class="ms-2">{{ label }}</label>
         <fa-icon [icon]="faQuestionCircle" size="sm" class="ms-1 text-secondary" />
     </div>
