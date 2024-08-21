@@ -44,6 +44,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         if (this.isLocal && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
             this.updateCheckoutDirectories();
         }
+
         const isBuildConfigChanged = this.isBuildConfigChanged(
             changes.programmingExercise?.currentValue?.buildConfig,
             changes.programmingExercise?.previousValue?.buildConfig,
@@ -126,5 +127,11 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
                     newValue?.testCheckoutPath !== oldValue?.testCheckoutPath ||
                     newValue?.solutionCheckoutPath !== oldValue?.solutionCheckoutPath))
         );
+    }
+
+    private resetProgrammingExerciseBuildCheckoutPaths() {
+        this.programmingExercise.buildConfig!.assignmentCheckoutPath = undefined;
+        this.programmingExercise.buildConfig!.testCheckoutPath = undefined;
+        this.programmingExercise.buildConfig!.solutionCheckoutPath = undefined;
     }
 }

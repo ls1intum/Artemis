@@ -50,7 +50,6 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
         );
         const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
         if (isSubmissionBuildPlanCheckoutRepositoriesChanged || isProgrammingLanguageUpdated) {
-            this.resetProgrammingExerciseBuildCheckoutPaths();
             this.reset();
         }
     }
@@ -85,12 +84,6 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent implements OnCh
         } else {
             this.solutionCheckoutPath = '';
         }
-    }
-
-    resetProgrammingExerciseBuildCheckoutPaths() {
-        this.programmingExercise.buildConfig!.assignmentCheckoutPath = '';
-        this.programmingExercise.buildConfig!.testCheckoutPath = '';
-        this.programmingExercise.buildConfig!.solutionCheckoutPath = '';
     }
 
     onAssigmentRepositoryCheckoutPathChange(event: string) {
