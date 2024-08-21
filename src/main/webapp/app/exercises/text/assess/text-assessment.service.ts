@@ -152,7 +152,7 @@ export class TextAssessmentService {
                     if (participation.exercise) {
                         this.accountService.setAccessRightsForExercise(participation.exercise);
                     }
-                    const submission = participation.submissions![0];
+                    const submission = participation.submissions!.last()!;
                     let result;
                     if (resultId) {
                         result = getSubmissionResultById(submission, resultId);
