@@ -32,9 +32,9 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
     let platformAction: PlatformAction = new PlatformAction();
 
     const submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO = {
-        exerciseCheckoutDirectory: 'assignment',
-        solutionCheckoutDirectory: 'solution',
-        testCheckoutDirectory: 'tests',
+        exerciseCheckoutDirectory: '/assignment',
+        solutionCheckoutDirectory: '/solution',
+        testCheckoutDirectory: '/tests',
     };
 
     beforeEach(async () => {
@@ -130,5 +130,32 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
 
         stringArray = ['a', 'b', undefined];
         expect(component.areValuesUnique(stringArray)).toBeTrue();
+    });
+
+    it('should should reset values correctly when buildconfig is null', () => {
+        component.programmingExercise.buildConfig = undefined;
+        component.submissionBuildPlanCheckoutRepositories = submissionBuildPlanCheckoutRepositories;
+        component.ngOnChanges({
+            programmingLanguage: {
+                currentValue: ProgrammingLanguage.JAVA,
+                previousValue: undefined,
+                firstChange: true,
+                isFirstChange: () => true,
+            },
+            submissionBuildPlanCheckoutRepositories: {
+                currentValue: submissionBuildPlanCheckoutRepositories,
+                previousValue: {
+                    exerciseCheckoutDirectory: '/assignment',
+                    testCheckoutDirectory: '/tests',
+                    solutionCheckoutDirectory: '/solutionRepo',
+                },
+                firstChange: false,
+                isFirstChange: () => false,
+            },
+        });
+
+        expect(component.assignmentCheckoutPath).toBe('assignment');
+        expect(component.testCheckoutPath).toBe('tests');
+        expect(component.solutionCheckoutPath).toBe('solution');
     });
 });
