@@ -15,6 +15,7 @@ import {
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     NEW_REPLY_MESSAGE_TITLE,
     Notification,
+    PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE,
     QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
@@ -38,6 +39,7 @@ const conversationMessageNotificationTitles = [
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     NEW_REPLY_FOR_EXAM_POST_TITLE,
     NEW_REPLY_FOR_COURSE_POST_TITLE,
+    PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE,
 ];
 
 @Component({
