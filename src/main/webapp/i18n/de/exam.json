@@ -143,6 +143,7 @@
             "imported": "Klausur importiert",
             "deleted": "Klausur \"{{ param }}\" gelöscht",
             "startCheckBoxText": "Ich bestätige, dass ich die obigen Regeln gelesen habe und dass ich mich während der Prüfung an diese Regeln halten werde.",
+            "endCheckBoxText": "Ich bestätige, dass ich die Prüfung abgeschlossen habe und bereit bin, meine Antworten einzureichen.",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
             "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebenen Hilfsmittel bearbeitet habe.",
             "notConfirmed": "Bitte setze einen Haken in das Kästchen, um fortzufahren.",
@@ -322,13 +323,11 @@
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
             "handInEarly": "Vorzeitig Abgeben",
-            "continueAfterHandInEarly": "Weitermachen",
+            "continueAfterHandInEarly": "Zurück",
             "attendanceCheck": "Anwesenheitskontrolle",
-            "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
-            "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
-            "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
-            "attendanceNotVerifiedWarningFirstSentence": "Deine Anwesenheit wurde noch nicht kontrolliert.",
-            "attendanceNotVerifiedWarningSecondSentence": "Bitte warte, bis deine Anwesenheit kontrolliert wurde, oder kontaktiere die Hörsaalaufsicht wenn du denkst dass ein Fehler aufgetreten ist.",
+            "continueAfterHandInEarlyDescription": "Um mit der Klausur fortzufahren, klicke auf den Button 'Zurück'.",
+            "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen.",
+            "attendanceNotVerifiedWarning": "Deine Anwesenheit wurde noch nicht kontrolliert. Bitte warte, bis deine Anwesenheit kontrolliert wurde, oder kontaktiere die Hörsaalaufsicht wenn du denkst dass ein Fehler aufgetreten ist.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
             "numberOfSavedExercises": "Anzahl der gespeicherten Aufgaben",
             "submissionSuccessful": {
@@ -784,7 +783,8 @@
         "studentExam": {
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
-            "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
+            "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!",
+            "deleted": "Testlauf gelöscht"
         },
         "examTimeline": {
             "title": "Klausurverlauf von {{ username }}",

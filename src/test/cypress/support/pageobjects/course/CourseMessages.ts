@@ -100,11 +100,11 @@ export class CourseMessagesPage {
     }
 
     getName() {
-        return cy.get('h3.conversation-name');
+        return cy.get('h4.d-inline-block');
     }
 
     getTopic() {
-        return cy.get('.conversation-topic');
+        return cy.get('#conversation-topic');
     }
 
     editName(newName: string) {

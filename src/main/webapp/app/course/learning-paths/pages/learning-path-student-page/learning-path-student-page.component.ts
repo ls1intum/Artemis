@@ -37,10 +37,11 @@ export class LearningPathStudentPageComponent implements OnInit {
     private readonly alertService: AlertService = inject(AlertService);
     private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
 
-    readonly isLoading = signal(false);
+    readonly isLearningPathIdLoading = signal(false);
     readonly learningPathId = signal<number | undefined>(undefined);
     readonly courseId: Signal<number> = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => params.courseId)));
     readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
+    readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
 
     ngOnInit(): void {
         this.loadLearningPathId(this.courseId());
@@ -48,7 +49,7 @@ export class LearningPathStudentPageComponent implements OnInit {
 
     private async loadLearningPathId(courseId: number): Promise<void> {
         try {
-            this.isLoading.set(true);
+            this.isLearningPathIdLoading.set(true);
             const learningPathId = await this.learningApiService.getLearningPathId(courseId);
             this.learningPathId.set(learningPathId);
         } catch (error) {
@@ -57,19 +58,19 @@ export class LearningPathStudentPageComponent implements OnInit {
                 this.alertService.error(error);
             }
         } finally {
-            this.isLoading.set(false);
+            this.isLearningPathIdLoading.set(false);
         }
     }
 
     async generateLearningPath(courseId: number): Promise<void> {
         try {
-            this.isLoading.set(true);
+            this.isLearningPathIdLoading.set(true);
             const learningPathId = await this.learningApiService.generateLearningPath(courseId);
             this.learningPathId.set(learningPathId);
         } catch (error) {
             this.alertService.error(error);
         } finally {
-            this.isLoading.set(false);
+            this.isLearningPathIdLoading.set(false);
         }
     }
 }

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.aop.logging;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import tech.jhipster.config.JHipsterConstants;
 
@@ -60,6 +62,17 @@ public class LoggingAspect {
         if (AbstractVersionControlService.isReadFullyShortReadOfBlockException(e)) {
             // ignore
             return;
+        }
+
+        if (e instanceof LocalVCAuthException) {
+            if (Objects.equals(e.getMessage(), "No authorization header provided")) {
+                // ignore, this is a common case and does not need to be logged
+                return;
+            }
+            else if (e.getMessage() != null && e.getMessage().startsWith("The username has to be")) {
+                // ignore, this is a common case and does not need to be logged
+                return;
+            }
         }
 
         if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT))) {

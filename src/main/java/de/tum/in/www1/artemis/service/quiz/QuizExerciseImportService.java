@@ -2,19 +2,23 @@ package de.tum.in.www1.artemis.service.quiz;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
@@ -71,10 +75,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
      *
      * @param templateExercise The template exercise which should get imported
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param files            The potential files to be added. Null if no change to files during import. ExamImportService sends null by default
      * @return The newly created exercise
      */
     @NotNull
-    public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise) {
+    public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise, @Nullable List<MultipartFile> files) throws IOException {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
         copyQuizQuestions(importedExercise, newExercise);
@@ -85,6 +90,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
         channelService.createExerciseChannel(newQuizExercise, Optional.ofNullable(importedExercise.getChannelName()));
 
         competencyProgressService.updateProgressByLearningObjectAsync(newQuizExercise);
+        if (files != null) {
+            newQuizExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newQuizExercise, files));
+        }
 
         return newQuizExercise;
     }
@@ -150,11 +158,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
             URI backgroundFileIntendedPath = URI.create(FileService.BACKGROUND_FILE_SUBPATH);
             // Check whether pictureFilePublicPath is actually a picture file path
             // (which is the case when its path starts with the path backgroundFileIntendedPath)
-            FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
-            // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
-            Path oldPath = FilePathService.actualPathForPublicPath(backgroundFilePublicPath);
-            Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
-            dndQuestion.setBackgroundFilePath(FilePathService.publicPathForActualPathOrThrow(newPath, null).toString());
+            // If it is null it is a new image which doesn't exist yet and will be added later.
+            if (FilePathService.actualPathForPublicPath(backgroundFilePublicPath) != null) {
+                FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
+                // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
+                Path oldPath = FilePathService.actualPathForPublicPath(backgroundFilePublicPath);
+                Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
+                dndQuestion.setBackgroundFilePath(FilePathService.publicPathForActualPathOrThrow(newPath, null).toString());
+            }
         }
         else {
             log.warn("BackgroundFilePath of DragAndDropQuestion {} is null", dndQuestion.getId());
@@ -181,11 +192,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
             URI pictureFileIntendedPath = URI.create(FileService.PICTURE_FILE_SUBPATH);
             // Check whether pictureFilePublicPath is actually a picture file path
             // (which is the case when its path starts with the path pictureFileIntendedPath)
-            FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
-            // Need to copy the file and get a new path, same as above
-            Path oldDragItemPath = FilePathService.actualPathForPublicPath(pictureFilePublicPath);
-            Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
-            dragItem.setPictureFilePath(FilePathService.publicPathForActualPathOrThrow(newDragItemPath, null).toString());
+            // If it is null it is a new image which doesn't exist yet and will be added later.
+            if (FilePathService.actualPathForPublicPath(pictureFilePublicPath) != null) {
+                FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
+                // Need to copy the file and get a new path, same as above
+                Path oldDragItemPath = FilePathService.actualPathForPublicPath(pictureFilePublicPath);
+                Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
+                dragItem.setPictureFilePath(FilePathService.publicPathForActualPathOrThrow(newDragItemPath, null).toString());
+            }
         }
     }
 

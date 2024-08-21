@@ -19,7 +19,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -55,7 +54,7 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
     Optional<Participation> findByIdWithLatestSubmission(@Param("participationId") long participationId);
 
     default Participation findByIdWithLatestSubmissionElseThrow(Long participationId) {
-        return findByIdWithLatestSubmission(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        return getValueElseThrow(findByIdWithLatestSubmission(participationId), participationId);
     }
 
     @Query("""
@@ -69,7 +68,7 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
 
     @NotNull
     default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
-        return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        return getValueElseThrow(findWithEagerLegalSubmissionsById(participationId), participationId);
     }
 
     @Query("""
@@ -84,7 +83,7 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
 
     @NotNull
     default Participation findWithEagerSubmissionsByIdWithTeamStudentsElseThrow(long participationId) {
-        return findWithEagerSubmissionsByIdWithTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        return getValueElseThrow(findWithEagerSubmissionsByIdWithTeamStudents(participationId), participationId);
     }
 
     @Query("""
@@ -110,6 +109,15 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
                 AND p.individualDueDate IS NOT NULL
             """)
     Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+                SELECT p
+                FROM Participation p
+                    LEFT JOIN FETCH p.exercise e
+                    LEFT JOIN FETCH e.buildConfig
+                WHERE p.id = :participationId
+            """)
+    Optional<Participation> findWithProgrammingExerciseWithBuildConfigById(@Param("participationId") long participationId);
 
     Set<Participation> findByExerciseId(long exerciseId);
 

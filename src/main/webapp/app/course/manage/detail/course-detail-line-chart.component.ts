@@ -53,14 +53,14 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
 
     data: any[];
     // Data changes will be stored in the copy first, to trigger change detection when ready
-    dataCopy = [
+    dataCopy: { name: string; series: { name?: string; value?: number }[] }[] = [
         {
             name: '',
             series: [{}],
         },
     ];
     // Used for storing absolute values to display in tooltip
-    absoluteSeries = [{}];
+    absoluteSeries: { absoluteValue?: number; name?: string }[] = [{}];
     curve: any = shape.curveMonotoneX;
     average = { name: 'Mean', value: 0 };
     startDateDisplayed = false;

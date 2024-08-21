@@ -8,14 +8,6 @@ import { ArtemisAppModule } from './app.module';
 import { MonacoConfig } from 'app/core/config/monaco.config';
 
 ProdConfig();
-
-if (module['hot']) {
-    module['hot'].accept();
-    if ('production' !== process.env.NODE_ENV) {
-        console.clear();
-    }
-}
-
 MonacoConfig();
 
 platformBrowserDynamic()

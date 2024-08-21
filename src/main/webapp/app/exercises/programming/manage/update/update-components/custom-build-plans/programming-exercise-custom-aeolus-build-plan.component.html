@@ -6,13 +6,16 @@
     </div>
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
         <div class="row m-1">
-            @if (programmingExercise.windFile && programmingExercise.windFile.metadata && programmingExercise.windFile.metadata.docker) {
-                <jhi-programming-exercise-docker-image [dockerImage]="programmingExercise.windFile.metadata.docker.image" (dockerImageChange)="setDockerImage($event)" />
+            @if (programmingExercise.buildConfig?.windfile && programmingExercise.buildConfig?.windfile?.metadata && programmingExercise.buildConfig?.windfile?.metadata?.docker) {
+                <jhi-programming-exercise-docker-image
+                    [dockerImage]="programmingExercise.buildConfig!.windfile!.metadata.docker.image"
+                    (dockerImageChange)="setDockerImage($event)"
+                />
             }
             <div class="col-3 col-md-3">
                 <div class="d-flex flex-column h-100 justify-content-between">
                     <div class="list-group">
-                        @for (action of this.programmingExercise.windFile?.actions; track action) {
+                        @for (action of this.programmingExercise.buildConfig?.windfile?.actions; track action) {
                             <div class="list-group-item mb-1" [ngClass]="{ active: active?.name === action.name }" (click)="changeActiveAction(action.name)">
                                 <div class="d-flex w-100 justify-content-between">
                                     <p class="mb-0">{{ action.name }}</p>
