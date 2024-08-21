@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
@@ -44,18 +45,21 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void generateCompetencies_asEditor_shouldSucceed() throws Exception {
         String courseDescription = "Cool course description";
+        var currentCompetencies = new PyrisCompetencyRecommendationDTO[] { new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND), };
 
         // Expect that a request is sent to Pyris having the following characteristics
         irisRequestMockProvider.mockRunCompetencyExtractionResponseAnd(dto -> {
             var token = dto.execution().settings().authenticationToken();
             assertThat(token).isNotNull();
             assertThat(dto.courseDescription()).contains(courseDescription);
+            assertThat(dto.currentCompetencies()).containsExactly(currentCompetencies);
             assertThat(dto.taxonomyOptions()).isNotEmpty();
             assertThat(dto.maxN()).isPositive();
         });
 
         // Send a request to the Artemis server as if the user had clicked the button in the UI
-        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/course-competencies/generate-from-description", courseDescription, HttpStatus.ACCEPTED);
+        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/course-competencies/generate-from-description",
+                new PyrisCompetencyExtractionInputDTO(courseDescription, currentCompetencies), HttpStatus.ACCEPTED);
 
         PyrisCompetencyRecommendationDTO expected = new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND);
         List<PyrisCompetencyRecommendationDTO> recommendations = List.of(expected, expected, expected);
@@ -90,6 +94,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     void testAllPreAuthorize() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/course-competencies/generate-from-description", "a", HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/course-competencies/generate-from-description",
+                new PyrisCompetencyExtractionInputDTO("a", new PyrisCompetencyRecommendationDTO[] {}), HttpStatus.FORBIDDEN);
     }
 }
