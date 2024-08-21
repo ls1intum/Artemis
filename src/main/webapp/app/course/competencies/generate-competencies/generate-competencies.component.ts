@@ -90,7 +90,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
             this.courseId = Number(params['courseId']);
             this.courseSub = this.courseManagementService.find(this.courseId).subscribe({
                 next: (course) => {
-                    this.courseDescriptionForm.setCourseDescription(course.body!.description ?? '');
+                    this.courseDescriptionForm.setCourseDescription(course.body?.description ?? '');
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -154,8 +154,8 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
     private getCurrentCompetenciesAndSuggestions(): Observable<CompetencyRecommendation[]> {
         const currentCompetencySuggestions = this.competencies.getRawValue().map((c) => c.competency);
         return this.courseCompetencyService.getAllForCourse(this.courseId).pipe(
-            map((competencies) => competencies.body!.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
-            map((competencies) => competencies.concat(currentCompetencySuggestions)),
+            map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
+            map((competencies) => currentCompetencySuggestions.concat(competencies ?? [])),
         );
     }
 
