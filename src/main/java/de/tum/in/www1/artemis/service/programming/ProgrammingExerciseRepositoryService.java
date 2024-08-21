@@ -677,6 +677,7 @@ public class ProgrammingExerciseRepositoryService {
         String solutionWorkingDirectory = buildConfig.getSolutionCheckoutPath() != null && !buildConfig.getSolutionCheckoutPath().isBlank() ? buildConfig.getSolutionCheckoutPath()
                 : Constants.SOLUTION_REPO_NAME;
 
+        // TODO: add custom placeholder for python import
         if (programmingLanguage == ProgrammingLanguage.PYTHON) {
             replacements.put(Constants.ASSIGNMENT_REPO_PARENT_PLACEHOLDER, studentWorkingDirectory.replace("/", "."));
         }
@@ -686,6 +687,9 @@ public class ProgrammingExerciseRepositoryService {
         replacements.put(Constants.ASSIGNMENT_REPO_PLACEHOLDER, "/" + studentWorkingDirectory + "/src");
         replacements.put(Constants.TEST_REPO_PLACEHOLDER, testWorkingDirectory);
         replacements.put(Constants.SOLUTION_REPO_PLACEHOLDER, solutionWorkingDirectory);
+        if (programmingLanguage == ProgrammingLanguage.JAVA && programmingExercise.getProjectType().isGradle()) {
+            replacements.put("${studentWorkingDirectoryGradle}", studentWorkingDirectory + "/src");
+        }
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }
 
