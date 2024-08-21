@@ -48,6 +48,9 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
                image-architecture: arm64
                # Only necessary on Windows:
                docker-connection-uri: tcp://localhost:2375
+               # Only necessary on Linux if using Docker Desktop
+               # The value might deviate depending on installation path:
+               docker-connection-uri: unix:///home/<user>/.docker/desktop/docker.sock
        eureka:
            client:
                register-with-eureka: false
@@ -59,6 +62,12 @@ If you are running Artemis on Windows, you also need to add a property ``artemis
 with the value ``tcp://localhost:2375`` as shown above.
 If you are running Artemis inside of a docker container, use ``tcp://host.docker.internal:2375`` instead.
 Make sure that Artemis can access docker by activating the "Expose daemon on tcp://localhost:2375 without TLS" option under Settings > General in Docker Desktop.
+
+If you are running Artemis on Linux, and are using Docker Desktop, you also need to add a property ``artemis.continuous-integration.docker-connection-uri``.
+The value for that property should then be the path to your unix socket used for connecting to Docker daemon, as shown above.
+In IntelliJ this might require you to first go into "Settings => Build, Execution, Deployment => Docker", add a new instance by clicking the '+',
+select "Unix socket" and choose the Docker Desktop socket (by default should be named "desktop-linux").
+Now simply look at the path in grey and set that path as the value for the ``artemis.continuous-integration.docker-connection-uri`` property.
 
 When you start Artemis for the first time, it will automatically create an admin user called "artemis_admin". If this does not work, refer to the guide for the :ref:`Jenkins and GitLab Setup` to manually create an admin user in the database.
 You can then use that admin user to create further users in Artemis' internal user management system.
