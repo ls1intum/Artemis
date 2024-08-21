@@ -1,6 +1,9 @@
 # This File is the configuration file for the analysisOfEndpointConnections. It allows to exclude certain endpoints
 # (either by URI or by file name) from the analysis, and to define the output file paths.
 
+serverFilesExcludedFromParsing:
+  -
+
 excludedEndpointFiles:
   - 'de/tum/in/www1/artemis/web/rest/open/PublicBuildPlanResource.java'
 
@@ -15,8 +18,8 @@ endpointsParsedIncorrectly:
     line: 1182
 
 excludedRestCallFiles:
-  - filePath: 'src/main/webapp/app/shared/statistics-graph/statistics.service.ts'
-  - filePath: 'src/main/webapp/app/shared/server-date.service.ts'
+  - 'src/main/webapp/app/shared/statistics-graph/statistics.service.ts'
+  - 'src/main/webapp/app/shared/server-date.service.ts'
 
 excludedRestCalls:
 
