@@ -58,7 +58,7 @@ export class ImportAllCourseCompetenciesModalComponent {
 
     readonly importSettings = signal<CourseCompetencyImportSettings>(new CourseCompetencyImportSettings());
 
-    protected selectCourse(course: Course): void {
+    public selectCourse(course: Course): void {
         const courseCompetencyImportOptions = <CourseCompetencyImportOptionsDTO>{
             sourceCourseId: course.id,
             importExercises: this.importSettings().importExercises,
