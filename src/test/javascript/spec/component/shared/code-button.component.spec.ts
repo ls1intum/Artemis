@@ -145,7 +145,7 @@ describe('CodeButtonComponent', () => {
 
         component.ngOnInit();
         tick();
-        expect(component.setupSshKeysUrl).toBe(`${window.location.origin}/user-settings/sshSettings`);
+        expect(component.setupSshKeysUrl).toBe(`${window.location.origin}/user-settings/ssh`);
         expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
         expect(component.sshEnabled).toBe(!!info.sshCloneURLTemplate);
         expect(component.versionControlUrl).toBe(info.versionControlUrl);
@@ -207,12 +207,13 @@ describe('CodeButtonComponent', () => {
     it('should not use ssh when ssh is not enabled (even if useSsh is set)', () => {
         participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.participations = [participation];
-        component.useSsh = true;
+        component.useParticipationVcsAccessToken = true;
+        component.useSsh = false;
         component.isTeamParticipation = false;
         component.accessTokensEnabled = true;
-        component.useToken = true;
         component.ngOnInit();
         component.ngOnChanges();
+        component.useToken = true;
 
         const url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}:**********@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -258,12 +259,13 @@ describe('CodeButtonComponent', () => {
     it('should insert the correct token in the repository uri', () => {
         participation.repositoryUri = `https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.participations = [participation];
+        component.useParticipationVcsAccessToken = true;
         component.useSsh = false;
-        component.useToken = true;
         component.isTeamParticipation = false;
         component.accessTokensEnabled = true;
         component.ngOnInit();
         component.ngOnChanges();
+        component.useToken = true;
 
         // Placeholder is shown
         let url = component.getHttpOrSshRepositoryUri();
@@ -288,12 +290,13 @@ describe('CodeButtonComponent', () => {
     it('should add the user login and token to the URL', () => {
         participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.participations = [participation];
+        component.useParticipationVcsAccessToken = true;
         component.useSsh = false;
-        component.useToken = true;
         component.isTeamParticipation = false;
         component.accessTokensEnabled = true;
         component.ngOnInit();
         component.ngOnChanges();
+        component.useToken = true;
 
         const url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}:**********@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -332,6 +335,22 @@ describe('CodeButtonComponent', () => {
 
         expect(component.isTeamParticipation).toBeFalsy();
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
+    });
+
+    it('should set wasCopied to true and back to false after 3 seconds on successful copy', () => {
+        component.ngOnInit();
+        jest.useFakeTimers();
+        component.onCopyFinished(true);
+        expect(component.wasCopied).toBeTruthy();
+        jest.advanceTimersByTime(3000);
+        expect(component.wasCopied).toBeFalsy();
+        jest.useRealTimers();
+    });
+
+    it('should not change wasCopied if copy is unsuccessful', () => {
+        component.ngOnInit();
+        component.onCopyFinished(false);
+        expect(component.wasCopied).toBeFalsy();
     });
 
     it('should fetch and store ssh preference', fakeAsync(() => {
