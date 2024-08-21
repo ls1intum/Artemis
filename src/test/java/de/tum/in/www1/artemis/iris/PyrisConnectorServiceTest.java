@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorException;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
 
@@ -46,7 +49,10 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     @MethodSource("irisExceptions")
     void testExceptionIngestionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockIngestionWebhookRunError(httpStatus);
-        assertThatThrownBy(() -> pyrisConnectorService.executeLectureAddtionWebhook("fullIngestion", null)).isInstanceOf(exceptionClass);
+        PyrisLectureUnitWebhookDTO pyrisLectureUnitWebhookDTO = new PyrisLectureUnitWebhookDTO("example.pdf", 123L, "Lecture Unit Name", 456L, "Lecture Name", 789L, "Course Name",
+                "Course Description");
+        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(pyrisLectureUnitWebhookDTO, null, List.of());
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureAddtionWebhook("fullIngestion", executionDTO)).isInstanceOf(exceptionClass);
     }
 
     @ParameterizedTest
