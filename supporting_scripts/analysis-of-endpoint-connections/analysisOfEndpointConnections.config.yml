@@ -22,8 +22,10 @@ excludedRestCallFiles:
   - 'src/main/webapp/app/shared/server-date.service.ts'
 
 excludedRestCalls:
+  -
 
 restCallsParsedIncorrectly:
+  -
 
 endpointParsingResultPath: 'endpoints.json'
 restCallParsingResultPath: 'restCalls.json'
