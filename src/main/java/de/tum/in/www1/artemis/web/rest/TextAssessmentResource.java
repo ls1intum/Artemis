@@ -418,7 +418,6 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         textSubmission.removeNotNeededResults(correctionRound, resultId);
-        participation.setResults(Set.copyOf(textSubmission.getResults()));
 
         return ResponseEntity.ok().body(participation);
     }

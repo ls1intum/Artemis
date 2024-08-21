@@ -810,10 +810,9 @@ public class ProgrammingExerciseUtilService {
         programmingSubmissionRepo.save(submission);
 
         submission.setParticipation(participation);
-        result.setParticipation(participation);
+        result.setSubmission(submission);
 
         result = resultRepo.save(result);
-        result.setSubmission(submission);
         submission.addResult(result);
         // Manual results are always rated
         if (assessmentType == AssessmentType.SEMI_AUTOMATIC) {

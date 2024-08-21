@@ -350,24 +350,19 @@ public class ComplaintResource {
 
         Submission originalSubmission = complaint.getResult().getSubmission();
         if (originalSubmission != null) {
-            Submission submissionWithOnlyId;
-            if (originalSubmission instanceof TextSubmission) {
-                submissionWithOnlyId = new TextSubmission();
+            Submission submissionIdParticipationWrapper;
+            switch (originalSubmission) {
+                case TextSubmission ignored -> submissionIdParticipationWrapper = new TextSubmission();
+                case ModelingSubmission ignored -> submissionIdParticipationWrapper = new ModelingSubmission();
+                case FileUploadSubmission ignored -> submissionIdParticipationWrapper = new FileUploadSubmission();
+                case ProgrammingSubmission ignored -> submissionIdParticipationWrapper = new ProgrammingSubmission();
+                default -> {
+                    return;
+                }
             }
-            else if (originalSubmission instanceof ModelingSubmission) {
-                submissionWithOnlyId = new ModelingSubmission();
-            }
-            else if (originalSubmission instanceof FileUploadSubmission) {
-                submissionWithOnlyId = new FileUploadSubmission();
-            }
-            else if (originalSubmission instanceof ProgrammingSubmission) {
-                submissionWithOnlyId = new ProgrammingSubmission();
-            }
-            else {
-                return;
-            }
-            submissionWithOnlyId.setId(originalSubmission.getId());
-            complaint.getResult().setSubmission(submissionWithOnlyId);
+            submissionIdParticipationWrapper.setParticipation(originalParticipation);
+            submissionIdParticipationWrapper.setId(originalSubmission.getId());
+            complaint.getResult().setSubmission(submissionIdParticipationWrapper);
         }
     }
 

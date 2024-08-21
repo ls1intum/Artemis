@@ -225,7 +225,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
-    List<Complaint> getAllByResult_Participation_Exercise_Id(Long exerciseId);
+    List<Complaint> getAllByResult_Submission_Participation_Exercise_Id(Long exerciseId);
 
     /**
      * Given a course id, retrieve all complaints related to assessments related to that course
@@ -234,7 +234,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
-    List<Complaint> getAllByResult_Participation_Exercise_Course_Id(Long courseId);
+    List<Complaint> getAllByResult_Submission_Participation_Exercise_Course_Id(Long courseId);
 
     /**
      * Given a examId id, retrieve all complaints related to assessments related to that course
@@ -243,7 +243,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
-    List<Complaint> getAllByResult_Participation_Exercise_ExerciseGroup_Exam_Id(Long examId);
+    List<Complaint> getAllByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_Id(Long examId);
 
     /**
      * Given a user id and an exercise id retrieve all complaints related to assessments made by that assessor in that exercise.
@@ -253,7 +253,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
-    List<Complaint> getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(Long assessorId, Long exerciseId);
+    List<Complaint> getAllByResult_Assessor_IdAndResult_Submission_Participation_Exercise_Id(Long assessorId, Long exerciseId);
 
     /**
      * Given a user id and a course id retrieve all complaints related to assessments made by that assessor in that course.
@@ -263,7 +263,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission", "result.submission.participation", "result.assessor" })
-    List<Complaint> getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(Long assessorId, Long courseId);
+    List<Complaint> getAllByResult_Assessor_IdAndResult_Submission_Participation_Exercise_Course_Id(Long assessorId, Long courseId);
 
     // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**

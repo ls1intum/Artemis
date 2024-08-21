@@ -210,7 +210,7 @@ public class FileUploadExerciseUtilService {
         Result result = new Result();
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setScore(100D);
-        result.setParticipation(participation);
+        result.setSubmission(fileUploadSubmission);
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -223,10 +223,8 @@ public class FileUploadExerciseUtilService {
             feedback.setResult(result);
         }
         result = resultRepo.save(result);
-        result.setSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.addResult(result);
-        fileUploadSubmission.getParticipation().addResult(result);
         fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
         studentParticipationRepo.save(participation);
         return fileUploadSubmission;

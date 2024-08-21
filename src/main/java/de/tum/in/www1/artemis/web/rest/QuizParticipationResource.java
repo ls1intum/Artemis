@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -93,19 +95,24 @@ public class QuizParticipationResource {
         StudentParticipation participation = participationService.startExercise(exercise, user, true);
 
         Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true);
+
+        Submission submission;
         Result result;
         if (optionalResult.isPresent()) {
             var quizSubmission = (QuizSubmission) optionalResult.get().getSubmission();
             var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
             quizSubmission.setSubmittedAnswers(submittedAnswers);
             result = optionalResult.get();
+            submission = quizSubmission;
         }
         else {
             result = new Result();
-            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).orElseThrow());
+            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).orElseThrow();
         }
 
-        participation.setResults(Set.of(result));
+        submission.setResults(List.of(result));
+
+        participation.setSubmissions(Set.of(submission));
         participation.setExercise(exercise);
 
         var view = exercise.viewForStudentsInQuizExercise(quizBatch.orElse(null));

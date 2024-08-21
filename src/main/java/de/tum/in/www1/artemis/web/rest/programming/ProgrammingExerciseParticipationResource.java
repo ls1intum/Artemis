@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -111,12 +110,10 @@ public class ProgrammingExerciseParticipationResource {
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         hasAccessToParticipationElseThrow(participation);
-        if (shouldHideExamExerciseResults(participation)) {
-            participation.setResults(Set.of());
-        }
 
         // hide details that should not be shown to the students
-        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
+        resultService.filterSensitiveInformationIfNecessary(participation, participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream()).toList(),
+                Optional.empty());
         return ResponseEntity.ok(participation);
     }
 
@@ -134,12 +131,10 @@ public class ProgrammingExerciseParticipationResource {
 
         // TODO: improve access checks to avoid fetching the user multiple times
         hasAccessToParticipationElseThrow(participation);
-        if (shouldHideExamExerciseResults(participation)) {
-            participation.setResults(Set.of());
-        }
 
         // hide details that should not be shown to the students
-        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
+        resultService.filterSensitiveInformationIfNecessary(participation, participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream()).toList(),
+                Optional.empty());
         return ResponseEntity.ok(participation);
     }
 

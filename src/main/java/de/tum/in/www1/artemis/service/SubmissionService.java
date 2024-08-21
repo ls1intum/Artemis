@@ -386,9 +386,8 @@ public class SubmissionService {
      */
     public Result saveNewEmptyResult(Submission submission) {
         Result result = new Result();
-        result.setParticipation(submission.getParticipation());
-        result = resultRepository.save(result);
         result.setSubmission(submission);
+        result = resultRepository.save(result);
         submission.addResult(result);
         submissionRepository.save(submission);
         return result;

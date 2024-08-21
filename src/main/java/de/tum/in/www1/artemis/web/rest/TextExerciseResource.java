@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.plagiarism.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
-import static java.util.Collections.emptySet;
 
 import java.io.File;
 import java.net.URI;
@@ -408,12 +407,6 @@ public class TextExerciseResource {
             throw new AccessForbiddenException();
         }
 
-        // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().isEmpty()) {
-            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
-            participation.setResults(new HashSet<>(results));
-        }
-
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         participation.setSubmissions(new HashSet<>());
 
@@ -425,7 +418,6 @@ public class TextExerciseResource {
 
             if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
                 textSubmission.setResults(Collections.emptyList());
-                participation.setResults(emptySet());
             }
 
             Result result = textSubmission.getLatestResult();
@@ -445,7 +437,6 @@ public class TextExerciseResource {
 
                 // only send the one latest result to the client
                 textSubmission.setResults(List.of(result));
-                participation.setResults(Set.of(result));
             }
 
             participation.addSubmission(textSubmission);

@@ -197,16 +197,17 @@ public class QuizSubmissionResource {
 
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
+        // create Participation stub
+        StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
+
         // update submission
         quizSubmission.setSubmitted(true);
         quizSubmission.setType(SubmissionType.MANUAL);
         quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
-
-        // create Participation stub
-        StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
+        quizSubmission.setParticipation(participation);
 
         // create result
-        Result result = new Result().participation(participation).submission(quizSubmission);
+        Result result = new Result().submission(quizSubmission);
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());

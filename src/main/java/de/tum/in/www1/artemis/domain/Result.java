@@ -94,7 +94,6 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties({ "results", "participation" })
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -269,11 +268,11 @@ public class Result extends DomainObject implements Comparable<Result> {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
-        else if (submission.getType() == SubmissionType.ILLEGAL || participation.isPracticeMode()) {
+        else if (submission.getType() == SubmissionType.ILLEGAL || submission.getParticipation().isPracticeMode()) {
             this.rated = false;
         }
         else {
-            setRatedIfNotAfterDueDate(participation, submission.getSubmissionDate());
+            setRatedIfNotAfterDueDate(submission.getParticipation(), submission.getSubmissionDate());
         }
     }
 
@@ -562,7 +561,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param removeHiddenFeedback true if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean removeHiddenFeedback) {
-        filterSensitiveFeedbacks(removeHiddenFeedback, participation.getExercise());
+        filterSensitiveFeedbacks(removeHiddenFeedback, submission.getParticipation().getExercise());
     }
 
     /**

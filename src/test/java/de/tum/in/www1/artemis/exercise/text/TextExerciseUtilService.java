@@ -328,6 +328,7 @@ public class TextExerciseUtilService {
         Result result = new Result();
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setScore(100D);
+        result.setSubmission(submission);
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -335,10 +336,8 @@ public class TextExerciseUtilService {
             result.setCompletionDate(ZonedDateTime.now());
         }
         result = resultRepo.save(result);
-        result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
         submission = textSubmissionRepo.save(submission);
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
