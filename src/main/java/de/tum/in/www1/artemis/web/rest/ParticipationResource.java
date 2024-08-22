@@ -50,6 +50,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -72,6 +73,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -83,6 +85,7 @@ import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.GradingScaleService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.TextExerciseFeedbackService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -119,6 +122,8 @@ public class ParticipationResource {
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final ExerciseRepository exerciseRepository;
+
+    private final TextExerciseRepository textExerciseRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -162,6 +167,8 @@ public class ParticipationResource {
 
     private final ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService;
 
+    private final TextExerciseFeedbackService textExerciseFeedbackService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -171,7 +178,8 @@ public class ParticipationResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
-            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService) {
+            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, TextExerciseFeedbackService textExerciseFeedbackService,
+            TextExerciseRepository textExerciseRepository) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -197,6 +205,8 @@ public class ParticipationResource {
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
+        this.textExerciseFeedbackService = textExerciseFeedbackService;
+        this.textExerciseRepository = textExerciseRepository;
     }
 
     /**
@@ -352,8 +362,16 @@ public class ParticipationResource {
     @PutMapping("exercises/{exerciseId}/request-feedback")
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<StudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request for feedback request: {}", exerciseId);
+
+        // Different approach for text Exercises, default else is programming exercises
+        Optional<TextExercise> textExerciseOpt = textExerciseRepository.findById(exerciseId);
+        if (textExerciseOpt.isPresent()) {
+            return handleTextExerciseFeedbackRequest(textExerciseOpt.get(), principal);
+            // TODO If we add a new submission right here it makes things easier with assessments...
+        }
+
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         if (programmingExercise.isExamExercise()) {
@@ -383,6 +401,38 @@ public class ParticipationResource {
         }
 
         participation = this.programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exerciseId, studentParticipation, programmingExercise);
+
+        return ResponseEntity.ok().body(participation);
+    }
+
+    private ResponseEntity<StudentParticipation> handleTextExerciseFeedbackRequest(TextExercise textExercise, Principal principal) {
+
+        if (textExercise.isExamExercise()) {
+            throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
+        }
+
+        if (textExercise.getDueDate() != null && now().isAfter(textExercise.getDueDate())) {
+            throw new BadRequestAlertException("The due date is over", "participation", "preconditions not met");
+        }
+
+        var participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(textExercise.getId(), principal.getName()).get();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        checkAccessPermissionOwner(participation, user);
+
+        var studentParticipation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
+        var submissions = submissionRepository.findAllByParticipationId(studentParticipation.getId());
+
+        if (submissions.isEmpty()) {
+            throw new BadRequestAlertException("You need to submit at least once", "participation", "preconditions not met");
+        }
+
+        var currentDate = now();
+        var participationIndividualDueDate = participation.getIndividualDueDate();
+        if (participationIndividualDueDate != null && currentDate.isAfter(participationIndividualDueDate)) {
+            throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
+        }
+        participation = this.textExerciseFeedbackService.handleNonGradedFeedbackRequest(textExercise.getId(), studentParticipation, textExercise);
 
         return ResponseEntity.ok().body(participation);
     }
@@ -580,7 +630,8 @@ public class ParticipationResource {
             participations = findParticipationWithLatestResults(exercise);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
-                if (participation.getResults() != null && !participation.getResults().isEmpty()) {
+                if (participation.getResults() != null && !participation.getResults().isEmpty()
+                        && !(participation.getResults().stream().allMatch(result -> AssessmentType.AUTOMATIC_ATHENA.equals(result.getAssessmentType())))) {
                     participation.setSubmissions(null);
                 }
                 else if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {

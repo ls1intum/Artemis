@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -677,6 +678,21 @@ public class ParticipationService {
             return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerLegalSubmissions(exercise.getId(), team.getId())).orElse(List.of());
         }
         return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), studentId);
+    }
+
+    /**
+     * Get the text exercise participation with the Latest Submissions and its results
+     *
+     * @param participationId the id of the participation
+     * @return the participation with latest submission and result
+     * @throws EntityNotFoundException
+     */
+    public StudentParticipation findTextExerciseParticipationWithLatestSubmissionAndResult(Long participationId) throws EntityNotFoundException {
+        Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
+        if (participation.isEmpty() || !(participation.get() instanceof StudentParticipation)) {
+            throw new EntityNotFoundException("No text exercise participation found with id " + participationId);
+        }
+        return (StudentParticipation) participation.get();
     }
 
     /**
