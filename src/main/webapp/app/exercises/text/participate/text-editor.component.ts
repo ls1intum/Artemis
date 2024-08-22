@@ -142,7 +142,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.course = getCourseFromExercise(this.textExercise);
 
         if (participation.submissions?.length) {
-            this.submission = participation.submissions[participation.submissions.length-1] as TextSubmission;
+            this.submission = participation.submissions[participation.submissions.length - 1] as TextSubmission;
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
             if (this.submission?.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
                 this.result = this.submission.latestResult!;
@@ -188,7 +188,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     get isAutomaticResult(): boolean {
-
         const isAutomatic = this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
         return isAutomatic;
     }
