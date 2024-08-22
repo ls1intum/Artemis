@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 export type FormSectionStatus = {
     title: string;
@@ -11,27 +11,16 @@ export type FormSectionStatus = {
     templateUrl: './form-status-bar.component.html',
     styleUrl: './form-status-bar.component.scss',
 })
-export class FormStatusBarComponent implements AfterViewInit {
+export class FormStatusBarComponent {
     @Input()
     formStatusSections: FormSectionStatus[];
 
-    @HostListener('window:resize')
-    onResize() {
-        setTimeout(() => {
-            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement).offsetHeight;
-            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
-        });
-    }
-
-    ngAfterViewInit() {
-        this.onResize();
-    }
-
     scrollToHeadline(id: string) {
         const element = document.getElementById(id);
+
         if (element) {
-            element.style.scrollMarginTop = 'calc(2rem + 78px)';
-            element.scrollIntoView();
+            element.style.scrollMarginTop = 'calc(3rem + 85px)';
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 }
