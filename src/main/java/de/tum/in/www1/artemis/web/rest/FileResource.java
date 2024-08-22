@@ -77,7 +77,6 @@ import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.errors.NotFoundAlertException;
 
 /**
  * REST controller for managing Files.
@@ -88,8 +87,6 @@ import de.tum.in.www1.artemis.web.rest.errors.NotFoundAlertException;
 public class FileResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileResource.class);
-
-    private static final String ENTITY_NAME = "fileResource";
 
     private static final int DAYS_TO_CACHE = 1;
 
@@ -387,12 +384,9 @@ public class FileResource {
     @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
-        Attachment attachment = attachmentRepository.findById(attachmentId)
-                .orElseThrow(() -> new NotFoundAlertException("artemisApp.attachment.pdfPreview.attachmentIDError", ENTITY_NAME, "attachmentIDError"));
-
+        Attachment attachment = attachmentRepository.findByIdElseThrow(attachmentId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-
-        checkAttachmentAuthorizationOrThrow(course, attachment);
+        checkAttachmentExistsInCourseOrThrow(course, attachment);
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
@@ -465,13 +459,10 @@ public class FileResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
         log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
-        AttachmentUnit attachmentUnit = attachmentUnitRepository.findById(attachmentUnitId)
-                .orElseThrow(() -> new NotFoundAlertException("artemisApp.attachment.pdfPreview.attachmentUnitIDError", ENTITY_NAME, "attachmentUnitIDError"));
-
-        Attachment attachment = attachmentUnit.getAttachment();
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-
-        checkAttachmentAuthorizationOrThrow(course, attachment);
+        Attachment attachment = attachmentUnit.getAttachment();
+        checkAttachmentExistsInCourseOrThrow(course, attachment);
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
@@ -602,6 +593,18 @@ public class FileResource {
         }
         else {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        }
+    }
+
+    /**
+     * Checks if the attachment exists in the mentioned course
+     *
+     * @param course     the course to check if the attachment is part of it
+     * @param attachment the attachment for which the existence should be checked
+     */
+    private void checkAttachmentExistsInCourseOrThrow(Course course, Attachment attachment) {
+        if (!attachment.getLecture().getCourse().equals(course)) {
+            throw new EntityNotFoundException("This attachment does not exist in this course.");
         }
     }
 

@@ -20,20 +20,12 @@ jest.mock('pdfjs-dist/build/pdf.worker', () => {
     return {};
 });
 
-function createMouseEvent(target: Element): MouseEvent {
-    return new MouseEvent('click', {
-        view: window,
-        bubbles: true,
-        cancelable: true,
-        relatedTarget: target,
-    });
-}
-
 function createMockEvent(target: Element, eventType = 'click'): MouseEvent {
     const event = new MouseEvent(eventType, {
         view: window,
         bubbles: true,
         cancelable: true,
+        relatedTarget: target,
     });
     Object.defineProperty(event, 'target', { value: target, writable: false });
     return event;
@@ -81,7 +73,7 @@ describe('PdfPreviewComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            declarations: [PdfPreviewComponent],
+            imports: [PdfPreviewComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: routeMock },
                 { provide: AttachmentService, useValue: attachmentServiceMock },
@@ -316,7 +308,7 @@ describe('PdfPreviewComponent', () => {
     });
 
     it('should not close the enlarged view if the click is on the canvas itself', () => {
-        const mockEvent = createMouseEvent(mockEnlargedCanvas);
+        const mockEvent = createMockEvent(mockEnlargedCanvas);
         Object.defineProperty(mockEvent, 'target', { value: mockEnlargedCanvas, writable: false });
 
         component.isEnlargedView = true;

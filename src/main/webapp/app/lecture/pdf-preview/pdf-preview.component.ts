@@ -18,6 +18,7 @@ type NavigationDirection = 'next' | 'prev';
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
     styleUrls: ['./pdf-preview.component.scss'],
+    standalone: true,
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
     @ViewChild('pdfContainer', { static: true }) pdfContainer: ElementRef<HTMLDivElement>;

@@ -194,7 +194,7 @@ describe('LectureUnitManagementComponent', () => {
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeTrue();
         });
 
-        it('should return false for an attachment unit with a non-PDF link', () => {
+        it('should return false for a text unit', () => {
             const lectureUnit = {
                 type: LectureUnitType.ATTACHMENT,
                 attachment: { link: 'file.txt' },
