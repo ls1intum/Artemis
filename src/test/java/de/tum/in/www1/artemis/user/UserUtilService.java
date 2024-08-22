@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.user;
 import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -182,6 +183,31 @@ public class UserUtilService {
     public User setRegistrationNumberOfUserAndSave(User user, String registrationNumber) {
         user.setRegistrationNumber(registrationNumber);
         return userRepo.save(user);
+    }
+
+    /**
+     * Updates and saves the user's vcsAccessToken and its expiry date
+     *
+     * @param user           The User to update
+     * @param vcsAccessToken The userVcsAccessToken to set
+     * @param expiryDate     The tokens expiry date
+     * @return The updated User
+     */
+    public User setUserVcsAccessTokenAndExpiryDateAndSave(User user, String vcsAccessToken, ZonedDateTime expiryDate) {
+        user.setVcsAccessToken(vcsAccessToken);
+        user.setVcsAccessTokenExpiryDate(expiryDate);
+        return userRepo.save(user);
+    }
+
+    /**
+     * Deletes the userVcsAccessToken from a user
+     *
+     * @param userWithUserToken The user whose token gets deleted
+     */
+    public void deleteUserVcsAccessToken(User userWithUserToken) {
+        userWithUserToken.setVcsAccessTokenExpiryDate(null);
+        userWithUserToken.setVcsAccessToken(null);
+        userRepo.save(userWithUserToken);
     }
 
     /**

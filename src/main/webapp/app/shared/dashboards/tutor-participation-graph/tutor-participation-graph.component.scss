@@ -91,6 +91,9 @@ jhi-tutor-participation-graph {
         margin-bottom: 1rem;
 
         .stacked-item {
+            margin-top: 0.5em;
+            position: relative;
+
             &:first-child {
                 margin-top: 0;
 
@@ -103,9 +106,6 @@ jhi-tutor-participation-graph {
                     right: -2em;
                 }
             }
-
-            margin-top: 0.5em;
-            position: relative;
 
             &::before,
             &::after {
