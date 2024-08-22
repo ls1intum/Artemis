@@ -185,11 +185,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
-        } else if (this.exercise!.type! === ExerciseType.TEXT && this.result && Result.isAthenaAIResult(this.result)) {
-            this.textColorClass = 'text-primary';
-            this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
-            this.resultString = 'Preliminary AI Feedback';
-            this.resultTooltip = this.buildResultTooltip();
         } else if (
             this.result &&
             ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || Result.isAthenaAIResult(this.result))
