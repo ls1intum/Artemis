@@ -194,10 +194,17 @@ describe('LectureUnitManagementComponent', () => {
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeTrue();
         });
 
-        it('should return false for a text unit', () => {
+        it('should return false for file extension different than .pdf', () => {
             const lectureUnit = {
                 type: LectureUnitType.ATTACHMENT,
                 attachment: { link: 'file.txt' },
+            };
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();
+        });
+
+        it('should return false for a text unit', () => {
+            const lectureUnit = {
+                type: LectureUnitType.TEXT,
             };
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();
         });

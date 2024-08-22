@@ -392,11 +392,9 @@ describe('LectureAttachmentsComponent', () => {
             expect(comp.isViewButtonAvailable(attachment.link!)).toBeFalse();
         });
 
-        it('should return false for other common file extensions', () => {
-            const attachments = [{ link: 'document.docx' }, { link: 'spreadsheet.xlsx' }, { link: 'presentation.pptx' }, { link: 'image.jpeg' }];
-            attachments.forEach((att) => {
-                expect(comp.isViewButtonAvailable(att.link!)).toBeFalse();
-            });
+        it.each([['document.docx'], ['spreadsheet.xlsx'], ['presentation.pptx'], ['image.jpeg']])('should return false for common file extension %s', (link) => {
+            const attachment = { link };
+            expect(comp.isViewButtonAvailable(attachment.link)).toBeFalse();
         });
     });
 });

@@ -25,7 +25,6 @@ function createMockEvent(target: Element, eventType = 'click'): MouseEvent {
         view: window,
         bubbles: true,
         cancelable: true,
-        relatedTarget: target,
     });
     Object.defineProperty(event, 'target', { value: target, writable: false });
     return event;
