@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisModule } from 'app/shared/metis/metis.module';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { DebugElement, ViewContainerRef } from '@angular/core';
 import dayjs from 'dayjs/esm';
@@ -35,7 +36,7 @@ describe('AnswerPostHeaderComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip), MockModule(MetisModule)],
             providers: [
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
@@ -70,6 +71,8 @@ describe('AnswerPostHeaderComponent', () => {
                 component.posting = metisResolvingAnswerPostUser1;
                 component.posting.creationDate = yesterday;
                 component.ngOnInit();
+                component.userRoleBadge = 'artemisApp.metis.userRoles.student';
+                component.todayFlag = 'artemisApp.metis.today';
             });
     });
 
@@ -79,7 +82,7 @@ describe('AnswerPostHeaderComponent', () => {
 
     it('should set author information correctly', () => {
         fixture.detectChanges();
-        const headerAuthorAndDate = getElement(debugElement, '.header-author-date');
+        const headerAuthorAndDate = getElement(debugElement, '#header-author-date');
         expect(headerAuthorAndDate).not.toBeNull();
         expect(headerAuthorAndDate.innerHTML).toContain(metisUser1.name);
     });
@@ -88,7 +91,7 @@ describe('AnswerPostHeaderComponent', () => {
         component.posting.creationDate = yesterday;
         component.ngOnInit();
         fixture.detectChanges();
-        expect(getElement(debugElement, '.today-flag')).toBeNull();
+        expect(getElement(debugElement, '#today-flag')).toBeNull();
     });
 
     it('should display edit and delete options to post author', () => {

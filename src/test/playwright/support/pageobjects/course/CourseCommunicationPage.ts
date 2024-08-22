@@ -42,7 +42,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInModal(content: string) {
-        const contentField = this.page.locator('.modal-content .markdown-editor .ace_editor');
+        const contentField = this.page.locator('.modal-content .markdown-editor .monaco-editor');
         await contentField.click();
         await contentField.pressSequentially(content);
     }
@@ -52,7 +52,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInline(content: string) {
-        const contentField = this.page.locator('.markdown-editor-wrapper .markdown-editor .ace_editor');
+        const contentField = this.page.locator('.markdown-editor-wrapper .markdown-editor .monaco-editor');
         await contentField.click();
         await contentField.pressSequentially(content);
     }

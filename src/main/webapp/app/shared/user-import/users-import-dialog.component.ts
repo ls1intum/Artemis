@@ -25,7 +25,9 @@ const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstude
 const POSSIBLE_ROOM_HEADERS = ['actualroom', 'actualRoom', 'raum', 'room', 'Room'];
 const POSSIBLE_SEAT_HEADERS = ['actualseat', 'actualSeat', 'sitzplatz', 'sitz', 'seat', 'Seat'];
 
-type CsvUser = object;
+interface CsvUser {
+    [key: string]: string;
+}
 
 @Component({
     selector: 'jhi-users-import-dialog',
@@ -137,26 +139,26 @@ export class UsersImportDialogComponent implements OnDestroy {
 
         if (this.examUserMode) {
             return csvUsers.map(
-                (users) =>
+                (user: CsvUser) =>
                     ({
-                        registrationNumber: users[registrationNumberHeader]?.trim() || '',
-                        login: users[loginHeader]?.trim() || '',
-                        email: users[emailHeader]?.trim() || '',
-                        firstName: users[firstNameHeader]?.trim() || '',
-                        lastName: users[lastNameHeader]?.trim() || '',
-                        room: users[roomHeader]?.trim() || '',
-                        seat: users[seatHeader]?.trim() || '',
+                        registrationNumber: user[registrationNumberHeader]?.trim() || '',
+                        login: user[loginHeader]?.trim() || '',
+                        email: user[emailHeader]?.trim() || '',
+                        firstName: user[firstNameHeader]?.trim() || '',
+                        lastName: user[lastNameHeader]?.trim() || '',
+                        room: user[roomHeader]?.trim() || '',
+                        seat: user[seatHeader]?.trim() || '',
                     }) as ExamUserDTO,
             );
         } else {
             return csvUsers.map(
-                (users) =>
+                (user: CsvUser) =>
                     ({
-                        registrationNumber: users[registrationNumberHeader]?.trim() || '',
-                        login: users[loginHeader]?.trim() || '',
-                        email: users[emailHeader]?.trim() || '',
-                        firstName: users[firstNameHeader]?.trim() || '',
-                        lastName: users[lastNameHeader]?.trim() || '',
+                        registrationNumber: user[registrationNumberHeader]?.trim() || '',
+                        login: user[loginHeader]?.trim() || '',
+                        email: user[emailHeader]?.trim() || '',
+                        firstName: user[firstNameHeader]?.trim() || '',
+                        lastName: user[lastNameHeader]?.trim() || '',
                     }) as StudentDTO,
             );
         }
@@ -210,11 +212,11 @@ export class UsersImportDialogComponent implements OnDestroy {
      */
     private parseCSVFile(csvFile: File): Promise<CsvUser[]> {
         return new Promise((resolve, reject) => {
-            parse(csvFile, {
+            parse<CsvUser>(csvFile, {
                 header: true,
                 transformHeader: (header: string) => cleanString(header),
                 skipEmptyLines: true,
-                complete: (results) => resolve(results.data as CsvUser[]),
+                complete: (results) => resolve(results.data),
                 error: (error) => reject(error),
             });
         });

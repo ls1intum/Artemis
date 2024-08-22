@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
 import de.tum.in.www1.artemis.localvcci.TestBuildAgentConfiguration;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -63,7 +64,8 @@ import de.tum.in.www1.artemis.user.UserUtilService;
         "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
-        "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500" })
+        "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}",
+        "artemis.version-control.build-agent-use-ssh=true", "info.contact=test@localhost", "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:7921/" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
@@ -84,6 +86,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    protected ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     protected TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;

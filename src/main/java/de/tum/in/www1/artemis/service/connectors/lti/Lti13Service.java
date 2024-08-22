@@ -109,7 +109,6 @@ public class Lti13Service {
      * @param clientRegistrationId the clientRegistrationId of the source LMS
      */
     public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
-
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
         Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
         if (targetExercise.isEmpty()) {
@@ -204,7 +203,7 @@ public class Lti13Service {
                 return;
             }
 
-            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
             if (result.isEmpty()) {
                 log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());

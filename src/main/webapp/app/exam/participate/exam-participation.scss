@@ -50,16 +50,8 @@ $management-header-height: 230px;
 }
 
 .content-exam-height {
-    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--exam-height-offset));
+    height: calc(100vh - var(--exam-height-offset));
     overflow-y: auto;
-
-    &.content-exam-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--exam-height-offset));
-    }
-
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--exam-height-offset)) !important;
-    }
 
     &.content-exam-height-testRun {
         height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height);
@@ -83,5 +75,18 @@ $management-header-height: 230px;
         @media (max-width: 768px) {
             height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height - 20px) !important;
         }
+    }
+}
+
+.end-view {
+    max-width: 900px;
+    margin: 0 auto;
+
+    @media (max-width: 900px) {
+        max-width: 600px;
+    }
+
+    @media (max-width: 600px) {
+        max-width: 500px;
     }
 }

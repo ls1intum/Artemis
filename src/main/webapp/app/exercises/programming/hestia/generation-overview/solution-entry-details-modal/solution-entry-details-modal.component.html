@@ -9,8 +9,8 @@
                 >Note: Changes apply to the fragments in existing code hints that contain this fragment.</span
             >
         </div>
-        <div class="d-flex flex-row">
-            <jhi-solution-entry class="flex-grow-1" [solutionEntry]="solutionEntry" [enableEditing]="isEditable" />
+        <div class="d-flex flex-column align-items-end gap-3">
+            <jhi-solution-entry class="w-100" [solutionEntry]="solutionEntry" [enableEditing]="isEditable" />
             @if (isEditable) {
                 <div class="ps-2 flex-grow-0">
                     <button type="button" class="btn btn-primary" jhiTranslate="entity.action.save" (click)="saveSolutionEntry()"></button>
