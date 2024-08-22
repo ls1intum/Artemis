@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -101,6 +102,8 @@ public class ParticipationService {
 
     private final ProfileService profileService;
 
+    private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
+
     private final CompetencyProgressService competencyProgressService;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -109,7 +112,8 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService, CompetencyProgressService competencyProgressService) {
+            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, CompetencyProgressService competencyProgressService) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -129,6 +133,7 @@ public class ParticipationService {
         this.teamScoreRepository = teamScoreRepository;
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.profileService = profileService;
+        this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.competencyProgressService = competencyProgressService;
     }
 
@@ -229,11 +234,18 @@ public class ParticipationService {
         participation.setInitializationState(InitializationState.UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
+
         // StartedDate is used to link a Participation to a test exam exercise
         if (initializationDate != null) {
             participation.setInitializationDate(initializationDate);
         }
-        return studentParticipationRepository.saveAndFlush(participation);
+        participation = studentParticipationRepository.saveAndFlush(participation);
+
+        if (exercise instanceof ProgrammingExercise && participant instanceof User user && profileService.isLocalVcsActive()) {
+            participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
+        }
+
+        return participation;
     }
 
     /**
@@ -326,6 +338,9 @@ public class ParticipationService {
             participation.setParticipant(participant);
             participation.setPracticeMode(true);
             participation = studentParticipationRepository.saveAndFlush(participation);
+            if (participant instanceof User user) {
+                participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
+            }
         }
         else {
             // make sure participation and exercise are connected
@@ -680,6 +695,21 @@ public class ParticipationService {
     }
 
     /**
+     * Get the text exercise participation with the Latest Submissions and its results
+     *
+     * @param participationId the id of the participation
+     * @return the participation with latest submission and result
+     * @throws EntityNotFoundException
+     */
+    public StudentParticipation findTextExerciseParticipationWithLatestSubmissionAndResult(Long participationId) throws EntityNotFoundException {
+        Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
+        if (participation.isEmpty() || !(participation.get() instanceof StudentParticipation)) {
+            throw new EntityNotFoundException("No text exercise participation found with id " + participationId);
+        }
+        return (StudentParticipation) participation.get();
+    }
+
+    /**
      * Get all programming exercise participations belonging to exercise and student with eager results and submissions.
      *
      * @param exercise  the exercise
@@ -810,6 +840,8 @@ public class ParticipationService {
             }
             // delete local repository cache
             gitService.deleteLocalRepository(repositoryUri);
+
+            participationVCSAccessTokenService.deleteByParticipationId(participationId);
         }
 
         // If local CI is active, remove all queued jobs for participation

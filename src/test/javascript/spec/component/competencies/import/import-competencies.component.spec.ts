@@ -1,9 +1,6 @@
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
 import { FormsModule } from 'app/forms/forms.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -11,8 +8,6 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
-import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
-import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
 
 describe('ImportCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<ImportCompetenciesComponent>;
@@ -21,14 +16,8 @@ describe('ImportCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
-            declarations: [
-                ImportCompetenciesComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(ButtonComponent),
-                MockComponent(ImportCompetenciesTableComponent),
-                MockComponent(CompetencySearchComponent),
-            ],
+            imports: [ImportCompetenciesComponent, ArtemisTestModule, FormsModule],
+            declarations: [],
             providers: [
                 {
                     provide: ActivatedRoute,

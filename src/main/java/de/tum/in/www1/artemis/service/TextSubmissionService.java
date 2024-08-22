@@ -81,6 +81,10 @@ public class TextSubmissionService extends SubmissionService {
         if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             textSubmission.setSubmitted(true);
         }
+        // To ensure that a new submission is created when Athena Feedback is present
+        if (!textSubmission.getResults().isEmpty()) {
+            textSubmission.setId(null);
+        }
         textSubmission = save(textSubmission, participation, exercise, user);
         return textSubmission;
     }
@@ -104,7 +108,6 @@ public class TextSubmissionService extends SubmissionService {
             participation.setInitializationState(InitializationState.FINISHED);
             studentParticipationRepository.save(participation);
         }
-
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         textSubmission.setResults(new ArrayList<>());
         textSubmission = textSubmissionRepository.save(textSubmission);

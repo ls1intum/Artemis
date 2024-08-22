@@ -27,7 +27,7 @@ on:
   schedule:
     - cron: '0 16 * * 0'
 
-# Keep in sync with build.yml and test.yml
+# Keep in sync with build.yml and test.yml and analysis-of-endpoint-connections.yml
 env:
   CI: true
   node: 20
