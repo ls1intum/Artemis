@@ -19,8 +19,9 @@ export class FormStatusBarComponent {
         const element = document.getElementById(id);
 
         if (element) {
-            element.style.scrollMarginTop = 'calc(3rem + 85px)';
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement).offsetHeight;
+            element.style.scrollMarginTop = `calc(3rem + ${headerHeight}px)`;
+            element.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
         }
     }
 }
