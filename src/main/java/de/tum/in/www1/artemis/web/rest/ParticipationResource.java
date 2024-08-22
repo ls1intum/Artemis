@@ -369,7 +369,6 @@ public class ParticipationResource {
         Optional<TextExercise> textExerciseOpt = textExerciseRepository.findById(exerciseId);
         if (textExerciseOpt.isPresent()) {
             return handleTextExerciseFeedbackRequest(textExerciseOpt.get(), principal);
-            // TODO If we add a new submission right here it makes things easier with assessments...
         }
 
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
