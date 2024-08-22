@@ -121,6 +121,8 @@ public class NotificationSettingsService {
     // editor notification setting group
     public static final String NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED = "notification.editor-notification.programming-test-cases-changed";
 
+    public static final String NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_EXAM_TEST_CASES_CHANGED = "notification.editor-notification.programming-exam-test-cases-changed";
+
     // instructor notification setting group
     public static final String NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-notification.course-and-exam-archiving-started";
 
@@ -166,6 +168,7 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
             // editor notification setting group
             new NotificationSetting(true, false, true, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED),
+            new NotificationSetting(true, false, true, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_EXAM_TEST_CASES_CHANGED),
             // instructor notification setting group
             new NotificationSetting(true, false, true, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED),
             new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN),
