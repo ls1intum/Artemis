@@ -20,7 +20,11 @@ export class FormStatusBarComponent {
 
         if (element) {
             const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement).offsetHeight;
-            element.style.scrollMarginTop = `calc(3rem + ${headerHeight}px)`;
+
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const offset = isSafari ? 8 : 4;
+
+            element.style.scrollMarginTop = `calc(${offset}rem + ${headerHeight}px)`;
             element.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
         }
     }
