@@ -20,9 +20,11 @@ fn main() {
     // Run multiple times to simulate different sorting strategies
     for _ in 0..ITERATIONS {
         let mut dates = create_random_dates();
+        // Configure context
         policy.configure(&dates);
         println!("Unsorted Array of course dates = {dates:#?}");
 
+        // Sort dates
         context.borrow().sort(&mut dates);
 
         println!("Sorted Array of course dates = {dates:#?}");
