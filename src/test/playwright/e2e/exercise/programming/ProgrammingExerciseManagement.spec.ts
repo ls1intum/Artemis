@@ -33,6 +33,26 @@ test.describe('Programming Exercise Management', () => {
             await expect(courseManagementExercises.getExerciseTitle(exerciseTitle)).toBeVisible();
             await page.waitForURL(`**/programming-exercises/${exercise.id}**`);
         });
+
+        test('FormStatusBar scrolls to the correct section', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, programmingExerciseCreation }) => {
+            await login(admin, '/');
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExercisesOfCourse(course.id!);
+            await courseManagementExercises.createProgrammingExercise();
+            await page.waitForURL('**/programming-exercises/new**');
+
+            const firstScrollToSectionHeadline = 'Problem';
+            const secondScrollToSectionHeadline = 'General';
+            // scroll down
+            await programmingExerciseCreation.clickFormStatusBarSection(3);
+            await programmingExerciseCreation.getHeadlineLocator(firstScrollToSectionHeadline, true);
+            await programmingExerciseCreation.getHeadlineLocator(secondScrollToSectionHeadline, false);
+
+            // scroll up
+            // await programmingExerciseCreation.clickFormStatusBarSection(1);
+            // await programmingExerciseCreation.getHeadlineLocator(firstScrollToSectionHeadline, false);
+            // await programmingExerciseCreation.getHeadlineLocator(secondScrollToSectionHeadline, true);
+        });
     });
 
     test.describe('Programming exercise deletion', () => {

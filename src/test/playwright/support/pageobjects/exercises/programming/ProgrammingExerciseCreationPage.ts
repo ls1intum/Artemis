@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 import { PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constants';
 import { Dayjs } from 'dayjs';
 
@@ -72,5 +72,22 @@ export class ProgrammingExerciseCreationPage {
             await this.page.waitForTimeout(500);
         }
         await expect(this.page.locator('.owl-dt-popup')).not.toBeVisible();
+    }
+
+    async clickFormStatusBarSection(sectionId: number) {
+        const searchedSectionId = `#section-status-bar-item-${sectionId}`;
+        const sectionStatusBarLocator: Locator = this.page.locator(searchedSectionId);
+        expect(await sectionStatusBarLocator.isVisible()).toBeTruthy();
+        await sectionStatusBarLocator.click();
+    }
+
+    async getHeadlineLocator(searchedHeadlineDisplayText: string, expected: boolean = true) {
+        const headlineLocator = this.page.getByRole('heading', { name: searchedHeadlineDisplayText }).first();
+        await this.page.waitForTimeout(2000); // wait for the scroll animation to finish
+        if (expected) {
+            await expect(headlineLocator).toBeInViewport();
+        } else {
+            await expect(headlineLocator).not.toBeInViewport();
+        }
     }
 }
