@@ -81,9 +81,9 @@ export class ProgrammingExerciseCreationPage {
         await sectionStatusBarLocator.click();
     }
 
-    async getHeadlineLocator(searchedHeadlineDisplayText: string, expected: boolean = true) {
+    async checkIsHeadlineLocatorInViewport(searchedHeadlineDisplayText: string, expected: boolean) {
         const headlineLocator = this.page.getByRole('heading', { name: searchedHeadlineDisplayText }).first();
-        await this.page.waitForTimeout(2000); // wait for the scroll animation to finish
+
         if (expected) {
             await expect(headlineLocator).toBeInViewport();
         } else {

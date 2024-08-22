@@ -41,17 +41,18 @@ test.describe('Programming Exercise Management', () => {
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
 
-            const firstScrollToSectionHeadline = 'Problem';
-            const secondScrollToSectionHeadline = 'General';
+            const firstSectionHeadline = 'General';
+            const thirdSectionHeadline = 'Problem';
+
             // scroll down
             await programmingExerciseCreation.clickFormStatusBarSection(3);
-            await programmingExerciseCreation.getHeadlineLocator(firstScrollToSectionHeadline, true);
-            await programmingExerciseCreation.getHeadlineLocator(secondScrollToSectionHeadline, false);
+            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(firstSectionHeadline, false);
+            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(thirdSectionHeadline, true);
 
             // scroll up
-            // await programmingExerciseCreation.clickFormStatusBarSection(1);
-            // await programmingExerciseCreation.getHeadlineLocator(firstScrollToSectionHeadline, false);
-            // await programmingExerciseCreation.getHeadlineLocator(secondScrollToSectionHeadline, true);
+            await programmingExerciseCreation.clickFormStatusBarSection(0);
+            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(firstSectionHeadline, true);
+            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(thirdSectionHeadline, false);
         });
     });
 
