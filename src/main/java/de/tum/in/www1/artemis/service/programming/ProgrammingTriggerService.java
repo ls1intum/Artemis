@@ -149,9 +149,9 @@ public class ProgrammingTriggerService {
 
         boolean resultsExist = resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
 
-        // if (testCasesChanged == programmingExercise.getTestCasesChanged() || (!resultsExist && testCasesChanged)) {
-        // return;
-        // }
+        if (testCasesChanged == programmingExercise.getTestCasesChanged() || (!resultsExist && testCasesChanged)) {
+            return;
+        }
 
         programmingExercise.setTestCasesChanged(testCasesChanged);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
