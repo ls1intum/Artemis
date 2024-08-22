@@ -32,7 +32,12 @@ test.describe('Programming exercise participation', () => {
     });
 
     const testCases = [
-        { description: 'Makes a failing Java submission', programmingLanguage: ProgrammingLanguage.JAVA, submission: javaBuildErrorSubmission, commitMessage: 'Initial commit' },
+        {
+            description: 'Makes a failing Java submission',
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            submission: javaBuildErrorSubmission,
+            commitMessage: 'Initial commit',
+        },
         {
             description: 'Makes a partially successful Java submission',
             programmingLanguage: ProgrammingLanguage.JAVA,
@@ -235,6 +240,7 @@ async function makeGitExerciseSubmission(
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
     }
     repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
+    repoUrl = repoUrl.replace(`:**********`, ``);
     const urlParts = repoUrl.split('/');
     const repoName = urlParts[urlParts.length - 1];
     const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
