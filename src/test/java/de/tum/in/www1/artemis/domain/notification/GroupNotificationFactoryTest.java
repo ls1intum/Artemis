@@ -15,6 +15,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCIS
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_RELEASED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_UPDATED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_ANNOUNCEMENT_POST;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_EXAM_TEST_CASES_CHANGED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.QUIZ_EXERCISE_STARTED;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createAnnouncementNotification;
@@ -42,6 +43,8 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.L
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_ANNOUNCEMENT_POST_TITLE;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.PROGRAMMING_EXAM_TEST_CASES_CHANGED_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TEXT;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.QUIZ_EXERCISE_STARTED_TEXT;
@@ -353,6 +356,16 @@ class GroupNotificationFactoryTest {
         expectedText = PROGRAMMING_TEST_CASES_CHANGED_TEXT;
         expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
         expectedPriority = MEDIUM;
+        createAndCheckNotification(Base.EXERCISE);
+    }
+
+    @Test
+    void createNotificationBasedOnExercise_withNotificationType_ProgrammingExamTestCasesChanged() {
+        notificationType = PROGRAMMING_EXAM_TEST_CASES_CHANGED;
+        expectedTitle = PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE;
+        expectedText = PROGRAMMING_EXAM_TEST_CASES_CHANGED_TEXT;
+        expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
+        expectedPriority = HIGH;
         createAndCheckNotification(Base.EXERCISE);
     }
 

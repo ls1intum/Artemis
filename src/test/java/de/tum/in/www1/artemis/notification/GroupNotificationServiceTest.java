@@ -18,8 +18,10 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.E
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.EXERCISE_RELEASED_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.EXERCISE_UPDATED_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.ILLEGAL_SUBMISSION_TITLE;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.QUIZ_EXERCISE_STARTED_TITLE;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_EXAM_TEST_CASES_CHANGED;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED;
@@ -527,6 +529,16 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         prepareNotificationSettingForTest(instructor, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED);
         groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(programmingExercise);
         verifyRepositoryCallWithCorrectNotificationAndReturnNotification(2, PROGRAMMING_TEST_CASES_CHANGED_TITLE);
+    }
+
+    /**
+     * Test for notifyInstructorGroupAboutChangedTestCasesForExamProgrammingExercise method
+     */
+    @Test
+    void testNotifyInstructorGroupAboutChangedTestCasesForExamProgrammingExercise() {
+        prepareNotificationSettingForTest(instructor, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_EXAM_TEST_CASES_CHANGED);
+        groupNotificationService.notifyEditorInstructorGroupsAboutChangedTestCasesForExamProgrammingExercise(programmingExercise);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(2, PROGRAMMING_EXAM_TEST_CASES_CHANGED_TITLE);
     }
 
     // Course Archiving
