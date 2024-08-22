@@ -1,7 +1,10 @@
 use chrono::NaiveDate;
 use rust_template_exercise::{bubble_sort::BubbleSort, merge_sort::MergeSort};
 
-use rust_template_test_macros::{require_impl_function_or_fail, require_impl_method_or_fail, require_struct_or_fail, require_trait, require_trait_supertrait_or_fail};
+use rust_template_test_macros::{
+    require_impl_function_or_fail, require_impl_method_or_fail, require_struct_or_fail,
+    require_trait, require_trait_supertrait_or_fail,
+};
 
 #[require_trait(sort_strategy::SortStrategy)]
 use rust_template_exercise::sort_strategy::SortStrategy;

@@ -1,8 +1,8 @@
 use std::error::Error;
 use std::ffi::OsStr;
-use std::{fs, io};
 use std::fs::read_to_string;
 use std::path::{Component, Path};
+use std::{fs, io};
 
 use syn::{parse_file, FnArg, ImplItem, Item, TraitItem, Type, TypeParamBound};
 
@@ -19,7 +19,12 @@ fn visit_dirs<F: Fn(&Path) -> Result<(), Box<dyn Error>>>(
     dir: &Path,
     cb: &F,
 ) -> Result<(), Box<dyn Error>> {
-    for entry in fs::read_dir(dir).map_err(|e| io::Error::new(e.kind(), format!("Failed to read directory {}: {}", dir.display(), e)))? {
+    for entry in fs::read_dir(dir).map_err(|e| {
+        io::Error::new(
+            e.kind(),
+            format!("Failed to read directory {}: {}", dir.display(), e),
+        )
+    })? {
         let entry = entry?;
         let path = entry.path();
         if path.is_dir() {

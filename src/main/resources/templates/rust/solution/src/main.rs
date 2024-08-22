@@ -1,5 +1,5 @@
-use std::{cell::RefCell, ops::RangeInclusive};
 use std::time::Duration;
+use std::{cell::RefCell, ops::RangeInclusive};
 
 use chrono::{NaiveDate, TimeDelta};
 use rand::{thread_rng, Rng};

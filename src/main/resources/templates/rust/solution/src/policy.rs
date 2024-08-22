@@ -1,8 +1,8 @@
-use std::cell::RefCell;
 use crate::{
     bubble_sort::BubbleSort, context::Context, merge_sort::MergeSort, sort_strategy::SortStrategy,
 };
 use chrono::NaiveDate;
+use std::cell::RefCell;
 
 const SIZE_THRESHOLD: usize = 10;
 

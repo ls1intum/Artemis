@@ -1,6 +1,6 @@
-use std::ops::Deref;
 use crate::sort_strategy::SortStrategy;
 use chrono::NaiveDate;
+use std::ops::Deref;
 
 pub struct Context {
     sort_algorithm: Option<Box<dyn SortStrategy<NaiveDate>>>,
