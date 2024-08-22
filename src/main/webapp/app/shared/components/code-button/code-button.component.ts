@@ -13,7 +13,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
-import { IdeSettingsService, PREDEFINED_IDE } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
+import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 
 @Component({
@@ -57,7 +57,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     activeParticipation?: ProgrammingExerciseStudentParticipation;
     isPracticeMode: boolean | undefined;
 
-    programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, PREDEFINED_IDE[0]]]);
+    vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
+    programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
 
     // Icons
     readonly faCode = faCode;
@@ -293,7 +294,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         return (
             this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
             this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
-            PREDEFINED_IDE[0]
+            this.vscodeFallback
         );
     }
 

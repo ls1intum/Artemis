@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest.settings.ide;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.Arrays;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -48,7 +50,23 @@ public class IdeSettingsResource {
     }
 
     /**
-     * GET ide-settings: get the predefined IDEs
+     * GET ide-settings/predefined: get the predefined IDEs
+     *
+     * @return the predefined ides as IdeDTO
+     */
+    @GetMapping("ide-settings/predefined")
+    @EnforceAtLeastStudent
+    public ResponseEntity<IdeDTO[]> getPredefinedIdes() {
+        log.debug("REST request to get predefined IDEs");
+
+        IdeDTO[] ideRecords = Arrays.stream(Ide.PREDEFINED_IDES).map(IdeDTO::new).toArray(IdeDTO[]::new);
+        log.debug("Successfully queried predefined IDEs");
+
+        return ResponseEntity.ok(ideRecords);
+    }
+
+    /**
+     * GET ide-settings: get the IDEs preferences of the user
      *
      * @return the ide preferences of the user as IdeMappingDTO
      */
@@ -140,7 +158,7 @@ public class IdeSettingsResource {
      */
     private void orphanRemoval(Ide ide) {
         // TODO should be handled by orphan removal annotation in IDE, but does not work
-        if (ide == null) {
+        if (ide == null || Arrays.stream(Ide.PREDEFINED_IDES).anyMatch(predefinedIde -> predefinedIde.getDeepLink().equals(ide.getDeepLink()))) {
             return;
         }
 

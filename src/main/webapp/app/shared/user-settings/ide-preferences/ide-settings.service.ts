@@ -10,8 +10,14 @@ export class IdeSettingsService {
     public ideSettingsUrl = 'api/ide-settings';
     error?: string;
 
-    constructor(private http: HttpClient) {
-        this.loadIdePreferences();
+    constructor(private http: HttpClient) {}
+
+    /**
+     * GET call to the server to receive the stored ide preferences of the current user
+     * @return the saved ide preference which were found in the database or error
+     */
+    public loadPredefinedIdes(): Observable<Ide[]> {
+        return this.http.get<Ide[]>(this.ideSettingsUrl + '/predefined');
     }
 
     /**
@@ -47,21 +53,3 @@ export class IdeSettingsService {
         return this.http.delete<void>(this.ideSettingsUrl, { params, observe: 'response' });
     }
 }
-
-export const PREDEFINED_IDE: Ide[] = [
-    { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' },
-    {
-        name: 'IntelliJ',
-        deepLink: 'jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo={cloneUrl}',
-    },
-    { name: 'Eclipse', deepLink: 'eclipse://clone?repo={cloneUrl}' },
-    {
-        name: 'PyCharm',
-        deepLink: 'jetbrains://pycharm/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo={cloneUrl}',
-    },
-    {
-        name: 'CLion',
-        deepLink: 'jetbrains://clion/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo={cloneUrl}',
-    },
-    { name: 'XCode', deepLink: 'xcode://clone?repo={cloneUrl}' },
-];

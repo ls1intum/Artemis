@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, WritableSignal, signal } fr
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { Ide, ideEquals } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { IdeSettingsService, PREDEFINED_IDE } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
+import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 
 @Component({
     selector: 'jhi-ide-preferences',
@@ -11,7 +11,9 @@ import { IdeSettingsService, PREDEFINED_IDE } from 'app/shared/user-settings/ide
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IdeSettingsComponent implements OnInit {
-    programmingLanguageToIde: WritableSignal<Map<ProgrammingLanguage, Ide>> = signal(new Map([[ProgrammingLanguage.EMPTY, PREDEFINED_IDE[0]]]));
+    protected PREDEFINED_IDE: Ide[] = [{ name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' }];
+
+    programmingLanguageToIde: WritableSignal<Map<ProgrammingLanguage, Ide>> = signal(new Map([[ProgrammingLanguage.EMPTY, this.PREDEFINED_IDE[0]]]));
 
     assignedProgrammingLanguages: ProgrammingLanguage[] = [];
     // languages that have no IDE assigned yet
@@ -20,9 +22,13 @@ export class IdeSettingsComponent implements OnInit {
     constructor(private ideSettingsService: IdeSettingsService) {}
 
     ngOnInit() {
+        this.ideSettingsService.loadPredefinedIdes().subscribe((predefinedIde) => {
+            this.PREDEFINED_IDE = predefinedIde;
+        });
+
         this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIdeMap) => {
             if (!programmingLanguageToIdeMap.has(ProgrammingLanguage.EMPTY)) {
-                programmingLanguageToIdeMap.set(ProgrammingLanguage.EMPTY, PREDEFINED_IDE[0]);
+                programmingLanguageToIdeMap.set(ProgrammingLanguage.EMPTY, this.PREDEFINED_IDE[0]);
             }
 
             this.programmingLanguageToIde.set(programmingLanguageToIdeMap);
@@ -38,7 +44,7 @@ export class IdeSettingsComponent implements OnInit {
     }
 
     addProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {
-        this.ideSettingsService.saveIdePreference(programmingLanguage, PREDEFINED_IDE[0]).subscribe((ide) => {
+        this.ideSettingsService.saveIdePreference(programmingLanguage, this.PREDEFINED_IDE[0]).subscribe((ide) => {
             this.programmingLanguageToIde.update((map) => new Map(map.set(programmingLanguage, ide)));
 
             this.assignedProgrammingLanguages.push(programmingLanguage);
@@ -69,7 +75,6 @@ export class IdeSettingsComponent implements OnInit {
     }
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
-    protected readonly PREDEFINED_IDE = PREDEFINED_IDE;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
 }
