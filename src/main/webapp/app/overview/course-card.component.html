@@ -1,26 +1,29 @@
-<div class="card" [class.guided-tour]="hasGuidedTour">
-    <div id="course-{{ course.id }}-header" class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="{ '--background-color-for-hover': courseColor }">
+<div class="card rounded-4 border-white flex-grow-1" [class.guided-tour]="hasGuidedTour">
+    <div
+        id="course-{{ course.id }}-header"
+        class="card-header rounded-top-4 text-white"
+        [routerLink]="['/courses', course.id!]"
+        [ngStyle]="{ '--background-color-for-hover': courseColor }"
+    >
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-        <div class="container">
-            <div class="row align-items-center justify-content-center">
+        <div class="container ps-2 d-flex align-items-center justify-content-center">
+            @if (course.courseIcon) {
                 <div class="col-auto">
-                    @if (course.courseIcon) {
-                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
-                    }
+                    <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
                 </div>
-                <div class="col text-center">
-                    <h5 class="card-title">
-                        {{ course.title }}
-                    </h5>
-                </div>
+            }
+            <div class="col text-center card-header-title">
+                <h5 class="card-title">
+                    {{ course.title }}
+                </h5>
             </div>
         </div>
     </div>
-    <div class="card-body mt-3 mb-3">
+    <div class="card-body rounded-bottom-4 border border-lightgrey pt-3">
         <div class="d-flex flex-column justify-content-between">
             <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-            <div class="information-box-wrapper ms-2">
-                <div class="row">
+            <div class="information-box-wrapper ms-1">
+                <div class="row mt-1">
                     <div class="col-7" [ngClass]="{ 'col-12': !(exerciseCount && (totalReachableScore > 0 || totalAbsoluteScore > 0)) }">
                         @if (exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0)) {
                             <div class="align-self-center">
@@ -79,7 +82,7 @@
                 </div>
             </div>
             @if (course.isAtLeastTutor || course.isAtLeastEditor || course.isAtLeastInstructor) {
-                <div class="d-flex justify-content-start align-items-center ms-2">
+                <div class="d-flex justify-content-start align-items-center ms-1">
                     <a class="fw-bold btn-management" [routerLink]="['/course-management', course.id!]">
                         <span jhiTranslate="artemisApp.studentDashboard.cardManageCourse"></span>
                         <fa-icon class="ms-1" [icon]="faArrowRight" />

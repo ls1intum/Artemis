@@ -1,8 +1,8 @@
 .card {
-    height: 320px;
-    min-width: 360px;
+    height: 283px;
+    min-width: 320px;
+    max-width: 400px;
     transition: transform 0.2s linear;
-    border-radius: 20px;
 
     &:hover {
         transform: scale(1.012);
@@ -11,10 +11,7 @@
 
     .card-header {
         position: relative;
-        padding: 15px;
-        height: 100px;
-        border-top-right-radius: 20px;
-        border-top-left-radius: 20px;
+        height: 85px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -38,13 +35,14 @@
         .card-title {
             overflow: hidden;
             padding-bottom: 1px;
-            max-height: 80px;
+            // matches 4 lines
+            max-height: 76px;
         }
     }
 
     .card-body {
         .information-box-wrapper {
-            height: 145px;
+            height: 135px;
         }
 
         .chart-container {
@@ -93,4 +91,8 @@ jhi-secured-image {
         height: 65px;
         width: auto;
     }
+}
+
+.card-header-title {
+    max-width: 280px;
 }
