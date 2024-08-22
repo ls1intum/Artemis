@@ -46,7 +46,6 @@ import { Observable, ReplaySubject } from 'rxjs';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 
-//TODO Michal Kawka
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
     /**

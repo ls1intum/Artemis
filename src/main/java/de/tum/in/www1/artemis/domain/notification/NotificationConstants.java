@@ -59,7 +59,6 @@ import com.google.common.collect.ImmutableBiMap;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
-// TODO Michal Kawka
 public class NotificationConstants {
 
     // Titles
