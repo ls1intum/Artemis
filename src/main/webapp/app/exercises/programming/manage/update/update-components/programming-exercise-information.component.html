@@ -57,6 +57,7 @@
                 [isLocal]="isLocal"
                 [checkoutSolutionRepository]="programmingExercise.buildConfig?.checkoutSolutionRepository"
                 (submissionBuildPlanEvent)="updateSubmissionBuildPlanCheckoutDirectories($event)"
+                [isEdit]="true"
             />
             @if (editRepositoryCheckoutPath && isLocal) {
                 <jhi-programming-exercise-edit-checkout-directories

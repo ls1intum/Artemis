@@ -223,6 +223,37 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).not.toHaveBeenCalledWith(ProgrammingLanguage.OCAML, false);
     });
 
+    it('should not call service when inEdit and build config is available', () => {
+        jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
+
+        component.isEdit = true;
+        component.programmingExercise!.buildConfig = new ProgrammingExerciseBuildConfig();
+        component.programmingExercise!.buildConfig.solutionCheckoutPath = 'solution';
+        component.programmingExercise!.buildConfig.testCheckoutPath = 'tests';
+        component.programmingExercise!.buildConfig.assignmentCheckoutPath = 'assignment';
+
+        component.ngOnChanges({
+            checkoutSolutionRepository: {
+                previousValue: true,
+                currentValue: true,
+            },
+        } as unknown as SimpleChanges);
+
+        // assertion to check if ngOnChanges was executed properly and updated the checkout directories
+        expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).not.toHaveBeenCalledWith(ProgrammingLanguage.OCAML, false);
+        expect(component.checkoutDirectories).toEqual({
+            submissionBuildPlanCheckoutDirectories: {
+                exerciseCheckoutDirectory: '/assignment',
+                testCheckoutDirectory: '/tests',
+                solutionCheckoutDirectory: '/solution',
+            },
+            solutionBuildPlanCheckoutDirectories: {
+                solutionCheckoutDirectory: '/assignment',
+                testCheckoutDirectory: '/tests',
+            },
+        });
+    });
+
     it('should update auxiliary repository directories on changes', () => {
         fixture.detectChanges();
 
@@ -242,6 +273,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should update component when buildconfig was changed', () => {
+        component.isEdit = true;
         component.programmingExercise!.buildConfig = new ProgrammingExerciseBuildConfig();
         component.programmingExercise!.buildConfig.solutionCheckoutPath = 'solution';
 

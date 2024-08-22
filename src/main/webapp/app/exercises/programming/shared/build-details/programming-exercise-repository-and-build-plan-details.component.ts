@@ -21,6 +21,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     @Input() programmingLanguage?: ProgrammingLanguage;
     @Input() isLocal: boolean;
     @Input() checkoutSolutionRepository?: boolean = true;
+    @Input() isEdit = false;
     @Output() submissionBuildPlanEvent = new EventEmitter<BuildPlanCheckoutDirectoriesDTO>();
 
     constructor(private programmingExerciseService: ProgrammingExerciseService) {}
@@ -42,12 +43,14 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
         const isCheckoutSolutionRepositoryUpdated = changes.checkoutSolutionRepository?.currentValue !== changes.checkoutSolutionRepository?.previousValue;
         if (this.isLocal && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
-            this.resetProgrammingExerciseBuildCheckoutPaths();
+            if (this.isEdit) {
+                this.resetProgrammingExerciseBuildCheckoutPaths();
+            }
             this.updateCheckoutDirectories();
         }
 
         const isBuildConfigChanged = this.isBuildConfigAvailable(this.programmingExercise.buildConfig);
-        if (this.isLocal && isBuildConfigChanged) {
+        if (this.isLocal && this.isEdit && isBuildConfigChanged) {
             this.checkoutDirectories = this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories);
         }
     }
@@ -64,12 +67,16 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         this.checkoutDirectorySubscription?.unsubscribe(); // might be defined from previous method execution
 
         const CHECKOUT_SOLUTION_REPOSITORY_DEFAULT = true;
-        this.checkoutDirectorySubscription = this.programmingExerciseService
-            .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage, this.checkoutSolutionRepository ?? CHECKOUT_SOLUTION_REPOSITORY_DEFAULT)
-            .subscribe((checkoutDirectories) => {
-                this.checkoutDirectories = checkoutDirectories;
-                this.submissionBuildPlanEvent.emit(checkoutDirectories.submissionBuildPlanCheckoutDirectories!);
-            });
+        if (this.isEdit || !this.isBuildConfigAvailable(this.programmingExercise.buildConfig)) {
+            this.checkoutDirectorySubscription = this.programmingExerciseService
+                .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage, this.checkoutSolutionRepository ?? CHECKOUT_SOLUTION_REPOSITORY_DEFAULT)
+                .subscribe((checkoutDirectories) => {
+                    this.checkoutDirectories = checkoutDirectories;
+                    this.submissionBuildPlanEvent.emit(checkoutDirectories.submissionBuildPlanCheckoutDirectories!);
+                });
+        } else {
+            this.checkoutDirectories = this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories);
+        }
     }
 
     private setCheckoutDirectoriesFromBuildConfig(checkoutDirectories?: CheckoutDirectoriesDto): CheckoutDirectoriesDto | undefined {
