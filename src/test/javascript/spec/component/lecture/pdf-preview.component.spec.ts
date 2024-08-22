@@ -364,4 +364,17 @@ describe('PdfPreviewComponent', () => {
         expect(mockContext.clearRect).toHaveBeenCalledWith(0, 0, 1000, 800);
         expect(mockContext.drawImage).toHaveBeenCalledWith(mockCanvasElement, 0, 0, 1000, 800);
     });
+
+    it('should correctly position the canvas', () => {
+        const parent = document.createElement('div');
+        component.pdfContainer = { nativeElement: { clientWidth: 1000, clientHeight: 800, scrollTop: 500 } } as ElementRef<HTMLDivElement>;
+        const canvasElem = component.enlargedCanvas.nativeElement;
+        parent.appendChild(canvasElem);
+        canvasElem.width = 500;
+        canvasElem.height = 400;
+        component.positionCanvas();
+        expect(canvasElem.style.left).toBe('250px');
+        expect(canvasElem.style.top).toBe('200px');
+        expect(parent.style.top).toBe('500px');
+    });
 });
