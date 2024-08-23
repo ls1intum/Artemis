@@ -34,10 +34,10 @@
         <div class="row">
             <h4 class="col m-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.recentlyAccessed"></h4>
         </div>
-        <div class="row mx-1">
+        <div class="row mx-2">
             @for (course of recentlyAccessedCourses; track course) {
                 <jhi-overview-course-card
-                    class="col-xs-12 col-md-6 col-lg-4 col-xl-3 px-2 pb-4 d-flex justify-content-center"
+                    class="col-xs-12 col-md-6 col-lg-4 col-xl-3 px-2 pb-3 d-flex justify-content-center"
                     [course]="course"
                     [hasGuidedTour]="course === courseForGuidedTour"
                 />
@@ -57,10 +57,10 @@
             </div>
         </div>
     } @else {
-        <div class="row mx-1" [ngClass]="{ 'mt-3': recentlyAccessedCourses.length === 0 }">
+        <div class="row mx-2">
             @for (course of regularCourses; track course) {
                 <jhi-overview-course-card
-                    class="col-xs-12 col-md-6 col-lg-4 col-xl-3 px-2 pb-4 d-flex justify-content-center"
+                    class="col-xs-12 col-md-6 col-lg-4 col-xl-3 px-2 pb-3 d-flex justify-content-center"
                     [course]="course"
                     [hasGuidedTour]="course === courseForGuidedTour"
                 />

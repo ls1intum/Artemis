@@ -38,6 +38,15 @@
             // matches 4 lines
             max-height: 76px;
         }
+
+        .course-circle {
+            height: 65px;
+            min-width: 65px;
+            background-color: var(--course-image-bg);
+            border-radius: 50%;
+            display: inline-block;
+            color: var(--bs-body-color);
+        }
     }
 
     .card-body {
