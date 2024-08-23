@@ -79,13 +79,29 @@ export class ProgrammingExerciseCreationPage {
         const sectionStatusBarLocator: Locator = this.page.locator(searchedSectionId);
         expect(await sectionStatusBarLocator.isVisible()).toBeTruthy();
         await sectionStatusBarLocator.click();
+        await this.page.waitForTimeout(1000); // wait for scroll to finish
+    }
+
+    /**
+     * Verifies that the locator is visible in the viewport and not hidden by another element
+     *
+     * {@link toBeHidden} and {@link toBeVisible} do not solve this problem
+     * @param locator
+     */
+    private async verifyLocatorIsVisible(locator: Locator) {
+        const initialPosition = await locator.boundingBox();
+        await locator.click(); // scrolls to the locator if needed (e.g. if hidden by another element)
+        const newPosition = await locator.boundingBox();
+        expect(initialPosition).toEqual(newPosition);
     }
 
     async checkIsHeadlineLocatorInViewport(searchedHeadlineDisplayText: string, expected: boolean) {
         const headlineLocator = this.page.getByRole('heading', { name: searchedHeadlineDisplayText }).first();
 
         if (expected) {
-            await expect(headlineLocator).toBeInViewport();
+            await expect(headlineLocator).toBeInViewport({ ratio: 1 });
+            // additional check because toBeInViewport is to inaccurate
+            await this.verifyLocatorIsVisible(headlineLocator);
         } else {
             await expect(headlineLocator).not.toBeInViewport();
         }
