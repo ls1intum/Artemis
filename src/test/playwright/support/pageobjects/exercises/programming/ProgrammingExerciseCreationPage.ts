@@ -79,18 +79,22 @@ export class ProgrammingExerciseCreationPage {
      *
      * Here we are using the headline of the page as reference
      */
-    async waitForPageToFinishScrolling() {
+    async waitForPageToFinishScrolling(maxTimeout: number = 5000) {
         const elementOnPageAffectedByScroll = this.page.locator('h2');
         let isScrolling = true;
+        const startTime = Date.now();
 
         while (isScrolling) {
             const initialPosition = await elementOnPageAffectedByScroll.boundingBox();
-            await this.page.waitForTimeout(100);
+            await this.page.waitForTimeout(100); // give the page a short time to scroll
             const newPosition = await elementOnPageAffectedByScroll.boundingBox();
-            console.log(initialPosition);
-            console.log(newPosition);
 
             isScrolling = initialPosition?.y !== newPosition?.y;
+
+            const isWaitingForScrollExceedingTimeout = Date.now() - startTime > maxTimeout;
+            if (isWaitingForScrollExceedingTimeout) {
+                throw new Error(`Aborting waiting for scroll end - page is still scrolling after ${maxTimeout}ms`);
+            }
         }
     }
 
