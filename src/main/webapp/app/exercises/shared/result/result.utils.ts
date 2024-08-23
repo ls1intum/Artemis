@@ -243,7 +243,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'text-secondary';
     }
 
-    if (resultIsPreliminary(result) && !!result.participation?.exercise?.type === ExerciseType.TEXT) {
+    if (resultIsPreliminary(result) && result.participation?.exercise?.type === ExerciseType.TEXT) {
         return 'text-secondary';
     }
 
