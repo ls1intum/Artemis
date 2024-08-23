@@ -124,10 +124,10 @@ public class TextExerciseFeedbackService {
 
         var automaticResult = this.submissionService.saveNewEmptyResult(submission);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
-        automaticResult.setRated(false);
+        automaticResult.setRated(true);
         automaticResult.setScore(0.0);
         automaticResult.setSuccessful(null);
-        automaticResult.setCompletionDate(ZonedDateTime.now().plusSeconds(15));
+        // automaticResult.setCompletionDate(ZonedDateTime.now().plusSeconds(30));
         automaticResult = this.resultRepository.save(automaticResult);
 
         // This will create a new submission without results, this is important so that tutor assessment works as it used to.
