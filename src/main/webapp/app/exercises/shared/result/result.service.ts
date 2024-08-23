@@ -113,22 +113,16 @@ export class ResultService implements IResultService {
     private getResultStringNonProgrammingExerciseWithAIFeedback(result: Result, relativeScore: number, points: number, short: boolean | undefined): string {
         let aiFeedbackMessage: string = '';
         if (isAIResultAndFailed(result)) {
-            aiFeedbackMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
+            aiFeedbackMessage =
+                this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed') +
+                ' ' +
+                this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         } else if (isAIResultAndIsBeingProcessed(result)) {
             aiFeedbackMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         } else if (isAIResultAndTimedOut(result)) {
             aiFeedbackMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
         } else if (isAIResultAndProcessed(result)) {
-            if (short) {
-                aiFeedbackMessage = this.translateService.instant(`artemisApp.result.resultString.short`, {
-                    relativeScore,
-                });
-            } else {
-                aiFeedbackMessage = this.translateService.instant(`artemisApp.result.resultString.nonProgramming`, {
-                    relativeScore,
-                    points,
-                });
-            }
+            aiFeedbackMessage = this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         }
         return aiFeedbackMessage + ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
     }
