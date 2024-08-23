@@ -181,6 +181,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
         String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
+        buildJobId = "test_duplicate";
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null);
 

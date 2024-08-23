@@ -56,6 +56,11 @@ public class SharedQueueManagementService {
 
     private IQueue<BuildJobQueueItem> queue;
 
+    // TODO: remove this
+    public static int errorCountSave = 0;
+
+    public static int errorCountCancel = 0;
+
     /**
      * Map of build jobs currently being processed across all nodes
      */
@@ -142,21 +147,26 @@ public class SharedQueueManagementService {
      */
     public void cancelBuildJob(String buildJobId) {
         // Remove build job if it is queued
-        if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
-            List<BuildJobQueueItem> toRemove = new ArrayList<>();
-            for (BuildJobQueueItem job : queue) {
-                if (Objects.equals(job.id(), buildJobId)) {
-                    toRemove.add(job);
+        try {
+            if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
+                List<BuildJobQueueItem> toRemove = new ArrayList<>();
+                for (BuildJobQueueItem job : queue) {
+                    if (Objects.equals(job.id(), buildJobId)) {
+                        toRemove.add(job);
+                    }
+                }
+                queue.removeAll(toRemove);
+            }
+            else {
+                // Cancel build job if it is currently being processed
+                BuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
+                if (buildJob != null) {
+                    triggerBuildJobCancellation(buildJobId);
                 }
             }
-            queue.removeAll(toRemove);
         }
-        else {
-            // Cancel build job if it is currently being processed
-            BuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
-            if (buildJob != null) {
-                triggerBuildJobCancellation(buildJobId);
-            }
+        catch (Exception e) {
+            SharedQueueManagementService.errorCountCancel++;
         }
     }
 
@@ -203,13 +213,18 @@ public class SharedQueueManagementService {
      * @param courseId id of the course
      */
     public void cancelAllQueuedBuildJobsForCourse(long courseId) {
-        List<BuildJobQueueItem> toRemove = new ArrayList<>();
-        for (BuildJobQueueItem job : queue) {
-            if (job.courseId() == courseId) {
-                toRemove.add(job);
+        try {
+            List<BuildJobQueueItem> toRemove = new ArrayList<>();
+            for (BuildJobQueueItem job : queue) {
+                if (job.courseId() == courseId) {
+                    toRemove.add(job);
+                }
             }
+            queue.removeAll(toRemove);
         }
-        queue.removeAll(toRemove);
+        catch (Exception e) {
+            SharedQueueManagementService.errorCountSave++;
+        }
     }
 
     /**
@@ -231,13 +246,18 @@ public class SharedQueueManagementService {
      * @param participationId id of the participation
      */
     public void cancelAllJobsForParticipation(long participationId) {
-        List<BuildJobQueueItem> toRemove = new ArrayList<>();
-        for (BuildJobQueueItem queuedJob : queue) {
-            if (queuedJob.participationId() == participationId) {
-                toRemove.add(queuedJob);
+        try {
+            List<BuildJobQueueItem> toRemove = new ArrayList<>();
+            for (BuildJobQueueItem queuedJob : queue) {
+                if (queuedJob.participationId() == participationId) {
+                    toRemove.add(queuedJob);
+                }
             }
+            queue.removeAll(toRemove);
         }
-        queue.removeAll(toRemove);
+        catch (Exception e) {
+            SharedQueueManagementService.errorCountSave++;
+        }
 
         for (BuildJobQueueItem runningJob : processingJobs.values()) {
             if (runningJob.participationId() == participationId) {

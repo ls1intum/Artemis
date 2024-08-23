@@ -189,4 +189,15 @@ public class BuildJobQueueResource {
         BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
         return ResponseEntity.ok(buildJobStatistics);
     }
+
+    // TODO: remove this method
+    @GetMapping("errorCounterBilel")
+    public ResponseEntity<Integer> getErrorCounter() {
+        return ResponseEntity.ok(SharedQueueManagementService.errorCountSave);
+    }
+
+    @GetMapping("errorCounterDeleteBilel")
+    public ResponseEntity<Integer> getErrorCounterCancel() {
+        return ResponseEntity.ok(SharedQueueManagementService.errorCountCancel);
+    }
 }
