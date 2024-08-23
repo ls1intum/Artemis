@@ -6,6 +6,10 @@ export type FormSectionStatus = {
     empty?: boolean;
 };
 
+const SAFARI_USER_AGENT_REGEX: RegExp = /^((?!chrome|android).)*safari/i;
+const SAFARI_HEADLINE_OFFSET = 8;
+const CHROME_HEADLINE_OFFSET = 4;
+
 @Component({
     selector: 'jhi-form-status-bar',
     templateUrl: './form-status-bar.component.html',
@@ -32,9 +36,7 @@ export class FormStatusBarComponent implements AfterViewInit {
         if (element) {
             const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement)?.offsetHeight;
 
-            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            const SAFARI_HEADLINE_OFFSET = 8;
-            const CHROME_HEADLINE_OFFSET = 4;
+            const isSafari = SAFARI_USER_AGENT_REGEX.test(navigator.userAgent);
             const offset = isSafari ? SAFARI_HEADLINE_OFFSET : CHROME_HEADLINE_OFFSET;
 
             element.style.scrollMarginTop = `calc(${offset}rem + ${headerHeight}px)`;
