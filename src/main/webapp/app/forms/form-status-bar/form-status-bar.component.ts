@@ -17,12 +17,13 @@ export class FormStatusBarComponent {
 
     scrollToHeadline(id: string) {
         const element = document.getElementById(id);
-
         if (element) {
             const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement)?.offsetHeight;
 
             const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            const offset = isSafari ? 8 : 4;
+            const SAFARI_HEADLINE_OFFSET = 8;
+            const CHROME_HEADLINE_OFFSET = 4;
+            const offset = isSafari ? SAFARI_HEADLINE_OFFSET : CHROME_HEADLINE_OFFSET;
 
             element.style.scrollMarginTop = `calc(${offset}rem + ${headerHeight}px)`;
             element.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
