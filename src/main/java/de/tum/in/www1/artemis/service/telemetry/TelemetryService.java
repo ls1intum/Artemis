@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 public class TelemetryService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TelemetryData(String version, String serverUrl, String operatorName, String contact, List<String> profiles, String adminName) {
+    public record TelemetryData(String version, String serverUrl, String operator, String contact, List<String> profiles, String adminName) {
     }
 
     private static final Logger log = LoggerFactory.getLogger(TelemetryService.class);
@@ -53,7 +53,7 @@ public class TelemetryService {
     private String serverUrl;
 
     @Value("${info.operatorName}")
-    private String operatorName;
+    private String operator;
 
     @Value("${info.operatorAdminName}")
     private String operatorAdminName;
@@ -99,10 +99,10 @@ public class TelemetryService {
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         TelemetryData telemetryData;
         if (sendAdminDetails) {
-            telemetryData = new TelemetryData(version, serverUrl, operatorName, contact, activeProfiles, operatorAdminName);
+            telemetryData = new TelemetryData(version, serverUrl, operator, contact, activeProfiles, operatorAdminName);
         }
         else {
-            telemetryData = new TelemetryData(version, serverUrl, operatorName, null, activeProfiles, null);
+            telemetryData = new TelemetryData(version, serverUrl, operator, null, activeProfiles, null);
         }
 
         HttpHeaders headers = new HttpHeaders();
