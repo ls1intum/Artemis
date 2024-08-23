@@ -44,8 +44,6 @@
     }
 }
 
-// Bottom padding adjustments based on the screen sizes
-
 @media screen and (min-width: 1710px) {
     .col-xl-3 {
         padding-bottom: 1.5rem !important;
@@ -58,7 +56,7 @@
     }
 }
 
-@media screen and (max-width: 1149px) and (min-width: 890px) {
+@media screen and (max-width: 1149px) and (min-width: 900px) {
     .col-md-6 {
         padding-bottom: 1.5rem !important;
     }

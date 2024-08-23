@@ -28,8 +28,8 @@
             <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
             <div class="information-box-wrapper ms-1">
                 <div class="row mt-1">
-                    <div class="col-7" [ngClass]="{ 'col-12': !(exerciseCount && (totalReachableScore > 0 || totalAbsoluteScore > 0)) }">
-                        @if (exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0)) {
+                    <div class="col-7" [ngClass]="{ 'col-12': !(exerciseCount && (totalReachableScore || totalAbsoluteScore)) }">
+                        @if (exerciseCount && (totalReachableScore || totalAbsoluteScore)) {
                             <div class="align-self-center">
                                 <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
                                 <div class="fw-bold">
@@ -61,7 +61,7 @@
                             </div>
                         }
                     </div>
-                    @if (exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0)) {
+                    @if (exerciseCount && (totalReachableScore || totalAbsoluteScore)) {
                         <div class="align-self-center chart-container col-5">
                             <ngx-charts-pie-chart
                                 id="score-chart"
@@ -85,8 +85,8 @@
                     }
                 </div>
             </div>
-            @if (course.isAtLeastTutor || course.isAtLeastEditor || course.isAtLeastInstructor) {
-                <div class="d-flex justify-content-start align-items-center ms-1">
+            @if (course.isAtLeastTutor) {
+                <div class="d-flex justify-content-start align-items-center ms-1 mt-1">
                     <a class="fw-bold btn-management" [routerLink]="['/course-management', course.id!]">
                         <span jhiTranslate="artemisApp.studentDashboard.cardManageCourse"></span>
                         <fa-icon class="ms-1" [icon]="faArrowRight" />
