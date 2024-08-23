@@ -100,7 +100,7 @@ export class ProgrammingExerciseCreationPage {
 
         if (expected) {
             await expect(headlineLocator).toBeInViewport({ ratio: 1 });
-            // additional check because toBeInViewport is to inaccurate
+            /** additional check because {@link toBeInViewport} is too inaccurate */
             await this.verifyLocatorIsVisible(headlineLocator);
         } else {
             await expect(headlineLocator).not.toBeInViewport();
