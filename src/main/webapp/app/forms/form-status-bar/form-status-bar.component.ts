@@ -19,7 +19,7 @@ export class FormStatusBarComponent {
         const element = document.getElementById(id);
 
         if (element) {
-            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement).offsetHeight;
+            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement)?.offsetHeight;
 
             const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
             const offset = isSafari ? 8 : 4;
