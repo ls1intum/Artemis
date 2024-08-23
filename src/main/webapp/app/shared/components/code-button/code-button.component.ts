@@ -108,7 +108,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
 
         this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIde) => {
-            if (programmingLanguageToIde.size !== 0) {
+            if (programmingLanguageToIde.size) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }
 
@@ -286,16 +286,12 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         return this.externalCloningService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUri(false));
     }
 
-    buildIDEUrl(): string | undefined {
-        return this.externalCloningService.buildIDEUrl(this.getHttpOrSshRepositoryUri(false), this.getIde());
+    buildIdeUrl(): string | undefined {
+        return this.externalCloningService.buildIdeUrl(this.getHttpOrSshRepositoryUri(false), this.getIde());
     }
 
     getIde(): Ide {
-        return (
-            this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
-            this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
-            this.vscodeFallback
-        );
+        return this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ?? this.vscodeFallback;
     }
 
     switchPracticeMode() {

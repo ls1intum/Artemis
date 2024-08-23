@@ -18,6 +18,15 @@ span {
     font-size: smaller;
 }
 
+.btn-default {
+    transition: background-color 0.3s ease;
+}
+
+.btn-default:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px solid #999;
+}
+
 .dropdown-toggle::after {
     display: none;
 }

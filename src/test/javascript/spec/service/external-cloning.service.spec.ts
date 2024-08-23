@@ -24,11 +24,11 @@ describe('ExternalCloningService', () => {
         const cloneUrl = baseUrl + '/git/repo.git';
         const ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
         const expectedUrl = 'vscode://vscode.git/clone?url=https%3A%2F%2Fartemis.cit.tum.de%2Fgit%2Frepo.git';
-        expect(service.buildIDEUrl(cloneUrl, ide)).toEqual(expectedUrl);
+        expect(service.buildIdeUrl(cloneUrl, ide)).toEqual(expectedUrl);
     });
 
     it('should return undefined when cloneUrl is undefined but ide is defined', () => {
         const ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
-        expect(service.buildIDEUrl(undefined, ide)).toBeUndefined();
+        expect(service.buildIdeUrl(undefined, ide)).toBeUndefined();
     });
 });
