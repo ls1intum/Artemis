@@ -75,7 +75,7 @@ export class ProgrammingExerciseCreationPage {
     }
 
     async clickFormStatusBarSection(sectionId: number) {
-        const searchedSectionId = `#section-status-bar-item-${sectionId}`;
+        const searchedSectionId = `#status-bar-section-item-${sectionId}`;
         const sectionStatusBarLocator: Locator = this.page.locator(searchedSectionId);
         expect(await sectionStatusBarLocator.isVisible()).toBeTruthy();
         await sectionStatusBarLocator.click();

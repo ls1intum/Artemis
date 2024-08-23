@@ -34,7 +34,14 @@ test.describe('Programming Exercise Management', () => {
             await page.waitForURL(`**/programming-exercises/${exercise.id}**`);
         });
 
-        test('FormStatusBar scrolls to the correct section', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, programmingExerciseCreation }) => {
+        test('FormStatusBar scrolls to the correct section with headline visible after scroll', async ({
+            login,
+            page,
+            navigationBar,
+            courseManagement,
+            courseManagementExercises,
+            programmingExerciseCreation,
+        }) => {
             await login(admin, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
@@ -42,17 +49,19 @@ test.describe('Programming Exercise Management', () => {
             await page.waitForURL('**/programming-exercises/new**');
 
             const firstSectionHeadline = 'General';
-            const thirdSectionHeadline = 'Problem';
+            const firstSectionStatusBarId = 0;
+            const fourthSectionHeadline = 'Problem';
+            const fourthSectionStatusBarId = 3;
 
             // scroll down
-            await programmingExerciseCreation.clickFormStatusBarSection(3);
+            await programmingExerciseCreation.clickFormStatusBarSection(fourthSectionStatusBarId);
             await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(firstSectionHeadline, false);
-            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(thirdSectionHeadline, true);
+            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(fourthSectionHeadline, true);
 
             // scroll up
-            await programmingExerciseCreation.clickFormStatusBarSection(0);
+            await programmingExerciseCreation.clickFormStatusBarSection(firstSectionStatusBarId);
             await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(firstSectionHeadline, true);
-            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(thirdSectionHeadline, false);
+            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(fourthSectionHeadline, false);
         });
     });
 
