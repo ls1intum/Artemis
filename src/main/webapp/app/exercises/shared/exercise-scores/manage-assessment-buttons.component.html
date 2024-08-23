@@ -28,9 +28,7 @@
                         {{
                             'artemisApp.assessment.dashboard.actions.' +
                                 (this.examMode ? 'examCorrectionRound.' : '') +
-                                (!participation.results?.[correctionRound]?.assessmentType ||
-                                participation.results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC ||
-                                participation.results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC_ATHENA
+                                (!participation.results?.[correctionRound]?.assessmentType || participation.results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC
                                     ? 'assess'
                                     : participation.results?.[correctionRound]?.completionDate
                                       ? 'open'

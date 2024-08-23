@@ -289,7 +289,7 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
     }
 
     if (resultIsPreliminary(result) && result.participation?.exercise?.type === ExerciseType.TEXT) {
-        if (isAIResultAndIsBeingProcessed(result)) {
+        if (result.successful === undefined) {
             return faSpinner;
         }
         return faQuestionCircle;
