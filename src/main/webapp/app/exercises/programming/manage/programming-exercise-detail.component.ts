@@ -465,13 +465,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: { boolean: exercise.buildConfig?.sequentialTestRuns },
                 },
                 !!exercise.buildConfig?.buildScript &&
-                    !!exercise.buildConfig?.windFile?.metadata?.docker?.image && {
+                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.dockerImage',
-                        data: { text: exercise.buildConfig?.windFile?.metadata?.docker?.image },
+                        data: { text: exercise.buildConfig?.windfile?.metadata?.docker?.image },
                     },
                 !!exercise.buildConfig?.buildScript &&
-                    !!exercise.buildConfig?.windFile?.metadata?.docker?.image && {
+                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
@@ -761,8 +761,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkAndSetWindFile(exercise: ProgrammingExercise) {
-        if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windFile) {
-            exercise.buildConfig!.windFile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
+        if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windfile) {
+            exercise.buildConfig!.windfile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
         }
     }
 

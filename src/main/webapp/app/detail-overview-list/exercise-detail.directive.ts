@@ -5,6 +5,8 @@ import { TextDetailComponent } from 'app/detail-overview-list/components/text-de
 import { DateDetailComponent } from 'app/detail-overview-list/components/date-detail.component';
 import { LinkDetailComponent } from 'app/detail-overview-list/components/link-detail.component';
 import { BooleanDetailComponent } from 'app/detail-overview-list/components/boolean-detail.component';
+import { ProgrammingRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-repository-buttons-detail.component';
+import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-auxiliary-repository-buttons-detail.component';
 
 @Directive({
     selector: '[jhiExerciseDetail]',
@@ -23,11 +25,22 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
         }
         this.detail = this.detail as ShownDetail;
 
-        const detailTypeToComponent: { [key in DetailType]?: Type<TextDetailComponent | DateDetailComponent | LinkDetailComponent | BooleanDetailComponent> } = {
+        const detailTypeToComponent: {
+            [key in DetailType]?: Type<
+                | TextDetailComponent
+                | DateDetailComponent
+                | LinkDetailComponent
+                | BooleanDetailComponent
+                | ProgrammingRepositoryButtonsDetailComponent
+                | ProgrammingAuxiliaryRepositoryButtonsDetailComponent
+            >;
+        } = {
             [DetailType.Text]: TextDetailComponent,
             [DetailType.Date]: DateDetailComponent,
             [DetailType.Link]: LinkDetailComponent,
             [DetailType.Boolean]: BooleanDetailComponent,
+            [DetailType.ProgrammingRepositoryButtons]: ProgrammingRepositoryButtonsDetailComponent,
+            [DetailType.ProgrammingAuxiliaryRepositoryButtons]: ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
         };
 
         const detailComponent = detailTypeToComponent[this.detail.type];
