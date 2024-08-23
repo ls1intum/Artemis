@@ -55,13 +55,13 @@ test.describe('Programming Exercise Management', () => {
 
             // scroll down
             await programmingExerciseCreation.clickFormStatusBarSection(fourthSectionStatusBarId);
-            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(firstSectionHeadline, false);
-            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(fourthSectionHeadline, true);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(firstSectionHeadline, false);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(fourthSectionHeadline, true);
 
             // scroll up
             await programmingExerciseCreation.clickFormStatusBarSection(firstSectionStatusBarId);
-            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(firstSectionHeadline, true);
-            await programmingExerciseCreation.checkIsHeadlineLocatorInViewport(fourthSectionHeadline, false);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(firstSectionHeadline, true);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(fourthSectionHeadline, false);
         });
     });
 

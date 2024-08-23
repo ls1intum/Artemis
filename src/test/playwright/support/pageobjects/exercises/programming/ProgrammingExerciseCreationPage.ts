@@ -120,7 +120,7 @@ export class ProgrammingExerciseCreationPage {
         expect(initialPosition).toEqual(newPosition);
     }
 
-    async checkIsHeadlineLocatorInViewport(searchedHeadlineDisplayText: string, expected: boolean) {
+    async checkIsHeadlineVisibleToUser(searchedHeadlineDisplayText: string, expected: boolean) {
         const headlineLocator = this.page.getByRole('heading', { name: searchedHeadlineDisplayText }).first();
 
         if (expected) {
