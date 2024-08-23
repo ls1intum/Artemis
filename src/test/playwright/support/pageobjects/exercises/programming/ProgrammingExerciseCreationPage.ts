@@ -74,12 +74,32 @@ export class ProgrammingExerciseCreationPage {
         await expect(this.page.locator('.owl-dt-popup')).not.toBeVisible();
     }
 
+    /**
+     * Uses an element that is affected by the scrolling of the page as reference to determine if the page is still scrolling
+     *
+     * Here we are using the headline of the page as reference
+     */
+    async waitForPageToFinishScrolling() {
+        const elementOnPageAffectedByScroll = this.page.locator('h2');
+        let isScrolling = true;
+
+        while (isScrolling) {
+            const initialPosition = await elementOnPageAffectedByScroll.boundingBox();
+            await this.page.waitForTimeout(100);
+            const newPosition = await elementOnPageAffectedByScroll.boundingBox();
+            console.log(initialPosition);
+            console.log(newPosition);
+
+            isScrolling = initialPosition?.y !== newPosition?.y;
+        }
+    }
+
     async clickFormStatusBarSection(sectionId: number) {
         const searchedSectionId = `#status-bar-section-item-${sectionId}`;
         const sectionStatusBarLocator: Locator = this.page.locator(searchedSectionId);
         expect(await sectionStatusBarLocator.isVisible()).toBeTruthy();
         await sectionStatusBarLocator.click();
-        await this.page.waitForTimeout(1000); // wait for scroll to finish
+        await this.waitForPageToFinishScrolling();
     }
 
     /**
