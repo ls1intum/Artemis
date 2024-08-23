@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, HostListener, Input } from '@angular/core';
+import { updateHeaderHeightScssVariableBasedOnNavbar } from 'app/shared/util/navbar.util';
 
 export type FormSectionStatus = {
     title: string;
@@ -20,22 +21,12 @@ export class FormStatusBarComponent implements AfterViewInit {
     formStatusSections: FormSectionStatus[];
 
     @HostListener('window:resize')
-    onResize() {
-        const addingDistanceToNavbarWouldBreakStatusBar = this.isSafari();
-        if (addingDistanceToNavbarWouldBreakStatusBar) {
-            // on Safari the FormStatusBar disappears when the following code is executed, so we skip it
-            // the only negative consequence is that the FormStatusBar is a bit closer to the navbar than in Chrome/Firefox
-            return;
-        }
-
-        setTimeout(function addDistanceFromStatusBarToNavbar() {
-            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement).offsetHeight;
-            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
-        });
+    onResizeAddDistanceFromStatusBarToNavbar() {
+        updateHeaderHeightScssVariableBasedOnNavbar();
     }
 
     ngAfterViewInit() {
-        this.onResize();
+        this.onResizeAddDistanceFromStatusBarToNavbar();
     }
 
     private isSafari() {
