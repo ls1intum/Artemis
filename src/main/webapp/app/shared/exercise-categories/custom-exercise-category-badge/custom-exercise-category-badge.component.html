@@ -1,5 +1,5 @@
 <h4 class="fw-medium">
-    <div class="badge me-1" [ngStyle]="{ backgroundColor: category.color }" [class.normal]="fontSize === 'normal'" [class.small]="fontSize === 'small'">
+    <div class="badge me-1" [ngStyle]="{ backgroundColor: category.color }" [ngClass]="'category-' + fontSize">
         {{ category.category }}
         @if (displayRemoveButton) {
             <button class="remove-button" (click)="onClick()">

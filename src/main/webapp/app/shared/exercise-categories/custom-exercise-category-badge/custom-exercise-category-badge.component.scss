@@ -8,10 +8,11 @@
     }
 }
 
-.small {
+/** category options should be consistent with the type CategoryFontSize */
+.category-small {
     font-size: 0.85rem;
 }
 
-.normal {
+.category-default {
     font-size: 1rem;
 }

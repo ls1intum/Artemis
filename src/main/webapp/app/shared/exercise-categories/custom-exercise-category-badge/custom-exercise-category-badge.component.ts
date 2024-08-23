@@ -4,6 +4,8 @@ import { CommonModule } from '@angular/common';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
+type CategoryFontSize = 'default' | 'small';
+
 @Component({
     selector: 'jhi-custom-exercise-category-badge',
     templateUrl: './custom-exercise-category-badge.component.html',
@@ -17,5 +19,5 @@ export class CustomExerciseCategoryBadgeComponent {
     @Input({ required: true }) category: ExerciseCategory;
     @Input() displayRemoveButton: boolean = false;
     @Input() onClick: () => void = () => {};
-    @Input() fontSize: 'normal' | 'small' = 'normal';
+    @Input() fontSize: CategoryFontSize = 'default';
 }
