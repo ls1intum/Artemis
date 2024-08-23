@@ -142,7 +142,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.course = getCourseFromExercise(this.textExercise);
 
         if (participation.submissions?.length) {
-            this.submission = participation.submissions[participation.submissions.length - 1] as TextSubmission;
+            this.submission = participation.submissions.last() as TextSubmission;
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
             if (this.submission?.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
                 this.result = this.submission.latestResult!;
@@ -188,8 +188,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     get isAutomaticResult(): boolean {
-        const isAutomatic = this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
-        return isAutomatic;
+        return this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
     /**
      * True, if the due date is after the current date, or there is no due date, or the exercise is always active
@@ -290,7 +289,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     /**
      * Stream of submissions being emitted on:
-     * 1. text editor input after a debounce time of  2 seconds
+     * 1. text editor input after a debounce time of 2 seconds
      * 2. manually triggered change on submission (e.g. when submit was clicked)
      */
     private buildSubmissionObservable() {

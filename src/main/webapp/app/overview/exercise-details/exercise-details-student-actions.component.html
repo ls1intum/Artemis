@@ -227,9 +227,6 @@
                         ></button>
                     }
                 </span>
-                <!-- SPECIALTODO : Fix this so that it actually work conditionally rendering-->
-                <!-- @if (athenaEnabled) {  NOTE: exercise.allowFeedbackRequests &&  -->
-
                 @if (
                     (gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
                     gradedParticipation?.initializationState === InitializationState.FINISHED
@@ -253,7 +250,7 @@
                         [hideLabelMobile]="false"
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
-                    @if (exercise.allowFeedbackRequests && athenaEnabled) {
+                    @if (exercise.allowFeedbackRequests && athenaEnabled && exercise.type === ExerciseType.TEXT) {
                         <button
                             class="btn btn-primary"
                             (click)="requestFeedback()"
