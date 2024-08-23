@@ -3,14 +3,11 @@
     <div class="d-flex justify-content-between">
         @for (formStatusSection of formStatusSections; track formStatusSection.title; let index = $index) {
             <div class="d-flex flex-column align-items-center" id="status-bar-section-item-{{ index }}">
-                <div
-                    class="d-flex align-items-center justify-content-center border rounded-circle border-secondary form-status-circle"
-                    (click)="scrollToHeadline(formStatusSection.title)"
-                >
+                <div class="form-status-circle border rounded-circle" (click)="scrollToHeadline(formStatusSection.title)">
                     <jhi-checklist-check
                         [checkAttribute]="formStatusSection.valid"
                         [iconColor]="formStatusSection.empty && formStatusSection.valid ? 'var(--bs-gray)' : undefined"
-                        class="fa-sm"
+                        class="fa-sm position-absolute top-50 start-50 translate-middle"
                     />
                 </div>
                 <a (click)="scrollToHeadline(formStatusSection.title)" class="d-none d-sm-inline link-primary">{{ formStatusSection.title | artemisTranslate }}</a>
