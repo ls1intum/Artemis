@@ -79,7 +79,12 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     }
 
     toggleFeedbackRequests(event: any) {
-        this.exercise.allowFeedbackRequests = !!event.target.checked;
+        if (event.target.checked) {
+            this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
+            this.exercise.allowFeedbackRequests = true;
+        } else {
+            this.exercise.allowFeedbackRequests = false;
+        }
     }
 
     private hasDueDatePassed() {
