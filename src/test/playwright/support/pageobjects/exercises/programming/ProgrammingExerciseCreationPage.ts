@@ -108,6 +108,7 @@ export class ProgrammingExerciseCreationPage {
 
     /**
      * Verifies that the locator is visible in the viewport and not hidden by another element
+     * (e.g. could be hidden by StatusBar / Navbar)
      *
      * {@link toBeHidden} and {@link toBeVisible} do not solve this problem
      * @param locator
