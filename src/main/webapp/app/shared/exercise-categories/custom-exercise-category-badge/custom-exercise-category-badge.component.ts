@@ -12,10 +12,10 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     imports: [CommonModule, FontAwesomeModule],
 })
 export class CustomExerciseCategoryBadgeComponent {
-    @Input() category: ExerciseCategory;
+    protected readonly faTimes = faTimes;
+
+    @Input({ required: true }) category: ExerciseCategory;
     @Input() displayRemoveButton: boolean = false;
     @Input() onClick: () => void = () => {};
-    @Input() fontSize: string = '1rem';
-
-    readonly faTimes = faTimes;
+    @Input() fontSize: 'normal' | 'small' = 'normal';
 }
