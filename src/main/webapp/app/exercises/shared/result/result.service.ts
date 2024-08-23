@@ -94,6 +94,9 @@ export class ResultService implements IResultService {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {
+            if (Result.isAthenaAIResult(result)) {
+                return this.getResultStringNonProgrammingExerciseWithAIFeedback(result, relativeScore, points, short);
+            }
             return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         } else {
             return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
@@ -101,7 +104,46 @@ export class ResultService implements IResultService {
     }
 
     /**
-     * Generates the result string for a programming exercise. Contains the score and points
+     * Generates the result string for a text exercise. Contains the score and points
+     * @param result the result object
+     * @param relativeScore the achieved score in percent
+     * @param points the amount of achieved points
+     * @param short flag that indicates if the resultString should use the short format
+     */
+    private getResultStringNonProgrammingExerciseWithAIFeedback(result: Result, relativeScore: number, points: number, short: boolean | undefined): string {
+        if (isAIResultAndFailed(result)) {
+            return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
+        } else if (isAIResultAndIsBeingProcessed(result)) {
+            return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+        } else if (isAIResultAndTimedOut(result)) {
+            return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+        } else if (isAIResultAndProcessed(result)) {
+            if (short) {
+                return (
+                    this.translateService.instant(`artemisApp.result.resultString.short`, {
+                        relativeScore,
+                    }) +
+                    ' (' +
+                    this.translateService.instant('artemisApp.result.preliminary') +
+                    ')'
+                );
+            } else {
+                return (
+                    this.translateService.instant(`artemisApp.result.resultString.nonProgramming`, {
+                        relativeScore,
+                        points,
+                    }) +
+                    ' (' +
+                    this.translateService.instant('artemisApp.result.preliminary') +
+                    ')'
+                );
+            }
+        }
+        return this.translateService.instant('artemisApp.result.preliminary');
+    }
+
+    /**
+     * Generates the result string for a non programming exercise. Contains the score and points
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
      * @param short flag that indicates if the resultString should use the short format
