@@ -162,7 +162,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
 
-        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true);
+        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
     }
 
     /**
