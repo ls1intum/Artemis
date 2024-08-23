@@ -40,7 +40,11 @@
         @case (ResultTemplateStatus.HAS_RESULT) {
             @if (result) {
                 @if (showIcon) {
-                    <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" size="lg" />
+                    @if (result.successful === undefined) {
+                        <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" animation="spin" size="lg" />
+                    } @else {
+                        <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" size="lg" />
+                    }
                 }
                 <span
                     [class]="textColorClass"
