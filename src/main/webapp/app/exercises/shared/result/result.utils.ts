@@ -243,6 +243,10 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'text-secondary';
     }
 
+    if (resultIsPreliminary(result) && !!result.participation?.exercise?.type === ExerciseType.TEXT) {
+        return 'text-secondary';
+    }
+
     if (templateStatus === ResultTemplateStatus.LATE) {
         return 'result-late';
     }
@@ -280,6 +284,10 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
  */
 export const getResultIconClass = (result: Result | undefined, templateStatus: ResultTemplateStatus): IconProp => {
     if (!result) {
+        return faQuestionCircle;
+    }
+
+    if (resultIsPreliminary(result) && !!result.participation?.exercise?.type === ExerciseType.TEXT) {
         return faQuestionCircle;
     }
 

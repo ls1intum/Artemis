@@ -111,35 +111,26 @@ export class ResultService implements IResultService {
      * @param short flag that indicates if the resultString should use the short format
      */
     private getResultStringNonProgrammingExerciseWithAIFeedback(result: Result, relativeScore: number, points: number, short: boolean | undefined): string {
+        let aiFeedbackMessage: string;
         if (isAIResultAndFailed(result)) {
-            return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
+            aiFeedbackMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
         } else if (isAIResultAndIsBeingProcessed(result)) {
-            return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+            aiFeedbackMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         } else if (isAIResultAndTimedOut(result)) {
-            return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+            aiFeedbackMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
         } else if (isAIResultAndProcessed(result)) {
             if (short) {
-                return (
-                    this.translateService.instant(`artemisApp.result.resultString.short`, {
-                        relativeScore,
-                    }) +
-                    ' (' +
-                    this.translateService.instant('artemisApp.result.preliminary') +
-                    ')'
-                );
+                aiFeedbackMessage = this.translateService.instant(`artemisApp.result.resultString.short`, {
+                    relativeScore,
+                });
             } else {
-                return (
-                    this.translateService.instant(`artemisApp.result.resultString.nonProgramming`, {
-                        relativeScore,
-                        points,
-                    }) +
-                    ' (' +
-                    this.translateService.instant('artemisApp.result.preliminary') +
-                    ')'
-                );
+                aiFeedbackMessage = this.translateService.instant(`artemisApp.result.resultString.nonProgramming`, {
+                    relativeScore,
+                    points,
+                });
             }
         }
-        return this.translateService.instant('artemisApp.result.preliminary');
+        return aiFeedbackMessage + ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
     }
 
     /**
