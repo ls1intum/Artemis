@@ -287,7 +287,7 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (resultIsPreliminary(result) && !!result.participation?.exercise?.type === ExerciseType.TEXT) {
+    if (resultIsPreliminary(result) && result.participation?.exercise?.type === ExerciseType.TEXT) {
         return faQuestionCircle;
     }
 
