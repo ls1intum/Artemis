@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
@@ -73,15 +72,11 @@ public class LocalCIResultProcessingService {
 
     private IMap<String, BuildAgentInformation> buildAgentInformation;
 
-    // TODO: remove this;
-    private final SharedQueueManagementService sharedQueueManagementService;
-
     private UUID listenerId;
 
     public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
-            SharedQueueManagementService sharedQueueManagementService) {
+            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService) {
         this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
@@ -90,7 +85,6 @@ public class LocalCIResultProcessingService {
         this.buildJobRepository = buildJobRepository;
         this.programmingTriggerService = programmingTriggerService;
         this.buildLogEntryService = buildLogEntryService;
-        this.sharedQueueManagementService = sharedQueueManagementService;
     }
 
     /**
@@ -244,11 +238,6 @@ public class LocalCIResultProcessingService {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
             return buildJobRepository.save(buildJob);
-        }
-        catch (DataIntegrityViolationException e) {
-            SharedQueueManagementService.errorCountSave++;
-            log.error("Could not save build job to database", e);
-            return null;
         }
         catch (Exception e) {
             log.error("Could not save build job to database", e);
