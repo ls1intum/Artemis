@@ -34,9 +34,6 @@ export class LectureUpdateWizardComponent implements OnInit {
         private router: Router,
     ) {}
 
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
     ngOnInit() {
         this.isSaving = false;
 
@@ -81,10 +78,7 @@ export class LectureUpdateWizardComponent implements OnInit {
         return this.currentStep > step;
     }
 
-    /**
-     * Checks if the given step is the current one
-     */
-    isCurrent(step: number) {
+    isCurrentStep(step: number) {
         return this.currentStep === step;
     }
 

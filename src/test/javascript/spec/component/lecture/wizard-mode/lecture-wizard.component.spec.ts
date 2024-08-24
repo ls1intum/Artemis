@@ -175,7 +175,7 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCurrent(2);
+            const result = wizardComponent.isCurrentStep(2);
             expect(result).toBeTrue();
         });
     }));
@@ -185,7 +185,7 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCurrent(1);
+            const result = wizardComponent.isCurrentStep(1);
             expect(result).toBeFalse();
         });
     }));
