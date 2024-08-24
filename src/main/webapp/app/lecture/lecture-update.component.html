@@ -8,8 +8,7 @@
                 [lecture]="lecture"
                 [isSaving]="isSaving"
             />
-        }
-        @if (!isShowingWizardMode) {
+        } @else {
             <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
                 <div class="d-flex">
                     <div class="flex-grow-1">
