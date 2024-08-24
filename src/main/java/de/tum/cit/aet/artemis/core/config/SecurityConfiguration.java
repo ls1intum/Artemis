@@ -55,7 +55,6 @@ import com.webauthn4j.springframework.security.challenge.ChallengeRepository;
 import com.webauthn4j.springframework.security.challenge.HttpSessionChallengeRepository;
 import com.webauthn4j.springframework.security.config.configurers.WebAuthnLoginConfigurer;
 import com.webauthn4j.springframework.security.converter.jackson.WebAuthn4JSpringSecurityJSONModule;
-import com.webauthn4j.springframework.security.credential.InMemoryWebAuthnCredentialRecordManager;
 import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordManager;
 import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordService;
 import com.webauthn4j.springframework.security.options.AssertionOptionsProvider;
@@ -72,6 +71,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.PassKeyCredentialService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -96,17 +96,20 @@ public class SecurityConfiguration {
 
     private final ApplicationContext applicationContext;
 
+    private final PassKeyCredentialService passKeyCredentialService;
+
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
     public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
-            Optional<CustomLti13Configurer> customLti13Configurer, ApplicationContext applicationContext) {
+            Optional<CustomLti13Configurer> customLti13Configurer, ApplicationContext applicationContext, PassKeyCredentialService passKeyCredentialService) {
         this.tokenProvider = tokenProvider;
         this.passwordService = passwordService;
         this.corsFilter = corsFilter;
         this.profileService = profileService;
         this.customLti13Configurer = customLti13Configurer;
         this.applicationContext = applicationContext;
+        this.passKeyCredentialService = passKeyCredentialService;
     }
 
     /**
@@ -338,7 +341,9 @@ public class SecurityConfiguration {
 
     @Bean
     public WebAuthnCredentialRecordManager webAuthnAuthenticatorManager() {
-        return new InMemoryWebAuthnCredentialRecordManager();
+        // TODO: it might be possible to realize this differently, effectively we want to define that
+        // passKeyCredentialService is used as WebAuthnCredentialRecordManager
+        return passKeyCredentialService;
     }
 
     @Bean

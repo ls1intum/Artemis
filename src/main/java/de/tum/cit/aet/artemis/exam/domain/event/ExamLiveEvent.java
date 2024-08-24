@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 @EntityListeners(AuditingEntityListener.class)
 public abstract class ExamLiveEvent extends DomainObject {
 
+    @CreatedBy
     @Column(name = "created_by", nullable = false, length = 50, updatable = false)
     private String createdBy;
 

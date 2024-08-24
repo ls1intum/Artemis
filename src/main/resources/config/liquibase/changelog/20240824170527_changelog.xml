@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240824170527" author="krusche">
+        <!-- Create passkey_credentials table -->
+        <createTable tableName="passkey_credentials">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="credential_id" type="varchar(1023)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="public_key" type="TEXT"/>
+
+            <column name="attestation_type" type="varchar(8)" defaultValue="direct">
+                <constraints nullable="false"/>
+            </column>
+            <column name="aaguid" type="char(36)" defaultValue="00000000-0000-0000-0000-000000000000"/>
+            <column name="signature_count" type="int"/>
+            <column name="last_used_date" type="datetime(3)"/>
+            <column name="created_by" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_date" type="datetime(3)"/>
+            <column name="last_modified_by" type="varchar(45)"/>
+
+            <column name="type" type="varchar(25)"/>
+            <column name="transports" type="enum('usb', 'nfc', 'ble', 'internal', 'hybrid')"/>
+            <column name="backup_eligible" type="boolean" defaultValue="false"/>
+            <column name="backup_state" type="boolean" defaultValue="false"/>
+        </createTable>
+
+        <!-- Create index for userId -->
+        <createIndex indexName="userId_index" tableName="passkey_credentials">
+            <column name="userId"/>
+        </createIndex>
+
+        <!-- Add foreign key constraint for userId referencing jhi_user -->
+        <addForeignKeyConstraint
+                baseTableName="passkey_credentials"
+                baseColumnNames="userId"
+                constraintName="FK_passkey_credentials_userId"
+                referencedTableName="jhi_user"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>
