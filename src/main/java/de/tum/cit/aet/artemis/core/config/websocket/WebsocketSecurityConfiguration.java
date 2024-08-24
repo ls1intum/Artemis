@@ -32,4 +32,5 @@ public class WebsocketSecurityConfiguration {
                 .anyMessage().denyAll();
         return messages.build();
     }
+
 }

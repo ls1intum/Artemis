@@ -5,8 +5,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -26,12 +29,43 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.DefaultHttpSecurityExpressionHandler;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.webauthn4j.WebAuthnManager;
+import com.webauthn4j.converter.util.ObjectConverter;
+import com.webauthn4j.data.AttestationConveyancePreference;
+import com.webauthn4j.data.PublicKeyCredentialParameters;
+import com.webauthn4j.data.PublicKeyCredentialType;
+import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier;
+import com.webauthn4j.metadata.converter.jackson.WebAuthnMetadataJSONModule;
+import com.webauthn4j.springframework.security.WebAuthnAuthenticationProvider;
+import com.webauthn4j.springframework.security.WebAuthnRegistrationRequestValidator;
+import com.webauthn4j.springframework.security.WebAuthnSecurityExpression;
+import com.webauthn4j.springframework.security.challenge.ChallengeRepository;
+import com.webauthn4j.springframework.security.challenge.HttpSessionChallengeRepository;
+import com.webauthn4j.springframework.security.config.configurers.WebAuthnLoginConfigurer;
+import com.webauthn4j.springframework.security.converter.jackson.WebAuthn4JSpringSecurityJSONModule;
+import com.webauthn4j.springframework.security.credential.InMemoryWebAuthnCredentialRecordManager;
+import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordManager;
+import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordService;
+import com.webauthn4j.springframework.security.options.AssertionOptionsProvider;
+import com.webauthn4j.springframework.security.options.AssertionOptionsProviderImpl;
+import com.webauthn4j.springframework.security.options.AttestationOptionsProvider;
+import com.webauthn4j.springframework.security.options.AttestationOptionsProviderImpl;
+import com.webauthn4j.springframework.security.options.RpIdProvider;
+import com.webauthn4j.springframework.security.options.RpIdProviderImpl;
+import com.webauthn4j.springframework.security.server.ServerPropertyProvider;
+import com.webauthn4j.springframework.security.server.ServerPropertyProviderImpl;
 
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -48,6 +82,8 @@ import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
+
     private final TokenProvider tokenProvider;
 
     private final PasswordService passwordService;
@@ -58,16 +94,19 @@ public class SecurityConfiguration {
 
     private final Optional<CustomLti13Configurer> customLti13Configurer;
 
+    private final ApplicationContext applicationContext;
+
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
     public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
-            Optional<CustomLti13Configurer> customLti13Configurer) {
+            Optional<CustomLti13Configurer> customLti13Configurer, ApplicationContext applicationContext) {
         this.tokenProvider = tokenProvider;
         this.passwordService = passwordService;
         this.corsFilter = corsFilter;
         this.profileService = profileService;
         this.customLti13Configurer = customLti13Configurer;
+        this.applicationContext = applicationContext;
     }
 
     /**
@@ -166,6 +205,7 @@ public class SecurityConfiguration {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, SecurityProblemSupport securityProblemSupport) throws Exception {
+
         // @formatter:off
         http
             // Disables CSRF (Cross-Site Request Forgery) protection; useful in stateless APIs where the token management is unnecessary.
@@ -187,7 +227,7 @@ public class SecurityConfiguration {
                 // Disables HTTP Strict Transport Security as it is managed at the reverse proxy level (typically nginx).
                 .httpStrictTransportSecurity((HeadersConfigurer.HstsConfig::disable))
                 // Defines Permissions Policy to restrict what features the browser is allowed to use.
-                .permissionsPolicy(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
+                .permissionsPolicy(config -> config.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=(), publickey-credentials-get *")))
             // Configures sessions to be stateless; appropriate for REST APIs where no session is required.
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // Configures authorization for various URL patterns. The patterns are considered in order.
@@ -204,6 +244,8 @@ public class SecurityConfiguration {
                     .requestMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone).
                     .requestMatchers("/api/public/**").permitAll()
+                    // TODO: can we do this?
+                    .anyRequest().access(getWebExpressionAuthorizationManager("@webAuthnSecurityExpression.isWebAuthnAuthenticated(authentication)"))
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
@@ -220,7 +262,22 @@ public class SecurityConfiguration {
                 }
             )
             // Applies additional configurations defined in a custom security configurer adapter.
-            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
+            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
+            .with(webAuthnLoginConfigurer(), configurer -> {
+                try {
+                    configurer.configure(http);
+                }
+                catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+        // As WebAuthn has its own CSRF protection mechanism (challenge), CSRF token is disabled here
+        http.csrf(csrf -> {
+            csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+            csrf.ignoringRequestMatchers("/webauthn/**");
+        });
+
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
             //.httpBasic(Customizer.withDefaults());
@@ -244,5 +301,107 @@ public class SecurityConfiguration {
      */
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider);
+    }
+
+    private WebAuthnLoginConfigurer<HttpSecurity> webAuthnLoginConfigurer() {
+
+        // TODO: adapt the options for Artemis
+
+        // @formatter:off
+        WebAuthnLoginConfigurer<HttpSecurity> webAuthnLoginConfigurer = new WebAuthnLoginConfigurer<>();
+        webAuthnLoginConfigurer
+            .defaultSuccessUrl("/", true)
+            .failureHandler((request, response, exception) -> {
+                log.error("Login error", exception);
+                response.sendRedirect("/login?error=Login failed: " + exception.getMessage());
+            })
+            .attestationOptionsEndpoint()
+                .rp()
+                .name("Artemis Passkey")
+                .and()
+            .pubKeyCredParams(
+                new PublicKeyCredentialParameters(PublicKeyCredentialType.PUBLIC_KEY, COSEAlgorithmIdentifier.ES256),
+                new PublicKeyCredentialParameters(PublicKeyCredentialType.PUBLIC_KEY, COSEAlgorithmIdentifier.RS256)
+            )
+            .attestation(AttestationConveyancePreference.DIRECT)
+            .extensions()
+                .uvm(true)
+                .credProps(true)
+                .extensionProviders()
+                .and()
+            .assertionOptionsEndpoint()
+                .extensions()
+                .extensionProviders();
+        return webAuthnLoginConfigurer;
+        // @formatter:on
+    }
+
+    @Bean
+    public WebAuthnCredentialRecordManager webAuthnAuthenticatorManager() {
+        return new InMemoryWebAuthnCredentialRecordManager();
+    }
+
+    @Bean
+    public ObjectConverter objectConverter() {
+        var jsonMapper = new ObjectMapper();
+        jsonMapper.registerModule(new WebAuthnMetadataJSONModule());
+        jsonMapper.registerModule(new WebAuthn4JSpringSecurityJSONModule());
+        var cborMapper = new ObjectMapper(new CBORFactory());
+        return new ObjectConverter(jsonMapper, cborMapper);
+    }
+
+    @Bean
+    public WebAuthnManager webAuthnManager(ObjectConverter objectConverter) {
+        return WebAuthnManager.createNonStrictWebAuthnManager(objectConverter);
+    }
+
+    @Bean
+    public WebAuthnSecurityExpression webAuthnSecurityExpression() {
+        return new WebAuthnSecurityExpression();
+    }
+
+    @Bean
+    public ChallengeRepository challengeRepository() {
+        return new HttpSessionChallengeRepository();
+    }
+
+    @Bean
+    public AttestationOptionsProvider attestationOptionsProvider(RpIdProvider rpIdProvider, WebAuthnCredentialRecordService webAuthnAuthenticatorService,
+            ChallengeRepository challengeRepository) {
+        return new AttestationOptionsProviderImpl(rpIdProvider, webAuthnAuthenticatorService, challengeRepository);
+    }
+
+    @Bean
+    public AssertionOptionsProvider assertionOptionsProvider(RpIdProvider rpIdProvider, WebAuthnCredentialRecordService webAuthnAuthenticatorService,
+            ChallengeRepository challengeRepository) {
+        return new AssertionOptionsProviderImpl(rpIdProvider, webAuthnAuthenticatorService, challengeRepository);
+    }
+
+    @Bean
+    public RpIdProvider rpIdProvider() {
+        return new RpIdProviderImpl();
+    }
+
+    @Bean
+    public ServerPropertyProvider serverPropertyProvider(RpIdProvider rpIdProvider, ChallengeRepository challengeRepository) {
+        return new ServerPropertyProviderImpl(rpIdProvider, challengeRepository);
+    }
+
+    @Bean
+    public WebAuthnRegistrationRequestValidator webAuthnRegistrationRequestValidator(WebAuthnManager webAuthnManager, ServerPropertyProvider serverPropertyProvider) {
+        return new WebAuthnRegistrationRequestValidator(webAuthnManager, serverPropertyProvider);
+    }
+
+    @Bean
+    public WebAuthnAuthenticationProvider webAuthnAuthenticationProvider(WebAuthnCredentialRecordService authenticatorService, WebAuthnManager webAuthnManager) {
+        return new WebAuthnAuthenticationProvider(authenticatorService, webAuthnManager);
+    }
+
+    private WebExpressionAuthorizationManager getWebExpressionAuthorizationManager(final String expression) {
+        var expressionHandler = new DefaultHttpSecurityExpressionHandler();
+        expressionHandler.setApplicationContext(applicationContext);
+        var authorizationManager = new WebExpressionAuthorizationManager(expression);
+        authorizationManager.setExpressionHandler(expressionHandler);
+        return authorizationManager;
     }
 }

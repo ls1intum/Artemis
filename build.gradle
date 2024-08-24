@@ -362,6 +362,8 @@ dependencies {
     // Support YML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
 
+    // Support CBOR serialization and deserialization for passkey and webauthn4j
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${fasterxml_version}"
 
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
@@ -411,6 +413,9 @@ dependencies {
     implementation "io.projectreactor.netty:reactor-netty:1.1.22"
     implementation "org.springframework:spring-messaging:6.1.13"
     implementation "org.springframework.retry:spring-retry:2.0.9"
+
+    // passkey functionality to simplify login
+    implementation "com.webauthn4j:webauthn4j-spring-security-core:0.10.0.RELEASE"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
