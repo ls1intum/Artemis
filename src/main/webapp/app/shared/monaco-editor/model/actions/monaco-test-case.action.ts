@@ -74,4 +74,8 @@ export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
         this.replaceTextAtCurrentSelection(editor, args?.selectedItem?.value ?? MonacoTestCaseAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
+
+    getOpeningIdentifier(): string {
+        return '(';
+    }
 }

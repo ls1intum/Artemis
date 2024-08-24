@@ -180,7 +180,7 @@ describe('MonacoEditorActionIntegration', () => {
         const action = new MonacoTaskAction();
         comp.registerAction(action);
         action.executeInCurrentEditor();
-        expect(comp.getText()).toBe(MonacoTaskAction.INSERT_TASK_TEXT);
+        expect(comp.getText()).toBe(`[task]${MonacoTaskAction.TEXT}`);
     });
 
     it('should enter fullscreen', () => {
