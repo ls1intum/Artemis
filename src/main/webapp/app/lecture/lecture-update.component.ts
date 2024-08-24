@@ -22,7 +22,13 @@ import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants'
     styleUrls: ['./lecture-update.component.scss'],
 })
 export class LectureUpdateComponent implements OnInit {
-    readonly documentationType: DocumentationType = 'Lecture';
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faSave = faSave;
+    protected readonly faPuzzleProcess = faPuzzlePiece;
+    protected readonly faBan = faBan;
+    protected readonly faHandShakeAngle = faHandshakeAngle;
+
+    protected readonly documentationType: DocumentationType = 'Lecture';
 
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
 
@@ -39,13 +45,6 @@ export class LectureUpdateComponent implements OnInit {
     file: File;
     fileName: string;
     fileInputTouched = false;
-
-    // Icons
-    faQuestionCircle = faQuestionCircle;
-    faSave = faSave;
-    faPuzzleProcess = faPuzzlePiece;
-    faBan = faBan;
-    faHandShakeAngle = faHandshakeAngle;
 
     // A human-readable list of allowed file extensions
     readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
