@@ -1,10 +1,12 @@
 .markdown-editor-wrapper {
     background-color: var(--md-editor-background);
+    .markdown-editor {
+        border: 1px solid var(--border-color);
+    }
 }
 
 .resize-placeholder {
     border: 1px solid var(--border-color);
-    border-bottom: none;
 }
 
 .file-upload-footer-input {
