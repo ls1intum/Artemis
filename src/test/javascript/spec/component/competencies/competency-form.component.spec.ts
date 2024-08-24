@@ -7,7 +7,7 @@ import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -17,6 +17,8 @@ import { CompetencyFormComponent } from 'app/course/competencies/forms/competenc
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -30,6 +32,10 @@ describe('CompetencyFormComponent', () => {
             declarations: [],
             providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
+            .overrideModule(ArtemisMarkdownEditorModule, {
+                remove: { exports: [MarkdownEditorMonacoComponent] },
+                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
+            })
             .compileComponents()
             .then(() => {
                 competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);

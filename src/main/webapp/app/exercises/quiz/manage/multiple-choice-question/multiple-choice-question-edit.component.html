@@ -94,19 +94,20 @@
         </div>
         <div class="markupEditorArea">
             <div class="question-content">
-                <jhi-markdown-editor
+                <jhi-markdown-editor-monaco
                     #markdownEditor
                     [markdown]="questionEditorText"
                     [showPreviewButton]="true"
-                    [showVisualModeButton]="true"
-                    [domainCommands]="commandMultipleChoiceQuestions"
+                    [showVisualButton]="true"
+                    [domainActions]="multipleChoiceActions"
                     (markdownChange)="changesInMarkdown()"
-                    (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                    (textWithDomainActionsFound)="domainActionsFound($event)"
+                    (onLeaveVisualTab)="onLeaveVisualTab()"
                     [showDefaultPreview]="false"
                     class="h-auto"
                 >
                     <!-- Preview -->
-                    <ng-container id="preview">
+                    <ng-container id="previewMonaco">
                         @if (showMultipleChoiceQuestionPreview) {
                             <jhi-multiple-choice-question [question]="question" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex" />
                         }
@@ -114,13 +115,13 @@
                     </ng-container>
                     <!-- End of Preview-->
                     <!-- Visual -->
-                    <ng-container id="visual" #visual>
+                    <ng-container id="visual">
                         @if (showMultipleChoiceQuestionVisual) {
-                            <jhi-multiple-choice-visual-question [question]="question" (questionChanged)="changesInVisualMode()" />
+                            <jhi-multiple-choice-visual-question #visual [question]="question" (questionChanged)="changesInVisualMode()" />
                         }
                     </ng-container>
                     <!-- End of Visual -->
-                </jhi-markdown-editor>
+                </jhi-markdown-editor-monaco>
             </div>
         </div>
     </div>
