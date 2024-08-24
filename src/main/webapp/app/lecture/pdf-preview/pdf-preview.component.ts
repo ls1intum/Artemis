@@ -143,7 +143,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param pageIndex The index of the page within the PDF document.
      * @returns A configured div element that includes the canvas and interactive overlays.
      */
-    private createContainer(canvas: HTMLCanvasElement, pageIndex: number): HTMLDivElement {
+    createContainer(canvas: HTMLCanvasElement, pageIndex: number): HTMLDivElement {
         const container = document.createElement('div');
         /* Dynamically created elements are not detected by DOM, that is why we need to set the styles manually.
          * See: https://stackoverflow.com/a/70911189

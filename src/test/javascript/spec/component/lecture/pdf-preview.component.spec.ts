@@ -50,6 +50,7 @@ describe('PdfPreviewComponent', () => {
     let mockCanvasElement: HTMLCanvasElement;
     let mockEnlargedCanvas: HTMLCanvasElement;
     let mockContext: any;
+    let mockOverlay: HTMLDivElement;
 
     beforeEach(async () => {
         global.URL.createObjectURL = jest.fn().mockReturnValue('mocked_blob_url');
@@ -110,6 +111,9 @@ describe('PdfPreviewComponent', () => {
             cb(0);
             return 0;
         });
+        mockOverlay = document.createElement('div');
+        mockOverlay.style.opacity = '0';
+        mockCanvasElement.appendChild(mockOverlay);
 
         fixture.detectChanges();
 
@@ -286,10 +290,24 @@ describe('PdfPreviewComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith('next');
     });
 
-    it('should call adjustCanvasSize when window is resized', () => {
+    it('should call updateEnlargedCanvas when window is resized and conditions are met', () => {
+        component.isEnlargedView = true;
+        component.currentPage = 1;
+
+        const canvas = document.createElement('canvas');
+        const pdfContainer = document.createElement('div');
+        pdfContainer.className = 'pdf-page-container';
+        pdfContainer.appendChild(canvas);
+        component.pdfContainer = {
+            nativeElement: pdfContainer,
+        } as ElementRef;
+
+        const updateEnlargedCanvasSpy = jest.spyOn(component, 'updateEnlargedCanvas');
         const adjustCanvasSizeSpy = jest.spyOn(component, 'adjustCanvasSize');
+
         window.dispatchEvent(new Event('resize'));
         expect(adjustCanvasSizeSpy).toHaveBeenCalled();
+        expect(updateEnlargedCanvasSpy).toHaveBeenCalledWith(canvas);
     });
 
     it('should close the enlarged view if click is outside the canvas within the enlarged container', () => {
@@ -367,5 +385,49 @@ describe('PdfPreviewComponent', () => {
         expect(canvasElem.style.left).toBe('250px');
         expect(canvasElem.style.top).toBe('200px');
         expect(parent.style.top).toBe('500px');
+    });
+
+    it('should create a container with correct styles and children', () => {
+        const mockCanvas = document.createElement('canvas');
+        mockCanvas.style.width = '600px';
+        mockCanvas.style.height = '400px';
+
+        const container = component.createContainer(mockCanvas, 1);
+        expect(container.tagName).toBe('DIV');
+        expect(container.classList.contains('pdf-page-container')).toBeTruthy();
+        expect(container.style.position).toBe('relative');
+        expect(container.style.display).toBe('inline-block');
+        expect(container.style.width).toBe('600px');
+        expect(container.style.height).toBe('400px');
+        expect(container.style.margin).toBe('20px');
+        expect(container.children).toHaveLength(2);
+
+        expect(container.firstChild).toBe(mockCanvas);
+    });
+
+    it('should handle mouseenter and mouseleave events correctly', () => {
+        const mockCanvas = document.createElement('canvas');
+        const container = component.createContainer(mockCanvas, 1);
+        const overlay = container.children[1] as HTMLElement;
+
+        // Trigger mouseenter
+        const mouseEnterEvent = new Event('mouseenter');
+        container.dispatchEvent(mouseEnterEvent);
+        expect(overlay.style.opacity).toBe('1');
+
+        // Trigger mouseleave
+        const mouseLeaveEvent = new Event('mouseleave');
+        container.dispatchEvent(mouseLeaveEvent);
+        expect(overlay.style.opacity).toBe('0');
+    });
+
+    it('should handle click event on overlay to trigger displayEnlargedCanvas', () => {
+        jest.spyOn(component, 'displayEnlargedCanvas');
+        const mockCanvas = document.createElement('canvas');
+        const container = component.createContainer(mockCanvas, 1);
+        const overlay = container.children[1];
+
+        overlay.dispatchEvent(new Event('click'));
+        expect(component.displayEnlargedCanvas).toHaveBeenCalledWith(mockCanvas, 1);
     });
 });
