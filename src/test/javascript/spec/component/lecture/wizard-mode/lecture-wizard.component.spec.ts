@@ -120,7 +120,7 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             expect(wizardComponent.currentStep).toBe(1);
-            wizardComponent.next();
+            wizardComponent.progressToNextStep();
             expect(wizardComponent.currentStep).toBe(2);
         });
     }));
@@ -145,46 +145,6 @@ describe('LectureWizardComponent', () => {
             wizardComponent.currentStep = 2;
             wizardComponent.onLectureCreationSucceeded();
             expect(wizardComponent.currentStep).toBe(3);
-        });
-    }));
-
-    it('should return is completed for smaller step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isStepCompleted(1);
-            expect(result).toBeTrue();
-        });
-    }));
-
-    it('should not return is completed for bigger step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isStepCompleted(3);
-            expect(result).toBeFalse();
-        });
-    }));
-
-    it('should return is current for same step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCurrentStep(2);
-            expect(result).toBeTrue();
-        });
-    }));
-
-    it('should not return is current for different step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCurrentStep(1);
-            expect(result).toBeFalse();
         });
     }));
 
