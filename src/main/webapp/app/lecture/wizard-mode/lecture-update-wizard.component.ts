@@ -4,7 +4,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Lecture } from 'app/entities/lecture.model';
 import { faArrowRight, faCheck, faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
-import { LectureUpdateWizardCompetenciesComponent } from 'app/lecture/wizard-mode/lecture-wizard-competencies.component';
 import { take } from 'rxjs/operators';
 
 @Component({
@@ -24,7 +23,11 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() isSaving: boolean;
 
     @ViewChild(LectureUpdateWizardUnitsComponent, { static: false }) unitsComponent: LectureUpdateWizardUnitsComponent;
-    @ViewChild(LectureUpdateWizardCompetenciesComponent, { static: false }) competenciesComponent: LectureUpdateWizardCompetenciesComponent;
+
+    readonly LECTURE_UPDATE_WIZARD_TITLE_STEP = 1;
+    readonly LECTURE_UPDATE_WIZARD_PERIOD_STEP = 2;
+    readonly LECTURE_UPDATE_WIZARD_ATTACHMENT_STEP = 3;
+    readonly LECTURE_UPDATE_WIZARD_UNIT_STEP = 4;
 
     currentStep: number;
 
@@ -41,7 +44,13 @@ export class LectureUpdateWizardComponent implements OnInit {
             if (params.step && !isNaN(+params.step)) {
                 this.currentStep = +params.step;
             } else {
-                this.currentStep = this.lecture.id ? 5 : this.lecture.startDate !== undefined || this.lecture.endDate !== undefined ? 2 : 1;
+                if (this.lecture.id) {
+                    this.currentStep = this.LECTURE_UPDATE_WIZARD_UNIT_STEP;
+                } else if (this.lecture.startDate === undefined && this.lecture.endDate === undefined) {
+                    this.currentStep = this.LECTURE_UPDATE_WIZARD_TITLE_STEP;
+                } else if (!this.lecture.id) {
+                    this.currentStep = this.LECTURE_UPDATE_WIZARD_PERIOD_STEP;
+                }
             }
 
             this.router.navigate([], {
@@ -53,7 +62,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     }
 
     progressToNextStep() {
-        if (this.currentStep === 2 || this.currentStep === 5) {
+        if (this.currentStep === this.LECTURE_UPDATE_WIZARD_PERIOD_STEP || this.currentStep === this.LECTURE_UPDATE_WIZARD_UNIT_STEP) {
             this.saveLectureFunction();
             return;
         }
@@ -68,24 +77,16 @@ export class LectureUpdateWizardComponent implements OnInit {
         this.currentStep++;
     }
 
-    isStepCompleted(step: number) {
-        return this.currentStep > step;
-    }
-
-    isCurrentStep(step: number) {
-        return this.currentStep === step;
-    }
-
     getNextIcon() {
-        return this.currentStep < 5 ? faArrowRight : faCheck;
+        return this.currentStep < this.LECTURE_UPDATE_WIZARD_UNIT_STEP ? faArrowRight : faCheck;
     }
 
     getNextText() {
-        return this.currentStep < 5 ? 'artemisApp.lecture.home.nextStepLabel' : 'entity.action.finish';
+        return this.currentStep < this.LECTURE_UPDATE_WIZARD_UNIT_STEP ? 'artemisApp.lecture.home.nextStepLabel' : 'entity.action.finish';
     }
 
     toggleWizardMode() {
-        if (this.currentStep <= 2) {
+        if (this.currentStep <= this.LECTURE_UPDATE_WIZARD_PERIOD_STEP) {
             this.toggleModeFunction();
         } else {
             this.router.navigate(['course-management', this.lecture.course!.id, 'lectures', this.lecture.id]);
