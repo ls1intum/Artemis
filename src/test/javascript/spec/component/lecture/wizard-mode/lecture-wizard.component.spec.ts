@@ -122,7 +122,7 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             expect(wizardComponent.currentStep).toBe(1);
-            wizardComponent.next();
+            wizardComponent.progressToNextStep();
             expect(wizardComponent.currentStep).toBe(2);
         });
     }));
@@ -135,7 +135,7 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             expect(wizardComponent.currentStep).toBe(5);
-            wizardComponent.next();
+            wizardComponent.progressToNextStep();
             expect(saveStub).toHaveBeenCalledOnce();
         });
     }));
@@ -155,7 +155,7 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCompleted(1);
+            const result = wizardComponent.isStepCompleted(1);
             expect(result).toBeTrue();
         });
     }));
@@ -165,7 +165,7 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCompleted(3);
+            const result = wizardComponent.isStepCompleted(3);
             expect(result).toBeFalse();
         });
     }));
