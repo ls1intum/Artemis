@@ -1,7 +1,7 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from './lecture.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -15,13 +15,18 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
+import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
+import { LectureUpdatePeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
+import { LectureUpdateTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
 
 @Component({
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
 })
-export class LectureUpdateComponent implements OnInit {
+export class LectureUpdateComponent implements OnInit, AfterViewInit, OnDestroy {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
     protected readonly faPuzzleProcess = faPuzzlePiece;
@@ -32,12 +37,18 @@ export class LectureUpdateComponent implements OnInit {
 
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
 
+    @ViewChild(ProgrammingExerciseInformationComponent) lectureTitleComponent?: LectureUpdateTitleComponent;
+    @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdatePeriodComponent;
+
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
     isShowingWizardMode: boolean;
+
+    formStatusSections: FormSectionStatus[];
+    inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
     courses: Course[];
 
@@ -86,6 +97,17 @@ export class LectureUpdateComponent implements OnInit {
                 this.isShowingWizardMode = params.shouldBeInWizardMode;
             }
         });
+    }
+
+    ngAfterViewInit() {
+        this.inputFieldSubscriptions.push(this.lectureTitleComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.lecturePeriodComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+    }
+
+    ngOnDestroy() {
+        for (const subscription of this.inputFieldSubscriptions) {
+            subscription?.unsubscribe();
+        }
     }
 
     /**
@@ -206,5 +228,32 @@ export class LectureUpdateComponent implements OnInit {
         if (visibleDate && startDate?.isBefore(visibleDate)) {
             this.lecture.visibleDate = startDate.clone();
         }
+    }
+
+    calculateFormStatusSections() {
+        this.formStatusSections = [
+            // {
+            //     title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
+            //     valid: this.exerciseInfoComponent?.formValid ?? false,
+            // },
+            // {
+            //     title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
+            //     valid: (this.exerciseDifficultyComponent?.teamConfigComponent.formValid && this.validIdeSelection()) ?? false,
+            // },
+            // {
+            //     title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
+            //     valid: this.exerciseLanguageComponent?.formValid ?? false,
+            // },
+            // {
+            //     title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
+            //     valid: true,
+            //     empty: !this.programmingExercise.problemStatement,
+            // },
+            // {
+            //     title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
+            //     valid: Boolean(this.exerciseGradingComponent?.formValid && (this.isExamMode || this.exercisePlagiarismComponent?.formValid)),
+            //     empty: this.exerciseGradingComponent?.formEmpty,
+            // },
+        ];
     }
 }
