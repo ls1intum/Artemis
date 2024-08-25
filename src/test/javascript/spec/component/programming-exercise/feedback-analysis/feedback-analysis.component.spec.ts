@@ -45,7 +45,7 @@ describe('FeedbackAnalysisComponent', () => {
             expect(component.feedbackDetails).toEqual(feedbackMock);
         });
 
-        it('should not call loadFeedbackDetails if exerciseId is not provided', async () => {
+        it('should not call loadFeedbackDetails if exerciseId is not provided', () => {
             component.exerciseId = undefined;
             component.ngOnInit();
 

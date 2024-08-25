@@ -1213,52 +1213,51 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Get aggregated feedback details for a given exercise, including the count and relative count
-     * of each unique feedback detail text and test case name. The query considers only the latest
-     * result for each student participation when calculating the counts and relative counts, and
-     * excludes participation that are in practice mode (i.e., `testRun` is `TRUE`).
-     *
-     * The relative count is calculated as the percentage of the total number of distinct results
-     * for the exercise, where only the latest automatic result per non-practice participation is considered.
-     * For the task number, a default value is set as it needs to be determined in a separate step.
+     * Retrieves aggregated feedback details for a given exercise, including the count of each unique feedback detail text and test case name.
+     * <br>
+     * The relative count and task number are initially set to 0 and are calculated in a separate step in the service layer.
      *
      * @param exerciseId Exercise ID.
-     * @return a list of FeedbackDetailDTO objects, each containing the feedback count, relative count,
-     *         detail text, test case name, and task number (currently set to 0).
+     * @return a list of {@link FeedbackDetailDTO} objects, with the relative count and task number set to 0.
      */
     @Query("""
-                SELECT new de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO(
-                    COUNT(f.id),
-                    (COUNT(f.id) * 100.0) / ((
-                                SELECT COUNT(DISTINCT r2.id)
-                                FROM StudentParticipation p2
-                                JOIN p2.results r2
-                                WHERE p2.exercise.id = :exerciseId
-                                  AND r2.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
-                                  AND r2.id = (
-                                      SELECT MAX(pr2.id)
-                                      FROM p2.results pr2
-                                      WHERE pr2.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
-                                  )
-                            )),
-                    f.detailText,
-                    tc.testName,
-                    0
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO(
+                COUNT(f.id),
+                0,
+                f.detailText,
+                f.testCase.testName,
+                0
                 )
-                FROM StudentParticipation p
-                JOIN p.results r
-                JOIN r.feedbacks f
-                LEFT JOIN f.testCase tc
-                WHERE p.exercise.id = :exerciseId
-                  AND p.testRun = FALSE
-                  AND r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
-                  AND r.id = (
-                      SELECT MAX(pr.id)
-                      FROM p.results pr
-                      WHERE pr.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
-                  )
-                  AND f.positive = FALSE
-                GROUP BY f.detailText, tc.testName
+            FROM StudentParticipation p
+                 JOIN p.results r
+                 JOIN r.feedbacks f
+                    WHERE p.exercise.id = :exerciseId
+                        AND p.testRun = FALSE
+                        AND r.id = (
+                            SELECT MAX(pr.id)
+                            FROM p.results pr
+                            )
+                        AND f.positive = FALSE
+                        GROUP BY f.detailText, f.testCase.testName
             """)
     List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.
+     *
+     * @param exerciseId Exercise ID.
+     * @return The count of distinct latest results for the exercise.
+     */
+    @Query("""
+                SELECT COUNT(DISTINCT r.id)
+                FROM StudentParticipation p
+                    JOIN p.results r
+                WHERE p.exercise.id = :exerciseId
+                      AND p.testRun = FALSE
+                      AND r.id = (
+                          SELECT MAX(pr.id)
+                          FROM p.results pr
+                      )
+            """)
+    long countDistinctResultsByExerciseId(@Param("exerciseId") long exerciseId);
 }

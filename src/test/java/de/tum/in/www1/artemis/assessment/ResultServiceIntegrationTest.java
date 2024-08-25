@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -729,25 +730,25 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void testGetAllFeedbackDetailsForExercise() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-
         Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        testCase.setId(1L);
 
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
         feedback.setDetailText("Some feedback");
-        feedback.setTestCase(null);
+        feedback.setTestCase(testCase);
         participationUtilService.addFeedbackToResult(feedback, result);
 
         List<FeedbackDetailDTO> response = request.getList("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK, FeedbackDetailDTO.class);
 
         assertThat(response).isNotEmpty();
-
         FeedbackDetailDTO feedbackDetail = response.getFirst();
         assertThat(feedbackDetail.count()).isEqualTo(1);
-        assertThat(feedbackDetail.relativeCount()).isNotNull();
+        assertThat(feedbackDetail.relativeCount()).isEqualTo(100.0);
         assertThat(feedbackDetail.detailText()).isEqualTo("Some feedback");
-        assertThat(feedbackDetail.testCaseName()).isNull();
-        assertThat(feedbackDetail.taskNumber()).isEqualTo(0);
+        assertThat(feedbackDetail.testCaseName()).isEqualTo("test1");
+        assertThat(feedbackDetail.taskNumber()).isEqualTo(1);
     }
 
     @Test

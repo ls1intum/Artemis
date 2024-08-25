@@ -287,7 +287,7 @@ public class ResultResource {
      * @return A ResponseEntity containing a list of FeedbackDetailDTOs, each with aggregated feedback details, including count, relative count,
      *         detail text, test case name, and task number.
      */
-    @GetMapping("/exercises/{exerciseId}/feedback-details")
+    @GetMapping("exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<FeedbackDetailDTO>> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);

@@ -11,8 +11,8 @@ import { AlertService } from 'app/core/util/alert.service';
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent implements OnInit {
-    @Input() exerciseTitle?: string;
-    @Input() exerciseId?: number;
+    @Input() exerciseTitle: string;
+    @Input() exerciseId: number;
     feedbackDetails: FeedbackDetail[] = [];
 
     constructor(

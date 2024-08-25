@@ -1,3 +1,8 @@
+<ng-template #tabTemplate let-type="type" let-translation="translation">
+    <div class="tab-item" (click)="selectTab(type)" [ngClass]="activeTab === type ? 'active' : ''">
+        <b [jhiTranslate]="translation"></b>
+    </div>
+</ng-template>
 <div>
     <div class="d-flex align-content-center mb-2">
         <h3 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.title"></h3>
@@ -25,11 +30,6 @@
                     ></ng-container>
                 }
             </div>
-            <ng-template #tabTemplate let-type="type" let-translation="translation">
-                <div class="tab-item" (click)="selectTab(type)" [ngClass]="activeTab === type ? 'active' : ''">
-                    <b [jhiTranslate]="translation"></b>
-                </div>
-            </ng-template>
             <ng-template>
                 <div></div>
             </ng-template>
@@ -271,7 +271,7 @@
         </div>
         <div class="grading-body-container mt-3">
             @if (programmingExercise.isAtLeastEditor && activeTab === 'feedback-analysis') {
-                <jhi-feedback-analysis [exerciseTitle]="programmingExercise.title" [exerciseId]="programmingExercise.id"></jhi-feedback-analysis>
+                <jhi-feedback-analysis [exerciseTitle]="programmingExercise.title!" [exerciseId]="programmingExercise.id!"></jhi-feedback-analysis>
             }
         </div>
     }

@@ -527,48 +527,31 @@ public class ResultService {
     }
 
     /**
-     * Retrieves aggregated feedback details for a given exercise, assigning task numbers based on the associated test case names.
-     * We add the corresponding task number derived from the task and test case mapping to the feedbackDetailDTOs.
+     * Retrieves aggregated feedback details for a given exercise, calculating relative counts based on the total number of distinct results.
+     * The task numbers are assigned based on the associated test case names, using the set of tasks fetched from the database.
+     * <br>
+     * For each feedback detail:
+     * 1. The relative count is calculated as a percentage of the total number of distinct results for the exercise.
+     * 2. The task number is determined by matching the test case name with the tasks.
      *
-     * @param exerciseId Exercise ID.
-     * @return a list of FeedbackDetailDTO objects, each containing the feedback count, relative count,
-     *         detail text, test case name, and the determined task number.
+     * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
+     * @return A list of FeedbackDetailDTO objects, each containing:
+     *         - feedback count,
+     *         - relative count (as a percentage of distinct results),
+     *         - detail text,
+     *         - test case name,
+     *         - determined task number (based on the test case name).
      */
     public List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(long exerciseId) {
-        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId).stream().toList();
+        long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
+        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
         List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId);
-        List<FeedbackDetailDTO> updatedFeedbackDetails = new ArrayList<>();
 
-        for (FeedbackDetailDTO detail : feedbackDetails) {
-            FeedbackDetailDTO updatedDetail = new FeedbackDetailDTO(detail.count(), detail.relativeCount(), detail.detailText(), detail.testCaseName(),
-                    determineTaskNumber(tasks, detail.testCaseName()));
-            updatedFeedbackDetails.add(updatedDetail);
-        }
-
-        return updatedFeedbackDetails;
+        return feedbackDetails.stream().map(detail -> {
+            double relativeCount = (detail.count() * 100.0) / distinctResultCount;
+            int taskNumber = tasks.stream().filter(task -> task.getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(detail.testCaseName()))).findFirst()
+                    .map(task -> tasks.stream().toList().indexOf(task) + 1).orElse(0);
+            return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber);
+        }).collect(Collectors.toList());
     }
-
-    /**
-     * Determines the task number associated with a given test case name by iterating through the list of tasks.
-     * Each task is assigned a number based on its position in the list. If the test case name is found within a task's test cases,
-     * the corresponding task number is returned. If the test case name is not found, 0 is returned.
-     *
-     * @param tasks        List of ProgrammingExerciseTask objects containing test cases.
-     * @param testCaseName The name of the test case for which the task number is to be determined.
-     * @return the task number associated with the given test case name, or 0 if not found.
-     */
-    private int determineTaskNumber(List<ProgrammingExerciseTask> tasks, String testCaseName) {
-        if (testCaseName == null) {
-            return 0;
-        }
-
-        for (int i = 0; i < tasks.size(); i++) {
-            if (tasks.get(i).getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(testCaseName))) {
-                return i + 1;
-            }
-        }
-
-        return 0;
-    }
-
 }
