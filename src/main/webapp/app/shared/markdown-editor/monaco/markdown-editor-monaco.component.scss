@@ -44,17 +44,6 @@
             border-bottom-right-radius: 0;
         }
 
-        &__file-input {
-            // cannot be set to 'display: false' or similar
-            // input value would not be sent
-            width: 0.1px;
-            height: 0.1px;
-            opacity: 0;
-            overflow: hidden;
-            position: absolute;
-            z-index: -1;
-        }
-
         .rg-bottom {
             align-self: center;
         }
