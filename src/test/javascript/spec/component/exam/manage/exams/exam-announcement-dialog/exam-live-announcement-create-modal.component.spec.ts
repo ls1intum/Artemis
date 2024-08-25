@@ -7,9 +7,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('ExamLiveAnnouncementCreateModalComponent', () => {
     let component: ExamLiveAnnouncementCreateModalComponent;
@@ -19,7 +19,12 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ExamLiveAnnouncementCreateModalComponent, MockComponent(FaIconComponent), MockComponent(MarkdownEditorComponent), MockComponent(ExamLiveEventComponent)],
+            declarations: [
+                ExamLiveAnnouncementCreateModalComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MarkdownEditorMonacoComponent),
+                MockComponent(ExamLiveEventComponent),
+            ],
             providers: [
                 { provide: NgbActiveModal, useValue: { dismiss: jest.fn() } },
                 { provide: ExamManagementService, useValue: { createAnnouncement: jest.fn() } },

@@ -53,6 +53,6 @@ export class FileUploadExerciseCreationPage {
     }
 
     private async typeText(selector: string, text: string) {
-        await this.page.locator(selector).locator('.ace_content').pressSequentially(text);
+        await this.page.locator(selector).locator('.monaco-editor').pressSequentially(text);
     }
 }
