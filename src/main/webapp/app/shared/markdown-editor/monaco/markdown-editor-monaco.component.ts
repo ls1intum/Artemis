@@ -83,7 +83,7 @@ const BORDER_HEIGHT_OFFSET = 2;
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
-    styleUrls: ['./markdown-editor-monaco.component.scss', '../markdown-editor.component.scss'],
+    styleUrls: ['./markdown-editor-monaco.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
