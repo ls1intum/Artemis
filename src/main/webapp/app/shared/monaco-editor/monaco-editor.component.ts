@@ -11,7 +11,9 @@ import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monac
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
+export const MAX_TAB_SIZE = 8;
 type EditorPosition = { row: number; column: number };
+
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
