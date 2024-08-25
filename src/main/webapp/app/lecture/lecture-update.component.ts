@@ -85,7 +85,7 @@ export class LectureUpdateComponent implements OnInit {
                 },
                 {
                     title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
-                    valid: Boolean(this.unitSection()), // TODO retrieve the valid status
+                    valid: Boolean(this.unitSection().isUnitConfigurationValid()),
                 },
             ];
 

@@ -18,6 +18,9 @@ import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./create-exercise-unit.component.scss'],
 })
 export class CreateExerciseUnitComponent implements OnInit {
+    protected readonly faTimes = faTimes;
+    protected readonly faSort = faSort;
+
     @Input()
     hasCancelButton: boolean;
     @Input()
@@ -36,17 +39,12 @@ export class CreateExerciseUnitComponent implements OnInit {
     @Output()
     onExerciseUnitCreated: EventEmitter<any> = new EventEmitter<any>();
 
-    faTimes = faTimes;
-
     predicate = 'type';
     reverse = false;
     isLoading = false;
 
     exercisesAvailableForUnitCreation: Exercise[] = [];
     exercisesToCreateUnitFor: Exercise[] = [];
-
-    // Icons
-    faSort = faSort;
 
     constructor(
         private activatedRoute: ActivatedRoute,
