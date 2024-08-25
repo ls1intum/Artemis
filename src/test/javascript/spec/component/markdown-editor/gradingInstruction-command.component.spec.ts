@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
@@ -20,7 +19,7 @@ describe('Grading Instruction Command', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
+            imports: [ArtemisTestModule, ArtemisMarkdownEditorModule],
             declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(NgModel)],
         })
             .compileComponents()

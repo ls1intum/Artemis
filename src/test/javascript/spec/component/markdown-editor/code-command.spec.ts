@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -14,7 +13,7 @@ describe('CodeCommand', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
+            imports: [ArtemisTestModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()
             .then(() => {
