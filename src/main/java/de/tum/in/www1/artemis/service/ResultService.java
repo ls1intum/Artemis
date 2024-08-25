@@ -543,11 +543,12 @@ public class ResultService {
      *         - determined task number (based on the test case name).
      */
     public List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(long exerciseId) {
+        long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
         Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
         List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId);
 
         return feedbackDetails.stream().map(detail -> {
-            double relativeCount = (detail.count() * 100.0) / feedbackDetails.size();
+            double relativeCount = (detail.count() * 100.0) / distinctResultCount;
             int taskNumber = tasks.stream().filter(task -> task.getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(detail.testCaseName()))).findFirst()
                     .map(task -> tasks.stream().toList().indexOf(task) + 1).orElse(0);
             return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber);

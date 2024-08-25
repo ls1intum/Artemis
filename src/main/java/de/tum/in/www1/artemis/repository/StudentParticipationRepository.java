@@ -1241,4 +1241,23 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         GROUP BY f.detailText, f.testCase.testName
             """)
     List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.
+     *
+     * @param exerciseId Exercise ID.
+     * @return The count of distinct latest results for the exercise.
+     */
+    @Query("""
+                SELECT COUNT(DISTINCT r.id)
+                FROM StudentParticipation p
+                    JOIN p.results r
+                WHERE p.exercise.id = :exerciseId
+                      AND p.testRun = FALSE
+                      AND r.id = (
+                          SELECT MAX(pr.id)
+                          FROM p.results pr
+                      )
+            """)
+    long countDistinctResultsByExerciseId(@Param("exerciseId") long exerciseId);
 }
