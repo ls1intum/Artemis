@@ -37,16 +37,6 @@
         flex-flow: column nowrap;
         flex: 1 1 auto;
         touch-action: none;
-
-        .file-input {
-            border-bottom: 1px dotted var(--md-file-input-border-color);
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-
-        .rg-bottom {
-            align-self: center;
-        }
     }
 }
 
