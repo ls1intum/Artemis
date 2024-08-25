@@ -11,7 +11,4 @@ export class LectureUpdateTitleComponent {
     @Input() lecture: Lecture;
 
     domainActionsDescription = [new MonacoFormulaAction()];
-
-    formValid: boolean;
-    formValidChanges = new Subject<boolean>();
 }

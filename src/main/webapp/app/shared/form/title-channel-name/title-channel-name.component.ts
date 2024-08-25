@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, signal } from '@angular/core';
 import { ControlContainer, NgForm, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 
@@ -26,6 +26,14 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     formValid: boolean;
     formValidChanges = new Subject();
+
+    /**
+     * For now this co-exists with {@link formValid} and {@link formValidChanges}
+     *
+     * When refactoring further components relying on {@link TitleChannelNameComponent} should use the signal instead
+     * and get rid of Subscriptions that Angular can handle for us (refactoring this would require multiple separate PRs)
+     */
+    formValidSignal = signal<boolean>(false);
 
     // subscriptions
     fieldTitleSubscription?: Subscription;
@@ -57,7 +65,10 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     calculateFormValid(): void {
-        this.formValid = Boolean(this.field_title.valid && (this.hideChannelName || this.field_channel_name?.valid));
+        const isFormValid = Boolean(this.field_title.valid && (this.hideChannelName || this.field_channel_name?.valid));
+        this.formValidSignal.set(isFormValid);
+
+        this.formValid = isFormValid;
         this.formValidChanges.next(this.formValid);
     }
 
