@@ -329,7 +329,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
         // In the future, there may be more than one feedback node per line.
         const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-        // The lines are 0-based for Ace, but 1-based for Monaco -> increase by 1 to ensure it works in both editors.
+        // Feedback is stored with 0-based lines, but the lines of Monaco are 1-based. We add 1 to correct this
         this.editor.addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
     }
 
