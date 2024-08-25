@@ -293,5 +293,4 @@ public class ResultResource {
         log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
         return ResponseEntity.ok(resultService.findAggregatedFeedbackByExerciseId(exerciseId));
     }
-
 }
