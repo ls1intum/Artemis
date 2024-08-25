@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.VcsAccessLogService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -60,11 +61,14 @@ public class RepositoryService {
 
     private final ProfileService profileService;
 
+    private final VcsAccessLogService vcsAccessLogService;
+
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, ProfileService profileService) {
+    public RepositoryService(GitService gitService, ProfileService profileService, VcsAccessLogService vcsAccessLogService) {
         this.gitService = gitService;
         this.profileService = profileService;
+        this.vcsAccessLogService = vcsAccessLogService;
     }
 
     /**
@@ -471,9 +475,10 @@ public class RepositoryService {
      * @param user       the user who has committed the changes in the online editor
      * @throws GitAPIException if the staging/committing process fails.
      */
-    public void commitChanges(Repository repository, User user) throws GitAPIException {
+    public void commitChanges(Repository repository, User user, Long domainId) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
+        vcsAccessLogService.storeCodeEditorAccessLog(repository, user, domainId);
     }
 
     /**

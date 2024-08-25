@@ -2,16 +2,20 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.vcstokens.AuthenticationMechanism;
 import de.tum.in.www1.artemis.domain.vcstokens.VcsAccessLog;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.VcsAccessLogRepository;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
@@ -23,8 +27,11 @@ public class VcsAccessLogService {
 
     private final VcsAccessLogRepository vcsAccessLogRepository;
 
-    VcsAccessLogService(VcsAccessLogRepository vcsAccessLogRepository) {
+    private final ParticipationRepository participationRepository;
+
+    VcsAccessLogService(VcsAccessLogRepository vcsAccessLogRepository, ParticipationRepository participationRepository) {
         this.vcsAccessLogRepository = vcsAccessLogRepository;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -55,5 +62,23 @@ public class VcsAccessLogService {
             entry.setCommitHash(commitHash);
             vcsAccessLogRepository.save(entry);
         });
+    }
+
+    /**
+     * Stores the log for a push from the code editor.
+     *
+     * @param repo            The repository to which the push is executed
+     * @param user            The user submitting the change
+     * @param participationId The id of the participation belonging to the repository
+     * @throws GitAPIException if an error occurs while retrieving the git log
+     */
+    public void storeCodeEditorAccessLog(Repository repo, User user, Long participationId) throws GitAPIException {
+        try (Git git = new Git(repo)) {
+            String lastCommitHash = git.log().setMaxCount(1).call().iterator().next().getName();
+            var participation = participationRepository.findById(participationId);
+            if (participation.isPresent() && participation.get() instanceof ProgrammingExerciseParticipation programmingParticipation) {
+                storeAccessLog(user, programmingParticipation, RepositoryActionType.WRITE, AuthenticationMechanism.CODE_EDITOR, lastCommitHash, null);
+            }
+        }
     }
 }

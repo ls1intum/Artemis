@@ -16,5 +16,9 @@ public enum AuthenticationMechanism {
     /**
      * The user used SSH user token to authenticate to the LocalVC
      */
-    SSH
+    SSH,
+    /**
+     * The user used the artemis client code editor to authenticate to the LocalVC
+     */
+    CODE_EDITOR
 }
