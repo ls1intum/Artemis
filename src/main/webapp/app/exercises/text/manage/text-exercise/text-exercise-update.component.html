@@ -33,12 +33,11 @@
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group">
             <label jhiTranslate="artemisApp.exercise.problemStatement" for="problemStatement"></label>
-            <jhi-markdown-editor
+            <jhi-markdown-editor-monaco
                 id="problemStatement"
                 class="markdown-editor"
-                [domainCommands]="domainCommandsProblemStatement"
+                [domainActions]="domainActionsProblemStatement"
                 [(markdown)]="textExercise.problemStatement"
-                [editorMode]="EditorMode.LATEX"
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
@@ -57,12 +56,11 @@
         <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution"></h3>
         <div class="form-group">
             <label jhiTranslate="artemisApp.exercise.exampleSolution" for="exampleSolution"></label>
-            <jhi-markdown-editor
+            <jhi-markdown-editor-monaco
                 id="exampleSolution"
                 class="markdown-editor"
-                [domainCommands]="domainCommandsSampleSolution"
+                [domainActions]="domainActionsExampleSolution"
                 [(markdown)]="textExercise.exampleSolution"
-                [editorMode]="EditorMode.LATEX"
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
