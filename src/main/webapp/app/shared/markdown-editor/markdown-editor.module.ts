@@ -1,6 +1,5 @@
 import { MarkdownEditorComponent } from './markdown-editor.component';
 import { NgModule } from '@angular/core';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { FormsModule } from '@angular/forms';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -12,7 +11,7 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
 import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
-    imports: [ArtemisSharedModule, AceEditorModule, MonacoEditorModule, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule, DragDropModule],
+    imports: [ArtemisSharedModule, MonacoEditorModule, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule, DragDropModule],
     declarations: [MarkdownEditorComponent, MarkdownEditorMonacoComponent, SelectWithSearchComponent],
     exports: [MarkdownEditorComponent, MarkdownEditorMonacoComponent],
 })
