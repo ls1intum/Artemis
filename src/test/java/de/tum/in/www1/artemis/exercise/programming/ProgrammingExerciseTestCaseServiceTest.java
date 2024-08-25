@@ -74,7 +74,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         SecurityUtils.setAuthorizationObject();
         programmingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
+                .orElseThrow();
     }
 
     @Test

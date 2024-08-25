@@ -52,12 +52,12 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
     void setUp() {
         gitlabRequestMockProvider.enableMockingOfRequests();
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "versionControlAccessToken", true);
+        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "useVersionControlAccessToken", true);
     }
 
     @AfterEach
     void teardown() throws Exception {
-        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "versionControlAccessToken", false);
+        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "useVersionControlAccessToken", false);
         gitlabRequestMockProvider.reset();
     }
 

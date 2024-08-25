@@ -310,7 +310,7 @@ public class ProgrammingExerciseSolutionEntryResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<ProgrammingExerciseSolutionEntry>> createBehavioralSolutionEntries(@PathVariable Long exerciseId) {
         log.debug("REST request to create behavioral solution entries");
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
         try {

@@ -308,7 +308,7 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
         programmingExercise.setMaxPoints(i * 10.0);
         programmingExercise.setCompetencies(competencies);
         programmingExercise.setDifficulty(i == 1 ? DifficultyLevel.EASY : i == 2 ? DifficultyLevel.MEDIUM : DifficultyLevel.HARD);
-
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         return programmingExerciseRepository.save(programmingExercise);
     }
 

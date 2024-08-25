@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIResultService;
@@ -57,6 +58,9 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ParticipationRepository participationRepository;
@@ -179,8 +183,9 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTriggerBuildSuccess() throws GitLabApiException {
-        final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        exercise.setBranch("main");
+        final ProgrammingExercise exercise = programmingExerciseRepository.findWithBuildConfigById(programmingExerciseId).orElseThrow();
+        exercise.getBuildConfig().setBranch("main");
+        programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         programmingExerciseRepository.save(exercise);
         final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockTriggerBuild(null);
@@ -210,7 +215,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testConfigureBuildPlanSuccess() throws Exception {
-        final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
+        final ProgrammingExercise exercise = programmingExerciseRepository.findWithBuildConfigById(programmingExerciseId).orElseThrow();
         final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockConfigureBuildPlan(participation, defaultBranch);
         continuousIntegrationService.configureBuildPlan(participation, defaultBranch);
@@ -221,8 +226,9 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testConfigureBuildPlanFails() throws GitLabApiException {
         mockAddBuildPlanToGitLabRepositoryConfiguration(true);
-
+        final ProgrammingExercise exercise = programmingExerciseRepository.findWithBuildConfigById(programmingExerciseId).orElseThrow();
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setProgrammingExercise(exercise);
         participation.setRepositoryUri("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
         assertThatThrownBy(() -> continuousIntegrationService.configureBuildPlan(participation, "main")).isInstanceOf(GitLabCIException.class);
     }
@@ -230,7 +236,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateBuildPlanForExercise() throws GitLabApiException {
-        final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
+        final ProgrammingExercise exercise = programmingExerciseRepository.findWithBuildConfigById(programmingExerciseId).orElseThrow();
         final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri());
         mockAddBuildPlanToGitLabRepositoryConfiguration(false);
