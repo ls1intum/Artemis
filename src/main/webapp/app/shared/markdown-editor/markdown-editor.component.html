@@ -80,9 +80,7 @@
                                 </div>
                             </div>
                         }
-                        @for (command of defaultCommands | typeCheck: InteractiveSearchCommand; track defaultCommands.indexOf(command)) {
-                            <jhi-select-with-search [command]="command" [editorContentString]="editorContentString" />
-                        }
+                        @for (command of defaultCommands | typeCheck: InteractiveSearchCommand; track defaultCommands.indexOf(command)) {}
                         @for (command of defaultCommands | typeCheck: MultiOptionCommand | negatedTypeCheck: InteractiveSearchCommand; track defaultCommands.indexOf(command)) {
                             <div>
                                 <button
