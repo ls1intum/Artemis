@@ -1,4 +1,3 @@
-import { MarkdownEditorComponent } from './markdown-editor.component';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
@@ -12,7 +11,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
     imports: [ArtemisSharedModule, MonacoEditorModule, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule, DragDropModule],
-    declarations: [MarkdownEditorComponent, MarkdownEditorMonacoComponent, SelectWithSearchComponent],
-    exports: [MarkdownEditorComponent, MarkdownEditorMonacoComponent],
+    declarations: [MarkdownEditorMonacoComponent, SelectWithSearchComponent],
+    exports: [MarkdownEditorMonacoComponent],
 })
 export class ArtemisMarkdownEditorModule {}
