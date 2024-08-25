@@ -28,7 +28,7 @@ export const codeEditorTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.codeEditor.monacoEditor.content',
             highlightPadding: 5,
             orientation: Orientation.RIGHT,
-            userInteractionEvent: UserInteractionEvent.ACE_EDITOR,
+            userInteractionEvent: UserInteractionEvent.MONACO_EDITOR,
         }),
         new UserInterActionTourStep({
             highlightSelector: '.guided-tour-save-button',

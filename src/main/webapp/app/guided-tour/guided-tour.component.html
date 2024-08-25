@@ -92,7 +92,7 @@
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK) {
                                             <fa-icon [icon]="faHandPointUp" />
                                         }
-                                        @if (currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR) {
+                                        @if (currentTourStep.userInteractionEvent === UserInteractionEvent.MONACO_EDITOR) {
                                             <fa-icon [icon]="faICursor" />
                                         }
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR) {
@@ -110,7 +110,7 @@
                                     @if (currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK) {
                                         <span [jhiTranslate]="'tour.clickHint.text'"></span>
                                     }
-                                    @if (currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR) {
+                                    @if (currentTourStep.userInteractionEvent === UserInteractionEvent.MONACO_EDITOR) {
                                         <span [jhiTranslate]="'tour.typeHint.text'"></span>
                                     }
                                     @if (currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR) {

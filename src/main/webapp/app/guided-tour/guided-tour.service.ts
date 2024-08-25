@@ -641,7 +641,7 @@ export class GuidedTourService {
                     },
                     false,
                 );
-            } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
+            } else if (userInteraction === UserInteractionEvent.MONACO_EDITOR) {
                 /** We observe any added or removed lines in the .ace_text-layer node and trigger enableNextStepClick() */
                 targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
                 this.observeMutations(targetNode, options)
