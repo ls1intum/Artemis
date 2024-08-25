@@ -40,7 +40,7 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
     exerciseUnitForm = viewChild(CreateExerciseUnitComponent);
 
     isUnitConfigurationValid = computed(() => {
-        return this.textUnitForm()?.isFormValid() && this.videoUnitForm()?.isFormValid() && this.onlineUnitForm()?.isFormValid();
+        return this.textUnitForm()?.isFormValid() && this.videoUnitForm()?.isFormValid() && this.onlineUnitForm()?.isFormValid() && this.attachmentUnitForm()?.isFormValid();
     });
 
     isEditingLectureUnit: boolean;
