@@ -7,7 +7,15 @@
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
             <!--            TODO Translations:-->
-            <input id="import-objects-search" type="search" class="form-control ms-2 rounded" [placeholder]="'Search'" aria-label="Search" [(ngModel)]="searchTerm" />
+            <input
+                id="import-objects-search"
+                type="search"
+                class="form-control ms-2 rounded"
+                [placeholder]="'Search'"
+                aria-label="Search"
+                [(ngModel)]="searchTerm"
+                (ngModelChange)="search()"
+            />
         </div>
     </div>
 </div>
