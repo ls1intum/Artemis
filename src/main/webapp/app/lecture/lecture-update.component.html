@@ -30,12 +30,7 @@
                     <jhi-lecture-title-channel-name [lecture]="lecture" />
                     <div class="form-group" id="field_description">
                         <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
-                        <jhi-markdown-editor
-                            class="markdown-editor"
-                            [domainCommands]="domainCommandsDescription"
-                            [(markdown)]="lecture.description"
-                            [editorMode]="EditorMode.LATEX"
-                        />
+                        <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="lecture.description" />
                     </div>
                     <div class="d-flex">
                         <div class="form-group flex-grow-1">

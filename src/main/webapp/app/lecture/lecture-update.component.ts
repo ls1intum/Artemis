@@ -6,15 +6,14 @@ import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from './lecture.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { Lecture } from 'app/entities/lecture.model';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { Course } from 'app/entities/course.model';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
@@ -40,7 +39,6 @@ export class LectureUpdateComponent implements OnInit, AfterViewInit, OnDestroy 
     @ViewChild(ProgrammingExerciseInformationComponent) lectureTitleComponent?: LectureUpdateTitleComponent;
     @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdatePeriodComponent;
 
-    EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
     isProcessing: boolean;
@@ -52,7 +50,7 @@ export class LectureUpdateComponent implements OnInit, AfterViewInit, OnDestroy 
 
     courses: Course[];
 
-    domainCommandsDescription = [new KatexCommand()];
+    domainActionsDescription = [new MonacoFormulaAction()];
     file: File;
     fileName: string;
     fileInputTouched = false;

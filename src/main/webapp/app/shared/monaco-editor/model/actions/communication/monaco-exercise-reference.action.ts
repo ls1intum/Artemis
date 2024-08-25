@@ -59,4 +59,8 @@ export class MonacoExerciseReferenceAction extends MonacoEditorDomainActionWithO
         super.dispose();
         this.disposableCompletionProvider?.dispose();
     }
+
+    getOpeningIdentifier(): string {
+        return '[exercise]';
+    }
 }
