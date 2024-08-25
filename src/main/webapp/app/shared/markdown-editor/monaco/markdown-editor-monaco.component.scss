@@ -12,6 +12,10 @@
         height: 100%;
     }
 
+    .markdown-editor {
+        border: 1px solid var(--border-color);
+    }
+
     .md-resize-icon {
         color: var(--md-resize-icon-color);
     }
@@ -19,24 +23,9 @@
     .tab-list {
         background: var(--md-tab-list-bg);
     }
-    .tab-content,
-    .tab-content > .active {
-        display: flex;
-        flex-flow: column nowrap;
-        flex: 1 1 auto;
-        height: 100%;
-    }
 
     .no-dropdown-indicator::after {
         display: none;
-    }
-
-    .markdown-editor {
-        border: 1px solid var(--border-color);
-        display: flex;
-        flex-flow: column nowrap;
-        flex: 1 1 auto;
-        touch-action: none;
     }
 }
 
