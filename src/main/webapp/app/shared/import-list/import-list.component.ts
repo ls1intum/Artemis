@@ -1,7 +1,7 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
-import { PageableSearch, SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -47,50 +47,33 @@ export class ImportListComponent<T extends BaseEntity> {
     private readonly searchResult = signal<SearchResult<T> | undefined>(undefined);
     readonly resultsOnPage = computed(() => this.searchResult()?.resultsOnPage ?? []);
 
-    readonly searchTerm = signal<string>('');
     private readonly defaultSortingOrder = SortingOrder.ASCENDING;
-    private readonly searchState = signal<PageableSearch>({
-        page: 1,
-        pageSize: 10,
-        sortingOrder: this.defaultSortingOrder,
-        sortedColumn: 'ID',
-    });
-    readonly sortingOrder = computed(() => this.searchState().sortingOrder!);
-    readonly sortedColumn = computed(() => this.searchState().sortedColumn!);
-    readonly page = computed(() => this.searchState().page!);
-    readonly pageSize = computed(() => this.searchState().pageSize!);
+
+    readonly searchTerm = signal<string>('');
+    readonly sortingOrder = signal<SortingOrder>(this.defaultSortingOrder);
+    readonly sortedColumn = signal<string>('ID');
+    readonly page = signal<number>(1);
+    readonly pageSize = signal<number>(10).asReadonly();
     readonly collectionSize = computed(() => {
         const numberOfPages = this.searchResult()?.numberOfPages ?? 1;
         return numberOfPages === 1 ? this.resultsOnPage().length : numberOfPages * this.pageSize();
     });
 
     constructor() {
-        const debouncedDataLoad = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
-
-        effect(() => {
-            // Debounce loading data whenever search term changes
-            const searchTerm = this.searchTerm();
-            untracked(async () => {
-                if (this.searchResult()) {
-                    debouncedDataLoad(this.searchState(), searchTerm);
-                }
-            });
-        });
-        effect(() => {
-            // Load data whenever search state changes
-            const searchState = this.searchState();
-            untracked(async () => await this.loadData(searchState, this.searchTerm()));
-        });
+        this.loadData();
     }
 
-    private async loadData(searchState: PageableSearch, searchTerm: string): Promise<void> {
+    private async loadData(): Promise<void> {
         try {
             this.isLoading.set(true);
-            const completeSearchState = <SearchTermPageableSearch>{
-                ...searchState,
-                searchTerm,
+            const searchState = <SearchTermPageableSearch>{
+                searchTerm: this.searchTerm(),
+                page: this.page(),
+                sortedColumn: this.sortedColumn(),
+                sortingOrder: this.sortingOrder(),
+                pageSize: this.pageSize(),
             };
-            const result = await lastValueFrom(this.pagingService.search(completeSearchState));
+            const result = await lastValueFrom(this.pagingService.search(searchState));
             const filteredResults = this.filterSearchResult(result);
             this.searchResult.set(filteredResults);
         } catch (error) {
@@ -100,6 +83,11 @@ export class ImportListComponent<T extends BaseEntity> {
         }
     }
 
+    /*
+     * Debounce the data load to prevent unnecessary requests while typing.
+     */
+    private readonly debouncedDataLoad = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
+
     private filterSearchResult(searchResults: SearchResult<T>): SearchResult<T> {
         return <SearchResult<T>>{
             ...searchResults,
@@ -107,20 +95,20 @@ export class ImportListComponent<T extends BaseEntity> {
         };
     }
 
-    protected setSortedColumn(sortedColumn: string): void {
-        this.searchState.update((state) => {
-            let sortingOrder = state.sortingOrder === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING;
-            sortingOrder = state.sortedColumn === sortedColumn ? sortingOrder : this.defaultSortingOrder;
-            return {
-                ...state,
-                sortedColumn: sortedColumn,
-                sortingOrder: sortingOrder,
-            };
-        });
+    protected async setSortedColumn(sortedColumn: string): Promise<void> {
+        const sortingOrder = this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING;
+        this.sortingOrder.set(this.sortedColumn() === sortedColumn ? sortingOrder : this.defaultSortingOrder);
+        this.sortedColumn.set(sortedColumn);
+        await this.loadData();
     }
 
-    protected setPage(page: number): void {
-        this.searchState.update((state) => ({ ...state, page: page }));
+    protected async setPage(page: number): Promise<void> {
+        this.page.set(page);
+        await this.loadData();
+    }
+
+    protected search(): void {
+        this.debouncedDataLoad();
     }
 
     protected selectRow(item: T): void {
