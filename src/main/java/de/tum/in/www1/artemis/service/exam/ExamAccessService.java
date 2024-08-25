@@ -85,8 +85,11 @@ public class ExamAccessService {
         }
         else {
             Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-            // Generate a student exam if the exam is a test exam or if the student is registered for a normal exam
-            if (examWithExerciseGroupsAndExercises.isTestExam() || examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId())) {
+            // An exam can start 5 minutes before the start time, which is when programming exercises are unlocked
+            boolean canExamBeStarted = ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(examWithExerciseGroupsAndExercises));
+
+            // Generate a student exam if the exam is a test exam or if the student is registered for a normal exam and exam can click start button
+            if (examWithExerciseGroupsAndExercises.isTestExam() || (examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId()) && canExamBeStarted)) {
                 studentExam = studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, currentUser);
                 // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
                 studentExam.setExercises(null);
