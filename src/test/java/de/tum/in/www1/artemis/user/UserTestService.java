@@ -140,8 +140,6 @@ public class UserTestService {
     }
 
     public void tearDown() throws IOException {
-        // participationVCSAccessTokenRepository.deleteAll();
-        // var b = participationVCSAccessTokenRepository.findAll();
         userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
     }
 

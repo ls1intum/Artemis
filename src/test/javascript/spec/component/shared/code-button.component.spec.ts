@@ -333,7 +333,7 @@ describe('CodeButtonComponent', () => {
         component.activeParticipation = undefined;
         component.ngOnInit();
 
-        expect(component.isTeamParticipation).toBeFalse();
+        expect(component.isTeamParticipation).toBeFalsy();
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
