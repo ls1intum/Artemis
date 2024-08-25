@@ -2,8 +2,6 @@ import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges,
 import { AlertService } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
-import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
-import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -11,9 +9,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -35,11 +31,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     exerciseTestCases: string[] = [];
 
-    taskCommand = new TaskCommand();
-    taskRegex = this.taskCommand.getTagRegex('g');
-    testCaseCommand = new TestCaseCommand();
-    katexCommand = new KatexCommand();
-    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
+    taskRegex = MonacoTaskAction.GLOBAL_TASK_REGEX;
     testCaseAction = new MonacoTestCaseAction();
     domainActions: MonacoEditorDomainAction[] = [new MonacoFormulaAction(), new MonacoTaskAction(), this.testCaseAction];
 
@@ -84,7 +76,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.unsavedChanges = true;
         }
         this.programmingExercise = exercise;
-        this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand];
         this.exerciseChange.emit(this.programmingExercise);
     }
 
@@ -214,7 +205,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     tap((testCaseNames: string[]) => {
                         this.exerciseTestCases = testCaseNames;
                         const cases = this.exerciseTestCases.map((value) => ({ value, id: value }));
-                        this.testCaseCommand.setValues(cases);
                         this.testCaseAction.setValues(cases);
                     }),
                     catchError(() => of()),
