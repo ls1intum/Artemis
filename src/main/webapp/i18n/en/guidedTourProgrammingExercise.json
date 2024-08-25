@@ -10,7 +10,7 @@
                     "headline": "Class file",
                     "content": "Click on the class file to display its source code in the editor."
                 },
-                "aceEditor": {
+                "monacoEditor": {
                     "headline": "Code editor",
                     "content": "The source code is now displayed in the code editor. You can read through the <tt>TODO</tt> and try to solve it. Alternatively, you can enter any code for this test round. If you are done with your implementation, just click on the <tt>Next</tt> button to proceed."
                 },
