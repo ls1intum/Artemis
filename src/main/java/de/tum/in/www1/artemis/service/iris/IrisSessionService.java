@@ -10,13 +10,11 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatBasedFeatureInterface;
 import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisRateLimitedFeatureInterface;
 import de.tum.in.www1.artemis.service.iris.session.IrisSubFeatureInterface;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -34,14 +32,11 @@ public class IrisSessionService {
 
     private final IrisCourseChatSessionService irisCourseChatSessionService;
 
-    private final IrisHestiaSessionService irisHestiaSessionService;
-
     public IrisSessionService(UserRepository userRepository, IrisExerciseChatSessionService irisExerciseChatSessionService,
-            IrisCourseChatSessionService irisCourseChatSessionService, IrisHestiaSessionService irisHestiaSessionService) {
+            IrisCourseChatSessionService irisCourseChatSessionService) {
         this.userRepository = userRepository;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisCourseChatSessionService = irisCourseChatSessionService;
-        this.irisHestiaSessionService = irisHestiaSessionService;
     }
 
     /**
@@ -136,7 +131,6 @@ public class IrisSessionService {
         return switch (session) {
             case IrisExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
             case IrisCourseChatSession courseChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCourseChatSessionService, courseChatSession);
-            case IrisHestiaSession hestiaSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, hestiaSession);
             case null, default -> throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
         };
     }

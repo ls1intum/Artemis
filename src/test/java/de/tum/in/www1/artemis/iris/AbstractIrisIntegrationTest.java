@@ -20,21 +20,16 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisTemplateRepository;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     protected IrisSettingsService irisSettingsService;
-
-    @Autowired
-    protected IrisTemplateRepository irisTemplateRepository;
 
     @Autowired
     @Qualifier("irisRequestMockProvider")
@@ -64,7 +59,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected void activateIrisGlobally() {
         var globalSettings = irisSettingsService.getGlobalSettings();
         activateSubSettings(globalSettings.getIrisChatSettings());
-        activateSubSettings(globalSettings.getIrisHestiaSettings());
         activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
         irisSettingsRepository.save(globalSettings);
@@ -77,21 +71,16 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     private void activateSubSettings(IrisSubSettings settings) {
         settings.setEnabled(true);
-        settings.setPreferredModel(null);
-        settings.setAllowedModels(new TreeSet<>(Set.of("dummy")));
+        settings.setSelectedVariant("default");
+        settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
     }
 
     protected void activateIrisFor(Course course) {
         var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
 
         activateSubSettings(courseSettings.getIrisChatSettings());
-        courseSettings.getIrisChatSettings().setTemplate(createDummyTemplate());
-
-        activateSubSettings(courseSettings.getIrisHestiaSettings());
-        courseSettings.getIrisHestiaSettings().setTemplate(createDummyTemplate());
 
         activateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
-        courseSettings.getIrisCompetencyGenerationSettings().setTemplate(createDummyTemplate());
 
         activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
 
@@ -101,12 +90,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected void activateIrisFor(ProgrammingExercise exercise) {
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
         activateSubSettings(exerciseSettings.getIrisChatSettings());
-        exerciseSettings.getIrisChatSettings().setTemplate(createDummyTemplate());
         irisSettingsRepository.save(exerciseSettings);
-    }
-
-    protected IrisTemplate createDummyTemplate() {
-        return new IrisTemplate("Hello World");
     }
 
     /**

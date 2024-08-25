@@ -3,7 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { IrisModel } from 'app/entities/iris/settings/iris-model';
+import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 /**
  * Service for calling the Iris settings endpoints on the server
@@ -90,9 +91,11 @@ export class IrisSettingsService {
     }
 
     /**
-     * Get the global Iris settings
+     * Get the available variants for a feature
      */
-    getIrisModels(): Observable<IrisModel[] | undefined> {
-        return this.http.get<IrisModel[]>(`${this.resourceUrl}/iris/models`, { observe: 'response' }).pipe(map((res: HttpResponse<IrisModel[]>) => res.body ?? []));
+    getVariantsForFeature(feature: IrisSubSettingsType): Observable<IrisVariant[] | undefined> {
+        return this.http
+            .get<IrisVariant[]>(`${this.resourceUrl}/iris/variants/${feature}`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<IrisVariant[]>) => res.body ?? []));
     }
 }

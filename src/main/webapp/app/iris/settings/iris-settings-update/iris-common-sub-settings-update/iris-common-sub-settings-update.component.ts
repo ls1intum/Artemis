@@ -1,10 +1,11 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
-import { IrisModel } from 'app/entities/iris/settings/iris-model';
+import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 
 @Component({
     selector: 'jhi-iris-common-sub-settings-update',
@@ -18,9 +19,6 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     parentSubSettings?: IrisSubSettings;
 
     @Input()
-    allIrisModels: IrisModel[];
-
-    @Input()
     settingsType: IrisSettingsType;
 
     @Output()
@@ -28,9 +26,11 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     isAdmin: boolean;
 
-    inheritAllowedModels: boolean;
+    inheritAllowedVariants: boolean;
 
-    allowedIrisModels: IrisModel[];
+    availableVariants: IrisVariant[] = [];
+
+    allowedVariants: IrisVariant[] = [];
 
     enabled: boolean;
 
@@ -42,49 +42,62 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     // Icons
     faTrash = faTrash;
 
-    constructor(accountService: AccountService) {
+    constructor(
+        accountService: AccountService,
+        private irisSettingsService: IrisSettingsService,
+    ) {
         this.isAdmin = accountService.isAdmin();
     }
 
     ngOnInit() {
         this.enabled = this.subSettings?.enabled ?? false;
-        this.allowedIrisModels = this.getAvailableModels();
-        this.inheritAllowedModels = !!(!this.subSettings?.allowedModels && this.parentSubSettings);
+        this.loadVariants();
+        this.inheritAllowedVariants = !!(!this.subSettings?.allowedVariants && this.parentSubSettings);
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.allIrisModels) {
-            this.allowedIrisModels = this.getAvailableModels();
+        if (changes.availableVariants) {
+            this.allowedVariants = this.getAllowedVariants();
         }
         if (changes.subSettings) {
             this.enabled = this.subSettings?.enabled ?? false;
         }
     }
 
-    getAvailableModels(): IrisModel[] {
-        return this.allIrisModels.filter((model) => (this.subSettings?.allowedModels ?? this.parentSubSettings?.allowedModels ?? []).includes(model.id));
-    }
-
-    getPreferredModelName(): string | undefined {
-        return this.allIrisModels.find((model) => model.id === this.subSettings?.preferredModel)?.name ?? this.subSettings?.preferredModel;
-    }
-
-    getPreferredModelNameParent(): string | undefined {
-        return this.allIrisModels.find((model) => model.id === this.parentSubSettings?.preferredModel)?.name ?? this.parentSubSettings?.preferredModel;
-    }
-
-    onAllowedIrisModelsSelectionChange(model: IrisModel) {
-        this.inheritAllowedModels = false;
-        if (this.allowedIrisModels.includes(model)) {
-            this.allowedIrisModels = this.allowedIrisModels.filter((m) => m !== model);
-        } else {
-            this.allowedIrisModels.push(model);
+    loadVariants(): void {
+        if (!this.subSettings?.type) {
+            return;
         }
-        this.subSettings!.allowedModels = this.allowedIrisModels.map((model) => model.id);
+        this.irisSettingsService.getVariantsForFeature(this.subSettings?.type).subscribe((variants) => {
+            this.availableVariants = variants ?? this.availableVariants;
+            this.allowedVariants = this.getAllowedVariants();
+        });
     }
 
-    setModel(model: IrisModel | undefined) {
-        this.subSettings!.preferredModel = model?.id;
+    getAllowedVariants(): IrisVariant[] {
+        return this.availableVariants.filter((variant) => (this.subSettings?.allowedVariants ?? this.parentSubSettings?.allowedVariants ?? []).includes(variant.id));
+    }
+
+    getSelectedVariantName(): string | undefined {
+        return this.availableVariants.find((variant) => variant.id === this.subSettings?.selectedVariant)?.name ?? this.subSettings?.selectedVariant;
+    }
+
+    getSelectedVariantNameParent(): string | undefined {
+        return this.availableVariants.find((variant) => variant.id === this.parentSubSettings?.selectedVariant)?.name ?? this.parentSubSettings?.selectedVariant;
+    }
+
+    onAllowedIrisVariantsSelectionChange(variant: IrisVariant) {
+        this.inheritAllowedVariants = false;
+        if (this.allowedVariants.map((variant) => variant.id).includes(variant.id)) {
+            this.allowedVariants = this.allowedVariants.filter((m) => m.id !== variant.id);
+        } else {
+            this.allowedVariants.push(variant);
+        }
+        this.subSettings!.allowedVariants = this.allowedVariants.map((variant) => variant.id);
+    }
+
+    setVariant(variant: IrisVariant | undefined) {
+        this.subSettings!.selectedVariant = variant?.id;
     }
 
     onEnabledChange() {
@@ -101,12 +114,12 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         this.onEnabledChange();
     }
 
-    onInheritAllowedModelsChange() {
-        if (this.inheritAllowedModels) {
-            this.subSettings!.allowedModels = undefined;
-            this.allowedIrisModels = this.getAvailableModels();
+    onInheritAllowedVariantsChange() {
+        if (this.inheritAllowedVariants) {
+            this.subSettings!.allowedVariants = undefined;
+            this.allowedVariants = this.getAllowedVariants();
         } else {
-            this.subSettings!.allowedModels = this.allowedIrisModels.map((model) => model.id);
+            this.subSettings!.allowedVariants = this.allowedVariants.map((variant) => variant.id);
         }
     }
 

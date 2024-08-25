@@ -6,15 +6,9 @@ import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
-import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
-import {
-    IrisChatSubSettings,
-    IrisCompetencyGenerationSubSettings,
-    IrisHestiaSubSettings,
-    IrisLectureIngestionSubSettings,
-} from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisChatSubSettings, IrisCompetencyGenerationSubSettings, IrisLectureIngestionSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -30,7 +24,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     public exerciseId?: number;
     public irisSettings?: IrisSettings;
     public parentIrisSettings?: IrisSettings;
-    public allIrisModels?: IrisModel[];
 
     originalIrisSettings?: IrisSettings;
 
@@ -77,13 +70,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         return !this.isDirty;
     }
 
-    loadIrisModels(): void {
-        this.irisSettingsService.getIrisModels().subscribe((models) => {
-            this.allIrisModels = models;
-            this.isLoading = false;
-        });
-    }
-
     loadIrisSettings(): void {
         this.isLoading = true;
         this.loadIrisSettingsObservable().subscribe((settings) => {
@@ -115,9 +101,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
         if (!this.irisSettings.irisLectureIngestionSettings) {
             this.irisSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
-        }
-        if (!this.irisSettings.irisHestiaSettings) {
-            this.irisSettings.irisHestiaSettings = new IrisHestiaSubSettings();
         }
         if (!this.irisSettings.irisCompetencyGenerationSettings) {
             this.irisSettings.irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();

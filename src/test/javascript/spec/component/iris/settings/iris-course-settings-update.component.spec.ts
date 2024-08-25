@@ -6,7 +6,6 @@ import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
-import { IrisGlobalAutoupdateSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
 import { mockEmptySettings, mockSettings } from './mock-settings';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -24,7 +23,6 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
     const route = { parent: { params: routeParamsSubject.asObservable() } } as ActivatedRoute;
     let paramsSpy: jest.SpyInstance;
     let getSettingsSpy: jest.SpyInstance;
-    //let getModelsSpy: jest.SpyInstance;
     let getParentSettingsSpy: jest.SpyInstance;
 
     beforeEach(() => {
@@ -34,7 +32,6 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
                 IrisCourseSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
                 MockComponent(IrisCommonSubSettingsUpdateComponent),
-                MockComponent(IrisGlobalAutoupdateSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
             ],
@@ -50,7 +47,6 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
 
                 const irisSettings = mockSettings();
                 getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));
-                //getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(mockModels()));
                 getParentSettingsSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings').mockReturnValue(of(irisSettings));
             });
         fixture = TestBed.createComponent(IrisCourseSettingsUpdateComponent);
@@ -67,11 +63,9 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(comp.courseId).toBe(1);
         expect(comp.settingsUpdateComponent).toBeTruthy();
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
-        //expect(getModelsSpy).toHaveBeenCalledOnce();
         expect(getParentSettingsSpy).toHaveBeenCalledOnce();
 
-        expect(fixture.debugElement.query(By.directive(IrisGlobalAutoupdateSettingsUpdateComponent))).toBeFalsy();
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(4);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(3);
     });
 
     it('Can deactivate correctly', () => {
@@ -100,7 +94,6 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         comp.settingsUpdateComponent!.fillEmptyIrisSubSettings();
         expect(comp.settingsUpdateComponent!.irisSettings.irisChatSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisLectureIngestionSettings).toBeTruthy();
-        expect(comp.settingsUpdateComponent!.irisSettings.irisHestiaSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisCompetencyGenerationSettings).toBeTruthy();
     });
 });

@@ -17,7 +17,8 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisVariantDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
@@ -48,13 +49,14 @@ public class PyrisConnectorService {
     }
 
     /**
-     * Requests all available models from Pyris
+     * Requests all available variants from Pyris for a feature
      *
-     * @return A list of available Models as IrisModelDTO
+     * @param feature The feature to get the variants for
+     * @return A list of available Models as IrisVariantDTO
      */
-    public List<PyrisModelDTO> getOfferedModels() throws PyrisConnectorException {
+    public List<PyrisVariantDTO> getOfferedVariants(IrisSubSettingsType feature) throws PyrisConnectorException {
         try {
-            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/models", PyrisModelDTO[].class);
+            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/pipelines/" + feature.name() + "/variants", PyrisVariantDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 throw new PyrisConnectorException("Could not fetch offered models");
             }

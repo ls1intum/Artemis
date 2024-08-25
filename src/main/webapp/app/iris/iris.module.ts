@@ -14,7 +14,6 @@ import { IrisCommonSubSettingsUpdateComponent } from './settings/iris-settings-u
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
 import { IrisLogoComponent } from './iris-logo/iris-logo.component';
-import { IrisGlobalAutoupdateSettingsUpdateComponent } from './settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
@@ -36,7 +35,6 @@ import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.c
         IrisExerciseSettingsUpdateComponent,
         IrisCommonSubSettingsUpdateComponent,
         IrisLogoComponent,
-        IrisGlobalAutoupdateSettingsUpdateComponent,
         IrisEnabledComponent,
         ChatStatusBarComponent,
         IrisLogoButtonComponent,

@@ -295,7 +295,7 @@ Best Practices
         // IrisSubSettings.java
         @Column(name = "allowed_models")
         @Convert(converter = IrisModelListConverter.class)
-        private TreeSet<String> allowedModels = new TreeSet<>();
+        private TreeSet<String> allowedVariants = new TreeSet<>();
 
 
   * **Ordered Collection with duplicates**: When you want to order the collection of (potentially duplicated) objects of the relationship, then always use a ``List``. It is important to note here that there is no inherent order in a database table. One could argue that you can use the ``id`` field for the ordering, but there are edge cases where this can lead to problems. Therefore, for an ordered collection with duplicates, **always** annotate it with ``@OrderColumn``. An order column indicates to Hibernate that we want to order our collection based on a specific column of our data table. By default, the column name it expects is *tablenameS\_order*. For ordered collections, we also recommend that you annotate them with ``cascade = CascadeType.ALL`` and ``orphanRemoval = true``. E.g.:
