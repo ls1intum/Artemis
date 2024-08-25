@@ -34,22 +34,6 @@ import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/co
 import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
-export enum EditorMode {
-    NONE = 'none',
-    LATEX = 'latex',
-}
-
-const getAceMode = (mode: EditorMode) => {
-    switch (mode) {
-        case EditorMode.LATEX:
-            return 'ace/mode/latex';
-        case EditorMode.NONE:
-            return null;
-        default:
-            return null;
-    }
-};
-
 @Component({
     selector: 'jhi-markdown-editor',
     templateUrl: './markdown-editor.component.html',
@@ -67,7 +51,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
     @Input() markdown?: string;
-    @Input() editorMode = EditorMode.NONE;
     @Input() showLineNumbers = false;
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<SafeHtml | null>();

@@ -5,7 +5,6 @@ import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { cloneDeep } from 'lodash-es';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -24,7 +23,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     @Output() questionMoveUp = new EventEmitter<object>();
     @Output() questionMoveDown = new EventEmitter<object>();
 
-    editorMode = EditorMode.NONE;
     markdownMap: Map<number, string>;
     questionText: string;
 
