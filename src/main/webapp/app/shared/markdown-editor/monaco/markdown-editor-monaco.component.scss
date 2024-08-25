@@ -63,44 +63,6 @@
             z-index: -1;
         }
 
-        &__file-input:focus,
-        &__file-label:focus {
-            outline: 1px dotted #000;
-            outline: -webkit-focus-ring-color auto 5px;
-        }
-
-        &__file-label {
-            cursor: pointer;
-            width: 100%;
-            border: 1px solid var(--border-color);
-            border-top: none;
-            border-radius: 0 0.15em 0.15em 0;
-
-            .upload-subtitle {
-                font-size: 12px;
-                color: var(--bs-secondary);
-            }
-        }
-
-        &__markdown {
-            height: inherit;
-            overflow: auto;
-            padding: 1rem;
-        }
-
-        &__commands {
-            &-default,
-            &-domain {
-                display: flex;
-                flex-flow: row wrap;
-                align-items: center;
-            }
-
-            .mat-mdc-button {
-                height: fit-content;
-            }
-        }
-
         .rg-bottom {
             align-self: center;
         }
@@ -151,13 +113,6 @@
     li {
         position: relative;
     }
-}
-
-.nested {
-    padding-left: 30px;
-}
-.nested-slide {
-    padding-left: 50px;
 }
 
 .default-font-size {
