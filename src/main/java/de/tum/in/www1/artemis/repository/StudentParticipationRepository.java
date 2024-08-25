@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.participation.IdToPresentationScoreSum;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -1210,4 +1211,54 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.presentationScore IS NOT NULL
             """)
     double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Get aggregated feedback details for a given exercise, including the count and relative count
+     * of each unique feedback detail text and test case name. The query considers only the latest
+     * result for each student participation when calculating the counts and relative counts, and
+     * excludes participation that are in practice mode (i.e., `testRun` is `TRUE`).
+     *
+     * The relative count is calculated as the percentage of the total number of distinct results
+     * for the exercise, where only the latest automatic result per non-practice participation is considered.
+     * For the task number, a default value is set as it needs to be determined in a separate step.
+     *
+     * @param exerciseId Exercise ID.
+     * @return a list of FeedbackDetailDTO objects, each containing the feedback count, relative count,
+     *         detail text, test case name, and task number (currently set to 0).
+     */
+    @Query("""
+                SELECT new de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO(
+                    COUNT(f.id),
+                    (COUNT(f.id) * 100.0) / ((
+                                SELECT COUNT(DISTINCT r2.id)
+                                FROM StudentParticipation p2
+                                JOIN p2.results r2
+                                WHERE p2.exercise.id = :exerciseId
+                                  AND r2.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                                  AND r2.id = (
+                                      SELECT MAX(pr2.id)
+                                      FROM p2.results pr2
+                                      WHERE pr2.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                                  )
+                            )),
+                    f.detailText,
+                    tc.testName,
+                    0
+                )
+                FROM StudentParticipation p
+                JOIN p.results r
+                JOIN r.feedbacks f
+                LEFT JOIN f.testCase tc
+                WHERE p.exercise.id = :exerciseId
+                  AND p.testRun = FALSE
+                  AND r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                  AND r.id = (
+                      SELECT MAX(pr.id)
+                      FROM p.results pr
+                      WHERE pr.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                  )
+                  AND f.positive = false
+                GROUP BY f.detailText, tc.testName
+            """)
+    List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId);
 }

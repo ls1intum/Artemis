@@ -5,23 +5,31 @@
     @if (!isLoading) {
         <div class="top-bar">
             <div class="d-flex align-items-center">
-                <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab === 'test-cases' ? 'active' : ''">
-                    <b jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.title"></b>
-                </div>
+                <ng-container
+                    *ngTemplateOutlet="tabTemplate; context: { type: 'test-cases', translation: 'artemisApp.programmingExercise.configureGrading.testCases.title' }"
+                ></ng-container>
                 @if (programmingExercise.staticCodeAnalysisEnabled) {
-                    <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab === 'code-analysis' ? 'active' : ''">
-                        <b jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.titleHeader"></b>
-                    </div>
+                    <ng-container
+                        *ngTemplateOutlet="tabTemplate; context: { type: 'code-analysis', translation: 'artemisApp.programmingExercise.configureGrading.categories.titleHeader' }"
+                    ></ng-container>
                 }
-                <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab === 'submission-policy' ? 'active' : ''">
-                    <b jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title"></b>
-                </div>
+                <ng-container
+                    *ngTemplateOutlet="tabTemplate; context: { type: 'submission-policy', translation: 'artemisApp.programmingExercise.submissionPolicy.title' }"
+                ></ng-container>
                 @if (programmingExercise.isAtLeastEditor) {
-                    <div class="tab-item" (click)="selectTab('feedback-analysis')" [ngClass]="activeTab === 'feedback-analysis' ? 'active' : ''">
-                        <b jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.titleHeader"></b>
-                    </div>
+                    <ng-container
+                        *ngTemplateOutlet="
+                            tabTemplate;
+                            context: { type: 'feedback-analysis', translation: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.titleHeader' }
+                        "
+                    ></ng-container>
                 }
             </div>
+            <ng-template #tabTemplate let-type="type" let-translation="translation">
+                <div class="tab-item" (click)="selectTab(type)" [ngClass]="activeTab === type ? 'active' : ''">
+                    <b [jhiTranslate]="translation"></b>
+                </div>
+            </ng-template>
             <ng-template>
                 <div></div>
             </ng-template>

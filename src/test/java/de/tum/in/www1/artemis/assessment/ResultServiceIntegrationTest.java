@@ -73,7 +73,6 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
-import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailsWithResultIdsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -739,27 +738,25 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback.setTestCase(null);
         participationUtilService.addFeedbackToResult(feedback, result);
 
-        FeedbackDetailsWithResultIdsDTO response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
-                FeedbackDetailsWithResultIdsDTO.class);
+        List<FeedbackDetailDTO> response = request.getList("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK, FeedbackDetailDTO.class);
 
-        assertThat(response.feedbackDetails()).isNotEmpty();
-        assertThat(response.resultIds()).containsExactly(result.getId());
+        assertThat(response).isNotEmpty();
 
-        FeedbackDetailDTO feedbackDetail = response.feedbackDetails().get(0);
+        FeedbackDetailDTO feedbackDetail = response.getFirst();
+        assertThat(feedbackDetail.count()).isEqualTo(1);
+        assertThat(feedbackDetail.relativeCount()).isNotNull();
         assertThat(feedbackDetail.detailText()).isEqualTo("Some feedback");
-        assertThat(feedbackDetail.testCaseName()).isNull();  // Test case name should be null since no test case was linked
+        assertThat(feedbackDetail.testCaseName()).isNull();
+        assertThat(feedbackDetail.taskNumber()).isEqualTo(0);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllFeedbackDetailsForExercise_NoParticipations() throws Exception {
+    void testGetAllFeedbackDetailsForExercise_NoParticipation() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        List<FeedbackDetailDTO> response = request.getList("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK, FeedbackDetailDTO.class);
 
-        FeedbackDetailsWithResultIdsDTO response = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK,
-                FeedbackDetailsWithResultIdsDTO.class);
-
-        assertThat(response.feedbackDetails()).isNull();
-        assertThat(response.resultIds()).isNull();
+        assertThat(response).isEmpty();
     }
 
 }

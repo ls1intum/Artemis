@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -49,11 +50,15 @@ import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
+import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
@@ -99,6 +104,10 @@ public class ResultService {
 
     private final BuildLogEntryService buildLogEntryService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
@@ -106,7 +115,8 @@ public class ResultService {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
-            BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService) {
+            BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -125,6 +135,8 @@ public class ResultService {
         this.studentExamRepository = studentExamRepository;
         this.buildJobRepository = buildJobRepository;
         this.buildLogEntryService = buildLogEntryService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
     }
 
     /**
@@ -513,4 +525,50 @@ public class ResultService {
             return result;
         }
     }
+
+    /**
+     * Retrieves aggregated feedback details for a given exercise, assigning task numbers based on the associated test case names.
+     * We add the corresponding task number derived from the task and test case mapping to the feedbackDetailDTOs.
+     *
+     * @param exerciseId Exercise ID.
+     * @return a list of FeedbackDetailDTO objects, each containing the feedback count, relative count,
+     *         detail text, test case name, and the determined task number.
+     */
+    public List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(long exerciseId) {
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId).stream().toList();
+        List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId);
+        List<FeedbackDetailDTO> updatedFeedbackDetails = new ArrayList<>();
+
+        for (FeedbackDetailDTO detail : feedbackDetails) {
+            FeedbackDetailDTO updatedDetail = new FeedbackDetailDTO(detail.count(), detail.relativeCount(), detail.detailText(), detail.testCaseName(),
+                    determineTaskNumber(tasks, detail.testCaseName()));
+            updatedFeedbackDetails.add(updatedDetail);
+        }
+
+        return updatedFeedbackDetails;
+    }
+
+    /**
+     * Determines the task number associated with a given test case name by iterating through the list of tasks.
+     * Each task is assigned a number based on its position in the list. If the test case name is found within a task's test cases,
+     * the corresponding task number is returned. If the test case name is not found, 0 is returned.
+     *
+     * @param tasks        List of ProgrammingExerciseTask objects containing test cases.
+     * @param testCaseName The name of the test case for which the task number is to be determined.
+     * @return the task number associated with the given test case name, or 0 if not found.
+     */
+    private int determineTaskNumber(List<ProgrammingExerciseTask> tasks, String testCaseName) {
+        if (testCaseName == null) {
+            return 0;
+        }
+
+        for (int i = 0; i < tasks.size(); i++) {
+            if (tasks.get(i).getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(testCaseName))) {
+                return i + 1;
+            }
+        }
+
+        return 0;
+    }
+
 }

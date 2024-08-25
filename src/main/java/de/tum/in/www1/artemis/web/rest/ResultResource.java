@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,7 +53,6 @@ import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
-import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailsWithResultIdsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -282,37 +280,18 @@ public class ResultResource {
     }
 
     /**
-     * GET exercises/:exerciseId/feedback-details : Retrieves all negative feedback details and the latest result IDs for a given exercise.
+     * GET /exercises/:exerciseId/feedback-details : Retrieves all aggregated feedback details for a given exercise.
+     * The feedback details include counts and relative counts of feedback occurrences, along with associated test case names and task numbers.
      *
-     * @param exerciseId The ID of the exercise for which feedback details and result IDs should be retrieved.
-     * @return A ResponseEntity containing a list of all feedback details and the corresponding result IDs for the exercise.
+     * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
+     * @return A ResponseEntity containing a list of FeedbackDetailDTOs, each with aggregated feedback details, including count, relative count,
+     *         detail text, test case name, and task number.
      */
-    @GetMapping("exercises/{exerciseId}/feedback-details")
+    @GetMapping("/exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<FeedbackDetailsWithResultIdsDTO> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<FeedbackDetailDTO>> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
-
-        List<StudentParticipation> participations = studentParticipationRepository
-                .findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(exerciseId);
-        removeSubmissionAndExerciseData(participations);
-
-        List<Long> resultIds = new ArrayList<>();
-
-        List<FeedbackDetailDTO> allFeedbackDetails = new ArrayList<>(participations.stream().filter(participation -> !participation.isPracticeMode())
-                .flatMap(participation -> participation.getResults().stream()).peek(result -> resultIds.add(result.getId())).flatMap(result -> result.getFeedbacks().stream())
-                .filter(feedback -> Boolean.FALSE.equals(feedback.isPositive()))
-                .map(feedback -> new FeedbackDetailDTO(feedback.getDetailText(), (feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : null))).toList());
-
-        FeedbackDetailsWithResultIdsDTO response = new FeedbackDetailsWithResultIdsDTO(allFeedbackDetails, resultIds);
-        return ResponseEntity.ok(response);
-    }
-
-    private void removeSubmissionAndExerciseData(List<StudentParticipation> participations) {
-        // remove unnecessary data to reduce response size
-        participations.forEach(participation -> {
-            participation.setSubmissions(null);
-            participation.setExercise(null);
-        });
+        return ResponseEntity.ok(resultService.findAggregatedFeedbackByExerciseId(exerciseId));
     }
 
 }
