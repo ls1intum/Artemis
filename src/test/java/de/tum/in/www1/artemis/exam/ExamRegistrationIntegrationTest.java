@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,9 +24,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
@@ -58,6 +61,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private StudentExamRepository studentExamRepository;
 
     private Course course1;
 
@@ -105,6 +111,23 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Set<User> studentsInCourseAfter = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterUserInExam_studentExamGenerated() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        examRepository.save(exam);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(3));
+
+        Set<StudentExam> studentExamsBefore = studentExamRepository.findByExamId(exam.getId());
+        assertThat(studentExamsBefore).isEmpty();
+
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
+
+        Set<StudentExam> studentExamsAfter = studentExamRepository.findByExamId(exam.getId());
+        assertThat(studentExamsAfter).hasSize(1);
     }
 
     @Test

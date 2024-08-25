@@ -354,11 +354,23 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_noStudentExamPresent() {
+    void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_noStudentExamPresent_examCanBeStarted() {
         exam1.setStudentExams(Set.of());
+        exam1.setStartDate(ZonedDateTime.now().plusMinutes(3));
         examRepository.save(exam1);
         studentExamRepository.delete(studentExam1);
         assertThatNoException().isThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_noStudentExamPresent_examCannotBeStarted() {
+        exam1.setStudentExams(Set.of());
+        exam1.setStartDate(ZonedDateTime.now().plusMinutes(7));
+        examRepository.save(exam1);
+        studentExamRepository.delete(studentExam1);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
+                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
     }
 
     @Test
