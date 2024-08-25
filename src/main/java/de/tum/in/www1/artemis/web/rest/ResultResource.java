@@ -284,8 +284,7 @@ public class ResultResource {
      * The feedback details include counts and relative counts of feedback occurrences, along with associated test case names and task numbers.
      *
      * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @return A ResponseEntity containing a list of FeedbackDetailDTOs, each with aggregated feedback details, including count, relative count,
-     *         detail text, test case name, and task number.
+     * @return A ResponseEntity containing a list of {@link FeedbackDetailDTO}s
      */
     @GetMapping("exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastEditorInExercise

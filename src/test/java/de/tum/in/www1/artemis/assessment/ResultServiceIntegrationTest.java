@@ -753,6 +753,57 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetAllFeedbackDetailsForExerciseWithMultipleFeedback() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+        StudentParticipation participation2 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
+        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation2);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        testCase.setId(1L);
+
+        Feedback feedback1 = new Feedback();
+        feedback1.setPositive(false);
+        feedback1.setDetailText("Some feedback");
+        feedback1.setTestCase(testCase);
+        participationUtilService.addFeedbackToResult(feedback1, result);
+
+        Feedback feedback2 = new Feedback();
+        feedback2.setPositive(false);
+        feedback2.setDetailText("Some feedback");
+        feedback2.setTestCase(testCase);
+        participationUtilService.addFeedbackToResult(feedback2, result2);
+
+        Feedback feedback3 = new Feedback();
+        feedback3.setPositive(false);
+        feedback3.setDetailText("Some different feedback");
+        feedback3.setTestCase(testCase);
+        participationUtilService.addFeedbackToResult(feedback3, result);
+
+        List<FeedbackDetailDTO> response = request.getList("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK, FeedbackDetailDTO.class);
+
+        assertThat(response).hasSize(2);
+
+        FeedbackDetailDTO firstFeedbackDetail = response.stream().filter(feedbackDetail -> "Some feedback".equals(feedbackDetail.detailText())).findFirst().orElseThrow();
+
+        FeedbackDetailDTO secondFeedbackDetail = response.stream().filter(feedbackDetail -> "Some different feedback".equals(feedbackDetail.detailText())).findFirst()
+                .orElseThrow();
+
+        assertThat(firstFeedbackDetail.count()).isEqualTo(2);
+        assertThat(firstFeedbackDetail.relativeCount()).isEqualTo(100.0);
+        assertThat(firstFeedbackDetail.detailText()).isEqualTo("Some feedback");
+        assertThat(firstFeedbackDetail.testCaseName()).isEqualTo("test1");
+        assertThat(firstFeedbackDetail.taskNumber()).isEqualTo(1);
+
+        assertThat(secondFeedbackDetail.count()).isEqualTo(1);
+        assertThat(secondFeedbackDetail.relativeCount()).isEqualTo(50.0);
+        assertThat(secondFeedbackDetail.detailText()).isEqualTo("Some different feedback");
+        assertThat(secondFeedbackDetail.testCaseName()).isEqualTo("test1");
+        assertThat(secondFeedbackDetail.taskNumber()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllFeedbackDetailsForExercise_NoParticipation() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         List<FeedbackDetailDTO> response = request.getList("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK, FeedbackDetailDTO.class);

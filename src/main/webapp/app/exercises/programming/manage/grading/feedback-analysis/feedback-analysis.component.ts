@@ -28,7 +28,7 @@ export class FeedbackAnalysisComponent implements OnInit {
         try {
             this.feedbackDetails = await this.feedbackAnalysisService.getFeedbackDetailsForExercise(exerciseId);
         } catch (error) {
-            this.alertService.error('An error occurred while loading feedback details.');
+            this.alertService.error(`artemisApp.programmingExercise.configureGrading.feedbackAnalysis.error`);
         }
     }
 }

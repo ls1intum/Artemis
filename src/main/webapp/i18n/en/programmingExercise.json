@@ -317,7 +317,8 @@
                     "task": "Task",
                     "testcase": "Test Case",
                     "errorCategory": "Error Category",
-                    "totalItems": "In total {{count}} items"
+                    "totalItems": "In total {{count}} items",
+                    "error": "An error occurred while loading the feedback."
                 },
                 "help": {
                     "name": "Task names are written in bold whereas Test names are normal. Task or test name depending on whether the row is a task or test.",
