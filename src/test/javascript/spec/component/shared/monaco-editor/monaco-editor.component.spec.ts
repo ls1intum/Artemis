@@ -170,6 +170,12 @@ describe('MonacoEditorComponent', () => {
         expect(documentHighlightedMargins).toHaveLength(3);
     });
 
+    it('should get the number of lines in the editor', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        expect(comp.getNumberOfLines()).toBe(5);
+    });
+
     it('should pass the current line number to the line decorations hover button when clicked', () => {
         const clickCallbackStub = jest.fn();
         const className = 'testClass';

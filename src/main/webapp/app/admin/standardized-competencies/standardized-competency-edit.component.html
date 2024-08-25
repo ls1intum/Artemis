@@ -45,7 +45,7 @@
         <div class="form-group">
             <label jhiTranslate="artemisApp.standardizedCompetency.model.description"></label>
             @if (isEditing) {
-                <jhi-markdown-editor
+                <jhi-markdown-editor-monaco
                     [markdown]="form.controls.description.value"
                     (markdownChange)="updateDescriptionControl($event)"
                     class="markdown-preview"
