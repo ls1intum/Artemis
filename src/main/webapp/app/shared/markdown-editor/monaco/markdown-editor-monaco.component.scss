@@ -4,6 +4,7 @@
     flex: 1 1 auto;
     height: inherit;
     color: var(--md-wrapper-color);
+    background-color: var(--md-editor-background);
 
     // This is a fix for using the fullscreen mode on Safari.
     &:-webkit-full-screen {
@@ -31,20 +32,11 @@
     }
 
     .markdown-editor {
+        border: 1px solid var(--border-color);
         display: flex;
         flex-flow: column nowrap;
         flex: 1 1 auto;
         touch-action: none;
-
-        // Fix for full screen mode, otherwise the color is black.
-        background-color: var(--md-editor-background);
-
-        &__content {
-            height: 100% !important;
-            width: 100%;
-            flex: 1 1 auto;
-            overflow: auto;
-        }
 
         .file-input {
             border-bottom: 1px dotted var(--md-file-input-border-color);
@@ -66,11 +58,6 @@
         .rg-bottom {
             align-self: center;
         }
-    }
-
-    background-color: var(--md-editor-background);
-    .markdown-editor {
-        border: 1px solid var(--border-color);
     }
 }
 
