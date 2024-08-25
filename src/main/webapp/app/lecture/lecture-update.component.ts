@@ -35,7 +35,7 @@ export class LectureUpdateComponent implements OnInit {
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
 
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
-    unitSection = viewChild.required(LectureUpdateWizardUnitsComponent);
+    unitSection = viewChild(LectureUpdateWizardUnitsComponent);
 
     lecture: Lecture;
     isSaving: boolean;
@@ -85,7 +85,7 @@ export class LectureUpdateComponent implements OnInit {
                 },
                 {
                     title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
-                    valid: Boolean(this.unitSection().isUnitConfigurationValid()),
+                    valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
                 },
             ];
 
@@ -120,8 +120,8 @@ export class LectureUpdateComponent implements OnInit {
 
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing lecture
-     * Returns to the overview page if there is no previous state and we created a new lecture
+     * Returns to the detail page if there is no previous state, and we edited an existing lecture
+     * Returns to the overview page if there is no previous state, and we created a new lecture
      */
     previousState() {
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture.course!.id!.toString(), 'lectures'], this.lecture.id?.toString());
