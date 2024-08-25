@@ -156,7 +156,7 @@ export class CourseCommunicationPage {
      */
     async reply(postID: number, content: string) {
         const postElement = this.getSinglePost(postID);
-        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .ace_content');
+        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .monaco-editor');
         await postReplyField.click();
         await postReplyField.pressSequentially(content);
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/answer-posts`);
@@ -172,7 +172,7 @@ export class CourseCommunicationPage {
      */
     async replyWithMessage(postID: number, content: string): Promise<Post> {
         const postElement = this.getSinglePost(postID);
-        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .ace_content');
+        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .monaco-editor');
         await postReplyField.click();
         await postReplyField.pressSequentially(content);
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/answer-messages`);
