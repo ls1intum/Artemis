@@ -33,7 +33,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
      * When refactoring further components relying on {@link TitleChannelNameComponent} should use the signal instead
      * and get rid of Subscriptions that Angular can handle for us (refactoring this would require multiple separate PRs)
      */
-    formValidSignal = signal<boolean>(false);
+    isFormValidSignal = signal<boolean>(false);
 
     // subscriptions
     fieldTitleSubscription?: Subscription;
@@ -66,7 +66,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     calculateFormValid(): void {
         const isFormValid = Boolean(this.field_title.valid && (this.hideChannelName || this.field_channel_name?.valid));
-        this.formValidSignal.set(isFormValid);
+        this.isFormValidSignal.set(isFormValid);
 
         this.formValid = isFormValid;
         this.formValidChanges.next(this.formValid);

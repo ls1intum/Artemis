@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -21,6 +21,8 @@ export interface TextUnitFormData {
     styles: [],
 })
 export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
+    protected readonly faTimes = faTimes;
+
     @Input()
     formData: TextUnitFormData;
 
@@ -32,16 +34,17 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     @Output()
     onCancel: EventEmitter<any> = new EventEmitter<any>();
 
-    faTimes = faTimes;
-
     form: FormGroup;
     // not included in reactive form
     content: string | undefined;
     contentLoadedFromCache = false;
     firstMarkdownChangeHappened = false;
 
+    isFormValid = signal<boolean>(false);
+
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
+    private formValidityChangesSubscription: Subscription;
 
     constructor(
         private fb: FormBuilder,
@@ -66,6 +69,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnDestroy() {
         this.markdownChangesSubscription.unsubscribe();
+        this.formValidityChangesSubscription.unsubscribe();
     }
 
     ngOnInit(): void {
@@ -97,6 +101,13 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
             releaseDate: [undefined as dayjs.Dayjs | undefined],
             competencies: [undefined as Competency[] | undefined],
         });
+
+        if (this.formValidityChangesSubscription) {
+            this.formValidityChangesSubscription.unsubscribe();
+        }
+        this.formValidityChangesSubscription = this.form.statusChanges.subscribe(() => {
+            this.isFormValid.set(this.form.valid);
+        });
     }
 
     private setFormValues(formData: TextUnitFormData) {
@@ -113,10 +124,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
             localStorage.removeItem(this.router.url);
         }
         this.formSubmitted.emit(textUnitFormData);
-    }
-
-    get isSubmitPossible() {
-        return !this.form.invalid;
     }
 
     onMarkdownChange(markdown: string) {
