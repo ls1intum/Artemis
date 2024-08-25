@@ -56,7 +56,6 @@ import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
@@ -107,7 +106,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 UpdatingResultComponent,
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
                 ProgrammingExerciseEditableInstructionComponent,
-                MockComponent(MarkdownEditorComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
                 ProgrammingExerciseInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
