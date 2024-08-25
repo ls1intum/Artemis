@@ -7,19 +7,6 @@
             }
             <ng-template ngbNavContent>
                 <div [ngStyle]="{ 'minHeight.px': minHeightEditor }" class="height-100 markdown-editor d-flex flex-column" [id]="uniqueMarkdownEditorId">
-                    <jhi-ace-editor
-                        #aceEditor
-                        [mode]="aceEditorOptions.mode"
-                        [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
-                        [text]="markdown || ''"
-                        (textChange)="markdownTextChange($event)"
-                        class="form-control markdown-editor__content"
-                        (textChanged)="editorContentString = $event"
-                        [class.file-input]="enableFileUpload"
-                        (dragover)="enableFileUpload ? $event.preventDefault() : ''"
-                        (drop)="enableFileUpload ? onFileDrop($event) : ''"
-                        (paste)="enableFileUpload ? onFilePaste($event) : ''"
-                    />
                     <!-- manual input for file upload -->
                     @if (enableFileUpload) {
                         <input

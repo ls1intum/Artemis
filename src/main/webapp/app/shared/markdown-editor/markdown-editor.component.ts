@@ -1,11 +1,5 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-// Note: this import has to be before the 'brace' imports
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import 'brace/theme/chrome';
-import 'brace/mode/markdown';
-import 'brace/mode/latex';
-import 'brace/ext/language_tools';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -76,12 +70,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
     public InteractiveSearchCommand = InteractiveSearchCommand;
     // This ref is used for entering the fullscreen mode.
     @ViewChild('wrapper', { read: ElementRef, static: false }) wrapper: ElementRef;
-    @ViewChild('aceEditor', { static: false })
-    aceEditorContainer: AceEditorComponent;
-    aceEditorOptions = {
-        autoUpdateContent: true,
-        mode: 'markdown',
-    };
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/

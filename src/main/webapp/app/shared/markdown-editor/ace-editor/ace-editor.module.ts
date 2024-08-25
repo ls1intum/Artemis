@@ -1,8 +1,7 @@
 import { NgModule } from '@angular/core';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 
 @NgModule({
-    declarations: [AceEditorComponent],
-    exports: [AceEditorComponent],
+    declarations: [],
+    exports: [],
 })
 export class AceEditorModule {}
