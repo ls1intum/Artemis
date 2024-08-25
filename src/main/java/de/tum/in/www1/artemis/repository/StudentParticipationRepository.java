@@ -1257,7 +1257,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                       FROM p.results pr
                       WHERE pr.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
                   )
-                  AND f.positive = false
+                  AND f.positive = FALSE
                 GROUP BY f.detailText, tc.testName
             """)
     List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId);
