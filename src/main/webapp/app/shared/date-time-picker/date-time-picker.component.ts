@@ -16,6 +16,13 @@ import dayjs from 'dayjs/esm';
     ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
+    protected readonly faCalendarAlt = faCalendarAlt;
+    protected readonly faGlobe = faGlobe;
+    protected readonly faClock = faClock;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faCircleXmark = faCircleXmark;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
     @Input() labelName: string;
     @Input() labelTooltip: string;
@@ -24,19 +31,11 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() error: boolean;
     @Input() warning: boolean;
     @Input() requiredField: boolean = false;
-    @Input() startAt?: dayjs.Dayjs; // Default selected date. By default this sets it to the current time without seconds or milliseconds;
+    @Input() startAt?: dayjs.Dayjs; // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
     @Input() min?: dayjs.Dayjs; // Dates before this date are not selectable.
     @Input() max?: dayjs.Dayjs; // Dates after this date are not selectable.
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
     @Output() valueChange = new EventEmitter();
-
-    // Icons
-    faCalendarAlt = faCalendarAlt;
-    faGlobe = faGlobe;
-    faClock = faClock;
-    faQuestionCircle = faQuestionCircle;
-    faCircleXmark = faCircleXmark;
-    readonly faTriangleExclamation = faTriangleExclamation;
 
     private onChange?: (val?: dayjs.Dayjs) => void;
 
