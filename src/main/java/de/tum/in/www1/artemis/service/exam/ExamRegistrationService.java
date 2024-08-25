@@ -221,6 +221,7 @@ public class ExamRegistrationService {
             registeredExamUser = examUserRepository.save(registeredExamUser);
             exam.addExamUser(registeredExamUser);
             examRepository.save(exam);
+            // Generate a student exam for the registered student if the exam has already started
             if (exam.isStarted()) {
                 Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
                 studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
