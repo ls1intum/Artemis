@@ -32,14 +32,7 @@ import { v4 as uuid } from 'uuid';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
-
-export enum MarkdownEditorHeight {
-    INLINE = 100,
-    SMALL = 300,
-    MEDIUM = 500,
-    LARGE = 1000,
-    EXTRA_LARGE = 1500,
-}
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 export enum EditorMode {
     NONE = 'none',
