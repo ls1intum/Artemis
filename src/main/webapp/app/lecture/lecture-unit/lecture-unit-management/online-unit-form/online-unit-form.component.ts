@@ -1,8 +1,8 @@
 import dayjs from 'dayjs/esm';
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { map } from 'rxjs';
+import { Subscription, map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
@@ -32,7 +32,10 @@ function urlValidator(control: AbstractControl) {
     selector: 'jhi-online-unit-form',
     templateUrl: './online-unit-form.component.html',
 })
-export class OnlineUnitFormComponent implements OnInit, OnChanges {
+export class OnlineUnitFormComponent implements OnInit, OnChanges, OnDestroy {
+    protected readonly faTimes = faTimes;
+    protected readonly faArrowLeft = faArrowLeft;
+
     @Input()
     formData: OnlineUnitFormData;
     @Input()
@@ -47,12 +50,11 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
     @Output()
     onCancel: EventEmitter<any> = new EventEmitter<any>();
 
-    faTimes = faTimes;
-
     urlValidator = urlValidator;
 
-    // Icons
-    faArrowLeft = faArrowLeft;
+    isFormValid = signal<boolean>(false);
+
+    private formValidityChangesSubscription: Subscription;
 
     constructor(
         private fb: FormBuilder,
@@ -86,6 +88,10 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
         this.initializeForm();
     }
 
+    ngOnDestroy() {
+        this.formValidityChangesSubscription.unsubscribe();
+    }
+
     private initializeForm() {
         if (this.form) {
             return;
@@ -96,6 +102,13 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
             releaseDate: [undefined],
             source: [undefined, [Validators.required, this.urlValidator]],
             competencies: [undefined as Competency[] | undefined],
+        });
+
+        if (this.formValidityChangesSubscription) {
+            this.formValidityChangesSubscription.unsubscribe();
+        }
+        this.formValidityChangesSubscription = this.form.statusChanges.subscribe(() => {
+            this.isFormValid.set(this.form.valid);
         });
     }
 
@@ -134,10 +147,6 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
     submitForm() {
         const onlineUnitFormData: OnlineUnitFormData = { ...this.form.value };
         this.formSubmitted.emit(onlineUnitFormData);
-    }
-
-    get isSubmitPossible() {
-        return !this.form.invalid;
     }
 
     cancelForm() {
