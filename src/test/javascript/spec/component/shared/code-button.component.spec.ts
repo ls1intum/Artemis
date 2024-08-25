@@ -333,7 +333,7 @@ describe('CodeButtonComponent', () => {
         component.activeParticipation = undefined;
         component.ngOnInit();
 
-        expect(component.isTeamParticipation).toBeFalsy();
+        expect(component.isTeamParticipation).toBeFalse();
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
@@ -341,16 +341,16 @@ describe('CodeButtonComponent', () => {
         component.ngOnInit();
         jest.useFakeTimers();
         component.onCopyFinished(true);
-        expect(component.wasCopied).toBeTruthy();
+        expect(component.wasCopied).toBeTrue();
         jest.advanceTimersByTime(3000);
-        expect(component.wasCopied).toBeFalsy();
+        expect(component.wasCopied).toBeFalse();
         jest.useRealTimers();
     });
 
     it('should not change wasCopied if copy is unsuccessful', () => {
         component.ngOnInit();
         component.onCopyFinished(false);
-        expect(component.wasCopied).toBeFalsy();
+        expect(component.wasCopied).toBeFalse();
     });
 
     it('should fetch and store ssh preference', fakeAsync(() => {
@@ -366,33 +366,33 @@ describe('CodeButtonComponent', () => {
 
         expect(localStorageUseSshRetrieveStub).toHaveBeenNthCalledWith(1, 'useSsh');
         expect(localStorageUseSshObserveStub).toHaveBeenNthCalledWith(1, 'useSsh');
-        expect(component.useSsh).toBeFalsy();
+        expect(component.useSsh).toBeFalse();
 
         fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
         tick();
         fixture.debugElement.query(By.css('#useSSHButton')).nativeElement.click();
         tick();
         expect(localStorageUseSshStoreStub).toHaveBeenNthCalledWith(1, 'useSsh', true);
-        expect(component.useSsh).toBeTruthy();
+        expect(component.useSsh).toBeTrue();
 
         fixture.debugElement.query(By.css('#useHTTPSButton')).nativeElement.click();
         tick();
         expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
-        expect(component.useSsh).toBeFalsy();
+        expect(component.useSsh).toBeFalse();
 
         fixture.debugElement.query(By.css('#useHTTPSWithTokenButton')).nativeElement.click();
         tick();
         expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
-        expect(component.useSsh).toBeFalsy();
-        expect(component.useToken).toBeTruthy();
+        expect(component.useSsh).toBeFalse();
+        expect(component.useToken).toBeTrue();
 
         localStorageUseSshObserveStubSubject.next(true);
         tick();
-        expect(component.useSsh).toBeTruthy();
+        expect(component.useSsh).toBeTrue();
 
         localStorageUseSshObserveStubSubject.next(false);
         tick();
-        expect(component.useSsh).toBeFalsy();
+        expect(component.useSsh).toBeFalse();
     }));
 
     it.each([
