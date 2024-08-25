@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
@@ -60,7 +60,9 @@ export class ImportListComponent<T extends BaseEntity> {
     });
 
     constructor() {
-        this.loadData();
+        effect(() => {
+            untracked(async () => await this.loadData());
+        });
     }
 
     private async loadData(): Promise<void> {
