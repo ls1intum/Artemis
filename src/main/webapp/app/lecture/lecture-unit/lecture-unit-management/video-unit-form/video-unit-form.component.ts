@@ -1,9 +1,10 @@
 import dayjs from 'dayjs/esm';
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Competency } from 'app/entities/competency.model';
+import { Subscription } from 'rxjs';
 
 export interface VideoUnitFormData {
     name?: string;
@@ -57,7 +58,10 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     selector: 'jhi-video-unit-form',
     templateUrl: './video-unit-form.component.html',
 })
-export class VideoUnitFormComponent implements OnInit, OnChanges {
+export class VideoUnitFormComponent implements OnInit, OnChanges, OnDestroy {
+    protected readonly faTimes = faTimes;
+    protected readonly faArrowLeft = faArrowLeft;
+
     @Input()
     formData: VideoUnitFormData;
     @Input()
@@ -72,13 +76,12 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
     @Output()
     onCancel: EventEmitter<any> = new EventEmitter<any>();
 
-    faTimes = faTimes;
-
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
-    // Icons
-    faArrowLeft = faArrowLeft;
+    isFormValid = signal<boolean>(false);
+
+    private formValidityChangesSubscription: Subscription;
 
     constructor(private fb: FormBuilder) {}
 
@@ -113,6 +116,10 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
         this.initializeForm();
     }
 
+    ngOnDestroy() {
+        this.formValidityChangesSubscription.unsubscribe();
+    }
+
     private initializeForm() {
         if (this.form) {
             return;
@@ -125,6 +132,13 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
             urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
             competencies: [undefined as Competency[] | undefined],
         });
+
+        if (this.formValidityChangesSubscription) {
+            this.formValidityChangesSubscription.unsubscribe();
+        }
+        this.formValidityChangesSubscription = this.form.statusChanges.subscribe(() => {
+            this.isFormValid.set(this.form.valid);
+        });
     }
 
     private setFormValues(formData: VideoUnitFormData) {
@@ -134,10 +148,6 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
     submitForm() {
         const videoUnitFormData: VideoUnitFormData = { ...this.form.value };
         this.formSubmitted.emit(videoUnitFormData);
-    }
-
-    get isSubmitPossible() {
-        return !this.form.invalid;
     }
 
     get isTransformable() {
