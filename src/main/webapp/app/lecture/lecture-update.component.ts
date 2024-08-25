@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
@@ -25,7 +25,7 @@ import { LectureUpdateTitleComponent } from 'app/lecture/wizard-mode/lecture-wiz
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
 })
-export class LectureUpdateComponent implements OnInit, AfterViewInit, OnDestroy {
+export class LectureUpdateComponent implements OnInit {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
     protected readonly faPuzzleProcess = faPuzzlePiece;
@@ -95,17 +95,6 @@ export class LectureUpdateComponent implements OnInit, AfterViewInit, OnDestroy 
                 this.isShowingWizardMode = params.shouldBeInWizardMode;
             }
         });
-    }
-
-    ngAfterViewInit() {
-        this.inputFieldSubscriptions.push(this.lectureTitleComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
-        this.inputFieldSubscriptions.push(this.lecturePeriodComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
-    }
-
-    ngOnDestroy() {
-        for (const subscription of this.inputFieldSubscriptions) {
-            subscription?.unsubscribe();
-        }
     }
 
     /**
