@@ -75,7 +75,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     }
 
     sendTokenCreationRequest() {
-        if (!this.expiryDate || this.expiryDate.isBefore(dayjs())) {
+        if (!this.expiryDate || this.expiryDate.isBefore(dayjs()) || this.expiryDate.isAfter(dayjs().add(1, 'year'))) {
             this.alertService.error('artemisApp.userSettings.vcsAccessTokensSettingsPage.addFailure');
             return;
         }
@@ -111,7 +111,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
      * Validates if the expiry date is after current time
      */
     validateDate() {
-        this.validExpiryDate = !!this.expiryDate?.isAfter(dayjs());
+        this.validExpiryDate = !!this.expiryDate?.isAfter(dayjs()) && !!this.expiryDate?.isBefore(dayjs().add(1, 'year'));
     }
 
     /**

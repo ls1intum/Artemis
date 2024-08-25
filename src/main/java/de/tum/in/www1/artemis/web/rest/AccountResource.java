@@ -172,7 +172,7 @@ public class AccountResource {
     public ResponseEntity<UserDTO> createVcsAccessToken(@RequestParam("expiryDate") ZonedDateTime expiryDate) {
         User user = userRepository.getUser();
         log.debug("REST request to create a new VCS access token for user {}", user.getLogin());
-        if (expiryDate.isBefore(ZonedDateTime.now())) {
+        if (expiryDate.isBefore(ZonedDateTime.now()) || expiryDate.isAfter(ZonedDateTime.now().plusYears(1))) {
             throw new BadRequestException("Invalid expiry date provided");
         }
 
