@@ -1,5 +1,5 @@
 import { MonacoEditorDomainAction } from './monaco-editor-domain-action.model';
-import { ValueItem } from 'app/shared/markdown-editor/action-constants';
+import { ValueItem } from 'app/shared/markdown-editor/value-item.model';
 
 export interface DomainActionWithOptionsArguments {
     selectedItem: ValueItem;
