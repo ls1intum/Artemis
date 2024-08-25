@@ -44,13 +44,6 @@ describe('FeedbackAnalysisComponent', () => {
             expect(getFeedbackDetailsSpy).toHaveBeenCalledWith(1);
             expect(component.feedbackDetails).toEqual(feedbackMock);
         });
-
-        it('should not call loadFeedbackDetails if exerciseId is not provided', () => {
-            component.exerciseId = undefined;
-            component.ngOnInit();
-
-            expect(getFeedbackDetailsSpy).not.toHaveBeenCalled();
-        });
     });
 
     describe('loadFeedbackDetails', () => {

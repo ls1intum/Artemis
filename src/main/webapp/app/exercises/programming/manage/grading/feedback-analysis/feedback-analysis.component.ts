@@ -21,9 +21,7 @@ export class FeedbackAnalysisComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        if (this.exerciseId) {
-            this.loadFeedbackDetails(this.exerciseId);
-        }
+        this.loadFeedbackDetails(this.exerciseId);
     }
 
     async loadFeedbackDetails(exerciseId: number): Promise<void> {
