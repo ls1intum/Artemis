@@ -8,6 +8,7 @@ export type ValueItem = {
     attachmentUnits?: ValueItem[];
 };
 
+// TODO: Remove and rename file
 export type SlideItem = {
     id: string;
     slideImagePath: string;

@@ -8,7 +8,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { Attachment } from 'app/entities/attachment.model';
-import { SlideItem, ValueItem } from 'app/shared/markdown-editor/command-constants';
+import { SlideItem, ValueItem } from 'app/shared/markdown-editor/action-constants';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 
 export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
