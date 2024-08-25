@@ -26,7 +26,7 @@ import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredPr
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 
-@Component({ selector: 'jhi-markdown-editor', template: '' })
+@Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
     @Input() markdown: string;
     @Input() enableResize = false;

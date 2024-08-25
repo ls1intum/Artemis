@@ -60,15 +60,8 @@
                         </jhi-iris-logo-button>
                     </div>
                 }
-                <div class="form-group hint-form__editor-wrapper">
-                    <jhi-markdown-editor
-                        [markdown]="exerciseHint.content"
-                        (markdownChange)="updateHintContent($event)"
-                        [resizableMinHeight]="MarkdownEditorHeight.SMALL"
-                        [resizableMaxHeight]="MarkdownEditorHeight.LARGE"
-                        [domainCommands]="domainCommands"
-                        [editorMode]="editorMode"
-                    />
+                <div class="form-group hint-form__editor-wrapper mb-3">
+                    <jhi-markdown-editor-monaco [markdown]="exerciseHint.content" (markdownChange)="updateHintContent($event)" [domainActions]="domainActions" />
                 </div>
                 @if (exerciseHint.type === HintType.CODE) {
                     <div class="form-group hint-form__editor-wrapper">
