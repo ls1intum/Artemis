@@ -26,9 +26,7 @@ describe('IdeSettingsComponent', () => {
             providers: [{ provide: IdeSettingsService, useValue: mockIdeSettingsService }],
             schemas: [CUSTOM_ELEMENTS_SCHEMA],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(IdeSettingsComponent);
         component = fixture.componentInstance;
         ideSettingsService = TestBed.inject(IdeSettingsService);
@@ -51,7 +49,7 @@ describe('IdeSettingsComponent', () => {
         expect(component.PREDEFINED_IDE).toEqual(predefinedIdes);
         expect(component.programmingLanguageToIde()).toEqual(idePreferences);
         expect(component.assignedProgrammingLanguages).toEqual([ProgrammingLanguage.JAVA]);
-        expect(component.remainingProgrammingLanguages).not.toContain(Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.JAVA));
+        expect(component.remainingProgrammingLanguages).toEqual(Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.JAVA));
     });
 
     it('should add a programming language and update the lists', () => {
