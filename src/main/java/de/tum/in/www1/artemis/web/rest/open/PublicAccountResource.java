@@ -153,7 +153,7 @@ public class PublicAccountResource {
 
         Optional<String> loginOptional = SecurityUtils.getCurrentUserLogin();
         if (loginOptional.isPresent()) {
-            userOptional = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(loginOptional.get());
+            userOptional = userRepository.findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(loginOptional.get());
         }
 
         if (userOptional.isEmpty()) {
@@ -165,6 +165,7 @@ public class PublicAccountResource {
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
         userDTO.setVcsAccessToken(user.getVcsAccessToken());
+        userDTO.setSshPublicKey(user.getSshPublicKey());
         log.info("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return ResponseEntity.ok(userDTO);
     }
@@ -206,9 +207,9 @@ public class PublicAccountResource {
             else if (internalUsers.size() >= 2) {
                 throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
             }
-            var internalUser = internalUsers.get(0);
+            var internalUser = internalUsers.getFirst();
             if (userService.prepareUserForPasswordReset(internalUser)) {
-                mailService.sendPasswordResetMail(internalUsers.get(0));
+                mailService.sendPasswordResetMail(internalUsers.getFirst());
             }
         }
         else {

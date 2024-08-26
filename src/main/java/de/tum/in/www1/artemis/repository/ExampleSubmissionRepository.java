@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,14 +16,14 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the ExampleSubmission entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmission, Long> {
+public interface ExampleSubmissionRepository extends ArtemisJpaRepository<ExampleSubmission, Long> {
 
     Long countAllByExerciseId(long exerciseId);
 
@@ -68,7 +67,7 @@ public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmis
      * @return list of feedback for an example submission
      */
     default List<Feedback> getFeedbackForExampleSubmission(long exampleSubmissionId) {
-        var exampleSubmission = findByIdWithResultsAndFeedback(exampleSubmissionId).orElseThrow(() -> new EntityNotFoundException("Example Submission", exampleSubmissionId));
+        var exampleSubmission = getValueElseThrow(findByIdWithResultsAndFeedback(exampleSubmissionId), exampleSubmissionId);
         var submission = exampleSubmission.getSubmission();
 
         if (submission == null) {
@@ -86,11 +85,11 @@ public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmis
     }
 
     default ExampleSubmission findByIdWithEagerResultAndFeedbackElseThrow(long exampleSubmissionId) {
-        return findByIdWithResultsAndFeedback(exampleSubmissionId).orElseThrow(() -> new EntityNotFoundException("Example Submission", exampleSubmissionId));
+        return getValueElseThrow(findByIdWithResultsAndFeedback(exampleSubmissionId), exampleSubmissionId);
     }
 
     default ExampleSubmission findBySubmissionIdWithResultsElseThrow(long submissionId) {
-        return findWithResultsBySubmissionId(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));
+        return getValueElseThrow(findWithResultsBySubmissionId(submissionId), submissionId);
     }
 
 }

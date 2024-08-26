@@ -3,7 +3,13 @@ package de.tum.in.www1.artemis.domain.competency;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -37,7 +43,7 @@ public class LearningPath extends DomainObject {
     @ManyToMany
     @JoinTable(name = "competency_learning_path", joinColumns = @JoinColumn(name = "learning_path_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course", "learningPaths" })
-    private Set<Competency> competencies = new HashSet<>();
+    private Set<CourseCompetency> competencies = new HashSet<>();
 
     public int getProgress() {
         return progress;
@@ -63,23 +69,23 @@ public class LearningPath extends DomainObject {
         this.course = course;
     }
 
-    public Set<Competency> getCompetencies() {
+    public Set<CourseCompetency> getCompetencies() {
         return competencies;
     }
 
-    public void setCompetencies(Set<Competency> competencies) {
+    public void setCompetencies(Set<CourseCompetency> competencies) {
         this.competencies = competencies;
     }
 
-    public void addCompetency(Competency competency) {
+    public void addCompetency(CourseCompetency competency) {
         this.competencies.add(competency);
     }
 
-    public void addCompetencies(Set<Competency> competencies) {
+    public void addCompetencies(Set<CourseCompetency> competencies) {
         this.competencies.addAll(competencies);
     }
 
-    public void removeCompetency(Competency competency) {
+    public void removeCompetency(CourseCompetency competency) {
         this.competencies.remove(competency);
     }
 

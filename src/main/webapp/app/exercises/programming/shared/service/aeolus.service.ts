@@ -51,7 +51,7 @@ export class AeolusService {
     parseWindFile(file: string): WindFile | undefined {
         try {
             const templateFile: WindFile = JSON.parse(file);
-            const windFile: WindFile = Object.assign(new WindFile(), templateFile);
+            const windfile: WindFile = Object.assign(new WindFile(), templateFile);
             const actions: BuildAction[] = [];
             templateFile.actions.forEach((anyAction: any) => {
                 let action: BuildAction | undefined;
@@ -70,10 +70,12 @@ export class AeolusService {
                     actions.push(action);
                 }
             });
-            // somehow, the returned content has a scriptActions field, which is not defined in the WindFile class
-            delete windFile['scriptActions'];
-            windFile.actions = actions;
-            return windFile;
+            // somehow, the returned content may have a scriptActions field, which is not a field of the WindFile class
+            if ('scriptActions' in windfile) {
+                delete windfile['scriptActions'];
+            }
+            windfile.actions = actions;
+            return windfile;
         } catch (SyntaxError) {
             return undefined;
         }
@@ -98,20 +100,24 @@ export class AeolusService {
         };
     }
 
-    serializeWindFile(windFile: WindFile): string {
-        return JSON.stringify(windFile, this.replacer);
+    serializeWindFile(windfile: WindFile): string {
+        return JSON.stringify(windfile, this.replacer);
     }
 
     /**
-     * This takes care of serializing maps in the windfile
-     * @param _ key of the entry, not needed
-     * @param value value of the entry
+     * Serializes a value, transforming instances of Map into plain objects.
+     * This function is designed for use as a replacer function in JSON.stringify.
+     *
+     * @param _ The key associated with the value being serialized. This is not used in the function, but is required by the JSON.stringify replacer interface.
+     * @param value The value to be serialized. If the value is a Map, it will be converted to an object with string keys and values corresponding to the map's entries.
+     * @returns If the value is a Map, returns a plain object with keys and values from the map. Otherwise, returns the value unchanged.
+     * @template T The type of the value to be serialized. Ensures that the return type matches the type of the input value, except when the value is a Map.
      */
-    replacer(_: any, value: any): any {
+    replacer<T>(_: unknown, value: T): T | Record<string, unknown> {
         if (value instanceof Map) {
-            const object: any = {};
-            value.forEach((v, k) => {
-                object[k] = v;
+            const object: Record<string, unknown> = {};
+            value.forEach((value, key) => {
+                object[String(key)] = value;
             });
             return object;
         } else {

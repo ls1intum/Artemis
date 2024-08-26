@@ -69,7 +69,7 @@ Create new Quiz Exercise
 
         - Bonus: the points will be considered as bonus points.
 
-    - **Questions**: There are four ways to add questions to a quiz exercise.
+    - **Questions**: There are multiple ways to add questions to a quiz exercise.
 
         - **Add Multiple-Choice Question**
 
@@ -166,6 +166,73 @@ Create new Quiz Exercise
 
             - Preview View: Enables the student view.
 
+        - **Add Apollon Drag-And-Drop Question**
+
+            - In the quiz edit view click the button |CreateDragAndDropQuizButton|.
+
+                    .. figure:: quiz/apollon-diagrams.png
+                        :align: center
+
+                - In the Apollon diagram view, it is possible to see the list of existing Apollon diagrams and the possible actions to perform with them.
+
+                    - Open
+                    - Delete
+
+                - Clicking on the creation of a new Apollon Diagram button |CreateANewApollonDiagram| opens the following form:
+
+                    .. figure:: quiz/Apollon-form.png
+                        :align: center
+                        :scale: 50
+
+                    - Title (required): provide the title of the Apollon diagram, which will be used as title for the generated quiz question.
+
+                    - Diagram Type: A drop-down menu to select one of the following diagram types:
+
+                        - Class Diagram
+
+                        - Activity Diagram
+
+                        - Object Diagram
+
+                        - Use Case Diagram
+
+                        - Communication Diagram
+
+                        - Component Diagram
+
+                        - Deployment Diagram
+
+                        - Petri Net
+
+                        - Syntax Tree
+
+                        - Flowchart
+
+                    - Create button: Creates the Apollon diagram and opens the edit view.
+
+                    - Cancel button: Returns to the list of existing Apollon diagrams.
+
+                - After creating or opening an Apollon diagram, it can be edited in the edit view.
+
+                    .. figure:: quiz/apollon-editor.png
+                        :align: center
+
+                    - Back to overview link: Returns to the existing Apollon diagram lists.
+
+                    - Download button: Download the diagram as image. The "Crop Image to Selection" checkbox allows to include only the currently selected elements in the image.
+
+                    - Title (required): Allows to edit the tile of the diagram.
+
+                    - Modeling field: The items for modeling the diagram will be displayed here.
+
+                    - Elements to Drag and Drop into the modeling field.
+
+                    - Close: Returns to the quiz view without saving and creating a question.
+
+                    - Save Diagram button: Saves the Apollon diagram and stays in the edit view.
+
+                    - Generate a quiz exercise button: Generates a quiz drag-and-drop question and returns to the quiz edit view.
+
         - **Add Short-Answer Question**
 
             This kind of question is composed of a statement and spots to fill them out by typing the answers.
@@ -248,71 +315,6 @@ Create new Quiz Exercise
 
         - Save button
 
-Create Drag and Drop Model Quiz Exercise
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    - In the quiz exercises section click on the Create Quiz button |CreateDragAndDropQuizButton|.
-
-        .. figure:: quiz/apollon-diagrams.png
-            :align: center
-
-    - On the Apollon Diagrams page, it is possible to see the list of Apollon Diagrams and the possible actions to perform with them.
-
-        - Open
-        - Delete
-
-    - Clicking on the creation of a new Apollon Diagram button |CreateANewApollonDiagram| opens the following form:
-
-        .. figure:: quiz/Apollon-form.png
-            :align: center
-            :scale: 50
-
-        - Title: provide the title of the Drag-and-Drop Model Quiz
-
-        - Diagram Type: It is a list picker to select between several diagrams:
-
-            - Class Diagram
-
-            - Activity Diagram
-
-            - Object Diagram
-
-            - Use Case Diagram
-
-            - Communication Diagram
-
-            - Component Diagram
-
-            - Deployment Diagram
-
-            - Petri Net
-
-            - Syntax Tree
-
-            - Flowchart
-
-        - Save button
-
-        - Cancel button
-
-    - Click the save button to open the Apollon editor
-
-        .. figure:: quiz/apollon-editor.png
-            :align: center
-
-        - Title: Allows to edit the tile of the diagram.
-
-        - Crop image to selection: Allows to download the current selection.
-
-        - Download button: To download the selection.
-
-        - Generate a quiz exercise button.
-
-        - Save button.
-
-        - Modeling field: The items for modeling the diagram will be displayed here.
-
-        - Elements to Drag and Drop in the Modeling field.
 
 Import a Quiz
 ^^^^^^^^^^^^^

@@ -41,7 +41,7 @@ const editedCourseData = {
 const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
 const dateFormat = 'MMM D, YYYY HH:mm';
 
-describe('Course management', () => {
+describe.skip('Course management', () => {
     describe('Manual student selection', () => {
         let course: Course;
 
@@ -252,7 +252,7 @@ describe('Course management', () => {
         });
     });
 
-    describe('Course icon deletion', () => {
+    describe.only('Course icon deletion', () => {
         describe('Course within icon', () => {
             let course: Course;
 

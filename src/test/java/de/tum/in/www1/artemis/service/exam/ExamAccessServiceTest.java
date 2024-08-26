@@ -23,7 +23,10 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExamUserRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -35,9 +38,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "examaccessservicetest";
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private ExamRepository examRepository;
@@ -122,8 +122,8 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         examUser1.setUser(student1);
         examUser1 = examUserRepository.save(examUser1);
         testExam2.setExamUsers(Set.of(examUser1));
-        exerciseGroup1 = exam1.getExerciseGroups().get(0);
-        exerciseGroup2 = exam2.getExerciseGroups().get(0);
+        exerciseGroup1 = exam1.getExerciseGroups().getFirst();
+        exerciseGroup2 = exam2.getExerciseGroups().getFirst();
         studentExam1 = examUtilService.addStudentExam(exam1);
         studentExam2 = examUtilService.addStudentExam(exam2);
         studentExamForTestExam1 = examUtilService.addStudentExamForTestExam(testExam1, student1);

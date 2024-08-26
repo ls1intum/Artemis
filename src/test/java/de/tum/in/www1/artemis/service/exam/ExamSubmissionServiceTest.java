@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
@@ -77,7 +77,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         exercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        exam = examRepository.findByCourseId(course.getId()).get(0);
+        exam = examRepository.findByCourseId(course.getId()).getFirst();
         studentExam = examUtilService.addStudentExam(exam);
         studentExam.setWorkingTime(7200); // 2 hours
         studentExam.setUser(student1);

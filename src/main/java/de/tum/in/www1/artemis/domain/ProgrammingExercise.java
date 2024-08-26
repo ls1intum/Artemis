@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -28,7 +27,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.SecondaryTable;
-import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -37,8 +35,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -47,6 +43,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -55,8 +52,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
-import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
-import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -72,6 +67,7 @@ public class ProgrammingExercise extends Exercise {
     // TODO: delete publish_build_plan_url from exercise using liquibase
 
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @Override
     public String getType() {
         return "programming";
     }
@@ -92,6 +88,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
 
+    @Column(name = "allow_online_ide", table = "programming_exercise_details", nullable = false)
+    private boolean allowOnlineIde = false;
+
     @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
     private Boolean staticCodeAnalysisEnabled;
 
@@ -104,9 +103,6 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "package_name")
     private String packageName;
-
-    @Column(name = "sequential_test_runs")
-    private Boolean sequentialTestRuns;
 
     @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
     private boolean showTestNamesToStudents;
@@ -121,11 +117,6 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;
-
-    @Size(max = 36)
-    @Nullable
-    @Column(name = "build_plan_access_secret", table = "programming_exercise_details", length = 36)
-    private String buildPlanAccessSecret;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
@@ -162,27 +153,13 @@ public class ProgrammingExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details")
-    private boolean testwiseCoverageEnabled;
+    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
+    private boolean releaseTestsWithExampleSolution = false;
 
-    @Column(name = "branch", table = "programming_exercise_details")
-    private String branch;
-
-    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
-    private boolean releaseTestsWithExampleSolution;
-
-    @Column(name = "build_plan_configuration", table = "programming_exercise_details", columnDefinition = "longtext")
-    private String buildPlanConfiguration;
-
-    @Column(name = "build_script", table = "programming_exercise_details", columnDefinition = "longtext")
-    private String buildScript;
-
-    /**
-     * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
-     * This is currently only supported for HASKELL and OCAML, thus the default value is false.
-     */
-    @Column(name = "checkout_solution_repository", table = "programming_exercise_details", columnDefinition = "boolean default false")
-    private boolean checkoutSolutionRepository;
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
+    @JsonIgnoreProperties("programmingExercise")
+    private ProgrammingExerciseBuildConfig buildConfig;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -296,6 +273,18 @@ public class ProgrammingExercise extends Exercise {
         this.allowOfflineIde = allowOfflineIde;
     }
 
+    public boolean isAllowOnlineIde() {
+        return allowOnlineIde;
+    }
+
+    public void setAllowOnlineIde(boolean allowOnlineIde) {
+        this.allowOnlineIde = allowOnlineIde;
+    }
+
+    public String getProjectKey() {
+        return this.projectKey;
+    }
+
     public Boolean isStaticCodeAnalysisEnabled() {
         return this.staticCodeAnalysisEnabled;
     }
@@ -310,25 +299,6 @@ public class ProgrammingExercise extends Exercise {
 
     public void setMaxStaticCodeAnalysisPenalty(Integer maxStaticCodeAnalysisPenalty) {
         this.maxStaticCodeAnalysisPenalty = maxStaticCodeAnalysisPenalty;
-    }
-
-    public String getProjectKey() {
-        return this.projectKey;
-    }
-
-    public void setBranch(String branch) {
-        this.branch = branch;
-    }
-
-    /**
-     * Getter for the stored default branch of the exercise.
-     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfExercise(ProgrammingExercise)} if you are not sure that the value was already set in the Artemis database
-     *
-     * @return the name of the default branch or null if not yet stored in Artemis
-     */
-    @JsonIgnore
-    public String getBranch() {
-        return branch;
     }
 
     public void setReleaseTestsWithExampleSolution(boolean releaseTestsWithExampleSolution) {
@@ -480,6 +450,14 @@ public class ProgrammingExercise extends Exercise {
         this.submissionPolicy = submissionPolicy;
     }
 
+    public ProgrammingExerciseBuildConfig getBuildConfig() {
+        return buildConfig;
+    }
+
+    public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
+        this.buildConfig = buildConfig;
+    }
+
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
@@ -604,15 +582,6 @@ public class ProgrammingExercise extends Exercise {
         staticCodeAnalysisCategories.add(category);
     }
 
-    @JsonProperty("sequentialTestRuns")
-    public boolean hasSequentialTestRuns() {
-        return Objects.requireNonNullElse(sequentialTestRuns, false);
-    }
-
-    public void setSequentialTestRuns(Boolean sequentialTestRuns) {
-        this.sequentialTestRuns = sequentialTestRuns;
-    }
-
     public Boolean getShowTestNamesToStudents() {
         return showTestNamesToStudents;
     }
@@ -655,14 +624,6 @@ public class ProgrammingExercise extends Exercise {
         this.projectType = projectType;
     }
 
-    public Boolean isTestwiseCoverageEnabled() {
-        return testwiseCoverageEnabled;
-    }
-
-    public void setTestwiseCoverageEnabled(Boolean testwiseCoverageEnabled) {
-        this.testwiseCoverageEnabled = testwiseCoverageEnabled;
-    }
-
     /**
      * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
@@ -673,8 +634,9 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
-        setBuildPlanConfiguration(null);
-        setBuildScript(null);
+        if (buildConfig != null && Hibernate.isInitialized(buildConfig)) {
+            buildConfig.filterSensitiveInformation();
+        }
         super.filterSensitiveInformation();
     }
 
@@ -723,7 +685,7 @@ public class ProgrammingExercise extends Exercise {
         if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
             // The relevantDueDate check below keeps us from assessing feedback requests,
             // as their relevantDueDate is before the due date
-            if (getAllowManualFeedbackRequests()) {
+            if (getAllowFeedbackRequests()) {
                 return true;
             }
 
@@ -751,23 +713,16 @@ public class ProgrammingExercise extends Exercise {
      * @return true if the result is manual and the assessment is over, or it is an automatic result, false otherwise
      */
     private boolean checkForAssessedResult(Result result) {
-        return result.getCompletionDate() != null && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic());
+        return result.getCompletionDate() != null
+                && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic() || result.isAthenaAutomatic());
     }
 
     @Override
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", allowOnlineEditor='"
-                + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='"
-                + testCasesChanged + "'" + "}";
-    }
-
-    public boolean getCheckoutSolutionRepository() {
-        return this.checkoutSolutionRepository;
-    }
-
-    public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
-        this.checkoutSolutionRepository = checkoutSolutionRepository;
+                + isAllowOnlineEditor() + "'" + ", allowOnlineIde='" + isAllowOnlineIde() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='"
+                + getPackageName() + "'" + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     /**
@@ -809,7 +764,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && hasSequentialTestRuns()) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && getBuildConfig().hasSequentialTestRuns()) {
             throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
         }
 
@@ -836,10 +791,10 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Validates settings for exercises, where allowManualFeedbackRequests is set
+     * Validates settings for exercises, where allowFeedbackRequests is set
      */
-    public void validateManualFeedbackSettings() {
-        if (!this.getAllowManualFeedbackRequests()) {
+    public void validateSettingsForFeedbackRequest() {
+        if (!this.getAllowFeedbackRequests()) {
             return;
         }
 
@@ -864,19 +819,6 @@ public class ProgrammingExercise extends Exercise {
         this.exerciseHints = exerciseHints;
     }
 
-    public boolean hasBuildPlanAccessSecretSet() {
-        return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
-    }
-
-    @Nullable
-    public String getBuildPlanAccessSecret() {
-        return buildPlanAccessSecret;
-    }
-
-    public void generateAndSetBuildPlanAccessSecret() {
-        buildPlanAccessSecret = UUID.randomUUID().toString();
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -888,57 +830,13 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Returns the JSON encoded custom build plan configuration
+     * In course exercises students shall receive immediate feedback. {@link Visibility#ALWAYS}
+     * In Exams misconfiguration and leaking test results to students during an exam shall be prevented by the default setting. {@link Visibility#AFTER_DUE_DATE}
      *
-     * @return the JSON encoded custom build plan configuration or null if the default one should be used
+     * @return default visibility {@link Visibility} set after the first execution of a test case
+     *         or when resetting the test case settings
      */
-    public String getBuildPlanConfiguration() {
-        return buildPlanConfiguration;
-    }
-
-    /**
-     * Sets the JSON encoded custom build plan configuration
-     *
-     * @param buildPlanConfiguration the JSON encoded custom build plan configuration
-     */
-    public void setBuildPlanConfiguration(String buildPlanConfiguration) {
-        this.buildPlanConfiguration = buildPlanConfiguration;
-    }
-
-    /**
-     * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
-     * This method parses the JSON string and returns a {@link Windfile} object.
-     *
-     * @return the {@link Windfile} object or null if the JSON string could not be parsed
-     */
-    public Windfile getWindfile() {
-        if (buildPlanConfiguration == null) {
-            return null;
-        }
-        try {
-            return Windfile.deserialize(buildPlanConfiguration);
-        }
-        catch (JsonProcessingException e) {
-            log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
-        }
-        return null;
-    }
-
-    /**
-     * We store the bash script in the database
-     *
-     * @return the build script or null if the build script does not exist
-     */
-    public String getBuildScript() {
-        return buildScript;
-    }
-
-    /**
-     * Update the build script
-     *
-     * @param buildScript the new build script for the programming exercise
-     */
-    public void setBuildScript(String buildScript) {
-        this.buildScript = buildScript;
+    public Visibility getDefaultTestCaseVisibility() {
+        return this.isExamExercise() ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS;
     }
 }

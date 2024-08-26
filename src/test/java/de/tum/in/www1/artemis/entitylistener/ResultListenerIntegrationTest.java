@@ -20,21 +20,26 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -49,12 +54,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private Long idOfStudent1;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
-
-    @Autowired
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
@@ -67,16 +66,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private TeamRepository teamRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private ResultService resultService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -134,7 +124,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         request.put("/api/text-exercises", exercise, HttpStatus.OK);
         List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
-        ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
+        ParticipantScore savedParticipantScore = savedParticipantScores.getFirst();
         assertThat(savedParticipantScore.getLastPoints()).isEqualTo(200.0);
         assertThat(savedParticipantScore.getLastRatedPoints()).isEqualTo(200.0);
     }
@@ -400,10 +390,10 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         StudentParticipation studentParticipation;
         SecurityUtils.setAuthorizationObject();
         if (isTeamTest) {
-            studentParticipation = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(idOfTeamTextExercise, idOfStudent1).get(0);
+            studentParticipation = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(idOfTeamTextExercise, idOfStudent1).getFirst();
         }
         else {
-            studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1).get(0);
+            studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1).getFirst();
         }
         return participationUtilService.createSubmissionAndResult(studentParticipation, 100, isRated);
     }
@@ -431,7 +421,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).hasSize(1);
-        ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
+        ParticipantScore savedParticipantScore = savedParticipantScores.getFirst();
         Double pointsAchieved = round(persistedResult.getScore() * 0.01 * 10.0);
         if (isRatedResult) {
             assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), persistedResult.getId(),
@@ -466,7 +456,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScore).isNotEmpty();
         assertThat(savedParticipantScore).hasSize(1);
-        ParticipantScore updatedParticipantScore = savedParticipantScore.get(0);
+        ParticipantScore updatedParticipantScore = savedParticipantScore.getFirst();
         Double lastPoints = null;
         Double lastRatedPoints = null;
         if (expectedLastScore != null) {

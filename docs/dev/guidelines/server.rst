@@ -27,7 +27,27 @@ The main application is stored under ``/src/main`` and the main folders are:
 1. Naming convention
 ====================
 
-All variables, methods and classes should use CamelCase style. The only difference: the first letter of any class should be capital. Most importantly use intention-revealing, pronounceable names.
+All methods and classes should use camelCase style. The only difference: the first letter of any class should be capitalized. Most importantly, use intention-revealing, pronounceable names.
+Variable names should also use camelCase style, where the first letter should be lowercase. For constants, i.e. arguments with the ``static final`` keywords, use all uppercase letters with underscores to separate words: SCREAMING_SNAKE_CASE.
+The only exception to this rule is for the logger, which should be named ``log``.
+Variable and constant names should also be intention-revealing and pronounceable.
+
+Example:
+
+.. code-block:: java
+
+    public class ExampleClass {
+        private static final Logger log = LoggerFactory.getLogger(ExampleClass.class);
+
+        private static final int MAXIMUM_NUMBER_OF_STUDENTS = 10;
+
+        private final ExampleService exampleService;
+
+        public void exampleMethod() {
+            int numberOfStudents = 0;
+            [...]
+        }
+    }
 
 2. Single responsibility principle
 ==================================
@@ -79,7 +99,7 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 8. Comments
 ===========
 
-Only write comments for complicated algorithms, to help other developers better understand them. We should only add a comment, if our code is not self-explanatory.
+Always add JavaDoc and inline comments to help other developers better understand the code and the rationale behind it. ChatGPT can be a great help. It can generate comments for you, but you should always check them and adjust them to your needs. Prefer more extensive comments and documentation and avoid useless and non sense documentation. Comments should always be in English.
 
 9. Utility
 ==========
@@ -101,10 +121,10 @@ It gets activated when a particular jar file is detected on the classpath. The s
 
 * RestControllers should be stateless.
 * RestControllers are by default singletons.
-* RestControllers should not execute business logic but rely on delegation.
-* RestControllers should deal with the HTTP layer of the application.
+* RestControllers should not execute business logic but rely on delegation to ``@Service`` classes.
+* RestControllers should deal with the HTTP layer of the application, handle access control, input data validation, output data cleanup (if necessary) and error handling.
 * RestControllers should be oriented around a use-case/business-capability.
-* RestControllers should return DTOs that are as small as possible
+* RestControllers must always return DTOs that are as small as possible (please focus on data economy to improve performance and follow data privacy principles).
 
 Route naming conventions:
 
@@ -323,8 +343,8 @@ An example for a simple method is finding a single entity by ID:
 
 .. code-block:: java
 
-    default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
-       return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));
+    default Course findByIdWithLecturesElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerLecturesById(courseId), courseId);
     }
 
 
@@ -535,7 +555,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 
 .. code-block:: java
 
-    @GetMapping(Endpoints.GET_FOR_COURSE)
+    @GetMapping("courses/{courseId}/programming-exercises")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);

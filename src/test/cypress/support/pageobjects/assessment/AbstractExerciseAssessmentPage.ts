@@ -1,16 +1,16 @@
-import { BASE_API, ExerciseType, PUT } from '../../constants';
+import { BASE_API, ExerciseType, PATCH, PUT } from '../../constants';
 
 /**
  * Parent class for all exercise assessment pages.
  */
 export abstract class AbstractExerciseAssessmentPage {
-    readonly unreferencedFeedbackSelector = '.unreferenced-feedback-detail';
+    readonly UNREFERENCED_FEEDBACK_SELECTOR = '.unreferenced-feedback-detail';
 
     addNewFeedback(points: number, feedback?: string) {
         cy.get('.add-unreferenced-feedback').click();
-        cy.get(this.unreferencedFeedbackSelector).find('#feedback-points').clear().type(points.toString());
+        cy.get(this.UNREFERENCED_FEEDBACK_SELECTOR).find('#feedback-points').clear().type(points.toString());
         if (feedback) {
-            cy.get(this.unreferencedFeedbackSelector).find('#feedback-textarea').clear().type(feedback);
+            cy.get(this.UNREFERENCED_FEEDBACK_SELECTOR).find('#feedback-textarea').clear().type(feedback);
         }
     }
 
@@ -45,7 +45,7 @@ export abstract class AbstractExerciseAssessmentPage {
                 cy.intercept(PUT, `${BASE_API}/participations/*/submissions/*/text-assessment-after-complaint`).as('complaintAnswer');
                 break;
             case ExerciseType.MODELING:
-                cy.intercept(PUT, `${BASE_API}/complaint-responses/complaint/*/resolve`).as('complaintAnswer');
+                cy.intercept(PATCH, `${BASE_API}/complaints/*/response`).as('complaintAnswer');
                 break;
             case ExerciseType.FILE_UPLOAD:
                 cy.intercept(PUT, `${BASE_API}/file-upload-submissions/*/assessment-after-complaint`).as('complaintAnswer');

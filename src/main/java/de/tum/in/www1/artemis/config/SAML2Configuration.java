@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.config;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.security.cert.CertificateException;

@@ -37,14 +37,10 @@
                             <span style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ 'global.generic.unset' | artemisTranslate }} </span>
                         }
                         @if (semester === 'test') {
-                            <span style="font-size: 24px">
-                                {{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}
-                            </span>
+                            <span style="font-size: 24px" jhiTranslate="artemisApp.course.testCourse.plural"></span>
                         }
                         @if (semester === 'recent') {
-                            <span style="font-size: 24px">
-                                {{ 'artemisApp.course.recentlyAccessed' | artemisTranslate }}
-                            </span>
+                            <span style="font-size: 24px" jhiTranslate="artemisApp.course.recentlyAccessed"></span>
                         }
                     </div>
                     @if (!semesterCollapsed[semester]) {
@@ -53,9 +49,9 @@
                                 <jhi-course-management-card
                                     class="col-md-8"
                                     [course]="course"
-                                    [courseStatistics]="statistics[course.id!]"
-                                    [courseWithExercises]="coursesWithExercises[course.id!]"
-                                    [courseWithUsers]="coursesWithUsers[course.id!]"
+                                    [courseStatistics]="statistics.get(course.id!)"
+                                    [courseWithExercises]="coursesWithExercises.get(course.id!)"
+                                    [courseWithUsers]="coursesWithUsers.get(course.id!)"
                                     [isGuidedTour]="course === courseForGuidedTour"
                                 />
                             }

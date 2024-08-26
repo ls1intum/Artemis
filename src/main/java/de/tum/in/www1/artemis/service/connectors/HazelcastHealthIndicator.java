@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Profile;
@@ -19,7 +20,7 @@ public class HazelcastHealthIndicator implements HealthIndicator {
 
     private final HazelcastInstance hazelcastInstance;
 
-    public HazelcastHealthIndicator(HazelcastInstance hazelcastInstance) {
+    public HazelcastHealthIndicator(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
 

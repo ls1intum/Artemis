@@ -13,7 +13,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Profile(PROFILE_CORE)
@@ -26,11 +30,15 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService) {
+            FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService,
+            CompetencyProgressService competencyProgressService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.channelService = channelService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -50,6 +58,8 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         FileUploadExercise newFileUploadExercise = fileUploadExerciseRepository.save(newExercise);
 
         channelService.createExerciseChannel(newFileUploadExercise, Optional.ofNullable(importedExercise.getChannelName()));
+
+        competencyProgressService.updateProgressByLearningObjectAsync(newFileUploadExercise);
 
         return newFileUploadExercise;
     }

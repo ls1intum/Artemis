@@ -42,7 +42,7 @@ describe('FooterComponent', () => {
             component.isTestServer = true;
             fixture.detectChanges();
 
-            const gitInfoElement = fixture.debugElement.nativeElement.querySelector('.footer-git-wrapper');
+            const gitInfoElement = fixture.debugElement.nativeElement.querySelector('.footer-git');
             expect(gitInfoElement).not.toBeNull();
         });
     });
@@ -68,15 +68,18 @@ describe('FooterComponent', () => {
         });
 
         it('should display all git information', () => {
-            const gitBranchElement = fixture.debugElement.nativeElement.querySelector('.footer-git-wrapper .footer-git:nth-child(1)');
-            const gitCommitElement = fixture.debugElement.nativeElement.querySelector('.footer-git-wrapper .footer-git:nth-child(2)');
-            const gitTimestampElement = fixture.debugElement.nativeElement.querySelector('.footer-git-wrapper .footer-git:nth-child(3)');
-            const gitUserElement = fixture.debugElement.nativeElement.querySelector('.footer-git-wrapper .footer-git:nth-child(4)');
+            // Assuming there's only one .footer-git and it contains all git info divs
+            const footerGit = fixture.debugElement.nativeElement.querySelector('.footer-git');
+            const gitElements = footerGit.querySelectorAll('div');
 
-            expect(gitBranchElement.textContent).toContain('main');
-            expect(gitCommitElement.textContent).toContain('abc123');
-            expect(gitTimestampElement.textContent).toContain('2023-04-01T12:00:00Z');
-            expect(gitUserElement.textContent).toContain('user123');
+            // Ensure that we have exactly four git info divs
+            expect(gitElements).toHaveLength(4);
+
+            // Check each element for the expected text content
+            expect(gitElements[0].textContent).toContain('main'); // for git branch
+            expect(gitElements[1].textContent).toContain('abc123'); // for git commit ID
+            expect(gitElements[2].textContent).toContain('2023-04-01T12:00:00Z'); // for git timestamp
+            expect(gitElements[3].textContent).toContain('user123'); // for git commit user
         });
     });
 });

@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.ldap;
 
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -17,11 +19,10 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProviderImpl;
-import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.AuthorityService;
@@ -60,41 +61,101 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
         return null;
     }
 
+    /**
+     * Get or create a user based on the given authentication. This method will check the password
+     *
+     * @param authentication The authentication object
+     * @return The user object or null if the user is internal
+     */
     private User getOrCreateUser(Authentication authentication) {
-        String username = authentication.getName().toLowerCase();
+        String loginOrEmail = authentication.getName().toLowerCase(Locale.ENGLISH);
         String password = authentication.getCredentials().toString();
 
         long start = System.nanoTime();
 
-        final var optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
+        // distinguish between login and email here by using a simple regex
+        boolean isEmail = SecurityUtils.isEmail(loginOrEmail);
+
+        Optional<User> optionalUser;
+        if (isEmail) {
+            // It's an email, try to find the Artemis user in the database based on the email
+            optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByEmail(loginOrEmail);
+        }
+        else {
+            // It's a login, try to find the Artemis user in the database based on the login
+            optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(loginOrEmail);
+        }
         if (optionalUser.isPresent() && optionalUser.get().isInternal()) {
             // User found but is internal. Skip external authentication.
             return null;
         }
 
-        log.debug("Finished userRepository.findOneWithGroupsAndAuthoritiesByLogin in {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Finished userRepository.findOneWithGroupsAndAuthoritiesByLoginOrEmail in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
         // If the following code is executed, the user is either not yet existent or an external user
+        final LdapUserDto ldapUserDto;
+        if (isEmail) {
+            // It's an email, try to find the LDAP user in the external user management system based on the given email (which must not be the main user email)
+            ldapUserDto = ldapUserService.findByAnyEmail(loginOrEmail).orElseThrow(() -> new BadCredentialsException("Wrong credentials"));
+        }
+        else {
+            // It's a login, try to find the LDAP user in the external user management system based on the given login
+            ldapUserDto = ldapUserService.findByLogin(loginOrEmail).orElseThrow(() -> new BadCredentialsException("Wrong credentials"));
+        }
 
-        final LdapUserDto ldapUserDto = ldapUserService.findByUsername(username).orElseThrow(() -> new BadCredentialsException("Wrong credentials"));
-
-        log.debug("Finished ldapUserService.findByUsername in {}", TimeLogUtil.formatDurationFrom(start));
+        if (isEmail && optionalUser.isEmpty()) {
+            // this is an edge case which could happen when the user email changed or the user has multiple email addresses and used a secondary email to login
+            // therefore, double check if the Artemis User with the LDAP login (based on the given email) exists. If yes, we will use this user and update the LDAP values below
+            // without this code a second user would be created in Artemis which is not what we want (additionally this would fail because of unique constraints)
+            optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(ldapUserDto.getLogin());
+        }
+        log.debug("Finished ldapUserService.findByLogin in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
-        // We create our own authorization and use the credentials of the user.
+        // Use the given password to compare it with the LDAP entry (i.e. check the authorization)
         byte[] passwordBytes = Utf8.encode(password);
         boolean passwordCorrect = ldapTemplate.compare(ldapUserDto.getUid().toString(), "userPassword", passwordBytes);
-        log.debug("Compare password with LDAP entry for user {} to validate login", username);
-        // this is the normal case, where the password is validated
+        log.debug("Compare password with LDAP entry for user {} to validate login", loginOrEmail);
         if (!passwordCorrect) {
             throw new BadCredentialsException("Wrong credentials");
         }
 
         log.debug("Finished ldapTemplate.compare password in {}", TimeLogUtil.formatDurationFrom(start));
 
-        return optionalUser.orElseGet(() -> {
-            User newUser = userCreationService.createUser(ldapUserDto.getUsername(), null, null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),
+        // update the user details from ldapUserDto (because they might have changed, e.g. when the user changes the name)
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            boolean saveNeeded = false;
+            if (!Objects.equals(user.getLogin(), ldapUserDto.getLogin())) {
+                user.setLogin(ldapUserDto.getLogin());
+                saveNeeded = true;
+            }
+            if (!Objects.equals(user.getFirstName(), ldapUserDto.getFirstName())) {
+                user.setFirstName(ldapUserDto.getFirstName());
+                saveNeeded = true;
+            }
+            if (!Objects.equals(user.getLastName(), ldapUserDto.getLastName())) {
+                user.setLastName(ldapUserDto.getLastName());
+                saveNeeded = true;
+            }
+            if (!Objects.equals(user.getEmail(), ldapUserDto.getEmail())) {
+                user.setEmail(ldapUserDto.getEmail());
+                saveNeeded = true;
+            }
+            if (!Objects.equals(user.getRegistrationNumber(), ldapUserDto.getRegistrationNumber())) {
+                user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
+                saveNeeded = true;
+            }
+            // only save the user in the database in case it has changed
+            if (saveNeeded) {
+                user = userRepository.save(user);
+            }
+            return user;
+        }
+        else {
+            // this handles the case that the user does not exist in the Artemis database yet (i.e. first time user login)
+            User newUser = userCreationService.createUser(ldapUserDto.getLogin(), null, null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),
                     ldapUserDto.getRegistrationNumber(), null, "en", false);
 
             newUser.setGroups(new HashSet<>());
@@ -105,7 +166,7 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 newUser.setActivationKey(null);
             }
             return userCreationService.saveUser(newUser);
-        });
+        }
     }
 
     @Override
@@ -114,58 +175,13 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
     }
 
     /**
-     * Adds a user to a group. Ignores "user is already a member of" errors.
-     *
-     * @param user  The user
-     * @param group The group name
-     * @throws ArtemisAuthenticationException returns an error
-     */
-    @Override
-    public void addUserToGroup(User user, String group) throws ArtemisAuthenticationException {
-        // not relevant: this would only be possible if the LDAP supports groups and the connection has write access
-    }
-
-    @Override
-    public void createUserInExternalUserManagement(User user) {
-        // not relevant
-    }
-
-    @Override
-    public void createGroup(String groupName) {
-        // not relevant
-    }
-
-    @Override
-    public void deleteGroup(String groupName) {
-        // not relevant
-    }
-
-    @Override
-    public void removeUserFromGroup(User user, String group) {
-        // not relevant: this would only be possible if the LDAP supports groups and the connection has write access
-    }
-
-    @Override
-    public boolean isGroupAvailable(String group) {
-        // not relevant: this would only be possible if the LDAP supports groups
-        return true;
-    }
-
-    @Override
-    public ConnectorHealth health() {
-        // we cannot
-        return new ConnectorHealth(true);
-    }
-
-    /**
      * Checks if a user for the given email address exists.
      *
      * @param email The user email address
      * @return Optional String of username
-     * @throws ArtemisAuthenticationException an exception when the user cannot be retrieved
      */
     @Override
-    public Optional<String> getUsernameForEmail(String email) throws ArtemisAuthenticationException {
-        return ldapUserService.findByEmail(email).map(LdapUserDto::getUsername);
+    public Optional<String> getUsernameForEmail(String email) {
+        return ldapUserService.findByAnyEmail(email).map(LdapUserDto::getLogin);
     }
 }

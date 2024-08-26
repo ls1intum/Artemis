@@ -3,7 +3,11 @@ package de.tum.in.www1.artemis.post;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -12,20 +16,33 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.metis.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.*;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.Posting;
+import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.metis.*;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -37,11 +54,11 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 @Service
 public class ConversationUtilService {
 
-    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 
-    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+    private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
 
-    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Autowired
     private CourseRepository courseRepo;
@@ -91,7 +108,7 @@ public class ConversationUtilService {
      * @return The created Course
      */
     public Course createCourseWithPostsDisabled() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         return courseRepo.save(course);
     }
@@ -111,13 +128,13 @@ public class ConversationUtilService {
 
         Course course1 = courseUtilService.createCourse();
         for (int i = 0; i < 2; i++) {
-            TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+            TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course1);
             course1.addExercises(textExercise);
             textExercise = exerciseRepo.save(textExercise);
             Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
             testExerciseChannels.add(exerciseChannel);
 
-            Lecture lecture = LectureFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+            Lecture lecture = LectureFactory.generateLecture(PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course1);
             course1.addLectures(lecture);
             lecture = lectureRepo.save(lecture);
             Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
@@ -127,7 +144,7 @@ public class ConversationUtilService {
         courseRepo.save(course1);
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
-        plagiarismCase.setExercise(testExerciseChannels.get(0).getExercise());
+        plagiarismCase.setExercise(testExerciseChannels.getFirst().getExercise());
         plagiarismCase.setStudent(userUtilService.getUserByLogin(userPrefix + "student1"));
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 

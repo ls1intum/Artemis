@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -37,6 +42,15 @@ public class IrisExerciseSettings extends IrisSettings {
     }
 
     @Override
+    public IrisLectureIngestionSubSettings getIrisLectureIngestionSettings() {
+        return null;
+    }
+
+    @Override
+    public void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings) {
+    }
+
+    @Override
     public IrisChatSubSettings getIrisChatSettings() {
         return irisChatSettings;
     }
@@ -53,16 +67,6 @@ public class IrisExerciseSettings extends IrisSettings {
 
     @Override
     public void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings) {
-
-    }
-
-    @Override
-    public IrisCodeEditorSubSettings getIrisCodeEditorSettings() {
-        return null;
-    }
-
-    @Override
-    public void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings) {
 
     }
 

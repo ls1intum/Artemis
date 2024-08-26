@@ -76,7 +76,7 @@
                     <jhi-help-icon text="artemisApp.importUsers.csvFile.tooltip" class="me-1" />
                 </div>
                 @if (isParsing) {
-                    <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" />
+                    <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" animation="spin" />
                 }
             </div>
             <div class="mt-2">
@@ -175,16 +175,16 @@
             <div class="flex-shrink-0 me-2 d-flex">
                 @if (!hasImported) {
                     <div>
-                        <strong>{{ 'artemisApp.importUsers.numberOfUsers' | artemisTranslate }}</strong>
+                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
                         <span>&nbsp;{{ usersToImport.length }}</span>
                     </div>
                 } @else {
                     <div>
-                        <strong>{{ 'artemisApp.importUsers.numberOfUsersImported' | artemisTranslate }}</strong>
+                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
                         <span>{{ numberOfUsersImported }}</span>
                     </div>
                     <div class="ms-2">
-                        <strong>{{ 'artemisApp.importUsers.numberOfUsersNotImported' | artemisTranslate }}</strong>
+                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
                         <span
                             ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
                         >
@@ -196,16 +196,16 @@
             <div class="flex-shrink-0 me-2 d-flex">
                 @if (!hasImported) {
                     <div>
-                        <strong>{{ 'artemisApp.importUsers.numberOfUsers' | artemisTranslate }}</strong>
+                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
                         <span>&nbsp;{{ examUsersToImport.length }}</span>
                     </div>
                 } @else {
                     <div>
-                        <strong>{{ 'artemisApp.importUsers.numberOfUsersImported' | artemisTranslate }}</strong>
+                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
                         <span>{{ numberOfUsersImported }}</span>
                     </div>
                     <div class="ms-2">
-                        <strong>{{ 'artemisApp.importUsers.numberOfUsersNotImported' | artemisTranslate }}</strong>
+                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
                         <span
                             ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
                         >
@@ -221,7 +221,7 @@
                 <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="importUsers()">
                     <fa-icon [icon]="faUpload" class="me-2" />
                     <span jhiTranslate="entity.action.to-import"></span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch" />
+                    <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
                 </button>
             } @else {
                 <button class="btn btn-success" id="finish-button" (click)="onFinish()">

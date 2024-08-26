@@ -22,12 +22,11 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -79,9 +78,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamRepository examRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private SubmissionRepository submissionRepository;
@@ -137,7 +133,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         var textExercise = exerciseUtilService.getFirstExerciseWithType(course1, TextExercise.class);
         textExercise.setStartDate(ZonedDateTime.now().minusDays(40));
 
-        var result1 = participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), users.get(0), 10.0, 0.0, 50, true);
+        var result1 = participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), users.getFirst(), 10.0, 0.0, 50, true);
         result1.getSubmission().setSubmissionDate(ZonedDateTime.now().minusMinutes(10));
         submissionRepository.save(result1.getSubmission());
 
@@ -210,14 +206,14 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testPublicMetricsExams() {
         var users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        var courseWithActiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(users.get(0));
-        var activeExam = examRepository.findByCourseId(courseWithActiveExam.getId()).get(0);
+        var courseWithActiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(users.getFirst());
+        var activeExam = examRepository.findByCourseId(courseWithActiveExam.getId()).getFirst();
         activeExam.setStartDate(ZonedDateTime.now().minusDays(1));
         activeExam.setEndDate(ZonedDateTime.now().plusDays(1));
         examRepository.save(activeExam);
 
-        var courseWithInactiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(users.get(0));
-        var inactiveExam = examRepository.findByCourseId(courseWithInactiveExam.getId()).get(0);
+        var courseWithInactiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(users.getFirst());
+        var inactiveExam = examRepository.findByCourseId(courseWithInactiveExam.getId()).getFirst();
         inactiveExam.setStartDate(ZonedDateTime.now().minusDays(1));
         inactiveExam.setEndDate(ZonedDateTime.now().plusDays(1));
         examRepository.save(inactiveExam);
@@ -247,7 +243,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         exam1.setStartDate(ZonedDateTime.now().minusMinutes(1));
         exam1.setTitle("exam" + UUID.randomUUID());
         examRepository.save(exam1);
-        examUtilService.addStudentExamWithUser(exam1, users.get(0));
+        examUtilService.addStudentExamWithUser(exam1, users.getFirst());
         examUtilService.addStudentExamWithUser(exam1, users.get(1));
 
         var course2 = courseUtilService.createCourse();
@@ -258,10 +254,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         exam2.setTitle("exam" + UUID.randomUUID());
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(1));
         examRepository.save(exam2);
-        examUtilService.addStudentExamWithUser(exam2, users.get(0));
+        examUtilService.addStudentExamWithUser(exam2, users.getFirst());
 
         users.forEach(user -> user.setGroups(new HashSet<>()));
-        users.get(0).getGroups().add(TEST_PREFIX + "course1Students");
+        users.getFirst().getGroups().add(TEST_PREFIX + "course1Students");
         users.get(1).getGroups().add(TEST_PREFIX + "course1Students");
         users.get(2).getGroups().add(TEST_PREFIX + "course1Students");
         users.get(2).getGroups().add(TEST_PREFIX + "course2Students");
@@ -317,7 +313,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     void testPrometheusMetricsExercises() {
         var users = userUtilService.addUsers(TEST_PREFIX, 6, 0, 0, 0);
         // 3 in course 1
-        users.get(0).setGroups(Set.of(TEST_PREFIX + "course1students"));
+        users.getFirst().setGroups(Set.of(TEST_PREFIX + "course1students"));
         users.get(1).setGroups(Set.of(TEST_PREFIX + "course1students"));
         users.get(2).setGroups(Set.of(TEST_PREFIX + "course1students"));
         // 3 in course 2
@@ -348,10 +344,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         // Add activity to user
         quizExerciseUtilService.saveQuizSubmission(exerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
-                users.get(0).getLogin());
+                users.getFirst().getLogin());
 
         // We have to first refresh the active users and then the metrics to ensure the data is updated correctly
-        metricsBean.calculateCachedActiveUserNames();
+        metricsBean.calculateActiveUserMetrics();
         metricsBean.recalculateMetrics();
 
         // Should now have one active user
@@ -366,7 +362,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
                 users.get(1).getLogin());
 
         // We have to first refresh the active users and then the metrics to ensure the data is updated correctly
-        metricsBean.calculateCachedActiveUserNames();
+        metricsBean.calculateActiveUserMetrics();
         metricsBean.recalculateMetrics();
 
         // Should now have two active users
@@ -395,7 +391,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         var course = courseUtilService.createCourse();
         var exam1 = examUtilService.addExam(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(10));
         var registeredExamUser1 = new ExamUser();
-        registeredExamUser1.setUser(users.get(0));
+        registeredExamUser1.setUser(users.getFirst());
         registeredExamUser1.setExam(exam1);
         registeredExamUser1 = examUserRepository.save(registeredExamUser1);
         exam1.addExamUser(registeredExamUser1);
@@ -413,7 +409,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         var exam2 = examUtilService.addExam(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(5), ZonedDateTime.now().plusMinutes(12));
         var registeredExamUser3 = new ExamUser();
-        registeredExamUser3.setUser(users.get(0));
+        registeredExamUser3.setUser(users.getFirst());
         registeredExamUser3.setExam(exam2);
         registeredExamUser3 = examUserRepository.save(registeredExamUser3);
         exam2.addExamUser(registeredExamUser3);

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -35,6 +37,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -48,7 +51,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPer
  * Implementation of VersionControlService for the local VC server.
  */
 @Service
-@Profile("localvc")
+@Profile(PROFILE_LOCALVC)
 public class LocalVCService extends AbstractVersionControlService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCService.class);
@@ -56,12 +59,18 @@ public class LocalVCService extends AbstractVersionControlService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
+    private static String localVCBasePath;
+
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    public void setLocalVCBasePath(String localVCBasePath) {
+        LocalVCService.localVCBasePath = localVCBasePath;
+    }
 
     public LocalVCService(UriService uriService, GitService gitService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
-        super(gitService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository);
+            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        super(gitService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository,
+                programmingExerciseBuildConfigRepository);
     }
 
     @Override
@@ -119,7 +128,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteRepository(VcsRepositoryUri repositoryUri) {
 
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString());
         Path localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 
         try {
@@ -157,7 +166,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) {
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString());
         return getDefaultBranchOfRepository(localVCRepositoryUri);
     }
 
@@ -168,8 +177,19 @@ public class LocalVCService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      * @throws LocalVCInternalException if the default branch cannot be determined
      */
-    public String getDefaultBranchOfRepository(LocalVCRepositoryUri localVCRepositoryUri) {
+    public static String getDefaultBranchOfRepository(LocalVCRepositoryUri localVCRepositoryUri) {
         String localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toString();
+        return getDefaultBranchOfRepository(localRepositoryPath);
+    }
+
+    /**
+     * Get the default branch of the repository given the Local VC repository URI
+     *
+     * @param localRepositoryPath The path of the local repository to get the default branch for.
+     * @return the name of the default branch, e.g. 'main'
+     * @throws LocalVCInternalException if the default branch cannot be determined
+     */
+    public static String getDefaultBranchOfRepository(String localRepositoryPath) {
         Map<String, Ref> remoteRepositoryRefs;
         try {
             remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();
@@ -229,9 +249,7 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     public ConnectorHealth health() {
-        ConnectorHealth health = new ConnectorHealth(true);
-        health.setAdditionalInfo(Map.of("url", localVCBaseUrl));
-        return health;
+        return new ConnectorHealth(true, Map.of("url", localVCBaseUrl));
     }
 
     /**
@@ -280,7 +298,7 @@ public class LocalVCService extends AbstractVersionControlService {
         }
 
         try {
-            new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
+            new LocalVCRepositoryUri(repositoryUri.toString());
         }
         catch (LocalVCInternalException e) {
             return false;

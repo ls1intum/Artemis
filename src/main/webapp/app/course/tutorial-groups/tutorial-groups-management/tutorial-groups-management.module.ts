@@ -37,6 +37,9 @@ import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/
 import { TutorialGroupsChecklistComponent } from './tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { TutorialGroupFreePeriodsTableComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
+import { TutorialGroupsExportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-export-button.component/tutorial-groups-export-button.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+
 @NgModule({
     imports: [
         RouterModule.forChild(tutorialGroupManagementRoutes),
@@ -49,6 +52,7 @@ import { TutorialGroupFreePeriodsTableComponent } from 'app/course/tutorial-grou
         ArtemisTutorialGroupsSharedModule,
         ArtemisSidePanelModule,
         ArtemisSharedComponentModule,
+        ArtemisMarkdownEditorModule,
     ],
     declarations: [
         TutorialGroupsManagementComponent,
@@ -75,6 +79,7 @@ import { TutorialGroupFreePeriodsTableComponent } from 'app/course/tutorial-grou
         TutorialGroupFreePeriodRowButtonsComponent,
         EditTutorialGroupFreePeriodComponent,
         TutorialGroupsImportButtonComponent,
+        TutorialGroupsExportButtonComponent,
         TutorialGroupsRegistrationImportDialogComponent,
         TutorialGroupsChecklistComponent,
         TutorialGroupFreePeriodsTableComponent,

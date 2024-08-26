@@ -32,47 +32,49 @@ class SmartOutputStream extends TemporaryBuffer {
 
     private static final int LIMIT = 32 * 1024;
 
-    private final HttpServletRequest req;
+    private final HttpServletRequest request;
 
-    private final HttpServletResponse rsp;
+    private final HttpServletResponse response;
 
     private final boolean compressStream;
 
     private boolean startedOutput;
 
-    SmartOutputStream(final HttpServletRequest req, final HttpServletResponse rsp, boolean compressStream) {
+    SmartOutputStream(final HttpServletRequest request, final HttpServletResponse response, boolean compressStream) {
         super(LIMIT);
-        this.req = req;
-        this.rsp = rsp;
+        this.request = request;
+        this.response = response;
         this.compressStream = compressStream;
     }
 
-    @Override protected OutputStream overflow() throws IOException {
+    @Override
+    protected OutputStream overflow() throws IOException {
         startedOutput = true;
 
-        OutputStream out = rsp.getOutputStream();
-        if (compressStream && acceptsGzipEncoding(req)) {
-            rsp.setHeader(HDR_CONTENT_ENCODING, ENCODING_GZIP);
+        OutputStream out = response.getOutputStream();
+        if (compressStream && acceptsGzipEncoding(request)) {
+            response.setHeader(HDR_CONTENT_ENCODING, ENCODING_GZIP);
             out = new GZIPOutputStream(out);
         }
         return out;
     }
 
-    @Override public void close() throws IOException {
+    @Override
+    public void close() throws IOException {
         super.close();
 
         if (!startedOutput) {
             // If output hasn't started yet, the entire thing fit into our
             // buffer. Try to use a proper Content-Length header, and also
             // deflate the response with gzip if it will be smaller.
-            if (256 < this.length() && acceptsGzipEncoding(req)) {
+            if (256 < this.length() && acceptsGzipEncoding(request)) {
                 TemporaryBuffer gzbuf = new TemporaryBuffer.Heap(LIMIT);
                 try {
                     try (GZIPOutputStream gzip = new GZIPOutputStream(gzbuf)) {
                         this.writeTo(gzip, null);
                     }
                     if (gzbuf.length() < this.length()) {
-                        rsp.setHeader(HDR_CONTENT_ENCODING, ENCODING_GZIP);
+                        response.setHeader(HDR_CONTENT_ENCODING, ENCODING_GZIP);
                         writeResponse(gzbuf);
                         return;
                     }
@@ -91,8 +93,8 @@ class SmartOutputStream extends TemporaryBuffer {
         // The Content-Length cannot overflow when cast to an int, our
         // hardcoded LIMIT constant above assures us we wouldn't store
         // more than 2 GiB of content in memory.
-        rsp.setContentLength((int) out.length());
-        try (OutputStream os = rsp.getOutputStream()) {
+        response.setContentLength((int) out.length());
+        try (OutputStream os = response.getOutputStream()) {
             out.writeTo(os, null);
             os.flush();
         }

@@ -25,6 +25,9 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
+import { MetisModule } from 'app/shared/metis/metis.module';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -57,11 +60,13 @@ examples.forEach((activeConversation) => {
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
                 ],
+                imports: [MetisModule],
                 providers: [
                     MockProvider(NgbModal),
                     MockProvider(MetisConversationService),
                     MockProvider(ConversationService),
                     { provide: MetisService, useClass: MockMetisService },
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             }).compileComponents();
         }));
@@ -118,6 +123,19 @@ examples.forEach((activeConversation) => {
 
         it('should open dialog details dialog with info tab', fakeAsync(() => {
             detailDialogTest('info', ConversationDetailTabs.INFO);
+        }));
+
+        it('should toggle search when search button is pressed', fakeAsync(() => {
+            const searchButton = fixture.debugElement.nativeElement.querySelector('.search');
+            expect(searchButton).toBeTruthy();
+
+            const toggleSearchSpy = jest.spyOn(component, 'toggleSearchBar');
+            fixture.detectChanges();
+            searchButton.click();
+
+            fixture.whenStable().then(() => {
+                expect(toggleSearchSpy).toHaveBeenCalledOnce();
+            });
         }));
 
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {

@@ -60,7 +60,7 @@ public class GradingScaleService {
      * If the user does not have ADMIN role, they can only access the grading scales if they are an instructor in the course related to it.
      * The result is paged, meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send too many results.
-     *
+     * <p>
      * The search term is the title of the course or exam that is directly associated with that grading scale.
      *
      * @param search The search query defining the search term and the size of the returned page
@@ -120,9 +120,9 @@ public class GradingScaleService {
         // check if all pairs of the sorted grade steps have valid adjacency
         boolean validAdjacency = IntStream.range(0, sortedGradeSteps.size() - 1).allMatch(i -> GradeStep.checkValidAdjacency(sortedGradeSteps.get(i), sortedGradeSteps.get(i + 1)));
         // first step should start from and include 0
-        boolean validFirstElement = sortedGradeSteps.get(0).isLowerBoundInclusive() && sortedGradeSteps.get(0).getLowerBoundPercentage() == 0;
+        boolean validFirstElement = sortedGradeSteps.getFirst().isLowerBoundInclusive() && sortedGradeSteps.getFirst().getLowerBoundPercentage() == 0;
         // last step should end with an inclusive value
-        boolean validLastElement = sortedGradeSteps.get(sortedGradeSteps.size() - 1).isUpperBoundInclusive();
+        boolean validLastElement = sortedGradeSteps.getLast().isUpperBoundInclusive();
         return validAdjacency && validFirstElement && validLastElement;
     }
 

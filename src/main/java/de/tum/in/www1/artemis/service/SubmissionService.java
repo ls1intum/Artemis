@@ -4,7 +4,11 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMI
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -16,11 +20,31 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.AssessmentNote;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSelectionService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -390,6 +414,9 @@ public class SubmissionService {
      * @param feedbacks the feedbacks which are copied
      */
     private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
+        if (feedbacks == null) {
+            return;
+        }
         feedbacks.forEach(feedback -> {
             Feedback newFeedback = feedbackService.copyFeedback(feedback);
             result.addFeedback(newFeedback);
@@ -420,17 +447,26 @@ public class SubmissionService {
      * This method is used to create a new result, after a complaint has been accepted.
      * The new result contains the updated feedback of the result the complaint belongs to.
      *
-     * @param submission the submission where the original result and the result after the complaintResponse belong to
-     * @param oldResult  the original result, before the response
-     * @param feedbacks  the new feedbacks after the response
+     * @param submission         the submission where the original result and the result after the complaintResponse belong to
+     * @param oldResult          the original result, before the response
+     * @param feedbacks          the new feedbacks after the response
+     * @param assessmentNoteText the new text of the assessment note
      * @return the newly created result
      */
-    public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks) {
+    public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
+        updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
         newResult.setParticipation(submission.getParticipation());
         copyFeedbackToResult(newResult, feedbacks);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
         return newResult;
+    }
+
+    private void updateAssessmentNoteAfterComplaintResponse(Result newResult, String assessmentNoteText, User assessor) {
+        AssessmentNote newNote = new AssessmentNote();
+        newNote.setCreator(assessor);
+        newNote.setNote(assessmentNoteText);
+        newResult.setAssessmentNote(newNote);
     }
 
     /**
@@ -652,7 +688,7 @@ public class SubmissionService {
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
-            if (exercise instanceof ProgrammingExercise programmingExercise && !exercise.getAllowManualFeedbackRequests()) {
+            if (exercise instanceof ProgrammingExercise programmingExercise && !exercise.getAllowFeedbackRequests()) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
@@ -740,7 +776,11 @@ public class SubmissionService {
             var complaintMap = complaints.stream().collect(Collectors.toMap(complaint -> complaint.getResult().getId(), value -> value));
             // get the ids of all results which have a complaint, and with those fetch all their submissions
             List<Long> submissionIds = complaints.stream().map(complaint -> complaint.getResult().getSubmission().getId()).toList();
-            List<Submission> submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
+            List<Submission> submissions = List.of();
+            if (!submissionIds.isEmpty()) {
+                // avoid the database query if the list is empty to prevent performance issues
+                submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
+            }
 
             // add each submission with its complaint to the DTO
             submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
@@ -782,8 +822,7 @@ public class SubmissionService {
     public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(SearchTermPageableSearchDTO<String> search, Long exerciseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.STUDENT_PARTICIPATION);
         String searchTerm = search.getSearchTerm();
-        Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm,
-                pageable);
+        Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndResultsByExerciseId(exerciseId, searchTerm, pageable);
 
         var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
         final Page<Submission> submissionPage = new PageImpl<>(latestSubmissions, pageable, latestSubmissions.size());

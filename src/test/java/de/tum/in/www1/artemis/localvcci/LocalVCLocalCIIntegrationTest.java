@@ -2,10 +2,14 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_EXAM_CONDUCTION;
+import static de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_NORMAL;
+import static de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -20,10 +24,17 @@ import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -41,7 +52,6 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -49,13 +59,11 @@ import de.tum.in.www1.artemis.util.LocalRepository;
  * This class contains integration tests for the base repositories (template, solution, tests) and the different types of assignment repositories (student assignment, teaching
  * assistant assignment, instructor assignment).
  */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private BuildJobRepository buildJobRepository;
@@ -72,6 +80,22 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private String teamShortName;
 
     private String teamRepositorySlug;
+
+    @Value("${artemis.user-management.internal-admin.username}")
+    private String localVCUsername;
+
+    @Value("${artemis.user-management.internal-admin.password}")
+    private String localVCPassword;
+
+    @BeforeAll
+    void setupAll() {
+        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
+    }
+
+    @AfterAll
+    void cleanupAll() {
+        this.gitService.init();
+    }
 
     @BeforeEach
     void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
@@ -92,24 +116,26 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // TODO: mock the authorization properly, potentially in each test differently
 
-        var instructor1 = new LdapUserDto().username(TEST_PREFIX + "instructor1");
+        var instructor1 = new LdapUserDto().login(TEST_PREFIX + "instructor1");
         instructor1.setUid(new LdapName("cn=instructor1,ou=test,o=lab"));
 
-        var tutor1 = new LdapUserDto().username(TEST_PREFIX + "tutor1");
+        var tutor1 = new LdapUserDto().login(TEST_PREFIX + "tutor1");
         tutor1.setUid(new LdapName("cn=tutor1,ou=test,o=lab"));
 
-        var student1 = new LdapUserDto().username(TEST_PREFIX + "student1");
+        var student1 = new LdapUserDto().login(TEST_PREFIX + "student1");
         student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
 
-        var fakeUser = new LdapUserDto().username(localVCBaseUsername);
+        var fakeUser = new LdapUserDto().login(localVCBaseUsername);
         fakeUser.setUid(new LdapName("cn=" + localVCBaseUsername + ",ou=test,o=lab"));
 
-        doReturn(Optional.of(instructor1)).when(ldapUserService).findByUsername(instructor1.getUsername());
-        doReturn(Optional.of(tutor1)).when(ldapUserService).findByUsername(tutor1.getUsername());
-        doReturn(Optional.of(student1)).when(ldapUserService).findByUsername(student1.getUsername());
-        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByUsername(localVCBaseUsername);
+        doReturn(Optional.of(instructor1)).when(ldapUserService).findByLogin(instructor1.getLogin());
+        doReturn(Optional.of(tutor1)).when(ldapUserService).findByLogin(tutor1.getLogin());
+        doReturn(Optional.of(student1)).when(ldapUserService).findByLogin(student1.getLogin());
+        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByLogin(localVCBaseUsername);
 
         doReturn(true).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+        localVCLocalCITestService.mockInspectImage(dockerClient);
     }
 
     @AfterEach
@@ -265,13 +291,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Instructors should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(auxiliaryRepository.localGit, instructor1Login, projectKey1, auxiliaryRepositorySlug);
 
-        String commitHash = localVCLocalCITestService.commitFile(auxiliaryRepository.localRepoFile.toPath(), auxiliaryRepository.localGit);
+        localVCLocalCITestService.commitFile(auxiliaryRepository.localRepoFile.toPath(), auxiliaryRepository.localGit);
 
-        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash of the tests repository for both the solution and the template repository.
-        // Note: The stub needs to receive the same object twice. Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
-        // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
-                Map.of("testCommitHash", commitHash), Map.of("testCommitHash", commitHash));
+        doReturn(ObjectId.fromString(DUMMY_COMMIT_HASH_VALID)).when(gitService).getLastCommitHash(eq(programmingExercise.getVcsTestRepositoryUri()));
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         // Mock the results for the solution repository build and for the template repository build that will both be triggered as a result of updating the tests.
@@ -282,9 +304,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         localVCLocalCITestService.testPushSuccessful(auxiliaryRepository.localGit, instructor1Login, projectKey1, auxiliaryRepositorySlug);
 
-        // Solution submissions created as a result from a push to the auxiliary repository should contain the last commit of the tests repository.
-        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), commitHash, 13, false);
-        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), commitHash, 0, false);
+        // Solution submissions created as a result from a push to the auxiliary repository should contain the last commit of the test repository.
+        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), DUMMY_COMMIT_HASH_VALID, 13, false);
+        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), DUMMY_COMMIT_HASH_VALID, 0, false);
 
         await().until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId());
@@ -392,7 +414,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
 
-        await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).isPresent());
+        await().until(() -> resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participation.getId()).isPresent());
 
         // Second push should fail.
         localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
@@ -598,7 +620,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().iterator().next();
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
         programmingExercise.setExerciseGroup(exerciseGroup);
         programmingExerciseRepository.save(programmingExercise);
@@ -644,6 +666,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
             return buildJobOptional.isPresent() && buildJobOptional.get().getRepositoryType().equals(RepositoryType.USER);
         });
+
+        Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+
+        BuildJob buildJob = buildJobOptional.orElseThrow();
+
+        assertThat(buildJob.getPriority()).isEqualTo(1);
 
         // tutor1 should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
@@ -691,7 +719,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_instructorExamTestRun() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().iterator().next();
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
         programmingExercise.setExerciseGroup(exerciseGroup);
         programmingExerciseRepository.save(programmingExercise);
@@ -699,6 +727,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Start date is in the future.
         exam.setStartDate(ZonedDateTime.now().plusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        exam.setTestExam(true);
         examRepository.save(exam);
 
         // Create an exam test run.
@@ -747,12 +776,18 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
 
-        localVCLocalCITestService.testLatestSubmission(instructorTestRunParticipation.getId(), commitHash, 1, false);
+        localVCLocalCITestService.testLatestSubmission(instructorTestRunParticipation.getId(), commitHash, 1, false, false, 0, 20);
 
         await().until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(instructorTestRunParticipation.getId());
             return buildJobOptional.isPresent() && buildJobOptional.get().getRepositoryType().equals(RepositoryType.USER);
         });
+
+        // Check that priority is set to 2 for test run submissions
+        Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(instructorTestRunParticipation.getId());
+        BuildJob buildJob = buildJobOptional.orElseThrow();
+
+        assertThat(buildJob.getPriority()).isEqualTo(2);
 
         // Cleanup
         instructorExamTestRunRepository.resetLocalRepo();
@@ -887,5 +922,70 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Cleanup
         practiceRepository.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildPriorityAfterDueDate() throws Exception {
+        // Set dueDate before now
+        programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        testPriority(instructor1Login, PRIORITY_OPTIONAL_EXERCISE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildPriorityBeforeDueDate() throws Exception {
+        testPriority(student1Login, PRIORITY_NORMAL);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPriorityRunningExam() throws Exception {
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+
+        programmingExercise.setExerciseGroup(exerciseGroup);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Exam is running
+        var now = ZonedDateTime.now();
+        exam.setStartDate(now.minusHours(1));
+        exam.setEndDate(now.plusHours(1));
+        exam.setWorkingTime(2 * 60 * 60);
+        examRepository.save(exam);
+
+        // Create StudentExam.
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, student1);
+        studentExam.setExercises(List.of(programmingExercise));
+        studentExam.setWorkingTime(exam.getWorkingTime());
+        studentExam.setStartedAndStartDate(now.minusHours(1));
+        studentExamRepository.save(studentExam);
+
+        testPriority(student1Login, PRIORITY_EXAM_CONDUCTION);
+    }
+
+    private void testPriority(String login, int expectedPriority) throws Exception {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
+        String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+                Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
+        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
+
+        await().until(() -> {
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+            return buildJobOptional.isPresent();
+        });
+
+        Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+
+        BuildJob buildJob = buildJobOptional.orElseThrow();
+
+        assertThat(buildJob.getPriority()).isEqualTo(expectedPriority);
+
     }
 }

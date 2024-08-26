@@ -20,10 +20,14 @@ public class AthenaAuthorizationInterceptor implements ClientHttpRequestIntercep
     @Value("${artemis.athena.secret}")
     private String secret;
 
+    @Value("${server.url}")
+    private String artemisServerUrl;
+
     @NotNull
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
         request.getHeaders().set(HttpHeaders.AUTHORIZATION, secret);
+        request.getHeaders().set("X-Server-URL", artemisServerUrl);
         return execution.execute(request, body);
     }
 }

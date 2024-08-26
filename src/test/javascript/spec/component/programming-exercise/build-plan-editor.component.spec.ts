@@ -10,7 +10,6 @@ import { BuildPlan } from 'app/entities/build-plan.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { MockBuildPlanService } from '../../helpers/mocks/service/mock-build-plan.service';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { MockComponent } from 'ng-mocks';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
@@ -19,6 +18,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 describe('Build Plan Editor', () => {
     let fixture: ComponentFixture<BuildPlanEditorComponent>;
@@ -33,8 +33,14 @@ describe('Build Plan Editor', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, NgbTooltipMocksModule],
-            declarations: [BuildPlanEditorComponent, TranslatePipeMock, MockComponent(CodeEditorHeaderComponent), MockComponent(UpdatingResultComponent)],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            declarations: [
+                BuildPlanEditorComponent,
+                TranslatePipeMock,
+                MockComponent(MonacoEditorComponent),
+                MockComponent(CodeEditorHeaderComponent),
+                MockComponent(UpdatingResultComponent),
+            ],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: AlertService, useValue: new MockAlertService() },
@@ -146,7 +152,7 @@ describe('Build Plan Editor', () => {
             activatedRoute.snapshot = {
                 params: { exerciseId: 3 },
             } as unknown as ActivatedRouteSnapshot;
-            const getBuildPlanStub = jest.spyOn(buildPlanService, 'getBuildPlan').mockReturnValue(throwError(new HttpResponse<BuildPlan>({ status })));
+            const getBuildPlanStub = jest.spyOn(buildPlanService, 'getBuildPlan').mockReturnValue(throwError(() => new HttpResponse<BuildPlan>({ status })));
 
             const alertStub = jest.spyOn(alertService, 'error');
 
@@ -164,4 +170,10 @@ describe('Build Plan Editor', () => {
             discardPeriodicTasks();
         }),
     );
+
+    it('should update the tab size', () => {
+        const updateTabSizeSpy = jest.spyOn(comp.editor, 'updateModelIndentationSize');
+        comp.updateTabSize(5);
+        expect(updateTabSizeSpy).toHaveBeenCalledExactlyOnceWith(5);
+    });
 });

@@ -19,16 +19,20 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.lti.Claims;
+import de.tum.in.www1.artemis.domain.lti.LtiAuthenticationResponse;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
 
 /**
- * Processes an LTI 1.3 Authorization Request response.
+ * Filter for processing an LTI 1.3 Authorization Request response.
+ * It listens for LTI login attempts {@see CustomLti13Configurer#LTI13_LOGIN_PATH} and processes them.
  * Step 3. of OpenID Connect Third Party Initiated Login is handled solely by spring-security-lti13
  * OAuth2LoginAuthenticationFilter.
  */
@@ -55,34 +59,48 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+        log.info("LTI 1.3 Launch request received for url {}", this.requestMatcher.getPattern());
 
-        // Initialize targetLink as an empty string here to ensure it has a value even if an exception is caught later.
-        String targetLink = "";
-        OidcIdToken ltiIdToken = null;
         try {
+            // Login using the distributed authorization request repository
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
-            ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
-            targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
+            OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
+            String targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
 
-            lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
+            try {
+                // here we need to check if this is a deep-linking request or a launch request
+                if (CustomLti13Configurer.LTI13_DEEPLINK_MESSAGE_REQUEST.equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
+                    // Manually setting the deep linking path is required due to Moodle and edX's inconsistent deep linking implementation.
+                    // Unlike standard GET request-based methods, these platforms do not guarantee a uniform approach, necessitating
+                    // manual configuration to ensure reliable navigation and resource access compatibility.
+                    targetLink = CustomLti13Configurer.LTI13_DEEPLINK_SELECT_COURSE_PATH;
+                    lti13Service.startDeepLinking(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
+                }
+                else {
+                    lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
+                }
+            }
+            catch (LtiEmailAlreadyInUseException ex) {
+                // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
+                // We need targetLink to redirect user on the client-side after successful authentication
+                log.error("LTI 1.3 launch failed due to email already in use: {}", ex.getMessage(), ex);
+                handleLtiEmailAlreadyInUseException(response, ltiIdToken);
+            }
 
-            writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
+            writeResponse(targetLink, ltiIdToken, authToken.getAuthorizedClientRegistrationId(), response);
         }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
-            log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
+            log.error("Error during LTI 1.3 launch request: {}", ex.getMessage(), ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
-        }
-        catch (LtiEmailAlreadyInUseException ex) {
-            // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
-            // We need targetLink to redirect user on the client-side after successful authentication
-            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLink);
-            lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
-            response.setHeader("TargetLinkUri", uriBuilder.build().toUriString());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 user authentication failed");
         }
     }
 
-    private OidcAuthenticationToken finishOidcFlow(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    private void handleLtiEmailAlreadyInUseException(HttpServletResponse response, OidcIdToken ltiIdToken) {
+        this.lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+
+    private OidcAuthenticationToken finishOidcFlow(HttpServletRequest request, HttpServletResponse response) {
         OidcAuthenticationToken ltiAuthToken;
         try {
             // call spring-security-lti13 authentication filter to finish the OpenID Connect Third Party Initiated Login
@@ -92,24 +110,25 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             }
         }
         catch (OAuth2AuthenticationException | IllegalStateException ex) {
-            throw new IllegalStateException("Failed to attempt LTI 1.3 login authentication: " + ex.getMessage());
+            throw new IllegalStateException("Failed to attempt LTI 1.3 login authentication: " + ex.getMessage(), ex);
         }
 
         return ltiAuthToken;
     }
 
-    private void writeResponse(String targetLinkUri, HttpServletResponse response) throws IOException {
+    private void writeResponse(String targetLinkUri, OidcIdToken ltiIdToken, String clientRegistrationId, HttpServletResponse response) throws IOException {
         PrintWriter writer = response.getWriter();
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
-        lti13Service.buildLtiResponse(uriBuilder, response);
-
-        JsonObject json = new JsonObject();
-        json.addProperty("targetLinkUri", uriBuilder.build().toUriString());
+        if (SecurityUtils.isAuthenticated()) {
+            log.info("User is authenticated, building LTI response");
+            lti13Service.buildLtiResponse(uriBuilder, response);
+        }
+        LtiAuthenticationResponse jsonResponse = new LtiAuthenticationResponse(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        writer.print(json);
+        writer.print(new ObjectMapper().writeValueAsString(jsonResponse));
         writer.flush();
     }
 }

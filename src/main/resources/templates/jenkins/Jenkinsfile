@@ -4,18 +4,20 @@ node('docker') {
     ownStages = null
     try {
         stage('Checkout') {
-            checkout([
-                $class: 'GitSCM',
-                branches: [[name: '#defaultBranch']],
-                doGenerateSubmoduleConfigurations: false,
-                extensions: [],
-                submoduleCfg: [],
-                userRemoteConfigs: [[
-                    credentialsId: '#gitCredentials',
-                    name: 'tests',
-                    url: '#testRepository'
-                ]]
-            ])
+            dir('#testsCheckoutPath') {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '#defaultBranch']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [[
+                        credentialsId: '#gitCredentials',
+                        name: 'tests',
+                        url: '#testRepository'
+                    ]]
+                ])
+            }
             dir('#assignmentCheckoutPath') {
                 checkout([
                     $class: 'GitSCM',

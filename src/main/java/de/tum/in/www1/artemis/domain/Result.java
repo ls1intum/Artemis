@@ -7,26 +7,47 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPl
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import com.fasterxml.jackson.annotation.*;
-import com.google.common.base.Strings;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -101,6 +122,12 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    // OneToMany is required, otherwise the lazy loading does not work
+    // it will be ensured programmatically that only ever one note exists for every result object
+    @JoinColumn(name = "result_id", nullable = false)
+    private final List<AssessmentNote> assessmentNote = new ArrayList<>();
 
     // The following attributes are only used for Programming Exercises
     @Column(name = "test_case_count")
@@ -295,6 +322,10 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param skipAutomaticResults if true automatic results won't be updated
      */
     public void updateAllFeedbackItems(List<Feedback> feedbacks, boolean skipAutomaticResults) {
+        if (feedbacks == null) {
+            return;
+        }
+
         for (Feedback feedback : feedbacks) {
             if (skipAutomaticResults && feedback.getType() == FeedbackType.AUTOMATIC) {
                 continue;
@@ -344,7 +375,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * Compares the given feedback texts (existingText and newText) and checks if the text has changed.
      */
     private boolean feedbackTextHasChanged(String existingText, String newText) {
-        if (Strings.isNullOrEmpty(existingText) && Strings.isNullOrEmpty(newText)) {
+        if (StringUtils.isEmpty(existingText) && StringUtils.isEmpty(newText)) {
             return false;
         }
         return !Objects.equals(existingText, newText);
@@ -453,30 +484,58 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.fileReportsByTestCaseName = fileReportsByTestCaseName;
     }
 
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+    /**
+     * Checks the initialization status of the assessment note before returning. Only a single element is returned instead of the list,
+     * because it is modelled that way on the client-side. Jackson therefore needs a single object for the (de-)serialization.
+     *
+     * @return Null, if the field is uninitialized or the encapsulating arraylist is empty, or else, the assessment note.
+     */
+    public AssessmentNote getAssessmentNote() {
+        if (!Hibernate.isInitialized(assessmentNote) || assessmentNote.isEmpty()) {
+            return null;
+        }
+        else {
+            return assessmentNote.getFirst();
+        }
+    }
+
+    /**
+     * Clears the list before adding a new assessment note. This ensures that it contains at most one element.
+     * When setting null, the list is just cleared, without adding anything afterward.
+     *
+     * @param assessmentNote The assessment note that is added to the list as its new sole element.
+     */
+    public void setAssessmentNote(AssessmentNote assessmentNote) {
+        this.assessmentNote.clear();
+        if (assessmentNote != null) {
+            this.assessmentNote.add(assessmentNote);
+        }
+    }
 
     /**
      * Updates the attributes "score" and "successful" by evaluating its submission.
      * <b>Important</b>: the quizSubmission has to be loaded with eager submitted answers, otherwise this method will not work correctly
+     *
+     * @param quizExercise the quiz exercise for which the submission should be evaluated, must contain access to the course to calculate the score correctly
      */
-    public void evaluateQuizSubmission() {
+    public void evaluateQuizSubmission(@NotNull QuizExercise quizExercise) {
         if (submission instanceof QuizSubmission quizSubmission) {
-            // get the exercise this result belongs to
-            StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
-            QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission), quizExercise.getCourseViaExerciseGroupOrCourseMember());
         }
     }
 
     /**
-     * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
-     * their assessor.
+     * Removes the assessor and the internal assessment note from the result, can be invoked to make sure that sensitive
+     * information is not sent to the client. E.g. students should not see information about their assessor.
      * <p>
      * Does not filter feedbacks.
      */
     public void filterSensitiveInformation() {
         setAssessor(null);
+        if (Hibernate.isInitialized(assessmentNote)) {
+            setAssessmentNote(null);
+        }
     }
 
     /**
@@ -558,6 +617,16 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnore
     public boolean isAutomatic() {
         return AssessmentType.AUTOMATIC == assessmentType;
+    }
+
+    /**
+     * Checks whether the result is an automatic Athena result: AUTOMATIC_ATHENA
+     *
+     * @return true if the result is an automatic AI Athena result
+     */
+    @JsonIgnore
+    public boolean isAthenaAutomatic() {
+        return AssessmentType.AUTOMATIC_ATHENA == assessmentType;
     }
 
     @Override

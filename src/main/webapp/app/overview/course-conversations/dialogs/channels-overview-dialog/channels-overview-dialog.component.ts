@@ -7,7 +7,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
@@ -61,7 +60,6 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     constructor(
         private channelService: ChannelService,
-        private conversationService: ConversationService,
         private alertService: AlertService,
         private modalService: NgbModal,
 
@@ -87,10 +85,6 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         } else {
             this.dismiss();
         }
-    }
-
-    trackIdentity(index: number, item: ChannelDTO) {
-        return item.id!;
     }
 
     onChannelAction(channelAction: ChannelAction) {
@@ -121,7 +115,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                 this.close([channelAction.channel, this.channelModificationPerformed]);
                 break;
             case 'create':
-                this.createChannelFn &&
+                if (this.createChannelFn) {
                     this.createChannelFn(channelAction.channel)
                         .pipe(takeUntil(this.ngUnsubscribe))
                         .subscribe({
@@ -130,6 +124,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                                 this.channelModificationPerformed = true;
                             },
                         });
+                }
                 break;
         }
     }
@@ -151,7 +146,9 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                     this.otherChannels = channels?.filter((channel) => channel.subType !== this.channelSubType) ?? [];
                     this.noOfChannels = this.channels.length;
                 },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                error: (errorResponse: HttpErrorResponse) => {
+                    onError(this.alertService, errorResponse);
+                },
             });
     }
 

@@ -106,8 +106,149 @@ The ``pipeline.groovy`` file can be customized further by instructors after crea
 Artemis via the ‘Edit Build Plan’ button on the details page of the exercise.
 
 
-Caching example for Maven
-^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _dependecies-sonatype-nexus:
+
+Caching Maven Dependencies with Sonatype Nexus
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+With Sonatype Nexus you can run a caching server in your local network for Maven dependencies.
+An alternative approach for caching is with docker volumes, see :ref:`dependecies-docker-volumes`.
+
+.. note::
+
+    The following steps assume ``artemis.example.com`` is the host ``10.0.73.42`` and is using port ``8443`` for the cache.
+    Adapt the URLs for your actual setup.
+
+Sonatype Nexus Setup
+""""""""""""""""""""
+
+1. Set up Sonatype Nexus to run on ``artemis.example.com:8443`` e.g. in a `Docker container <https://hub.docker.com/r/sonatype/nexus3/>`_ behind a `proxy <https://help.sonatype.com/en/run-behind-a-reverse-proxy.html>`_.
+2. In the initial setup steps: Allow anonymous access.
+3. Set up the Maven proxy repository:
+    a. Create a new repository (**Repository - Repositories - Create repository**) of type ``maven2 (proxy)`` with name ``maven-proxy``.
+    b. The remote URL is https://repo1.maven.org/maven2/.
+4. Optionally create a new cleanup policy under *Repository - Cleanup Policies*
+    a. Format: ``maven2``
+    b. Release type: Releases & Pre-releases/Snapshots
+    c. Cleanup criteria: e.g. ‘Component Usage 14’ will remove all files that have not been downloaded for 14 days.
+    d. You can now add this cleanup policy to the policies in the repository you created earlier.
+
+Adding proxy to a Maven build
+"""""""""""""""""""""""""""""
+
+The following changes have to be made inside the `tests` repository.
+
+Option 1
+========
+
+Configure Maven so that it can find your Maven cache:
+
+.. code-block:: xml
+    :caption: ``pom.xml``
+
+    <repositories>
+        <repository>
+            <id>artemis-cache</id>
+            <url>https://artemis.example.com:8443/repository/maven-proxy/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>artemis-cache</id>
+            <url>https://artemis.example.com:8443/repository/maven-proxy/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+Option 2 (more rigorous alternative)
+====================================
+
+This setup forces Maven to exclusively download dependencies from the own proxy.
+
+.. code-block:: xml
+    :caption: ``.mvn/local-settings.xml``
+
+    <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+    <mirrors>
+        <mirror>
+        <id>artemis-cache</id>
+        <name>Artemis Cache</name>
+        <url>https://artemis.example.com:8443/repository/maven-proxy/</url>
+        <mirrorOf>*</mirrorOf>
+        <blocked>false</blocked>
+        </mirror>
+    </mirrors>
+    </settings>
+
+
+.. code-block:: shell
+    :caption: ``.mvn/maven.config``
+
+    --settings
+    ./.mvn/local-settings.xml
+
+Adding proxy to a Gradle build
+""""""""""""""""""""""""""""""
+
+The following changes have to be made inside the `tests` repository.
+
+.. code-block:: groovy
+    :caption: ``build.gradle``
+
+    repositories {
+        maven {
+            url "https://artemis.example.com:8443/repository/maven-proxy/"
+        }
+        // …
+    }
+
+
+.. code-block:: kotlin
+    :caption: Gradle ``build.gradle.kts``
+
+    repositories {
+        maven {
+            url = uri("https://artemis.example.com:8443/repository/maven-proxy/")
+        }
+        // …
+    }
+
+Security Considerations
+"""""""""""""""""""""""
+
+When you are using secret tests as part of your exercise, you might want to restrict network traffic leaving the CI run to avoid students leaking information.
+
+Jenkins
+=======
+
+In Jenkins setups, you can restrict the network access by adjusting the ``pipeline.groovy`` script.
+Add some flags to the ``dockerFlags`` variable:
+
+.. code:: groovy
+
+    dockerFlags += '--add-host "artemis.example.com:10.0.73.42" \
+        --network "artemis-restricted"'
+
+Additionally, on the CI runner host you will have to create the `artemis-restricted` Docker network and some iptables firewall rules to restrict traffic:
+
+.. code-block:: sh
+
+   docker network create --opt com.docker.network.bridge.name=artemis-restr artemis-restricted
+   iptables -I DOCKER-USER -i artemis-restr -j DROP
+   iptables -I DOCKER-USER -i artemis-restr -d $IP_OF_ARTEMIS_EXAMPLE_COM_CACHE -p tcp --dport 8443 -j ACCEPT
+
+
+.. _dependecies-docker-volumes:
+
+Caching with Docker Volumes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+With Docker volumes you can cache Maven dependencies.
+An alternative approach for caching is with Sonatype Nexus, see :ref:`dependecies-sonatype-nexus`.
+
+Example for Maven
+"""""""""""""""""
 
 The container image used to run the maven-tests already contains a set of commonly used dependencies
 (see `artemis-maven-docker <https://github.com/ls1intum/artemis-maven-docker>`__).
@@ -141,14 +282,14 @@ and changing the ``testRunner`` method into
 .. code:: groovy
 
   void testRunner() {
-      setDockerFlags()
+      setup()
 
       docker.image(dockerImage).inside(dockerFlags) { c ->
           runTestSteps()
       }
   }
 
-  private void setDockerFlags() {
+  private void setup() {
       if (isSolutionBuild) {
           dockerFlags += " -v artemis_maven_cache:/maven_cache"
       } else {
@@ -160,17 +301,17 @@ This mounts the cache as writeable only when executing the tests for the solutio
 running the tests for students’ code.
 
 
-Caching example for Gradle
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example for Gradle
+""""""""""""""""""
 
 In case of always writeable caches you can set ``-e GRADLE_USER_HOME=/gradle_cache`` as part of the ``dockerFlags``
 instead of the ``MAVEN_OPTS`` like above.
 
-For read-only caches like in the Maven example, define ``setDockerFlags()`` as
+For read-only caches like in the Maven example, define ``setup()`` as
 
 .. code:: groovy
 
-  private void setDockerFlags() {
+  private void setup() {
       if (isSolutionBuild) {
           dockerFlags += ' -e GRADLE_USER_HOME="/gradle_cache"'
           dockerFlags += ' -v artemis_gradle_cache:/gradle_cache'
@@ -180,3 +321,21 @@ For read-only caches like in the Maven example, define ``setDockerFlags()`` as
       }
   }
 
+Security Considerations
+"""""""""""""""""""""""
+
+When you are using secret tests as part of your exercise, you might want to disable network traffic leaving the CI run to avoid students leaking information.
+Thanks to the fact that the cache is prepared while running for the solution, you can disable the network for students submissions.
+Adjust ``dockerFlags`` and ``mavenFlags`` only for student submissions, like this:
+
+.. code:: groovy
+
+  private void setup() {
+      if (isSolutionBuild) {
+          // handle docker flags
+      } else {
+          // handle docker flags
+          // if not solution repo, disallow network access from containers
+          dockerFlags += ' --network none'
+          mavenFlags += ' --offline'
+      }

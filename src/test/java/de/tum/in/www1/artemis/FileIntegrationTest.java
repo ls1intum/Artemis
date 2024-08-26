@@ -25,8 +25,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -34,8 +35,10 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 
 class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -55,16 +58,10 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private LectureRepository lectureRepo;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -173,7 +170,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         callAndCheckMergeResult(lecture, 5);
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        List<LectureUnit> expectedCompletedUnits = List.of(units.get(0), units.get(2));
+        List<LectureUnit> expectedCompletedUnits = List.of(units.getFirst(), units.get(2));
         for (var unit : expectedCompletedUnits) {
             var completion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit.getId(), student.getId());
             assertThat(completion).isPresent();

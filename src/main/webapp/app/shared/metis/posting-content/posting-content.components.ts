@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -13,6 +13,7 @@ import { isCommunicationEnabled } from 'app/entities/course.model';
     selector: 'jhi-posting-content',
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;
@@ -113,43 +114,32 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // reference closing tag: [/referenceType] (wrapped between 3 characters)
                     // referenceStr: string to be displayed for the reference
                     // linkToReference: link to be navigated to on reference click
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     linkToReference = [this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex))];
                 } else if (ReferenceType.ATTACHMENT === referenceType || ReferenceType.ATTACHMENT_UNITS === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click
                     // attachmentRefDir: directory of the attachment
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
                     const attachmentRefDir = this.ATTACHMENT_DIR;
                     attachmentToReference =
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                         attachmentRefDir + this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
                 } else if (ReferenceType.SLIDE === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // slideToReference: location of attachment to be opened on reference click
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
                     const attachmentUnitRefDir = this.ATTACHMENT_DIR;
                     slideToReference =
-                        attachmentUnitRefDir +
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                        this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
+                        attachmentUnitRefDir + this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
                 } else if (ReferenceType.USER === referenceType) {
                     // referenceStr: string to be displayed for the reference
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     queryParams = {
                         referenceUserLogin: this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)),
                     } as Params;
                 } else if (ReferenceType.CHANNEL === referenceType) {
                     // referenceStr: string to be displayed for the reference
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     const channelId = parseInt(this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)));
                     queryParams = {
                         channelId: isNaN(channelId) ? undefined : channelId,

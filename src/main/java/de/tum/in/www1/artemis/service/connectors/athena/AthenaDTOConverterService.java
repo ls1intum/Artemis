@@ -6,11 +6,30 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.service.dto.athena.*;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseBaseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.FeedbackBaseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingFeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingSubmissionDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ProgrammingExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ProgrammingSubmissionDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionBaseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
 
 /**
  * Service to convert exercises, submissions and feedback to DTOs for Athena.
@@ -28,11 +47,14 @@ public class AthenaDTOConverterService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
     public AthenaDTOConverterService(TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository) {
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
     }
 
     /**
@@ -41,7 +63,7 @@ public class AthenaDTOConverterService {
      * @param exercise the exercise to convert
      * @return *ExerciseDTO for Athena
      */
-    public ExerciseDTO ofExercise(Exercise exercise) {
+    public ExerciseBaseDTO ofExercise(Exercise exercise) {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 // Fetch text exercise with grade criteria
@@ -52,6 +74,12 @@ public class AthenaDTOConverterService {
                 // Fetch programming exercise with grading criteria
                 var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(exercise.getId());
                 return ProgrammingExerciseDTO.of(programmingExercise, artemisServerUrl);
+            }
+            case MODELING -> {
+                // Fetch grading criteria for modeling exercise
+                var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+                exercise.setGradingCriteria(gradingCriteria);
+                return ModelingExerciseDTO.of((ModelingExercise) exercise);
             }
         }
         throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
@@ -64,12 +92,15 @@ public class AthenaDTOConverterService {
      * @param submission the submission to convert
      * @return *SubmissionDTO for Athena
      */
-    public SubmissionDTO ofSubmission(long exerciseId, Submission submission) {
+    public SubmissionBaseDTO ofSubmission(long exerciseId, Submission submission) {
         if (submission instanceof TextSubmission textSubmission) {
             return TextSubmissionDTO.of(exerciseId, textSubmission);
         }
         else if (submission instanceof ProgrammingSubmission programmingSubmission) {
             return ProgrammingSubmissionDTO.of(exerciseId, programmingSubmission, artemisServerUrl);
+        }
+        else if (submission instanceof ModelingSubmission modelingSubmission) {
+            return ModelingSubmissionDTO.of(exerciseId, modelingSubmission);
         }
         throw new IllegalArgumentException("Submission type not supported: " + submission.getType());
     }
@@ -82,7 +113,7 @@ public class AthenaDTOConverterService {
      * @param feedback     the feedback to convert
      * @return *FeedbackDTO for Athena
      */
-    public FeedbackDTO ofFeedback(Exercise exercise, long submissionId, Feedback feedback) {
+    public FeedbackBaseDTO ofFeedback(Exercise exercise, long submissionId, Feedback feedback) {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 TextBlock feedbackTextBlock = null;
@@ -93,6 +124,9 @@ public class AthenaDTOConverterService {
             }
             case PROGRAMMING -> {
                 return ProgrammingFeedbackDTO.of(exercise.getId(), submissionId, feedback);
+            }
+            case MODELING -> {
+                return ModelingFeedbackDTO.of(exercise.getId(), submissionId, feedback);
             }
         }
         throw new IllegalArgumentException("Feedback type not supported: " + exercise.getId());

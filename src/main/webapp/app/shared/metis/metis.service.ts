@@ -23,7 +23,6 @@ import {
 } from 'app/shared/metis/metis.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
@@ -46,10 +45,9 @@ export class MetisService implements OnDestroy {
     private course: Course;
     private courseId: number;
     private cachedPosts: Post[] = [];
-    private cachedTotalNumberOfPots: number;
+    private cachedTotalNumberOfPosts: number;
     private subscriptionChannel?: string;
 
-    private forceUpdate: boolean;
     private courseWideTopicSubscription: Subscription;
 
     constructor(
@@ -58,7 +56,6 @@ export class MetisService implements OnDestroy {
         protected reactionService: ReactionService,
         protected accountService: AccountService,
         protected exerciseService: ExerciseService,
-        private translateService: TranslateService,
         private jhiWebsocketService: JhiWebsocketService,
         private conversationService: ConversationService,
         notificationService: NotificationService,
@@ -157,28 +154,13 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * fetches all post tags used in the current course, informs all subscribing components
-     */
-    updateCoursePostTags(): void {
-        this.postService
-            .getAllPostTagsByCourseId(this.courseId)
-            .pipe(map((res: HttpResponse<string[]>) => res.body!.filter((tag) => !!tag)))
-            .subscribe((tags: string[]) => {
-                this.tags$.next(tags);
-            });
-    }
-
-    /**
      * fetches all posts for a course, optionally fetching posts only for a certain context, i.e. a lecture, exercise or specified course-wide-context,
      * informs all components that subscribed on posts by sending the newly fetched posts
-     * @param {PostContextFilter} postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
-     * @param {boolean} forceUpdate if true, forces a re-fetch even if filter property did not change
+     * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
+     * @param forceUpdate if true, forces a re-fetch even if filter property did not change
      * @param conversation active conversation if available
      */
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, conversation: ConversationDTO | undefined = undefined): void {
-        // store value for promise
-        this.forceUpdate = forceUpdate;
-
         // check if the post context did change
         if (
             forceUpdate ||
@@ -198,16 +180,16 @@ export class MetisService implements OnDestroy {
                     // if the context changed, we need to fetch posts and dismiss cached posts
                     this.cachedPosts = res.body!;
                 }
-                this.cachedTotalNumberOfPots = Number(res.headers.get('X-Total-Count'));
+                this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
                 this.posts$.next(this.cachedPosts);
-                this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 this.createSubscriptionFromPostContextFilter();
             });
         } else {
             // if we do not require force update, e.g. because only the post title, tag or content changed,
             // we can emit the previously cached posts
             this.posts$.next(this.cachedPosts);
-            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
         }
     }
 
@@ -225,7 +207,7 @@ export class MetisService implements OnDestroy {
                 if (indexToUpdate === -1) {
                     this.cachedPosts = [createdPost, ...this.cachedPosts];
                     this.posts$.next(this.cachedPosts);
-                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 }
             }),
         );
@@ -251,7 +233,7 @@ export class MetisService implements OnDestroy {
                         }
                         this.cachedPosts[indexOfCachedPost].answers!.push(createdAnswerPost);
                         this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }
             }),
@@ -272,7 +254,7 @@ export class MetisService implements OnDestroy {
                     updatedPost.answers = [...(this.cachedPosts[indexToUpdate].answers ?? [])];
                     this.cachedPosts[indexToUpdate] = updatedPost;
                     this.posts$.next(this.cachedPosts);
-                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 }
             }),
         );
@@ -292,9 +274,10 @@ export class MetisService implements OnDestroy {
                     const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === updatedAnswerPost.id) ?? -1;
                     if (indexOfAnswer > -1) {
                         updatedAnswerPost.post = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
+                        updatedAnswerPost.authorRole = this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer].authorRole;
                         this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = updatedAnswerPost;
                         this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }
             }),
@@ -325,7 +308,7 @@ export class MetisService implements OnDestroy {
                     if (indexToUpdate > -1) {
                         this.cachedPosts.splice(indexToUpdate, 1);
                         this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }),
             )
@@ -346,9 +329,9 @@ export class MetisService implements OnDestroy {
                         // Delete the answer if it still exists (might already be deleted due to WebSocket message)
                         const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
                         if (indexOfAnswer > -1) {
-                            this.cachedPosts[indexOfCachedPost].answers!.splice(indexOfAnswer, 1);
+                            this.cachedPosts[indexOfCachedPost].answers?.splice(indexOfAnswer, 1);
                             this.posts$.next(this.cachedPosts);
-                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                         }
                     }
                 }),
@@ -376,7 +359,7 @@ export class MetisService implements OnDestroy {
                         // Need to create a new message object since Angular doesn't detect changes otherwise
                         this.cachedPosts[indexToUpdate] = { ...cachedPost };
                         this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }
             }),
@@ -401,7 +384,7 @@ export class MetisService implements OnDestroy {
                         // Need to create a new message object since Angular doesn't detect changes otherwise
                         this.cachedPosts[indexToUpdate] = { ...cachedPost };
                         this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }
             }),
@@ -534,19 +517,10 @@ export class MetisService implements OnDestroy {
         let displayName = '';
         if (post.conversation) {
             displayName = getAsChannelDTO(post.conversation)?.name ?? '';
-            routerLinkComponents = ['/courses', this.courseId, 'messages'];
+            routerLinkComponents = ['/courses', this.courseId, 'communication'];
             queryParams = { conversationId: post.conversation.id! };
         }
         return { routerLinkComponents, displayName, queryParams };
-    }
-
-    /**
-     * Invokes the post service to get a top-k-list of course posts with high similarity scores when compared with a certain strategy
-     * @param {Post} tempPost that is currently created and compared against existing course posts on updates in the form group
-     * @return {Observable<Post[]>} array of similar posts that were found in the course
-     */
-    getSimilarPosts(tempPost: Post): Observable<Post[]> {
-        return this.postService.computeSimilarityScoresWithCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));
     }
 
     /**
@@ -623,6 +597,14 @@ export class MetisService implements OnDestroy {
             case MetisPostAction.UPDATE:
                 const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToUpdate > -1) {
+                    // WebSocket does not currently update the author and authorRole of posts correctly, so this is implemented as a workaround
+                    postDTO.post.authorRole = this.cachedPosts[indexToUpdate].authorRole;
+                    postDTO.post.answers?.forEach((answer: AnswerPost) => {
+                        const cachedAnswer = this.cachedPosts[indexToUpdate].answers?.find((a) => a.id === answer.id);
+                        if (cachedAnswer) {
+                            answer.authorRole = cachedAnswer.authorRole;
+                        }
+                    });
                     this.cachedPosts[indexToUpdate] = postDTO.post;
                 }
                 this.addTags(postDTO.post.tags);

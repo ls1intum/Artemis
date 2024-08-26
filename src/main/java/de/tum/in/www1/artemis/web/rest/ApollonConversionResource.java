@@ -45,7 +45,7 @@ public class ApollonConversionResource {
         log.debug("REST call to convert apollon model to pdf");
 
         // The apollonConversionService will manage the processing and database saving
-        InputStream inputStream = apollonConversionService.convertModel(request.getModel());
+        InputStream inputStream = apollonConversionService.convertModel(request.model());
 
         InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
         log.debug("REST call for apollon model conversion to pdf finished");

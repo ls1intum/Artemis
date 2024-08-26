@@ -4,6 +4,7 @@
             "title": "Your current courses",
             "recentlyAccessed": "Recently accessed courses",
             "otherCourses": "Other courses",
+            "noCourses": "You are not enrolled in any courses. Enroll manually or contact your course instructor.",
             "exerciseTitle": "Current active exercise in \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Current exercise in \"{{ course }}\":",
             "examTitle": "Current exam in \"{{ course }}\":",
@@ -34,18 +35,59 @@
             "general": {
                 "noDataFound": "No data found."
             },
+            "sidebar": {
+                "past": "Past",
+                "current": "Current",
+                "dueSoon": "Due soon",
+                "future": "Future",
+                "noDueDate": "No due date",
+                "noDate": "No date",
+                "all": "Tutorial Groups",
+                "registered": "My Tutorial Groups",
+                "further": "Further Tutorial Groups",
+                "real": "Exams",
+                "test": "Test Exams",
+                "start": "Start",
+                "workingTime": "Working Time",
+                "attainablePoints": "Attainable Points",
+                "noUpcomingSession": "No upcoming Session",
+                "header": "Conversations",
+                "show": "Show conversations",
+                "hide": "Hide conversations",
+                "notFound": "No conversation found",
+                "favoriteChannels": "Favorites",
+                "hiddenChannels": "Hidden",
+                "channels": "Channels",
+                "generalChannels": "General",
+                "exerciseChannels": "Exercises",
+                "lectureChannels": "Lectures",
+                "examChannels": "Exams",
+                "createChannel": "Create channel",
+                "browseChannels": "Browse channels",
+                "groupChats": "Group Chats",
+                "directMessages": "Direct Messages",
+                "filterConversationPlaceholder": "Filter conversations"
+            },
             "menu": {
                 "exercises": "Exercises",
+                "textExercise": "Text Exercise",
+                "fileUploadExercise": "File Upload Exercise",
+                "programmingExercise": "Programming Exercise",
+                "modelingExercise": "Modeling Exercise",
+                "quizExercise": "Quiz Exercise",
+                "repository": "Repository",
                 "statistics": "Statistics",
                 "lectures": "Lectures",
                 "tutorialGroups": "Tutorials",
                 "competencies": "Competencies",
                 "learningPath": "Learning Path",
+                "more": "More",
+                "dashboard": "Dashboard",
                 "exams": "Exams",
                 "testExam": "Test Exam",
                 "communication": "Communication",
-                "messages": "Messages",
-                "plagiarismCases": "Plagiarism Cases"
+                "plagiarismCases": "Plagiarism Cases",
+                "gradingSystem": "Grading System"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
@@ -176,6 +218,12 @@
             "competencies": {
                 "noData": "No competencies available for this course."
             },
+            "tutorialGroups": {
+                "selectTutorialGroup": "Please select a Tutorial Group."
+            },
+            "exams": {
+                "selectExam": "Please select an Exam."
+            },
             "lectureList": {
                 "lectureGroupHeader": "(Lectures: {{ total }})",
                 "totalLectures": "Total lectures:",
@@ -192,7 +240,8 @@
                 "notReleased": "Not released",
                 "version": "Version",
                 "isDownloading": "Is downloading...",
-                "downloadMergedPdf": "Download Complete PDF"
+                "downloadMergedPdf": "Download Complete PDF",
+                "selectLecture": " Please select a Lecture."
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",
@@ -222,7 +271,7 @@
                 "showResults": "Show all results",
                 "graded": "Graded",
                 "notGraded": "Not graded",
-                "rated": "Rated",
+                "rated": "Graded",
                 "practice": "Practice",
                 "assessmentType": "Assessment:",
                 "releaseDate": "Release date:",
@@ -240,7 +289,8 @@
                 "complaintPossible": "Complaint possible:",
                 "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
                 "presented": "Presented:",
-                "presentation": "Presentation:"
+                "presentation": "Presentation:",
+                "selectExercise": "Please select an Exercise."
             }
         }
     }

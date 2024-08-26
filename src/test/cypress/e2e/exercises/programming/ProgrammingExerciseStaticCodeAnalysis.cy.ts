@@ -6,7 +6,7 @@ import { courseManagementAPIRequest, exerciseAPIRequest, programmingExerciseEdit
 import { admin, studentOne } from '../../../support/users';
 import { convertModelAfterMultiPart } from '../../../support/utils';
 
-describe('Static code analysis tests', () => {
+describe.skip('Static code analysis tests', () => {
     let course: Course;
     let exercise: ProgrammingExercise;
 

@@ -4,22 +4,22 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data repository for the IrisMessage entity.
  */
-public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> {
+public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage, Long> {
 
     List<IrisMessage> findAllBySessionId(long sessionId);
 
@@ -41,11 +41,25 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
             """)
     int countLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
-    @NotNull
-    default IrisMessage findByIdElseThrow(long messageId) throws EntityNotFoundException {
-        return findById(messageId).orElseThrow(() -> new EntityNotFoundException("Iris Message", messageId));
-    }
+    Optional<IrisMessage> findFirstBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
 
     @EntityGraph(type = LOAD, attributePaths = { "content" })
-    IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
+    IrisMessage findIrisMessageById(long irisMessageId);
+
+    /**
+     * Finds the first message with content by session ID and sender, ordered by the sent date in descending order.
+     * This method avoids in-memory paging by retrieving the message directly from the database.
+     *
+     * @param sessionId the ID of the session to find the message for
+     * @param sender    the sender of the message
+     * @return the first {@code IrisMessage} with content, ordered by sent date in descending order,
+     *         or null if no message is found
+     */
+    default IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender) {
+        var irisMessage = findFirstBySessionIdAndSenderOrderBySentAtDesc(sessionId, sender);
+        if (irisMessage.isEmpty()) {
+            return null;
+        }
+        return findIrisMessageById(irisMessage.get().getId());
+    }
 }

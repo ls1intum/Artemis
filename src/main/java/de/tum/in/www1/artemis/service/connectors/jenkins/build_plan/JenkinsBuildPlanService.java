@@ -37,6 +37,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
@@ -47,6 +48,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
@@ -57,9 +59,9 @@ import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResults
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsEndpoints;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlConfigBuilder;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlFileUtils;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Service
 @Profile("jenkins")
@@ -91,6 +93,8 @@ public class JenkinsBuildPlanService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final BuildPlanRepository buildPlanRepository;
 
     private final Optional<AeolusBuildPlanService> aeolusBuildPlanService;
@@ -107,7 +111,8 @@ public class JenkinsBuildPlanService {
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
             JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator,
-            BuildPlanRepository buildPlanRepository, Optional<AeolusBuildPlanService> aeolusBuildPlanService) {
+            BuildPlanRepository buildPlanRepository, Optional<AeolusBuildPlanService> aeolusBuildPlanService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -119,6 +124,7 @@ public class JenkinsBuildPlanService {
         this.jenkinsPipelineScriptCreator = jenkinsPipelineScriptCreator;
         this.buildPlanRepository = buildPlanRepository;
         this.aeolusBuildPlanService = aeolusBuildPlanService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -130,11 +136,12 @@ public class JenkinsBuildPlanService {
      */
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
 
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
-        final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
+        final boolean checkoutSolution = exercise.getBuildConfig().getCheckoutSolutionRepository();
         final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUris, checkoutSolution,
                 buildPlanUrl);
 
@@ -142,7 +149,7 @@ public class JenkinsBuildPlanService {
         String job = jobFolder + "-" + planKey;
         boolean couldCreateBuildPlan = false;
 
-        if (aeolusBuildPlanService.isPresent() && exercise.getBuildPlanConfiguration() != null) {
+        if (aeolusBuildPlanService.isPresent() && exercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             var createdJob = createCustomAeolusBuildPlanForExercise(exercise, jobFolder + "/" + job, internalRepositoryUris.assignmentRepositoryUri(),
                     internalRepositoryUris.testRepositoryUri(), internalRepositoryUris.solutionRepositoryUri());
             couldCreateBuildPlan = createdJob != null;
@@ -178,9 +185,8 @@ public class JenkinsBuildPlanService {
         }
         return switch (programmingLanguage) {
             case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY -> jenkinsBuildPlanCreator;
-            case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
-            case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
-            case OCAML -> throw new UnsupportedOperationException("OCaml templates are not available for Jenkins.");
+            case VHDL, ASSEMBLER, OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
+                throw new UnsupportedOperationException(programmingLanguage + " templates are not available for Jenkins.");
         };
     }
 
@@ -240,9 +246,9 @@ public class JenkinsBuildPlanService {
      */
     private void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, Document jobConfig) {
         final Long previousExerciseId = templateExercise.getId();
-        final String previousBuildPlanAccessSecret = templateExercise.getBuildPlanAccessSecret();
+        final String previousBuildPlanAccessSecret = templateExercise.getBuildConfig().getBuildPlanAccessSecret();
         final Long newExerciseId = newExercise.getId();
-        final String newBuildPlanAccessSecret = newExercise.getBuildPlanAccessSecret();
+        final String newBuildPlanAccessSecret = newExercise.getBuildConfig().getBuildPlanAccessSecret();
 
         String toBeReplaced = String.format("/%d/build-plan?secret=%s", previousExerciseId, previousBuildPlanAccessSecret);
         String replacement = String.format("/%d/build-plan?secret=%s", newExerciseId, newBuildPlanAccessSecret);
@@ -263,7 +269,7 @@ public class JenkinsBuildPlanService {
             final var headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_XML);
 
-            String jobXmlString = XmlFileUtils.writeToString(jobConfig);
+            String jobXmlString = JenkinsXmlFileUtils.writeToString(jobConfig);
             final var entity = new HttpEntity<>(jobXmlString, headers);
 
             restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
@@ -491,13 +497,14 @@ public class JenkinsBuildPlanService {
      */
     private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, VcsRepositoryUri repositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri) throws ContinuousIntegrationBuildPlanException {
-        if (aeolusBuildPlanService.isEmpty() || programmingExercise.getBuildPlanConfiguration() == null) {
+        if (aeolusBuildPlanService.isEmpty() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             return null;
         }
         try {
-            Windfile windfile = programmingExercise.getWindfile();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            Windfile windfile = buildConfig.getWindfile();
             Map<String, AeolusRepository> repositories = aeolusBuildPlanService.get().createRepositoryMapForWindfile(programmingExercise.getProgrammingLanguage(),
-                    programmingExercise.getBranch(), programmingExercise.getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri, solutionRepositoryUri, List.of());
+                    buildConfig.getBranch(), buildConfig.getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri, solutionRepositoryUri, List.of());
 
             String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
             windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.vcsCredentials, resultHookUrl, "planDescription", repositories,

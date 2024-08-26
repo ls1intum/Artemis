@@ -1,0 +1,110 @@
+<div class="d-flex flex-column">
+    <div class="mb-2">
+        <div class="d-flex justify-content-between">
+            @if (knowledgeArea.id !== undefined) {
+                <h4 [jhiTranslate]="'artemisApp.knowledgeArea.details.title' + (isEditing ? 'Edit' : '')"></h4>
+            } @else {
+                <h4 jhiTranslate="artemisApp.knowledgeArea.details.titleCreate"></h4>
+            }
+            <button type="button" class="btn-close" (click)="close()"></button>
+        </div>
+        <!-- do not allow these actions when creating a new knowledge area because it is not saved yet -->
+        @if (knowledgeArea.id) {
+            <div class="mb-1">
+                <jhi-button [icon]="faPlus" [btnSize]="ButtonSize.SMALL" title="artemisApp.knowledgeArea.details.createCompetencyButton" (onClick)="openNewCompetency()" />
+                <jhi-button [icon]="faPlus" [btnSize]="ButtonSize.SMALL" title="artemisApp.knowledgeArea.details.createKnowledgeAreaButton" (onClick)="openNewKnowledgeArea()" />
+            </div>
+            @if (!isEditing) {
+                <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" title="entity.action.edit" [icon]="faPencil" (onClick)="edit()" />
+            }
+            <button
+                class="me-0"
+                jhiDeleteButton
+                [entityTitle]="knowledgeArea.title ?? ''"
+                [deleteQuestion]="'artemisApp.knowledgeArea.manage.deleteModal.question'"
+                [deleteConfirmationText]="'artemisApp.knowledgeArea.manage.deleteModal.typeNameToConfirm'"
+                (delete)="delete()"
+                [dialogError]="dialogError"
+            >
+                <fa-icon [icon]="faTrash" />
+            </button>
+        }
+    </div>
+    <div class="d-flex flex-column border-0" [formGroup]="form">
+        <div class="form-group">
+            <label for="title-input" jhiTranslate="artemisApp.knowledgeArea.model.title"></label>
+            <input type="text" class="form-control" id="title-input" formControlName="title" />
+            @if (form.controls.title.invalid && (form.controls.title.dirty || form.controls.title.touched)) {
+                <div class="alert alert-danger">
+                    @if (form.controls.title.errors?.required) {
+                        <div jhiTranslate="artemisApp.knowledgeArea.details.error.titleRequired"></div>
+                    }
+                    @if (form.controls.title.errors?.maxlength) {
+                        <div jhiTranslate="artemisApp.knowledgeArea.details.error.titleMaxLength" [translateValues]="{ max: validators.TITLE_MAX }"></div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="form-group">
+            <label for="short-title-input" jhiTranslate="artemisApp.knowledgeArea.model.shortTitle"></label>
+            <input type="text" class="form-control" id="short-title-input" formControlName="shortTitle" />
+            @if (form.controls.shortTitle.invalid && (form.controls.shortTitle.dirty || form.controls.shortTitle.touched)) {
+                <div class="alert alert-danger">
+                    @if (form.controls.shortTitle.errors?.required) {
+                        <div jhiTranslate="artemisApp.knowledgeArea.details.error.shortTitleRequired"></div>
+                    }
+                    @if (form.controls.shortTitle.errors?.maxlength) {
+                        <div jhiTranslate="artemisApp.knowledgeArea.details.error.shortTitleMaxLength" [translateValues]="{ max: validators.SHORT_TITLE_MAX }"></div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="form-group">
+            <label jhiTranslate="artemisApp.knowledgeArea.model.description"></label>
+            @if (isEditing) {
+                <jhi-markdown-editor-monaco
+                    [markdown]="form.controls.description.value"
+                    (markdownChange)="updateDescriptionControl($event)"
+                    class="markdown-preview"
+                    [enableFileUpload]="false"
+                />
+            } @else {
+                <div disabled="true" class="markdown-preview border rounded p-1" [innerHTML]="form.controls.description.value ?? '&nbsp;' | htmlForMarkdown"></div>
+            }
+            @if (form.controls.description.invalid && form.controls.description.dirty) {
+                <div
+                    class="alert alert-danger"
+                    jhiTranslate="artemisApp.knowledgeArea.details.error.descriptionMaxLength"
+                    [translateValues]="{ max: validators.DESCRIPTION_MAX }"
+                ></div>
+            }
+        </div>
+        <div class="form-group">
+            <label for="knowledge-area-select" jhiTranslate="artemisApp.knowledgeArea.model.parent"></label>
+            <select id="knowledge-area-select" class="form-select" formControlName="parentId">
+                <option [ngValue]="undefined"></option>
+                @for (knowledgeArea of knowledgeAreas; track knowledgeArea.id) {
+                    <option [ngValue]="knowledgeArea.id">
+                        {{ knowledgeArea.title }}
+                    </option>
+                }
+            </select>
+            @if (form.controls.parentId.invalid && (form.controls.parentId.dirty || form.controls.parentId.touched)) {
+                <div class="alert alert-danger" jhiTranslate="artemisApp.knowledgeArea.details.error.parentIdCircle"></div>
+            }
+        </div>
+    </div>
+    @if (isEditing) {
+        <div>
+            <jhi-button [btnType]="ButtonType.SECONDARY" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
+            <jhi-button
+                [btnType]="ButtonType.PRIMARY"
+                [btnSize]="ButtonSize.SMALL"
+                [title]="'entity.action.save'"
+                [icon]="faSave"
+                (onClick)="save()"
+                [disabled]="this.form.invalid"
+            />
+        </div>
+    }
+</div>

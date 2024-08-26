@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,18 +49,23 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -83,6 +89,9 @@ public class LocalVCLocalCITestService {
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
+    private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
+
+    @Autowired
     private ResultRepository resultRepository;
 
     @Value("${artemis.version-control.url}")
@@ -90,6 +99,8 @@ public class LocalVCLocalCITestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    private static final int DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS = 10;
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCITestService.class);
 
@@ -142,6 +153,21 @@ public class LocalVCLocalCITestService {
      */
     public void mockTestResults(DockerClient dockerClient, List<Path> mockedTestResultsPaths, String testResultsPath) throws IOException {
         mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromMultipleTestResultFolders(mockedTestResultsPaths));
+    }
+
+    /**
+     * Mocks the inspection of the image returned by dockerClient.inspectImageCmd(String imageId).exec().
+     * The mocked image inspection will have the architecture "amd64" to pass the check in LocalCIBuildService.
+     *
+     * @param dockerClient the DockerClient to mock.
+     */
+    public void mockInspectImage(DockerClient dockerClient) {
+        InspectImageResponse inspectImageResponse = new InspectImageResponse();
+        inspectImageResponse.withArch("amd64");
+
+        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
+        doReturn(inspectImageResponse).when(inspectImageCmd).exec();
     }
 
     /**
@@ -509,8 +535,21 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug   the repository slug of the repository.
      */
     public void testPushSuccessful(Git repositoryHandle, String username, String projectKey, String repositorySlug) {
+        testPushSuccessful(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
+    }
+
+    /**
+     * Perform a push operation and fail if there was an exception.
+     *
+     * @param repositoryHandle the Git object for the repository.
+     * @param username         the username of the user that tries to push to the repository.
+     * @param password         the password or token of the user
+     * @param projectKey       the project key of the repository.
+     * @param repositorySlug   the repository slug of the repository.
+     */
+    public void testPushSuccessful(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) {
         try {
-            performPush(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
+            performPush(repositoryHandle, username, password, projectKey, repositorySlug);
         }
         catch (GitAPIException e) {
             fail("Pushing was not successful: " + e.getMessage());
@@ -527,11 +566,13 @@ public class LocalVCLocalCITestService {
      * @param buildFailed                     whether the build should have failed or not.
      * @param isStaticCodeAnalysisEnabled     whether static code analysis is enabled for the exercise.
      * @param expectedCodeIssueCount          the expected number of code issues (only relevant if static code analysis is enabled).
+     * @param timeoutInSeconds                the maximum time to wait for the result to be persisted. If null, the default timeout of 10s is used.
      */
     public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed, boolean isStaticCodeAnalysisEnabled,
-            int expectedCodeIssueCount) {
+            int expectedCodeIssueCount, Integer timeoutInSeconds) {
         // wait for result to be persisted
-        await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
+        Duration timeoutDuration = timeoutInSeconds != null ? Duration.ofSeconds(timeoutInSeconds) : Duration.ofSeconds(DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS);
+        await().atMost(timeoutDuration).until(() -> resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
@@ -564,7 +605,7 @@ public class LocalVCLocalCITestService {
     }
 
     public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
-        testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, false, 0);
+        testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, false, 0, null);
     }
 
     /**
@@ -611,11 +652,51 @@ public class LocalVCLocalCITestService {
      * @param localVCBasePath     the base path for the local repositories taken from the artemis.version-control.local-vcs-repo-path environment variable.
      */
     public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
-        LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri(), localVCBaseUrl);
+        LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
         assertThat(templateRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
-        LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri(), localVCBaseUrl);
+        LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri());
         assertThat(solutionRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
-        LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri(), localVCBaseUrl);
+        LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
+    }
+
+    /**
+     * Gets the participationVcsAccessToken belonging to a user and a participation
+     *
+     * @param userId                     The user's id
+     * @param programmingParticipationId The participation's id
+     *
+     * @return the participationVcsAccessToken of the user for the given participationId
+     */
+    public ParticipationVCSAccessToken getParticipationVcsAccessToken(Long userId, Long programmingParticipationId) {
+        return participationVcsAccessTokenService.findByUserIdAndParticipationIdOrElseThrow(userId, programmingParticipationId);
+    }
+
+    /**
+     * Deletes the participationVcsAccessToken for a participation
+     *
+     * @param participationId The participationVcsAccessToken's participationId
+     */
+    public void deleteParticipationVcsAccessToken(long participationId) {
+        participationVcsAccessTokenService.deleteByParticipationId(participationId);
+    }
+
+    /**
+     * Creates the participationVcsAccessToken for a user and a participation
+     *
+     * @param user            The user for which the token should get created
+     * @param participationId The participationVcsAccessToken's participationId
+     */
+    public void createParticipationVcsAccessToken(User user, long participationId) {
+        participationVcsAccessTokenService.createVcsAccessTokenForUserAndParticipationIdOrElseThrow(user, participationId);
+    }
+
+    /**
+     * Deletes a programmingParticipation
+     *
+     * @param programmingParticipation The participation to delete
+     */
+    public void deleteParticipation(ProgrammingExerciseStudentParticipation programmingParticipation) {
+        programmingExerciseStudentParticipationRepository.delete(programmingParticipation);
     }
 }

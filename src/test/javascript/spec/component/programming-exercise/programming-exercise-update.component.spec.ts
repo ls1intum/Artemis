@@ -42,13 +42,11 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/incl
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/submission-policy.model';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import '@angular/localize/init';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
@@ -68,6 +66,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -96,7 +95,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 SelectControlValueAccessor,
                 NumberValueAccessor,
                 MockComponent(HelpIconComponent),
-                MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
+                MockComponent(ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent),
                 MockComponent(TableEditableFieldComponent),
                 MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
                 MockComponent(CategorySelectorComponent),
@@ -438,15 +437,15 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         it('should clear custom build definition on programming language change', fakeAsync(() => {
             // WHEN
             fixture.detectChanges();
-            comp.programmingExercise.buildPlanConfiguration = 'some custom build definition';
-            comp.programmingExercise.windFile = new WindFile();
+            comp.programmingExercise.buildConfig!.buildPlanConfiguration = 'some custom build definition';
+            comp.programmingExercise.buildConfig!.windfile = new WindFile();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
             comp.onProjectTypeChange(ProjectType.FACT);
 
             // THEN
-            expect(comp.programmingExercise.buildPlanConfiguration).toBeUndefined();
-            expect(comp.programmingExercise.windFile).toBeUndefined();
+            expect(comp.programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
+            expect(comp.programmingExercise.buildConfig?.windfile).toBeUndefined();
         }));
     });
 
@@ -907,7 +906,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick();
 
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
-            expect(comp.programmingExercise.testwiseCoverageEnabled).toBeFalse();
+            expect(comp.programmingExercise.buildConfig?.testwiseCoverageEnabled).toBeFalse();
         }));
 
         it('should disable options for java dejagnu project type and re-enable them after changing back to maven or gradle', fakeAsync(() => {
@@ -1016,6 +1015,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         expect(calculateFormValidSectionsSpy).toHaveBeenCalledTimes(6);
 
+        comp.programmingExercise.allowOfflineIde = false;
+        comp.programmingExercise.allowOnlineEditor = false;
+        comp.calculateFormStatusSections();
+        expect(comp.formStatusSections[1].valid).toBeFalse();
+        comp.programmingExercise.allowOnlineEditor = true;
+        comp.calculateFormStatusSections();
+        expect(comp.formStatusSections[1].valid).toBeTrue();
+
         comp.ngOnDestroy();
 
         for (const subscription of comp.inputFieldSubscriptions) {
@@ -1033,13 +1040,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.programmingExercise.exampleSolutionPublicationDate).toBeUndefined();
         expect(comp.programmingExercise.zipFileForImport?.name).toBe('test.zip');
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
-        expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
         expect(comp.programmingExercise.allowOfflineIde).toBeTrue();
         expect(comp.programmingExercise.allowOnlineEditor).toBeTrue();
         expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
         expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
         // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
-        expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
+        expect(comp.programmingExercise.allowFeedbackRequests).toBeFalse();
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
         // name and short name should also be imported
         expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
@@ -1063,7 +1069,7 @@ const getProgrammingExerciseForImport = () => {
     programmingExercise.allowOfflineIde = true;
     programmingExercise.allowOnlineEditor = true;
     programmingExercise.allowComplaintsForAutomaticAssessments = true;
-    programmingExercise.allowManualFeedbackRequests = true;
+    programmingExercise.allowFeedbackRequests = true;
 
     history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
 
@@ -1107,7 +1113,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: false,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [],
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             } as ProgrammingLanguageFeature;

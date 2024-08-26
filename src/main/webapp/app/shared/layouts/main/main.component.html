@@ -1,5 +1,11 @@
 <jhi-alert-overlay />
-<div class="page-wrapper" [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" cdkScrollable>
+<div
+    id="page-wrapper"
+    class="page-wrapper"
+    [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }"
+    [ngStyle]="{ 'overflow-y': !isTestRunExam && isExamStarted ? 'hidden' : 'auto' }"
+    cdkScrollable
+>
     <jhi-page-ribbon />
     @if (showSkeleton) {
         <div class="sticky-top">
@@ -19,7 +25,9 @@
     <jhi-notification-popup />
     @if (showSkeleton) {
         <div>
-            <jhi-footer [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" />
+            @if (isTestRunExam || !isExamStarted) {
+                <jhi-footer [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" />
+            }
         </div>
     }
 </div>

@@ -1,21 +1,13 @@
 import { Page, expect } from '@playwright/test';
 import { BASE_API } from '../../../constants';
 import { getExercise } from '../../../utils';
-import { Commands } from '../../../commands';
-import { UserCredentials } from '../../../users';
-import { CoursesPage } from '../../course/CoursesPage';
-import { CourseOverviewPage } from '../../course/CourseOverviewPage';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class OnlineEditorPage {
     private readonly page: Page;
-    private readonly courseList: CoursesPage;
-    private readonly courseOverview: CourseOverviewPage;
 
-    constructor(page: Page, courseList: CoursesPage, courseOverview: CourseOverviewPage) {
+    constructor(page: Page) {
         this.page = page;
-        this.courseList = courseList;
-        this.courseOverview = courseOverview;
     }
 
     findFileBrowser(exerciseID: number) {
@@ -112,8 +104,9 @@ export class OnlineEditorPage {
     }
 
     async getResultScore() {
-        await Commands.reloadUntilFound(this.page, '#result-score');
-        return this.page.locator('#result-score');
+        const resultScore = this.page.locator('#result-score');
+        await resultScore.waitFor({ state: 'visible' });
+        return resultScore;
     }
 
     getResultScoreFromExercise(exerciseID: number) {
@@ -138,15 +131,6 @@ export class OnlineEditorPage {
         await this.typeSubmission(exerciseID, submission);
         await this.submit(exerciseID);
         await verifyOutput();
-    }
-
-    async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
-        await Commands.login(this.page, credentials, '/');
-        await this.page.waitForURL(/\/courses/);
-        await this.courseList.openCourse(courseId!);
-        await this.courseOverview.startExercise(exerciseId);
-        await Commands.reloadUntilFound(this.page, '#open-exercise-' + exerciseId);
-        await this.courseOverview.openRunningProgrammingExercise(exerciseId);
     }
 }
 

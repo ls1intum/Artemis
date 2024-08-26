@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.NotFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -92,7 +91,7 @@ public class ProgrammingExerciseImportFromFileService {
      **/
     public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user)
             throws IOException, GitAPIException, URISyntaxException {
-        if (!"zip".equals(FileNameUtils.getExtension(zipFile.getOriginalFilename()))) {
+        if (!"zip".equals(FilenameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
         Path importExerciseDir = null;
@@ -111,7 +110,7 @@ public class ProgrammingExerciseImportFromFileService {
             if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
-            Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString()));
+            Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(exerciseFilePath.toString()));
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
             importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, oldShortName, user);
             newProgrammingExercise.setCourse(course);
@@ -214,7 +213,6 @@ public class ProgrammingExerciseImportFromFileService {
         try (var files = Files.walk(repository.getLocalPath())) {
             files.filter(file -> "gradlew".equals(file.getFileName().toString())).forEach(file -> file.toFile().setExecutable(true));
         }
-        repository.setContent(null);
     }
 
     private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
@@ -259,7 +257,7 @@ public class ProgrammingExerciseImportFromFileService {
                     "There are either no or more than one sub-directories containing " + repoType + " in their name. Please make sure that there is exactly one.");
         }
 
-        return result.get(0);
+        return result.getFirst();
     }
 
     private Path retrieveExerciseJsonPath(Path dirPath) throws IOException {
@@ -275,6 +273,6 @@ public class ProgrammingExerciseImportFromFileService {
         if (result.size() != 1) {
             throw new BadRequestAlertException("There are either no JSON files or more than one JSON file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
-        return result.get(0);
+        return result.getFirst();
     }
 }

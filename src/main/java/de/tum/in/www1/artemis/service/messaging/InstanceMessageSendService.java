@@ -178,4 +178,18 @@ public interface InstanceMessageSendService {
      * @param resultIdToBeDeleted the id of the result about to be deleted
      */
     void sendParticipantScoreSchedule(Long exerciseId, Long participantId, Long resultIdToBeDeleted);
+
+    /**
+     * Send a message to the main server that a quiz exercise was created or updated and a (re-)scheduling has to be performed
+     *
+     * @param quizExerciseId the id of the quiz exercise that should be scheduled
+     */
+    void sendQuizExerciseStartSchedule(Long quizExerciseId);
+
+    /**
+     * Send a message to the main server that a quiz exercise was deleted and the scheduling should be cancelled
+     *
+     * @param quizExerciseId the id of the quiz exercise that should be no longer be scheduled
+     */
+    void sendQuizExerciseStartCancel(Long quizExerciseId);
 }

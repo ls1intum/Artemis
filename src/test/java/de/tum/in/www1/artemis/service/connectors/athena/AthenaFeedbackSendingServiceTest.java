@@ -16,14 +16,23 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -41,6 +50,9 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Mock
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Mock
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -67,7 +79,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     @BeforeEach
     void setUp() {
         athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), athenaModuleService,
-                new AthenaDTOConverterService(textBlockRepository, textExerciseRepository, programmingExerciseRepository));
+                new AthenaDTOConverterService(textBlockRepository, textExerciseRepository, programmingExerciseRepository, gradingCriterionRepository));
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
@@ -82,6 +94,8 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         when(textBlockRepository.findById(textBlock.getId())).thenReturn(Optional.of(textBlock));
 
         textFeedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference(textBlock.getId());
+        textFeedback.setText("Title");
+        textFeedback.setDetailText("Description");
         textFeedback.setId(3L);
         var result = new Result();
         textFeedback.setResult(result);
@@ -99,6 +113,8 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         programmingSubmission.setId(2L);
 
         programmingFeedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference("test");
+        programmingFeedback.setText("Title");
+        programmingFeedback.setDetailText("Description");
         programmingFeedback.setId(3L);
         programmingFeedback.setReference("file:src/Test.java_line:12");
         var programmingResult = new Result();
@@ -112,8 +128,8 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.submission.id").value(textSubmission.getId()), jsonPath("$.submission.exerciseId").value(textExercise.getId()),
                 jsonPath("$.feedbacks[0].id").value(textFeedback.getId()), jsonPath("$.feedbacks[0].exerciseId").value(textExercise.getId()),
                 jsonPath("$.feedbacks[0].title").value(textFeedback.getText()), jsonPath("$.feedbacks[0].description").value(textFeedback.getDetailText()),
-                jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()), jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()),
-                jsonPath("$.feedbacks[0].indexStart").value(textBlock.getStartIndex()), jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()));
+                jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()), jsonPath("$.feedbacks[0].indexStart").value(textBlock.getStartIndex()),
+                jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()));
 
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
         athenaRequestMockProvider.verify();
@@ -167,15 +183,15 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.submission.id").value(programmingSubmission.getId()), jsonPath("$.submission.exerciseId").value(programmingExercise.getId()),
                 jsonPath("$.feedbacks[0].id").value(programmingFeedback.getId()), jsonPath("$.feedbacks[0].exerciseId").value(programmingExercise.getId()),
                 jsonPath("$.feedbacks[0].title").value(programmingFeedback.getText()), jsonPath("$.feedbacks[0].description").value(programmingFeedback.getDetailText()),
-                jsonPath("$.feedbacks[0].credits").value(programmingFeedback.getCredits()), jsonPath("$.feedbacks[0].credits").value(programmingFeedback.getCredits()),
-                jsonPath("$.feedbacks[0].lineStart").value(12), jsonPath("$.feedbacks[0].lineEnd").value(12));
+                jsonPath("$.feedbacks[0].credits").value(programmingFeedback.getCredits()), jsonPath("$.feedbacks[0].lineStart").value(12),
+                jsonPath("$.feedbacks[0].lineEnd").value(12));
 
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
         athenaRequestMockProvider.verify();
     }
 
     @Test
-    void testFeedbackSendingUnsupportedExerciseType() {
+    void testFeedbackSendingModeling() {
         athenaRequestMockProvider.mockSendFeedbackAndExpect("modeling");
         assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(new ModelingExercise(), new ModelingSubmission(), List.of()))
                 .isInstanceOf(IllegalArgumentException.class);

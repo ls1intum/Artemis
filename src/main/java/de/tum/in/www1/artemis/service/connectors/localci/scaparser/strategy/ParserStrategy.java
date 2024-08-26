@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy;
 
-import org.w3c.dom.Document;
-
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 /**
@@ -9,11 +7,15 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
  */
 public interface ParserStrategy {
 
+    static String transformToUnixPath(String path) {
+        return path.replace("\\", "/");
+    }
+
     /**
-     * Parse a static code analysis report into a common Java representation.
+     * Parse a static code analysis report from an XML string into a common Java representation.
      *
-     * @param doc XML DOM Document
+     * @param xmlContent The XML content as a String
      * @return Report object containing the parsed report information
      */
-    StaticCodeAnalysisReportDTO parse(Document doc);
+    StaticCodeAnalysisReportDTO parse(String xmlContent);
 }

@@ -9,10 +9,10 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface LtiPlatformConfigurationRepository extends JpaRepository<LtiPlatformConfiguration, Long> {
+public interface LtiPlatformConfigurationRepository extends ArtemisJpaRepository<LtiPlatformConfiguration, Long> {
 
     /**
      * Finds an LTI platform configuration by its registration ID.
@@ -31,18 +31,6 @@ public interface LtiPlatformConfigurationRepository extends JpaRepository<LtiPla
     Optional<LtiPlatformConfiguration> findByRegistrationId(String registrationId);
 
     /**
-     * Finds an LTI platform configuration by ID or throws EntityNotFoundException if not found.
-     *
-     * @param platformId The ID of the configuration.
-     * @return LtiPlatformConfiguration if found.
-     * @throws EntityNotFoundException if not found.
-     */
-    @NotNull
-    default LtiPlatformConfiguration findByIdElseThrow(Long platformId) throws EntityNotFoundException {
-        return findById(platformId).orElseThrow(() -> new EntityNotFoundException("LtiPlatformConfiguration", platformId));
-    }
-
-    /**
      * Fetches an {@link LtiPlatformConfiguration} with its associated online courses eagerly loaded.
      *
      * @param id The ID of the LtiPlatformConfiguration.
@@ -51,7 +39,7 @@ public interface LtiPlatformConfigurationRepository extends JpaRepository<LtiPla
      */
     @NotNull
     default LtiPlatformConfiguration findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(long id) throws EntityNotFoundException {
-        return Optional.ofNullable(findWithEagerOnlineCourseConfigurationsById(id)).orElseThrow(() -> new EntityNotFoundException("LtiPlatformConfiguration", id));
+        return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationsById(id)), id);
     }
 
     /**

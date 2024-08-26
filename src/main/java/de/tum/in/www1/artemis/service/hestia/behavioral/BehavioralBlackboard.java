@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia.behavioral;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;

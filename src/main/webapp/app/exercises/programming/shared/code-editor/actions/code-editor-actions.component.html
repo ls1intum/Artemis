@@ -11,7 +11,7 @@
         >
             @if (isResolvingConflict) {
                 <span>
-                    <fa-icon [icon]="faCircleNotch" [spin]="true" />
+                    <fa-icon [icon]="faCircleNotch" animation="spin" />
                     <span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
                 </span>
             } @else {
@@ -32,7 +32,7 @@
     >
         @if (editorState === EditorState.REFRESHING) {
             <span>
-                <fa-icon [icon]="faCircleNotch" [spin]="true" />
+                <fa-icon [icon]="faCircleNotch" animation="spin" />
                 <span jhiTranslate="artemisApp.editor.refreshing"></span>
             </span>
         } @else {

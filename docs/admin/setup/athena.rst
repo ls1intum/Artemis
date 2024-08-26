@@ -1,3 +1,5 @@
+.. _athena_service:
+
 Athena Service
 --------------
 
@@ -23,7 +25,7 @@ HTTP. We need to extend the configuration in the file
    artemis:
       # ...
       athena:
-         url: http://localhost:5000
+         url: http://localhost:5100
          secret: abcdef12345
          modules:
             # See https://github.com/ls1intum/Athena for a list of available modules

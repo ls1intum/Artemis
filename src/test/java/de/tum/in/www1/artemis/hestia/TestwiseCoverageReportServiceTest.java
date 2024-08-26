@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.localvcci.AbstractLocalCILocalVCIntegrationTest;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
@@ -98,9 +98,9 @@ class TestwiseCoverageReportServiceTest extends AbstractLocalCILocalVCIntegratio
         var fileReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
         testwiseCoverageService.createTestwiseCoverageReport(fileReportsByTestName, programmingExercise, solutionSubmission);
 
-        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
+        var reports = coverageReportRepository.getLatestCoverageReportsWithLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
         assertThat(reports).hasSize(1);
-        var report = reports.get(0);
+        var report = reports.getFirst();
         // 18/50 lines covered = 32%
         assertThat(report.getCoveredLineRatio()).isEqualTo(0.32);
 

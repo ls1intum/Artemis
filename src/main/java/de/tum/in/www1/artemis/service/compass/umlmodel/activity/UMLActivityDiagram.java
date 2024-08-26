@@ -16,10 +16,10 @@ public class UMLActivityDiagram extends UMLDiagram implements Serializable {
     private List<UMLControlFlow> controlFlowList;
 
     /**
-     * to make mockito happy
+     * empty constructor used to make mockito happy
      */
     public UMLActivityDiagram() {
-        super();
+        // default empty constructor
     }
 
     public UMLActivityDiagram(long modelSubmissionId, List<UMLActivityNode> activityNodeList, List<UMLActivity> activityList, List<UMLControlFlow> controlFlowList) {

@@ -6,8 +6,6 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
-import { Router } from '@angular/router';
-import { faCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-commits-info',
@@ -21,27 +19,26 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() submissions?: ProgrammingSubmission[];
     @Input() exerciseProjectKey?: string;
     @Input() isRepositoryView = false;
+
     private commitHashURLTemplate: string;
     private commitsInfoSubscription: Subscription;
     private profileInfoSubscription: Subscription;
-    localVC = false;
-    routerLink: string;
+    protected isGroupsExpanded = true;
+    protected groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
 
-    faCircle = faCircle;
+    localVC = false;
 
     constructor(
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private profileService: ProfileService,
-        private router: Router,
     ) {}
 
     ngOnInit(): void {
-        this.routerLink = this.router.url;
         if (!this.commits) {
             if (this.participationId) {
                 this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
                     if (commits) {
-                        this.commits = this.sortCommitsByTimestampDesc(commits);
+                        this.commits = commits;
                     }
                 });
             }
@@ -51,7 +48,9 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
             this.localVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
+
         this.setCommitDetails();
+        this.groupCommits();
     }
 
     ngOnDestroy(): void {
@@ -68,11 +67,52 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         }
     }
 
-    private sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
-        return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
-    }
-
     private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {
         return submissions?.find((submission) => submission.commitHash === commitInfo.hash);
+    }
+
+    /**
+     * Groups commits together that were pushed in one batch.
+     * As we don't have a direct indicator whether commits were pushed together,
+     * we infer groups based on the presence of a 'result' on a commit.
+     */
+    private groupCommits() {
+        if (!this.commits) {
+            return;
+        }
+
+        const commitGroups: { key: string; commits: CommitInfo[]; date: string }[] = [];
+        let tempGroup: CommitInfo[] = [];
+
+        this.commits = this.commits?.sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? -1 : 1));
+
+        for (let i = 0; i < this.commits.length; i++) {
+            const commit = this.commits[i];
+            tempGroup.push(commit);
+
+            if (commit.result) {
+                const date = dayjs(tempGroup[tempGroup.length - 1].timestamp).format('YYYY-MM-DD');
+                commitGroups.push({
+                    key: `${date}-${commit.author}`,
+                    commits: [...tempGroup].reverse(),
+                    date: date ?? '',
+                });
+                tempGroup = [];
+            }
+        }
+
+        if (tempGroup.length > 0) {
+            commitGroups.push({
+                key: 'no-result',
+                commits: [...tempGroup].reverse(),
+                date: dayjs(tempGroup[tempGroup.length - 1].timestamp).format('YYYY-MM-DD') ?? '',
+            });
+        }
+
+        this.groupedCommits = commitGroups.reverse();
+    }
+
+    protected toggleAllExpanded() {
+        this.isGroupsExpanded = !this.isGroupsExpanded;
     }
 }

@@ -2,7 +2,12 @@ package de.tum.in.www1.artemis.domain.quiz.scoring;
 
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
+import de.tum.in.www1.artemis.domain.quiz.DropLocation;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 
 /**
  * Proportional without penalty means that every correct mapping increases the score by maxScore / numberOfDropLocationsThatShouldHaveAMapping

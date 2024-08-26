@@ -15,6 +15,7 @@ import { Router } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
+import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
 
 const sections: DetailOverviewSection[] = [
     {
@@ -35,11 +36,11 @@ describe('DetailOverviewList', () => {
     let fixture: ComponentFixture<DetailOverviewListComponent>;
     let modalService: NgbModal;
     let modelingService: ModelingExerciseService;
-    let alertServide: AlertService;
+    let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [ExerciseDetailDirective],
             declarations: [DetailOverviewListComponent, TranslatePipeMock],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -53,7 +54,7 @@ describe('DetailOverviewList', () => {
             .then(() => {
                 modalService = fixture.debugElement.injector.get(NgbModal);
                 modelingService = fixture.debugElement.injector.get(ModelingExerciseService);
-                alertServide = fixture.debugElement.injector.get(AlertService);
+                alertService = fixture.debugElement.injector.get(AlertService);
             });
 
         fixture = TestBed.createComponent(DetailOverviewListComponent);
@@ -68,12 +69,24 @@ describe('DetailOverviewList', () => {
         expect(DetailOverviewListComponent).not.toBeNull();
 
         component.ngOnDestroy();
-        expect(component.profileSub?.closed).toBeTruthy();
+        expect(component.profileSubscription?.closed).toBeTruthy();
     });
 
     it('should escape all falsy values', () => {
         component.sections = [
-            { headline: 'some-section', details: [null as any as Detail, undefined, false, { type: DetailType.Text, title: 'title', data: { text: 'A Title' } }] },
+            {
+                headline: 'some-section',
+                details: [
+                    null as any as Detail,
+                    undefined,
+                    false,
+                    {
+                        type: DetailType.Text,
+                        title: 'title',
+                        data: { text: 'A Title' },
+                    },
+                ],
+            },
         ];
         fixture.detectChanges();
         const detailListTitleDOMElements = fixture.nativeElement.querySelectorAll('dt[id^=detail-title]');
@@ -105,8 +118,8 @@ describe('DetailOverviewList', () => {
     });
 
     it('should error on download apollon Diagram fail', () => {
-        jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(throwError(new HttpResponse({ body: new Blob() })));
-        const errorSpy = jest.spyOn(alertServide, 'error');
+        jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(throwError(() => new HttpResponse({ body: new Blob() })));
+        const errorSpy = jest.spyOn(alertService, 'error');
         component.downloadApollonDiagramAsPDf({} as UMLModel, 'title');
         expect(errorSpy).toHaveBeenCalledOnce();
     });

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -15,7 +15,7 @@ import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { faCircleNotch, faExclamationCircle, faExclamationTriangle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
@@ -23,6 +23,7 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
+import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
 
 @Component({
     selector: 'jhi-result',
@@ -34,7 +35,7 @@ import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedbac
  * When using the result component make sure that the reference to the participation input is changed if the result changes
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
-export class ResultComponent implements OnInit, OnChanges {
+export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     // make constants available to html
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInformation;
@@ -61,8 +62,6 @@ export class ResultComponent implements OnInit, OnChanges {
     submission?: Submission;
     badge: Badge;
     resultTooltip?: string;
-    logsAvailable?: boolean;
-
     latestDueDate: dayjs.Dayjs | undefined;
 
     // Icons
@@ -72,6 +71,8 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
 
+    private resultUpdateSubscription?: ReturnType<typeof setTimeout>;
+
     constructor(
         private participationService: ParticipationService,
         private translateService: TranslateService,
@@ -79,6 +80,7 @@ export class ResultComponent implements OnInit, OnChanges {
         private exerciseService: ExerciseService,
         @Optional() private exerciseCacheService: ExerciseCacheService,
         private resultService: ResultService,
+        private csvDownloadService: CsvDownloadService,
     ) {}
 
     /**
@@ -106,8 +108,16 @@ export class ResultComponent implements OnInit, OnChanges {
                     });
                 }
                 // Make sure result and participation are connected
-                this.result = this.participation.results[0];
-                this.result.participation = this.participation;
+                if (!this.showUngradedResults) {
+                    const firstRatedResult = this.participation.results.find((result) => result.rated);
+                    if (firstRatedResult) {
+                        this.result = firstRatedResult;
+                        this.result.participation = this.participation;
+                    }
+                } else {
+                    this.result = this.participation.results[0];
+                    this.result.participation = this.participation;
+                }
             }
         } else if (!this.participation && this.result && this.result.participation) {
             // make sure this.participation is initialized in case it was not passed
@@ -125,8 +135,6 @@ export class ResultComponent implements OnInit, OnChanges {
         // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
         this.submission = this.result?.submission;
 
-        this.logsAvailable = this.result?.logsAvailable;
-
         this.evaluate();
 
         this.translateService.onLangChange.subscribe(() => {
@@ -137,6 +145,12 @@ export class ResultComponent implements OnInit, OnChanges {
 
         if (this.showBadge && this.result) {
             this.badge = ResultService.evaluateBadge(this.participation, this.result);
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (this.resultUpdateSubscription) {
+            clearTimeout(this.resultUpdateSubscription);
         }
     }
 
@@ -173,7 +187,10 @@ export class ResultComponent implements OnInit, OnChanges {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
-        } else if (this.result && this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
+        } else if (
+            this.result &&
+            ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || Result.isAthenaAIResult(this.result))
+        ) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
@@ -185,6 +202,16 @@ export class ResultComponent implements OnInit, OnChanges {
             this.result = undefined;
             this.resultString = '';
         }
+
+        if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK && this.result?.completionDate) {
+            const dueTime = -dayjs().diff(this.result.completionDate, 'milliseconds');
+            this.resultUpdateSubscription = setTimeout(() => {
+                this.evaluate();
+                if (this.resultUpdateSubscription) {
+                    clearTimeout(this.resultUpdateSubscription);
+                }
+            }, dueTime);
+        }
     }
 
     /**
@@ -193,6 +220,19 @@ export class ResultComponent implements OnInit, OnChanges {
     buildResultTooltip(): string | undefined {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         const programmingExercise = this.exercise as ProgrammingExercise;
+
+        // Automatically generated feedback section
+        if (this.result) {
+            if (this.templateStatus === ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
+                return 'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip';
+            } else if (this.templateStatus === ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT) {
+                return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
+            } else if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
+                return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
+            } else if (this.templateStatus === ResultTemplateStatus.HAS_RESULT && Result.isAthenaAIResult(this.result)) {
+                return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
+            }
+        }
         if (
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
@@ -261,13 +301,7 @@ export class ResultComponent implements OnInit, OnChanges {
     downloadBuildResult(participationId?: number) {
         if (participationId) {
             this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
-                const fileURL = URL.createObjectURL(artifact.fileContent);
-                const link = document.createElement('a');
-                link.href = fileURL;
-                link.target = '_blank';
-                link.download = artifact.fileName;
-                document.body.appendChild(link);
-                link.click();
+                this.csvDownloadService.downloadArtifact(artifact.fileContent, artifact.fileName);
             });
         }
     }

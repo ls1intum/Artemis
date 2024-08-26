@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -24,11 +23,9 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -42,15 +39,6 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PasswordService passwordService;
-
-    @Autowired
-    private ExamAccessService examAccessService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -146,6 +134,15 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Test for bad request, if the working time is 0
         Exam examD = ExamFactory.generateTestExam(course1);
         examD.setWorkingTime(0);
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateTestExam_asInstructor_attendanceCheckTurnedOn() throws Exception {
+        // Test for bad request if the attendance check is turned on
+        Exam examD = ExamFactory.generateTestExam(course1);
+        examD.setExamWithAttendanceCheck(true);
         request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
     }
 

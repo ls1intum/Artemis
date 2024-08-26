@@ -28,6 +28,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     Long exampleTutorialGroupId;
 
     @BeforeEach
+    @Override
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 1, 1, 1);
@@ -125,7 +126,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
-        var firstMondayOfAugustSession = sessions.get(0);
+        var firstMondayOfAugustSession = sessions.getFirst();
         assertScheduledSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
@@ -146,7 +147,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // then
         assertThat(createdPeriod).isNull();
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
-        var firstMondayOfAugustSession = sessions.get(0);
+        var firstMondayOfAugustSession = sessions.getFirst();
         assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
@@ -165,7 +166,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
-        var firstMondayOfAugustSession = sessions.get(0);
+        var firstMondayOfAugustSession = sessions.getFirst();
         assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
@@ -185,7 +186,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
-        var firstMondayOfAugustSession = sessions.get(0);
+        var firstMondayOfAugustSession = sessions.getFirst();
         assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
@@ -205,7 +206,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
-        var firstMondayOfAugustSession = sessions.get(0);
+        var firstMondayOfAugustSession = sessions.getFirst();
         assertScheduledSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
@@ -225,7 +226,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
-        var firstMondayOfAugustSession = sessions.get(0);
+        var firstMondayOfAugustSession = sessions.getFirst();
         assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
@@ -245,7 +246,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // then
         var sessions = this.getTutorialGroupSessionsAscending(exampleTutorialGroupId);
-        var firstMondayOfAugustSession = sessions.get(0);
+        var firstMondayOfAugustSession = sessions.getFirst();
         assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
         assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod()).isNotNull();
 
@@ -268,9 +269,9 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // then
         List<TutorialGroupSession> sessions = this.getTutorialGroupSessionsAscending(exampleTutorialGroupId);
-        TutorialGroupSession firstMondayOfAugustSession = sessions.get(0);
+        TutorialGroupSession firstMondayOfAugustSession = sessions.getFirst();
         assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
-        assert (firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).equals(createdPeriod.getId());
+        assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).isEqualTo(createdPeriod.getId());
         assertTutorialGroupFreePeriodCreatedCorrectlyFromDTO(firstMondayOfAugustSession.getTutorialGroupFreePeriod(), dto);
 
         // cleanup
@@ -301,7 +302,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // then
         firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
         assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
-        assert (firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).equals(createdPeriod2.getId());
+        assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).isEqualTo(createdPeriod2.getId());
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());

@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.GitDiffReportParserService;
 
@@ -33,10 +34,13 @@ public class CommitHistoryService {
 
     private final GitService gitService;
 
+    private final ProfileService profileService;
+
     private final GitDiffReportParserService gitDiffReportParserService;
 
-    public CommitHistoryService(GitService gitService, GitDiffReportParserService gitDiffReportParserService) {
+    public CommitHistoryService(GitService gitService, ProfileService profileService, GitDiffReportParserService gitDiffReportParserService) {
         this.gitService = gitService;
+        this.profileService = profileService;
         this.gitDiffReportParserService = gitDiffReportParserService;
     }
 
@@ -51,7 +55,17 @@ public class CommitHistoryService {
      * @throws IOException     If an error occurs while accessing the file system
      */
     public ProgrammingExerciseGitDiffReport generateReportForCommits(VcsRepositoryUri repositoryUri, String commitHash1, String commitHash2) throws GitAPIException, IOException {
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
+
+        Repository repository;
+        if (profileService.isLocalVcsActive()) {
+            log.debug("Using local VCS generateReportForCommits on repo {}", repositoryUri);
+            repository = gitService.getBareRepository(repositoryUri);
+        }
+        else {
+            log.debug("Checking out repo {} for generateReportForCommits", repositoryUri);
+            repository = gitService.getOrCheckoutRepository(repositoryUri, true);
+        }
+
         RevCommit commitOld = repository.parseCommit(repository.resolve(commitHash1));
         RevCommit commitNew = repository.parseCommit(repository.resolve(commitHash2));
 

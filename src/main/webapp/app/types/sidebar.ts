@@ -1,11 +1,30 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
-export type SidebarTypes = 'exercise' | 'default';
+import dayjs from 'dayjs/esm';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { StudentExam } from 'app/entities/student-exam.model';
 
-export type AccordionGroups = Record<TimeGroupCategory, { entityData: SidebarCardElement[] }>;
-export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;
+export type SidebarCardSize = 'S' | 'M' | 'L';
+export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noDate';
+export type ExamGroupCategory = 'real' | 'test';
+export type TutorialGroupCategory = 'all' | 'registered' | 'further';
+export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
+export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
+export type ChannelGroupCategory =
+    | 'favoriteChannels'
+    | 'generalChannels'
+    | 'exerciseChannels'
+    | 'lectureChannels'
+    | 'groupChats'
+    | 'directMessages'
+    | 'examChannels'
+    | 'hiddenChannels';
+export type CollapseState = {
+    [key: string]: boolean;
+} & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
+export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
+export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
 
 export interface SidebarData {
     groupByCategory: boolean;
@@ -13,6 +32,8 @@ export interface SidebarData {
     groupedData?: AccordionGroups;
     ungroupedData?: SidebarCardElement[];
     storageId?: string;
+    showAccordionAddOption?: boolean;
+    showAccordionLeadingIcon?: boolean;
 }
 
 export interface SidebarCardElement {
@@ -52,12 +73,14 @@ export interface SidebarCardElement {
      * the item.
      */
     routerLink?: string;
-
-    // TODO Extra Exercise Part
     /**
      * Set for Exercises
      */
     type?: string;
+    /**
+     * Sets the size of SidebarCards
+     */
+    size: SidebarCardSize;
     /**
      * Set for Exercises, shows the colored border on the left side
      */
@@ -70,4 +93,38 @@ export interface SidebarCardElement {
      * Set for Exercises. Will be removed after refactoring
      */
     exercise?: Exercise;
+    /**
+     * Set For Exam, this is a string which may define an icon for the status of the exam.
+     * It has to be a valid FontAwesome icon name and will be displayed in the
+     * 'regular' style. Needed for future implementation
+     */
+    statusIcon?: IconProp;
+    /**
+     * Set for Exam, identifies the color of the status icon. Needed for future implementation
+     */
+    statusIconColor?: string;
+    /**
+     * Set for Exam, shows the start date and time
+     */
+    startDateWithTime?: dayjs.Dayjs;
+    /**
+     * Set for Exam, shows the working time
+     */
+    workingTime?: number;
+    /**
+     * Set for Exam, represents the student exam of a real exam to obtain individual working time
+     */
+    studentExam?: StudentExam;
+    /**
+     * Set for Exam, shows the maximum attainable Points
+     */
+    attainablePoints?: number;
+    /**
+     * Set for Exam, indetifies the current status of an exam exercise for exam sidebar
+     */
+    rightIcon?: IconProp;
+    /**
+     * Set for Conversation. Will be removed after refactoring
+     */
+    conversation?: ConversationDTO;
 }

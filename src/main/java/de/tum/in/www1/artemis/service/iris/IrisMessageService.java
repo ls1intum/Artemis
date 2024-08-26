@@ -56,6 +56,6 @@ public class IrisMessageService {
         session.setMessages(sessionWithMessages.getMessages()); // Make sure we keep the session up to date as we overrode it. We do this to avoid unnecessarily fetching the
                                                                 // session again.
 
-        return sessionWithMessages.getMessages().get(sessionWithMessages.getMessages().size() - 1);
+        return sessionWithMessages.getMessages().getLast();
     }
 }

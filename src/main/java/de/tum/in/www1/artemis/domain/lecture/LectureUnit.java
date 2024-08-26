@@ -5,15 +5,39 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.LearningObject;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 
 @Entity
 @Table(name = "lecture_unit")
@@ -54,7 +78,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @OrderBy("title")
     @JsonIgnoreProperties({ "lectureUnits", "course" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    protected Set<Competency> competencies = new HashSet<>();
+    protected Set<CourseCompetency> competencies = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore // important, so that the completion status of other users do not leak to anyone
@@ -84,11 +108,12 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         this.releaseDate = releaseDate;
     }
 
-    public Set<Competency> getCompetencies() {
+    @Override
+    public Set<CourseCompetency> getCompetencies() {
         return competencies;
     }
 
-    public void setCompetencies(Set<Competency> competencies) {
+    public void setCompetencies(Set<CourseCompetency> competencies) {
         this.competencies = competencies;
     }
 
@@ -110,15 +135,24 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         this.completedUsers = completedUsers;
     }
 
+    /**
+     * Checks if the lecture unit is visible to the students.
+     * A lecture unit is visible to the students if the lecture is visible to the students and the release date is null or in the past.
+     *
+     * @return true if the lecture unit is visible to the students, false otherwise
+     */
     @JsonProperty("visibleToStudents")
     public boolean isVisibleToStudents() {
+        if (lecture == null || !lecture.isVisibleToStudents()) {
+            return false;
+        }
+
         if (releaseDate == null) {
             return true;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
     }
 
-    @Override
     public boolean isCompletedFor(User user) {
         return getCompletedUsers().stream().map(LectureUnitCompletion::getUser).anyMatch(user1 -> user1.getId().equals(user.getId()));
     }

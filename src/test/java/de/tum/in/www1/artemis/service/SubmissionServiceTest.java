@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +18,19 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -24,9 +38,12 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -119,7 +136,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam = examRepository.save(exam);
 
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
-        examTextExercise = (TextExercise) exam.getExerciseGroups().get(0).getExercises().stream().filter(ex -> ex instanceof TextExercise).findAny().orElse(null);
+        examTextExercise = (TextExercise) exam.getExerciseGroups().getFirst().getExercises().stream().filter(ex -> ex instanceof TextExercise).findAny().orElse(null);
         examModelingExercise = (ModelingExercise) exam.getExerciseGroups().get(3).getExercises().stream().filter(ex -> ex instanceof ModelingExercise).findAny().orElse(null);
         examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findAny()
                 .orElse(null);
@@ -307,7 +324,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor2).contains(submission1);
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).isEmpty();
@@ -338,7 +355,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).isEmpty();
@@ -367,11 +384,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).hasSize(1);
-        assertThat(submissionListTutor2CorrectionRound1.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor2CorrectionRound1.getFirst()).isEqualTo(submission1);
 
     }
 
@@ -403,11 +420,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).hasSize(1);
-        assertThat(submissionListTutor2CorrectionRound1.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor2CorrectionRound1.getFirst()).isEqualTo(submission1);
     }
 
     @Test
@@ -460,7 +477,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor2).contains(submission1);
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
 
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
@@ -492,7 +509,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).isEmpty();
@@ -521,11 +538,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).hasSize(1);
-        assertThat(submissionListTutor2CorrectionRound1.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor2CorrectionRound1.getFirst()).isEqualTo(submission1);
 
     }
 
@@ -555,11 +572,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEmpty();
 
         assertThat(submissionListTutor1CorrectionRound0).hasSize(1);
-        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor1CorrectionRound0.getFirst()).isEqualTo(submission1);
         assertThat(submissionListTutor2CorrectionRound0).isEmpty();
         assertThat(submissionListTutor1CorrectionRound1).isEmpty();
         assertThat(submissionListTutor2CorrectionRound1).hasSize(1);
-        assertThat(submissionListTutor2CorrectionRound1.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor2CorrectionRound1.getFirst()).isEqualTo(submission1);
     }
 
     @Test
@@ -675,7 +692,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         List<Feedback> newFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
 
         assertThat(newFeedbacks).isEqualTo(newResult.getFeedbacks()).hasSameSizeAs(oldFeedbacks);
-        assertThat(newFeedbacks.get(0).isPositive()).isTrue();
+        assertThat(newFeedbacks.getFirst().isPositive()).isTrue();
         assertThat(newFeedbacks.get(1).isPositive()).isTrue();
         assertThat(newFeedbacks.get(2).isPositive()).isTrue();
         assertThat(newFeedbacks.get(2).getCredits()).isZero();

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -6,9 +6,8 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetDates } from 'app/entities/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForImport } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
@@ -27,10 +26,12 @@ import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-f
 import { NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -55,8 +56,8 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     existingCategories: ExerciseCategory[];
     EditorMode = EditorMode;
     notificationText?: string;
-    domainCommandsProblemStatement = [new KatexCommand()];
-    domainCommandsSampleSolution = [new KatexCommand()];
+    domainActionsProblemStatement = [new MonacoFormulaAction()];
+    domainActionsExampleSolution = [new MonacoFormulaAction()];
     isImport: boolean;
     examCourseId?: number;
 
@@ -204,7 +205,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
                 // We reference normal exercises by their course, having both would lead to conflicts on the server
                 this.fileUploadExercise.exerciseGroup = undefined;
             }
-            resetDates(this.fileUploadExercise);
+            resetForImport(this.fileUploadExercise);
         }
     }
 

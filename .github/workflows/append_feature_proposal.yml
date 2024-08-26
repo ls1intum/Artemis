@@ -1,0 +1,169 @@
+name: Append Feature Proposal to Issue Description
+
+on:
+  issues:
+    types: [assigned, unassigned, labeled]
+
+jobs:
+  check-labels:
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.feature-proposal-tag-check.outputs.status }}
+    steps:
+      - id: feature-proposal-tag-check
+        name: Check if feature proposal tag added
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const issueNumber = context.payload.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: issueNumber,
+            });
+
+            const hasFeatureProposalLabel = issue.data.labels.some(label => label.name === 'needs-feature-proposal');
+            if (hasFeatureProposalLabel) {
+              console.log('Feature Proposal label added. Proceeding...');
+              core.setOutput('status', 'success');
+            } else {
+              console.log('Feature Proposal label not added. Skipping action...');
+              core.setOutput('status', 'failure');
+            }
+
+  manage-feature-proposal:
+    needs: check-labels
+    if: needs.check-labels.outputs.status == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if feature proposal tag added
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const issueNumber = context.payload.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: issueNumber,
+            });
+
+            const hasFeatureProposalLabel = issue.data.labels.some(label => label.name === 'needs-feature-proposal');
+            if (hasFeatureProposalLabel) {
+              console.log('Feature Proposal label added. Proceeding...');
+            } else {
+              console.log('Feature Proposal label not added. Skipping action...');
+              process.exit(0);
+            }
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Append Feature Proposal Template to Issue Description
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const issueNumber = context.payload.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: issueNumber,
+            });
+
+            // Check if the issue has a 'bug' label
+            const hasBugLabel = issue.data.labels.some(label => label.name === 'bug');
+            if (hasBugLabel) {
+              console.log("Issue is labeled as 'bug'. Skipping...");
+              return; // Exit the script if 'bug' label is found
+            }
+
+            const featureProposalMarker = '<!-- Feature Proposal Marker -->';
+            if (!issue.data.body.includes(featureProposalMarker)) {
+              const templateContent = await github.rest.repos.getContent({
+                owner,
+                repo,
+                path: '.github/ISSUE_TEMPLATE/feature-proposal--developer-.md'
+              });
+              let templateText = Buffer.from(templateContent.data.content, 'base64').toString();
+
+              // Add separator line and remove metadata section
+              templateText = '---\n' + templateText.split('---').slice(2).join('---').trim();
+
+              const updatedBody = issue.data.body + "\n" + templateText;
+
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body: updatedBody,
+              });
+            }
+
+      - name: Update or Post instructions comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const issueNumber = context.payload.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: issueNumber,
+            });
+
+            // Check if the issue has any assignees
+              if (issue.data.assignees.length === 0) {
+              console.log("No assignees for this issue. Skipping...");
+              return; // Exit the script if no assignees are found
+            }
+
+            // Check if the issue has a 'bug' label
+            const hasBugLabel = issue.data.labels.some(label => label.name === 'bug');
+            if (hasBugLabel) {
+              console.log("Issue is labeled as 'bug'. Skipping...");
+              return; // Exit the script if 'bug' label is found
+            }
+
+            const assignees = issue.data.assignees.map(assignee => '@' + assignee.login).join(', ');
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: issueNumber,
+            });
+            const instructionCommentMarker = '<!-- Instruction Comment Marker -->';
+            let instructionCommentId = null;
+
+            for (const comment of comments.data) {
+              if (comment.body.includes(instructionCommentMarker)) {
+                instructionCommentId = comment.id;
+                break;
+              }
+            }
+
+            const commentBody = `Hello ${assignees},\n\nThank you for taking on this issue.\n\nTo ensure the Feature Proposal is accurately filled out, we kindly ask you to follow the structure provided.\n\n**For detailed instructions and best practices**, please refer to our **[Development Process Guidelines](https://docs.artemis.cit.tum.de/dev/development-process.html)**.\n\n${instructionCommentMarker}`;
+
+            if (instructionCommentId) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: instructionCommentId,
+                body: commentBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body: commentBody,
+              });
+            }

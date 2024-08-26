@@ -1,0 +1,19 @@
+@if (isLoading) {
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only" jhiTranslate="loading"></span>
+        </div>
+    </div>
+} @else {
+    <div class="container">
+        <h3 jhiTranslate="artemisApp.prerequisite.edit.title"></h3>
+        <jhi-prerequisite-form
+            [isEditMode]="true"
+            [formData]="formData"
+            (formSubmitted)="updateCompetency($event)"
+            [courseId]="courseId"
+            [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"
+            [averageStudentScore]="prerequisite?.courseProgress?.averageStudentScore ?? 0"
+        />
+    </div>
+}

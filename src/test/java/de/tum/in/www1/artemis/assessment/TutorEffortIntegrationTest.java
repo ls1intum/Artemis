@@ -14,26 +14,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.tutor.effort.TutorEffort;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "tutoreffort"; // only lower case is supported
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private TextSubmissionRepository textSubmissionRepository;
@@ -43,12 +37,6 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private TextAssessmentEventRepository textAssessmentEventRepository;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -91,7 +79,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
         TutorEffort effortExpected = createTutorEffortObject(0);
 
         assertThat(tutorEfforts).isNotNull().hasSize(1);
-        assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
+        assertThat(tutorEfforts.getFirst()).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
     /**
@@ -110,7 +98,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
         TutorEffort effortExpected = createTutorEffortObject(25);
 
         assertThat(tutorEfforts).isNotNull().hasSize(1);
-        assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
+        assertThat(tutorEfforts.getFirst()).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
     /**
@@ -129,7 +117,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
         TutorEffort effortExpected = createTutorEffortObject(0);
 
         assertThat(tutorEfforts).isNotNull().hasSize(1);
-        assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
+        assertThat(tutorEfforts.getFirst()).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
     TutorEffort createTutorEffortObject(int minutes) {

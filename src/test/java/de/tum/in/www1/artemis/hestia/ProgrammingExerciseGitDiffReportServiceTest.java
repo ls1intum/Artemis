@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.localvcci.AbstractLocalCILocalVCIntegrationTest;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
@@ -145,10 +145,10 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractLocalCILocalVC
         assertThat(report.getEntries()).hasSize(2);
         var entries = new ArrayList<>(report.getEntries());
         entries.sort(Comparator.comparing(ProgrammingExerciseGitDiffEntry::getStartLine));
-        assertThat(entries.get(0).getPreviousStartLine()).isEqualTo(2);
-        assertThat(entries.get(0).getStartLine()).isEqualTo(2);
-        assertThat(entries.get(0).getPreviousLineCount()).isEqualTo(1);
-        assertThat(entries.get(0).getLineCount()).isEqualTo(1);
+        assertThat(entries.getFirst().getPreviousStartLine()).isEqualTo(2);
+        assertThat(entries.getFirst().getStartLine()).isEqualTo(2);
+        assertThat(entries.getFirst().getPreviousLineCount()).isEqualTo(1);
+        assertThat(entries.getFirst().getLineCount()).isEqualTo(1);
 
         assertThat(entries.get(1).getPreviousStartLine()).isEqualTo(4);
         assertThat(entries.get(1).getStartLine()).isEqualTo(4);

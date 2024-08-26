@@ -6,17 +6,16 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface ChannelRepository extends JpaRepository<Channel, Long> {
+public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
 
     @Query("""
             SELECT DISTINCT channel
@@ -88,8 +87,4 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
             ORDER BY channel.name
             """)
     Set<Channel> findChannelByCourseIdAndNameAndIdNot(@Param("courseId") Long courseId, @Param("name") String name, @Param("channelId") Long channelId);
-
-    default Channel findByIdElseThrow(long channelId) {
-        return this.findById(channelId).orElseThrow(() -> new EntityNotFoundException("Channel", channelId));
-    }
 }

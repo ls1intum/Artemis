@@ -9,15 +9,14 @@
         <div class="modal-body">
             <div class="form-group">
                 <div class="mb-4" jhiTranslate="artemisApp.examManagement.announcementCreate.task"></div>
-                <jhi-markdown-editor
-                    #markdownEditor
+                <jhi-markdown-editor-monaco
                     class="markdown-editor"
                     [markdown]="textContent"
                     [showPreviewButton]="false"
                     [showEditButton]="false"
                     [enableFileUpload]="false"
-                    [colorCommands]="[]"
-                    [defaultCommands]="COMMANDS"
+                    [colorAction]="undefined"
+                    [defaultActions]="actions"
                     (markdownChange)="textContentChanged($event)"
                 />
             </div>
@@ -30,7 +29,7 @@
     @if (status === 'submitting') {
         <div class="modal-body">
             <h2 class="mb-0">
-                <fa-icon [icon]="faSpinner" [spin]="true" />
+                <fa-icon [icon]="faSpinner" animation="spin" />
                 <span jhiTranslate="artemisApp.examManagement.announcementCreate.sending"></span>
             </h2>
         </div>

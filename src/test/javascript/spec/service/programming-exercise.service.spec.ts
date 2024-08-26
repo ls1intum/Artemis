@@ -321,7 +321,7 @@ describe('ProgrammingExercise Service', () => {
         const repositoryType = 'TEMPLATE';
         const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
         service.getDiffReportForCommits(exerciseId, participationId, commitId, commitId2, repositoryType).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/participation/${participationId}/commits/${commitId}/diff-report/${commitId2}?repositoryType=${repositoryType}`;
+        const url = `${resourceUrl}/${exerciseId}/commits/${commitId}/diff-report/${commitId2}?repositoryType=${repositoryType}&participationId=${participationId}`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(expected);
         tick();
@@ -391,6 +391,16 @@ describe('ProgrammingExercise Service', () => {
         tick();
     }));
 
+    it('should export a student repository', fakeAsync(() => {
+        const exerciseId = 1;
+        const participationId = 5;
+        service.exportStudentRepository(exerciseId, participationId).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/export-student-repository/${participationId}`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(new Blob());
+        tick();
+    }));
+
     it('should check plagiarism report', fakeAsync(() => {
         const exerciseId = 1;
         service.checkPlagiarismJPlagReport(exerciseId).subscribe();
@@ -417,7 +427,11 @@ describe('ProgrammingExercise Service', () => {
     ])('should call correct exercise endpoint', (test) =>
         fakeAsync(() => {
             const exerciseId = 1;
-            service[test.method](exerciseId).subscribe();
+            const functionToCall = service[test.method as keyof ProgrammingExerciseService];
+            if (typeof functionToCall !== 'function') {
+                throw new Error(`Method ${test.method} does not exist on service`);
+            }
+            functionToCall.bind(service, exerciseId).apply().subscribe();
             const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
             const req = httpMock.expectOne({ method: 'GET', url });
             req.flush({});

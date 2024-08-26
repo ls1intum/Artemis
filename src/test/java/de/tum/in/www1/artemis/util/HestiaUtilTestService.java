@@ -22,9 +22,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
@@ -67,6 +68,9 @@ public class HestiaUtilTestService {
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     /**
      * Sets up the template repository of a programming exercise with a single file
@@ -113,7 +117,7 @@ public class HestiaUtilTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(templateRepoUri),
                 eq(false), any());
         doNothing().when(gitService).pullIgnoreConflicts(any(Repository.class));
-
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
@@ -172,7 +176,10 @@ public class HestiaUtilTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(solutionRepoUri),
                 eq(false), any());
 
+        var buildConfig = programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
+        exercise.setBuildConfig(buildConfig);
         var savedExercise = exerciseRepository.save(exercise);
+        savedExercise.setBuildConfig(buildConfig);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         solutionParticipation.setRepositoryUri(solutionRepoUri.toString());
@@ -188,6 +195,15 @@ public class HestiaUtilTestService {
         return setupSubmission(Collections.singletonMap(fileName, content), exercise, participationRepo, login);
     }
 
+    public ProgrammingSubmission deleteFileAndSetupSubmission(String oldFileName, String newFileName, String content, ProgrammingExercise exercise,
+            LocalRepository participationRepo, String login) throws Exception {
+        Path oldFilePath = Path.of(participationRepo.localRepoFile + "/" + oldFileName);
+        Files.delete(oldFilePath);
+        // Ensure JGit realizes the file has been removed
+        participationRepo.localGit.rm().addFilepattern(oldFileName).call();
+        return setupSubmission(newFileName, content, exercise, participationRepo, login);
+    }
+
     public ProgrammingSubmission setupSubmission(Map<String, String> files, ProgrammingExercise exercise, LocalRepository participationRepo, String login) throws Exception {
         for (Map.Entry<String, String> entry : files.entrySet()) {
             String fileName = entry.getKey();
@@ -200,6 +216,7 @@ public class HestiaUtilTestService {
         }
         participationRepo.localGit.add().addFilepattern(".").call();
         GitService.commit(participationRepo.localGit).setMessage("commit").call();
+        participationRepo.localGit.push().call();
         var commits = participationRepo.localGit.log().call();
         var commitsList = StreamSupport.stream(commits.spliterator(), false).toList();
 
@@ -218,9 +235,10 @@ public class HestiaUtilTestService {
                 anyBoolean());
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.localRepoFile.toURI());
-        var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.get(0).getId().getName(), SubmissionType.MANUAL);
+        doReturn(gitService.linkRepositoryForExistingGit(participationRepo.originRepoFile.toPath(), null, "main", true)).when(gitService).getBareRepository(any());
+        var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.getFirst().getId().getName(), SubmissionType.MANUAL);
         participation = programmingExerciseStudentParticipationRepository
-                .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).get(0);
+                .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).getFirst();
         return (ProgrammingSubmission) participationUtilService.addSubmission(participation, submission);
     }
 

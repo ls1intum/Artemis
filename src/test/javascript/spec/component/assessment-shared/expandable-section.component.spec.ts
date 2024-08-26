@@ -33,7 +33,7 @@ describe('ExpandableSectionComponent', () => {
 
         const key = component.storageKey;
 
-        expect(key).toEqual(component.prefix + component.headerKey);
+        expect(key).toEqual(component.PREFIX + component.headerKey);
     });
 
     it('should load state from local storage on init', () => {

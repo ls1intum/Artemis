@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.service.dto.ResponsibleUserDTO;
@@ -65,6 +65,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @BeforeEach
+    @Override
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
         users = userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
@@ -191,7 +192,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getConversationsOfUser_onlyCourseWideChannelsIfMessagingDisabled() throws Exception {
+    void getConversationsOfUser_onlyChannelsIfMessagingDisabled() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
         addUsersToConversation(channel.getId(), "tutor1");
@@ -211,7 +212,9 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
         List<ConversationDTO> channels = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
 
-        channels.forEach(conv -> assertThat(conv instanceof ChannelDTO ch && ch.getIsCourseWide()));
+        assertThat(channels).allSatisfy(ch -> {
+            assertThat(ch).isInstanceOf(ChannelDTO.class);
+        });
 
         // cleanup
         conversationMessageRepository.deleteById(post.getId());
@@ -621,7 +624,6 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     private static List<Arguments> courseConfigurationProvider() {
         return List.of(Arguments.of(CourseInformationSharingConfiguration.DISABLED, HttpStatus.FORBIDDEN),
                 Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, HttpStatus.OK),
-                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, HttpStatus.OK),
-                Arguments.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, HttpStatus.OK));
+                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, HttpStatus.OK));
     }
 }

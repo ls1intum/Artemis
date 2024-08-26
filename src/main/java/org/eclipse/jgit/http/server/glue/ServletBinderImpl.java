@@ -25,7 +25,8 @@ abstract class ServletBinderImpl implements ServletBinder {
         this.filters = new ArrayList<>();
     }
 
-    @Override public ServletBinder through(Filter filter) {
+    @Override
+    public ServletBinder through(Filter filter) {
         if (filter == null) {
             throw new NullPointerException(HttpServerText.get().filterMustNotBeNull);
         }
@@ -33,7 +34,8 @@ abstract class ServletBinderImpl implements ServletBinder {
         return this;
     }
 
-    @Override public void with(HttpServlet servlet) {
+    @Override
+    public void with(HttpServlet servlet) {
         if (servlet == null) {
             throw new NullPointerException(HttpServerText.get().servletMustNotBeNull);
         }

@@ -11,6 +11,11 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { FireworksModule } from 'app/shared/fireworks/fireworks.module';
+import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
+import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
+import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
+import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 
 const routes: Routes = [
     {
@@ -34,6 +39,11 @@ const routes: Routes = [
         ArtemisMarkdownModule,
         ArtemisSidePanelModule,
         FireworksModule,
+        JudgementOfLearningRatingComponent,
+        AttachmentUnitComponent,
+        VideoUnitComponent,
+        TextUnitComponent,
+        OnlineUnitComponent,
     ],
     declarations: [CourseCompetenciesDetailsComponent],
     exports: [CourseCompetenciesDetailsComponent],

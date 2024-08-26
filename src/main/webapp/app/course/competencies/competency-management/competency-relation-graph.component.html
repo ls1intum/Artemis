@@ -2,17 +2,15 @@
     <div ngbAccordion [closeOthers]="true">
         <div ngbAccordionItem>
             <div ngbAccordionHeader>
-                <button ngbAccordionButton>
-                    {{ 'artemisApp.competency.relation.competencyRelations' | artemisTranslate }}<span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
-                </button>
+                <button ngbAccordionButton jhiTranslate="artemisApp.competency.relation.competencyRelations"></button>
             </div>
             <div ngbAccordionCollapse>
                 <div ngbAccordionBody>
                     <ng-template>
-                        <form class="row p-3 g-3 align-items-center">
+                        <form class="row p-3 pb-0 g-3 align-items-end">
                             <div class="col">
                                 <div class="form-group">
-                                    <label for="tail">{{ 'artemisApp.competency.relation.tailCompetency' | artemisTranslate }}</label>
+                                    <label for="tail" jhiTranslate="artemisApp.competency.relation.tailCompetency"></label>
                                     <select
                                         [ngClass]="{ 'border-danger': relationError }"
                                         class="form-select"
@@ -29,7 +27,7 @@
                             </div>
                             <div class="col">
                                 <div class="form-group">
-                                    <label for="type">{{ 'artemisApp.competency.relation.relationType' | artemisTranslate }}</label>
+                                    <label for="type" jhiTranslate="artemisApp.competency.relation.relationType"></label>
                                     <select
                                         [ngClass]="{ 'border-danger': relationError }"
                                         class="form-select"
@@ -39,14 +37,17 @@
                                         (change)="validate()"
                                     >
                                         @for (relationType of competencyRelationType | keyvalue: keepOrder; track relationType) {
-                                            <option [ngValue]="relationType.key">{{ 'artemisApp.competency.relation.type.' + relationType.value | artemisTranslate }}</option>
+                                            <option
+                                                [jhiTranslate]="'artemisApp.competency.relation.type.' + relationType.value"
+                                                [title]="'artemisApp.competency.relation.typeExplanation.' + relationType.value | artemisTranslate"
+                                            ></option>
                                         }
                                     </select>
                                 </div>
                             </div>
                             <div class="col">
                                 <div class="form-group">
-                                    <label for="head">{{ 'artemisApp.competency.relation.headCompetency' | artemisTranslate }}</label>
+                                    <label for="head" jhiTranslate="artemisApp.competency.relation.headCompetency"></label>
                                     <select
                                         [ngClass]="{ 'border-danger': relationError }"
                                         class="form-select"
@@ -62,26 +63,41 @@
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <input
-                                    type="button"
-                                    class="btn btn-primary"
-                                    value="{{ 'artemisApp.competency.relation.createRelation' | artemisTranslate }}"
-                                    (click)="createRelation()"
-                                    [disabled]="!headCompetencyId || !tailCompetencyId || !relationType || relationError"
-                                />
+                                <div class="form-group">
+                                    <button
+                                        class="btn btn-primary"
+                                        jhiTranslate="artemisApp.competency.relation.createRelation"
+                                        (click)="createRelation()"
+                                        [disabled]="!headCompetencyId || !tailCompetencyId || !relationType || relationError"
+                                    ></button>
+                                </div>
+                            </div>
+                            <div class="d-flex m-0 justify-content-end">
                                 @if (relationError) {
                                     <span jhiTranslate="{{ errorMessage[relationError] }}" id="relation-not-valid-text" class="invalid-feedback"></span>
                                 }
+                                <button
+                                    id="center-button"
+                                    class="btn btn-primary"
+                                    (click)="centerView()"
+                                    ngbTooltip="{{ 'artemisApp.learningPath.graph.progressNav.center' | artemisTranslate }}"
+                                >
+                                    <fa-icon [icon]="faArrowsToEye" />
+                                </button>
                             </div>
                         </form>
                         <ngx-graph
                             class="m-1 chart-container"
-                            layout="dagreCluster"
-                            [enableZoom]="false"
-                            [draggingEnabled]="false"
                             [nodes]="nodes()"
                             [links]="edges()"
+                            layout="dagreCluster"
+                            [draggingEnabled]="false"
+                            [showMiniMap]="true"
+                            [miniMapMaxWidth]="250"
+                            [miniMapMaxHeight]="250"
                             [update$]="update$"
+                            [center$]="center$"
+                            [zoomToFit$]="zoomToFit$"
                         >
                             <ng-template #defsTemplate>
                                 <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">

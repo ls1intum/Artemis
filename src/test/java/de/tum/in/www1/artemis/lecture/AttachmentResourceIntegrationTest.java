@@ -19,18 +19,17 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 
 class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "attachmentresourceintegrationtest";
-
-    @Autowired
-    private CourseRepository courseRepo;
 
     @Autowired
     private AttachmentRepository attachmentRepository;
@@ -39,13 +38,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     private LectureRepository lectureRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private Attachment attachment;
 
@@ -163,7 +156,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachment_notInstructorInACourse() throws Exception {
-        var course = courseRepo.save(new Course());
+        var course = courseRepository.save(new Course());
         attachment = attachmentRepository.save(attachment);
         lecture.setCourse(course);
         lectureRepository.save(lecture);

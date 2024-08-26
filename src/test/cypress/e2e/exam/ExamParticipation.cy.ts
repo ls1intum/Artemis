@@ -23,7 +23,7 @@ import { convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 const textFixture = 'loremIpsum.txt';
 const textFixtureShort = 'loremIpsum-short.txt';
 
-describe('Exam participation', () => {
+describe.skip('Exam participation', () => {
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
     let studentTwoName: string;

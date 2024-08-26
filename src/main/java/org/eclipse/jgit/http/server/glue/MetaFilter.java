@@ -16,7 +16,6 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 import org.eclipse.jgit.http.server.HttpServerText;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -82,22 +81,13 @@ public class MetaFilter implements Filter {
         return register(new RegexPipeline.Binder(expression));
     }
 
-    /**
-     * Construct a binding for a regular expression.
-     *
-     * @param pattern
-     *                    the regular expression to pattern match the URL against.
-     * @return binder for the passed expression.
-     */
-    public ServletBinder serveRegex(Pattern pattern) {
-        return register(new RegexPipeline.Binder(pattern));
-    }
-
-    @Override public void init(FilterConfig filterConfig) throws ServletException {
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
         servletContext = filterConfig.getServletContext();
     }
 
-    @Override public void destroy() {
+    @Override
+    public void destroy() {
         if (pipelines != null) {
             Set<Object> destroyed = newIdentitySet();
             for (UrlPipeline p : pipelines) {
@@ -111,19 +101,23 @@ public class MetaFilter implements Filter {
         final IdentityHashMap<Object, Object> m = new IdentityHashMap<>();
         return new AbstractSet<>() {
 
-            @Override public boolean add(Object o) {
+            @Override
+            public boolean add(Object o) {
                 return m.put(o, o) == null;
             }
 
-            @Override public boolean contains(Object o) {
+            @Override
+            public boolean contains(Object o) {
                 return m.containsKey(o);
             }
 
-            @Override public Iterator<Object> iterator() {
+            @Override
+            public Iterator<Object> iterator() {
                 return m.keySet().iterator();
             }
 
-            @Override public int size() {
+            @Override
+            public int size() {
                 return m.size();
             }
         };

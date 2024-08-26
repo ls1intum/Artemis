@@ -32,7 +32,7 @@
             },
             "course": {
                 "headline": "Your current courses",
-                "content": "This is a course you are signed up for. You can check out the course details afterwards by clicking on this panel."
+                "content": "This is a course you are enrolled in. You can check out the course details afterwards by clicking on this panel."
             },
             "courseFooter": {
                 "headline": "Next exercise due",
@@ -41,10 +41,6 @@
             "courseClick": {
                 "headline": "View course details",
                 "content": "Click on this panel to navigate to the course detail page."
-            },
-            "register": {
-                "headline": "Register for other courses",
-                "content": "Click here to see other courses you can register for."
             },
             "contact": {
                 "headline": "Contact the Artemis team",

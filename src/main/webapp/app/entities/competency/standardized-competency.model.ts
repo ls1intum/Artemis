@@ -1,16 +1,14 @@
-import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CourseCompetency } from 'app/entities/competency.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
+import { BaseCompetency } from 'app/entities/competency.model';
 
-export interface StandardizedCompetency extends BaseEntity {
-    title?: string;
-    description?: string;
-    taxonomy?: CompetencyTaxonomy;
+export interface StandardizedCompetency extends BaseCompetency {
     version?: string;
     knowledgeArea?: KnowledgeArea;
     source?: Source;
     firstVersion?: StandardizedCompetency;
     childVersions?: StandardizedCompetency[];
-    linkedCompetencies?: Competency[];
+    linkedCompetencies?: CourseCompetency[];
 }
 
 export interface StandardizedCompetencyDTO extends BaseEntity {
@@ -52,6 +50,12 @@ export enum StandardizedCompetencyValidators {
     DESCRIPTION_MAX = 2000,
 }
 
+export enum KnowledgeAreaValidators {
+    TITLE_MAX = 255,
+    SHORT_TITLE_MAX = 10,
+    DESCRIPTION_MAX = 2000,
+}
+
 /**
  * KnowledgeAreaDTO with additional information for the tree view:
  * isVisible: if it should be shown or not (used for filters)
@@ -64,6 +68,11 @@ export interface KnowledgeAreaForTree extends KnowledgeAreaDTO {
     competencies?: StandardizedCompetencyForTree[];
 }
 
+export interface KnowledgeAreasForImportDTO {
+    knowledgeAreas: KnowledgeAreaDTO[];
+    sources: Source[];
+}
+
 /**
  * StandardizedCompetencyDTO with additional information for the tree view
  * isVisible: if it should be shown or not (used for filters)
@@ -72,43 +81,25 @@ export interface StandardizedCompetencyForTree extends StandardizedCompetencyDTO
     isVisible: boolean;
 }
 
-export function convertToStandardizedCompetencyDTO(competency: StandardizedCompetency) {
-    const competencyDTO: StandardizedCompetencyDTO = {
-        id: competency.id,
-        title: competency.title,
-        description: competency.description,
-        taxonomy: competency.taxonomy,
-        version: competency.version,
-        knowledgeAreaId: competency.knowledgeArea?.id,
-        sourceId: competency.source?.id,
-    };
-    return competencyDTO;
-}
+export function sourceToString(source: Source) {
+    const author = source.author ?? '';
+    const title = source.title ?? '';
+    const uri = source.uri ?? '';
 
-export function convertToStandardizedCompetency(competencyDTO: StandardizedCompetencyDTO) {
-    const competency: StandardizedCompetency = {
-        id: competencyDTO.id,
-        title: competencyDTO.title,
-        description: competencyDTO.description,
-        taxonomy: competencyDTO.taxonomy,
-        version: competencyDTO.version,
-    };
-
-    if (competencyDTO.knowledgeAreaId) {
-        competency.knowledgeArea = {
-            id: competencyDTO.knowledgeAreaId,
-        };
+    if (!author) {
+        return `"${title}". ${uri}`;
+    } else {
+        return `${author}. "${title}". ${uri}`;
     }
-    if (competencyDTO.sourceId) {
-        competency.source = {
-            id: competencyDTO.sourceId,
-        };
-    }
-
-    return competency;
 }
 
 export function convertToStandardizedCompetencyForTree(competencyDTO: StandardizedCompetencyDTO, isVisible: boolean) {
     const competencyForTree: StandardizedCompetencyForTree = { ...competencyDTO, isVisible: isVisible };
     return competencyForTree;
+}
+
+export function convertToKnowledgeAreaForTree(knowledgeAreaDTO: KnowledgeAreaDTO, isVisible = true, level = 0): KnowledgeAreaForTree {
+    const children = knowledgeAreaDTO.children?.map((child) => convertToKnowledgeAreaForTree(child, isVisible, level + 1));
+    const competencies = knowledgeAreaDTO.competencies?.map((competency) => convertToStandardizedCompetencyForTree(competency, isVisible));
+    return { ...knowledgeAreaDTO, children: children, competencies: competencies, level: level, isVisible: isVisible };
 }

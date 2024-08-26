@@ -11,12 +11,19 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -24,6 +31,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -32,7 +40,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface SubmissionRepository extends JpaRepository<Submission, Long> {
+public interface SubmissionRepository extends ArtemisJpaRepository<Submission, Long> {
 
     /**
      * Load submission with eager Results
@@ -60,6 +68,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return a list of the participation's submissions
      */
     List<Submission> findAllByParticipationId(long participationId);
+
+    Optional<Submission> findByParticipationIdOrderBySubmissionDateDesc(long participationId);
 
     List<Submission> findByParticipation_Exercise_ExerciseGroup_Exam_Id(long examId);
 
@@ -410,9 +420,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.assessmentNote
             WHERE submission.id = :submissionId
             """)
-    Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+    Optional<Submission> findWithEagerResultAndFeedbackAndAssessmentNoteById(@Param("submissionId") long submissionId);
 
     @Query("""
             SELECT DISTINCT submission
@@ -421,12 +432,13 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH submission.participation p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE submission.id = :submissionId
             """)
-    Optional<Submission> findWithEagerResultAndFeedbackAndTeamStudentsById(@Param("submissionId") long submissionId);
+    Optional<Submission> findWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudentsById(@Param("submissionId") long submissionId);
 
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
@@ -438,7 +450,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return a new submission for the given type connected to the given participation
      */
     default Submission initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
-
         Submission submission;
         if (exercise instanceof ProgrammingExercise) {
             submission = new ProgrammingSubmission();
@@ -461,7 +472,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
         submission.setType(submissionType);
         submission.setParticipation(participation);
-        save(submission);
+        submission = save(submission);
         participation.addSubmission(submission);
         return submission;
     }
@@ -477,14 +488,15 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the result.
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the
+     * result and the assessment note of the result.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      * @throws EntityNotFoundException if no submission could be found for the given id
      */
-    default Submission findOneWithEagerResultAndFeedback(long submissionId) {
-        return findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    default Submission findOneWithEagerResultAndFeedbackAndAssessmentNote(long submissionId) {
+        return getValueElseThrow(this.findWithEagerResultAndFeedbackAndAssessmentNoteById(submissionId), submissionId);
     }
 
     /**
@@ -495,9 +507,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submission with the given id
      * @throws EntityNotFoundException if no submission could be found for the given id
      */
-    default Submission findOneWithEagerResultAndFeedbackAndTeamStudents(long submissionId) {
-        return findWithEagerResultAndFeedbackAndTeamStudentsById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    default Submission findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(long submissionId) {
+        return getValueElseThrow(findWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudentsById(submissionId), submissionId);
     }
 
     /**
@@ -508,7 +519,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @throws EntityNotFoundException if no submission could be found for the given id
      */
     default Submission findByIdWithResultsElseThrow(long submissionId) {
-        return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));
+        return getValueElseThrow(findWithEagerResultsAndAssessorById(submissionId), submissionId);
     }
 
     /**
@@ -540,7 +551,54 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     Set<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
 
-    default Submission findByIdElseThrow(long submissionId) {
-        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));
-    }
+    /**
+     * GChecks if unassessed Quiz Submissions exist for the given exam
+     *
+     * @param examId the ID of the exam
+     * @return boolean indicating if there are unassessed Quiz Submission
+     */
+    @Query("""
+                SELECT COUNT(p.exercise) > 0
+                FROM StudentParticipation p
+                    JOIN p.submissions s
+                    LEFT JOIN s.results r
+                WHERE p.exercise.exerciseGroup.exam.id = :examId
+                    AND p.testRun IS FALSE
+                    AND TYPE(s) = QuizSubmission
+                    AND s.submitted IS TRUE
+                    AND r.id IS NULL
+            """)
+    boolean existsUnassessedQuizzesByExamId(@Param("examId") long examId);
+
+    /**
+     * Checks if unsubmitted text and modeling submissions exist for the exam with the given id
+     *
+     * @param examId the ID of the exam
+     * @return boolean indicating if there are unsubmitted text and modelling submissions
+     */
+    @Query("""
+            SELECT COUNT(p.exercise) > 0
+            FROM StudentParticipation p
+                JOIN p.submissions s
+            WHERE p.exercise.exerciseGroup.exam.id = :examId
+                AND p.testRun IS FALSE
+                AND TYPE(s) IN (TextSubmission, ModelingSubmission)
+                AND (s.submitted IS NULL OR s.submitted IS FALSE)
+                AND s.submissionDate IS NULL
+            """)
+    boolean existsUnsubmittedExercisesByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT COUNT(s) > 0
+            FROM Submission s
+                LEFT JOIN s.participation p
+                LEFT JOIN p.exercise e
+                LEFT JOIN p.student st
+                LEFT JOIN p.team t
+                LEFT JOIN t.students ts
+            WHERE e.id = :exerciseId
+                AND (st.id = :userId OR ts.id = :userId)
+                AND s.submitted = TRUE
+            """)
+    boolean existsByExerciseIdAndParticipantIdAndSubmitted(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
 }

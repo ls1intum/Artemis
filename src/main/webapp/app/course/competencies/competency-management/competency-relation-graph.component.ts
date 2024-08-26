@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, computed, input } from '@angular/core';
-import { Edge, Node } from '@swimlane/ngx-graph';
-import { Competency, CompetencyRelation, CompetencyRelationError, CompetencyRelationType } from 'app/entities/competency.model';
+import { faArrowsToEye } from '@fortawesome/free-solid-svg-icons';
+import { Edge, NgxGraphZoomOptions, Node } from '@swimlane/ngx-graph';
+import { CompetencyRelation, CompetencyRelationError, CompetencyRelationType, CourseCompetency } from 'app/entities/competency.model';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -9,7 +10,7 @@ import { Subject } from 'rxjs';
     styleUrls: ['./competency-relation-graph.component.scss'],
 })
 export class CompetencyRelationGraphComponent {
-    competencies = input<Competency[]>([]);
+    competencies = input<CourseCompetency[]>([]);
     relations = input<CompetencyRelation[]>([]);
 
     @Output() onRemoveRelation = new EventEmitter<number>();
@@ -45,8 +46,13 @@ export class CompetencyRelationGraphComponent {
     relationType?: CompetencyRelationType;
     relationError?: CompetencyRelationError = undefined;
     update$: Subject<boolean> = new Subject<boolean>();
+    center$: Subject<boolean> = new Subject<boolean>();
+    zoomToFit$: Subject<NgxGraphZoomOptions> = new Subject<NgxGraphZoomOptions>();
 
-    //constants
+    // icons
+    protected readonly faArrowsToEye = faArrowsToEye;
+
+    // constants
     protected readonly competencyRelationType = CompetencyRelationType;
     protected readonly errorMessage: Record<CompetencyRelationError, string> = {
         CIRCULAR: 'artemisApp.competency.relation.createsCircularRelation',
@@ -76,6 +82,11 @@ export class CompetencyRelationGraphComponent {
      */
     removeRelation(edge: Edge) {
         this.onRemoveRelation.emit(edge.data.id);
+    }
+
+    centerView() {
+        this.zoomToFit$.next({ autoCenter: true });
+        this.center$.next(true);
     }
 
     /**

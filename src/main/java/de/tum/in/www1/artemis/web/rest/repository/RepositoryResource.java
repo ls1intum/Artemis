@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
@@ -36,11 +37,11 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ProfileService;
-import de.tum.in.www1.artemis.service.RepositoryAccessService;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.programming.RepositoryAccessService;
+import de.tum.in.www1.artemis.service.programming.RepositoryService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType;
@@ -245,6 +246,27 @@ public abstract class RepositoryResource {
                 return new ResponseEntity<>(HttpStatus.OK);
             }
         });
+    }
+
+    /**
+     * Save files and commit changes.
+     *
+     * @param domainId    that serves as an abstract identifier for retrieving the repository.
+     * @param submissions list of file submissions to save.
+     * @param commit      if the changes should be committed.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
+     */
+    protected ResponseEntity<Map<String, String>> saveFilesAndCommitChanges(Long domainId, List<FileSubmission> submissions, boolean commit, Repository repository) {
+        Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
+
+        if (commit) {
+            var response = commitChanges(domainId);
+            if (response.getStatusCode() != HttpStatus.OK) {
+                throw new ResponseStatusException(response.getStatusCode());
+            }
+        }
+
+        return ResponseEntity.ok(fileSaveResult);
     }
 
     /**

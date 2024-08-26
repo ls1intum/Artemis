@@ -32,17 +32,14 @@ import org.springframework.util.ResourceUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
@@ -59,19 +56,10 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
     private ObjectMapper mapper;
 
     @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
     private StudentExamRepository studentExamRepository;
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -101,16 +89,16 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
 
         // same registration number as in test pdf file
         student1.setRegistrationNumber("03756882");
-        userRepo.save(student1);
+        userRepository.save(student1);
 
         student2.setRegistrationNumber("03756883");
-        userRepo.save(student2);
+        userRepository.save(student2);
 
         student3.setRegistrationNumber("03756884");
-        userRepo.save(student3);
+        userRepository.save(student3);
 
         student4.setRegistrationNumber("03756885");
-        userRepo.save(student4);
+        userRepository.save(student4);
 
         exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student2);
         exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
@@ -233,7 +221,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVerifyExamUserAttendance() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true);
-        long examId = studentExams.get(0).getExam().getId();
+        long examId = studentExams.getFirst().getExam().getId();
 
         final HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent", "foo");
@@ -288,6 +276,32 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         assertThat(updatedExamUser.getDidCheckLogin()).isTrue();
 
         verifySignedExamUsersHaveSignature(examId, unsignedExamUserIds);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testVerifyAttendance() throws Exception {
+        // User started an exam, but attendance wasn't checked yet
+        var attendanceCheckResponse = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance", HttpStatus.OK, Boolean.class);
+        assertThat(attendanceCheckResponse).isFalse();
+
+        // Verify attendance
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "");
+        var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
+        ExamUser examUser = mapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
+        assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
+        assertThat(examUser.getDidCheckImage()).isTrue();
+        assertThat(examUser.getDidCheckName()).isTrue();
+        assertThat(examUser.getDidCheckLogin()).isTrue();
+        assertThat(examUser.getSigningImagePath()).isNotEmpty();
+
+        // Switch back to student2
+        userUtilService.changeUser(TEST_PREFIX + "student2");
+
+        // Check attendance again
+        attendanceCheckResponse = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance", HttpStatus.OK, Boolean.class);
+        assertThat(attendanceCheckResponse).isTrue();
     }
 
     private void verifySignedExamUsersHaveSignature(long examId, List<Long> unsignedExamUserIds) throws Exception {
@@ -355,7 +369,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         }
 
         var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
-        Exam exam = examRepository.findByIdElseThrow(studentExams.get(0).getExam().getId());
+        Exam exam = examRepository.findByIdElseThrow(studentExams.getFirst().getExam().getId());
         Course course = exam.getCourse();
 
         if (!early) {

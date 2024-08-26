@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
+import static de.tum.in.www1.artemis.config.lti.CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH;
+import static de.tum.in.www1.artemis.config.lti.CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.time.Instant;
@@ -15,7 +18,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -29,7 +31,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 @Profile("lti")
 @RestController
 // TODO: should we adapt the mapping based on the profile?
-@RequestMapping("api/public/")
 public class PublicLtiResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicLtiResource.class);
@@ -38,13 +39,17 @@ public class PublicLtiResource {
 
     /**
      * POST lti13/auth-callback Redirects an LTI 1.3 Authorization Request Response to the client
+     * POST lti13/deep-link: Redirects an LTI 1.3 Deep Linking Request Response to the client
+     * <p>
+     * Consolidates handling for both 'auth-callback' and 'deep-link' endpoints to simplify client interactions.
+     * This approach ensures consistent processing and user experience for authentication and deep linking flows.
      *
      * @param request  HTTP request
      * @param response HTTP response
      * @return the ResponseEntity with status 200 (OK)
      * @throws IOException If an input or output exception occurs
      */
-    @PostMapping("lti13/auth-callback")
+    @PostMapping({ LTI13_LOGIN_REDIRECT_PROXY_PATH, LTI13_DEEPLINK_REDIRECT_PATH })
     @EnforceNothing
     public ResponseEntity<Void> lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String state = request.getParameter("state");
@@ -83,10 +88,7 @@ public class PublicLtiResource {
     private boolean isValidJwtIgnoreSignature(String token) {
         try {
             SignedJWT parsedToken = SignedJWT.parse(token);
-            if (parsedToken.getJWTClaimsSet().getExpirationTime().before(Date.from(Instant.now()))) {
-                return false;
-            }
-            return true;
+            return !parsedToken.getJWTClaimsSet().getExpirationTime().before(Date.from(Instant.now()));
         }
         catch (ParseException e) {
             log.info("LTI request: JWT token is invalid: {}", token, e);

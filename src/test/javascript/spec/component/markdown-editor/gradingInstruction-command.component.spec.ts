@@ -42,23 +42,23 @@ describe('Grading Instruction Command', () => {
                 '\n' +
                 '\t' +
                 ('[credits]' +
-                    CreditsCommand.text +
+                    CreditsCommand.TEXT +
                     '\n' +
                     '\t' +
                     '[gradingScale]' +
-                    GradingScaleCommand.text +
+                    GradingScaleCommand.TEXT +
                     '\n' +
                     '\t' +
                     '[description]' +
-                    InstructionDescriptionCommand.text +
+                    InstructionDescriptionCommand.TEXT +
                     '\n' +
                     '\t' +
                     '[feedback]' +
-                    FeedbackCommand.text +
+                    FeedbackCommand.TEXT +
                     '\n' +
                     '\t' +
                     '[maxCountInScore]' +
-                    UsageCountCommand.text) +
+                    UsageCountCommand.TEXT) +
                 '\n',
         );
     });
@@ -71,6 +71,6 @@ describe('Grading Instruction Command', () => {
         comp.ngAfterViewInit();
 
         criterionCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('\n' + '[criterion]' + GradingCriterionCommand.text + '\n' + gradingInstructionCommand.instructionText());
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('\n' + '[criterion]' + GradingCriterionCommand.TEXT + '\n' + gradingInstructionCommand.instructionText());
     });
 });

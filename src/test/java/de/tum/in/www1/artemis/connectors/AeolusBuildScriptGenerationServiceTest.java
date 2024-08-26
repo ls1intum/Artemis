@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -77,10 +78,7 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
     private Windfile getWindfile() {
         Windfile windfile = new Windfile();
         windfile.setApi("v0.0.1");
-        windfile.setMetadata(new WindfileMetadata());
-        windfile.getMetadata().setName("test");
-        windfile.getMetadata().setDescription("test");
-        windfile.getMetadata().setId("test");
+        windfile.setMetadata(new WindfileMetadata("test", "test", "test", null, null, null, null, null));
         return windfile;
     }
 
@@ -93,21 +91,22 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise.setBuildPlanConfiguration(getSerializedWindfile());
+        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(getSerializedWindfile());
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setSequentialTestRuns(true);
-        programmingExercise.setTestwiseCoverageEnabled(true);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(true);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNotNull();
         assertThat(script).isEqualTo("imagine a result here");
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.setSequentialTestRuns(false);
-        programmingExercise.setTestwiseCoverageEnabled(false);
-        programmingExercise.setBuildPlanConfiguration(null);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(false);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(null);
         script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNotNull();
         assertThat(script).isEqualTo("imagine a result here");

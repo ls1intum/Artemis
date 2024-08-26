@@ -1,14 +1,14 @@
 import { AfterContentChecked, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
-import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-privacy-statement-update-component',
@@ -16,31 +16,31 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
     templateUrl: './legal-document-update.component.html',
 })
 export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked {
-    readonly supportedLanguages: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
+    readonly SUPPORTED_LANGUAGES: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
     readonly faBan = faBan;
     readonly faSave = faSave;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faCheckCircle = faCheckCircle;
     readonly faCircleNotch = faCircleNotch;
-    readonly languageOptions = this.supportedLanguages.map((language) => ({
+    readonly LANGUAGE_OPTIONS = this.SUPPORTED_LANGUAGES.map((language) => ({
         value: language,
         labelKey: 'artemisApp.legal.language.' + language,
         btnClass: 'btn-primary',
     }));
-    readonly defaultLanguage = LegalDocumentLanguage.GERMAN;
-    readonly maxHeight = MarkdownEditorHeight.EXTRA_LARGE;
-    readonly minHeight = MarkdownEditorHeight.MEDIUM;
+    readonly DEFAULT_LANGUAGE = LegalDocumentLanguage.GERMAN;
+    readonly MAX_HEIGHT = MarkdownEditorHeight.EXTRA_LARGE;
+    readonly MIN_HEIGHT = MarkdownEditorHeight.MEDIUM;
 
     legalDocument: LegalDocument;
     legalDocumentType: LegalDocumentType = LegalDocumentType.PRIVACY_STATEMENT;
     unsavedChanges = false;
     isSaving = false;
-    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
+    @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditor: MarkdownEditorMonacoComponent;
 
-    currentLanguage = this.defaultLanguage;
+    currentContentTrimmed = '';
+    currentLanguage = this.DEFAULT_LANGUAGE;
     unsavedChangesWarning: NgbModalRef;
     titleKey: string;
-    private languageChangeInPreview: boolean;
 
     constructor(
         private legalDocumentService: LegalDocumentService,
@@ -48,7 +48,6 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         private route: ActivatedRoute,
         private languageHelper: JhiLanguageHelper,
         private changeDetectorRef: ChangeDetectorRef,
-        private markdownService: ArtemisMarkdownService,
     ) {}
 
     ngOnInit() {
@@ -68,8 +67,8 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         }
         this.languageHelper.updateTitle(this.titleKey);
 
-        this.legalDocument = new LegalDocument(this.legalDocumentType, this.defaultLanguage);
-        this.getLegalDocumentForUpdate(this.legalDocumentType, this.defaultLanguage).subscribe((document) => {
+        this.legalDocument = new LegalDocument(this.legalDocumentType, this.DEFAULT_LANGUAGE);
+        this.getLegalDocumentForUpdate(this.legalDocumentType, this.DEFAULT_LANGUAGE).subscribe((document) => {
             this.legalDocument = document;
         });
     }
@@ -84,7 +83,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
 
     updateLegalDocument() {
         this.isSaving = true;
-        this.legalDocument.text = this.markdownEditor.markdown!;
+        this.legalDocument.text = this.currentContentTrimmed;
         if (this.legalDocumentType === LegalDocumentType.PRIVACY_STATEMENT) {
             this.legalDocumentService.updatePrivacyStatement(this.legalDocument).subscribe((statement) => {
                 this.setUpdatedDocument(statement);
@@ -102,29 +101,27 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         this.isSaving = false;
     }
 
-    checkUnsavedChanges(content: string) {
+    onContentChanged(content: string) {
+        this.currentContentTrimmed = content.trim();
         this.unsavedChanges = content !== this.legalDocument.text;
     }
 
-    onLanguageChange(legalDocumentLanguage: any) {
+    onLanguageChange(legalDocumentLanguage: LegalDocumentLanguage) {
         if (this.unsavedChanges) {
             this.showWarning(legalDocumentLanguage);
         } else {
-            this.markdownEditor.markdown = '';
             this.currentLanguage = legalDocumentLanguage;
             this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => {
                 this.legalDocument = document;
+                this.markdownEditor.markdown = this.legalDocument.text;
+                // Ensure the new text is parsed and displayed in the preview
+                this.markdownEditor.parseMarkdown();
                 this.unsavedChanges = false;
-                // if we are currently in preview mode, we need to update the preview
-                if (this.markdownEditor.previewMode) {
-                    this.markdownEditor.previewTextAsHtml = this.markdownService.safeHtmlForMarkdown(this.legalDocument.text);
-                    this.languageChangeInPreview = true;
-                }
             });
         }
     }
 
-    showWarning(legalDocumentLanguage: any) {
+    showWarning(legalDocumentLanguage: LegalDocumentLanguage) {
         this.unsavedChangesWarning = this.modalService.open(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
         if (this.legalDocumentType === LegalDocumentType.PRIVACY_STATEMENT) {
             this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.legal.privacyStatement.unsavedChangesWarning';
@@ -150,17 +147,5 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
      * */
     ngAfterContentChecked() {
         this.changeDetectorRef.detectChanges();
-    }
-
-    /**
-     * If the language is changed while we are in the preview mode, we must trigger a change event, so the ace editor updates its content.
-     * We must do this when the editor is visible because otherwise the editor will only be updated if you click on it once.
-     */
-    updateTextIfLanguageChangedInPreview() {
-        if (this.languageChangeInPreview) {
-            // we have to trigger a change event, so the ace editor updates its content
-            this.markdownEditor.aceEditorContainer.getEditor().session._emit('change', { start: { row: 0, column: 0 }, end: { row: 0, column: 0 }, action: 'insert', lines: [] });
-            this.languageChangeInPreview = false;
-        }
     }
 }

@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
-import { Subject } from 'rxjs';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { Subject, Subscription } from 'rxjs';
+import { ProgrammingExercise, ProgrammingExerciseBuildConfig, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
@@ -48,7 +48,7 @@ import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/sha
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
-import { PROFILE_IRIS, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
@@ -75,6 +75,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'Programming';
 
     programmingExercise: ProgrammingExercise;
+    programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
     competencies: Competency[];
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;
@@ -90,6 +91,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     // Used to hide links to repositories and build plans when the "localvc" profile is active.
     // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
     localVCEnabled = false;
+    localCIEnabled = false;
     irisEnabled = false;
     irisChatEnabled = false;
 
@@ -100,6 +102,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     isBuildPlanEditable = false;
 
     plagiarismCheckSupported = false; // default value
+
+    private activatedRouteSubscription: Subscription;
+    private templateAndSolutionParticipationSubscription: Subscription;
+    private profileInfoSubscription: Subscription;
+    private irisSettingsSubscription: Subscription;
+    private submissionPolicySubscription: Subscription;
+    private buildLogsSubscription: Subscription;
+    private exerciseStatisticsSubscription: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -147,8 +157,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.checkBuildPlanEditable();
 
-        this.activatedRoute.data.subscribe(({ programmingExercise }) => {
+        this.activatedRouteSubscription = this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.programmingExerciseBuildConfig = programmingExercise.buildConfig;
             this.competencies = programmingExercise.competencies;
             const exerciseId = this.programmingExercise.id!;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
@@ -170,68 +181,74 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
 
-            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe((updatedProgrammingExercise) => {
-                this.programmingExercise = updatedProgrammingExercise.body!;
+            this.templateAndSolutionParticipationSubscription = this.programmingExerciseService
+                .findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!)
+                .subscribe((updatedProgrammingExercise) => {
+                    this.programmingExercise = updatedProgrammingExercise.body!;
 
-                this.setLatestCoveredLineRatio();
-                this.loadingTemplateParticipationResults = false;
-                this.loadingSolutionParticipationResults = false;
-                this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-                    if (profileInfo) {
-                        if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
-                            this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
-                                profileInfo.buildPlanURLTemplate,
-                                this.programmingExercise.projectKey,
-                                this.programmingExercise.templateParticipation.buildPlanId,
-                            );
+                    this.setLatestCoveredLineRatio();
+                    this.loadingTemplateParticipationResults = false;
+                    this.loadingSolutionParticipationResults = false;
+                    this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+                        if (profileInfo) {
+                            if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
+                                this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                                    profileInfo.buildPlanURLTemplate,
+                                    this.programmingExercise.projectKey,
+                                    this.programmingExercise.templateParticipation.buildPlanId,
+                                );
+                            }
+                            if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId) {
+                                this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                                    profileInfo.buildPlanURLTemplate,
+                                    this.programmingExercise.projectKey,
+                                    this.programmingExercise.solutionParticipation.buildPlanId,
+                                );
+                            }
+                            this.supportsAuxiliaryRepositories =
+                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ??
+                                false;
+                            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                            this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
+                            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+                            if (this.irisEnabled) {
+                                this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                                    this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                                    this.exerciseDetailSections = this.getExerciseDetails();
+                                });
+                            }
                         }
-                        if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation && this.programmingExercise.solutionParticipation.buildPlanId) {
-                            this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
-                                profileInfo.buildPlanURLTemplate,
-                                this.programmingExercise.projectKey,
-                                this.programmingExercise.solutionParticipation.buildPlanId,
-                            );
-                        }
-                        this.supportsAuxiliaryRepositories =
-                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
-                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                        if (this.irisEnabled) {
-                            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                                this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
-                                this.exerciseDetailSections = this.getExerciseDetails();
-                            });
-                        }
+                        this.exerciseDetailSections = this.getExerciseDetails();
+                    });
+
+                    this.submissionPolicySubscription = this.programmingExerciseSubmissionPolicyService
+                        .getSubmissionPolicyOfProgrammingExercise(exerciseId!)
+                        .subscribe((submissionPolicy) => {
+                            this.programmingExercise.submissionPolicy = submissionPolicy;
+                            this.exerciseDetailSections = this.getExerciseDetails();
+                        });
+
+                    this.loadGitDiffReport();
+
+                    // the build logs endpoint requires at least editor privileges
+                    if (this.programmingExercise.isAtLeastEditor) {
+                        this.buildLogsSubscription = this.programmingExerciseService
+                            .getBuildLogStatistics(exerciseId!)
+                            .subscribe((buildLogStatistics) => (this.programmingExercise.buildLogStatistics = buildLogStatistics));
+                        this.exerciseDetailSections = this.getExerciseDetails();
                     }
+
+                    this.setLatestCoveredLineRatio();
+
+                    this.checkAndAlertInconsistencies();
+
+                    this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
+                        programmingExercise.programmingLanguage,
+                    ).plagiarismCheckSupported;
                     this.exerciseDetailSections = this.getExerciseDetails();
                 });
 
-                this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!).subscribe((submissionPolicy) => {
-                    this.programmingExercise.submissionPolicy = submissionPolicy;
-                    this.exerciseDetailSections = this.getExerciseDetails();
-                });
-
-                this.loadGitDiffReport();
-
-                // the build logs endpoint requires at least editor privileges
-                if (this.programmingExercise.isAtLeastEditor) {
-                    this.programmingExerciseService
-                        .getBuildLogStatistics(exerciseId!)
-                        .subscribe((buildLogStatistics) => (this.programmingExercise.buildLogStatistics = buildLogStatistics));
-                    this.exerciseDetailSections = this.getExerciseDetails();
-                }
-
-                this.setLatestCoveredLineRatio();
-
-                this.checkAndAlertInconsistencies();
-
-                this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
-                    programmingExercise.programmingLanguage,
-                ).plagiarismCheckSupported;
-                this.exerciseDetailSections = this.getExerciseDetails();
-            });
-
-            this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
         });
@@ -239,10 +256,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+        this.activatedRouteSubscription?.unsubscribe();
+        this.templateAndSolutionParticipationSubscription?.unsubscribe();
+        this.profileInfoSubscription?.unsubscribe();
+        this.irisSettingsSubscription?.unsubscribe();
+        this.submissionPolicySubscription?.unsubscribe();
+        this.buildLogsSubscription?.unsubscribe();
+        this.exerciseStatisticsSubscription?.unsubscribe();
     }
 
     getExerciseDetails(): DetailOverviewSection[] {
         const exercise = this.programmingExercise;
+        exercise.buildConfig = this.programmingExerciseBuildConfig;
         return [
             this.getExerciseDetailsGeneralSection(exercise),
             this.getExerciseDetailsModeSection(exercise),
@@ -331,7 +356,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.sequentialTestRuns.title',
-                    data: { boolean: exercise.sequentialTestRuns },
+                    data: { boolean: exercise.buildConfig?.sequentialTestRuns },
                 },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
@@ -340,7 +365,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.templateParticipation,
                         exerciseId: exercise.id,
                         type: 'TEMPLATE',
-                        showOpenLink: !this.localVCEnabled,
                     },
                 },
                 {
@@ -350,7 +374,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.solutionParticipation,
                         exerciseId: exercise.id,
                         type: 'SOLUTION',
-                        showOpenLink: !this.localVCEnabled,
                     },
                 },
                 {
@@ -360,7 +383,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: { repositoryUri: exercise.testRepositoryUri },
                         exerciseId: exercise.id,
                         type: 'TESTS',
-                        showOpenLink: !this.localVCEnabled,
                     },
                 },
                 this.supportsAuxiliaryRepositories &&
@@ -370,18 +392,33 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         data: {
                             auxiliaryRepositories: exercise.auxiliaryRepositories,
                             exerciseId: exercise.id,
-                            showOpenLink: !this.localVCEnabled,
                         },
                     },
-                {
+                exercise.isAtLeastEditor &&
+                    this.localCIEnabled && {
+                        type: DetailType.ProgrammingCheckoutDirectories,
+                        title: 'artemisApp.programmingExercise.checkoutDirectories',
+                        data: {
+                            exercise: exercise,
+                            programmingLanguage: exercise.programmingLanguage,
+                            isLocal: true,
+                        },
+                    },
+                !this.localCIEnabled && {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.templateBuildPlanId',
-                    data: { href: !this.localVCEnabled && exercise.templateParticipation?.buildPlanUrl, text: exercise.templateParticipation?.buildPlanId },
+                    data: {
+                        href: exercise.templateParticipation?.buildPlanUrl,
+                        text: exercise.templateParticipation?.buildPlanId,
+                    },
                 },
-                {
+                !this.localCIEnabled && {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.solutionBuildPlanId',
-                    data: { href: !this.localVCEnabled && exercise.solutionParticipation?.buildPlanUrl, text: exercise.solutionParticipation?.buildPlanId },
+                    data: {
+                        href: exercise.solutionParticipation?.buildPlanUrl,
+                        text: exercise.solutionParticipation?.buildPlanId,
+                    },
                 },
                 {
                     type: DetailType.ProgrammingTestStatus,
@@ -409,7 +446,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
                 {
                     type: DetailType.ProgrammingDiffReport,
-                    title: 'artemisApp.programmingExercise.diffReport.lineStatLabel',
+                    title: 'artemisApp.programmingExercise.diffReport.title',
+                    titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
                     data: {
                         addedLineCount: this.addedLineCount,
                         removedLineCount: this.removedLineCount,
@@ -417,26 +455,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         gitDiffReport: exercise.gitDiffReport,
                     },
                 },
-                !!exercise.buildScript &&
-                    !!exercise.windFile?.metadata?.docker?.image && {
+                !!exercise.buildConfig?.buildScript &&
+                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.dockerImage',
-                        data: { text: exercise.windFile?.metadata?.docker?.image },
+                        data: { text: exercise.buildConfig?.windfile?.metadata?.docker?.image },
                     },
-                !!exercise.buildScript &&
-                    !!exercise.windFile?.metadata?.docker?.image && {
+                !!exercise.buildConfig?.buildScript &&
+                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
-                        data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildScript + '\n```') },
+                        data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
                     },
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.recordTestwiseCoverage',
-                    data: { boolean: exercise.testwiseCoverageEnabled },
+                    data: { boolean: exercise.buildConfig?.testwiseCoverageEnabled },
                 },
                 exercise.isAtLeastTutor &&
-                    exercise?.testwiseCoverageEnabled && {
+                    exercise?.buildConfig?.testwiseCoverageEnabled && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.coveredLineRatio',
                         data: { text: exercise?.coveredLinesRatio ? (exercise.coveredLinesRatio * 100).toFixed(1) + ' %' : undefined },
@@ -528,7 +566,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
                     data: { boolean: exercise.allowComplaintsForAutomaticAssessments },
                 },
-                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowManualFeedbackRequests } },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowFeedbackRequests } },
                 { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
                 {
                     type: DetailType.Boolean,
@@ -714,8 +752,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkAndSetWindFile(exercise: ProgrammingExercise) {
-        if (exercise.buildPlanConfiguration && !exercise.windFile) {
-            exercise.windFile = this.aeolusService.parseWindFile(exercise.buildPlanConfiguration);
+        if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windfile) {
+            exercise.buildConfig!.windfile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
         }
     }
 
@@ -799,7 +837,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
 
         const latestSolutionSubmissionSuccessful = this.programmingExerciseService.getLatestResult(this.programmingExercise.solutionParticipation)?.successful;
-        if (this.programmingExercise.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
+        if (this.programmingExercise.buildConfig?.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
             this.programmingExerciseService.getLatestFullTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
                 this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio;
             });

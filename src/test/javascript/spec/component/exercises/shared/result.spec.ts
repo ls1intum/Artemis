@@ -23,6 +23,7 @@ import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
@@ -50,7 +51,7 @@ describe('ResultComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
-            declarations: [ResultComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), MockPipe(ArtemisDatePipe)],
+            declarations: [ResultComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -81,6 +82,7 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(programmingParticipation);
         participation1.results = [result1, result2];
         component.participation = participation1;
+        component.showUngradedResults = true;
 
         fixture.detectChanges();
 
@@ -99,6 +101,7 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(modelingParticipation);
         participation1.results = [result1, result2];
         component.participation = participation1;
+        component.showUngradedResults = true;
 
         fixture.detectChanges();
 

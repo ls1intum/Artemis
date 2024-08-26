@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.context.annotation.Profile;
@@ -15,11 +17,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
@@ -36,13 +42,23 @@ public class AttachmentUnitService {
 
     private final SlideRepository slideRepository;
 
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
+
+    private final Optional<IrisSettingsRepository> irisSettingsRepository;
+
+    private final CompetencyProgressService competencyProgressService;
+
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService) {
+            AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService,
+            Optional<IrisSettingsRepository> irisSettingsRepository, CompetencyProgressService competencyProgressService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
+        this.pyrisWebhookService = pyrisWebhookService;
+        this.irisSettingsRepository = irisSettingsRepository;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -70,7 +86,9 @@ public class AttachmentUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
-
+        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
+            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentUnit));
+        }
         return savedAttachmentUnit;
     }
 
@@ -86,9 +104,12 @@ public class AttachmentUnitService {
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
             boolean keepFilename) {
+        Set<CourseCompetency> existingCompetencies = existingAttachmentUnit.getCompetencies();
+
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
         existingAttachmentUnit.setName(updateUnit.getName());
         existingAttachmentUnit.setReleaseDate(updateUnit.getReleaseDate());
+        existingAttachmentUnit.setCompetencies(updateUnit.getCompetencies());
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(existingAttachmentUnit);
 
@@ -118,7 +139,14 @@ public class AttachmentUnitService {
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
             }
+            if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
+                pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(savedAttachmentUnit.getLecture().getCourse().getId(), List.of(savedAttachmentUnit));
+            }
         }
+
+        // Set the original competencies back to the attachment unit so that the competencyProgressService can determine which competencies changed
+        existingAttachmentUnit.setCompetencies(existingCompetencies);
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingAttachmentUnit, Optional.of(updateUnit));
 
         return savedAttachmentUnit;
     }

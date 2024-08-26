@@ -12,21 +12,20 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the QuizExercise entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
+public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
 
     @Query("""
             SELECT DISTINCT e
@@ -51,6 +50,22 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
             """)
     List<QuizExercise> findAllPlannedToStartAfter(@Param("earliestReleaseDate") ZonedDateTime earliestReleaseDate);
 
+    /**
+     * Find all quiz exercises that are planned to start in the future
+     *
+     * @param now the current date
+     * @return the list of quiz exercises
+     */
+    @Query("""
+            SELECT DISTINCT qe
+            FROM QuizExercise qe
+                LEFT JOIN FETCH qe.quizBatches b
+            WHERE qe.releaseDate > :now
+                OR b.startTime > :now
+                OR qe.dueDate > :now
+            """)
+    List<QuizExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
+
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
@@ -60,17 +75,15 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencies" })
+    Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesById(Long quizExerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
     Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
 
     @NotNull
-    default QuizExercise findByIdElseThrow(Long quizExerciseId) throws EntityNotFoundException {
-        return findById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
-    }
-
-    @NotNull
-    default QuizExercise findWithEagerQuestionsByIdOrElseThrow(Long quizExerciseId) {
-        return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
+    default QuizExercise findWithEagerBatchesByIdOrElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
 
     /**
@@ -92,7 +105,18 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
      */
     @NotNull
     default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
-        return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+        return getValueElseThrow(findWithEagerQuestionsById(quizExerciseId), quizExerciseId);
+    }
+
+    /**
+     * Get one quiz exercise by id and eagerly load questions
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    default QuizExercise findByIdWithQuestionsAndCompetenciesElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndCompetenciesById(quizExerciseId), quizExerciseId);
     }
 
     /**
@@ -103,7 +127,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
      */
     @NotNull
     default QuizExercise findByIdWithBatchesElseThrow(Long quizExerciseId) {
-        return findWithEagerBatchesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+        return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
 
     /**
@@ -119,12 +143,12 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
 
     @NotNull
     default QuizExercise findByIdWithQuestionsAndStatisticsElseThrow(Long quizExerciseId) {
-        return findWithEagerQuestionsAndStatisticsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+        return getValueElseThrow(findWithEagerQuestionsAndStatisticsById(quizExerciseId), quizExerciseId);
     }
 
     @NotNull
     default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(Long quizExerciseId) {
-        return findWithEagerQuestionsAndStatisticsAndCompetenciesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+        return getValueElseThrow(findWithEagerQuestionsAndStatisticsAndCompetenciesById(quizExerciseId), quizExerciseId);
     }
 
     default List<QuizExercise> findAllPlannedToStartInTheFuture() {

@@ -58,11 +58,6 @@ public class WorkingTimeUpdateEvent extends ExamLiveEvent {
 
     @Override
     public WorkingTimeUpdateEventDTO asDTO() {
-        var dto = new WorkingTimeUpdateEventDTO();
-        super.populateDTO(dto);
-        dto.setNewWorkingTime(newWorkingTime);
-        dto.setOldWorkingTime(oldWorkingTime);
-        dto.setCourseWide(courseWide);
-        return dto;
+        return new WorkingTimeUpdateEventDTO(this.getId(), this.getCreatedBy(), this.getCreatedDate(), newWorkingTime, oldWorkingTime, courseWide);
     }
 }

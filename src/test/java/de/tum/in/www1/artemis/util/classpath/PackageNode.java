@@ -1,6 +1,13 @@
 package de.tum.in.www1.artemis.util.classpath;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -85,7 +92,7 @@ public class PackageNode extends ClassPathNode {
             return ownClasses.add(new ClassNode(this, clazz, classInfo));
         }
         // Otherwise, more package segments left, so the class needs to be added to a sub-package
-        String subPackageName = remainingSegments.get(0);
+        String subPackageName = remainingSegments.getFirst();
         PackageNode subPackage = subPackages.computeIfAbsent(subPackageName, newSubPackageName -> new PackageNode(this, newSubPackageName));
         return subPackage.add(classInfo, clazz, remainingSegments.subList(1, remainingSegementCount));
     }

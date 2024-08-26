@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.config;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -118,7 +123,7 @@ class ProgrammingLanguageConfigurationTest {
     private Map<String, Map<String, String>> getDefaultImages() {
         final Map<String, Map<String, String>> images = new HashMap<>();
 
-        for (ProgrammingLanguage language : ProgrammingLanguage.values()) {
+        for (ProgrammingLanguage language : ProgrammingLanguage.getEnabledLanguages()) {
             final Map<String, String> languageImages = new HashMap<>();
             languageImages.put("default", language.name());
             images.put(language.toString().toLowerCase(), languageImages);

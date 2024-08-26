@@ -7,6 +7,8 @@ import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-e
 import { ProgrammingExerciseTask } from './programming-exercise-task';
 import { Observable, Subject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { isExamExercise } from 'app/shared/util/utils';
+import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 
 type Sort = {
     by: 'name' | 'weight' | 'multiplier' | 'bonusPoints' | 'visibility' | 'resulting' | 'type';
@@ -39,6 +41,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
 
     currentSort: Sort | undefined;
 
+    isExamExercise: boolean = false;
+
     get ignoreInactive() {
         return this.taskService.ignoreInactive;
     }
@@ -55,6 +59,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             by: 'name',
             descending: true,
         };
+
+        this.isExamExercise = isExamExercise(this.exercise);
     }
 
     updateTasks = () => {
@@ -132,14 +138,20 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
         this.tasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
     };
 
-    private compareNumForAttribute = (attributeKey: string): TaskComparator => {
-        return (a, b) => {
+    private compareNumForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseTestCase>(attributeKey: keyof T): TaskComparator => {
+        return (a: T, b: T) => {
             return ((a[attributeKey] as number) ?? 0) - ((b[attributeKey] as number) ?? 0);
         };
     };
 
-    private compareStringForAttribute = (attributeKey: string): TaskComparator => {
-        return (a, b) => {
+    /**
+     * {@link ProgrammingExerciseTask} extends {@link ProgrammingExerciseServerSideTask} which is why we need to explicitly add it here for the type
+     * @param attributeKey
+     */
+    private compareStringForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseServerSideTask | ProgrammingExerciseTestCase>(
+        attributeKey: keyof T,
+    ): TaskComparator => {
+        return (a: T, b: T) => {
             const aType = a[attributeKey] ?? '';
             const bType = b[attributeKey] ?? '';
 

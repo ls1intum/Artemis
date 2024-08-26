@@ -3,12 +3,21 @@ package de.tum.in.www1.artemis.tutorialgroups;
 import static de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 import static de.tum.in.www1.artemis.tutorialgroups.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -63,6 +73,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     Long exampleTwoTutorialGroupId;
 
     @BeforeEach
+    @Override
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 4, 2, 1, 1);
@@ -644,10 +655,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var freshTitleTwo = "freshTitleTwo";
 
         var existingTitle = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow().getTitle();
-        var regNullStudent = new TutorialGroupRegistrationImportDTO(freshTitleOne, null);
-        var regBlankStudent = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO("", "", "", "", ""));
-        var regStudentPropertiesNull = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null, null));
-        var regExistingTutorialGroup = new TutorialGroupRegistrationImportDTO(existingTitle, null);
+        var regNullStudent = new TutorialGroupRegistrationImportDTO(freshTitleOne, null, null, null, null, null, null);
+        var regBlankStudent = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO("", "", "", "", ""), null, null, null, null, null);
+        var regStudentPropertiesNull = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
+        var regExistingTutorialGroup = new TutorialGroupRegistrationImportDTO(existingTitle, null, null, null, null, null, null);
         assertTutorialWithTitleDoesNotExistInDb(freshTitleOne);
         assertTutorialWithTitleDoesNotExistInDb(freshTitleTwo);
         assertTutorialGroupWithTitleExistsInDb(existingTitle);
@@ -661,10 +672,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
         assertThat(importResult).hasSize(4);
-        assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::importSuccessful)).allMatch(status -> status.equals(true));
-        assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::error)).allMatch(Objects::isNull);
-        var regBlankExpected = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(null, null, null, null, null));
-        var studentPropertiesNullExpected = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null, null));
+        var regBlankExpected = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
+        var studentPropertiesNullExpected = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
         assertThat(importResult.stream()).containsExactlyInAnyOrder(regNullStudent, regBlankExpected, regExistingTutorialGroup, studentPropertiesNullExpected);
 
         assertImportedTutorialGroupWithTitleInDB(freshTitleOne, new HashSet<>(), instructor1);
@@ -698,19 +707,20 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         // student 1 from existing group1 to existing group 2
         // + test if identifying just with login works
-        var student1Reg = new TutorialGroupRegistrationImportDTO(group2.getTitle(), new StudentDTO(student1.getLogin(), student1.getFirstName(), student1.getLastName(), "", ""));
+        var student1Reg = new TutorialGroupRegistrationImportDTO(group2.getTitle(), new StudentDTO(student1.getLogin(), student1.getFirstName(), student1.getLastName(), "", ""),
+                null, null, null, null, null);
 
         // student 3 to existing group 1
         // + test if identifying just with registration number works
         var student3Reg = new TutorialGroupRegistrationImportDTO(group1.getTitle(),
-                new StudentDTO("", student3.getFirstName(), student3.getLastName(), student3.getRegistrationNumber(), student3.getEmail()));
+                new StudentDTO("", student3.getFirstName(), student3.getLastName(), student3.getRegistrationNumber(), student3.getEmail()), null, null, null, null, null);
 
         // student 4 to fresh tutorial group
         // + test if identifying with both login and registration number works
-        var student4Reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student4));
+        var student4Reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student4), null, null, null, null, null);
 
         // student 2 to fresh tutorial group
-        var student2Reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student2));
+        var student2Reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student2), null, null, null, null, null);
 
         var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
         tutorialGroupRegistrations.add(student1Reg);
@@ -743,7 +753,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         // given
         var emptyTitle = "";
-        var reg = new TutorialGroupRegistrationImportDTO(emptyTitle, new StudentDTO(student1));
+        var reg = new TutorialGroupRegistrationImportDTO(emptyTitle, new StudentDTO(student1), null, null, null, null, null);
         assertTutorialWithTitleDoesNotExistInDb(emptyTitle);
 
         var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
@@ -753,7 +763,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         assertThat(importResult).hasSize(1);
         assertTutorialWithTitleDoesNotExistInDb(emptyTitle);
-        var importResultDTO = importResult.get(0);
+        var importResultDTO = importResult.getFirst();
         assertThat(importResultDTO.importSuccessful()).isFalse();
         assertThat(importResultDTO.error()).isEqualTo(TutorialGroupResource.TutorialGroupImportErrors.NO_TITLE);
         // student1 should still be registered in the old tutorial group
@@ -765,7 +775,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void importRegistrations_titleButNonExistingStudent_shouldStillCreateTutorialGroupButNoRegistration() throws Exception {
         // given
         var freshTitle = generateRandomTitle();
-        var reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO("notExisting", "firstName", "firstName1", "", ""));
+        var reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO("notExisting", "firstName", "firstName1", "", ""), null, null, null, null, null);
         assertTutorialWithTitleDoesNotExistInDb(freshTitle);
 
         var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
@@ -775,7 +785,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
         assertThat(importResult).hasSize(1);
-        var importResultDTO = importResult.get(0);
+        var importResultDTO = importResult.getFirst();
         assertThat(importResultDTO.importSuccessful()).isFalse();
         assertThat(importResultDTO.error()).isEqualTo(TutorialGroupResource.TutorialGroupImportErrors.NO_USER_FOUND);
     }
@@ -804,10 +814,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
         assertUserIsNotRegisteredInATutorialGroup(student3);
 
-        var reg1 = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student1));
-        var reg2 = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(student1));
-        var reg3 = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student3));
-        var reg4 = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(student3));
+        var reg1 = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student1), null, null, null, null, null);
+        var reg2 = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(student1), null, null, null, null, null);
+        var reg3 = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student3), null, null, null, null, null);
+        var reg4 = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(student3), null, null, null, null, null);
         assertTutorialWithTitleDoesNotExistInDb(freshTitle);
         assertTutorialWithTitleDoesNotExistInDb(freshTitleTwo);
 
@@ -846,6 +856,26 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(tutorialGroupRepository.getTutorialGroupChannel(exampleTwoTutorialGroupId)).isEmpty();
         assertThat(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(exampleCourseId)).isEmpty();
         assertThat(postRepository.findById(post.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importRegistrations_withAdditionalHeaders_shouldCreateTutorialGroupWithDetails() throws Exception {
+
+        var freshTitle = "freshTitle";
+        var student1Reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student1), "Main Campus", 30, "German", "Some info", true);
+        assertTutorialWithTitleDoesNotExistInDb(freshTitle);
+
+        var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
+        tutorialGroupRegistrations.add(student1Reg);
+
+        var importResult = sendImportRequest(tutorialGroupRegistrations);
+
+        assertThat(importResult).hasSize(1);
+        assertThat(importResult.getFirst().importSuccessful()).isTrue();
+        assertThat(importResult.getFirst().error()).isNull();
+
+        assertTutorialGroupWithTitleInDB(freshTitle, Set.of(student1), INSTRUCTOR_REGISTRATION, true, "Some info", 30, "Main Campus", "German", instructor1);
     }
 
     private List<TutorialGroupRegistrationImportDTO> sendImportRequest(List<TutorialGroupRegistrationImportDTO> tutorialGroupRegistrations) throws Exception {
@@ -989,6 +1019,201 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private void deregisterStudentForbiddenTest() throws Exception {
         request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + student2.getLogin(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void testDayOfWeekConversion() {
+        // This is a utility test that directly verifies the day of week conversion logic
+        assertThat(tutorialGroupService.getDayOfWeekString(1)).isEqualTo("Monday");
+        assertThat(tutorialGroupService.getDayOfWeekString(2)).isEqualTo("Tuesday");
+        assertThat(tutorialGroupService.getDayOfWeekString(3)).isEqualTo("Wednesday");
+        assertThat(tutorialGroupService.getDayOfWeekString(4)).isEqualTo("Thursday");
+        assertThat(tutorialGroupService.getDayOfWeekString(5)).isEqualTo("Friday");
+        assertThat(tutorialGroupService.getDayOfWeekString(6)).isEqualTo("Saturday");
+        assertThat(tutorialGroupService.getDayOfWeekString(7)).isEqualTo("Sunday");
+    }
+
+    @Test
+    void testDayOfWeekConversionInvalidInput() {
+        // This is a utility test that directly verifies the day of week conversion logic with invalid input
+        assertThatThrownBy(() -> tutorialGroupService.getDayOfWeekString(0)).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid day of the week: 0");
+        assertThatThrownBy(() -> tutorialGroupService.getDayOfWeekString(9)).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid day of the week: 9");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportTutorialGroupsToCSV() throws Exception {
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
+        String csvContent = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(csvContent).contains("ID,Title,Campus,Language");
+        assertThat(csvContent).contains("LoremIpsum1");
+        assertThat(csvContent).contains("LoremIpsum2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCSVContentWithSampleData() throws Exception {
+        // given
+        List<TutorialGroup> tutorialGroups = new ArrayList<>();
+        tutorialGroups
+                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1)));
+        tutorialGroups
+                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2)));
+
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language,Capacity,IsOnline");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
+        String csvContent = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(csvContent).contains("ID,Title,Campus,Language,Capacity,IsOnline");
+        assertThat(csvContent).contains("SampleTitle1,SampleInfo1,ENGLISH,10");
+        assertThat(csvContent).contains("SampleTitle2,SampleInfo2,GERMAN,20");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportTutorialGroupsToJSON() throws Exception {
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+        String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(jsonResponse).contains("ID");
+        assertThat(jsonResponse).contains("Title");
+        assertThat(jsonResponse).contains("Campus");
+        assertThat(jsonResponse).contains("Language");
+        assertThat(jsonResponse).contains("LoremIpsum1");
+        assertThat(jsonResponse).contains("LoremIpsum2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportTutorialGroupsToCSVWithAllFields() throws Exception {
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
+        String csvContent = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(csvContent)
+                .contains("ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Registration Number,First Name,Last Name");
+        assertThat(csvContent).contains("LoremIpsum1");
+        assertThat(csvContent).contains("LoremIpsum2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testJSONContentWithSampleData() throws Exception {
+        // given
+        List<TutorialGroup> tutorialGroups = new ArrayList<>();
+        tutorialGroups
+                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1)));
+        tutorialGroups
+                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2)));
+
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language,Capacity,Is Online");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+        String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(jsonResponse).contains("ID");
+        assertThat(jsonResponse).contains("Title");
+        assertThat(jsonResponse).contains("Campus");
+        assertThat(jsonResponse).contains("Language");
+        assertThat(jsonResponse).contains("Capacity");
+        assertThat(jsonResponse).contains("Is Online");
+        assertThat(jsonResponse).contains("SampleTitle1");
+        assertThat(jsonResponse).contains("SampleInfo1");
+        assertThat(jsonResponse).contains("ENGLISH");
+        assertThat(jsonResponse).contains("10");
+        assertThat(jsonResponse).contains("SampleTitle2");
+        assertThat(jsonResponse).contains("SampleInfo2");
+        assertThat(jsonResponse).contains("GERMAN");
+        assertThat(jsonResponse).contains("20");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportTutorialGroupsToJSONWithAllFields() throws Exception {
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+        String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(jsonResponse).contains("ID");
+        assertThat(jsonResponse).contains("Title");
+        assertThat(jsonResponse).contains("Campus");
+        assertThat(jsonResponse).contains("Language");
+        assertThat(jsonResponse).contains("Additional Information");
+        assertThat(jsonResponse).contains("Capacity");
+        assertThat(jsonResponse).contains("Is Online");
+        assertThat(jsonResponse).contains("Day of Week");
+        assertThat(jsonResponse).contains("Start Time");
+        assertThat(jsonResponse).contains("End Time");
+        assertThat(jsonResponse).contains("Location");
+        assertThat(jsonResponse).contains("Students");
+        assertThat(jsonResponse).contains("LoremIpsum1");
+        assertThat(jsonResponse).contains("LoremIpsum2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testJSONContentWithSampleDataIncludingOptionalFields() throws Exception {
+        // given
+        List<TutorialGroup> tutorialGroups = new ArrayList<>();
+        tutorialGroups
+                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1)));
+        tutorialGroups
+                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2)));
+
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+        String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(jsonResponse).contains("ID");
+        assertThat(jsonResponse).contains("Title");
+        assertThat(jsonResponse).contains("Campus");
+        assertThat(jsonResponse).contains("Language");
+        assertThat(jsonResponse).contains("Additional Information");
+        assertThat(jsonResponse).contains("Capacity");
+        assertThat(jsonResponse).contains("Is Online");
+        assertThat(jsonResponse).contains("Day of Week");
+        assertThat(jsonResponse).contains("Start Time");
+        assertThat(jsonResponse).contains("End Time");
+        assertThat(jsonResponse).contains("Location");
+        assertThat(jsonResponse).contains("Students");
+        assertThat(jsonResponse).contains("SampleTitle1");
+        assertThat(jsonResponse).contains("SampleInfo1");
+        assertThat(jsonResponse).contains("ENGLISH");
+        assertThat(jsonResponse).contains("10");
+        assertThat(jsonResponse).contains("SampleTitle2");
+        assertThat(jsonResponse).contains("SampleInfo2");
+        assertThat(jsonResponse).contains("GERMAN");
+        assertThat(jsonResponse).contains("20");
     }
 
 }

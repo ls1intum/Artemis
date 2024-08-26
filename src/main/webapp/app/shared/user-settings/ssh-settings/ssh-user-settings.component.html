@@ -1,0 +1,83 @@
+<h1 jhiTranslate="artemisApp.userSettings.sshSettings">
+    <!--SSH Settings-->
+</h1>
+@if (currentUser) {
+    <div class="list-group d-block">
+        <div class="list-group-item">
+            <dt>
+                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshSettingsInfoText"> </span>
+                <jhi-documentation-button [type]="documentationType" />
+            </dt>
+        </div>
+        @if (storedSshKey === '' && !editSshKey) {
+            <div class="list-group-item">
+                <jhi-button
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.SMALL"
+                    [title]="'artemisApp.userSettings.sshSettingsPage.addNewSshKey'"
+                    (onClick)="editSshKey = !editSshKey"
+                />
+            </div>
+        }
+        @if (storedSshKey !== '' && !editSshKey) {
+            <dt class="list-group-item" jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshKeyDisplayedInformation"></dt>
+            <div class="list-group-item">
+                {{ sshKey }}
+            </div>
+            <div class="list-group-item">
+                <div class="btn-group" role="group" aria-label="Actions">
+                    <jhi-button
+                        class="d-flex"
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.SMALL"
+                        [icon]="faEdit"
+                        [title]="'artemisApp.userSettings.sshSettingsPage.editExistingSshKey'"
+                        (onClick)="editSshKey = !editSshKey"
+                    />
+                </div>
+                <div class="btn-group" role="group" aria-label="Actions">
+                    <button
+                        class="btn btn-md flex-grow-1 d-flex align-items-center"
+                        jhiDeleteButton
+                        [renderButtonText]="false"
+                        (delete)="deleteSshKey()"
+                        deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
+                        [dialogError]="dialogError$"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                        <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey" class="ms-2">Delete</div>
+                    </button>
+                </div>
+            </div>
+        }
+        @if (editSshKey) {
+            <div class="list-group-item">
+                <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></div>
+            </div>
+            <div class="list-group-item">
+                <dd>
+                    <textarea class="form-control" rows="10" [readonly]="!editSshKey" [(ngModel)]="sshKey"></textarea>
+                </dd>
+                <div class="col col-auto text-right">
+                    <div class="btn-group" role="group" aria-label="Actions">
+                        <jhi-button
+                            [btnType]="ButtonType.PRIMARY"
+                            [btnSize]="ButtonSize.SMALL"
+                            [icon]="faSave"
+                            [title]="'artemisApp.userSettings.sshSettingsPage.saveSshKey'"
+                            (onClick)="saveSshKey()"
+                        />
+                    </div>
+                    <div class="btn-group" role="group" aria-label="Actions">
+                        <jhi-button
+                            [btnType]="ButtonType.PRIMARY"
+                            [btnSize]="ButtonSize.SMALL"
+                            [title]="'artemisApp.userSettings.sshSettingsPage.cancelSavingSshKey'"
+                            (onClick)="cancelEditingSshKey()"
+                        />
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

@@ -21,7 +21,6 @@ describe('CompetencyRings', () => {
                 component = fixture.componentInstance;
 
                 component.progress = 110;
-                component.confidence = 50;
                 component.mastery = -10;
             });
     });
@@ -34,7 +33,6 @@ describe('CompetencyRings', () => {
         fixture.detectChanges();
 
         expect(component.progressPercentage).toBe(100);
-        expect(component.confidencePercentage).toBe(50);
         expect(component.masteryPercentage).toBe(0);
     });
 
@@ -47,16 +45,11 @@ describe('CompetencyRings', () => {
     it('should visualize using progress bars', () => {
         fixture.detectChanges();
 
-        const masteryRing = fixture.debugElement.query(By.css('.ring1 .progressbar'));
+        const masteryRing = fixture.debugElement.query(By.css('.mastery-ring .progressbar'));
         expect(masteryRing).toBeTruthy();
         expect(masteryRing.styles.opacity).toBe('0');
 
-        const confidenceRing = fixture.debugElement.query(By.css('.ring2 .progressbar'));
-        expect(confidenceRing).toBeTruthy();
-        expect(confidenceRing.styles.opacity).toBe('1');
-        expect(confidenceRing.nativeElement.getAttribute('stroke-dasharray')).toBe('50, 100');
-
-        const progressRing = fixture.debugElement.query(By.css('.ring3 .progressbar'));
+        const progressRing = fixture.debugElement.query(By.css('.progress-ring .progressbar'));
         expect(progressRing).toBeTruthy();
         expect(progressRing.styles.opacity).toBe('1');
         expect(progressRing.nativeElement.getAttribute('stroke-dasharray')).toBe('100, 100');

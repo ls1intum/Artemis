@@ -16,15 +16,31 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
@@ -156,24 +172,24 @@ public class ResultResource {
     }
 
     /**
-     * GET /participations/:participationId/results/logs-available : get the logs availability for the results of a participation.
+     * GET /participations/:participationId/results/build-job-ids : Get the build job ids for the results of a participation if the respective build logs are available (else null)
      *
      * @param participationId the id of the participation to the results
-     * @return the ResponseEntity with status 200 (OK) and with body the map of resultId and log availability, status 404 (Not Found) if the participation does not exist or 403
+     * @return the ResponseEntity with status 200 (OK) and with body the map of resultId and build job id, status 404 (Not Found) if the participation does not exist or 403
      *         (forbidden) if the user does not have permissions to access the participation.
      */
-    @GetMapping("participations/{participationId}/results/logs-available")
+    @GetMapping("participations/{participationId}/results/build-job-ids")
     @EnforceAtLeastTutor
-    public ResponseEntity<Map<Long, Boolean>> getLogsAvailabilityForResultsOfParticipation(@PathVariable long participationId) {
-        log.debug("REST request to get logs availability for results of participation : {}", participationId);
+    public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
+        log.debug("REST request to get build job ids for results of participation : {}", participationId);
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
 
-        Map<Long, Boolean> logsAvailable = resultService.getLogsAvailabilityForResults(results);
+        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results);
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        return new ResponseEntity<>(logsAvailable, HttpStatus.OK);
+        return new ResponseEntity<>(resultBuildJobMap, HttpStatus.OK);
     }
 
     /**

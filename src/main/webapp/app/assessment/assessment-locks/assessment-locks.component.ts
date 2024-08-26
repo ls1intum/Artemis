@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Location } from '@angular/common';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
@@ -21,8 +20,6 @@ import { combineLatest } from 'rxjs';
     templateUrl: './assessment-locks.component.html',
 })
 export class AssessmentLocksComponent implements OnInit {
-    PROGRAMMING_EXERCISE = ExerciseType.PROGRAMMING;
-
     readonly ExerciseType = ExerciseType;
 
     course: Course;
@@ -51,7 +48,6 @@ export class AssessmentLocksComponent implements OnInit {
         private fileUploadAssessmentService: FileUploadAssessmentService,
         private programmingAssessmentService: ProgrammingAssessmentManualResultService,
         translateService: TranslateService,
-        private location: Location,
         private courseService: CourseManagementService,
         private examManagementService: ExamManagementService,
     ) {

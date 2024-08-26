@@ -16,17 +16,39 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExerciseDeletionService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.FileUploadExerciseImportService;
+import de.tum.in.www1.artemis.service.FileUploadExerciseService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.export.FileUploadSubmissionExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -45,7 +67,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(FileUploadExerciseResource.Endpoints.ROOT)
+@RequestMapping("api/")
 public class FileUploadExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadExerciseResource.class);
@@ -85,12 +107,14 @@ public class FileUploadExerciseResource {
 
     private final ChannelRepository channelRepository;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            ChannelRepository channelRepository, CompetencyProgressService competencyProgressService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -106,6 +130,7 @@ public class FileUploadExerciseResource {
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -135,6 +160,7 @@ public class FileUploadExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
+        competencyProgressService.updateProgressByLearningObjectAsync(result);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
     }
@@ -148,10 +174,9 @@ public class FileUploadExerciseResource {
      *
      * @param sourceId                   The ID of the original exercise which should get imported
      * @param importedFileUploadExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @throws URISyntaxException When the URI of the response entity is invalid
-     *
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      *         (403) if the user is not at least an editor in the target course.
+     * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("file-upload-exercises/import/{sourceId}")
     @EnforceAtLeastEditor
@@ -161,7 +186,7 @@ public class FileUploadExerciseResource {
         if (sourceId <= 0 || (importedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedFileUploadExercise.getExerciseGroup() == null)) {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
-        importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity("File Upload Exercise");
+        importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var originalFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(sourceId);
@@ -249,7 +274,7 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
-        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findByIdElseThrow(fileUploadExercise.getId());
+        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findWithEagerCompetenciesByIdElseThrow(fileUploadExercise.getId());
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
@@ -260,7 +285,10 @@ public class FileUploadExerciseResource {
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
+
+        exerciseService.notifyAboutExerciseChanges(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(fileUploadExerciseBeforeUpdate, Optional.of(fileUploadExercise));
+
         return ResponseEntity.ok(updatedExercise);
     }
 
@@ -270,7 +298,7 @@ public class FileUploadExerciseResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the list of fileUploadExercises in body
      */
-    @GetMapping(value = "/courses/{courseId}/file-upload-exercises")
+    @GetMapping(value = "courses/{courseId}/file-upload-exercises")
     @EnforceAtLeastTutor
     public ResponseEntity<List<FileUploadExercise>> getFileUploadExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
@@ -372,7 +400,7 @@ public class FileUploadExerciseResource {
      *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
      *         Server Error) if the fileUploadExercise couldn't be updated
      */
-    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PutMapping("file-upload-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
@@ -388,19 +416,5 @@ public class FileUploadExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbackAfterGradingInstructionUpdate);
         return updateFileUploadExercise(fileUploadExercise, null, fileUploadExercise.getId());
-    }
-
-    public static final class Endpoints {
-
-        public static final String ROOT = "/api";
-
-        public static final String FILE_UPLOAD_EXERCISES = "/file-upload-exercises";
-
-        public static final String FILE_UPLOAD_EXERCISE = FILE_UPLOAD_EXERCISES + "/{exerciseId}";
-
-        public static final String REEVALUATE_EXERCISE = FILE_UPLOAD_EXERCISE + "/re-evaluate";
-
-        private Endpoints() {
-        }
     }
 }

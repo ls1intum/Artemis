@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,11 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.score.StudentScoreSum;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface StudentScoreRepository extends JpaRepository<StudentScore, Long> {
+public interface StudentScoreRepository extends ArtemisJpaRepository<StudentScore, Long> {
 
     @Transactional // ok because of delete
     @Modifying
@@ -57,6 +57,14 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
                 AND s.user = :user
             """)
     List<StudentScore> findAllByExerciseAndUserWithEagerExercise(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
+
+    @Query("""
+            SELECT stud
+            FROM StudentScore s
+                LEFT JOIN s.user stud
+            WHERE s.exercise = :exercise
+            """)
+    Set<User> findAllUsersWithScoresByExercise(@Param("exercise") Exercise exercise);
 
     @Transactional // ok because of delete
     @Modifying

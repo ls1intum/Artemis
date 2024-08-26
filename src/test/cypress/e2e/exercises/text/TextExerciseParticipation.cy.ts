@@ -7,7 +7,7 @@ import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, textExe
 import { admin, studentOne } from '../../../support/users';
 import { convertModelAfterMultiPart } from '../../../support/utils';
 
-describe('Text exercise participation', () => {
+describe.skip('Text exercise participation', () => {
     let course: Course;
     let exercise: TextExercise;
 

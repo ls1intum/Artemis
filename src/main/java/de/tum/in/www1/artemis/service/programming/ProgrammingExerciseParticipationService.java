@@ -19,14 +19,28 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
@@ -141,6 +155,18 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     * Tries to retrieve a student participation for the given team exercise and user
+     *
+     * @param exercise the exercise for which to find a participation.
+     * @param user     the user who is member of the team to which the participation belongs.
+     * @return the participation for the given exercise and user.
+     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
+     */
+    public Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseAndUser(ProgrammingExercise exercise, User user) {
+        return studentParticipationRepository.findTeamParticipationByExerciseIdAndStudentId(exercise.getId(), user.getId());
+    }
+
+    /**
      * Tries to retrieve a student participation for the given exercise and username and test run flag.
      *
      * @param exercise        the exercise for which to find a participation.
@@ -192,6 +218,19 @@ public class ProgrammingExerciseParticipationService {
             throw new EntityNotFoundException("participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
         }
         return participation.get();
+    }
+
+    /**
+     * Tries to retrieve all student participation for the given exercise id and username.
+     *
+     * @param exercise the exercise for which to find a participation
+     * @param username of the user to which the participation belongs.
+     * @return the participations for the given exercise and user.
+     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
+     */
+    @NotNull
+    public List<ProgrammingExerciseStudentParticipation> findStudentParticipationsByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
+        return studentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**

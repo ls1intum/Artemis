@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * independent actions but also to run actions on a single target. (e.q. the parsing of the test results that needs to
  * run on Jenkins but not in LocalCI)
  */
+// TODO: convert into Record
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ScriptAction extends Action {

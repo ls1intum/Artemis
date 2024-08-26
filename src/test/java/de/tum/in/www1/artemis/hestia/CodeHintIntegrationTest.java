@@ -19,12 +19,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class CodeHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -40,13 +38,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -137,7 +129,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Map<String, ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, test -> test));
 
-        var changedEntry = solutionEntries.get(0);
+        var changedEntry = solutionEntries.getFirst();
         changedEntry.setLine(100);
         changedEntry.setPreviousLine(200);
         changedEntry.setCode("Changed code");

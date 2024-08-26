@@ -2,9 +2,16 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
@@ -27,7 +34,6 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
@@ -73,7 +79,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     @Override
     public void upgradeTemplate(ProgrammingExercise exercise) {
         // TODO: Support sequential test runs
-        if (exercise.hasSequentialTestRuns()) {
+        if (exercise.getBuildConfig().hasSequentialTestRuns()) {
             return;
         }
         // Template and solution repository can also contain a project object model for some project types
@@ -102,8 +108,8 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
             if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
-                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.get(0), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
-                writeProjectObjectModel(updatedRepoModel, repositoryPoms.get(0));
+                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.getFirst(), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
+                writeProjectObjectModel(updatedRepoModel, repositoryPoms.getFirst());
             }
 
             if (repositoryType == RepositoryType.TESTS) {
@@ -138,13 +144,13 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         // Get general template resources
         final Path programmingLanguageTemplate = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
 
-        Resource[] templatePoms = resourceLoaderService.getResources(programmingLanguageTemplate, filePattern);
+        Resource[] templatePoms = resourceLoaderService.getFileResources(programmingLanguageTemplate, filePattern);
 
         // Get project type specific template resources
         if (exercise.getProjectType() != null) {
             final Path projectTypeTemplate = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
 
-            final Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypeTemplate, filePattern);
+            final Resource[] projectTypePoms = resourceLoaderService.getFileResources(projectTypeTemplate, filePattern);
 
             // Prefer project type specific resources
             templatePoms = projectTypePoms.length > 0 ? projectTypePoms : templatePoms;

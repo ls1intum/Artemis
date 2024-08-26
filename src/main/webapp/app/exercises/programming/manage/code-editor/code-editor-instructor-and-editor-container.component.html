@@ -3,7 +3,7 @@
         <div class="card-body">
             @if (loadingState === LOADING_STATE.INITIALIZING) {
                 <span>
-                    <fa-icon [icon]="faCircleNotch" [spin]="true" />
+                    <fa-icon [icon]="faCircleNotch" animation="spin" />
                     <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
                 </span>
             }
@@ -17,23 +17,16 @@
     </nav>
 }
 @if (exercise) {
-    <jhi-code-editor-container
-        [participation]="selectedParticipation!"
-        [buildable]="selectedRepository !== REPOSITORY.TEST"
-        [course]="course"
-        (onResizeEditorInstructions)="onResizeEditorInstructions()"
-    >
+    <jhi-code-editor-container [participation]="selectedParticipation!" [buildable]="selectedRepository !== REPOSITORY.TEST" [course]="course" [allowHiddenFiles]="true">
         <div editorTitle>
             <span>{{ exercise?.title }}</span>
             <!-- prettier-ignore -->
             <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
-        <span
-        >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-        }]
-        @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-          <jhi-included-in-score-badge
-          [includedInOverallScore]="exercise.includedInOverallScore" />
-        }</span>
+                <span>, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
+            }]
+            @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"/>
+            }</span>
         </div>
         <div editorTitleActions class="d-flex align-items-center ms-2">
             <jhi-programming-exercise-instructor-exercise-status
@@ -96,7 +89,7 @@
                             <fa-icon [icon]="faPlus" class="text-white me-2" />
                         }
                         @if (loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                            <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-white me-2" />
+                            <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
                         }
                         <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo"></span>
                     </button>
@@ -107,7 +100,7 @@
                             <fa-icon [icon]="faTimes" class="text-white me-2" />
                         }
                         @if (loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                            <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-white me-2" />
+                            <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
                         }
                         <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo"></span>
                     </button>
@@ -132,15 +125,11 @@
         <jhi-programming-exercise-editable-instructions
             editorSidebar
             [(exercise)]="exercise"
-            [(participation)]="selectedRepository !== REPOSITORY.TEST ? selectedParticipation! : exercise.templateParticipation!"
+            [(participation)]="selectedParticipation!"
             [templateParticipation]="exercise.templateParticipation!"
+            [initialEditorHeight]="'external'"
             [enableResize]="false"
             class="instructions-wrapper__content card-body p-0"
         />
-        <ng-container chatbot-button>
-            @if (this.irisSettings?.irisCodeEditorSettings?.enabled) {
-                <jhi-code-editor-chatbot-button />
-            }
-        </ng-container>
     </jhi-code-editor-container>
 }

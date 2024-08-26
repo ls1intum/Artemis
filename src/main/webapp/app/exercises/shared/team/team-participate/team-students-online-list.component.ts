@@ -17,8 +17,8 @@ import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
     encapsulation: ViewEncapsulation.None,
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
-    readonly showTypingDuration = 2000; // ms
-    readonly sendTypingInterval = this.showTypingDuration / 1.5;
+    readonly SHOW_TYPING_DURATION = 2000; // ms
+    readonly SEND_TYPING_INTERVAL = this.SHOW_TYPING_DURATION / 1.5;
 
     @Input() typing$: Observable<any>;
     @Input() participation: StudentParticipation;
@@ -71,7 +71,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     private setupTypingIndicatorSender() {
         if (this.typing$) {
-            this.typing$.pipe(throttleTime(this.sendTypingInterval)).subscribe({
+            this.typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
                 next: () => this.jhiWebsocketService.send(this.buildWebsocketTopic('/typing'), {}),
                 error: (error) => console.error(error),
             });
@@ -127,19 +127,19 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     /**
      * Computes which of the online team members are currently typing
      *
-     * Typing students are those online students whose {lastTypingDate} is more recent than {showTypingDuration} ms ago.
+     * Typing students are those online students whose {lastTypingDate} is more recent than {SHOW_TYPING_DURATION} ms ago.
      * If there are any typing students, find the timestamp of the earliest expiration of the typing state among them.
      * Then, schedule another computation for that timestamp.
      */
     private computeTypingTeamStudents() {
         this.typingTeamStudents = this.onlineTeamStudents.filter((student: OnlineTeamStudent) => {
-            return Boolean(student.lastTypingDate?.isAfter(dayjs().subtract(this.showTypingDuration, 'ms')));
+            return Boolean(student.lastTypingDate?.isAfter(dayjs().subtract(this.SHOW_TYPING_DURATION, 'ms')));
         });
         if (this.typingTeamStudents.length > 0) {
             const lastTypingDates = this.typingTeamStudents.map((student: OnlineTeamStudent) => student.lastTypingDate).filter(Boolean);
             const minTypingDate = dayjs.min(lastTypingDates);
             if (minTypingDate) {
-                const earliestExpiration = minTypingDate.add(this.showTypingDuration, 'ms');
+                const earliestExpiration = minTypingDate.add(this.SHOW_TYPING_DURATION, 'ms');
                 const timeToExpirationInMilliseconds = earliestExpiration.diff(dayjs());
                 setTimeout(() => this.computeTypingTeamStudents(), timeToExpirationInMilliseconds);
             }

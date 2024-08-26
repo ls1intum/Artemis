@@ -10,7 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +21,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -49,12 +52,18 @@ public class AeolusTemplateService {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
         this.buildScriptProviderService = buildScriptProviderService;
-        // load all scripts into the cache
-        cacheOnBoot();
     }
 
-    private void cacheOnBoot() {
-        var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
+    /**
+     * Loads all YAML scripts from the "templates/aeolus" directory into the cache when the application is ready.
+     *
+     * <p>
+     * Scripts are read, processed, and stored in the {@code templateCache}. Errors during loading are logged.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void cacheOnBoot() {
+        // load all scripts into the cache
+        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
@@ -162,8 +171,9 @@ public class AeolusTemplateService {
      */
     public Windfile getDefaultWindfileFor(ProgrammingExercise exercise) {
         try {
+            ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             return getWindfileFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                    exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
+                    buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
             log.info("No windfile for the settings of exercise {}", exercise.getId(), e);
@@ -172,32 +182,32 @@ public class AeolusTemplateService {
     }
 
     /**
-     * We take the template and add the default docker image and flags for the programming language and project type
-     * of the artemis instance. This way, an Artemis admin can change the docker image and flags for the particular
-     * instance without having to change the template file.
+     * Enhances a given {@code Windfile} instance by configuring its Docker settings based on the specified programming
+     * language and project type. This method allows for dynamic configuration of Docker settings for Artemis instances,
+     * enabling administrators to specify custom Docker images and flags without altering the core template.
+     * <p>
+     * If the project type is Xcode, which does not support Docker, the Docker configuration is explicitly set to {@code null}.
      *
-     * @param windfile    the template file
-     * @param language    the programming language
-     * @param projectType the project type
+     * @param windfile    the Windfile template to be updated with Docker configuration
+     * @param language    the programming language used, which determines the Docker image and flags
+     * @param projectType an optional specifying the project type; influences the Docker configuration
      */
     private void addInstanceVariablesToWindfile(Windfile windfile, ProgrammingLanguage language, Optional<ProjectType> projectType) {
 
-        if (windfile.getMetadata() == null) {
-            windfile.setMetadata(new WindfileMetadata());
+        WindfileMetadata metadata = windfile.getMetadata();
+        if (metadata == null) {
+            metadata = new WindfileMetadata();
         }
         if (projectType.isPresent() && ProjectType.XCODE.equals(projectType.get())) {
             // xcode does not support docker
-            windfile.getMetadata().setDocker(null);
+            metadata = new WindfileMetadata();
+            windfile.setMetadata(metadata);
             return;
         }
-        if (windfile.getMetadata().getDocker() == null) {
-            windfile.getMetadata().setDocker(new DockerConfig());
-        }
-        WindfileMetadata metadata = windfile.getMetadata();
-        DockerConfig dockerConfig = windfile.getMetadata().getDocker();
-        dockerConfig.setImage(programmingLanguageConfiguration.getImage(language, projectType));
-        dockerConfig.setParameters(programmingLanguageConfiguration.getDefaultDockerFlags());
-        metadata.setDocker(dockerConfig);
+        String image = programmingLanguageConfiguration.getImage(language, projectType);
+        DockerConfig dockerConfig = new DockerConfig(image, null, null, programmingLanguageConfiguration.getDefaultDockerFlags());
+        metadata = new WindfileMetadata(metadata.name(), metadata.id(), metadata.description(), metadata.author(), metadata.gitCredentials(), dockerConfig, metadata.resultHook(),
+                metadata.resultHookCredentials());
         windfile.setMetadata(metadata);
     }
 }

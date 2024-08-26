@@ -7,17 +7,18 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface LectureUnitCompletionRepository extends JpaRepository<LectureUnitCompletion, Long> {
+public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<LectureUnitCompletion, Long> {
 
     @Query("""
             SELECT lectureUnitCompletion
@@ -37,4 +38,19 @@ public interface LectureUnitCompletionRepository extends JpaRepository<LectureUn
             """)
     Set<LectureUnitCompletion> findByLectureUnitsAndUserId(@Param("lectureUnits") Collection<? extends LectureUnit> lectureUnits, @Param("userId") Long userId);
 
+    @Query("""
+            SELECT COUNT(lectureUnitCompletion)
+            FROM LectureUnitCompletion lectureUnitCompletion
+            WHERE lectureUnitCompletion.lectureUnit.id IN :lectureUnitIds
+                AND lectureUnitCompletion.user.id = :userId
+            """)
+    int countByLectureUnitIdsAndUserId(@Param("lectureUnitIds") Collection<Long> lectureUnitIds, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT user
+            FROM LectureUnitCompletion lectureUnitCompletion
+                LEFT JOIN lectureUnitCompletion.user user
+            WHERE lectureUnitCompletion.lectureUnit = :lectureUnit
+            """)
+    Set<User> findCompletedUsersForLectureUnit(@Param("lectureUnit") LectureUnit lectureUnit);
 }

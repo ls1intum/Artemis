@@ -11,8 +11,6 @@ package org.eclipse.jgit.http.server;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import org.eclipse.jgit.internal.transport.parser.FirstCommand;
 import org.eclipse.jgit.lib.Constants;
@@ -23,6 +21,7 @@ import org.eclipse.jgit.transport.RequestNotYetReadException;
 import org.eclipse.jgit.transport.SideBandOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.eclipse.jgit.util.StringUtils;
 import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
@@ -57,26 +56,13 @@ public class GitSmartHttpTools {
     public static final String RECEIVE_PACK_RESULT_TYPE = "application/x-git-receive-pack-result";
 
     /** Git service names accepted by the /info/refs?service= handler. */
-    public static final List<String> VALID_SERVICES = Collections.unmodifiableList(Arrays.asList(UPLOAD_PACK, RECEIVE_PACK));
+    public static final List<String> VALID_SERVICES = List.of(UPLOAD_PACK, RECEIVE_PACK);
 
     private static final String INFO_REFS_PATH = "/" + INFO_REFS;
 
     private static final String UPLOAD_PACK_PATH = "/" + UPLOAD_PACK;
 
     private static final String RECEIVE_PACK_PATH = "/" + RECEIVE_PACK;
-
-    private static final List<String> SERVICE_SUFFIXES = Collections.unmodifiableList(Arrays.asList(INFO_REFS_PATH, UPLOAD_PACK_PATH, RECEIVE_PACK_PATH));
-
-    /**
-     * Check a request for Git-over-HTTP indicators.
-     *
-     * @param req
-     *                the current HTTP request that may have been made by Git.
-     * @return true if the request is likely made by a Git client program.
-     */
-    public static boolean isGitClient(HttpServletRequest req) {
-        return isInfoRefs(req) || isUploadPack(req) || isReceivePack(req);
-    }
 
     /**
      * Send an error to the Git client or browser.
@@ -127,7 +113,7 @@ public class GitSmartHttpTools {
      *                         the response cannot be sent.
      */
     public static void sendError(HttpServletRequest req, HttpServletResponse res, int httpStatus, String textForGit) throws IOException {
-        if (textForGit == null || textForGit.length() == 0) {
+        if (StringUtils.isEmptyOrNull(textForGit)) {
             switch (httpStatus) {
                 case SC_FORBIDDEN:
                     textForGit = HttpServerText.get().repositoryAccessForbidden;
@@ -246,56 +232,8 @@ public class GitSmartHttpTools {
         }
     }
 
-    /**
-     * Get the response Content-Type a client expects for the request.
-     * <p>
-     * This method should only be invoked if
-     * {@link #isGitClient(HttpServletRequest)} is true.
-     *
-     * @param req
-     *                current request.
-     * @return the Content-Type the client expects.
-     * @throws IllegalArgumentException
-     *                                      the request is not a Git client request. See
-     *                                      {@link #isGitClient(HttpServletRequest)}.
-     */
-    public static String getResponseContentType(HttpServletRequest req) {
-        if (isInfoRefs(req)) {
-            return infoRefsResultType(req.getParameter("service"));
-        }
-        else if (isUploadPack(req)) {
-            return UPLOAD_PACK_RESULT_TYPE;
-        }
-        else if (isReceivePack(req)) {
-            return RECEIVE_PACK_RESULT_TYPE;
-        }
-        else {
-            throw new IllegalArgumentException();
-        }
-    }
-
     static String infoRefsResultType(String svc) {
         return "application/x-" + svc + "-advertisement";
-    }
-
-    /**
-     * Strip the Git service suffix from a request path.
-     *
-     * Generally the suffix is stripped by the {@code SuffixPipeline} handling
-     * the request, so this method is rarely needed.
-     *
-     * @param path
-     *                 the path of the request.
-     * @return the path up to the last path component before the service suffix;
-     *         the path as-is if it contains no service suffix.
-     */
-    public static String stripServiceSuffix(String path) {
-        for (String suffix : SERVICE_SUFFIXES) {
-            if (path.endsWith(suffix)) {
-                return path.substring(0, path.length() - suffix.length());
-            }
-        }
-        return path;
     }
 
     /**

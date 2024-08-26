@@ -9,17 +9,21 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
 
 /**
- * Service responsible for initializing the database with specific testdata related to competencies for use in integration tests.
+ * Service responsible for initializing the database with specific test data related to competencies for use in integration tests.
  */
 @Service
 public class CompetencyUtilService {
@@ -36,6 +40,9 @@ public class CompetencyUtilService {
     @Autowired
     private CompetencyRelationRepository competencyRelationRepository;
 
+    @Autowired
+    private CompetencyJolRepository competencyJOLRepository;
+
     /**
      * Creates and saves a Competency for the given Course.
      *
@@ -47,7 +54,9 @@ public class CompetencyUtilService {
         Competency competency = new Competency();
         competency.setTitle("Example Competency" + suffix);
         competency.setDescription("Magna pars studiorum, prodita quaerimus.");
+        competency.setTaxonomy(CompetencyTaxonomy.UNDERSTAND);
         competency.setCourse(course);
+
         return competencyRepo.save(competency);
     }
 
@@ -125,9 +134,9 @@ public class CompetencyUtilService {
      * @param competency  The Competency to add to the LectureUnit
      * @param lectureUnit The LectureUnit to update
      */
-    public void linkLectureUnitToCompetency(Competency competency, LectureUnit lectureUnit) {
+    public LectureUnit linkLectureUnitToCompetency(Competency competency, LectureUnit lectureUnit) {
         lectureUnit.getCompetencies().add(competency);
-        lectureUnitRepository.save(lectureUnit);
+        return lectureUnitRepository.save(lectureUnit);
     }
 
     /**
@@ -167,5 +176,27 @@ public class CompetencyUtilService {
     public Competency updateMasteryThreshold(@NotNull Competency competency, int masteryThreshold) {
         competency.setMasteryThreshold(masteryThreshold);
         return competencyRepo.save(competency);
+    }
+
+    /**
+     * Creates and saves a CompetencyJOL for the given Competency and User.
+     *
+     * @param competency    The Competency the CompetencyJOL belongs to
+     * @param user          The User the CompetencyJOL belongs to
+     * @param value         The value of the CompetencyJOL
+     * @param judgementTime The time of the judgement
+     * @param progress      The progress of the CompetencyJOL
+     * @param confidence    The confidence of the CompetencyJOL
+     * @return The persisted CompetencyJOL
+     */
+    public CompetencyJol createJol(Competency competency, User user, short value, ZonedDateTime judgementTime, double progress, double confidence) {
+        CompetencyJol jol = new CompetencyJol();
+        jol.setCompetency(competency);
+        jol.setUser(user);
+        jol.setValue(value);
+        jol.setJudgementTime(judgementTime);
+        jol.setCompetencyProgress(progress);
+        jol.setCompetencyConfidence(confidence);
+        return competencyJOLRepository.save(jol);
     }
 }

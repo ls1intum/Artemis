@@ -13,7 +13,7 @@
                     <div class="form-group mt-4">
                         <div class="table-wrapper-scroll-y scrollbar">
                             <ul class="list-group">
-                                @for (channel of channels; track trackIdentity($index, channel)) {
+                                @for (channel of channels; track channels.indexOf(channel)) {
                                     <li [id]="'channel-' + channel.id" class="list-group-item">
                                         <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)" />
                                     </li>
@@ -26,12 +26,12 @@
                     <div class="form-group mt-4">
                         <div (click)="otherChannelsAreCollapsed = !otherChannelsAreCollapsed" class="other-channels">
                             <fa-icon [icon]="faChevronRight" [rotate]="!otherChannelsAreCollapsed ? 90 : undefined" />
-                            <span class="h5">{{ 'artemisApp.dialogs.channelOverview.otherChannels' | artemisTranslate }}</span>
+                            <span class="h5" jhiTranslate="artemisApp.dialogs.channelOverview.otherChannels"></span>
                         </div>
                         <div [(ngbCollapse)]="otherChannelsAreCollapsed">
                             <div class="table-wrapper-scroll-y scrollbar mt-2">
                                 <ul class="list-group">
-                                    @for (channel of otherChannels; track trackIdentity($index, channel)) {
+                                    @for (channel of otherChannels; track otherChannels.indexOf(channel)) {
                                         <li [id]="'channel-' + channel.id" class="list-group-item">
                                             <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)" />
                                         </li>
@@ -44,9 +44,13 @@
             </div>
             <div class="modal-footer justify-content-between">
                 @if (createChannelFn && canCreateChannel(course)) {
-                    <button type="button" class="btn btn-secondary" (click)="openCreateChannelDialog($event)" id="createChannel">
-                        {{ 'artemisApp.dialogs.channelOverview.createChannelButton' | artemisTranslate }}
-                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        (click)="openCreateChannelDialog($event)"
+                        id="createChannel"
+                        jhiTranslate="artemisApp.dialogs.channelOverview.createChannelButton"
+                    ></button>
                 }
             </div>
         </div>

@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,11 +15,11 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Long> {
+public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGroup, Long> {
 
     @Query("""
             SELECT tutorialGroup
@@ -143,23 +142,19 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
 
     default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
-        return findByIdWithSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+        return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);
     }
 
     default TutorialGroup findByIdWithTeachingAssistantAndCourseElseThrow(long tutorialGroupId) {
-        return this.findByIdWithTeachingAssistantAndCourse(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
-    }
-
-    default TutorialGroup findByIdElseThrow(long tutorialGroupId) {
-        return this.findById(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+        return getValueElseThrow(findByIdWithTeachingAssistantAndCourse(tutorialGroupId), tutorialGroupId);
     }
 
     default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsElseThrow(long tutorialGroupId) {
-        return this.findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+        return getValueElseThrow(findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId), tutorialGroupId);
     }
 
     default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(long tutorialGroupId) {
-        return this.findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+        return getValueElseThrow(findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId), tutorialGroupId);
     }
 
     default Optional<Channel> getTutorialGroupChannel(Long tutorialGroupId) {

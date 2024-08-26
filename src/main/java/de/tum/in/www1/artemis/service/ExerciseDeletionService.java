@@ -16,17 +16,23 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
@@ -66,11 +72,13 @@ public class ExerciseDeletionService {
 
     private final ChannelService channelService;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            ChannelRepository channelRepository, ChannelService channelService) {
+            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressService competencyProgressService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -85,6 +93,7 @@ public class ExerciseDeletionService {
         this.textExerciseService = textExerciseService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -130,6 +139,7 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
+        Set<CourseCompetency> competencies = exercise.getCompetencies();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         long start = System.nanoTime();
@@ -159,7 +169,7 @@ public class ExerciseDeletionService {
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
+        participationService.deleteAllByExercise(exercise, deleteStudentReposBuildPlans, deleteStudentReposBuildPlans, false);
 
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
         exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
@@ -189,6 +199,8 @@ public class ExerciseDeletionService {
             exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
             exerciseRepository.delete(exercise);
         }
+
+        competencies.forEach(competencyProgressService::updateProgressByCompetencyAsync);
     }
 
     /**
@@ -217,6 +229,6 @@ public class ExerciseDeletionService {
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationService.deleteAllByExerciseId(exercise.getId(), true, true);
+        participationService.deleteAllByExercise(exercise, true, true, true);
     }
 }

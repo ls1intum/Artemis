@@ -18,7 +18,7 @@
             },
             "presentationType": {
                 "title": "Präsentationsmodus",
-                "description": "Wählen Sie \"Einfach\", um die Anzahl der Präsentationen festzulegen, die ein Student halten muss, um den Notenbonus für den Kurs zu erhalten. Wählen Sie \"Benotet\", um die Anzahl der von Tutoren benoteten Präsentationen, die ein Student halten kann, und die Gewichtung der Präsentationen für die Kursnote festzulegen.",
+                "description": "Wähle \"Einfach\", um die Anzahl der Präsentationen festzulegen, die ein Student halten muss, um den Notenbonus für den Kurs zu erhalten. Wähle \"Benotet\", um die Anzahl der von Tutoren benoteten Präsentationen, die ein Student halten kann, und die Gewichtung der Präsentationen für die Kursnote festzulegen.",
                 "none": "Keine",
                 "basic": "Einfach",
                 "graded": "Benotet"
@@ -59,7 +59,7 @@
                 },
                 "maxPoints": {
                     "title": "Maximale Punktzahl",
-                    "explanation": "Legt die maximale Punktzahl für den gegebenen Kurs/die gegebene Prüfung fest. Der Wert wird benötigt, wenn ein Notenschlüssel mit absoluter Punktzahl als Schranke anstelle eines Prozentsatzes benötigt wird. Beachten Sie, dass die maximale Punktzahl keinen Einfluss auf die Notenberechnung für Kurse hat, für Prüfungen jedoch schon."
+                    "explanation": "Legt die maximale Punktzahl für den gegebenen Kurs/die gegebene Prüfung fest. Der Wert wird benötigt, wenn ein Notenschlüssel mit absoluter Punktzahl als Schranke anstelle eines Prozentsatzes benötigt wird. Beachte, dass die maximale Punktzahl keinen Einfluss auf die Notenberechnung für Kurse hat, für Prüfungen jedoch schon."
                 },
                 "gradeType": {
                     "title": "Notentyp",

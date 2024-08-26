@@ -19,6 +19,7 @@ export enum ExamLiveEventType {
     EXAM_WIDE_ANNOUNCEMENT = 'examWideAnnouncement',
     WORKING_TIME_UPDATE = 'workingTimeUpdate',
     EXAM_ATTENDANCE_CHECK = 'examAttendanceCheck',
+    PROBLEM_STATEMENT_UPDATE = 'problemStatementUpdate',
 }
 
 export type ExamLiveEvent = {
@@ -42,6 +43,13 @@ export type WorkingTimeUpdateEvent = ExamLiveEvent & {
     oldWorkingTime: number;
     newWorkingTime: number;
     courseWide: boolean;
+};
+
+export type ProblemStatementUpdateEvent = ExamLiveEvent & {
+    text: string;
+    problemStatement: string;
+    exerciseId: number;
+    exerciseName: string;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -237,11 +245,13 @@ export class ExamParticipationLiveEventsService {
         return observable;
     }
 
-    public observeNewEventsAsUser(eventTypes: ExamLiveEventType[] = []): Observable<ExamLiveEvent> {
+    public observeNewEventsAsUser(eventTypes: ExamLiveEventType[] = [], examStartDate: dayjs.Dayjs): Observable<ExamLiveEvent> {
         const observable = this.newUserEventSubject.asObservable().pipe(
             filter(
                 (event: ExamLiveEvent) =>
-                    !this.lastAcknowledgedEventStatus?.acknowledgedEvents[String(event.id)]?.user && (eventTypes.length === 0 || eventTypes.includes(event.eventType)),
+                    !this.lastAcknowledgedEventStatus?.acknowledgedEvents[String(event.id)]?.user &&
+                    (eventTypes.length === 0 || eventTypes.includes(event.eventType)) &&
+                    !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(examStartDate)),
             ),
             tap((event: ExamLiveEvent) => this.setEventAcknowledgeTimestamps(event)),
             distinct((event) => event.id),

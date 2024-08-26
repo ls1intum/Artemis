@@ -37,7 +37,7 @@
                 "totalTimeSpent": "Gesamtdauer der Benotung (in Minuten)",
                 "averageTime": "Bewertungsgeschwindigkeit (Einreichungen/Minuten)",
                 "effortMedian": "Median des Aufwands (Minuten)",
-                "noData": "Für diese Übung sind derzeit keine Datensätze vorhanden. Bitte versuchen Sie es später noch einmal.",
+                "noData": "Für diese Übung sind derzeit keine Datensätze vorhanden. Bitte versuche es später noch einmal.",
                 "minutes": "Minuten",
                 "tutors": "Tutor:innen",
                 "multipleTutors": "Tutor:innen korrigierten",

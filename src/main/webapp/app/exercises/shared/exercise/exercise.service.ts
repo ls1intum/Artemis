@@ -19,6 +19,9 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
+import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { IrisExerciseSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -28,6 +31,15 @@ export type ExampleSolutionInfo = {
     exampleSolutionUML?: any;
     programmingExercise?: ProgrammingExercise;
     exampleSolutionPublished: boolean;
+};
+
+export type EntityDetailsResponseType = HttpResponse<ExerciseDetailsType>;
+export type ExerciseDetailsType = {
+    exercise: Exercise;
+    irisSettings?: IrisExerciseSettings;
+    plagiarismCaseInfo?: PlagiarismCaseInfo;
+    availableExerciseHints?: ExerciseHint[];
+    activatedExerciseHints?: ExerciseHint[];
 };
 
 export interface ExerciseServicable<T extends Exercise> {
@@ -146,15 +158,20 @@ export class ExerciseService {
      * Get exercise details including all results for the currently logged-in user
      * @param { number } exerciseId - Id of the exercise to get the repos from
      */
-    getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => {
-                this.processExerciseEntityResponse(res);
-
+    getExerciseDetails(exerciseId: number): Observable<EntityDetailsResponseType> {
+        return this.http.get<ExerciseDetailsType>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' }).pipe(
+            map((res: EntityDetailsResponseType) => {
                 if (res.body) {
+                    res.body.exercise = ExerciseService.convertExerciseDatesFromServer(res.body.exercise)!;
+                    ExerciseService.parseExerciseCategories(res.body.exercise);
+                    // Make sure to set the access rights for the exercise
+                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body.exercise);
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.posts === undefined) {
-                        res.body.posts = [];
+                    if (res.body.exercise.posts === undefined) {
+                        res.body.exercise.posts = [];
+                    }
+                    for (const hint of res.body.activatedExerciseHints ?? []) {
+                        this.entityTitleService.setTitle(EntityType.HINT, [hint?.id, exerciseId], hint?.title);
                     }
                 }
                 return res;
@@ -181,6 +198,15 @@ export class ExerciseService {
      */
     reset(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
+    }
+
+    /**
+     * Evaluate the quiz exercise
+     * @param quizExerciseId id of the quiz exercise to be evaluated
+     * @returns void
+     */
+    evaluateQuizExercise(quizExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.post<any>(`api/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {

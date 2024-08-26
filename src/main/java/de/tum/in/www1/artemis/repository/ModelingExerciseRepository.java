@@ -11,21 +11,20 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the ModelingExercise entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ModelingExerciseRepository extends JpaRepository<ModelingExercise, Long>, JpaSpecificationExecutor<ModelingExercise> {
+public interface ModelingExerciseRepository extends ArtemisJpaRepository<ModelingExercise, Long>, JpaSpecificationExecutor<ModelingExercise> {
 
     @Query("""
             SELECT DISTINCT e
@@ -41,6 +40,9 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencies", "exampleSubmissions.submission.results",
             "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "competencies" })
+    Optional<ModelingExercise> findWithEagerCompetenciesById(Long exerciseId);
 
     @Query("""
             SELECT modelingExercise
@@ -93,28 +95,27 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
 
     @NotNull
-    default ModelingExercise findByIdElseThrow(long exerciseId) {
-        return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
-    }
-
-    @NotNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
-        return findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+        return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId), exerciseId);
     }
 
     @NotNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(long exerciseId) {
-        return findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+        return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId), exerciseId);
     }
 
     @NotNull
     default ModelingExercise findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(long exerciseId) {
-        return findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(exerciseId), exerciseId);
     }
 
     @NotNull
     default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
-        return findWithStudentParticipationsSubmissionsResultsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+        return getValueElseThrow(findWithStudentParticipationsSubmissionsResultsById(exerciseId), exerciseId);
+    }
+
+    @NotNull
+    default ModelingExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
     }
 }

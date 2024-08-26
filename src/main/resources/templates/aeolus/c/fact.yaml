@@ -1,7 +1,7 @@
 api: v0.0.1
 actions:
   - name: setup_the_build_environment
-    script: |
+    script: |-
       #!/usr/bin/env bash
       # ------------------------------
       # Task Description:
@@ -13,7 +13,7 @@ actions:
       sudo chown artemis_user:artemis_user test-reports/ -R || true
     runAlways: false
   - name: build_and_run_all_tests
-    script: |
+    script: |-
       #!/usr/bin/env bash
       # ------------------------------
       # Task Description:

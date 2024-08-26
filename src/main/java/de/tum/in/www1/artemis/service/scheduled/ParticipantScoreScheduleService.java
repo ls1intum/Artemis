@@ -1,14 +1,19 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC;
+
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
@@ -16,7 +21,9 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -30,7 +37,13 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TeamScoreRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
@@ -47,7 +60,7 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
  * @see de.tum.in.www1.artemis.service.listeners.ResultListener
  */
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class ParticipantScoreScheduleService {
 
     public static int DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
@@ -111,16 +124,18 @@ public class ParticipantScoreScheduleService {
     /**
      * Schedule all outdated participant scores when the service is started.
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void startup() {
-        isRunning.set(true);
-        try {
-            // this should never prevent the application start of Artemis
-            scheduleTasks();
-        }
-        catch (Exception ex) {
-            log.error("Cannot schedule participant score service", ex);
-        }
+        scheduler.schedule(() -> {
+            isRunning.set(true);
+            try {
+                // this should never prevent the application start of Artemis
+                scheduleTasks();
+            }
+            catch (Exception ex) {
+                log.error("Cannot schedule participant score service", ex);
+            }
+        }, Instant.now().plusSeconds(PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC));
     }
 
     public void activate() {
@@ -143,6 +158,7 @@ public class ParticipantScoreScheduleService {
      * We schedule all results that were created/updated since the last run of the cron job.
      * Additionally, we schedule all participant scores that are outdated/invalid.
      */
+    // TODO: could be converted to TaskScheduler, but tests depend on this implementation at the moment. See QuizScheduleService for reference
     @Scheduled(cron = "0 * * * * *")
     protected void scheduleTasks() {
         log.debug("Schedule tasks to process...");
@@ -253,7 +269,7 @@ public class ParticipantScoreScheduleService {
                     teamScoreRepository.deleteAllByTeamId(participantId);
                     return;
                 }
-                participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(score -> score);
+                participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(Function.identity());
             }
             else {
                 // Fetch the student and its score for the given exercise
@@ -264,7 +280,7 @@ public class ParticipantScoreScheduleService {
                     studentScoreRepository.deleteAllByUserId(participantId);
                     return;
                 }
-                participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(score -> score);
+                participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(Function.identity());
             }
 
             if (participantScore.isPresent()) {
@@ -288,20 +304,20 @@ public class ParticipantScoreScheduleService {
 
             // Either use the existing participant score or create a new one
             var score = participantScore.orElseGet(() -> {
-                if (participant instanceof Team team) {
-                    var teamScore = new TeamScore();
-                    teamScore.setTeam(team);
-                    teamScore.setExercise(exercise);
-                    return teamScore;
-                }
-                else if (participant instanceof User user) {
-                    var studentScore = new StudentScore();
-                    studentScore.setUser(user);
-                    studentScore.setExercise(exercise);
-                    return studentScore;
-                }
-                else {
-                    return null;
+                switch (participant) {
+                    case Team team -> {
+                        var teamScore = new TeamScore();
+                        teamScore.setTeam(team);
+                        teamScore.setExercise(exercise);
+                        return teamScore;
+                    }
+                    case User user -> {
+                        var studentScore = new StudentScore();
+                        studentScore.setUser(user);
+                        studentScore.setExercise(exercise);
+                        return studentScore;
+                    }
+                    default -> throw new IllegalArgumentException("Unknown participant type: " + participant);
                 }
             });
 
@@ -319,7 +335,7 @@ public class ParticipantScoreScheduleService {
             if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
                 scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
             }
-            competencyProgressService.updateProgressByLearningObject(score.getExercise(), scoreParticipant.getParticipants());
+            competencyProgressService.updateProgressByLearningObjectSync(score.getExercise(), scoreParticipant.getParticipants());
         }
         catch (Exception e) {
             log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);

@@ -12,21 +12,20 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseContentCount;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the Lecture entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface LectureRepository extends JpaRepository<Lecture, Long> {
+public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
 
     @Query("""
             SELECT lecture
@@ -138,28 +137,23 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
     @NotNull
-    default Lecture findByIdElseThrow(long lectureId) {
-        return findById(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
-    }
-
-    @NotNull
     default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {
-        return findByIdWithLectureUnitsAndCompetencies(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+        return getValueElseThrow(findByIdWithLectureUnitsAndCompetencies(lectureId), lectureId);
     }
 
     @NotNull
     default Lecture findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(Long lectureId) {
-        return findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletions(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+        return getValueElseThrow(findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletions(lectureId), lectureId);
     }
 
     @NotNull
     default Lecture findByIdWithLectureUnitsAndAttachmentsElseThrow(Long lectureId) {
-        return findByIdWithLectureUnitsAndAttachments(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+        return getValueElseThrow(findByIdWithLectureUnitsAndAttachments(lectureId), lectureId);
     }
 
     @NotNull
     default Lecture findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(long lectureId) {
-        return findByIdWithLectureUnitsAndSlidesAndAttachments(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+        return getValueElseThrow(findByIdWithLectureUnitsAndSlidesAndAttachments(lectureId), lectureId);
     }
 
     @Query("""

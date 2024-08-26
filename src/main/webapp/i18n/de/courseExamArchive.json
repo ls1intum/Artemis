@@ -29,7 +29,7 @@
             },
             "confirmArchive": {
                 "title": "Achtung: Ein Archiv existiert bereits!",
-                "message": "Warnung! Der Kurs wurde bereits archiviert. Wenn Sie fortfahren, wird das Archiv überschrieben! Sind Sie sicher, dass Sie fortfahren möchten?"
+                "message": "Warnung! Der Kurs wurde bereits archiviert. Wenn du fortfährst, wird das Archiv überschrieben! Bist du sicher, dass du fortfahren möchtest?"
             }
         }
     }

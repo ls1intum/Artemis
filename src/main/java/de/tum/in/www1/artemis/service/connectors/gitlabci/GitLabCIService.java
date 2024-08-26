@@ -16,7 +16,13 @@ import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.GroupApi;
 import org.gitlab4j.api.ProjectApi;
-import org.gitlab4j.api.models.*;
+import org.gitlab4j.api.models.AccessLevel;
+import org.gitlab4j.api.models.Pipeline;
+import org.gitlab4j.api.models.PipelineFilter;
+import org.gitlab4j.api.models.PipelineStatus;
+import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.ProjectAccessToken;
+import org.gitlab4j.api.models.Variable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,22 +33,21 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
-import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
-import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 @Profile("gitlabci")
 @Service
@@ -90,6 +95,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
@@ -108,16 +115,14 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Value("${artemis.version-control.token}")
     private String gitlabToken;
 
-    public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+    public GitLabCIService(GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.gitlab = gitlab;
         this.uriService = uriService;
         this.buildPlanRepository = buildPlanRepository;
         this.buildPlanService = buildPlanService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
@@ -153,7 +158,10 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private void setupGitLabCIConfigurationForGroup(ProgrammingExercise exercise, boolean overwrite) {
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
+
         final String projectKey = exercise.getProjectKey();
+        final ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
 
         updateGroupVariable(projectKey, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
                 programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())), overwrite);
@@ -163,8 +171,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         updateGroupVariable(projectKey, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage, overwrite);
         updateGroupVariable(projectKey, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue, overwrite);
         updateGroupVariable(projectKey, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH, overwrite);
-        updateGroupVariable(projectKey, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch(), overwrite);
-        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch(), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, buildConfig.getBranch(), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_BRANCH_NAME, buildConfig.getBranch(), overwrite);
         updateGroupVariable(projectKey, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, uriService.getRepositorySlugFromRepositoryUriString(exercise.getTestRepositoryUri()), overwrite);
         updateGroupVariable(projectKey, VARIABLE_TEST_GIT_TOKEN, () -> generateGitLabTestToken(exercise), overwrite);
         updateGroupVariable(projectKey, VARIABLE_TEST_GIT_USER, gitlabUser, overwrite);
@@ -392,5 +400,10 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         log.error("Unsupported action: GitLabCIService.getWebHookUrl()");
         return Optional.empty();
+    }
+
+    @Override
+    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
+        throw new UnsupportedOperationException("Method not implemented, consult the build plans in GitLab for more information on the checkout directories.");
     }
 }

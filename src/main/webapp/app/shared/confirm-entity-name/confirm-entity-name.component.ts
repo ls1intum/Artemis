@@ -46,7 +46,7 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
     ngOnInit() {
         this.control = this.fb.control('', {
             nonNullable: true,
-            validators: [Validators.required, (control: FormControl) => Validators.pattern(this.entityName)(control)],
+            validators: [Validators.required, this.compareWithEntityName.bind(this)],
         });
     }
 
@@ -88,5 +88,12 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
 
     registerOnValidatorChange(fn: () => void) {
         this.onValidatorChange = fn;
+    }
+
+    private compareWithEntityName(control: FormControl): ValidationErrors | null {
+        if (control.value !== this.entityName) {
+            return { invalidName: true };
+        }
+        return null;
     }
 }

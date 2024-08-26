@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Course;
@@ -61,26 +60,23 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseFactory;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
@@ -88,9 +84,6 @@ import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "textassessment";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private ComplaintRepository complaintRepo;
@@ -108,16 +101,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
     private SubmissionRepository submissionRepository;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepository;
-
-    @Autowired
-    private ResultRepository resultRepo;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -130,12 +117,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private TextAssessmentService textAssessmentService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -162,7 +143,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
         // every test indirectly uses the submission selection in Athena, so we mock it here
         athenaRequestMockProvider.enableMockingOfRequests();
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 0); // always select the first submission
@@ -179,7 +160,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
-        var result = resultRepo.findDistinctBySubmissionId(textSubmission.getId());
+        var result = resultRepository.findDistinctBySubmissionId(textSubmission.getId());
         assertThat(result).isPresent();
     }
 
@@ -205,7 +186,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor2");
         Result result = textSubmission.getLatestResult();
         result.setCompletionDate(null); // assessment is still in progress for this test
-        resultRepo.save(result);
+        resultRepository.save(result);
         StudentParticipation participation = request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.LOCKED, StudentParticipation.class);
         assertThat(participation).as("participation is locked and should not be returned").isNull();
     }
@@ -275,7 +256,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_wrongParticipationId() throws Exception {
         TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
+        AssessmentUpdateDTO assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
 
         long randomId = 12354;
         Result updatedResult = request.putWithResponseBody("/api/participations/" + randomId + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
@@ -288,7 +269,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
         TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
+        AssessmentUpdateDTO assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
 
         Result updatedResult = request.putWithResponseBody(
                 "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
@@ -312,17 +293,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         // Get Text Submission and Complaint
         request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class);
-        final Complaint complaint = request.get("/api/complaints/submissions/" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
+        final Complaint complaint = request.get("/api/complaints?submissionId=" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
-        TextAssessmentUpdateDTO assessmentUpdate = new TextAssessmentUpdateDTO();
-        assessmentUpdate.feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
-        assessmentUpdate.setTextBlocks(new HashSet<>());
-
+        final var assessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null, new HashSet<>());
         Result updatedResult = request.putWithResponseBody(
                 "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
                 assessmentUpdate, Result.class, HttpStatus.OK);
@@ -404,7 +382,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void getParticipationForNonTextExercise() throws Exception {
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf",
                 textExercise.getCourseViaExerciseGroupOrCourseMember());
-        exerciseRepo.save(fileUploadExercise);
+        exerciseRepository.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
@@ -435,7 +413,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void getDataForTextEditorForNonTextExercise_badRequest() throws Exception {
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf",
                 textExercise.getCourseViaExerciseGroupOrCourseMember());
-        exerciseRepo.save(fileUploadExercise);
+        exerciseRepository.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
@@ -479,12 +457,12 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exam.setPublishResultsDate(now().plusHours(3));
 
         // creating exercise
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
 
         examRepository.save(exam);
 
@@ -503,11 +481,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exam.setEndDate(now().minusHours(1));
         exam.setVisibleDate(now().minusHours(3));
 
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
 
         examRepository.save(exam);
 
@@ -535,11 +513,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exam.setPublishResultsDate(now().minusMinutes(30));
         exam.setNumberOfCorrectionRoundsInExam(2);
 
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
 
         examRepository.save(exam);
 
@@ -594,7 +572,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
     }
 
-    private Result getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {
+    private void getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(isExample);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
@@ -612,7 +590,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
             }
         }
 
-        return result;
     }
 
     @Test
@@ -787,7 +764,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(10.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -825,7 +802,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -856,7 +833,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -887,7 +864,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -962,7 +939,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Test123", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, student, originalAssessor);
         textSubmission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? now() : null);
-        resultRepo.save(textSubmission.getLatestResult());
+        resultRepository.save(textSubmission.getLatestResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
@@ -1057,10 +1034,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exam = examRepository.save(exam);
 
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
-        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         TextExercise exercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup1);
         exercise.setAssessmentType(assessmentType);
-        exercise = exerciseRepo.save(exercise);
+        exercise = exerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
 
         // add student submission
@@ -1075,7 +1052,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // verify setup
         assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
         assertThat(exam.getEndDate()).isBefore(now());
-        var optionalFetchedExercise = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
+        var optionalFetchedExercise = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
         assertThat(optionalFetchedExercise).isPresent();
         final var exerciseWithParticipation = optionalFetchedExercise.get();
         studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().iterator().next();
@@ -1085,7 +1062,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("withExerciseGroups", "true");
         Exam examReturned = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        examReturned.getExerciseGroups().get(0).getExercises().forEach(exerciseExamReturned -> {
+        examReturned.getExerciseGroups().getFirst().getExercises().forEach(exerciseExamReturned -> {
             assertThat(exerciseExamReturned.getNumberOfParticipations()).isNotNull();
             assertThat(exerciseExamReturned.getNumberOfParticipations()).isEqualTo(1);
         });
@@ -1113,13 +1090,12 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
-        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> {
-            feedback.setDetailText("Good work here");
-        }).collect(Collectors.toCollection(ArrayList::new));
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
         TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(feedbacks);
         Result firstSubmittedManualResult = request.postWithResponseBody("/api/participations/" + submissionWithoutFirstAssessment.getParticipation().getId() + "/results/"
@@ -1130,8 +1106,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isNotNull();
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isNotNull();
         assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
 
         // verify that the result contains the relationship
@@ -1150,7 +1126,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
@@ -1186,7 +1162,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
@@ -1215,8 +1191,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
                 paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1)).isEqualTo(secondSubmittedManualResult);
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(1)).isEqualTo(secondSubmittedManualResult);
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
@@ -1250,15 +1226,15 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"));
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
-        Submission submission = submissions.get(0);
+        Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(2);
-        Result firstResult = submission.getResults().get(0);
+        Result firstResult = submission.getResults().getFirst();
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/text-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
-        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(1);
-        assertThat(submission.getResults().get(0)).isEqualTo(lastResult);
+        assertThat(submission.getResults().getFirst()).isEqualTo(lastResult);
     }
 
     @Test
@@ -1326,7 +1302,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         request.putWithResponseBody("/api/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
                 + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
 
-        feedbacks.remove(0);
+        feedbacks.removeFirst();
 
         request.putWithResponseBody("/api/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
                 + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
@@ -1342,7 +1318,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         verify(textBlockService, times(irrelevantCallCount + 3)).findAllBySubmissionId(textSubmission.getId());
 
         Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
-        assertThat(textBlocks).allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission.get(block.getId())));
+        final String[] ignoringFields = { "submission.results", "submission.submissionDate", "submission.participation", "submission.blocks", "submission.versions" };
+        assertThat(textBlocks).allSatisfy(block -> assertThat(block).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(blocksSubmission.get(block.getId())));
     }
 
     /**

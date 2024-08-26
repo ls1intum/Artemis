@@ -15,7 +15,6 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,6 +28,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.service.exam.ExamQuizQuestionsGenerator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface StudentExamRepository extends JpaRepository<StudentExam, Long> {
+public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long studentExamId);
@@ -314,11 +314,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             """)
     void startStudentExam(@Param("studentExamId") Long studentExamId, @Param("startedDate") ZonedDateTime startedDate);
 
-    @NotNull
-    default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
-        return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));
-    }
-
     /**
      * Return the StudentExam of the participation's user, if possible
      *
@@ -328,7 +323,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      */
     default Optional<StudentExam> findStudentExam(Exercise exercise, StudentParticipation participation) {
         if (exercise.isExamExercise()) {
-            var examUser = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Exam Participation with " + participation.getId() + " has no student!"));
+            var examUser = getArbitraryValueElseThrow(participation.getStudent());
             return findByExerciseIdAndUserId(exercise.getId(), examUser.getId());
         }
         return Optional.empty();
@@ -342,7 +337,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      */
     @NotNull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
-        return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+        return getValueElseThrow(findWithExercisesById(studentExamId), studentExamId);
     }
 
     /**
@@ -353,7 +348,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      */
     @NotNull
     default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
-        return findWithExercisesSubmissionPolicyAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+        return getValueElseThrow(findWithExercisesSubmissionPolicyAndSessionsById(studentExamId), studentExamId);
     }
 
     /**
@@ -365,7 +360,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      */
     @NotNull
     default Integer findMaxWorkingTimeByExamIdElseThrow(Long examId) {
-        return findMaxWorkingTimeByExamId(examId).orElseThrow(() -> new EntityNotFoundException("No student exams found for exam id " + examId));
+        return getArbitraryValueElseThrow(findMaxWorkingTimeByExamId(examId), Long.toString(examId));
     }
 
     /**
@@ -379,6 +374,11 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, ExamQuizQuestionsGenerator examQuizQuestionsGenerator) {
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
+
+        // In case the total number of exercises in the exam is not set by the instructor
+        if (exam.getNumberOfExercisesInExam() == null) {
+            throw new EntityNotFoundException("The number of exercises in the exam " + exam.getId() + " does not exist");
+        }
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Determine the default working time by computing the duration between start and end date of the exam
@@ -474,4 +474,18 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             WHERE se.id IN :ids
             """)
     List<StudentExam> findAllWithEagerExercisesById(@Param("ids") List<Long> ids);
+
+    /**
+     * Gets the longest working time of the exam with the given id
+     *
+     * @param examId the id of the exam
+     * @return number longest working time of the exam
+     */
+    @Query("""
+                SELECT MAX(se.workingTime)
+                FROM StudentExam se
+                JOIN se.exam e
+                WHERE e.id = :examId
+            """)
+    Integer findLongestWorkingTimeForExam(@Param("examId") Long examId);
 }

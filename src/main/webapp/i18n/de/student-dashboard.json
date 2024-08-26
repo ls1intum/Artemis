@@ -4,6 +4,7 @@
             "title": "Deine aktuellen Kurse",
             "recentlyAccessed": "Zuletzt besuchte Kurse",
             "otherCourses": "Andere Kurse",
+            "noCourses": "Du bist in keinem Kurs eingeschrieben. Schreibe dich manuell ein oder kontaktiere die Lehrenden.",
             "exerciseTitle": "Aktuelle aktive Übung von \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Aktuelle Übung von \"{{ course }}\":",
             "examTitle": "Aktuelle Prüfung von \"{{ course }}\":",
@@ -34,18 +35,59 @@
             "general": {
                 "noDataFound": "Keine Einträge gefunden."
             },
+            "sidebar": {
+                "past": "Vorangegangen",
+                "current": "Aktuell",
+                "dueSoon": "Bald fällig",
+                "future": "Zukünftig",
+                "noDueDate": "Unbefristet",
+                "noDate": "Ohne Datum",
+                "all": "Übungsgruppen",
+                "registered": "Meine Übungsgruppen",
+                "further": "Weitere Übungsgruppen",
+                "real": "Klausuren",
+                "test": "Testklausuren",
+                "start": "Beginn",
+                "workingTime": "Bearbeitungszeit",
+                "attainablePoints": "Erreichbare Punkte",
+                "noUpcomingSession": "Kein Termin",
+                "header": "Konversationen",
+                "show": "Konversationen zeigen",
+                "hide": "Konversationen ausblenden",
+                "notFound": "Keine Konversation gefunden",
+                "favoriteChannels": "Favoriten",
+                "hiddenChannels": "Ausgeblendet",
+                "channels": "Kanäle",
+                "generalChannels": "Allgemein",
+                "exerciseChannels": "Aufgaben",
+                "lectureChannels": "Vorlesungen",
+                "examChannels": "Klausuren",
+                "createChannel": "Kanal erstellen",
+                "browseChannels": "Kanäle durchsuchen",
+                "groupChats": "Gruppen-Chats",
+                "directMessages": "Direktnachrichten",
+                "filterConversationPlaceholder": "Konversationen filtern"
+            },
             "menu": {
                 "exercises": "Aufgaben",
+                "textExercise": "Textaufgabe",
+                "fileUploadExercise": "Datei-Upload-Aufgabe",
+                "programmingExercise": "Programmieraufgabe",
+                "modelingExercise": "Modellierungsaufgabe",
+                "quizExercise": "Quizaufgabe",
+                "repository": "Repository",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
                 "competencies": "Kompetenzen",
                 "learningPath": "Lernpfad",
+                "dashboard": "Übersichtsseite",
                 "tutorialGroups": "Tutorien",
+                "more": "Mehr",
                 "exams": "Klausuren",
                 "testExam": "Testklausur",
                 "communication": "Kommunikation",
-                "messages": "Nachrichten",
-                "plagiarismCases": "Plagiatsfälle"
+                "plagiarismCases": "Plagiatsfälle",
+                "gradingSystem": "Notenschlüssel"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
@@ -174,6 +216,12 @@
             "competencies": {
                 "noData": "Es sind keine Kompetenzen für diesen Kurs vorhanden."
             },
+            "tutorialGroups": {
+                "selectTutorialGroup": "Bitte wähle eine Übungsgruppe aus."
+            },
+            "exams": {
+                "selectExam": "Bitte wähle eine Klausur aus."
+            },
             "lectureList": {
                 "lectureGroupHeader": "(Vorlesungen: {{ total }})",
                 "totalLectures": "Vorlesungen insgesamt:",
@@ -190,7 +238,8 @@
                 "notReleased": "Nicht freigegeben",
                 "version": "Version",
                 "isDownloading": "Wird heruntergeladen...",
-                "downloadMergedPdf": "Vollständiges PDF herunterladen"
+                "downloadMergedPdf": "Vollständiges PDF herunterladen",
+                "selectLecture": "Bitte wähle eine Vorlesung aus."
             },
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
@@ -208,7 +257,7 @@
                 "instructorActions": {
                     "title": "Aktionen für Lehrende:",
                     "titleTutor": "Aktionen für Tutor:innen",
-                    "scores": "Bewertungen",
+                    "scores": "Ergebnisse",
                     "statistics": "Statistiken"
                 },
                 "notParticipated": "Nicht teilgenommen",
@@ -238,7 +287,8 @@
                 "complaintPossible": "Beschwerde möglich:",
                 "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben.",
                 "presented": "Präsentiert:",
-                "presentation": "Präsentation:"
+                "presentation": "Präsentation:",
+                "selectExercise": "Bitte wähle eine Aufgabe aus."
             }
         }
     }

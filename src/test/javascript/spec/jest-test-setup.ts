@@ -6,6 +6,7 @@ import 'jest-canvas-mock';
 import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
 import { TextDecoder, TextEncoder } from 'util';
+import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
 
 /*
  * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
@@ -15,7 +16,7 @@ import { TextDecoder, TextEncoder } from 'util';
  * on the document.
  */
 document.queryCommandSupported = () => false;
-import 'monaco-editor/esm/vs/editor/edcore.main';
+import 'monaco-editor/esm/vs/editor/edcore.main'; // Do not move this import.
 
 failOnConsole({
     shouldFailOnWarn: true,
@@ -26,7 +27,8 @@ failOnConsole({
 const noop = () => {};
 
 const mock = () => {
-    let storage = {};
+    let storage: { [key: string]: any } = {};
+
     return {
         getItem: (key: any) => (key in storage ? storage[key] : null),
         setItem: (key: any, value: any) => (storage[key] = value || ''),
@@ -53,13 +55,6 @@ Object.defineProperty(window, 'getComputedStyle', {
     }),
 });
 
-Object.defineProperty(window, 'location', {
-    value: {
-        hash: '',
-        href: 'https://artemis.fake/test',
-    },
-});
-
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: jest.fn().mockImplementation((query) => ({
@@ -74,5 +69,8 @@ Object.defineProperty(window, 'matchMedia', {
     })),
 });
 
-// Prevents an error with the monaco editor tests
+// Prevents errors with the monaco editor tests
 Object.assign(global, { TextDecoder, TextEncoder });
+// Custom language definitions load clipboardService.js, which depends on ClipboardItem. This must be mocked for the tests.
+Object.assign(window.navigator, { clipboard: { writeText: () => Promise.resolve(), write: () => Promise.resolve() } });
+Object.assign(global, { ClipboardItem: jest.fn().mockImplementation(() => new MockClipboardItem()) });

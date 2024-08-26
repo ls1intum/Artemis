@@ -15,7 +15,6 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
+public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long> {
 
     @Query("""
             SELECT e
@@ -70,7 +70,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             WHERE e.course.id = :courseId
             """)
-    Set<Exercise> findAllExercisesByCourseId(@Param("courseId") Long courseId);
+    Set<Exercise> findAllExercisesByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT e
@@ -347,6 +347,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
                 LEFT JOIN FETCH e.posts
                 LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.submissionPolicy
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
@@ -482,13 +483,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Long getTeamParticipationCountById(@Param("exerciseId") Long exerciseId);
 
     @NotNull
-    default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
-        return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-    }
-
-    @NotNull
     default Exercise findWithCompetenciesByIdElseThrow(long exerciseId) throws EntityNotFoundException {
-        return findWithCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        return getValueElseThrow(findWithCompetenciesById(exerciseId), exerciseId);
     }
 
     /**
@@ -499,7 +495,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      */
     @NotNull
     default Exercise findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(Long exerciseId) {
-        return findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        return getValueElseThrow(findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId), exerciseId);
     }
 
     /**
@@ -531,11 +527,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      */
     @NotNull
     default Exercise findByIdWithStudentParticipationsElseThrow(Long exerciseId) {
-        return findByIdWithEagerParticipations(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        return getValueElseThrow(findByIdWithEagerParticipations(exerciseId), exerciseId);
     }
 
     default Exercise findByIdWithEagerExampleSubmissionsElseThrow(Long exerciseId) {
-        return findByIdWithEagerExampleSubmissions(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        return getValueElseThrow(findByIdWithEagerExampleSubmissions(exerciseId), exerciseId);
     }
 
     /**

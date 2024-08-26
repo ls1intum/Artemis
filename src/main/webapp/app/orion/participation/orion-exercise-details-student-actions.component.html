@@ -1,5 +1,5 @@
 <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [smallButtons]="smallButtons" [examMode]="examMode">
-    <ng-template #overrideCloneOnlineEditorButton>
+    <ng-template #overrideCodeAndOnlineEditorButton>
         @if (isOfflineIdeAllowed && (orionState.view !== ExerciseView.STUDENT || orionState.opened !== this.exercise.id)) {
             <jhi-ide-button
                 [featureToggle]="FeatureToggle.ProgrammingExercises"

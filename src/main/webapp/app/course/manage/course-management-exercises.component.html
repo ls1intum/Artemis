@@ -24,9 +24,7 @@
         <jhi-course-management-exercises-search (exerciseFilter)="exerciseFilter = $event" />
     }
     @if (showSearch && getFilteredExerciseCount() === 0 && !exerciseFilter.isEmpty()) {
-        <div class="alert alert-secondary" role="alert">
-            {{ 'artemisApp.course.exercise.search.noResults' | artemisTranslate }}
-        </div>
+        <div class="alert alert-secondary" role="alert" jhiTranslate="artemisApp.course.exercise.search.noResults"></div>
     }
     <jhi-course-exercise-card
         [headingJhiTranslate]="'artemisApp.course.programmingExercises'"
@@ -44,7 +42,7 @@
                     course: course,
                     programmingExerciseCountCallback: setProgrammingExerciseCount.bind(this),
                     exerciseFilter: exerciseFilter,
-                    filteredProgrammingExercisesCountCallback: setFilteredProgrammingExerciseCount.bind(this)
+                    filteredProgrammingExercisesCountCallback: setFilteredProgrammingExerciseCount.bind(this),
                 }
             "
             [embedded]="true"

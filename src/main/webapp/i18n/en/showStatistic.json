@@ -7,7 +7,7 @@
             "nextStatistic": "Next Statistic",
             "releaseStatistic": "Release Statistics",
             "rereleaseStatistic": "Revoke Statistics",
-            "switchToRated": "Show rated Results",
+            "switchToRated": "Show graded Results",
             "switchToUnrated": "Show unrated Results",
             "showSolution": "Show Solution",
             "hideSolution": "Hide Solution",
@@ -17,20 +17,20 @@
             "quizQuestions": "Quiz questions",
             "quizPointStatistic": {
                 "maxScore": "Maximum Points: ",
-                "titleRated": "Point Distribution (rated)",
-                "titleUnrated": "Point Distribution (unrated)",
+                "titleRated": "Point Distribution (graded)",
+                "titleUnrated": "Point Distribution (ungraded)",
                 "xAxes": "Points",
                 "yAxes": "Amount"
             },
             "quizStatistic": {
                 "average": "Average",
-                "titleRated": "Quiz Statistic (rated)",
-                "titleUnrated": "Quiz Statistic (unrated)",
+                "titleRated": "Quiz Statistic (graded)",
+                "titleUnrated": "Quiz Statistic (ungraded)",
                 "xAxes": "Questions",
                 "yAxes": "Correct Solutions"
             },
             "questionStatistic": {
-                "titleRated": "Answer Distribution (rated)",
+                "titleRated": "Answer Distribution (graded)",
                 "titleUnrated": "Answer Distribution (unrated)",
                 "xAxes": "Answers",
                 "yAxes": "Amount",

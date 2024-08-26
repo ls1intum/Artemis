@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,14 +18,18 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponses;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedbackRequests;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
+public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Long> {
 
     @Query("""
             SELECT c
@@ -145,7 +148,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      *
      * @param exerciseIds   - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
-     * @return number of complaints associated to exercise exerciseId
+     * @return list of exercise ids with the number of complaints based on the complaint type
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
@@ -160,11 +163,11 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
     /**
-     * This method counts the number of complaints by complaint type associated to an exercise id
+     * This method counts the number of complaints by complaint type associated to an exercise id ignoring test runs
      *
      * @param exerciseIds   - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
-     * @return number of complaints associated to exercise exerciseId
+     * @return list of exercise ids with the number of complaints based on the complaint type
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
@@ -517,4 +520,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             GROUP BY cr.reviewer.id
             """)
     List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    default Complaint findWithEagerAssessorByIdElseThrow(Long complaintId) {
+        return getValueElseThrow(findByIdWithEagerAssessor(complaintId), complaintId);
+    }
 }

@@ -17,7 +17,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseFactory;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -27,11 +35,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseFactory;
+import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -43,9 +50,6 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private ResultRepository resultRepository;
@@ -318,7 +322,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         Exam exam = examUtilService.addExam(course1, visibleDate, startDate, endDate);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
+        var exercise = exam.getExerciseGroups().getFirst().getExercises().iterator().next();
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
         assertThat(isAllowed).isFalse();
@@ -334,7 +338,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         Exam exam = examUtilService.addExam(course1, visibleDate, startDate, endDate, publishResultDate);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
+        var exercise = exam.getExerciseGroups().getFirst().getExercises().iterator().next();
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
         assertThat(isAllowed).isFalse();

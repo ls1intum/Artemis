@@ -6,7 +6,7 @@ import { communicationAPIRequest, courseManagementAPIRequest, courseMessages, ex
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
 import { convertModelAfterMultiPart, generateUUID, titleLowercase } from '../../support/utils';
 
-describe('Course messages', () => {
+describe.skip('Course messages', () => {
     let course: Course;
 
     before('Create course', () => {

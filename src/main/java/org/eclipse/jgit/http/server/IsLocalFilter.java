@@ -29,15 +29,18 @@ import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
  */
 class IsLocalFilter implements Filter {
 
-    @Override public void init(FilterConfig config) throws ServletException {
+    @Override
+    public void init(FilterConfig config) throws ServletException {
         // Do nothing.
     }
 
-    @Override public void destroy() {
+    @Override
+    public void destroy() {
         // Do nothing.
     }
 
-    @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         if (isLocal(getRepository(request))) {
             chain.doFilter(request, response);
         }

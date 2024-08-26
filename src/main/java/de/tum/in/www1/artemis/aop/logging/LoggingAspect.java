@@ -1,21 +1,26 @@
 package de.tum.in.www1.artemis.aop.logging;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import tech.jhipster.config.JHipsterConstants;
 
 /**
  * Aspect for logging execution of service and repository Spring components.
- *
+ * <p>
  * By default, it only runs with the "dev" profile.
  */
 @Aspect
@@ -59,8 +64,19 @@ public class LoggingAspect {
             return;
         }
 
+        if (e instanceof LocalVCAuthException) {
+            if (Objects.equals(e.getMessage(), "No authorization header provided")) {
+                // ignore, this is a common case and does not need to be logged
+                return;
+            }
+            else if (e.getMessage() != null && e.getMessage().startsWith("The username has to be")) {
+                // ignore, this is a common case and does not need to be logged
+                return;
+            }
+        }
+
         if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT))) {
-            log.error("Exception in {}.{}() with cause = \'{}\' and exception = \'{}\'", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(),
+            log.error("Exception in {}.{}() with cause = '{}' and exception = '{}'", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(),
                     e.getCause() != null ? e.getCause() : "NULL", e.getMessage(), e);
         }
         else {

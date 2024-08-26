@@ -34,6 +34,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
@@ -264,7 +266,7 @@ public class TutorialGroupSessionResource {
         checkEntityIdMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToCancel.getTutorialGroup(), null);
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
-        if (tutorialGroupStatusDTO != null && tutorialGroupStatusDTO.status_explanation() != null && tutorialGroupStatusDTO.status_explanation().trim().length() > 0) {
+        if (tutorialGroupStatusDTO != null && tutorialGroupStatusDTO.status_explanation() != null && !tutorialGroupStatusDTO.status_explanation().trim().isEmpty()) {
             sessionToCancel.setStatusExplanation(tutorialGroupStatusDTO.status_explanation().trim());
         }
         sessionToCancel = tutorialGroupSessionRepository.save(sessionToCancel);
@@ -282,13 +284,13 @@ public class TutorialGroupSessionResource {
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {
+    public ResponseEntity<TutorialGroupSession> activate(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId) throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToActivate.getTutorialGroupFreePeriod() != null) {
             throw new BadRequestException("You can not activate a session that is cancelled by a overlapping with a free period");
         }
-        checkEntityIdMatchesPathIds(sessionToActivate, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.ofNullable(sessionId));
+        checkEntityIdMatchesPathIds(sessionToActivate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToActivate.getTutorialGroup(), null);
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);
@@ -330,12 +332,14 @@ public class TutorialGroupSessionResource {
     /**
      * DTO used to send the status explanation when i.g. cancelling a tutorial group session
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupStatusDTO(String status_explanation) {
     }
 
     /**
      * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupSessionDTO(@NotNull LocalDate date, @NotNull LocalTime startTime, @NotNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
 
         public void validityCheck() {

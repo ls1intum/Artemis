@@ -1,6 +1,12 @@
 package de.tum.in.www1.artemis.domain.competency;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
@@ -14,29 +20,29 @@ public class CompetencyRelation extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "tail_competency_id", nullable = false)
-    private Competency tailCompetency;
+    private CourseCompetency tailCompetency;
 
     @ManyToOne
     @JoinColumn(name = "head_competency_id", nullable = false)
-    private Competency headCompetency;
+    private CourseCompetency headCompetency;
 
     @Column(name = "type", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private RelationType type;
 
-    public Competency getTailCompetency() {
+    public CourseCompetency getTailCompetency() {
         return tailCompetency;
     }
 
-    public void setTailCompetency(Competency tailCompetency) {
+    public void setTailCompetency(CourseCompetency tailCompetency) {
         this.tailCompetency = tailCompetency;
     }
 
-    public Competency getHeadCompetency() {
+    public CourseCompetency getHeadCompetency() {
         return headCompetency;
     }
 
-    public void setHeadCompetency(Competency headCompetency) {
+    public void setHeadCompetency(CourseCompetency headCompetency) {
         this.headCompetency = headCompetency;
     }
 

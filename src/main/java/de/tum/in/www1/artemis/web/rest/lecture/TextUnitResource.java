@@ -10,7 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
@@ -86,18 +92,18 @@ public class TextUnitResource {
             throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idNull");
         }
 
-        var textUnit = textUnitRepository.findByIdWithCompetenciesBidirectional(textUnitForm.getId()).orElseThrow();
+        var existingTextUnit = textUnitRepository.findByIdWithCompetencies(textUnitForm.getId()).orElseThrow();
 
-        if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
+        if (existingTextUnit.getLecture() == null || existingTextUnit.getLecture().getCourse() == null || !existingTextUnit.getLecture().getId().equals(lectureId)) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
-        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, existingTextUnit.getLecture(), null);
 
-        textUnitForm.setId(textUnit.getId());
-        textUnitForm.setLecture(textUnit.getLecture());
+        textUnitForm.setId(existingTextUnit.getId());
+        textUnitForm.setLecture(existingTextUnit.getLecture());
         TextUnit result = textUnitRepository.save(textUnitForm);
 
-        competencyProgressService.updateProgressByLearningObjectAsync(result);
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingTextUnit, Optional.of(textUnitForm));
 
         return ResponseEntity.ok(result);
     }
@@ -131,7 +137,7 @@ public class TextUnitResource {
         textUnit.setLecture(lecture);
         lecture.addLectureUnit(textUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
-        TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
+        TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().getLast();
 
         competencyProgressService.updateProgressByLearningObjectAsync(persistedTextUnit);
 

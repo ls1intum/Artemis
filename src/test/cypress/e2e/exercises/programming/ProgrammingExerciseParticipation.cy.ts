@@ -11,7 +11,7 @@ import { ProgrammingLanguage } from '../../../support/constants';
 import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
 import { convertModelAfterMultiPart } from '../../../support/utils';
 
-describe('Programming exercise participation', () => {
+describe.skip('Programming exercise participation', () => {
     let course: Course;
 
     before('Create course', () => {

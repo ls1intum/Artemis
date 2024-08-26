@@ -1,11 +1,18 @@
 package de.tum.in.www1.artemis.team;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -202,7 +209,7 @@ public class TeamUtilService {
      * @return The created Team
      */
     public Team addTeamForExercise(Exercise exercise, User owner) {
-        return addTeamsForExercise(exercise, 1, owner).get(0);
+        return addTeamsForExercise(exercise, 1, owner).getFirst();
     }
 
     /**
@@ -214,7 +221,7 @@ public class TeamUtilService {
      * @return The created Team
      */
     public Team addTeamForExercise(Exercise exercise, User owner, String loginPrefix) {
-        return addTeamsForExercise(exercise, "team", loginPrefix, 1, owner).get(0);
+        return addTeamsForExercise(exercise, "team", loginPrefix, 1, owner).getFirst();
     }
 
     /**

@@ -119,7 +119,16 @@ describe('LectureAttachmentsComponent', () => {
 
     it('should load existing lecture', fakeAsync(() => {
         comp.lectureId = 42;
-        const findWithDetailsStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(new HttpResponse({ body: { ...lecture, id: 42 } })));
+        const findWithDetailsStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {
+                        ...lecture,
+                        id: 42,
+                    },
+                }),
+            ),
+        );
         const findAllAttachmentsByLectureId = jest.spyOn(attachmentService, 'findAllByLectureId').mockReturnValue(of(new HttpResponse({ body: attachments })));
         fixture.detectChanges();
         expect(findWithDetailsStub).toHaveBeenCalledWith(42);
@@ -149,16 +158,14 @@ describe('LectureAttachmentsComponent', () => {
     }));
 
     it('should not accept too large file', fakeAsync(() => {
-        attachmentServiceCreateStub.mockReturnValue(throwError(new Error('File too large')));
+        attachmentServiceCreateStub.mockReturnValue(throwError(() => new Error('File too large')));
         fixture.detectChanges();
         const addAttachmentButton = fixture.debugElement.query(By.css('#add-attachment'));
         expect(comp.attachmentToBeCreated).toBeUndefined();
         expect(addAttachmentButton).not.toBeNull();
         addAttachmentButton.nativeElement.click();
         fixture.detectChanges();
-        const fakeBlob = {};
-        fakeBlob['name'] = 'Test-File.pdf';
-        fakeBlob['size'] = 100000000000000000;
+        const fakeBlob = { name: 'Test-File.pdf', size: 100000000000000000 };
         comp.attachmentFile = fakeBlob as File;
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();
@@ -198,7 +205,7 @@ describe('LectureAttachmentsComponent', () => {
         comp.fileInput = { nativeElement: { value: 'Test-File.pdf' } };
         comp.attachmentToBeCreated = attachment;
         comp.attachmentFile = file;
-        const attachmentServiceCreateStub = jest.spyOn(attachmentService, 'create').mockReturnValue(throwError(new Error(errorMessage)));
+        const attachmentServiceCreateStub = jest.spyOn(attachmentService, 'create').mockReturnValue(throwError(() => new Error(errorMessage)));
         comp.saveAttachment();
         expect(attachmentServiceCreateStub).toHaveBeenCalledExactlyOnceWith(attachment, file);
         expect(comp.attachmentToBeCreated).toEqual(attachment);
@@ -236,7 +243,7 @@ describe('LectureAttachmentsComponent', () => {
             // Do change
             attachment.name = 'New Name';
 
-            const attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(throwError(new Error(errorMessage)));
+            const attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(throwError(() => new Error(errorMessage)));
             comp.saveAttachment();
             expect(attachmentServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(1, attachment, withFile ? file : undefined, { notificationText: notification });
             expect(comp.attachmentToBeCreated).toEqual(attachment);
@@ -326,7 +333,7 @@ describe('LectureAttachmentsComponent', () => {
         } as Attachment;
         const errorMessage = 'Some error message';
         comp.dialogError$.pipe(take(1)).subscribe((error) => expect(error).toBe(errorMessage));
-        const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(throwError(new Error(errorMessage)));
+        const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(throwError(() => new Error(errorMessage)));
         comp.deleteAttachment(toDelete);
         expect(comp.attachments).toHaveLength(2);
         expect(attachmentServiceDeleteStub).toHaveBeenCalledExactlyOnceWith(attachmentId);

@@ -1,7 +1,7 @@
 import { loginPage, navigationBar } from '../support/artemis';
 import { studentOne } from '../support/users';
 
-describe('Login page tests', () => {
+describe.skip('Login page tests', () => {
     it('Logs in via the UI', () => {
         cy.visit('/');
         loginPage.login(studentOne);

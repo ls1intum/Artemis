@@ -3,7 +3,6 @@ import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
-import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
@@ -16,7 +15,6 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
         ArtemisSharedPipesModule,
-        ArtemisCoursesRoutingModule,
         ArtemisExerciseButtonsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         OrionModule,

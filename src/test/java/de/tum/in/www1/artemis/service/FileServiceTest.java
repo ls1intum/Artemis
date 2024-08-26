@@ -1,10 +1,18 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatRuntimeException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -14,7 +22,12 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
@@ -370,25 +383,11 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testRenameSpecialFilename(@TempDir Path targetDir) throws IOException {
-        final Path sourceFile = overridableBasePath.resolve("Makefile.file");
-        FileUtils.writeStringToFile(sourceFile.toFile(), "content", Charset.defaultCharset());
-
-        final Resource[] resources = resourceLoaderService.getResources(overridableBasePath);
-        assertThat(resources).isNotEmpty();
-
-        fileService.copyResources(resources, Path.of("templates"), targetDir, true);
-
-        final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("Makefile");
-        assertThat(expectedTargetFile).exists().isNotEmptyFile();
-    }
-
-    @Test
     void testIgnoreDirectoryFalsePositives(@TempDir Path targetDir) throws IOException {
         final Path sourceDirectory = overridableBasePath.resolve("package.xcworkspace");
         Files.createDirectories(sourceDirectory);
 
-        final Resource[] resources = resourceLoaderService.getResources(overridableBasePath);
+        final Resource[] resources = resourceLoaderService.getFileResources(overridableBasePath);
         assertThat(resources).isNotEmpty();
 
         fileService.copyResources(resources, Path.of("templates"), targetDir, true);

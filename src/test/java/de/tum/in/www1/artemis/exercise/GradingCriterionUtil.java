@@ -5,7 +5,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
 
 public final class GradingCriterionUtil {
 

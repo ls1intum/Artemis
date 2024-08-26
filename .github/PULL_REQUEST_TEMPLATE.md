@@ -5,15 +5,16 @@
 #### General
 <!-- Remove tasks that are not applicable for your PR. Please only put the PR into ready for review, if all relevant tasks are checked! -->
 <!-- You only need to choose one of the first two check items: Generally, test on the test servers. -->
-<!-- If it's only a small change, testing it locally is acceptable and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
+<!-- If it's only a small change, testing it locally is acceptable, and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
 - [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.cit.tum.de/dev/guidelines/language-guidelines/).
-- [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.cit.tum.de/dev/development-process/#naming-conventions-for-github-pull-requests).
+- [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html#naming-conventions-for-github-pull-requests).
 
 
 #### Server
-- [ ] **Important**: I implemented the changes with a very good performance and prevented too many (unnecessary) database calls.
+- [ ] **Important**: I implemented the changes with a [very good performance](https://docs.artemis.cit.tum.de/dev/guidelines/performance/) and prevented too many (unnecessary) and too complex database calls.
+- [ ] I **strictly** followed the principle of **data economy** for all database calls.
 - [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/).
 - [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
 - [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/#rest-endpoint-best-practices-for-authorization) and checked the course groups for all new REST Calls (security).
@@ -21,7 +22,8 @@
 
 
 #### Client
-- [ ] **Important**: I implemented the changes with a very good performance, prevented too many (unnecessary) REST calls and made sure the UI is responsive, even with large data.
+- [ ] **Important**: I implemented the changes with a very good performance, prevented too many (unnecessary) REST calls and made sure the UI is responsive, even with large data (e.g. using paging).
+- [ ] I **strictly** followed the principle of **data economy** for all client-server REST calls.
 - [ ] I **strictly** followed the [client coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/).
 - [ ] Following the [theming guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client-design/), I specified colors only in the theming variable files and checked that the changes look consistent in both the light and the dark theme.
 - [ ] I added multiple integration tests (Jest) related to the features (with a high test coverage), while following the [test guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client-tests/).
@@ -74,14 +76,15 @@ Prerequisites:
 > [!NOTE]
 > These badges show the state of the test servers.
 > Green = Currently available, Red = Currently locked
+> Click on the badges to get to the test servers.
 
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test1)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test2)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test3)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test1)](https://artemis-test1.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test2)](https://artemis-test2.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test3)](https://artemis-test3.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)](https://artemis-test4.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)](https://artemis-test5.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)](https://artemis-test6.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)](https://artemis-test9.artemis.cit.tum.de)
 
 ### Review Progress
 <!-- Each PR should be reviewed by at least two other developers. The code, the functionality (= manual test) and the exam mode need to be reviewed. -->
@@ -91,8 +94,8 @@ Prerequisites:
 <!-- All PRs that might affect the exam mode (e.g. change a client component that is also used in the exam mode) need an additional verification that the exam mode still works. -->
 
 #### Performance Review
-- [ ] I (as a reviewer) confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance 
-- [ ] I (as a reviewer) confirm that the server changes (in particular related to database calls) are implemented with a very good performance
+- [ ] I (as a reviewer) confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance even for very large courses with more than 2000 students.
+- [ ] I (as a reviewer) confirm that the server changes (in particular related to database calls) are implemented with a very good performance even for very large courses with more than 2000 students.
 #### Code Review
 - [ ] Code Review 1
 - [ ] Code Review 2
@@ -100,6 +103,9 @@ Prerequisites:
 - [ ] Test 1
 - [ ] Test 2
 #### Exam Mode Test
+- [ ] Test 1
+- [ ] Test 2
+#### Performance Tests
 - [ ] Test 1
 - [ ] Test 2
 

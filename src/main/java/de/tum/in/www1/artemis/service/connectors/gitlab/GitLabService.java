@@ -1,14 +1,21 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
-import static org.gitlab4j.api.models.AccessLevel.*;
+import static org.gitlab4j.api.models.AccessLevel.DEVELOPER;
+import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
+import static org.gitlab4j.api.models.AccessLevel.OWNER;
+import static org.gitlab4j.api.models.AccessLevel.REPORTER;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +27,13 @@ import org.apache.http.HttpStatus;
 import org.gitlab4j.api.Constants;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
-import org.gitlab4j.api.models.*;
+import org.gitlab4j.api.models.AccessLevel;
+import org.gitlab4j.api.models.Event;
+import org.gitlab4j.api.models.Group;
+import org.gitlab4j.api.models.Member;
+import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.ProjectHook;
+import org.gitlab4j.api.models.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,13 +45,19 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -71,8 +90,10 @@ public class GitLabService extends AbstractVersionControlService {
 
     public GitLabService(UserRepository userRepository, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UriService uriService,
             GitLabUserManagementService gitLabUserManagementService, GitService gitService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
-        super(gitService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository);
+            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        super(gitService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository,
+                programmingExerciseBuildConfigRepository);
         this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
@@ -312,17 +333,17 @@ public class GitLabService extends AbstractVersionControlService {
         final var details = GitLabPushNotificationDTO.convert(requestBody);
         // Gitlab specifically provide the previous latest commit and the new latest commit after the given push event
         // Here we retrieve the hash of the new latest commit
-        final var gitLabCommitHash = details.getNewHash();
+        final var gitLabCommitHash = details.newHash();
         // Here we search for the commit details for the given commit hash
         // Technically these details should always be present but as this could change, we handle the edge case
-        final var firstMatchingCommit = details.getCommits().stream().filter(com -> gitLabCommitHash.equals(com.getHash())).findFirst();
+        final var firstMatchingCommit = Optional.ofNullable(details.commits()).flatMap(commits -> commits.stream().filter(com -> gitLabCommitHash.equals(com.hash())).findFirst());
         if (firstMatchingCommit.isPresent()) {
             // Fill commit with commit details
             final var gitLabCommit = firstMatchingCommit.get();
-            final var ref = details.getRef().split("/");
+            final var ref = details.ref().split("/");
             var branch = ref[ref.length - 1];
-            var author = gitLabCommit.getAuthor();
-            return new Commit(gitLabCommitHash, author.getName(), gitLabCommit.getMessage(), author.getEmail(), branch);
+            var author = gitLabCommit.author();
+            return new Commit(gitLabCommitHash, author.name(), gitLabCommit.message(), author.email(), branch);
         }
         return new Commit(gitLabCommitHash, null, null, null, null);
     }

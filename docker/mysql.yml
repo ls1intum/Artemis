@@ -5,7 +5,7 @@
 services:
     mysql:
         container_name: artemis-mysql
-        image: docker.io/library/mysql:8.2.0
+        image: docker.io/library/mysql:8.4.0
         pull_policy: if_not_present
         volumes:
             - artemis-mysql-data:/var/lib/mysql
@@ -17,7 +17,7 @@ services:
         # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "3306"
-        command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp --max_connections=100000
+        command: mysqld --lower_case_table_names=1 --tls-version='' --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp --max_connections=100000
         # mbind: Operation not permitted workaround for docker compose (see https://github.com/docker-library/mysql/issues/303)
         cap_add:
             - SYS_NICE  # CAP_SYS_NICE

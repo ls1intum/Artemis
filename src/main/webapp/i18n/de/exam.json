@@ -14,7 +14,7 @@
                 "pdfExampleText": "Beispiel für ein gültiges PDF-Dateiformat:",
                 "pdfFile": {
                     "label": ".pdf-Datei auswählen",
-                    "tooltip": "Bitte wählen Sie eine .pdf-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
+                    "tooltip": "Bitte wähle eine .pdf-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
                 },
                 "dialogTitle": "Bilder hochladen",
                 "allImagesSaved": "Alle Bilder wurden erfolgreich gespeichert.",
@@ -115,12 +115,13 @@
                 "resultTable": "Ergebnistabelle"
             },
             "title": "Klausur",
-            "startExam": "Starten",
+            "startExam": "Klausur Starten",
             "endExam": "Beenden",
             "date": "Datum",
             "time": "Zeit",
             "workingTime": "Bearbeitungszeit",
             "examinedStudent": "Prüfungsteilnehmer:in",
+            "moduleNumber": "Modulnummer",
             "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausurenübersicht des Kurses auf diese Klausur klickst.",
             "course": "Kurs",
             "exercises": "Aufgaben",
@@ -141,6 +142,8 @@
             "updated": "Klausur bearbeitet",
             "imported": "Klausur importiert",
             "deleted": "Klausur \"{{ param }}\" gelöscht",
+            "startCheckBoxText": "Ich bestätige, dass ich die obigen Regeln gelesen habe und dass ich mich während der Prüfung an diese Regeln halten werde.",
+            "endCheckBoxText": "Ich bestätige, dass ich die Prüfung abgeschlossen habe und bereit bin, meine Antworten einzureichen.",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
             "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebenen Hilfsmittel bearbeitet habe.",
             "notConfirmed": "Bitte setze einen Haken in das Kästchen, um fortzufahren.",
@@ -182,11 +185,13 @@
                 "type": {
                     "examWideAnnouncement": "Klausurweite Ankündigung",
                     "workingTimeUpdate": "Bearbeitungszeit Aktualisiert",
-                    "examAttendanceCheck": "Anwesenheitskontrolle"
+                    "examAttendanceCheck": "Anwesenheitskontrolle",
+                    "problemStatementUpdate": "Aufgabenstellung Aktualisiert"
                 },
                 "from": "von",
                 "acknowledge": "Bestätigen",
                 "acknowledgeAll": "Alle bestätigen",
+                "navigateToExercise": "Navigiere zur Aufgabe",
                 "messages": {
                     "workingTimeUpdate": {
                         "titleEveryone": "Die Bearbeitungszeit der Klausur wurde geändert.",
@@ -196,6 +201,10 @@
                     },
                     "examAttendanceCheck": {
                         "description": "Eine Klausur-Aufsicht hat die Anwesenheitskontrolle für dich ausgelöst. Bitte folge den Anweisungen der Aufsicht."
+                    },
+                    "problemStatementUpdate": {
+                        "description": "Die Aufgabenstellung der Aufgabe '{{ exerciseName }}' wurde aktualisiert. Bitte öffne die Aufgabe, um die Änderungen zu sehen.",
+                        "instructorMessage": "Lehrkraft Nachricht:"
                     }
                 }
             }
@@ -269,6 +278,7 @@
         "examParticipation": {
             "timer": "Restzeit: ",
             "timerEndView": "Restzeit: ",
+            "exerciseOverview": "Das ist die Aufgabenübersicht",
             "connected": "Deine Antworten werden alle 30s gespeichert.",
             "ideConnected": "Deine Antworten müssen manuell abgesendet werden.",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
@@ -290,6 +300,7 @@
             "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgabe zu betrachten, navigiere zur Klausurseite ",
             "atLeastTutorStudentExam": "Da du nicht Studierende:r bist, kannst du nicht an der Klausur teilnehmen:",
             "goToExamManagement": "Zur Klausurverwaltung gehen",
+            "goToExamBack": "Gehe zurück, um die Prüfung weiterzumachen",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
@@ -305,17 +316,20 @@
             "bonus": "Bonuspunkte",
             "synced": "Aufgabe gespeichert",
             "notSynced": "Aufgabe nicht gespeichert",
+            "notStarted": "Aufgabe nicht gestartet",
             "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
             "notSubmitted": "Aufgabe nicht eingereicht",
             "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind.",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
-            "handInEarly": "Vorzeitig abgeben",
-            "continueAfterHandInEarly": "Weitermachen",
-            "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
-            "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
-            "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
+            "handInEarly": "Vorzeitig Abgeben",
+            "continueAfterHandInEarly": "Zurück",
+            "attendanceCheck": "Anwesenheitskontrolle",
+            "continueAfterHandInEarlyDescription": "Um mit der Klausur fortzufahren, klicke auf den Button 'Zurück'.",
+            "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen.",
+            "attendanceNotVerifiedWarning": "Deine Anwesenheit wurde noch nicht kontrolliert. Bitte warte, bis deine Anwesenheit kontrolliert wurde, oder kontaktiere die Hörsaalaufsicht wenn du denkst dass ein Fehler aufgetreten ist.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
+            "numberOfSavedExercises": "Anzahl der gespeicherten Aufgaben",
             "submissionSuccessful": {
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
@@ -381,6 +395,7 @@
             "evaluateQuizExerciseFailure": "Es gab einen Fehler bei der Auswertung der Quiz-Aufgaben:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Alle Klausuren der Studierenden überprüft und die nicht eingereichten oder leeren Modellierungs- und Textaufgaben mit 0 Punkten bewertet.",
             "assessUnsubmittedStudentExamsFailure": "Die Klausur ist noch nicht für alle Studierenden beendet.",
+            "assessUnsubmittedStudentExamsIdFailure": "Nicht eingereichte Aufgaben konnten aufgrund einer fehlenden Kurs-ID oder Prüfung-ID nicht bewertet werden.",
             "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Beim Fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.\n\nBestehende Teilnahmen und Abgaben werden ebenfalls gelöscht!",
             "studentExamStatusSuccess": "Alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
@@ -463,6 +478,7 @@
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
+            "examWithAttendanceCheck": "Klausur mit Anwesenheitskontrolle",
             "startText": "Information zu Klausurbeginn",
             "endText": "Information zum Klausurende",
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
@@ -560,6 +576,7 @@
                 "titleInfo": "Der Name der Aufgabengruppe wird den Studierenden als Aufgabenname angezeigt.",
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
+                    "questionLocalVC": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden gelöscht.<br>Alle Studierenden- Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden ebenfalls gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern! ",
                     "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
                 },
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",
@@ -636,7 +653,7 @@
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
-                    "editWorkingTime": "Bis zu einer Minute vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
+                    "editWorkingTime": "Bis zu einer Minute vor dem Ende der Prüfung kannst du deren Dauer verlängern.",
                     "createAnnouncement": "Um wichtige Informationen an alle Studierenden, die gerade an der Klausur arbeiten, zu kommunizieren, kannst du eine Ankündigung machen. Sie wird sofort an alle Studierenden verteilt und angezeigt.",
                     "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
@@ -669,14 +686,20 @@
                     "exerciseTableSingular": "Aufgabe",
                     "points": "Punkte",
                     "numberParticipants": "Teilnehmende",
-                    "variants": "Varianten"
+                    "variants": "Varianten",
+                    "assessmentCheckType": "Check Typ",
+                    "assessmentStatus": "Status",
+                    "assessmentAction": "Aktion",
+                    "checkUnfinishedAssessments": "Unvollständige Bewertungen",
+                    "checkUnassessedQuizzes": "Unbewertete Quizaufgaben",
+                    "checkUnsubmittedExercises": "Nicht eingereichte Aufgaben"
                 }
             },
             "editWorkingTime": {
                 "title": "Prüfungszeit bearbeiten",
                 "label": "Änderung der Prüfungszeit",
                 "duration": "Die neue Dauer der Prüfung beträgt <strong>{{ duration }}</strong>.",
-                "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Wollen Sie die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
+                "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Willst du die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "announcementCreate": {
@@ -732,6 +755,7 @@
             "studentExam": "Klausur ({{ examTitle }})",
             "testRun": "Testlauf ({{ examTitle }})",
             "exercises": "Aufgaben",
+            "overview": "Übersicht",
             "downloadPDF": " PDF herunterladen",
             "student": "Student",
             "name": "Name: ",
@@ -759,7 +783,8 @@
         "studentExam": {
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
-            "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
+            "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!",
+            "deleted": "Testlauf gelöscht"
         },
         "examTimeline": {
             "title": "Klausurverlauf von {{ username }}",

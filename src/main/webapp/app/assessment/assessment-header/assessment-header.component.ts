@@ -93,9 +93,21 @@ export class AssessmentHeaderComponent {
         // if there is no 'save' button
         if (this.result?.completionDate) {
             return true;
+        } else if (Result.hasNonEmptyAssessmentNote(this.result)) {
+            return this.saveDisabledWithAssessmentNotePresent;
         } else {
-            return !this.assessmentsAreValid || !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+            return this.saveDisabledWithoutAssessmentNotePresent;
         }
+    }
+
+    get saveDisabledWithAssessmentNotePresent() {
+        // this is almost identical to submitDisabled, but without the assessmentsAreValid check
+        // otherwise, we wouldn't be able to save the assessment note without making prior changes to the feedback
+        return !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+    }
+
+    get saveDisabledWithoutAssessmentNotePresent() {
+        return !this.assessmentsAreValid || this.saveDisabledWithAssessmentNotePresent;
     }
 
     get submitDisabled() {

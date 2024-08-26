@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -17,9 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class BuildLogResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildLogResource.class);
@@ -31,22 +33,22 @@ public class BuildLogResource {
     }
 
     /**
-     * GET /build-log/{resultId} : get the build log for a given result
+     * GET /build-log/{buildJobId} : get the build log for a given result
      *
-     * @param resultId the id of the result for which to retrieve the build log
+     * @param buildJobId the id of the build job for which to retrieve the build log
      * @return the ResponseEntity with status 200 (OK) and the build log in the body, or with status 404 (Not Found) if the build log could not be found
      */
-    @GetMapping("/build-log/{resultId}")
+    @GetMapping("build-log/{buildJobId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<Resource> getBuildLogForSubmission(@PathVariable long resultId) {
-        log.debug("REST request to get the build log for result {}", resultId);
+    public ResponseEntity<Resource> getBuildLogForBuildJob(@PathVariable String buildJobId) {
+        log.debug("REST request to get the build log for build job {}", buildJobId);
         HttpHeaders responseHeaders = new HttpHeaders();
-        FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForResult(String.valueOf(resultId));
+        FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJobId);
         if (buildLog == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-        responseHeaders.setContentDispositionFormData("attachment", "build-" + resultId + ".log");
+        responseHeaders.setContentDispositionFormData("attachment", "build-" + buildJobId + ".log");
         return new ResponseEntity<>(buildLog, responseHeaders, HttpStatus.OK);
     }
 }

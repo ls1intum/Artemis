@@ -6,7 +6,7 @@
     @if (node.type === NodeType.COMPETENCY_START || node.type === NodeType.COMPETENCY_END) {
         <div class="node-icon-container" [class.node-s]="node.type === NodeType.COMPETENCY_END" [jhiStickyPopover]="popContentCompetency" placement="right" triggers="manual">
             @if (node.type === NodeType.COMPETENCY_START) {
-                <jhi-competency-rings class="m-1" id="competency-start" [progress]="progress" [confidence]="confidence" [mastery]="mastery" [hideTooltip]="true" />
+                <jhi-competency-rings class="m-1" id="competency-start" [progress]="progress" [mastery]="mastery" [hideTooltip]="true" />
             }
             @if (node.type === NodeType.COMPETENCY_END) {
                 <fa-icon id="competency-end" [icon]="getIcon(node)" />

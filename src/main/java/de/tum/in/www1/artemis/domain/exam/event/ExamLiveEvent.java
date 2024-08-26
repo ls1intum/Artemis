@@ -18,7 +18,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
-import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventBaseDTO;
 
 /**
  * Base class for all exam live events. An exam live event indicates that an event or change has occurred during an exam.
@@ -81,11 +81,5 @@ public abstract class ExamLiveEvent extends DomainObject {
         this.studentExamId = studentExamId;
     }
 
-    protected void populateDTO(ExamLiveEventDTO dto) {
-        dto.setId(getId());
-        dto.setCreatedBy(getCreatedBy());
-        dto.setCreatedDate(getCreatedDate());
-    }
-
-    public abstract ExamLiveEventDTO asDTO();
+    public abstract ExamLiveEventBaseDTO asDTO();
 }

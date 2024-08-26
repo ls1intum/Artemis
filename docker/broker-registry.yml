@@ -28,7 +28,7 @@ services:
 
     activemq-broker:
         container_name: artemis-activemq-broker
-        image: docker.io/apache/activemq-artemis:2.31.2-alpine
+        image: docker.io/apache/activemq-artemis:2.33.0-alpine
         pull_policy: if_not_present
         environment:
             ARTEMIS_USER: ${BROKER_USER:-guest}

@@ -6,17 +6,17 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long> {
+public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneChat, Long> {
 
     /**
      * Find all active one-to-one chats of a given user in a given course.
@@ -56,16 +56,21 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
     @Query("""
             SELECT DISTINCT o
             FROM OneToOneChat o
-                LEFT JOIN FETCH o.conversationParticipants p1
-                LEFT JOIN FETCH o.conversationParticipants p2
-                LEFT JOIN FETCH p1.user u1
-                LEFT JOIN FETCH p2.user u2
-                LEFT JOIN FETCH u1.groups
-                LEFT JOIN FETCH u2.groups
+                LEFT JOIN FETCH o.conversationParticipants p
+                LEFT JOIN FETCH p.user u
+                LEFT JOIN FETCH u.groups
             WHERE o.course.id = :courseId
-                AND u1.id = :userIdA
-                AND u2.id = :userIdB
+                AND u.id = :userIdA
+                AND EXISTS (
+                    SELECT 1
+                    FROM ConversationParticipant cp
+                    WHERE cp.conversation = o
+                        AND cp.user.id = :userIdB
+                )
             """)
+    // Exist checks required because we have a many-to-many relationship and hibernate doesn't allow multiple joins on the same table anymore.
+    // We only execute the exists check for the second user, because we can filter the chats by the first user. This reduces the amounts of existence checks to the number of
+    // one-to-one chats userA has in that specific course.
     Optional<OneToOneChat> findWithParticipantsAndUserGroupsInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
     @Query("""

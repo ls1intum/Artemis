@@ -1,31 +1,47 @@
-<div class="row justify-content-between my-1">
-    <div class="col-auto pe-0">
-        <span class="posting-header header-author-date">
-            @if (posting.author) {
-                <span class="posting-author-role" ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}">
-                    <fa-icon [icon]="userAuthorityIcon" />
-                </span>
-                <span class="posting-author">
-                    {{ posting.author!.name }}
-                </span>
-            }
-            @if (postingIsOfToday) {
-                <span class="today-flag">{{ todayFlag | artemisTranslate }}</span>
-            }
-            <span [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
-                {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+<div class="d-flex justify-content-between">
+    <div id="header-author-date" class="d-flex align-items-center gap-2 flex-wrap">
+        @if (posting.author) {
+            <span
+                [jhiTranslate]="userRoleBadge"
+                ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}"
+                class="badge fs-xx-small rounded-3"
+                [ngClass]="'badge-' + userAuthority"
+                id="role-badge"
+            ></span>
+            <span class="fs-small fw-semibold">
+                {{ posting.author?.name }}
             </span>
+        }
+        <span>-</span>
+        @if (postingIsOfToday) {
+            <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-x-small"></span>
+        }
+        <span class="fs-x-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+            {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
         </span>
+        @if (posting.resolved) {
+            <fa-icon
+                [icon]="faCheckSquare"
+                iconSize="xs"
+                class="col-auto pe-0 resolved px-1"
+                [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
+            />
+        }
+        @if (!!isCommunicationPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
+            <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>
+        }
+    </div>
+    <div class="gap-1 d-flex">
         @if (mayEditOrDelete) {
             <fa-icon
                 size="xs"
-                class="ms-1 editIcon clickable icon"
+                class="editIcon clickable icon"
                 [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
                 [icon]="faPencilAlt"
                 (click)="posting.title !== '' ? createEditModal.open() : isModalOpen.emit()"
             />
         }
-        <jhi-post-create-edit-modal #createEditModal [posting]="posting" [isCourseMessagesPage]="isCourseMessagesPage" (isModalOpen)="isModalOpen.emit()" />
+        <jhi-post-create-edit-modal #createEditModal [posting]="posting" [isCommunicationPage]="isCommunicationPage" (isModalOpen)="isModalOpen.emit()" />
         @if (mayEditOrDelete) {
             <jhi-confirm-icon
                 iconSize="xs"
@@ -34,9 +50,6 @@
                 [initialTooltip]="'artemisApp.metis.deletePost' | artemisTranslate"
                 [confirmTooltip]="'artemisApp.metis.confirmDeletePost' | artemisTranslate"
             />
-        }
-        @if (!!isCourseMessagesPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
-            <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
         }
     </div>
 </div>

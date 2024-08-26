@@ -76,7 +76,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
         examInThePast = examUtilService.addExam(course1, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1));
         examInTheFuture = examUtilService.addExam(course1, ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(1));
-        exerciseGroup1 = exam1.getExerciseGroups().get(0);
+        exerciseGroup1 = exam1.getExerciseGroups().getFirst();
         examRepository.save(exam1);
     }
 
@@ -117,7 +117,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(examResult).isEqualTo(exam1);
         examResult = examRepository.findByIdWithExerciseGroupsElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
-        assertThat(examResult.getExerciseGroups().get(0)).isEqualTo(exerciseGroup1);
+        assertThat(examResult.getExerciseGroups().getFirst()).isEqualTo(exerciseGroup1);
     }
 
     @Test
@@ -208,13 +208,15 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         // check if general method works. More sophisticated test are within the ExamIntegrationTests
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1, true);
         assertThat(examChecklistDTO).isNotNull();
-        assertThat(examChecklistDTO.getNumberOfTestRuns()).isZero();
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isZero();
-        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isZero();
-        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isZero();
-        assertThat(examChecklistDTO.getNumberOfAllComplaints()).isZero();
-        assertThat(examChecklistDTO.getNumberOfAllComplaintsDone()).isZero();
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.numberOfTestRuns()).isZero();
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isZero();
+        assertThat(examChecklistDTO.numberOfExamsSubmitted()).isZero();
+        assertThat(examChecklistDTO.numberOfExamsStarted()).isZero();
+        assertThat(examChecklistDTO.numberOfAllComplaints()).isZero();
+        assertThat(examChecklistDTO.numberOfAllComplaintsDone()).isZero();
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.existsUnassessedQuizzes()).isFalse();
+        assertThat(examChecklistDTO.existsUnsubmittedExercises()).isFalse();
     }
 
     @Nested

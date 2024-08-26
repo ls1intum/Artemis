@@ -3,7 +3,11 @@ package de.tum.in.www1.artemis.service.exam;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 import jakarta.annotation.Nullable;
@@ -14,10 +18,19 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.exam.*;
+import de.tum.in.www1.artemis.domain.exam.ExamSession;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.SuspiciousExamSessions;
+import de.tum.in.www1.artemis.domain.exam.SuspiciousSessionReason;
+import de.tum.in.www1.artemis.domain.exam.SuspiciousSessionsAnalysisOptions;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.CourseWithIdDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamSessionDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamWithIdAndCourseDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithIdAndExamAndUserDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SuspiciousExamSessionsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.UserWithIdAndLoginDTO;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 

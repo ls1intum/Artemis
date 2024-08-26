@@ -1,8 +1,8 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { faArrowUpRightFromSquare, faCodeBranch, faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
+import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
@@ -12,7 +12,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
-import { Router } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subscription } from 'rxjs';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -38,12 +37,14 @@ export enum DetailType {
     ProgrammingProblemStatement = 'detail-problem-statement',
     ProgrammingTimeline = 'detail-timeline',
     ProgrammingBuildStatistics = 'detail-build-statistics',
+    ProgrammingCheckoutDirectories = 'detail-checkout-directories',
 }
 
 @Component({
     selector: 'jhi-detail-overview-list',
     templateUrl: './detail-overview-list.component.html',
     styleUrls: ['./detail-overview-list.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly isEmpty = isEmpty;
@@ -62,32 +63,28 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     headlinesRecord: Record<string, string>;
 
     // icons
-    faExclamationTriangle = faExclamationTriangle;
-    faEye = faEye;
-    faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-    faCodeBranch = faCodeBranch;
+    readonly faCodeCompare = faCodeCompare;
 
-    routerLink: string;
-    profileSub: Subscription;
+    WARNING = ButtonType.WARNING;
+
+    profileSubscription: Subscription;
     isLocalVC = false;
 
     constructor(
         private modalService: NgbModal,
         private modelingExerciseService: ModelingExerciseService,
         private alertService: AlertService,
-        private router: Router,
         private profileService: ProfileService,
     ) {}
 
     ngOnInit() {
-        this.routerLink = this.router.url;
         this.headlines = this.sections.map((section) => {
             return {
                 id: section.headline.replaceAll('.', '-'),
                 translationKey: section.headline,
             };
         });
-        this.profileSub = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.isLocalVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
         this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
@@ -100,7 +97,7 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
+        const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: 'diff-view-modal' });
         modalRef.componentInstance.report = gitDiff;
     }
 
@@ -115,6 +112,8 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.profileSub?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
     }
+
+    protected readonly TooltipPlacement = TooltipPlacement;
 }

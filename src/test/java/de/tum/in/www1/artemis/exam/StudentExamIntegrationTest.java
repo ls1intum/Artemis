@@ -40,7 +40,6 @@ import org.gitlab4j.api.GitLabApiException;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -62,7 +61,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.bonus.BonusFactory;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BonusStrategy;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -106,20 +104,17 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BonusRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -130,12 +125,11 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
-import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.WorkingTimeUpdateEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -153,13 +147,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     private ExamRepository examRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
     private ExamUserRepository examUserRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private SubmissionRepository submissionRepository;
@@ -204,16 +192,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -394,8 +373,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         }
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithMultipleTestRuns() throws Exception {
@@ -461,7 +438,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         Set<User> registeredStudents = getRegisteredStudents(numberOfStudents);
         var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
-        Exam exam = examRepository.findByIdElseThrow(studentExams.get(0).getExam().getId());
+        Exam exam = examRepository.findByIdElseThrow(studentExams.getFirst().getExam().getId());
         Course course = exam.getCourse();
 
         if (!early) {
@@ -494,8 +471,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/start-exercises", null, HttpStatus.BAD_REQUEST, null);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentExamForConduction() throws Exception {
@@ -515,8 +490,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 assertThat(exercise.getExerciseGroup().getExercises()).isEmpty();
                 assertThat(exercise.getExerciseGroup().getExam()).isNull();
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(((ProgrammingExercise) exercise).getBuildScript()).isNull();
-                    assertThat(((ProgrammingExercise) exercise).getBuildPlanConfiguration()).isNull();
+                    assertThat(((ProgrammingExercise) exercise).getBuildConfig()).isNull();
                 }
             }
             assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isTrue();
@@ -534,8 +508,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         return headers;
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForConduction_testExam() throws Exception {
@@ -593,7 +565,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             assertThat(exercise.getGradingCriteria()).isNullOrEmpty();
             assertThat(exercise.getGradingInstructions()).isNullOrEmpty();
         }
-        var textExercise = (TextExercise) response.getExercises().get(0);
+        var textExercise = (TextExercise) response.getExercises().getFirst();
         var quizExercise = (QuizExercise) response.getExercises().get(1);
 
         // Check that sensitive information has been removed
@@ -695,9 +667,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        List<Submission> response = request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
+        List<Submission> response = request.getList("/api/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
         assertThat(response).isNotEmpty();
-        assertThat((response.get(0).getParticipation()).isTestRun()).isTrue();
+        assertThat((response.getFirst().getParticipation()).isTestRun()).isTrue();
     }
 
     @Test
@@ -720,7 +692,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         userUtilService.changeUser(TEST_PREFIX + "student2");
-        request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
+        request.getList("/api/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
     }
 
     @Test
@@ -732,7 +704,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
-        final var latestSubmissions = request.getList("/api/exercises/" + exam.getExerciseGroups().get(0).getExercises().iterator().next().getId() + "/test-run-submissions",
+        final var latestSubmissions = request.getList("/api/exercises/" + exam.getExerciseGroups().getFirst().getExercises().iterator().next().getId() + "/test-run-submissions",
                 HttpStatus.OK, Submission.class);
         assertThat(latestSubmissions).isEmpty();
     }
@@ -863,13 +835,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExam1.getId(), false);
 
-        assertThat(capturedEvent.getNewWorkingTime()).isEqualTo(newWorkingTime);
-        assertThat(capturedEvent.getOldWorkingTime()).isEqualTo(oldWorkingTime);
+        assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(capturedEvent.oldWorkingTime()).isEqualTo(oldWorkingTime);
     }
 
-    private ExamLiveEventDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
+    private ExamLiveEventBaseDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
         // Create an ArgumentCaptor for the WebSocket message
-        ArgumentCaptor<ExamLiveEventDTO> websocketEventCaptor = ArgumentCaptor.forClass(ExamLiveEventDTO.class);
+        ArgumentCaptor<ExamLiveEventBaseDTO> websocketEventCaptor = ArgumentCaptor.forClass(ExamLiveEventBaseDTO.class);
 
         // Verify that the sendMessage method was called with the expected WebSocket event
         var expectedTopic = examWide ? "/topic/exam-participation/exam/" + studentExamOrExamId + "/events"
@@ -890,10 +862,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         var result = request.postWithPlainStringResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements", testMessage,
                 ExamWideAnnouncementEventDTO.class, HttpStatus.OK);
 
-        assertThat(result.getId()).isGreaterThan(0L);
-        assertThat(result.getText()).isEqualTo(testMessage);
-        assertThat(result.getCreatedBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
-        assertThat(result.getCreatedDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(result.id()).isGreaterThan(0L);
+        assertThat(result.text()).isEqualTo(testMessage);
+        assertThat(result.createdBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
+        assertThat(result.createdDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
         var event = captureExamLiveEventForId(exam1.getId(), true);
         assertThat(event).isEqualTo(result);
@@ -921,10 +893,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", testMessage,
                 ExamAttendanceCheckEventDTO.class, HttpStatus.OK);
 
-        assertThat(result.getId()).isGreaterThan(0L);
-        assertThat(result.getText()).isEqualTo(testMessage);
-        assertThat(result.getCreatedBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
-        assertThat(result.getCreatedDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(result.id()).isGreaterThan(0L);
+        assertThat(result.text()).isEqualTo(testMessage);
+        assertThat(result.createdBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
+        assertThat(result.createdDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
     }
 
@@ -958,7 +930,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     void testSubmitStudentExam_alreadySubmitted() throws Exception {
         // Set up an exercise
         exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
-        var exercise = exam1.getExerciseGroups().get(0).getExercises().iterator().next();
+        var exercise = exam1.getExerciseGroups().getFirst().getExercises().iterator().next();
         var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, studentExam1.getUser());
         var submission = ParticipationFactory.generateTextSubmission("Test1", Language.ENGLISH, true);
         studentExam1.addExercise(exercise);
@@ -998,9 +970,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     private void assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted(String content, Boolean submitted) {
         var fromDB = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExam1.getId(), false).orElseThrow();
         assertThat(fromDB.isSubmitted()).isEqualTo(submitted);
-        assertThat(fromDB.getExercises().get(0).getStudentParticipations().size()).isEqualTo(1);
-        assertThat(fromDB.getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().size()).isEqualTo(1);
-        assertThat(((TextSubmission) fromDB.getExercises().get(0).getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow()).getText()).isEqualTo(content);
+        assertThat(fromDB.getExercises().getFirst().getStudentParticipations().size()).isEqualTo(1);
+        assertThat(fromDB.getExercises().getFirst().getStudentParticipations().iterator().next().getSubmissions().size()).isEqualTo(1);
+        assertThat(((TextSubmission) fromDB.getExercises().getFirst().getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow()).getText())
+                .isEqualTo(content);
     }
 
     @Test
@@ -1067,12 +1040,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         verify(programmingTriggerService, timeout(4000)).triggerBuildForParticipations(List.of(participation));
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitExamOtherUser_forbidden() throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
 
         // make sure the exam is generally accessible
         exam2.setStartDate(ZonedDateTime.now().plusMinutes(4));
@@ -1088,12 +1059,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         deleteExamWithInstructor(exam1);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testgetExamTooEarly_forbidden() throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(true, true, 1).get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(true, true, 1).getFirst();
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
 
@@ -1101,8 +1070,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 StudentExam.class);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessUnsubmittedStudentExams() throws Exception {
@@ -1127,7 +1094,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                     assertThat(result.getFeedbacks()).isNotEmpty();
-                    assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
+                    assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("You did not submit your exam");
                 }
                 else {
                     fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
@@ -1136,8 +1103,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         }
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessUnsubmittedStudentExamsForMultipleCorrectionRounds() throws Exception {
@@ -1165,7 +1130,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                         result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                         assertThat(result.getFeedbacks()).isNotEmpty();
-                        assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
+                        assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("You did not submit your exam");
                     }
                 }
                 else {
@@ -1175,8 +1140,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         }
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessEmptyExamSubmissions() throws Exception {
@@ -1209,7 +1172,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                     assertThat(result.getFeedbacks()).isNotEmpty();
-                    assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("Empty submission");
+                    assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("Empty submission");
                 }
                 else {
                     fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
@@ -1218,8 +1181,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         }
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessEmptyExamSubmissionsForMultipleCorrectionRounds() throws Exception {
@@ -1253,7 +1214,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                         result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                         assertThat(result.getFeedbacks()).isNotEmpty();
-                        assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("Empty submission");
+                        assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("Empty submission");
                     }
                 }
                 else {
@@ -1263,8 +1224,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         }
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessUnsubmittedStudentExams_forbidden() throws Exception {
@@ -1278,8 +1237,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 HttpStatus.FORBIDDEN, null);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessUnsubmittedStudentExams_badRequest() throws Exception {
@@ -1290,12 +1247,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 HttpStatus.BAD_REQUEST, null);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessExamWithSubmissionResult() throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
 
         // this test should be after the end date of the exam
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
@@ -1351,12 +1306,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         return null;
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitStudentExam_early() throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
 
         userUtilService.changeUser(studentExam.getUser().getLogin());
         var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
@@ -1392,8 +1345,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(((ProgrammingExerciseStudentParticipation) participation).getVcsRepositoryUri(), participation.getStudents());
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitStudentExam_realistic() throws Exception {
@@ -1676,12 +1627,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         return jsonString.replaceAll(" +\"id\"\\s*:\\s*[0-9]+,\n", "");
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testStudentExamSummaryAsStudentBeforePublishResults_doFilter() throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
         StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin(), studentExam);
 
         // now we change to the point of time when the student exam needs to be submitted
@@ -1766,8 +1715,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         deleteExamWithInstructor(exam1);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testStudentExamSummaryAsStudentAfterPublishResults_dontFilter() throws Exception {
@@ -1828,8 +1775,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         deleteExamWithInstructor(exam1);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithoutGradingScaleAsStudentAfterPublishResults() throws Exception {
@@ -1838,8 +1783,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         // users tries to access exam summary after results are published
         userUtilService.changeUser(studentExam.getUser().getLogin());
 
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -1869,7 +1814,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
     @NotNull
     private StudentExam createStudentExamWithResultsAndAssessments(boolean setFields, int numberOfStudents) throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, setFields, numberOfStudents).get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, setFields, numberOfStudents).getFirst();
         var exam = examRepository.findById(studentExam.getExam().getId()).orElseThrow();
         StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam, studentExam.getUser().getLogin(), studentExam);
 
@@ -1923,8 +1868,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         return gradingScale;
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResults() throws Exception {
@@ -1937,8 +1880,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         // users tries to access exam summary after results are published
         userUtilService.changeUser(studentExam.getUser().getLogin());
 
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -2007,8 +1950,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         return studentExamFromServer;
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentBeforePublishResults() throws Exception {
@@ -2024,11 +1965,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         // users tries to access exam summary after results are published
         userUtilService.changeUser(studentExam.getUser().getLogin());
 
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary", HttpStatus.FORBIDDEN,
+                StudentExamWithGradeDTO.class);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOwnUserId() throws Exception {
@@ -2042,11 +1982,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         userUtilService.changeUser(studentExam.getUser().getLogin());
 
         var studentExamGradeInfoFromServerForUserId = request.get(
-                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + studentExam.getUser().getId(), HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary?userId=" + studentExam.getUser().getId(),
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServerForUserId.gradeType()).isEqualTo(studentExamGradeInfoFromServer.gradeType());
         assertThat(studentExamGradeInfoFromServerForUserId.studentResult().overallGrade()).isEqualTo(studentExamGradeInfoFromServer.studentResult().overallGrade());
@@ -2056,8 +1996,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         assertThat(studentExamGradeInfoFromServer.studentExam()).isEqualTo(studentExam);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOtherUserId() throws Exception {
@@ -2072,12 +2010,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         userUtilService.changeUser(student1.getLogin());
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         // Note: student1 cannot see the grade summary for student2
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + student2.getId(), HttpStatus.FORBIDDEN,
-                StudentExamWithGradeDTO.class);
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam1.getId() + "/grade-summary?userId=" + student2.getId(),
+                HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsInstructorAfterPublishResultsWithOtherUserId() throws Exception {
@@ -2089,8 +2025,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         gradingScaleRepository.save(gradingScale);
 
         var studentExamGradeInfoFromServer = request.get(
-                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + studentExam.getUser().getId(), HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary?userId=" + studentExam.getUser().getId(),
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -2102,8 +2038,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus()).isNull();
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleWithCorrectlyRoundedPoints() throws Exception {
@@ -2144,14 +2078,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         // Assert actual computed result.
         userUtilService.changeUser(studentExam.getUser().getLogin());
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved()).isEqualTo(expectedOverallPoints);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -2174,8 +2106,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         }
 
         var studentExamGradeInfoFromServer = request.get(
-                "/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/grade-summary" + queryParam, HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+                "/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/" + finalStudentExam.getId() + "/grade-summary" + queryParam,
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -2212,15 +2144,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         bonusRepository.save(bonus);
 
         StudentParticipation participationWithLatestResult = studentParticipationRepository
-                .findByExerciseIdAndStudentIdAndTestRunWithLatestResult(finalStudentExam.getExercises().get(0).getId(), finalStudentExam.getUser().getId(), false).orElseThrow();
+                .findByExerciseIdAndStudentIdAndTestRunWithLatestResult(finalStudentExam.getExercises().getFirst().getId(), finalStudentExam.getUser().getId(), false)
+                .orElseThrow();
         Result result = participationWithLatestResult.getResults().iterator().next();
         result.setScore(0.0); // To reduce grade to a grade lower than the max grade.
         resultRepository.save(result);
         return finalExam;
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedFinalExamSummaryWithBonusExamAndPlagiarismAsStudent() throws Exception {
@@ -2244,15 +2175,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         var bonusPlagiarismCase = new PlagiarismCase();
         bonusPlagiarismCase.setStudent(student);
-        bonusPlagiarismCase.setExercise(bonusStudentExam.getExercises().get(0));
+        bonusPlagiarismCase.setExercise(bonusStudentExam.getExercises().getFirst());
         bonusPlagiarismCase.setVerdict(PlagiarismVerdict.PLAGIARISM);
         plagiarismCaseRepository.save(bonusPlagiarismCase);
 
         // users tries to access exam summary after results are published
         userUtilService.changeUser(student.getLogin());
 
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/grade-summary",
-                HttpStatus.OK, StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get(
+                "/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/" + finalStudentExam.getId() + "/grade-summary", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -2272,8 +2204,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.PLAGIARISM);
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedFinalExamSummaryWithPlagiarismAndNotParticipatedBonusExamAsStudent() throws Exception {
@@ -2309,8 +2239,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         log.debug("Found {} student exams for student {} {} and exam {}", studentExams.size(), student.getId(), student.getLogin(), finalExam.getId());
         assertThat(studentExams).as("Found too many student exams" + studentExams).hasSize(1);
 
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/grade-summary",
-                HttpStatus.OK, StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get(
+                "/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/" + finalStudentExam.getId() + "/grade-summary", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved()).isEqualTo(24.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGrade()).isEqualTo("3.0");
@@ -2321,12 +2252,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalGrade()).isEqualTo("3.0");
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithStudentExamsAfterConductionAndEvaluation() throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
 
         final StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin(), studentExam);
 
@@ -2400,13 +2329,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         testRun2.setTestRun(true);
         testRun2.setExam(testRun1.getExam());
         testRun2.setUser(instructor);
-        testRun2.setExercises(List.of(testRun1.getExercises().get(0)));
+        testRun2.setExercises(List.of(testRun1.getExercises().getFirst()));
         testRun2.setWorkingTime(testRun1.getWorkingTime());
         studentExamRepository.save(testRun2);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun1.getId(), HttpStatus.OK);
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList).hasSize(1);
-        testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
+        testRunList.getFirst().getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
     }
 
     @Test
@@ -2420,13 +2349,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         testRun2.setTestRun(true);
         testRun2.setExam(testRun1.getExam());
         testRun2.setUser(instructor);
-        testRun2.setExercises(List.of(testRun1.getExercises().get(0)));
+        testRun2.setExercises(List.of(testRun1.getExercises().getFirst()));
         testRun2.setWorkingTime(testRun1.getWorkingTime());
         studentExamRepository.save(testRun2);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun2.getId(), HttpStatus.OK);
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList).hasSize(1);
-        testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
+        testRunList.getFirst().getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
     }
 
     @Test
@@ -2436,9 +2365,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().get(0).getId(), instructor.getId());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
-        participationService.delete(participations.get(0).getId(), false, false, true);
+        participationService.delete(participations.getFirst().getId(), false, false, true);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
     }
 
@@ -2547,9 +2476,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
-        StudentExamWithGradeDTO studentExamGradeInfoFromServer = request.get(
-                "/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/grade-summary?userId=" + instructor1.getId() + "&isTestRun=true",
-                HttpStatus.OK, StudentExamWithGradeDTO.class);
+        StudentExamWithGradeDTO studentExamGradeInfoFromServer = request.get("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/"
+                + testRun.getId() + "/grade-summary?userId=" + instructor1.getId() + "&isTestRun=true", HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().size()).isEqualTo(testRunExam.getExerciseGroups().size());
     }
@@ -2560,7 +2488,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExerciseId);
         assertThat(results).hasSize(1);
-        var result = results.get(0);
+        var result = results.getFirst();
         assertThat(result.getSubmission().getId()).isEqualTo(quizSubmissionId);
 
         assertThat(result.getScore()).isEqualTo(44.4);
@@ -2581,12 +2509,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         }
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8291)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitAndUnSubmitStudentExamAfterExamIsOver() throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
 
         // now we change to the point of time when the student exam needs to be submitted
         // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
@@ -2863,8 +2789,24 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     .setStartedAndStartDate(ZonedDateTime.ofInstant(studentExamForConduction.getStartedDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             studentParticipation
                     .setInitializationDate(ZonedDateTime.ofInstant(studentParticipation.getInitializationDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-            assertThat(studentParticipation.getInitializationDate()).isEqualToIgnoringSeconds(studentExamForConduction.getStartedDate());
+            assertThat(studentParticipation.getInitializationDate()).isCloseTo(studentExamForConduction.getStartedDate(), within(1, ChronoUnit.SECONDS));
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLongestWorkingTimeForExam() throws Exception {
+        // Step 1: Create mock student exams
+        List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
+
+        // Step 2: Get the maximum working time among the exams to find the longest time
+        final int longestWorkingTime = studentExams.stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0);
+
+        // When
+        final int response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/longest-working-time", HttpStatus.OK, Integer.class);
+
+        // Then
+        assertThat(response).isEqualTo(longestWorkingTime);
     }
 
     @Nested
@@ -2910,7 +2852,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
             // Prepare student exam
             ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
-            StudentExam studentExam = studentExams.get(0);
+            StudentExam studentExam = studentExams.getFirst();
             userUtilService.changeUser(studentExam.getUser().getLogin());
             studentExamForConduction = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                     HttpStatus.OK, StudentExam.class);

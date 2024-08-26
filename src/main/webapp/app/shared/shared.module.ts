@@ -62,6 +62,7 @@ import { SearchFilterComponent } from './search-filter/search-filter.component';
         ArtemisSharedLibsModule,
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,
+        RouterModule,
         CircularProgressBarComponent,
         ConfirmEntityNameComponent,
         DetailOverviewNavigationBarComponent,

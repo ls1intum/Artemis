@@ -5,17 +5,17 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the ProgrammingExerciseTask entity.
  */
-public interface ProgrammingExerciseTaskRepository extends JpaRepository<ProgrammingExerciseTask, Long> {
+public interface ProgrammingExerciseTaskRepository extends ArtemisJpaRepository<ProgrammingExerciseTask, Long> {
 
     Set<ProgrammingExerciseTask> findByExerciseId(Long exerciseId);
 
@@ -28,7 +28,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
      */
     @NotNull
     default ProgrammingExerciseTask findByIdWithTestCaseAndSolutionEntriesElseThrow(long entryId) throws EntityNotFoundException {
-        return findByIdWithTestCaseAndSolutionEntries(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", entryId));
+        return getValueElseThrow(findByIdWithTestCaseAndSolutionEntries(entryId), entryId);
     }
 
     /**
@@ -55,7 +55,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
      */
     @NotNull
     default Set<ProgrammingExerciseTask> findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(long exerciseId) throws EntityNotFoundException {
-        return findByExerciseIdWithTestCaseAndSolutionEntries(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", exerciseId));
+        return getArbitraryValueElseThrow(findByExerciseIdWithTestCaseAndSolutionEntries(exerciseId), Long.toString(exerciseId));
     }
 
     /**

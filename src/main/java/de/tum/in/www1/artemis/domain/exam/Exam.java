@@ -9,13 +9,25 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -36,6 +48,12 @@ public class Exam extends DomainObject {
      */
     @Column(name = "test_exam")
     private boolean testExam;
+
+    /**
+     * This boolean indicates whether attendance is checked during exam
+     */
+    @Column(name = "exam_with_attendance_check")
+    private boolean examWithAttendanceCheck;
 
     /**
      * student can see the exam in the UI from this date onwards
@@ -167,6 +185,14 @@ public class Exam extends DomainObject {
 
     public void setTestExam(boolean testExam) {
         this.testExam = testExam;
+    }
+
+    public boolean isExamWithAttendanceCheck() {
+        return examWithAttendanceCheck;
+    }
+
+    public void setExamWithAttendanceCheck(boolean examWithAttendanceCheck) {
+        this.examWithAttendanceCheck = examWithAttendanceCheck;
     }
 
     @NotNull

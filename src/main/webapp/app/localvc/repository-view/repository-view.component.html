@@ -1,8 +1,30 @@
 <ng-container>
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
-        <div style="display: flex; justify-content: space-between; align-items: center">
-            <h1>Source</h1>
-            <div style="text-align: right">
+        <jhi-code-editor-container
+            [forRepositoryView]="true"
+            [showInlineFeedback]="showInlineFeedback"
+            [editable]="false"
+            [buildable]="false"
+            [participation]="participation"
+            [showEditorInstructions]="showEditorInstructions"
+            [allowHiddenFiles]="true"
+            [isTutorAssessment]="true"
+            [readOnlyManualFeedback]="true"
+            [course]="getCourseFromExercise(exercise)"
+        >
+            <div editorTitle>
+                <h1 jhiTranslate="artemisApp.repository.source"></h1>
+            </div>
+            <div class="d-flex ps-3" editorTitleActions>
+                @if (resultHasInlineFeedback) {
+                    <jhi-button
+                        [btnType]="ButtonType.PRIMARY_OUTLINE"
+                        [title]="'artemisApp.repository.toggleInlineFeedback.' + (showInlineFeedback ? 'hide' : 'show')"
+                        (onClick)="showInlineFeedback = !showInlineFeedback"
+                    />
+                }
+            </div>
+            <div editorToolbar style="text-align: right">
                 @if (result) {
                     <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" style="padding-right: 20px" />
                 }
@@ -13,18 +35,23 @@
                     </a>
                 }
                 @if (exercise?.allowOfflineIde) {
-                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" style="padding-left: 15px" />
+                    <jhi-code-button
+                        [loading]="!!exercise.loading"
+                        [smallButtons]="false"
+                        [routerLinkForRepositoryView]="'.'"
+                        [repositoryUri]="repositoryUri"
+                        [exercise]="exercise"
+                    />
+                }
+
+                @if (exercise.id) {
+                    @if (repositoryType === 'USER') {
+                        <jhi-programming-exercise-student-repo-download [buttonSize]="ButtonSize.MEDIUM" [exerciseId]="exercise.id" [participationId]="participation.id!" />
+                    } @else {
+                        <jhi-programming-exercise-instructor-repo-download [repositoryType]="repositoryType" [exerciseId]="exercise.id" [buttonSize]="ButtonSize.MEDIUM" />
+                    }
                 }
             </div>
-        </div>
-        <jhi-code-editor-container
-            [editable]="false"
-            [buildable]="false"
-            [participation]="participation"
-            [showEditorInstructions]="showEditorInstructions"
-            [isTutorAssessment]="true"
-            [course]="getCourseFromExercise(exercise)"
-        >
             <jhi-programming-exercise-instructions
                 editorSidebar
                 [exercise]="exercise"

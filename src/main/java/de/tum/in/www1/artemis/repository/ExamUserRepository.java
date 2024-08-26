@@ -9,17 +9,17 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
+public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long> {
 
     @Query("""
             SELECT eu
@@ -58,4 +58,18 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
                 )
             """)
     Set<ExamUserAttendanceCheckDTO> findAllExamUsersWhoDidNotSign(@Param("examId") long examId);
+
+    @Query("""
+            SELECT COUNT(examUser) > 0
+            FROM ExamUser examUser
+            WHERE examUser.exam.id = :examId
+                AND examUser.user.login = :login
+                AND examUser.signingImagePath IS NOT NULL
+                AND examUser.signingImagePath != ''
+                AND examUser.didCheckImage = TRUE
+                AND examUser.didCheckLogin = TRUE
+                AND examUser.didCheckRegistrationNumber = TRUE
+                AND examUser.didCheckName = TRUE
+            """)
+    boolean isAttendanceChecked(@Param("examId") long examId, @Param("login") String login);
 }

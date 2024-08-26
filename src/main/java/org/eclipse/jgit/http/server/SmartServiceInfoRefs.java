@@ -34,28 +34,31 @@ import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 /** Filter in front of {@link InfoRefsServlet} to catch smart service requests. */
 abstract class SmartServiceInfoRefs implements Filter {
 
-    private final String svc;
+    private final String service;
 
     private final Filter[] filters;
 
     SmartServiceInfoRefs(String service, List<Filter> filters) {
-        this.svc = service;
+        this.service = service;
         this.filters = filters.toArray(new Filter[0]);
     }
 
-    @Override public void init(FilterConfig config) throws ServletException {
+    @Override
+    public void init(FilterConfig config) throws ServletException {
         // Do nothing.
     }
 
-    @Override public void destroy() {
+    @Override
+    public void destroy() {
         // Do nothing.
     }
 
-    @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         final HttpServletRequest req = (HttpServletRequest) request;
         final HttpServletResponse res = (HttpServletResponse) response;
 
-        if (svc.equals(req.getParameter("service"))) {
+        if (service.equals(req.getParameter("service"))) {
             final Repository db = getRepository(req);
             try {
                 begin(req, db);
@@ -91,10 +94,10 @@ abstract class SmartServiceInfoRefs implements Filter {
         final HttpServletResponse res = (HttpServletResponse) response;
         final SmartOutputStream buf = new SmartOutputStream(req, res, true);
         try {
-            res.setContentType(infoRefsResultType(svc));
+            res.setContentType(infoRefsResultType(service));
 
             final PacketLineOut out = new PacketLineOut(buf);
-            respond(req, out, svc);
+            respond(req, out, service);
             buf.close();
         }
         catch (ServiceNotAuthorizedException e) {
@@ -173,7 +176,7 @@ abstract class SmartServiceInfoRefs implements Filter {
      *                                           didn't provide credentials
      */
     protected void respond(HttpServletRequest req, PacketLineOut pckOut, String serviceName) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
-        pckOut.writeString("# service=" + svc + '\n'); //$NON-NLS-1$
+        pckOut.writeString("# service=" + service + '\n'); //$NON-NLS-1$
         pckOut.end();
         advertise(req, new PacketLineOutRefAdvertiser(pckOut));
     }
@@ -182,7 +185,8 @@ abstract class SmartServiceInfoRefs implements Filter {
 
         private int filterIdx;
 
-        @Override public void doFilter(ServletRequest req, ServletResponse rsp) throws IOException, ServletException {
+        @Override
+        public void doFilter(ServletRequest req, ServletResponse rsp) throws IOException, ServletException {
             if (filterIdx < filters.length) {
                 filters[filterIdx++].doFilter(req, rsp, this);
             }

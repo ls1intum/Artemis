@@ -1,5 +1,6 @@
 $menu-width-closed: 64px;
 $menu-width-open: 220px;
+$breadcrumb-height: 45px; // needed to make the exam fullscreen
 
 .sidebar-container {
     width: $menu-width-open;
@@ -10,7 +11,7 @@ $menu-width-open: 220px;
 
 // ng-deep needed to remove scrollbar from mat-sidebar
 ::ng-deep .mat-drawer-inner-container {
-    overflow-x: hidden !important;
+    overflow: hidden !important;
 }
 
 .sidebar-wrapper {
@@ -26,12 +27,17 @@ $menu-width-open: 220px;
 
 .mat-drawer-container {
     height: calc(100vh - var(--sidebar-footer-height-prod));
+
     &.sidenav-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev));
     }
 
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+    }
+
+    &.exam-wrapper {
+        height: 100vh !important;
     }
 
     .mat-drawer {
@@ -43,6 +49,7 @@ $menu-width-open: 220px;
         &.sidenav-height-dev {
             height: calc(100vh - var(--sidebar-footer-height-dev));
         }
+
         @media (max-width: 768px) {
             height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
         }
@@ -54,11 +61,15 @@ $menu-width-open: 220px;
         display: block;
         height: calc(100vh - var(--sidebar-footer-height-prod));
         width: calc(100vw - $menu-width-open);
-        overflow: auto;
+        overflow: hidden;
         margin-left: $menu-width-open !important;
         transition:
             width 0.2s ease-in-out,
             margin-left 0.2s ease-in-out !important;
+
+        &.exam-wrapper {
+            height: 100vh !important;
+        }
 
         &.sidenav-height-dev {
             height: calc(100vh - var(--sidebar-footer-height-dev));
@@ -77,6 +88,13 @@ $menu-width-open: 220px;
         .mat-drawer-content {
             width: calc(100vw - $menu-width-closed);
             margin-left: $menu-width-closed !important;
+        }
+    }
+
+    &.exam-is-active {
+        .mat-drawer-content {
+            width: 100vw;
+            margin-left: 0px !important;
         }
     }
 
@@ -151,10 +169,12 @@ a:not(.btn):not(.tab-link):hover {
     font-size: xx-small;
 }
 
-.newMessage:after {
+.newMessage:after,
+.dropdown-content > .nav-item > .newMessage:after {
     @extend %message-block;
     margin-left: 0.25rem;
 }
+
 .collapsed.newMessage:after {
     @extend %message-block;
     margin-left: -0.9rem;
@@ -165,7 +185,6 @@ jhi-secured-image {
         border-radius: 50%;
         height: 36px;
         width: auto;
-        margin-right: 0.75rem;
     }
 }
 
@@ -197,7 +216,11 @@ jhi-secured-image {
     background-color: var(--course-image-bg);
     border-radius: 50%;
     display: inline-block;
-    margin-right: 0.75rem;
+    color: var(--bs-body-color);
+}
+
+.course-title {
+    margin-left: 0.75rem;
 }
 
 .max-width-collapsed {
@@ -221,10 +244,61 @@ jhi-secured-image {
 .btn-sidebar-collapse {
     background-color: var(--link-item-bg);
     &:hover {
-        background-color: var(--gray-200);
+        background-color: var(--sidebar-card-selected-bg);
         color: var(--primary);
     }
     &:focus {
         border-color: transparent;
+    }
+}
+
+.three-dots {
+    cursor: pointer;
+    &:hover {
+        color: var(--link-item-color);
+    }
+}
+
+.dropdown-li {
+    display: block;
+    text-decoration: none;
+}
+
+.dropdown-content {
+    overflow-y: auto;
+    position: absolute;
+    background-color: var(--dropdown-bg);
+    border: 1px solid var(--border-color);
+    z-index: 3000;
+    border-radius: 4px;
+    &.fixedContentSize {
+        max-height: 171px; // To avoid cut offs in the dropdown menu content (4 items)
+    }
+}
+
+.dropdown-menu {
+    min-width: 204px;
+    max-width: 294px;
+}
+
+.dropdown-courses.active {
+    display: block;
+}
+
+.dropdown-toggle::after {
+    display: none;
+}
+
+@media print {
+    mat-sidenav {
+        display: none; /* Hide the sidebar */
+    }
+
+    .mat-drawer-container,
+    .mat-drawer-container.container-closed {
+        .mat-drawer-content {
+            margin-left: 0 !important; /* Remove any left margin or padding if necessary */
+            width: 100% !important; /* Make the content full width */
+        }
     }
 }

@@ -54,8 +54,8 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
     /**
      * The config parameter for enabling VCS access tokens.
      */
-    @Value("${artemis.version-control.version-control-access-token:#{false}}")
-    private Boolean versionControlAccessToken;
+    @Value("${artemis.version-control.use-version-control-access-token:#{false}}")
+    private boolean useVersionControlAccessToken;
 
     public GitLabPersonalAccessTokenManagementService(UserRepository userRepository, GitLabApi gitlabApi, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
         this.userRepository = userRepository;
@@ -72,7 +72,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
      */
     @Override
     public void createAccessToken(User user, Duration lifetime) {
-        if (versionControlAccessToken) {
+        if (useVersionControlAccessToken) {
             if (user.getVcsAccessToken() != null) {
                 throw new IllegalArgumentException("User already has an access token");
             }
@@ -115,7 +115,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
      */
     @Override
     public void renewAccessToken(User user, Duration newLifetime) {
-        if (versionControlAccessToken) {
+        if (useVersionControlAccessToken) {
             if (user.getVcsAccessToken() == null) {
                 throw new IllegalArgumentException("User has no VCS access token to be renewed");
             }
@@ -137,7 +137,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
     private void revokePersonalAccessToken(org.gitlab4j.api.models.User gitlabUser, User user) {
         GitLabPersonalAccessTokenListResponseDTO response = fetchPersonalAccessTokenId(gitlabUser.getId());
 
-        revokePersonalAccessToken(response.getId());
+        revokePersonalAccessToken(response.id());
 
         // Set access token to null for local user object to ensure consistency.
         user.setVcsAccessToken(null);
@@ -180,7 +180,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
         }
 
         // We assume that there exists no other personal access token with a name that contains the value of PERSONAL_ACCESS_TOKEN_NAME.
-        return responseBody.get(0);
+        return responseBody.getFirst();
     }
 
     private org.gitlab4j.api.models.User getGitLabUserFromUser(User user) {

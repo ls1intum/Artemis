@@ -15,13 +15,13 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface GradingScaleRepository extends JpaRepository<GradingScale, Long> {
+public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScale, Long> {
 
     /**
      * Find a grading scale for course by id
@@ -84,7 +84,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     @NotNull
     default GradingScale findByCourseIdOrElseThrow(long courseId) {
         try {
-            return findByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Grading scale with course ID " + courseId + " doesn't exist"));
+            return getValueElseThrow(findByCourseId(courseId));
         }
         catch (IncorrectResultSizeDataAccessException exception) {
             return deleteExcessiveGradingScales(courseId, false);
@@ -111,7 +111,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     @NotNull
     default GradingScale findByExamIdOrElseThrow(long examId) {
         try {
-            return findByExamId(examId).orElseThrow(() -> new EntityNotFoundException("Grading scale with exam ID " + examId + " doesn't exist"));
+            return getValueElseThrow(findByExamId(examId));
         }
         catch (IncorrectResultSizeDataAccessException exception) {
             return deleteExcessiveGradingScales(examId, true);
@@ -197,7 +197,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return grade step corresponding to the given percentage
      */
     default GradeStep matchPercentageToGradeStep(double percentage, long gradingScaleId) {
-        Set<GradeStep> gradeSteps = findById(gradingScaleId).orElseThrow().getGradeSteps();
+        Set<GradeStep> gradeSteps = findByIdElseThrow(gradingScaleId).getGradeSteps();
         return this.matchPercentageToGradeStep(percentage, gradeSteps);
     }
 
@@ -217,8 +217,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
         }
         if (percentage > 100) {
             // return the highest grade step for percentages > 100 (bonus points)
-            Optional<GradeStep> highestGradeStep = gradeSteps.stream().max(Comparator.comparing(GradeStep::getUpperBoundPercentage));
-            return highestGradeStep.orElseThrow(() -> new EntityNotFoundException("No grade steps available"));
+            return getArbitraryValueElseThrow(gradeSteps.stream().max(Comparator.comparing(GradeStep::getUpperBoundPercentage)));
         }
         throw new EntityNotFoundException("No grade step in selected grading scale matches given percentage");
     }
@@ -241,6 +240,6 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
         for (int i = 1; i < gradingScales.size(); i++) {
             deleteById(gradingScales.get(i).getId());
         }
-        return gradingScales.get(0);
+        return gradingScales.getFirst();
     }
 }

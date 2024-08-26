@@ -1,0 +1,11 @@
+/* Prevents the spinner from appearing when data loads very quickly.*/
+.spinner {
+    animation: delayAnimation 0s 0.5s forwards;
+    opacity: 0;
+}
+
+@keyframes delayAnimation {
+    to {
+        opacity: 1;
+    }
+}

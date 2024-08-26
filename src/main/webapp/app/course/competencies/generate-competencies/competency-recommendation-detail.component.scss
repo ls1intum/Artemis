@@ -1,16 +1,3 @@
-.chevron-position {
-    display: inline-block;
-    vertical-align: middle;
-}
-
-.rotate-icon {
-    transition: transform 0.3s ease;
-}
-
-.rotate-icon.rotated {
-    transform: rotate(90deg);
-}
-
 .card {
     background-color: var(--overview-light-background-color);
     margin-bottom: 0.5rem;

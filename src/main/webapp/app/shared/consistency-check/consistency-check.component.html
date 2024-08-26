@@ -11,7 +11,7 @@
             @if (isLoading) {
                 <div class="d-flex justify-content-center m-5">
                     <div class="spinner-border" role="status">
-                        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                        <span class="sr-only" jhiTranslate="loading"></span>
                     </div>
                 </div>
             } @else {
@@ -41,7 +41,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (error of inconsistencies; track error) {
+                            @for (error of inconsistencies; let index = $index; track index) {
                                 <tr>
                                     <td>
                                         <a [routerLink]="['/course-management', error.programmingExerciseCourseId, 'programming-exercises', error.programmingExercise!.id]">

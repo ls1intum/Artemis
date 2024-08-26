@@ -5,7 +5,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
@@ -31,12 +30,24 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
     let component: CourseCompetenciesDetailsComponent;
 
-    let competencyService: CompetencyService;
+    let courseCompetencyService: CourseCompetencyService;
+
+    let setCompletionSpy: jest.SpyInstance;
+    let getProgressSpy: jest.SpyInstance;
+
+    const parentParams = { courseId: 1 };
+    const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
+    // example route looks like: /courses/1/competencies/10
+    const route = { params: of({ competencyId: 10 }), parent: parentRoute } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -61,11 +72,11 @@ describe('CourseCompetenciesDetails', () => {
             providers: [
                 MockProvider(LectureUnitService),
                 MockProvider(AlertService),
+                MockProvider(FeatureToggleService),
+                MockProvider(CourseStorageService),
                 {
                     provide: ActivatedRoute,
-                    useValue: {
-                        params: of({ competencyId: '1', courseId: '1' }),
-                    },
+                    useValue: route,
                 },
                 { provide: Router, useValue: MockRouter },
             ],
@@ -75,7 +86,12 @@ describe('CourseCompetenciesDetails', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseCompetenciesDetailsComponent);
                 component = fixture.componentInstance;
-                competencyService = TestBed.inject(CompetencyService);
+                courseCompetencyService = TestBed.inject(CourseCompetencyService);
+                const lectureUnitService = TestBed.inject(LectureUnitService);
+                const featureToggleService = TestBed.inject(FeatureToggleService);
+                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+                setCompletionSpy = jest.spyOn(lectureUnitService, 'setCompletion');
+                getProgressSpy = jest.spyOn(courseCompetencyService, 'getProgress');
             });
     });
 
@@ -94,7 +110,7 @@ describe('CourseCompetenciesDetails', () => {
             lectureUnits: [new TextUnit()],
             exercises: [{ id: 5 } as TextExercise],
         } as Competency;
-        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
 
@@ -112,7 +128,8 @@ describe('CourseCompetenciesDetails', () => {
             id: 1,
             exercises: [{ id: 5 } as ModelingExercise],
         } as Competency;
-        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+
+        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
 
@@ -133,7 +150,7 @@ describe('CourseCompetenciesDetails', () => {
                 } as CompetencyProgress,
             ],
         } as Competency;
-        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
         expect(findByIdSpy).toHaveBeenCalledOnce();
@@ -149,13 +166,11 @@ describe('CourseCompetenciesDetails', () => {
     }));
 
     it('should detect if due date is passed', () => {
-        const competencyFuture = { softDueDate: dayjs().add(1, 'days') } as Competency;
-        component.competency = competencyFuture;
+        component.competency = { softDueDate: dayjs().add(1, 'days') } as Competency;
         fixture.detectChanges();
         expect(component.softDueDatePassed).toBeFalse();
 
-        const competencyPast = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
-        component.competency = competencyPast;
+        component.competency = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
         fixture.detectChanges();
         expect(component.softDueDatePassed).toBeTrue();
     });
@@ -168,5 +183,17 @@ describe('CourseCompetenciesDetails', () => {
         fixture.detectChanges();
         const badge = fixture.debugElement.query(By.css('#date-badge')).nativeElement;
         expect(badge.classList).toContain('bg-' + expectedBadge);
+    });
+
+    it('should update progress after lecture unit completion', () => {
+        component.competencyId = 42;
+        component.courseId = 21;
+
+        setCompletionSpy.mockReturnValue(of(new HttpResponse({ body: null })));
+        const lectureUnitCompletionEvent = { lectureUnit: { id: 1, lecture: { id: 2 }, visibleToStudents: true, completed: false }, completed: true } as LectureUnitCompletionEvent;
+        component.completeLectureUnit(lectureUnitCompletionEvent);
+
+        expect(setCompletionSpy).toHaveBeenCalledOnce();
+        expect(getProgressSpy).toHaveBeenCalledWith(42, 21, true);
     });
 });

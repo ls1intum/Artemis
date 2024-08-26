@@ -7,6 +7,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,12 +17,12 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -33,17 +34,17 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Result entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ResultRepository extends JpaRepository<Result, Long> {
+public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     @Query("""
             SELECT r
@@ -64,17 +65,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(long exerciseId);
 
-    /**
-     * Get the latest results for each programming exercise student participation in an exercise from the database together with the list of feedback items.
-     *
-     * @param exerciseId the id of the exercise to load from the database
-     * @return a list of results.
-     */
     @Query("""
             SELECT DISTINCT r
             FROM Result r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
                 LEFT JOIN TREAT (r.participation AS ProgrammingExerciseStudentParticipation) sp
             WHERE r.completionDate = (
                     SELECT MAX(rr.completionDate)
@@ -88,19 +81,108 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND sp.student IS NOT NULL
             ORDER BY r.completionDate ASC
             """)
-    List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") long exerciseId);
+    List<Result> findLatestAutomaticResultsForExercise(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId);
+    List<Result> findResultsWithFeedbacksAndTestCaseByIdIn(List<Long> ids);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId);
+    /**
+     * Get the latest results for each programming exercise student participation in an exercise from the database together with the list of feedback items.
+     *
+     * @param exerciseId the id of the exercise to load from the database
+     * @return a list of results.
+     */
+    default List<Result> findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(long exerciseId) {
+        List<Long> ids = findLatestAutomaticResultsForExercise(exerciseId).stream().map(DomainObject::getId).toList();
 
-    @EntityGraph(type = LOAD, attributePaths = "submission")
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return findResultsWithFeedbacksAndTestCaseByIdIn(ids);
+    }
+
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
+    Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
+
+    /**
+     * Finds the first result by participation ID, including its feedback and test cases, ordered by completion date in descending order.
+     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     *
+     * @param participationId the ID of the participation to find the result for
+     * @return an {@code Optional} containing the first {@code Result} with feedback and test cases, ordered by completion date in descending order,
+     *         or an empty {@code Optional} if no result is found
+     */
+    default Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
+        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        if (resultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = resultOptional.get().getId();
+        return findResultWithFeedbacksAndTestCasesById(id);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase", "submission" })
+    Optional<Result> findResultWithSubmissionAndFeedbacksTestCasesById(long resultId);
+
+    /**
+     * Finds the first result by participation ID, including its submission, feedback, and test cases, ordered by completion date in descending order.
+     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     *
+     * @param participationId the ID of the participation to find the result for
+     * @return an {@code Optional} containing the first {@code Result} with submission, feedback, and test cases, ordered by completion date in descending order,
+     *         or an empty {@code Optional} if no result is found
+     */
+    default Optional<Result> findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
+        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        if (resultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = resultOptional.get().getId();
+        return findResultWithSubmissionAndFeedbacksTestCasesById(id);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = "submission")
+    Optional<Result> findResultWithSubmissionsById(long resultId);
+
+    /**
+     * Finds the first result by participation ID, including its submissions, ordered by completion date in descending order.
+     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     *
+     * @param participationId the ID of the participation to find the result for
+     * @return an {@code Optional} containing the first {@code Result} with submissions, ordered by completion date in descending order,
+     *         or an empty {@code Optional} if no result is found
+     */
+    default Optional<Result> findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(long participationId) {
+        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        if (resultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = resultOptional.get().getId();
+        return findResultWithSubmissionsById(id);
+    }
+
     Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
+
+    /**
+     * Finds the first rated or unrated result by participation ID, including its submission, ordered by completion date in descending order.
+     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     *
+     * @param participationId the ID of the participation to find the result for
+     * @param rated           a boolean indicating whether to find a rated or unrated result
+     * @return an {@code Optional} containing the first {@code Result} with submissions, ordered by completion date in descending order,
+     *         or an empty {@code Optional} if no result is found
+     */
+    default Optional<Result> findFirstByParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(long participationId, boolean rated) {
+        var resultOptional = findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, rated);
+        if (resultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = resultOptional.get().getId();
+        return findResultWithSubmissionsById(id);
+    }
 
     Optional<Result> findDistinctBySubmissionId(long submissionId);
 
@@ -129,7 +211,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Set<Result> findAllByParticipationExerciseId(long exerciseId);
 
     /**
-     * Load a result from the database by its id together with the associated submission, the list of feedback items and the assessor.
+     * Load a result from the database by its id together with the associated submission, the list of feedback items, its assessor and assessment note.
      *
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
@@ -141,12 +223,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH s.results
                 LEFT JOIN FETCH r.feedbacks
                 LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH r.participation p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE r.id = :resultId
             """)
-    Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsById(@Param("resultId") long resultId);
+    Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(@Param("resultId") long resultId);
 
     /**
      * counts the number of assessments of a course, which are either rated or not rated
@@ -183,8 +266,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             """)
     Optional<Result> findWithSubmissionAndFeedbackAndTeamStudentsById(@Param("resultId") long resultId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesById(long resultId);
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase", "assessmentNote" })
+    Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(long resultId);
 
     /**
      * Gets the number of assessments with a rated result set by an assessor for an exercise
@@ -495,6 +578,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return a number of assessments for the course
      */
     default DueDateStat countNumberOfAssessments(Set<Long> exerciseIds) {
+        // avoid invoking the query for empty sets, because this can lead to performance issues
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return new DueDateStat(0, 0);
+        }
         var ratedCounts = countAssessmentsByExerciseIdsAndRated(exerciseIds);
         long inTime = 0;
         long late = 0;
@@ -711,7 +798,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Optional<Result> findLatestResultWithFeedbacksForParticipation(long participationId, boolean withSubmission) {
         if (withSubmission) {
-            return findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
         }
         else {
             return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
@@ -719,22 +806,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
-        return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
+        return getValueElseThrow(findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId));
     }
 
-    default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(long resultId) {
-        return findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
-    }
-
-    /**
-     * Get a result from the database by its id, else throws an EntityNotFoundException
-     *
-     * @param resultId the id of the result to load from the database
-     * @return the result
-     */
-    default Result findByIdElseThrow(long resultId) {
-        return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(long resultId) {
+        return getValueElseThrow(findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(resultId), resultId);
     }
 
     /**
@@ -744,11 +820,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return the result with submission and feedback list
      */
     default Result findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(long resultId) {
-        return findWithSubmissionAndFeedbackAndTeamStudentsById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        return getValueElseThrow(findWithSubmissionAndFeedbackAndTeamStudentsById(resultId), resultId);
     }
 
-    default Result findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(long resultId) {
-        return findWithEagerSubmissionAndFeedbackAndTestCasesById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    default Result findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(long resultId) {
+        return getValueElseThrow(findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(resultId), resultId);
     }
 
     /**
@@ -759,7 +835,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return the result with the given id
      */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
-        return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Submission", resultId));
+        return getValueElseThrow(findByIdWithEagerFeedbacks(resultId), resultId);
     }
 
     /**

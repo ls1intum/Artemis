@@ -1,3 +1,5 @@
+import org.apache.tools.ant.DirectoryScanner
+
 pluginManagement {
     plugins {
         id 'org.springframework.boot' version "${spring_boot_version}"
@@ -11,3 +13,10 @@ pluginManagement {
 }
 
 rootProject.name = 'Artemis'
+
+// needed for rest call and endpoint analysis
+include 'supporting_scripts:analysis-of-endpoint-connections'
+
+// needed for programming exercise templates
+DirectoryScanner.removeDefaultExclude "**/.gitattributes"
+DirectoryScanner.removeDefaultExclude "**/.gitignore"

@@ -4,7 +4,15 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
@@ -72,6 +80,7 @@ public class Team extends AbstractAuditingEntity implements Participant {
         return this;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -98,6 +107,7 @@ public class Team extends AbstractAuditingEntity implements Participant {
         this.shortName = shortName;
     }
 
+    @Override
     public String getParticipantIdentifier() {
         return shortName;
     }
@@ -168,24 +178,28 @@ public class Team extends AbstractAuditingEntity implements Participant {
 
     @JsonIgnore(false)
     @JsonProperty
+    @Override
     public String getCreatedBy() {
         return super.getCreatedBy();
     }
 
     @JsonIgnore(false)
     @JsonProperty
+    @Override
     public Instant getCreatedDate() {
         return super.getCreatedDate();
     }
 
     @JsonIgnore(false)
     @JsonProperty
+    @Override
     public String getLastModifiedBy() {
         return super.getLastModifiedBy();
     }
 
     @JsonIgnore(false)
     @JsonProperty
+    @Override
     public Instant getLastModifiedDate() {
         return super.getLastModifiedDate();
     }

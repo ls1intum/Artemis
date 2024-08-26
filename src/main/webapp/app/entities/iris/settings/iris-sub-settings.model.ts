@@ -4,8 +4,8 @@ import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
 export enum IrisSubSettingsType {
     CHAT = 'chat',
     HESTIA = 'hestia',
-    CODE_EDITOR = 'code-editor',
     COMPETENCY_GENERATION = 'competency-generation',
+    LECTURE_INGESTION = 'lecture-ingestion',
 }
 
 export abstract class IrisSubSettings implements BaseEntity {
@@ -23,18 +23,14 @@ export class IrisChatSubSettings extends IrisSubSettings {
     rateLimitTimeframeHours?: number;
 }
 
+export class IrisLectureIngestionSubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.LECTURE_INGESTION;
+    autoIngestOnLectureAttachmentUpload: boolean;
+}
+
 export class IrisHestiaSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.HESTIA;
     template?: IrisTemplate;
-}
-
-export class IrisCodeEditorSubSettings extends IrisSubSettings {
-    type = IrisSubSettingsType.CODE_EDITOR;
-    chatTemplate?: IrisTemplate;
-    problemStatementGenerationTemplate?: IrisTemplate;
-    templateRepoGenerationTemplate?: IrisTemplate;
-    solutionRepoGenerationTemplate?: IrisTemplate;
-    testRepoGenerationTemplate?: IrisTemplate;
 }
 
 export class IrisCompetencyGenerationSubSettings extends IrisSubSettings {

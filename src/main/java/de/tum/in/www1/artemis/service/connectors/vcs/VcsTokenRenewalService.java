@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.vcs;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -20,7 +22,7 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
  * Uses the scheduled task {@link #renewAllVcsAccessTokens} to periodically renew all VCS access tokens that have expired or that are about to expire.
  */
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class VcsTokenRenewalService {
 
     /**
@@ -40,12 +42,12 @@ public class VcsTokenRenewalService {
     /**
      * The config parameter for enabling VCS access tokens.
      */
-    private final boolean versionControlAccessToken;
+    private final boolean useVersionControlAccessToken;
 
     // note: we inject the configuration value here to easily test with different ones
-    public VcsTokenRenewalService(@Value("${artemis.version-control.version-control-access-token:#{false}}") boolean versionControlAccessToken,
+    public VcsTokenRenewalService(@Value("${artemis.version-control.use-version-control-access-token:#{false}}") boolean versionControlAccessToken,
             Optional<VcsTokenManagementService> vcsTokenManagementService, UserRepository userRepository) {
-        this.versionControlAccessToken = versionControlAccessToken;
+        this.useVersionControlAccessToken = versionControlAccessToken;
         this.vcsTokenManagementService = vcsTokenManagementService;
         this.userRepository = userRepository;
     }
@@ -57,7 +59,7 @@ public class VcsTokenRenewalService {
      */
     @Scheduled(cron = "0 0 4 * * SUN") // Every sunday at 4 am
     public void renewAllVcsAccessTokens() {
-        if (versionControlAccessToken && vcsTokenManagementService.isPresent()) {
+        if (useVersionControlAccessToken && vcsTokenManagementService.isPresent()) {
             log.info("Started scheduled access token renewal");
             int renewedAccessTokenCount = renewExpiringAccessTokens();
             int createdAccessTokenCount = createMissingAccessTokens();

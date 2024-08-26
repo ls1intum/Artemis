@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -55,7 +55,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     gradeStepsDTO?: GradeStepsDTO;
     gradeStepsDTOSub: Subscription;
 
-    // Used to show the "Clone Repository URI" button instead of a link to GitLab when the "localvc" profile is active.
     localVCEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -74,8 +73,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     isSaving: boolean;
 
     afterDueDate = false;
-
-    routerLink: string;
 
     // Icons
     faTable = faTable;
@@ -96,7 +93,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private profileService: ProfileService,
         private gradingSystemService: GradingSystemService,
-        private router: Router,
     ) {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
@@ -107,7 +103,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * Initialize component by calling loadAll and registerChangeInParticipation
      */
     ngOnInit() {
-        this.routerLink = this.router.url;
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();

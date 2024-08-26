@@ -45,15 +45,13 @@ describe('TutorialGroupSessionRowComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should set class of cancelled sessions correctly', () => {
+    it('should display session canceled button when sessions are cancelled', () => {
         component.session = { ...session, status: TutorialGroupSessionStatus.CANCELLED };
         component.ngOnChanges();
+        fixture.detectChanges();
 
-        // all columns should have the table danger class
-        const tableCells = fixture.debugElement.queryAll(By.css('td'));
-        tableCells.forEach((tableCell) => {
-            expect(tableCell.nativeElement.classList).toContain('table-danger');
-        });
+        const sessionCanceledButton = fixture.debugElement.query(By.css('button.btn-outline-danger'));
+        expect(sessionCanceledButton).not.toBeNull();
     });
 
     it('should save attendance count when input is changed', fakeAsync(() => {

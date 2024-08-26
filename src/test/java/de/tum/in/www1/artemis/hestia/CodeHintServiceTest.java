@@ -3,7 +3,12 @@ package de.tum.in.www1.artemis.hestia;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,9 +20,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
-import de.tum.in.www1.artemis.domain.hestia.*;
+import de.tum.in.www1.artemis.domain.hestia.CodeHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
@@ -129,8 +137,8 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var codeHints = codeHintService.generateCodeHintsForExercise(exercise, true);
         assertThat(codeHints).hasSize(1);
-        assertThat(codeHints.get(0).getProgrammingExerciseTask()).isEqualTo(task);
-        assertThat(codeHints.get(0).getSolutionEntries()).containsExactly(solutionEntry);
+        assertThat(codeHints.getFirst().getProgrammingExerciseTask()).isEqualTo(task);
+        assertThat(codeHints.getFirst().getSolutionEntries()).containsExactly(solutionEntry);
     }
 
     @Test
@@ -142,17 +150,17 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var codeHints = codeHintService.generateCodeHintsForExercise(exercise, true);
         assertThat(codeHints).hasSize(1);
-        var codeHint = codeHints.get(0);
+        var codeHint = codeHints.getFirst();
 
         codeHints = codeHintService.generateCodeHintsForExercise(exercise, true);
         assertThat(codeHints).hasSize(1);
-        assertThat(codeHints.get(0)).isNotEqualTo(codeHint);
-        assertThat(codeHints.get(0).getProgrammingExerciseTask()).isEqualTo(task);
-        assertThat(codeHints.get(0).getSolutionEntries()).containsExactly(solutionEntry);
+        assertThat(codeHints.getFirst()).isNotEqualTo(codeHint);
+        assertThat(codeHints.getFirst().getProgrammingExerciseTask()).isEqualTo(task);
+        assertThat(codeHints.getFirst().getSolutionEntries()).containsExactly(solutionEntry);
 
         final Set<CodeHint> codeHintsAfterSaving = codeHintRepository.findByExerciseId(exercise.getId());
         assertThat(codeHintsAfterSaving).hasSize(1);
-        assertThat(codeHintsAfterSaving.stream().findAny().orElseThrow()).isNotEqualTo(codeHint).isEqualTo(codeHints.get(0));
+        assertThat(codeHintsAfterSaving.stream().findAny().orElseThrow()).isNotEqualTo(codeHint).isEqualTo(codeHints.getFirst());
     }
 
     @Test
@@ -164,14 +172,14 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var codeHints = codeHintService.generateCodeHintsForExercise(exercise, false);
         assertThat(codeHints).hasSize(1);
-        var codeHint = codeHints.get(0);
+        var codeHint = codeHints.getFirst();
 
         codeHints = codeHintService.generateCodeHintsForExercise(exercise, false);
         assertThat(codeHints).hasSize(1);
-        assertThat(codeHints.get(0)).isNotEqualTo(codeHint);
-        assertThat(codeHints.get(0).getProgrammingExerciseTask()).isEqualTo(task);
-        assertThat(codeHints.get(0).getSolutionEntries()).containsExactly(solutionEntry);
-        assertThat(codeHintRepository.findByExerciseId(exercise.getId())).containsExactlyInAnyOrder(codeHint, codeHints.get(0));
+        assertThat(codeHints.getFirst()).isNotEqualTo(codeHint);
+        assertThat(codeHints.getFirst().getProgrammingExerciseTask()).isEqualTo(task);
+        assertThat(codeHints.getFirst().getSolutionEntries()).containsExactly(solutionEntry);
+        assertThat(codeHintRepository.findByExerciseId(exercise.getId())).containsExactlyInAnyOrder(codeHint, codeHints.getFirst());
     }
 
     @Test

@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 import java.security.Principal;
 
@@ -44,7 +46,7 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
 
         var exam = examUtilService.addExam(course);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, false);
-        var examExercise = exam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
+        var examExercise = exam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
 
         var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
         var msgMock = (Message<String>) mock(Message.class);

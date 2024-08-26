@@ -16,8 +16,10 @@ import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
-import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
+import { BuildAgentSummaryComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-summary.component';
 import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
+import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent-details/build-agent-details/build-agent-details.component';
+import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 
 export const adminState: Routes = [
     {
@@ -94,7 +96,15 @@ export const adminState: Routes = [
             },
             {
                 path: 'build-agents',
-                component: BuildAgentsComponent,
+                component: BuildAgentSummaryComponent,
+                data: {
+                    pageTitle: 'artemisApp.buildAgents.title',
+                },
+                canActivate: [LocalCIGuard],
+            },
+            {
+                path: 'build-agents/details',
+                component: BuildAgentDetailsComponent,
                 data: {
                     pageTitle: 'artemisApp.buildAgents.title',
                 },
@@ -106,6 +116,22 @@ export const adminState: Routes = [
                 data: {
                     pageTitle: 'artemisApp.standardizedCompetency.title',
                 },
+            },
+            {
+                // Create a new path without a component defined to prevent the StandardizedCompetencyManagementComponent from being always rendered
+                path: 'standardized-competencies',
+                data: {
+                    pageTitle: 'artemisApp.standardizedCompetency.title',
+                },
+                children: [
+                    {
+                        path: 'import',
+                        component: AdminImportStandardizedCompetenciesComponent,
+                        data: {
+                            pageTitle: 'artemisApp.standardizedCompetency.import.title',
+                        },
+                    },
+                ],
             },
             {
                 path: 'privacy-statement',

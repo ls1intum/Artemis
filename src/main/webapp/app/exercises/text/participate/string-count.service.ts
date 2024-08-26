@@ -7,7 +7,7 @@ export class StringCountService {
     /**
      * includes Latin-1 Supplement 00C0 to 00FF to support german "umlaute"
      */
-    private readonly wordMatchRegex = /[\w\u00C0-\u00ff]+/g;
+    private readonly WORD_MATCH_REGEX = /[\w\u00C0-\u00ff]+/g;
 
     constructor() {}
 
@@ -18,7 +18,7 @@ export class StringCountService {
     public countWords(text: string | null | undefined): number {
         let wordCount = 0;
         if (text) {
-            const match = text.match(this.wordMatchRegex);
+            const match = text.match(this.WORD_MATCH_REGEX);
             if (match) {
                 wordCount = match.length;
             }

@@ -35,10 +35,10 @@
               "is-mobile",
               "js-video-url-parser",
               "jszip",
+              "localforage",
               "mobile-drag-drop",
               "papaparse",
               "pepjs",
-              "process",
               "prop-types",
               "react",
               "react-dom",
@@ -66,7 +66,8 @@
             "index": "src/main/webapp/index.html",
             "browser": "src/main/webapp/app/app.main.ts",
             "polyfills": [
-                "src/main/webapp/app/polyfills.ts"
+                "src/main/webapp/app/polyfills.ts",
+                "@angular/localize/init"
             ],
             "tsConfig": "tsconfig.json",
             "inlineStyleLanguage": "scss",

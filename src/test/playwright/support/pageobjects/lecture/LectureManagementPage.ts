@@ -95,7 +95,7 @@ export class LectureManagementPage {
         await this.openCreateUnit(UnitType.TEXT);
         await this.page.fill('#name', name);
         await this.page.fill('#pick-releaseDate #date-input-field', releaseDate.toString());
-        const contentField = this.page.locator('.ace_content');
+        const contentField = this.page.locator('.monaco-editor');
         await contentField.click();
         await contentField.pressSequentially(text);
         return this.submitUnit();
@@ -131,8 +131,14 @@ export class LectureManagementPage {
         return this.page.locator(selector).first();
     }
 
+    private getLectureDateInfo(fieldName: string) {
+        const selector = `//dt[span[contains(text(), "${fieldName}")]]/following-sibling::dd/jhi-date-detail`;
+        return this.page.locator(selector).first();
+    }
+
     getLectureTitle() {
-        return this.getLectureInfo('Title');
+        const selector = `//dt[span[contains(text(), "Title")]]/following-sibling::dd/jhi-text-detail`;
+        return this.page.locator(selector).first();
     }
 
     getLectureDescription() {
@@ -140,15 +146,15 @@ export class LectureManagementPage {
     }
 
     getLectureVisibleDate() {
-        return this.getLectureInfo('Visible from');
+        return this.getLectureDateInfo('Visible from');
     }
 
     getLectureStartDate() {
-        return this.getLectureInfo('Start Date');
+        return this.getLectureDateInfo('Start Date');
     }
 
     getLectureEndDate() {
-        return this.getLectureInfo('End Date');
+        return this.getLectureDateInfo('End Date');
     }
 
     getLectureCourse() {

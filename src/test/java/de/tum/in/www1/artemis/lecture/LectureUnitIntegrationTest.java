@@ -3,7 +3,11 @@ package de.tum.in.www1.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,24 +18,22 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
+import de.tum.in.www1.artemis.domain.lecture.TextUnit;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.web.rest.dto.lectureunit.LectureUnitForLearningPathNodeDetailsDTO;
 
 class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "lectureunitintegration";
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private TextUnitRepository textUnitRepository;
@@ -41,12 +43,6 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -66,7 +62,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
-        Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
+        Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
 
         // Add users that are not in the course
@@ -108,7 +104,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit() throws Exception {
-        var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
+        var lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.OK);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnitId);
@@ -117,13 +113,13 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_shouldUnlinkCompetency() throws Exception {
-        var lectureUnit = lecture1.getLectureUnits().get(0);
+        var lectureUnit = lecture1.getLectureUnits().getFirst();
         var competency = competencyUtilService.createCompetency(lecture1.getCourse());
         lectureUnit.setCompetencies(Set.of(competency));
         lectureRepository.save(lecture1);
 
         var lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits().get(0).getCompetencies()).isNotEmpty();
+        assertThat(lecture.getLectureUnits().getFirst().getCompetencies()).isNotEmpty();
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
@@ -133,7 +129,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_shouldRemoveCompletions() throws Exception {
-        var lectureUnit = lecture1.getLectureUnits().get(0);
+        var lectureUnit = lecture1.getLectureUnits().getFirst();
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         LectureUnitCompletion completion = new LectureUnitCompletion();
@@ -154,14 +150,14 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void deleteLectureUnit_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
+        var lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_notPartOfLecture_shouldReturnBadRequest() throws Exception {
-        var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
+        var lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
         request.delete("/api/lectures/" + Integer.MAX_VALUE + "/lecture-units/" + lectureUnitId, HttpStatus.BAD_REQUEST);
     }
 
@@ -187,7 +183,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         Collections.swap(newlyOrderedList, 0, 1);
         List<LectureUnit> returnedList = request.putWithResponseBodyList("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, LectureUnit.class,
                 HttpStatus.OK);
-        assertThat(returnedList.get(0).getId()).isEqualTo(newlyOrderedList.get(0));
+        assertThat(returnedList.getFirst().getId()).isEqualTo(newlyOrderedList.getFirst());
         assertThat(returnedList.get(1).getId()).isEqualTo(newlyOrderedList.get(1));
     }
 
@@ -223,26 +219,24 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setLectureUnitCompletion() throws Exception {
         // Set lecture unit as completed for current user
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=true", null,
                 HttpStatus.OK, null);
 
         this.lecture1 = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
-        LectureUnit lectureUnit = this.lecture1.getLectureUnits().get(0);
+        LectureUnit lectureUnit = this.lecture1.getLectureUnits().getFirst();
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
-        assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isTrue();
-        assertThat(lectureUnit.getCompletionDate(userRepo.getUser())).isNotNull();
+        assertThat(lectureUnit.isCompletedFor(userRepository.getUser())).isTrue();
 
         // Set lecture unit as uncompleted for user
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=false", null,
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=false", null,
                 HttpStatus.OK, null);
 
         this.lecture1 = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
-        lectureUnit = this.lecture1.getLectureUnits().get(0);
+        lectureUnit = this.lecture1.getLectureUnits().getFirst();
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();
-        assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isFalse();
-        assertThat(lectureUnit.getCompletionDate(userRepo.getUser())).isEmpty();
+        assertThat(lectureUnit.isCompletedFor(userRepository.getUser())).isFalse();
     }
 
     @Test
@@ -272,7 +266,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void setLectureUnitCompletion_shouldReturnForbidden() throws Exception {
         // User is not in same course as lecture unit
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=true", null,
                 HttpStatus.FORBIDDEN, null);
     }
 

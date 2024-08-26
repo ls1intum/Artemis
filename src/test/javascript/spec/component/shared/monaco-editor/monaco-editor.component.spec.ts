@@ -5,9 +5,11 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { BehaviorSubject } from 'rxjs';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
+import { MonacoEditorLineDecorationsHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-line-decorations-hover-button.model';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -152,6 +154,56 @@ describe('MonacoEditorComponent', () => {
         expect(comp.editorBuildAnnotations[0].isOutdated()).toBeTrue();
     });
 
+    it('should highlight line ranges with the specified classnames', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        comp.highlightLines(1, 2, 'test-class-name', 'test-margin-class-name');
+        comp.highlightLines(4, 4, 'test-class-name', 'test-margin-class-name');
+        // The editor must be large enough to display all lines.
+        comp.layoutWithFixedSize(400, 400);
+        const documentHighlightedLines = document.getElementsByClassName('test-class-name');
+        const documentHighlightedMargins = document.getElementsByClassName('test-margin-class-name');
+        // Two highlight elements, each representing a range.
+        expect(comp.getLineHighlights()).toHaveLength(2);
+        // In total, three lines (including their margins) are highlighted.
+        expect(documentHighlightedLines).toHaveLength(3);
+        expect(documentHighlightedMargins).toHaveLength(3);
+    });
+
+    it('should get the number of lines in the editor', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        expect(comp.getNumberOfLines()).toBe(5);
+    });
+
+    it('should pass the current line number to the line decorations hover button when clicked', () => {
+        const clickCallbackStub = jest.fn();
+        const className = 'testClass';
+        const monacoMouseEvent = { target: { position: { lineNumber: 1 }, element: { classList: { contains: () => true } } } };
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        comp.setLineDecorationsHoverButton(className, clickCallbackStub);
+        comp.lineDecorationsHoverButton?.onClick(monacoMouseEvent as unknown as any);
+        monacoMouseEvent.target.position.lineNumber = 3;
+        comp.lineDecorationsHoverButton?.onClick(monacoMouseEvent as unknown as any);
+        expect(clickCallbackStub).toHaveBeenNthCalledWith(1, 1);
+        expect(clickCallbackStub).toHaveBeenNthCalledWith(2, 3);
+    });
+
+    it('should hide the line decorations hover button when no line number is available', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        comp.setLineDecorationsHoverButton('testClass', () => {});
+        const button: MonacoEditorLineDecorationsHoverButton = comp.lineDecorationsHoverButton!;
+        // Case 1 - by default
+        expect(button.isVisible()).toBeFalse();
+        button.moveAndUpdate(1);
+        expect(button.isVisible()).toBeTrue();
+        // Case 2 - undefined is passed as line number
+        button.moveAndUpdate(undefined);
+        expect(button.isVisible()).toBeFalse();
+    });
+
     it('should not allow editing in readonly mode', () => {
         comp.readOnly = true;
         fixture.detectChanges();
@@ -164,11 +216,17 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         comp.setAnnotations(buildAnnotationArray);
         comp.addLineWidget(1, 'widget', document.createElement('div'));
+        comp.setLineDecorationsHoverButton('testClass', jest.fn());
+        comp.highlightLines(1, 1);
         const disposeAnnotationSpy = jest.spyOn(comp.editorBuildAnnotations[0], 'dispose');
         const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0], 'dispose');
+        const disposeHoverButtonSpy = jest.spyOn(comp.lineDecorationsHoverButton!, 'dispose');
+        const disposeLineHighlightSpy = jest.spyOn(comp.lineHighlights[0], 'dispose');
         comp.ngOnDestroy();
         expect(disposeWidgetSpy).toHaveBeenCalledOnce();
         expect(disposeAnnotationSpy).toHaveBeenCalledOnce();
+        expect(disposeHoverButtonSpy).toHaveBeenCalledOnce();
+        expect(disposeLineHighlightSpy).toHaveBeenCalledOnce();
     });
 
     it('should switch to and update the text of a single model', () => {
@@ -213,5 +271,24 @@ describe('MonacoEditorComponent', () => {
         expect(comp.models).toBeEmpty();
         expect(modelDisposeSpy).toHaveBeenCalledOnce();
         expect(model.isDisposed()).toBeTrue();
+    });
+
+    it('should correctly set the start line number', () => {
+        fixture.detectChanges();
+        comp.changeModel('file', multiLineText);
+        comp.setStartLineNumber(5);
+        // Ensure that the editor is large enough to display all lines.
+        comp.layoutWithFixedSize(400, 400);
+        const lineNumbers = fixture.debugElement.nativeElement.querySelectorAll('.line-numbers');
+        expect(lineNumbers).toHaveLength(5);
+        expect([...lineNumbers].map((elem: HTMLElement) => elem.textContent)).toContainAllValues(['5', '6', '7', '8', '9']);
+    });
+
+    it('should apply option presets to the editor', () => {
+        fixture.detectChanges();
+        const preset = new MonacoEditorOptionPreset({ lineNumbers: 'off' });
+        const applySpy = jest.spyOn(preset, 'apply');
+        comp.applyOptionPreset(preset);
+        expect(applySpy).toHaveBeenCalledExactlyOnceWith(comp['_editor']);
     });
 });

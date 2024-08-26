@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.web.websocket.team;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import jakarta.annotation.Nullable;
 
@@ -43,6 +46,7 @@ public class TeamWebsocketService {
      */
     public void sendTeamAssignmentUpdate(Exercise exercise, @Nullable Team existingTeam, @Nullable Team updatedTeam, List<StudentParticipation> participationsOfUpdatedTeam) {
         // Users in the existing team that are no longer in the updated team were unassigned => inform them
+        // TODO: do we really need participations with submissions and results for the team assignment payload?
         if (existingTeam != null) {
             TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, null, List.of());
             Set<User> unassignedUsers = new HashSet<>(existingTeam.getStudents());

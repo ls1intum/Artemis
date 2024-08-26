@@ -12,11 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -44,16 +47,18 @@ public class BuildScriptProviderService {
      */
     public BuildScriptProviderService(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
-        // load all scripts into the cache
-        cacheOnBoot();
     }
 
     /**
-     * Loads all scripts from the resources/templates/aeolus directory into the cache
-     * The windfiles are ignored, since they are only used for the windfile and are cached in {@link AeolusTemplateService}
+     * Loads all scripts from the resources/templates/aeolus directory into the cache.
+     *
+     * <p>
+     * Windfiles are ignored since they are only used for the windfile and are cached in {@link AeolusTemplateService}.
+     * Each script is read, processed, and stored in the {@code scriptCache}. Errors during loading are logged.
      */
-    private void cacheOnBoot() {
-        var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
+    @EventListener(ApplicationReadyEvent.class)
+    public void cacheOnBoot() {
+        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
@@ -120,8 +125,9 @@ public class BuildScriptProviderService {
      */
     public String getScriptFor(ProgrammingExercise exercise) {
         try {
+            ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             return getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                    exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
+                    buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
             log.error("Failed to provide build script for programming exercise " + exercise.getId(), e);

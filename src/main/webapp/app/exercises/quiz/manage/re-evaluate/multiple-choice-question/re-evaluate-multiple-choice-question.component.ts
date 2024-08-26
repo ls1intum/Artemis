@@ -26,6 +26,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
 
     editorMode = EditorMode.NONE;
     markdownMap: Map<number, string>;
+    questionText: string;
 
     // Create Backup Question for resets
     @Input() backupQuestion: MultipleChoiceQuestion;
@@ -46,9 +47,10 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
         for (const answer of this.question.answerOptions!) {
             this.markdownMap.set(
                 answer.id!,
-                (answer.isCorrect ? CorrectOptionCommand.identifier : IncorrectOptionCommand.identifier) + ' ' + generateExerciseHintExplanation(answer),
+                (answer.isCorrect ? CorrectOptionCommand.IDENTIFIER : IncorrectOptionCommand.IDENTIFIER) + ' ' + generateExerciseHintExplanation(answer),
             );
         }
+        this.questionText = this.getQuestionText(this.question);
     }
 
     /**
@@ -102,9 +104,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
         const startOfThisPart = text.indexOf(answerOptionText);
         const box = text.substring(0, startOfThisPart);
         // Check if box says this answer option is correct or not
-        if (box === CorrectOptionCommand.identifier) {
+        if (box === CorrectOptionCommand.IDENTIFIER) {
             answer.isCorrect = true;
-        } else if (box === IncorrectOptionCommand.identifier) {
+        } else if (box === IncorrectOptionCommand.IDENTIFIER) {
             answer.isCorrect = false;
         } else {
             answer.isCorrect = undefined;
@@ -117,7 +119,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      * @param text
      */
     private static splitByCorrectIncorrectTag(text: string): string[] {
-        const stringForSplit = escapeStringForUseInRegex(`${CorrectOptionCommand.identifier}`) + '|' + escapeStringForUseInRegex(`${IncorrectOptionCommand.identifier}`);
+        const stringForSplit = escapeStringForUseInRegex(`${CorrectOptionCommand.IDENTIFIER}`) + '|' + escapeStringForUseInRegex(`${IncorrectOptionCommand.IDENTIFIER}`);
         const splitRegExp = new RegExp(stringForSplit, 'g');
         return text.split(splitRegExp);
     }

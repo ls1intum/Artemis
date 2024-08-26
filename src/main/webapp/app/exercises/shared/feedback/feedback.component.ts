@@ -213,7 +213,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
-
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
                         if (this.isExamReviewPage) {
@@ -223,6 +222,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
                     if (
+                        this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
                         this.exerciseType === ExerciseType.PROGRAMMING &&
                         this.result.participation &&
                         (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)

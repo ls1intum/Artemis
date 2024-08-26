@@ -69,7 +69,7 @@ import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
-import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -444,9 +444,8 @@ public class StudentExamResource {
     }
 
     @NotNull
-    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId, boolean isTestRun) {
-        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId, isTestRun)
-                .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
+    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId, Long studentExamId) {
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
         return studentExam;
     }
@@ -512,7 +511,7 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/student-exams/grade-summary : Return student exam result, aggregate points, assessment result
+     * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary : Return student exam result, aggregate points, assessment result
      * for a student exam and grade calculations if the exam is assessed. Only instructors can use userId parameter to get exam results of other users,
      * if the caller is a student, userId should either be the user id of the caller or empty.
      * <p>
@@ -520,21 +519,21 @@ public class StudentExamResource {
      * <p>
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
-     * @param courseId  the course to which the student exam belongs to
-     * @param examId    the exam to which the student exam belongs to
-     * @param userId    the user id of the student whose grade summary is requested
-     * @param isTestRun whether the student exam belongs to a test run by an instructor or not
+     * @param courseId      the course to which the student exam belongs to
+     * @param examId        the exam to which the student exam belongs to
+     * @param studentExamId the id of the student exam whose grade summary is requested
+     * @param userId        the user id of the student whose grade summary is requested
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
-    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/grade-summary")
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestParam(required = false) Long userId, @RequestParam(required = false, defaultValue = "false") boolean isTestRun) {
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable long courseId, @PathVariable long examId, @PathVariable long studentExamId,
+            @RequestParam(required = false) Long userId) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
         User targetUser = userId == null ? currentUser : userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
-        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, isTestRun);
+        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, studentExamId);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
         if (!isAtLeastInstructor && !currentUser.getId().equals(targetUser.getId())) {
@@ -558,7 +557,7 @@ public class StudentExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/live-events")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<ExamLiveEventDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<ExamLiveEventBaseDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
@@ -572,7 +571,7 @@ public class StudentExamResource {
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, studentExam.isTestRun(), false);
 
-        List<ExamLiveEventDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream().map(ExamLiveEvent::asDTO)
+        List<ExamLiveEventBaseDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream().map(ExamLiveEvent::asDTO)
                 .toList();
 
         log.debug("getExamLiveEvents done in {}ms for user {}", System.currentTimeMillis() - start, currentUser.getLogin());
@@ -685,7 +684,7 @@ public class StudentExamResource {
      * @param examId   the exam to which the student exam belongs to
      * @return ResponseEntity containing the list of generated participations
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
+    @PostMapping(value = "courses/{courseId}/exams/{examId}/student-exams/start-exercises")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
@@ -889,5 +888,21 @@ public class StudentExamResource {
         auditEventRepository.add(auditEvent);
 
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
+    }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/longest-working-time : Returns the value of
+     * the longest working time of the exam
+     *
+     * @param courseId the course to which the student exams belong to
+     * @param examId   the exam to which the student exams belong to
+     * @return the longest working time of the exam (in seconds)
+     */
+    @EnforceAtLeastInstructor
+    @GetMapping("courses/{courseId}/exams/{examId}/longest-working-time")
+    public ResponseEntity<Integer> getLongestWorkingTimeForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        Integer longestWorkingTime = studentExamRepository.findLongestWorkingTimeForExam(examId);
+        return ResponseEntity.ok().body(longestWorkingTime);
     }
 }

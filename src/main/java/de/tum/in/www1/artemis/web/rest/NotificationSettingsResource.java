@@ -14,7 +14,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
@@ -54,7 +58,7 @@ public class NotificationSettingsResource {
 
     /**
      * GET notification-settings : Get all NotificationSettings for current user
-     *
+     * <p>
      * Fetches the NotificationSettings for the current user from the server.
      * If the user has not yet modified the settings there will be none in the database, then
      *
@@ -74,7 +78,7 @@ public class NotificationSettingsResource {
 
     /**
      * PUT notification-settings : Save NotificationSettings for current user
-     *
+     * <p>
      * Saves the provided NotificationSettings to the server.
      *
      * @param notificationSettings which should be saved to the notificationSetting database.

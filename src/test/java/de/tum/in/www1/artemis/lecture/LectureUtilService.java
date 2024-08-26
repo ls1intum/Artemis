@@ -4,21 +4,48 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
+import de.tum.in.www1.artemis.domain.lecture.Slide;
+import de.tum.in.www1.artemis.domain.lecture.TextUnit;
+import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.post.ConversationFactory;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
+import de.tum.in.www1.artemis.repository.SlideRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextUnitRepository;
+import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
 
@@ -143,7 +170,7 @@ public class LectureUtilService {
      * @param competencies The Competencies to add to the LectureUnits
      * @return The Lecture with updated LectureUnits
      */
-    public Lecture addCompetencyToLectureUnits(Lecture lecture, Set<Competency> competencies) {
+    public Lecture addCompetencyToLectureUnits(Lecture lecture, Set<CourseCompetency> competencies) {
         Lecture l = lectureRepo.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture.getId());
         l.getLectureUnits().forEach(lectureUnit -> {
             lectureUnit.setCompetencies(competencies);
@@ -207,6 +234,41 @@ public class LectureUtilService {
         attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
         attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
         attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnitRepository.save(attachmentUnit);
+    }
+
+    /**
+     * Creates and saves an AttachmentUnit with an Attachment that has a file. Also creates and saves the given number of Slides for the AttachmentUnit.
+     * The Slides link to image files.
+     *
+     * @param numberOfSlides The number of Slides to create
+     * @param shouldBePdf    if true file will be pdf, else image
+     * @return The created AttachmentUnit
+     */
+    public AttachmentUnit createAttachmentUnitWithSlidesAndFile(int numberOfSlides, boolean shouldBePdf) {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        Attachment attachmentOfAttachmentUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentUnit.getId(), true)
+                : LectureFactory.generateAttachmentWithFile(started, attachmentUnit.getId(), true);
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        for (int i = 1; i <= numberOfSlides; i++) {
+            Slide slide = new Slide();
+            slide.setSlideNumber(i);
+            String testFileName = "slide" + i + ".png";
+            try {
+                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathService.getTempFilePath().resolve(testFileName).toFile());
+            }
+            catch (IOException ex) {
+                fail("Failed while copying test attachment files", ex);
+            }
+            slide.setSlideImagePath("/api/files/temp/" + testFileName);
+            slide.setAttachmentUnit(attachmentUnit);
+            slideRepository.save(slide);
+        }
         return attachmentUnitRepository.save(attachmentUnit);
     }
 
@@ -291,6 +353,11 @@ public class LectureUtilService {
         lectureUnitCompletion.setUser(user);
         lectureUnitCompletion.setCompletedAt(ZonedDateTime.now());
         lectureUnitCompletion = lectureUnitCompletionRepository.save(lectureUnitCompletion);
+
+        if (Hibernate.isInitialized(lectureUnit.getCompletedUsers())) {
+            lectureUnit.getCompletedUsers().add(lectureUnitCompletion);
+        }
+
         return lectureUnitCompletion.getLectureUnit();
     }
 }

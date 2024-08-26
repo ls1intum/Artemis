@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * Base class for the actions that can be defined in a {@link Windfile}
  */
+// TODO: remove and convert subclasses into Records
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Action {

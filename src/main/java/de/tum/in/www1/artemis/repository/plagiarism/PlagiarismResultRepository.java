@@ -9,26 +9,41 @@ import jakarta.annotation.Nullable;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the PlagiarismResult entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResult<?>, Long> {
+public interface PlagiarismResultRepository extends ArtemisJpaRepository<PlagiarismResult<?>, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "comparisons" })
     Optional<PlagiarismResult<?>> findFirstByExerciseIdOrderByLastModifiedDateDesc(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = "comparisons")
+    PlagiarismResult<?> findPlagiarismResultById(long plagiarismResultId);
+
+    /**
+     * Finds the first plagiarism result by exercise ID, including its comparisons, ordered by last modified date in descending order.
+     * If no plagiarism result is found, this method returns null. This method avoids in-memory paging by retrieving the result directly from the database.
+     *
+     * @param exerciseId the ID of the exercise to find the plagiarism result for
+     * @return the first {@code PlagiarismResult} with comparisons, ordered by last modified date in descending order,
+     *         or null if no result is found
+     */
     @Nullable
-    default PlagiarismResult<?> findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
-        return findFirstByExerciseIdOrderByLastModifiedDateDesc(exerciseId).orElse(null);
+    default PlagiarismResult<?> findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
+        var plagiarismResultIdOrEmpty = findFirstByExerciseIdOrderByLastModifiedDateDesc(exerciseId);
+        if (plagiarismResultIdOrEmpty.isEmpty()) {
+            return null;
+        }
+        var id = plagiarismResultIdOrEmpty.get().getId();
+        return findPlagiarismResultById(id);
     }
 
     /**
@@ -38,7 +53,8 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
      * @return the saved result
      */
     default PlagiarismResult<?> savePlagiarismResultAndRemovePrevious(PlagiarismResult<?> result) {
-        Optional<PlagiarismResult<?>> optionalPreviousResult = findFirstByExerciseIdOrderByLastModifiedDateDesc(result.getExercise().getId());
+        Optional<PlagiarismResult<?>> optionalPreviousResult = Optional
+                .ofNullable(findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(result.getExercise().getId()));
         result = save(result);
         optionalPreviousResult.ifPresent(this::delete);
         return result;

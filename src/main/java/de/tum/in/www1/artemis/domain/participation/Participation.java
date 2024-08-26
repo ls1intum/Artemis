@@ -1,18 +1,43 @@
 package de.tum.in.www1.artemis.domain.participation;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import jakarta.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -106,6 +131,7 @@ public abstract class Participation extends DomainObject implements Participatio
         this.submissionCountTransient = submissionCount;
     }
 
+    @Override
     public InitializationState getInitializationState() {
         return initializationState;
     }
@@ -115,10 +141,12 @@ public abstract class Participation extends DomainObject implements Participatio
         return this;
     }
 
+    @Override
     public void setInitializationState(InitializationState initializationState) {
         this.initializationState = initializationState;
     }
 
+    @Override
     public ZonedDateTime getInitializationDate() {
         return initializationDate;
     }
@@ -128,14 +156,17 @@ public abstract class Participation extends DomainObject implements Participatio
         return this;
     }
 
+    @Override
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
     }
 
+    @Override
     public ZonedDateTime getIndividualDueDate() {
         return individualDueDate;
     }
 
+    @Override
     public void setIndividualDueDate(ZonedDateTime individualDueDate) {
         this.individualDueDate = individualDueDate;
     }
@@ -176,6 +207,7 @@ public abstract class Participation extends DomainObject implements Participatio
         return this;
     }
 
+    @Override
     public void addResult(Result result) {
         this.results.add(result);
         result.setParticipation(this);
@@ -190,6 +222,7 @@ public abstract class Participation extends DomainObject implements Participatio
         this.results = results;
     }
 
+    @Override
     public Set<Submission> getSubmissions() {
         return submissions;
     }
@@ -199,6 +232,7 @@ public abstract class Participation extends DomainObject implements Participatio
         return this;
     }
 
+    @Override
     public void addSubmission(Submission submission) {
         this.submissions.add(submission);
         submission.setParticipation(this);
@@ -252,7 +286,7 @@ public abstract class Participation extends DomainObject implements Participatio
         if (sortedResultsWithCompletionDate.isEmpty()) {
             return null;
         }
-        return sortedResultsWithCompletionDate.get(0);
+        return sortedResultsWithCompletionDate.getFirst();
     }
 
     /**
@@ -264,6 +298,7 @@ public abstract class Participation extends DomainObject implements Participatio
      * @param <T> submission type
      * @return the latest submission or null
      */
+    @Override
     public <T extends Submission> Optional<T> findLatestSubmission() {
         return findLatestSubmission(false);
     }

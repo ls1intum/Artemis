@@ -1,0 +1,24 @@
+<!-- eslint-disable @angular-eslint/template/eqeqeq -->
+<div class="alert alert-info">
+    <div class="d-flex gap-1 align-items-center">
+        <b>
+            <span jhiTranslate="artemisApp.courseStudentDashboard.judgementOfLearning.title"></span>
+        </b>
+        <jhi-help-icon text="artemisApp.courseStudentDashboard.judgementOfLearning.info" />
+    </div>
+    <star-rating
+        checkedColor="var(--yellow)"
+        uncheckedColor="var(--gray-500)"
+        [value]="rating ?? 0"
+        [size]="'24'"
+        [readOnly]="rating != undefined"
+        [totalStars]="5"
+        (rate)="onRate($event)"
+    />
+    @if (rating != undefined && mastery != undefined) {
+        <div class="mt-2">
+            <span jhiTranslate="artemisApp.courseStudentDashboard.judgementOfLearning.artemisRating"></span>
+            <star-rating checkedColor="var(--info)" uncheckedColor="var(--gray-500)" [value]="(mastery / 100) * 5" [size]="'24'" [readOnly]="true" [totalStars]="5" />
+        </div>
+    }
+</div>

@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
@@ -12,6 +14,7 @@ import jakarta.annotation.PostConstruct;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -22,19 +25,28 @@ import com.hazelcast.map.IMap;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 
@@ -42,8 +54,20 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
  * Service for triggering builds on the local CI system.
  */
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
+
+    public static final int PRIORITY_ALL_BUILDS = 4;
+
+    public static final int PRIORITY_OPTIONAL_EXERCISE = 3;
+
+    public static final int PRIORITY_PRACTICE = 3;
+
+    public static final int PRIORITY_NORMAL = 2;
+
+    public static final int PRIORITY_EXAM_CONDUCTION = 1;
+
+    public static final int TESTCOURSE_PRIORITY_PENALTY = 5;
 
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
@@ -63,15 +87,22 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
-    private IQueue<LocalCIBuildJobQueueItem> queue;
+    private final GitService gitService;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private IQueue<BuildJobQueueItem> queue;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    public LocalCITriggerService(HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
+    private final ExerciseDateService exerciseDateService;
+
+    public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService) {
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -80,6 +111,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.versionControlService = versionControlService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
+        this.gitService = gitService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     @PostConstruct
@@ -95,27 +129,54 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
-        triggerBuild(participation, null, null);
+    public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws LocalCIException {
+        triggerBuild(participation, null, null, triggerAll);
     }
 
     /**
      * Add a new build job item containing all relevant information necessary for the execution to the distributed build job queue.
      *
      * @param participation     the participation of the repository which should be built and tested
-     * @param commitHash        the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
+     * @param commitHashToBuild the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
      * @param triggeredByPushTo type of the repository that was pushed to and triggered the build job
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) throws LocalCIException {
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false);
+    }
+
+    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll)
+            throws LocalCIException {
+
+        // Commit hash related to the repository that will be tested
+        String assignmentCommitHash;
+
+        // Commit hash related to the test repository
+        String testCommitHash;
+
+        if (triggeredByPushTo == null || triggeredByPushTo.equals(RepositoryType.AUXILIARY)) {
+            assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
+            testCommitHash = gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName();
+        }
+        else if (triggeredByPushTo.equals(RepositoryType.TESTS)) {
+            assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
+            commitHashToBuild = Objects.requireNonNullElseGet(commitHashToBuild,
+                    () -> gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName());
+            testCommitHash = commitHashToBuild;
+        }
+        else {
+            assignmentCommitHash = commitHashToBuild;
+            testCommitHash = gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName();
+        }
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
-        // Exam exercises have a higher priority than normal exercises
-        int priority = programmingExercise.isExamExercise() ? 1 : 2;
+        // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
+        int priority = determinePriority(programmingExercise, participation, triggerAll);
+        priority = addPenaltyIfTestCourse(programmingExercise, priority);
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
@@ -123,14 +184,17 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null);
 
-        RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo);
+        var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
 
-        BuildConfig buildConfig = getBuildConfig(participation, commitHash);
+        RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig);
 
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
-                programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig);
+
+        BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId, programmingExercise.getId(),
+                0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         queue.add(buildJobQueueItem);
+        log.info("Added build job {} to the queue", buildJobId);
 
         dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }
@@ -140,7 +204,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     private List<String> getTestResultPaths(Windfile windfile) throws IllegalArgumentException {
         List<String> testResultPaths = new ArrayList<>();
         for (AeolusResult testResultPath : windfile.getResults()) {
-            testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
+            testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.path());
         }
         return testResultPaths;
     }
@@ -152,7 +216,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @param triggeredByPushTo type of the repository that was pushed to and triggered the build job
      * @return the repository information for the given participation
      */
-    private RepositoryInfo getRepositoryInfo(ProgrammingExerciseParticipation participation, RepositoryType triggeredByPushTo) {
+    private RepositoryInfo getRepositoryInfo(ProgrammingExerciseParticipation participation, RepositoryType triggeredByPushTo, ProgrammingExerciseBuildConfig buildConfig) {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
@@ -172,7 +236,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String[] auxiliaryRepositoryUris = auxiliaryRepositories.stream().map(AuxiliaryRepository::getRepositoryUri).toArray(String[]::new);
         String[] auxiliaryRepositoryCheckoutDirectories1 = auxiliaryRepositories.stream().map(AuxiliaryRepository::getCheckoutDirectory).toArray(String[]::new);
 
-        if (programmingExercise.getCheckoutSolutionRepository()) {
+        if (buildConfig.getCheckoutSolutionRepository()) {
             ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
             if (programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
                 var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(participation.getProgrammingExercise().getId());
@@ -208,7 +272,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     }
 
-    private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHash) {
+    private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash,
+            ProgrammingExerciseBuildConfig buildConfig) {
         String branch;
         try {
             branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
@@ -221,14 +286,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
-        boolean sequentialTestRunsEnabled = programmingExercise.hasSequentialTestRuns();
-        boolean testwiseCoverageEnabled = programmingExercise.isTestwiseCoverageEnabled();
+        boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
+        boolean testwiseCoverageEnabled = buildConfig.isTestwiseCoverageEnabled();
 
         Windfile windfile;
         String dockerImage;
         try {
-            windfile = programmingExercise.getWindfile();
-            dockerImage = windfile.getMetadata().getDocker().getFullImageName();
+            windfile = buildConfig.getWindfile();
+            dockerImage = windfile.getMetadata().docker().getFullImageName();
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
@@ -239,9 +304,60 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         List<String> resultPaths = getTestResultPaths(windfile);
 
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
-        String buildScript = localCIBuildConfigurationService.createBuildScript(participation);
+        programmingExercise.setBuildConfig(buildConfig);
+        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
-        return new BuildConfig(buildScript, dockerImage, commitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled,
-                testwiseCoverageEnabled, resultPaths);
+        return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
+    }
+
+    private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
+        return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise);
+    }
+
+    /**
+     * Determines the priority of the build job.
+     * Lower values indicate higher priority.
+     */
+    private int determinePriority(ProgrammingExercise programmingExercise, ProgrammingExerciseParticipation participation, boolean triggerAll) {
+        // Use the lowest priority if the build is part of a trigger all action
+        if (triggerAll) {
+            return PRIORITY_ALL_BUILDS;
+        }
+
+        // Check for test exams and exam test runs
+        if (programmingExercise.isExamExercise()) {
+            if (programmingExercise.getExam().isTestExam()) {
+                return PRIORITY_NORMAL;
+            }
+            if (participation instanceof StudentParticipation sp && sp.isTestRun()) {
+                return PRIORITY_NORMAL;
+            }
+        }
+
+        // Submissions after the due date (e.g. practice mode or finished exams) have lowest priority
+        if (exerciseDateService.isAfterDueDate(participation)) {
+            return PRIORITY_PRACTICE;
+        }
+
+        // If the exercise is now an exam exercise, then the exam is currently ongoing
+        // Here quick feedback is important, so we give it a higher priority
+        if (programmingExercise.isExamExercise()) {
+            return PRIORITY_EXAM_CONDUCTION;
+        }
+
+        // Reduce priority of optional exercises
+        if (programmingExercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
+            return PRIORITY_OPTIONAL_EXERCISE;
+        }
+
+        return PRIORITY_NORMAL;
+    }
+
+    private int addPenaltyIfTestCourse(ProgrammingExercise programmingExercise, int priority) {
+        if (programmingExercise.getCourseViaExerciseGroupOrCourseMember().isTestCourse()) {
+            return priority + TESTCOURSE_PRIORITY_PENALTY;
+        }
+        return priority;
     }
 }

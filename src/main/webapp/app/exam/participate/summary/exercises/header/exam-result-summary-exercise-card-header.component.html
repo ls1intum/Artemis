@@ -17,7 +17,7 @@
                             <fa-icon [ngClass]="exerciseInfo?.colorClass" [icon]="exerciseInfo?.resultIconClass!" size="lg" />
                         }
                         @if (exerciseInfo?.achievedPercentage !== undefined) {
-                            <span [class]="exerciseInfo!.colorClass"> {{ exerciseInfo!.achievedPercentage }}% </span>
+                            <span data-testid="achieved-percentage" [class]="exerciseInfo!.colorClass"> {{ exerciseInfo!.achievedPercentage }}% </span>
                         }
                     </div>
                 </div>

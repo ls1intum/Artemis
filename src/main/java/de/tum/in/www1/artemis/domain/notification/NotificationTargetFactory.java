@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -103,7 +107,7 @@ public class NotificationTargetFactory {
         NotificationTarget target = new NotificationTarget(EXAMS_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), COURSES_TEXT);
         target.setProblemStatement(exercise.getProblemStatement());
         target.setExerciseId(exercise.getId());
-        target.setExamId(exercise.getExamViaExerciseGroupOrCourseMember().getId());
+        target.setExamId(exercise.getExam().getId());
         return target;
     }
 
@@ -335,11 +339,11 @@ public class NotificationTargetFactory {
      * If the post is not associated with a conversation or messaging is disabled in the course, the URL leads to the communication page.
      *
      * @param post    which information will be needed to create the URL
-     * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
+     * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000"))
      * @return viable URL to the notification related page
      */
     public static String extractNotificationUrl(Post post, String baseUrl) {
-        // e.g. http://localhost:8080/courses/1/messages?conversationId=123
-        return baseUrl + "/courses/" + post.getConversation().getCourse().getId() + "/messages?conversationId=" + post.getConversation().getId();
+        // e.g. http://localhost:8080/courses/1/communication?conversationId=123
+        return baseUrl + "/courses/" + post.getConversation().getCourse().getId() + "/communication?conversationId=" + post.getConversation().getId();
     }
 }

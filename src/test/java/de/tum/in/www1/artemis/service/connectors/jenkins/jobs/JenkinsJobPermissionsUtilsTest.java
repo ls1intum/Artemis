@@ -13,13 +13,13 @@ import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlFileUtils;
 
 class JenkinsJobPermissionsUtilsTest {
 
     @Test
     void testRemovePermissionsFromFolder() throws TransformerException {
-        final Document folderConfig = XmlFileUtils.readFromString("""
+        final Document folderConfig = JenkinsXmlFileUtils.readFromString("""
                 <?xml version='1.1' encoding='UTF-8'?>
                 <com.cloudbees.hudson.plugins.folder.Folder plugin="cloudbees-folder@6.729.v2b_9d1a_74d673">
                   <actions/>
@@ -58,12 +58,12 @@ class JenkinsJobPermissionsUtilsTest {
         JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, allPermissions, Set.of("instructor1"));
 
         final var updatedPermissions = folderConfig.getElementsByTagName("permission");
-        assertThat(updatedPermissions.getLength()).as("Document should contain no permissions:\n" + XmlFileUtils.writeToString(folderConfig)).isZero();
+        assertThat(updatedPermissions.getLength()).as("Document should contain no permissions:\n" + JenkinsXmlFileUtils.writeToString(folderConfig)).isZero();
     }
 
     @Test
     void testAddPermissionsToFolder() {
-        final Document folderConfig = XmlFileUtils.readFromString("""
+        final Document folderConfig = JenkinsXmlFileUtils.readFromString("""
                 <?xml version='1.1' encoding='UTF-8'?>
                 <com.cloudbees.hudson.plugins.folder.Folder plugin="cloudbees-folder@6.729.v2b_9d1a_74d673">
                   <actions/>

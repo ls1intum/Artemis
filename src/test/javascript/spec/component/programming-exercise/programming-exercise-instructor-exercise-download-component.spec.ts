@@ -54,7 +54,7 @@ describe('ProgrammingExerciseInstructorExerciseDownloadComponent', () => {
     });
 
     it('should show alert if the export fails', () => {
-        jest.spyOn(service, 'exportInstructorExercise').mockReturnValue(throwError(new HttpResponse({ body: 'error' })));
+        jest.spyOn(service, 'exportInstructorExercise').mockReturnValue(throwError(() => new HttpResponse({ body: 'error' })));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         component.exerciseId = 1;
         component.exportExercise();

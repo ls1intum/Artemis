@@ -25,6 +25,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.eclipse.jgit.util.StringUtils;
 import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
@@ -67,15 +68,18 @@ public class RepositoryFilter implements Filter {
         this.resolver = resolver;
     }
 
-    @Override public void init(FilterConfig config) throws ServletException {
+    @Override
+    public void init(FilterConfig config) throws ServletException {
         context = config.getServletContext();
     }
 
-    @Override public void destroy() {
+    @Override
+    public void destroy() {
         context = null;
     }
 
-    @Override public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
+    @Override
+    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
 
@@ -86,10 +90,11 @@ public class RepositoryFilter implements Filter {
         }
 
         String name = req.getPathInfo();
-        while (name != null && 0 < name.length() && name.charAt(0) == '/') {
+
+        while (!StringUtils.isEmptyOrNull(name) && name.charAt(0) == '/') {
             name = name.substring(1);
         }
-        if (name == null || name.length() == 0) {
+        if (StringUtils.isEmptyOrNull(name)) {
             sendError(req, res, SC_NOT_FOUND);
             return;
         }

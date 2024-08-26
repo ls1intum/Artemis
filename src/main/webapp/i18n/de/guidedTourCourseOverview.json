@@ -32,7 +32,7 @@
             },
             "course": {
                 "headline": "Deine aktuellen Kurse",
-                "content": "Du bist für diesen Kurs angemeldet. Später kannst du dir die Kursdetailseite genauer anschauen, indem du auf diese Kachel klickst."
+                "content": "Du bist in diesen Kurs eingeschrieben. Später kannst du dir die Kursdetailseite genauer anschauen, indem du auf diese Kachel klickst."
             },
             "courseFooter": {
                 "headline": "Nächste fällige Übungsabgabe",
@@ -41,10 +41,6 @@
             "courseClick": {
                 "headline": "Kursdetail einsehen",
                 "content": "Klicke nun diese Kachel an, um auf die Kursdetailseite zu gelangen."
-            },
-            "register": {
-                "headline": "Melde dich für andere Kurse an",
-                "content": "Du kannst auf dieser Seite einsehen, ob du dich für weitere Kurse anmelden kannst."
             },
             "contact": {
                 "headline": "Kontaktiere das Artemis Team",

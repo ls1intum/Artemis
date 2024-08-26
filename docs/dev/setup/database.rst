@@ -64,7 +64,7 @@ PostgreSQL Setup
 No special PostgreSQL settings are required.
 You can either use your package manager’s version, or set it up using a container.
 An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_
-is provided in ``src/main/docker/postgres.yml``.
+is provided in ``docker/postgres.yml``.
 
 When setting up the Artemis server, the following values need to be added/updated in the server configuration (see setup steps below) to connect to PostgreSQL instead of MySQL:
 
@@ -72,12 +72,11 @@ When setting up the Artemis server, the following values need to be added/update
 
     spring:
         datasource:
-            url: "jdbc:postgresql://<IP/HOSTNAME of PostgreSQL database host>/Artemis?ssl=false"
-            username: <YOUR_DB_USER>
-            password: <YOUR_DB_PASSWORD>
+            url: jdbc:postgresql://localhost:5432/Artemis?ssl=false
+            username: Artemis
         jpa:
             database: POSTGRESQL
 
 .. note::
-    This example assumes that the database is called ``Artemis``.
-    You might have to update this part of ``spring.datasource.url`` as well if you chose a different name.
+    This example assumes that you use the mentioned Docker Compose file on your localhost, leading to a database called ``Artemis`` that runs on port ``5432`` and where no password is necessary.
+    You might have to update ``spring.datasource.url`` if you use another configuration and set the password in ``spring.datasource.password``.

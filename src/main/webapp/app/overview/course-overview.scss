@@ -1,5 +1,3 @@
-$header-height: 84px;
-
 /* ==========================================================================
 Course Info Bar
 ========================================================================== */
@@ -95,19 +93,6 @@ Course Info Bar
     }
 }
 
-.chevron-position {
-    display: inline-block;
-    vertical-align: middle;
-}
-
-.rotate-icon {
-    transition: transform 0.3s ease;
-}
-
-.rotated {
-    transform: rotate(90deg);
-}
-
 .icon-container {
     display: inline-block;
     vertical-align: middle;
@@ -156,6 +141,8 @@ canvas#complete-chart {
     text-align: left;
     color: white;
     background-color: #3e8acc;
+    border: none;
+    border-radius: 1px;
     &:hover {
         background-color: #0f6ab4;
     }
@@ -165,8 +152,6 @@ canvas#complete-chart {
     &:disabled {
         background-color: gray;
     }
-    border: none;
-    border-radius: 1px;
 }
 
 /* Default the color to white even on bootstrap 5 */
@@ -194,6 +179,12 @@ canvas#complete-chart {
     animation-iteration-count: initial;
 }
 
+@media (max-width: 655px) {
+    .horizontal-scroll {
+        overflow-x: auto;
+    }
+}
+
 @keyframes fadeIn {
     0% {
         opacity: 0;
@@ -207,24 +198,4 @@ canvas#complete-chart {
         visibility: visible;
         opacity: 1;
     }
-}
-
-.module-bg {
-    background-color: var(--module-bg);
-}
-
-.scrollable-content {
-    height: calc(100vh - var(--sidebar-footer-height-prod) - $header-height);
-    overflow-y: auto;
-
-    &.content-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - $header-height);
-    }
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - $header-height) !important;
-    }
-}
-
-.sidebar-collapsed {
-    display: none;
 }

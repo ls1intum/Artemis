@@ -1,0 +1,103 @@
+<div style="padding-bottom: 60px">
+    <h3 id="build-agents-heading" jhiTranslate="artemisApp.buildAgents.summary"></h3>
+    @if (buildAgents) {
+        <p>
+            {{ buildAgents.length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds }} <span jhiTranslate="artemisApp.buildAgents.of"></span>
+            {{ buildCapacity }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span>
+        </p>
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
+        <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="buildAgents!">
+            <ng-template let-settings="settings" let-controls="controls">
+                <ngx-datatable
+                    class="bootstrap"
+                    [limit]="settings.limit"
+                    [sortType]="settings.sortType"
+                    [columnMode]="settings.columnMode"
+                    [headerHeight]="settings.headerHeight"
+                    [footerHeight]="settings.footerHeight"
+                    [rowHeight]="settings.rowHeight"
+                    [rows]="settings.rows"
+                    [rowClass]="settings.rowClass"
+                    [scrollbarH]="settings.scrollbarH"
+                >
+                    <ngx-datatable-column prop="name" [minWidth]="150">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.name"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('name')" />
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: value }">
+                                {{ value }}
+                            </a>
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="status" [minWidth]="150">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('status')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.status"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('status')" />
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            @if (value) {
+                                <span jhiTranslate="artemisApp.buildAgents.running"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.buildAgents.idle"></span>
+                            }
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="maxNumberOfConcurrentBuildJobs" [minWidth]="100">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('maxNumberOfConcurrentBuildJobs')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('maxNumberOfConcurrentBuildJobs')" />
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <span>{{ value }}</span>
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="numberOfCurrentBuildJobs" [minWidth]="100">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('numberOfCurrentBuildJobs')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.numberOfCurrentBuildJobs"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('numberOfCurrentBuildJobs')" />
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                            <span style="margin-right: 20px">{{ value }}</span>
+                            @if (value > 0) {
+                                <button class="btn btn-danger btn-sm" (click)="cancelAllBuildJobs(row.name)">
+                                    <fa-icon [icon]="faTimes" />
+                                    <span jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
+                                </button>
+                            }
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="runningBuildJobs" [minWidth]="250">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('runningBuildJobs')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('runningBuildJobs')" />
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <div>
+                                @for (job of value; track job.id) {
+                                    <div style="display: flex; align-items: center">
+                                        <span style="width: 200px; margin-right: 10px; text-align: left">{{ job.id }}</span>
+                                        <button style="margin-bottom: 2px" class="btn btn-danger btn-sm" (click)="cancelBuildJob(job.id)">
+                                            <fa-icon [icon]="faTimes" />
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </ng-template>
+                    </ngx-datatable-column>
+                </ngx-datatable>
+            </ng-template>
+        </jhi-data-table>
+    }
+</div>

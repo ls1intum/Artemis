@@ -16,21 +16,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -40,13 +37,15 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
-import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 @Profile("jenkins")
 @Service
 public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Value("${artemis.continuous-integration.url}")
     protected URL serverUrl;
@@ -68,14 +67,12 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final ProfileService profileService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    public JenkinsService(JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
-            JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService, Optional<AeolusTemplateService> aeolusTemplateService,
-            ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+    public JenkinsService(JenkinsServer jenkinsServer, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate,
+            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
+            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
@@ -83,7 +80,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.aeolusTemplateService = aeolusTemplateService;
         this.profileService = profileService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
@@ -93,7 +90,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
         final String projectKey = exercise.getProjectKey();
 
         if (!jenkinsBuildPlanService.projectFolderExists(projectKey)) {
@@ -103,7 +100,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
         deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
 
-        if (exercise.getBuildPlanConfiguration() != null) {
+        if (exercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             resetCustomBuildPlanToTemplate(exercise);
         }
 
@@ -116,22 +113,25 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
      *
      * @param exercise the programming exercise for which the build plan should be reset
      */
-    private void resetCustomBuildPlanToTemplate(ProgrammingExercise exercise) {
+    private void resetCustomBuildPlanToTemplate(ProgrammingExercise exercise) throws JsonProcessingException {
         if (aeolusTemplateService.isEmpty()) {
             return;
         }
         Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(exercise);
         if (windfile != null) {
-            exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+            exercise.getBuildConfig().setBuildPlanConfiguration(mapper.writeValueAsString(windfile));
         }
         if (profileService.isAeolusActive()) {
-            programmingExerciseRepository.save(exercise);
+            programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         }
     }
 
     @Override
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
+        // Make sure the build config is loaded
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(sourceExercise);
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(targetExercise);
         return jenkinsBuildPlanService.copyBuildPlan(sourceExercise, sourcePlanName, targetExercise, targetPlanName);
     }
 
@@ -237,15 +237,14 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
+        Map<String, Object> additionalInfo = Map.of("url", serverUrl);
         try {
             // Note: we simply check if the login page is reachable
             shortTimeoutRestTemplate.getForObject(serverUrl + "/login", String.class);
-            return new ConnectorHealth(true, Map.of("url", serverUrl));
+            return new ConnectorHealth(true, additionalInfo);
         }
         catch (Exception emAll) {
-            var health = new ConnectorHealth(false, Map.of("url", serverUrl));
-            health.setException(new JenkinsException("Jenkins Server is down!"));
-            return health;
+            return new ConnectorHealth(false, additionalInfo, new JenkinsException("Jenkins Server is down!"));
         }
     }
 
@@ -258,5 +257,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Error creating folder for exercise " + programmingExercise, e);
         }
+    }
+
+    @Override
+    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
+        throw new UnsupportedOperationException("Method not implemented, consult the build plans in Jenkins for more information on the checkout directories.");
     }
 }

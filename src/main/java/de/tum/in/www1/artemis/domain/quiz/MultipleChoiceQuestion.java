@@ -1,8 +1,18 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -12,7 +22,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
-import de.tum.in.www1.artemis.domain.quiz.scoring.*;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyMultipleChoiceAllOrNothing;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyMultipleChoiceProportionalWithPenalty;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyMultipleChoiceProportionalWithoutPenalty;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -75,6 +88,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      *
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      */
+    @Override
     public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof MultipleChoiceQuestion mcOriginalQuestion) {
             undoUnallowedAnswerChanges(mcOriginalQuestion);
@@ -118,6 +132,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      * @return a boolean which is true if the answer-changes make an update necessary and false if not
      */
+    @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof MultipleChoiceQuestion mcOriginalQuestion) {
             return checkAnswersIfRecalculationIsNecessary(mcOriginalQuestion);

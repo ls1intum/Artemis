@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy;
 
-import org.w3c.dom.Document;
+import java.nio.file.Path;
 
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
@@ -11,23 +11,16 @@ import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.Uns
 public class ParserPolicy {
 
     /**
-     * Selects the appropriate parsing strategy by looking for the identifying tag of a static code analysis tool
+     * Selects the appropriate parsing strategy based on the filename of the static code analysis XML report.
      *
-     * @param document static code analysis xml report
+     * @param fileName Name of the file that contains the static code analysis report
      * @return the parser strategy
      * @throws UnsupportedToolException - If the specified tool is not supported
      */
-    public ParserStrategy configure(Document document) {
-        String filePattern = document.getDocumentURI();
-        // Find the index of the last '/'
-        int lastIndex = filePattern.lastIndexOf('/');
-        // If '/' is found, extract the substring after it; otherwise, keep the original string
-        if (lastIndex != -1) {
-            filePattern = filePattern.substring(lastIndex + 1);
-        }
-        String finalFilePattern = filePattern;
+    public ParserStrategy configure(String fileName) {
+        String filePattern = extractFilePattern(fileName);
         StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolByFilePattern(filePattern)
-                .orElseThrow(() -> new UnsupportedToolException("Tool for identifying filePattern " + finalFilePattern + " not found"));
+                .orElseThrow(() -> new UnsupportedToolException("Tool for identifying filePattern " + filePattern + " not found"));
 
         return switch (tool) {
             case SPOTBUGS -> new SpotbugsParser();
@@ -39,4 +32,7 @@ public class ParserPolicy {
         };
     }
 
+    private String extractFilePattern(String fileName) {
+        return Path.of(fileName).getFileName().toString();
+    }
 }

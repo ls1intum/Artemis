@@ -1,16 +1,28 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_NAME;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_OWNER;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_TYPE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_SOURCE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TARGET;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.EnumUtils;
 
 import com.google.common.base.CaseFormat;
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.activity.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class ActivityDiagramParser {

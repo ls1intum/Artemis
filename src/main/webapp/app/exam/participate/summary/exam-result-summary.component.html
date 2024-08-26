@@ -1,4 +1,4 @@
-<div>
+<div id="exam-results-title">
     <h2>
         <ng-container>
             {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
@@ -11,17 +11,17 @@
 </div>
 @if (studentExam && !studentExam.submitted) {
     <div class="alert alert-danger text-center">
-        <strong>
-            {{ 'artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam' | artemisTranslate }}
-        </strong>
+        <strong jhiTranslate="artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam"></strong>
     </div>
 }
 @if (studentExam?.exam) {
-    <jhi-exam-general-information
-        [exam]="studentExam.exam!"
-        [studentExam]="studentExam"
-        [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
-    />
+    <div>
+        <jhi-exam-general-information
+            [exam]="studentExam.exam!"
+            [studentExam]="studentExam"
+            [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
+        />
+    </div>
 }
 @if (studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO) {
     <div class="mb-4" id="exam-summary-result-overview">
@@ -40,9 +40,7 @@
         {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
     </div>
 }
-<h3>
-    {{ 'artemisApp.exam.exercises' | artemisTranslate }}
-</h3>
+<h3 jhiTranslate="artemisApp.exam.exercises"></h3>
 @for (exercise of studentExam?.exercises; track exercise; let i = $index) {
     <div [id]="'exercise-' + exercise.id">
         <jhi-collapsible-card [isCardContentCollapsed]="exerciseInfos[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos[exercise.id!])">
@@ -117,7 +115,10 @@
                                 }
                             </div>
                         } @else {
-                            @if (exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission?.submitted) {
+                            @if (exerciseInfos[exercise.id!]?.participation) {
+                                @if (!exerciseInfos[exercise.id!]?.submission?.submitted) {
+                                    <div class="mb-3" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
+                                }
                                 @switch (exercise.type) {
                                     @case (TEXT) {
                                         <jhi-text-exam-summary
@@ -153,7 +154,12 @@
                                         />
                                     }
                                 }
-                                @if (exerciseInfos[exercise.id!]!.submission! && exercise.type !== QUIZ && isAfterStudentReviewStart) {
+                                @if (
+                                    exerciseInfos[exercise.id!]?.submission &&
+                                    exercise.type !== QUIZ &&
+                                    isAfterStudentReviewStart &&
+                                    exerciseInfos[exercise.id!]?.submission?.submitted
+                                ) {
                                     <jhi-complaint-student-view
                                         class="mb-2 mt-2 ms-3"
                                         [exercise]="exercise"
@@ -163,8 +169,6 @@
                                         [testRun]="isTestRun"
                                     />
                                 }
-                            } @else {
-                                {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
                             }
                         }
                         <!-- Show submission of student - if no submission found -> display that student did not participate -->
@@ -172,7 +176,10 @@
                 }
                 @if (exercise.type === PROGRAMMING) {
                     <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
-                    @if (exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission!) {
+                    @if (!exerciseInfos[exercise.id!]?.submission) {
+                        <div class="mb-3" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
+                    }
+                    @if (exerciseInfos[exercise.id!]?.participation) {
                         <jhi-programming-exam-summary
                             [exercise]="exercise"
                             [participation]="exerciseInfos[exercise.id!]!.participation!"
@@ -184,8 +191,6 @@
                             [isPrinting]="isPrinting"
                             [isAfterResultsArePublished]="resultsArePublished"
                         />
-                    } @else {
-                        {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
                     }
                 }
             </div>

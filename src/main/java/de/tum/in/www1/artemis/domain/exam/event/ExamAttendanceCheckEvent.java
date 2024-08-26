@@ -29,9 +29,6 @@ public class ExamAttendanceCheckEvent extends ExamLiveEvent {
 
     @Override
     public ExamAttendanceCheckEventDTO asDTO() {
-        var dto = new ExamAttendanceCheckEventDTO();
-        super.populateDTO(dto);
-        dto.setText(textContent);
-        return dto;
+        return new ExamAttendanceCheckEventDTO(this.getId(), this.getCreatedBy(), this.getCreatedDate(), textContent);
     }
 }

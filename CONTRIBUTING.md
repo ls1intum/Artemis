@@ -1,110 +1,43 @@
-# Contributing Guide for Artemis
+# Contribution Guidelines for Artemis
 
-Please read this guide before creating a pull request, otherwise your contribution might not be approved.
+Read the [setup guide](https://docs.artemis.cit.tum.de/dev/setup.html) on how to set up your local development environment.
 
-## Branch Organization
+## Identity and Transparency
 
-All pull request branches are created from develop.
+To ensure a transparent and trustworthy environment, we have established different guidelines for members of our organization and external contributors.
 
-We use the following structure for branch names:
+### For Members of Our Organization
 
-\<type\>/\<area\>/\<short-description\>
+1. **Real Names Required**: As a member of our organization, you must use your full real name in your GitHub profile. This is a prerequisite for joining our organization. Using a real name is crucial for building trust within the team and the broader community. It fosters accountability and transparency, which are essential for collaborative work. When members use their real identities, it encourages open communication and strengthens professional relationships. Furthermore, it aligns with best practices in open-source communities, where transparency is key to ensuring the integrity and reliability of contributions.
 
-Possible types are:
+2. **Profile Picture**: Members are required to upload an authentic profile picture. Use a clear, professional image and avoid comic-like pictures, memojis, or other non-authentic picture styles. Using a professional and authentic profile picture is essential for establishing credibility and fostering trust within the community. It helps others easily identify and connect with you, which is crucial for effective collaboration. By using a real photo, you present yourself as a serious and committed contributor, which in turn encourages others to take your work and interactions seriously. Avoiding non-authentic images ensures that the focus remains on the substance of your contributions rather than on distractions or misunderstandings that might arise from informal or unprofessional visuals.
 
-- feature
-- enhancement
-- bugfix
-- hotfix
+3. **Direct Branching and PR Creation**: As a member, you are encourages to create branches and pull requests (PRs) directly within the repository. Please follow the internal branching and code review processes outlined in [guidelines to the development process](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html) and [coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines.html).
 
-The pull request template will provide additional information on the requirement for the integration of changes into Artemis.  
-Once the changes in your pull request are approved by one of our reviewers, they can be merged into develop.
+### For External Contributors
 
-## Pull request (PR) guidelines:
+1. **Identity Verification**: External contributions will only be considered if the contributor uses their real name and an authentic profile picture (see above). This ensures accountability and trustworthiness in all external contributions.
 
-- **Merge fast**: PRs should only be open for a couple of days.
-- **Small packages**: PRs should be as small as possible and ideally concentrate on a single topic. Features should be split up into multiple PRs if it makes sense.
-- **Until the PR is _ready-for-review_, the PR should be a [Draft PR](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests#draft-pull-requests)**
-- **Definition of done**: Before requesting a code review make sure that the PR is _ready-for-review_:
-  - The PR template is filled out completely, containing as much information as needed to understand the feature.
-  - All tasks from the template checklist are done and checked off (writing tests, adding screenshots, etc.).
-  - The branch of the PR is up-to-date with develop.
-  - The last build of the PR is successful.
+2. **Forking the Repository**: External contributors fork the repository and work on changes in their own branches.
 
-## Code review guidelines
+3. **Submit a Pull Request**: Once your work is complete, submit a pull request for review. Ensure that your branch is up to date with the main branch before submitting.
 
-- **Check out the code and test it**: Testing the feature/enhancement/bugfix helps to understand the code.
-- **Respect the PR scope**: Bugfixes, enhancements or implementations that are unrelated to the PRs topic should not be enforced in a code review. 
-In this case the reviewer or PR maintainer needs to make sure to create an issue for this topic on GitHub or the internal task tracking tool so it is not lost.
-- **Code style is not part of a code review**: Code style and linting issues are not part of the review process. If issues in code style or linting arise, the linters and auto formatters used in our CI tools need to be updated.
-- **Enforce guidelines**: Enforcing technical & design guidelines is an integral part of the code review (e.g. consistent REST urls).
-- **Mark optional items**: Review items that are optional from the reviewers' perspective should be marked as such (e.g. "Optional: You could also do this with...")
-- **Explain your rational**: If the reviewer requests a change, the reasoning behind the change should be explained (e.g. not "Please change X to Y", but "Please change X to Y, because this would improve Z")
+4. **Compliance**: Contributions from external contributors that do not adhere to these guidelines may not be accepted.
 
-## Development Workflow
+### References and Best Practices
 
-Find here [a guide](docs/dev/setup.rst) on how to setup your local development environment.
+- We align our guidelines with the [GitHub Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies) which stress the importance of authenticity and transparency in user profiles.
+- For more insights on contributing to open-source projects, we recommend reviewing the [Open Source Guides by GitHub](https://opensource.guide/).
 
-## Route Naming Conventions
+By following these guidelines, we foster a collaborative environment built on mutual trust and respect, essential for the success of our project.
 
-- Always use **kebab-case** (e.g. "/exampleAssessment" → "/example-assessment")
-- The routes should follow the general structure entity > entityId > sub-entity ... (e.g. "/exercises/{exerciseId}/participations")
-- Use **plural for server route's** entities and **singular for client route's** entities
-- Specify the key entity at the end of the route (e.g. "text-editor/participations/{participationId}" should be changed to "participations/{participationId}/text-editor")
-- Never specify an id that is used only for consistency and not used in the code (e.g. GET "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/submissions/{submissionId}" can be simplified to GET "/submissions/{submissionId}" because all other entities than the submission are either not needed or can be loaded without the need to specify the id)
+## Contribution Process
 
-## CSS Guidelines
+1. **External contributors only**: Fork the Repository and create a branch.
+2. **Create a feature branch**: Work on your changes in a separate branch.
+3. **Submit a pull request**: Once your work is complete, submit a pull request for review.
 
-We are using [Scss](https://sass-lang.com) to write modular, reusable css.
+Thank you for your contributions and for helping us maintain a high standard of quality and trust in this project.
 
-We have a couple of global scss files in `webapp/content` but encourage [component dependent css with angular's styleUrls](https://angular.io/guide/component-styles).
 
-From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/introduction/).
-```scss
-.my-container {
-    // container styles
-    &__content {
-        // content styles
-        &--modifier {
-            // modifier styles
-        }
-    }
-}
-```
 
-Within the component html files, we encourage the use of [bootstrap css](https://getbootstrap.com/).
-
-Encouraged html styling:
-`<div class="d-flex ms-2">some content</div>`
-
-## Testing
-
-We create unit & integration tests for the Artemis server and client.
-Adding tests is an integral part of any pull request - please be aware that your pull request will not be approved until you provide automated tests for your implementation!
-Our goal is to keep the test coverage above 80%.
-
-### Server Testing
-
-We use the [Spring Boot testing utilities](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-testing.html) for server side testing.
-
-Location of test files: `src/test/java`
-
-Execution command:      `./gradlew test`
-
-### Client Testing
-
-We use [Jest](https://jestjs.io/) for client side testing.
-
-For convenience purposes we have [Sinon](https://sinonjs.org/) and [Chai](https://www.chaijs.com/) as dependencies, so that easy stubbing/mocking is possible ([sinon-chai](https://github.com/domenic/sinon-chai)).
-
-Location of test files: `src/test/javascript`
-
-Execution command:      `npm run test`
-
-The folder structure is further divided into:
-
-- component
-- integration
-- service
-
-The tests located in the folder `/app` are not working at the moment and are not included in the test runs.

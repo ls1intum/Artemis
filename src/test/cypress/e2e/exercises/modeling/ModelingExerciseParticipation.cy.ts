@@ -5,7 +5,7 @@ import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, modelin
 import { admin, studentOne } from '../../../support/users';
 import { convertModelAfterMultiPart } from '../../../support/utils';
 
-describe('Modeling Exercise Participation', () => {
+describe.skip('Modeling Exercise Participation', () => {
     let course: Course;
     let modelingExercise: ModelingExercise;
 

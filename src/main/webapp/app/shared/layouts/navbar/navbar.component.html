@@ -1,6 +1,6 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical, 'in-menu': iconsMovedToMenu }">
-        @if (currAccount && !isExamActive) {
+        @if (currAccount && !isExamActive && !isExamStarted) {
             <jhi-notification-sidebar />
         }
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu ? 'bottom' : 'bottom-right'" />
@@ -36,7 +36,7 @@
                     <li>
                         <a class="dropdown-item" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
                             <fa-icon [icon]="faCog" [fixedWidth]="true" />
-                            <span>{{ 'global.menu.settings' | artemisTranslate }}</span>
+                            <span jhiTranslate="global.menu.settings"></span>
                         </a>
                     </li>
                     <div class="dropdown-divider"></div>
@@ -133,7 +133,7 @@
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed">
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
-            @if (currAccount && !isExamActive) {
+            @if (currAccount && !isExamActive && !isExamStarted) {
                 <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                     <a class="guided-tour-overview nav-link" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
                         <span>
@@ -150,7 +150,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                @if (!isExamActive) {
+                @if (!isExamActive && !isExamStarted) {
                     <a class="guided-tour-course-admin nav-link" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
                         <span>
                             <fa-icon [icon]="faThList" />
@@ -167,7 +167,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                @if (!isExamActive) {
+                @if (!isExamActive && !isExamStarted) {
                     <a class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
                         <span>
                             <fa-icon [icon]="faUserPlus" />
@@ -328,10 +328,13 @@
 </nav>
 <jhi-system-notification />
 <div class="breadcrumb-container">
-    @if (!isExamActive && breadcrumbs && breadcrumbs.length > 0) {
+    @if (!isExamStarted && !isExamActive && breadcrumbs && breadcrumbs.length > 0) {
         <div>
             <ol class="breadcrumb">
                 @for (breadcrumb of breadcrumbs; track breadcrumb; let i = $index) {
+                    @if (i !== 0) {
+                        <fa-icon [icon]="faChevronRight" size="xs" class="breadcrumb-divider mx-2" />
+                    }
                     <li class="breadcrumb-item">
                         @if (breadcrumb && breadcrumb.translate) {
                             <a
@@ -344,14 +347,26 @@
                             >
                         }
                         @if (breadcrumb && !breadcrumb.translate) {
-                            <a
-                                class="breadcrumb-link"
-                                id="bread-crumb-plain-{{ i }}"
-                                [routerLink]="breadcrumb.uri"
-                                routerLinkActive="active"
-                                [routerLinkActiveOptions]="{ exact: true }"
-                                >{{ breadcrumb.label }}</a
-                            >
+                            @if (isBuildAgentDetails) {
+                                <a
+                                    class="breadcrumb-link"
+                                    id="bread-crumb-{{ i }}"
+                                    [routerLink]="breadcrumb.uri"
+                                    routerLinkActive="active"
+                                    [routerLinkActiveOptions]="{ exact: true }"
+                                    [queryParams]="{ agentName: agentName }"
+                                    >{{ breadcrumb.label }}</a
+                                >
+                            } @else {
+                                <a
+                                    class="breadcrumb-link"
+                                    id="bread-crumb-plain-{{ i }}"
+                                    [routerLink]="breadcrumb.uri"
+                                    routerLinkActive="active"
+                                    [routerLinkActiveOptions]="{ exact: true }"
+                                    >{{ breadcrumb.label }}</a
+                                >
+                            }
                         }
                     </li>
                 }

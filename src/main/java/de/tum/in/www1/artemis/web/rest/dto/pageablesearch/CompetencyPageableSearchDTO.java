@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto.pageablesearch;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 /**
@@ -8,6 +10,8 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
  *
  * @see SearchResultPageDTO
  */
+// TODO: convert to Record, use composition for common attributes
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CompetencyPageableSearchDTO extends PageableSearchDTO<String> {
 
     /**

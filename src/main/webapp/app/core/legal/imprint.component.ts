@@ -10,7 +10,7 @@ import { LegalDocumentService } from 'app/shared/service/legal-document.service'
     template: ` <div [innerHTML]="imprint | htmlForMarkdown"></div> `,
 })
 export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
-    imprint: string;
+    imprint?: string;
     private languageChangeSubscription?: Subscription;
 
     constructor(

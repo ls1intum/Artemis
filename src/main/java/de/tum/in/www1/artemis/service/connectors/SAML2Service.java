@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -30,13 +34,13 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
  * This class describes a service for SAML2 authentication.
- *
+ * <p>
  * The main method is {@link #handleAuthentication(Saml2AuthenticatedPrincipal)}. The service extracts the user information
  * from the {@link Saml2AuthenticatedPrincipal} and creates the user, if it does not exist already.
- *
+ * <p>
  * When the user gets created, the SAML2 attributes can be used to fill in user information. The configuration happens
  * via patterns for every field in the SAML2 configuration.
- *
+ * <p>
  * The service creates a {@link UsernamePasswordAuthenticationToken} which can then be used by the client to authenticate.
  * This is needed, since the client "does not know" that he is already authenticated via SAML2.
  */
@@ -86,7 +90,7 @@ public class SAML2Service {
 
     /**
      * Handles an authentication via SAML2.
-     *
+     * <p>
      * Registers new users and returns a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user.
      *
      * @param principal the principal, containing the user information

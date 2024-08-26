@@ -1,34 +1,68 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static java.time.ZonedDateTime.now;
 
-import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
+import de.tum.in.www1.artemis.repository.Lti13ResourceLaunchRepository;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
+import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -46,8 +80,6 @@ public class ExerciseService {
     private static final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
     private final AuthorizationCheckService authCheckService;
-
-    private final QuizScheduleService quizScheduleService;
 
     private final ExerciseDateService exerciseDateService;
 
@@ -87,20 +119,21 @@ public class ExerciseService {
 
     private final QuizBatchService quizBatchService;
 
-    private final ParticipantScoreService participantScoreService;
+    private final ExamLiveEventsService examLiveEventsService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, QuizScheduleService quizScheduleService,
-            AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            Lti13ResourceLaunchRepository lti13ResourceLaunchRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
-            ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
-            GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
-            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, ParticipantScoreService participantScoreService) {
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
+
+    public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
+            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, Lti13ResourceLaunchRepository lti13ResourceLaunchRepository,
+            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
+            ParticipantScoreRepository participantScoreRepository, UserRepository userRepository, ComplaintRepository complaintRepository,
+            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
+            FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository,
+            QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
         this.auditEventRepository = auditEventRepository;
-        this.quizScheduleService = quizScheduleService;
         this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
         this.participantScoreRepository = participantScoreRepository;
@@ -117,7 +150,8 @@ public class ExerciseService {
         this.ratingService = ratingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.quizBatchService = quizBatchService;
-        this.participantScoreService = participantScoreService;
+        this.examLiveEventsService = examLiveEventsService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
     }
 
     /**
@@ -274,7 +308,7 @@ public class ExerciseService {
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
-            filterForCourseDashboard(exercise, participationsOfUserInExercises, user.getLogin(), isStudent);
+            filterForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
             // remove sensitive information from the exercise for students
             if (isStudent) {
                 exercise.filterSensitiveInformation();
@@ -329,7 +363,6 @@ public class ExerciseService {
                 // if the quiz is not active the batches do not matter and there is no point in loading them
                 if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
                     // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
-                    quizExercise.setQuizBatches(null);
                     quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
                 }
             }
@@ -342,6 +375,7 @@ public class ExerciseService {
      * @param originalExercise the original exercise
      * @param updatedExercise  the updatedExercise
      */
+    @Async
     public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
         if (originalExercise.getMaxPoints().equals(updatedExercise.getMaxPoints()) && originalExercise.getBonusPoints().equals(updatedExercise.getBonusPoints())) {
             return; // nothing to do since points are still correct
@@ -412,10 +446,9 @@ public class ExerciseService {
      *
      * @param exercise       the exercise that should be filtered (this deletes many field values of the passed exercise object)
      * @param participations the set of participations, wherein to search for the relevant participation
-     * @param username       used to get quiz submission for the user
      * @param isStudent      defines if the current user is a student
      */
-    public void filterForCourseDashboard(Exercise exercise, Set<StudentParticipation> participations, String username, boolean isStudent) {
+    public void filterForCourseDashboard(Exercise exercise, Set<StudentParticipation> participations, boolean isStudent) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
 
@@ -428,17 +461,6 @@ public class ExerciseService {
 
         // get user's participation for the exercise
         Set<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : Set.of();
-
-        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
-        // if participation was not found in database
-        if (relevantParticipations.isEmpty() && exercise instanceof QuizExercise) {
-            AbstractQuizSubmission submission = quizScheduleService.getQuizSubmission(exercise.getId(), username);
-            if (submission.getSubmissionDate() != null) {
-                StudentParticipation quizParticipation = new StudentParticipation().exercise(exercise);
-                quizParticipation.setInitializationState(InitializationState.INITIALIZED);
-                relevantParticipations = Set.of(quizParticipation);
-            }
-        }
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         relevantParticipations.forEach(participation -> {
@@ -521,28 +543,24 @@ public class ExerciseService {
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
         // We only display the latest five past exercises in the client, only calculate statistics for those
-        var pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
-        pastExercises.sort((exerciseA, exerciseB) -> {
-            var dueDateA = exerciseA.getAssessmentDueDate() != null ? exerciseA.getAssessmentDueDate() : exerciseA.getDueDate();
-            var dueDateB = exerciseB.getAssessmentDueDate() != null ? exerciseB.getAssessmentDueDate() : exerciseB.getDueDate();
-            if (dueDateA.equals(dueDateB)) {
-                return 0;
-            }
+        List<Exercise> pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, now());
 
-            return dueDateA.isBefore(dueDateB) ? 1 : -1;
-        });
-        var fivePastExercises = pastExercises.stream().limit(5).toList();
+        Comparator<Exercise> exerciseDateComparator = Comparator.comparing(
+                exercise -> exercise.getAssessmentDueDate() != null ? exercise.getAssessmentDueDate() : exercise.getDueDate(), Comparator.nullsLast(Comparator.naturalOrder()));
 
-        // Calculate the average score for all five exercises at once
-        var averageScore = participantScoreRepository.findAverageScoreForExercises(fivePastExercises);
+        List<Exercise> lastFivePastExercises = pastExercises.stream().sorted(exerciseDateComparator.reversed()).limit(5).toList();
         Map<Long, Double> averageScoreById = new HashMap<>();
-        for (var element : averageScore) {
-            averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
+        if (!lastFivePastExercises.isEmpty()) {
+            // Calculate the average score for all five exercises at once
+            var averageScore = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
+            for (var element : averageScore) {
+                averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
+            }
         }
 
         // Fill statistics for all exercises potentially displayed on the client
-        var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
-        exercisesForManagementOverview.addAll(fivePastExercises);
+        var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, now());
+        exercisesForManagementOverview.addAll(lastFivePastExercises);
         return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
     }
 
@@ -638,9 +656,9 @@ public class ExerciseService {
      * @param exercise        exercise to update *
      */
     public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(Set<GradingCriterion> gradingCriteria, Exercise exercise) {
-        List<Feedback> feedback = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
+        boolean hasFeedbackFromStructuredGradingInstructionUsed = feedbackRepository.hasFeedbackByExerciseGradingCriteria(gradingCriteria);
 
-        if (!feedback.isEmpty()) {
+        if (hasFeedbackFromStructuredGradingInstructionUsed) {
             exercise.setGradingInstructionFeedbackUsed(true);
         }
     }
@@ -736,29 +754,33 @@ public class ExerciseService {
     }
 
     /**
-     * Checks if the user has achieved the minimum score.
-     *
-     * @param exercise the exercise that should be checked
-     * @param user     the user for which to check the score
-     * @param minScore the minimum score that should be achieved
-     * @return true if the user achieved the minimum score, false otherwise
-     */
-    public boolean hasScoredAtLeast(@NotNull Exercise exercise, @NotNull User user, double minScore) {
-        final var score = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(user, Set.of(exercise)).max();
-        if (score.isEmpty()) {
-            return false;
-        }
-        return score.getAsDouble() >= minScore;
-    }
-
-    /**
      * Removes competency from all exercises.
      *
      * @param exercises  set of exercises
      * @param competency competency to remove
      */
-    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
+    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull CourseCompetency competency) {
         exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
         exerciseRepository.saveAll(exercises);
+    }
+
+    /**
+     * Notifies students about exercise changes.
+     * For course exercises, notifications are used. For exam exercises, live events are used instead.
+     *
+     * @param originalExercise the original exercise
+     * @param updatedExercise  the updated exercise
+     * @param notificationText custom notification text
+     */
+    public void notifyAboutExerciseChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
+        if (originalExercise.isCourseExercise()) {
+            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
+        }
+        // start sending problem statement updates within the last 5 minutes before the exam starts
+        else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
+                && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+            User instructor = userRepository.getUser();
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
+        }
     }
 }

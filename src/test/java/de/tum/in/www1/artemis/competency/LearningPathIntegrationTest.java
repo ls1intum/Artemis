@@ -1,14 +1,19 @@
 package de.tum.in.www1.artemis.competency;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -19,49 +24,46 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
+import de.tum.in.www1.artemis.StudentScoreUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.RelationType;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
+import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.LearningPathResource;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyGraphNodeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyNameDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "learningpathintegration";
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private CompetencyUtilService competencyUtilService;
@@ -73,13 +75,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private LearningPathRepository learningPathRepository;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
 
     @Autowired
     private LectureRepository lectureRepository;
@@ -99,11 +95,27 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private LearningPathUtilService learningPathUtilService;
 
+    @Autowired
+    private CompetencyProgressRepository competencyProgressRepository;
+
+    @Autowired
+    private CompetencyRelationRepository competencyRelationRepository;
+
+    @Autowired
+    private StudentScoreUtilService studentScoreUtilService;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
     private Course course;
 
     private Competency[] competencies;
 
+    private TextExercise textExercise;
+
     private TextUnit textUnit;
+
+    private Lecture lecture;
 
     private static final int NUMBER_OF_STUDENTS = 5;
 
@@ -123,31 +135,31 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
 
-        course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).get(0);
+        course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).getFirst();
         competencies = competencyUtilService.createCompetencies(course, 5);
 
-        // set threshold to 60, 70, and 80 respectively
+        // set threshold to 60, 70, 80, 90 and 100 respectively
         for (int i = 0; i < competencies.length; i++) {
             competencies[i] = competencyUtilService.updateMasteryThreshold(competencies[i], 60 + i * 10);
         }
 
-        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
-        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
-        gradingCriterionRepository.saveAll(gradingCriteria);
-        participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, STUDENT_OF_COURSE);
-        competencyUtilService.linkExerciseToCompetency(competencies[1], textExercise);
+        for (int i = 1; i < competencies.length; i++) {
+            var relation = new CompetencyRelation();
+            relation.setHeadCompetency(competencies[i - 1]);
+            relation.setTailCompetency(competencies[i]);
+            relation.setType(RelationType.EXTENDS);
+            competencyRelationRepository.save(relation);
+        }
 
-        Lecture lecture = new Lecture();
+        lecture = new Lecture();
         lecture.setDescription("Test Lecture");
         lecture.setCourse(course);
         lectureRepository.save(lecture);
 
-        textUnit = lectureUtilService.createTextUnit();
-        lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
-        competencyUtilService.linkLectureUnitToCompetency(competencies[2], textUnit);
-
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
-        lectureUnitService.setLectureUnitCompletion(textUnit, student, true);
+
+        textUnit = createAndLinkTextUnit(student, competencies[0], true);
+        textExercise = createAndLinkTextExercise(competencies[1], false);
     }
 
     private ZonedDateTime now() {
@@ -185,7 +197,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private Competency importCompetencyRESTCall() throws Exception {
         final var course2 = courseUtilService.createCourse();
         final var competencyToImport = competencyUtilService.createCompetency(course2);
-        return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/import", competencyToImport, Competency.class, HttpStatus.CREATED);
+        return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/import", competencyToImport.getId(), Competency.class, HttpStatus.CREATED);
     }
 
     private List<CompetencyWithTailRelationDTO> importCompetenciesRESTCall(int numberOfCompetencies) throws Exception {
@@ -224,7 +236,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testEnableLearningPaths() throws Exception {
         enableLearningPathsRESTCall(course);
-        final var updatedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(course.getId());
+        final var updatedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
         assertThat(updatedCourse.getLearningPathsEnabled()).as("should enable LearningPaths").isTrue();
         assertThat(updatedCourse.getLearningPaths()).isNotNull();
         assertThat(updatedCourse.getLearningPaths().size()).as("should create LearningPath for each student").isEqualTo(NUMBER_OF_STUDENTS);
@@ -235,9 +247,9 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testEnableLearningPathsWithNoCompetencies() throws Exception {
-        var courseWithoutCompetencies = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, false, 0).get(0);
+        var courseWithoutCompetencies = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, false, 0).getFirst();
         enableLearningPathsRESTCall(courseWithoutCompetencies);
-        final var updatedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseWithoutCompetencies.getId());
+        final var updatedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(courseWithoutCompetencies.getId());
         assertThat(updatedCourse.getLearningPathsEnabled()).as("should enable LearningPaths").isTrue();
         assertThat(updatedCourse.getLearningPaths()).isNotNull();
         assertThat(updatedCourse.getLearningPaths().size()).as("should create LearningPath for each student").isEqualTo(NUMBER_OF_STUDENTS);
@@ -262,7 +274,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.put("/api/courses/" + course.getId() + "/learning-paths/generate-missing", null, HttpStatus.OK);
         students.forEach(user -> {
             user = userRepository.findWithLearningPathsByIdElseThrow(user.getId());
-            assertThat(user.getLearningPaths().size()).isEqualTo(1);
+            assertThat(user.getLearningPaths()).hasSize(1);
         });
 
     }
@@ -366,7 +378,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
 
-        assertThat(newCompetencies.size()).isEqualTo(numberOfNewCompetencies);
+        assertThat(newCompetencies).hasSize(numberOfNewCompetencies);
         assertThat(learningPathOptional).isPresent();
         assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competencies").containsAll(newCompetencies);
         assertThat(learningPathOptional.get().getCompetencies().size()).as("should not remove old competencies").isEqualTo(competencies.length + newCompetencies.size());
@@ -402,11 +414,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         assertThat(learningPath.getProgress()).as("contains no completed competency").isEqualTo(0);
 
-        // force update to avoid waiting for scheduler
-        competencyProgressService.updateCompetencyProgress(createdCompetency.getId(), student);
-
-        learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        assertThat(learningPath.getProgress()).as("contains completed competency").isNotEqualTo(0);
+        verify(competencyProgressService).updateProgressByCompetencyAndUsersInCourseAsync(eq(createdCompetency));
     }
 
     /**
@@ -437,6 +445,43 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var otherStudent = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), otherStudent.getId());
         request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathCompetencyGraphOfOtherUser() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var otherStudent = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), otherStudent.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/competency-graph", HttpStatus.FORBIDDEN, LearningPathCompetencyGraphDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathCompetencyGraph() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        Arrays.stream(competencies).forEach(competency -> competencyProgressService.updateCompetencyProgress(competency.getId(), student));
+
+        LearningPathCompetencyGraphDTO response = request.get("/api/learning-path/" + learningPath.getId() + "/competency-graph", HttpStatus.OK,
+                LearningPathCompetencyGraphDTO.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.nodes().stream().map(CompetencyGraphNodeDTO::id))
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(competencies).map(Competency::getId).map(Object::toString).toList());
+        assertThat(response.nodes()).allMatch(nodeDTO -> {
+            var progress = competencyProgressRepository.findByCompetencyIdAndUserIdOrElseThrow(Long.parseLong(nodeDTO.id()), student.getId());
+            var masteryProgress = CompetencyProgressService.getMasteryProgress(progress);
+            return Objects.equals(nodeDTO.value(), Math.floor(masteryProgress * 100))
+                    && Objects.equals(nodeDTO.valueType(), CompetencyGraphNodeDTO.CompetencyNodeValueType.MASTERY_PROGRESS);
+        });
+
+        Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
+        assertThat(response.edges()).hasSameSizeAs(relations);
+        assertThat(response.edges()).allMatch(relationDTO -> relations.stream().anyMatch(relation -> relation.getId() == Long.parseLong(relationDTO.id())
+                && relation.getTailCompetency().getId() == Long.parseLong(relationDTO.target()) && relation.getHeadCompetency().getId() == Long.parseLong(relationDTO.source())));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -525,26 +570,58 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
     }
 
-    @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void testGetLearningPathId() throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
-        assertThat(result).isEqualTo(learningPath.getId());
+    @Nested
+    class GetLearningPathId {
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnExistingId() throws Exception {
+            course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+            final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+            final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
+            assertThat(result).isEqualTo(learningPath.getId());
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnNotFoundIfNotExists() throws Exception {
+            course.setLearningPathsEnabled(true);
+            course = courseRepository.save(course);
+            var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            student = userRepository.findWithLearningPathsByIdElseThrow(student.getId());
+            learningPathRepository.deleteAll(student.getLearningPaths());
+            request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.NOT_FOUND, Long.class);
+        }
     }
 
-    @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void testGetLearningPathIdNotExisting() throws Exception {
-        course.setLearningPathsEnabled(true);
-        course = courseRepository.save(course);
-        var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
-        student = userRepository.findWithLearningPathsByIdElseThrow(student.getId());
-        learningPathRepository.deleteAll(student.getLearningPaths());
-        final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
-        assertThat(result).isNotNull();
+    @Nested
+    class GenerateLearningPath {
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnForbiddenIfNotEnabled() throws Exception {
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnBadRequestIfAlreadyExists() throws Exception {
+            course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldGenerateLearningPath() throws Exception {
+            course.setLearningPathsEnabled(true);
+            course = courseRepository.save(course);
+            final var response = request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.CREATED);
+            assertThat(response).isNotNull();
+            final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+            assertThat(learningPath).isNotNull();
+        }
     }
 
     @Test
@@ -568,11 +645,230 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         testGetCompetencyProgressForLearningPath();
     }
 
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigation() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        competencyProgressService.updateProgressByLearningObjectSync(textUnit, Set.of(student));
+
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+
+        verifyNavigationResult(result, textUnit, textExercise, null);
+        assertThat(result.progress()).isEqualTo(20);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationEmptyCompetencies() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        textExercise.setCompetencies(Set.of());
+        textExercise = exerciseRepository.save(textExercise);
+
+        TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[2], false);
+        TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[4], false);
+
+        var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        verifyNavigationResult(result, textUnit, secondTextUnit, thirdTextUnit);
+
+        lectureUnitService.setLectureUnitCompletion(secondTextUnit, student, true);
+        result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        verifyNavigationResult(result, secondTextUnit, thirdTextUnit, null);
+
+        lectureUnitService.setLectureUnitCompletion(thirdTextUnit, student, true);
+        result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        verifyNavigationResult(result, thirdTextUnit, null, null);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationDoesNotLeakUnreleasedLearningObjects() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        textExercise.setCompetencies(Set.of());
+        textExercise = exerciseRepository.save(textExercise);
+
+        TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[1], false);
+        secondTextUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        lectureUnitRepository.save(secondTextUnit);
+        TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[2], false);
+        TextUnit fourthTextUnit = createAndLinkTextUnit(student, competencies[3], false);
+        fourthTextUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        lectureUnitRepository.save(fourthTextUnit);
+        TextUnit fifthTextUnit = createAndLinkTextUnit(student, competencies[4], false);
+
+        var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        verifyNavigationResult(result, textUnit, thirdTextUnit, fifthTextUnit);
+    }
+
+    private LearningPathNavigationObjectDTO.LearningObjectType getLearningObjectType(LearningObject learningObject) {
+        return switch (learningObject) {
+            case LectureUnit ignored -> LearningPathNavigationObjectDTO.LearningObjectType.LECTURE;
+            case Exercise ignored -> LearningPathNavigationObjectDTO.LearningObjectType.EXERCISE;
+            default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
+        };
+    }
+
+    private void verifyNavigationResult(LearningPathNavigationDTO result, LearningObject expectedPredecessor, LearningObject expectedCurrent, LearningObject expectedSuccessor) {
+        verifyNavigationObjectResult(expectedPredecessor, result.predecessorLearningObject());
+        verifyNavigationObjectResult(expectedCurrent, result.currentLearningObject());
+        verifyNavigationObjectResult(expectedSuccessor, result.successorLearningObject());
+    }
+
+    private void verifyNavigationObjectResult(LearningObject expectedObject, LearningPathNavigationObjectDTO actualObject) {
+        if (expectedObject == null) {
+            assertThat(actualObject).isNull();
+        }
+        else {
+            assertThat(actualObject).isNotNull();
+            assertThat(actualObject.type()).isEqualTo(getLearningObjectType(expectedObject));
+            assertThat(actualObject.id()).isEqualTo(expectedObject.getId());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetRelativeLearningPathNavigation() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/relative-navigation?learningObjectId=" + textUnit.getId() + "&learningObjectType="
+                + LearningPathNavigationObjectDTO.LearningObjectType.LECTURE + "&competencyId=" + competencies[0].getId(), HttpStatus.OK, LearningPathNavigationDTO.class);
+
+        verifyNavigationResult(result, null, textUnit, textExercise);
+
+        assertThat(result.progress()).isEqualTo(learningPath.getProgress());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1337", roles = "USER")
+    void testGetLearningPathNavigationForOtherStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.FORBIDDEN, LearningPathNavigationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationOverview() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.OK, LearningPathNavigationOverviewDTO.class);
+
+        // TODO: currently learning objects connected to more than one competency are provided twice in the learning path
+        // TODO: this is not a problem for the navigation overview as the duplicates are filtered out
+
+        assertThat(result.learningObjects()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1337", roles = "USER")
+    void testGetLearningPathNavigationOverviewForOtherStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.FORBIDDEN, LearningPathNavigationOverviewDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetCompetencyOrderForLearningPath() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies", HttpStatus.OK, CompetencyNameDTO.class);
+        assertThat(result).containsExactlyElementsOf(Arrays.stream(competencies).map(CompetencyNameDTO::of).toList());
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningObjectsForCompetency() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        var result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies/" + competencies[0].getId() + "/learning-objects", HttpStatus.OK,
+                LearningPathNavigationObjectDTO.class);
+
+        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textUnit, true, competencies[0].getId()));
+
+        result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies/" + competencies[1].getId() + "/learning-objects", HttpStatus.OK,
+                LearningPathNavigationObjectDTO.class);
+
+        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textExercise, false, competencies[1].getId()));
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningObjectsForCompetencyMultipleObjects() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        List<LearningObject> completedLectureUnits = List.of(createAndLinkTextUnit(student, competencies[4], true), createAndLinkTextUnit(student, competencies[4], true));
+        List<LearningObject> finishedExercises = List.of(createAndLinkTextExercise(competencies[4], true), createAndLinkTextExercise(competencies[4], true),
+                createAndLinkTextExercise(competencies[4], true));
+
+        List<LearningObject> uncompletedLectureUnits = List.of(createAndLinkTextUnit(student, competencies[4], false));
+        List<LearningObject> unfinishedExercises = List.of(createAndLinkTextExercise(competencies[4], false), createAndLinkTextExercise(competencies[4], false));
+
+        int a = completedLectureUnits.size();
+        int b = completedLectureUnits.size() + finishedExercises.size();
+        int c = completedLectureUnits.size() + finishedExercises.size() + uncompletedLectureUnits.size();
+        int d = completedLectureUnits.size() + finishedExercises.size() + uncompletedLectureUnits.size() + unfinishedExercises.size();
+
+        var result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies/" + competencies[4].getId() + "/learning-objects", HttpStatus.OK,
+                LearningPathNavigationObjectDTO.class);
+
+        assertThat(result).hasSize(d);
+        assertThat(result.subList(0, a)).containsExactlyInAnyOrderElementsOf(
+                completedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, true, competencies[4].getId())).toList());
+        assertThat(result.subList(a, b)).containsExactlyInAnyOrderElementsOf(
+                finishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, true, competencies[4].getId())).toList());
+        assertThat(result.subList(b, c)).containsExactlyInAnyOrderElementsOf(
+                uncompletedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, competencies[4].getId())).toList());
+        assertThat(result.subList(c, d)).containsExactlyInAnyOrderElementsOf(
+                unfinishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, competencies[4].getId())).toList());
+    }
+
     void testGetCompetencyProgressForLearningPath() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, Set.class);
         assertThat(result).hasSize(5);
+    }
+
+    private TextExercise createAndLinkTextExercise(Competency competency, boolean withAssessment) {
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+        if (withAssessment) {
+            var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            studentScoreUtilService.createStudentScore(textExercise, student, 100.0);
+        }
+        competencyUtilService.linkExerciseToCompetency(competency, textExercise);
+
+        return textExercise;
+    }
+
+    private TextUnit createAndLinkTextUnit(User student, Competency competency, boolean completed) {
+        TextUnit textUnit = lectureUtilService.createTextUnit();
+        lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
+        textUnit = (TextUnit) competencyUtilService.linkLectureUnitToCompetency(competency, textUnit);
+
+        if (completed) {
+            lectureUnitService.setLectureUnitCompletion(textUnit, student, true);
+        }
+
+        return textUnit;
     }
 }

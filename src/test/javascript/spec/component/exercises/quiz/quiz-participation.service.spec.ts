@@ -50,19 +50,22 @@ describe('Quiz Participation Service', () => {
         tick();
     }));
 
-    it('should submit for live mode', fakeAsync(() => {
-        const mockSubmission = new QuizSubmission();
-        mockSubmission.id = 1;
-        mockSubmission.scoreInPoints = 10;
-        service.submitForLiveMode(mockSubmission, exerciseId).subscribe((res) => {
-            expect(res.body!.id).toBe(1);
-            expect(res.body!.scoreInPoints).toBe(10);
-        });
+    it.each([true, false])(
+        'should save or submit for live mode',
+        fakeAsync((submit: boolean) => {
+            const mockSubmission = new QuizSubmission();
+            mockSubmission.id = 1;
+            mockSubmission.scoreInPoints = 10;
+            service.saveOrSubmitForLiveMode(mockSubmission, exerciseId, submit).subscribe((res) => {
+                expect(res.body!.id).toBe(1);
+                expect(res.body!.scoreInPoints).toBe(10);
+            });
 
-        const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/live` });
-        req.flush(mockSubmission);
-        tick();
-    }));
+            const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/live?submit=${submit}` });
+            req.flush(mockSubmission);
+            tick();
+        }),
+    );
 
     afterEach(() => {
         httpMock.verify();

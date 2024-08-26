@@ -17,10 +17,10 @@ import { Submission } from 'app/entities/submission.model';
                 <div class="card-header">
                     <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto" />
                     @if (isBeforeExerciseDueDate) {
-                        <span>{{ 'artemisApp.assessment.dashboard.warning' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.assessment.dashboard.warning"></span>
                     }
                     @if (!isBeforeExerciseDueDate) {
-                        <span>{{ 'artemisApp.assessment.dashboard.warningIndividual' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.assessment.dashboard.warningIndividual"></span>
                     }
                 </div>
             }
@@ -44,7 +44,7 @@ export class AssessmentWarningComponent implements OnChanges {
         if (this.exercise.dueDate) {
             const now = dayjs();
             this.isBeforeExerciseDueDate = now.isBefore(this.exercise.dueDate);
-            this.showWarning = now.isBefore(this.getLatestDueDate()) && !this.exercise.allowManualFeedbackRequests;
+            this.showWarning = now.isBefore(this.getLatestDueDate()) && !this.exercise.allowFeedbackRequests;
         }
     }
 

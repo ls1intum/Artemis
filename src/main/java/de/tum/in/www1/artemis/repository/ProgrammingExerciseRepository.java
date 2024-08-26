@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -10,23 +13,26 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise_;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise_;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.base.DynamicSpecificationRepository;
+import de.tum.in.www1.artemis.repository.base.FetchOptions;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -35,12 +41,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long>, JpaSpecificationExecutor<ProgrammingExercise> {
-
-    default ProgrammingExercise findOneByIdElseThrow(final Specification<ProgrammingExercise> specification, long exerciseId) {
-        final Specification<ProgrammingExercise> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), exerciseId);
-        return findOne(specification.and(hasIdSpec)).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
-    }
+public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
     /**
      * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
@@ -67,22 +68,37 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
+            "submissionPolicy", "buildConfig" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencies", "auxiliaryRepositories",
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencies", "auxiliaryRepositories",
-            "submissionPolicy", "plagiarismDetectionConfig" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(long exerciseId);
+            "submissionPolicy", "buildConfig" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencies", "auxiliaryRepositories",
+            "submissionPolicy", "plagiarismDetectionConfig", "buildConfig" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(
+            long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "buildConfig" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigById(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "buildConfig" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndBuildConfigById(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories", "plagiarismDetectionConfig", "buildPlanConfiguration", "buildScript", "templateParticipation", "solutionParticipation" })
+            "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findForCreationById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
@@ -90,6 +106,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencies", "buildConfig" })
+    Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesCompetenciesAndBuildConfigById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
@@ -118,7 +137,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
         if (exercises.size() != 1) {
             throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
         }
-        return exercises.get(0);
+        return exercises.getFirst();
     }
 
     /**
@@ -229,16 +248,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.studentParticipations pep
-                LEFT JOIN FETCH pep.submissions s
-            WHERE s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL
-                OR s.type IS NULL
-            """)
-    List<ProgrammingExercise> findAllWithEagerParticipationsAndLegalSubmissions();
-
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.templateParticipation
                 LEFT JOIN FETCH pe.solutionParticipation
             WHERE pe.id = :exerciseId
@@ -261,23 +270,55 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students" })
-    Optional<ProgrammingExercise> findWithAllParticipationsById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
+    Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
 
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN pe.studentParticipations pep
-            WHERE pep.id = :participationId
-                OR pe.templateParticipation.id = :participationId
-                OR pe.solutionParticipation.id = :participationId
+                LEFT JOIN pe.studentParticipations spep
+            WHERE spep.id = :participationId
             """)
-    Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") long participationId);
+    Optional<ProgrammingExercise> findByStudentParticipationId(@Param("participationId") long participationId);
 
-    default ProgrammingExercise findByParticipationIdOrElseThrow(long participationId) throws EntityNotFoundException {
-        return findByParticipationId(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming exercise for participation with id " + participationId + " does not exist"));
-    }
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+            WHERE pe.templateParticipation.id = :participationId
+            """)
+    Optional<ProgrammingExercise> findByTemplateParticipationId(@Param("participationId") long participationId);
+
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.buildConfig
+            WHERE pe.solutionParticipation.id = :participationId
+            """)
+    Optional<ProgrammingExercise> findBySolutionParticipationIdWithBuildConfig(@Param("participationId") long participationId);
+
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.studentParticipations spep
+                LEFT JOIN FETCH pe.buildConfig
+            WHERE spep.id = :participationId
+            """)
+    Optional<ProgrammingExercise> findByStudentParticipationIdWithBuildConfig(@Param("participationId") long participationId);
+
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.buildConfig
+            WHERE pe.templateParticipation.id = :participationId
+            """)
+    Optional<ProgrammingExercise> findByTemplateParticipationIdWithBuildConfig(@Param("participationId") long participationId);
+
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+            WHERE pe.solutionParticipation.id = :participationId
+            """)
+    Optional<ProgrammingExercise> findBySolutionParticipationId(@Param("participationId") long participationId);
 
     @Query("""
             SELECT pe
@@ -298,9 +339,27 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH tc.solutionEntries
+                LEFT JOIN FETCH p.buildConfig
             WHERE p.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(@Param("exerciseId") long exerciseId);
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(
+            @Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExercise p
+                LEFT JOIN FETCH p.testCases tc
+                LEFT JOIN FETCH p.staticCodeAnalysisCategories
+                LEFT JOIN FETCH p.exerciseHints
+                LEFT JOIN FETCH p.templateParticipation
+                LEFT JOIN FETCH p.solutionParticipation
+                LEFT JOIN FETCH p.auxiliaryRepositories
+                LEFT JOIN FETCH tc.solutionEntries
+                LEFT JOIN FETCH p.buildConfig
+            WHERE p.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(
+            @Param("exerciseId") long exerciseId);
 
     /**
      * Returns all programming exercises that have a due date after {@code now} and have tests marked with
@@ -332,7 +391,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 LEFT JOIN FETCH pe.exerciseGroup eg
                 LEFT JOIN FETCH eg.exam e
             WHERE e.endDate > :dateTime
-             """)
+            """)
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
@@ -470,8 +529,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
-    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig" })
-    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig" })
+    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "buildConfig" })
+    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     long countByShortNameAndCourse(String shortName, Course course);
 
@@ -480,17 +542,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     long countByShortNameAndExerciseGroupExamCourse(String shortName, Course course);
 
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
-
-    /**
-     * Find a programming exercise by its id and throw an EntityNotFoundException if it cannot be found
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     */
-    @NotNull
-    default ProgrammingExercise findByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return findById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-    }
 
     /**
      * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
@@ -506,34 +557,25 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
 
-    /**
-     * Finds all programming exercises with eager template participation and the given programming language.
-     *
-     * @param programmingLanguage the programming language of the exercises to find.
-     * @return a list of programming exercises with eager template participation.
-     */
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.templateParticipation tp
-            WHERE pe.programmingLanguage = :programmingLanguage
-            """)
-    List<ProgrammingExercise> findAllByProgrammingLanguageWithTemplateParticipation(@Param("programmingLanguage") ProgrammingLanguage programmingLanguage);
-
     default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
-        return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+        return getValueElseThrow(findByIdWithGradingCriteria(exerciseId), exerciseId);
     }
 
     /**
-     * Find a programming exercise by its id and fetch related plagiarism detection config.
+     * Find a programming exercise by its id and fetch related plagiarism detection config and team config.
      * Throws an EntityNotFoundException if the exercise cannot be found.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      */
     @NotNull
-    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return findWithPlagiarismDetectionConfigById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(programmingExerciseId), programmingExerciseId);
+    }
+
+    @NotNull
+    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithBuildConfigById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -544,7 +586,18 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @NotNull
     default ProgrammingExercise findByIdWithAuxiliaryRepositoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return findWithAuxiliaryRepositoriesById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithAuxiliaryRepositoriesById(programmingExerciseId), programmingExerciseId);
+    }
+
+    /**
+     * Find a programming exercise with auxiliary repositories competencies, and buildConfig by its id and throw an {@link EntityNotFoundException} if it cannot be found
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithAuxiliaryRepositoriesCompetenciesAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithAuxiliaryRepositoriesCompetenciesAndBuildConfigById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -555,7 +608,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @NotNull
     default ProgrammingExercise findByIdWithSubmissionPolicyElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return findWithSubmissionPolicyById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithSubmissionPolicyById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -568,9 +621,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NotNull
+    // TODO: rename, this method does more than it promises
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -583,8 +636,21 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseId), programmingExerciseId);
+    }
+
+    /**
+     * Find a programming exercise by its id, including auxiliary repositories, template and solution participation,
+     * their latest results and build config.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    default ProgrammingExercise findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigById(programmingExerciseId);
+        return getValueElseThrow(programmingExercise, programmingExerciseId);
     }
 
     /**
@@ -596,8 +662,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @NotNull
     default ProgrammingExercise findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -627,50 +692,43 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId), programmingExerciseId);
+    }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation, team assignment config, categories and build config
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId);
+        return getValueElseThrow(programmingExercise, programmingExerciseId);
     }
 
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(long programmingExerciseId)
             throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(programmingExerciseId), programmingExerciseId);
     }
 
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(
-            long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(
-                programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-    }
-
-    /**
-     * Finds a programming exercise by its id including the submissions for its solution and template participation.
-     *
-     * @param exerciseId          The id of the programming exercise.
-     * @param withGradingCriteria True, if the grading instructions of the exercise should be included as well.
-     * @return A programming exercise that has the given id.
-     * @throws EntityNotFoundException In case no exercise with the given id exists.
-     */
-    @NotNull
-    default ProgrammingExercise findByIdWithAuxiliaryRepositoriesTeamAssignmentConfigAndGradingCriteriaElseThrow(long exerciseId, boolean withGradingCriteria)
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(long programmingExerciseId)
             throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigById(
+                programmingExerciseId);
+        return getValueElseThrow(programmingExercise, programmingExerciseId);
+    }
 
-        final Specification<ProgrammingExercise> specification = (root, query, criteriaBuilder) -> {
-            root.fetch(Exercise_.CATEGORIES, JoinType.LEFT);
-            root.fetch(Exercise_.TEAM_ASSIGNMENT_CONFIG, JoinType.LEFT);
-            root.fetch(ProgrammingExercise_.AUXILIARY_REPOSITORIES, JoinType.LEFT);
-
-            if (withGradingCriteria) {
-                root.fetch(Exercise_.GRADING_CRITERIA, JoinType.LEFT);
-            }
-
-            return null;
-        };
-
-        return findOneByIdElseThrow(specification, exerciseId);
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(
+            long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(
+                findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(programmingExerciseId),
+                programmingExerciseId);
     }
 
     /**
@@ -682,8 +740,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @NotNull
     default ProgrammingExercise findForCreationByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findForCreationById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findForCreationById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -715,41 +772,106 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         // TODO: This is a dark hack. Move this into a service where we properly load only the solution participation in the second step
-        Optional<ProgrammingExercise> programmingExerciseWithTemplate = findWithTemplateParticipationLatestResultFeedbackTestCasesById(programmingExerciseId);
-        Optional<ProgrammingExercise> programmingExerciseWithSolution = findWithSolutionParticipationLatestResultFeedbackTestCasesById(programmingExerciseId);
+        ProgrammingExercise programmingExerciseWithTemplate = getValueElseThrow(findWithTemplateParticipationLatestResultFeedbackTestCasesById(programmingExerciseId),
+                programmingExerciseId);
+        ProgrammingExercise programmingExerciseWithSolution = getValueElseThrow(findWithSolutionParticipationLatestResultFeedbackTestCasesById(programmingExerciseId),
+                programmingExerciseId);
 
-        var withTemplate = programmingExerciseWithTemplate.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-        var withSolution = programmingExerciseWithSolution.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        programmingExerciseWithTemplate.setSolutionParticipation(programmingExerciseWithSolution.getSolutionParticipation());
 
-        withTemplate.setSolutionParticipation(withSolution.getSolutionParticipation());
-
-        return withTemplate;
+        return programmingExerciseWithTemplate;
     }
 
     @NotNull
     default ProgrammingExercise findWithEagerStudentParticipationsByIdElseThrow(long programmingExerciseId) {
-        return findWithEagerStudentParticipationsById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        return getValueElseThrow(findWithEagerStudentParticipationsById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
-     * Retrieve the programming exercise from a programming exercise participation. In case the programming exercise is null or not initialized,
-     * this method will load it properly from the database and connect it to the participation
+     * Retrieves the associated ProgrammingExercise for a given ProgrammingExerciseParticipation.
+     * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked
+     * to the specified participation. This method handles different types of participation
+     * (template, solution, student) to optimize database queries and avoid performance bottlenecks.
      *
-     * @param participation the programming exercise participation for which the programming exercise should be found
-     * @return the programming exercise
+     * @param participation the programming exercise participation object; must not be null
+     * @return the linked ProgrammingExercise, or null if not found or the participation is not initialized
      */
     @Nullable
     default ProgrammingExercise getProgrammingExerciseFromParticipation(ProgrammingExerciseParticipation participation) {
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             // Find the programming exercise for the given participation
-            var optionalProgrammingExercise = findByParticipationId(participation.getId());
+            // NOTE: we use different methods to find the programming exercise based on the participation type on purpose to avoid slow database queries
+            long participationId = participation.getId();
+            Optional<ProgrammingExercise> optionalProgrammingExercise = switch (participation) {
+                case TemplateProgrammingExerciseParticipation ignored -> findByTemplateParticipationId(participationId);
+                case SolutionProgrammingExerciseParticipation ignored -> findBySolutionParticipationId(participationId);
+                case ProgrammingExerciseStudentParticipation ignored -> findByStudentParticipationId(participationId);
+                default -> Optional.empty();
+            };
             if (optionalProgrammingExercise.isEmpty()) {
                 return null;
             }
             participation.setProgrammingExercise(optionalProgrammingExercise.get());
         }
         return participation.getProgrammingExercise();
+    }
+
+    /**
+     * Retrieves the associated ProgrammingExercise with the build config for a given ProgrammingExerciseParticipation.
+     * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked
+     * to the specified participation. This method handles different types of participation
+     * (template, solution, student) to optimize database queries and avoid performance bottlenecks.
+     *
+     * @param participation the programming exercise participation object; must not be null
+     * @return the linked ProgrammingExercise, or null if not found or the participation is not initialized
+     */
+    default ProgrammingExercise getProgrammingExerciseWithBuildConfigFromParticipation(ProgrammingExerciseParticipation participation) {
+        // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
+        if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
+            // Find the programming exercise for the given participation
+            // NOTE: we use different methods to find the programming exercise based on the participation type on purpose to avoid slow database queries
+            long participationId = participation.getId();
+            Optional<ProgrammingExercise> optionalProgrammingExercise = switch (participation) {
+                case TemplateProgrammingExerciseParticipation ignored -> findByTemplateParticipationIdWithBuildConfig(participationId);
+                case SolutionProgrammingExerciseParticipation ignored -> findBySolutionParticipationIdWithBuildConfig(participationId);
+                case ProgrammingExerciseStudentParticipation ignored -> findByStudentParticipationIdWithBuildConfig(participationId);
+                default -> Optional.empty();
+            };
+            if (optionalProgrammingExercise.isEmpty()) {
+                return null;
+            }
+            participation.setProgrammingExercise(optionalProgrammingExercise.get());
+        }
+        return participation.getProgrammingExercise();
+    }
+
+    /**
+     * Retrieve the programming exercise from a programming exercise participation.
+     *
+     * @param participation The programming exercise participation for which to retrieve the programming exercise.
+     * @return The programming exercise of the provided participation.
+     */
+    @NotNull
+    default ProgrammingExercise getProgrammingExerciseFromParticipationElseThrow(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise programmingExercise = getProgrammingExerciseFromParticipation(participation);
+        if (programmingExercise == null) {
+            throw new EntityNotFoundException("No programming exercise found for the participation with id " + participation.getId());
+        }
+        return programmingExercise;
+    }
+
+    /**
+     * Fetch the programming exercise with the build config, or throw an EntityNotFoundException if it cannot be found.
+     *
+     * @param programmingExercise The programming exercise to fetch the build config for.
+     * @return The programming exercise with the build config.
+     */
+    default ProgrammingExercise getProgrammingExerciseWithBuildConfigElseThrow(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
+            return getValueElseThrow(findWithBuildConfigById(programmingExercise.getId()), programmingExercise.getId());
+        }
+        return programmingExercise;
     }
 
     /**
@@ -830,10 +952,43 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
         validateCourseAndExerciseShortName(programmingExercise, course);
     }
 
-    default void generateBuildPlanAccessSecretIfNotExists(ProgrammingExercise exercise) {
-        if (!exercise.hasBuildPlanAccessSecretSet()) {
-            exercise.generateAndSetBuildPlanAccessSecret();
-            save(exercise);
+    /**
+     * Fetch options for the {@link ProgrammingExercise} entity.
+     * Each option specifies an entity or a collection of entities to fetch eagerly when using a dynamic fetching query.
+     */
+    enum ProgrammingExerciseFetchOptions implements FetchOptions {
+
+        // @formatter:off
+        Categories(Exercise_.CATEGORIES),
+        TeamAssignmentConfig(Exercise_.TEAM_ASSIGNMENT_CONFIG),
+        AuxiliaryRepositories(ProgrammingExercise_.AUXILIARY_REPOSITORIES),
+        GradingCriteria(Exercise_.GRADING_CRITERIA),
+        StudentParticipations(ProgrammingExercise_.STUDENT_PARTICIPATIONS),
+        TemplateParticipation(ProgrammingExercise_.TEMPLATE_PARTICIPATION),
+        SolutionParticipation(ProgrammingExercise_.SOLUTION_PARTICIPATION),
+        TestCases(ProgrammingExercise_.TEST_CASES),
+        Tasks(ProgrammingExercise_.TASKS),
+        StaticCodeAnalysisCategories(ProgrammingExercise_.STATIC_CODE_ANALYSIS_CATEGORIES),
+        SubmissionPolicy(ProgrammingExercise_.SUBMISSION_POLICY),
+        ExerciseHints(ProgrammingExercise_.EXERCISE_HINTS),
+        Competencies(ProgrammingExercise_.COMPETENCIES),
+        Teams(ProgrammingExercise_.TEAMS),
+        TutorParticipations(ProgrammingExercise_.TUTOR_PARTICIPATIONS),
+        ExampleSubmissions(ProgrammingExercise_.EXAMPLE_SUBMISSIONS),
+        Attachments(ProgrammingExercise_.ATTACHMENTS),
+        Posts(ProgrammingExercise_.POSTS),
+        PlagiarismCases(ProgrammingExercise_.PLAGIARISM_CASES),
+        PlagiarismDetectionConfig(ProgrammingExercise_.PLAGIARISM_DETECTION_CONFIG);
+        // @formatter:on
+
+        private final String fetchPath;
+
+        ProgrammingExerciseFetchOptions(String fetchPath) {
+            this.fetchPath = fetchPath;
+        }
+
+        public String getFetchPath() {
+            return fetchPath;
         }
     }
 }

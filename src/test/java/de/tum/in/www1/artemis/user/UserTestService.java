@@ -17,7 +17,9 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -26,11 +28,14 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.domain.science.ScienceEvent;
+import de.tum.in.www1.artemis.domain.science.ScienceEventType;
+import de.tum.in.www1.artemis.exercise.programming.MockDelegate;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
@@ -82,31 +87,42 @@ public class UserTestService {
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    @Autowired
+    private ScienceEventRepository scienceEventRepository;
+
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
 
     public User student;
 
-    private static final int numberOfStudents = 2;
+    private ScienceEvent scienceEvent;
 
-    private static final int numberOfTutors = 1;
+    private static final int NUMBER_OF_STUDENTS = 2;
 
-    private static final int numberOfEditors = 1;
+    private static final int NUMBER_OF_TUTORS = 1;
 
-    private static final int numberOfInstructors = 1;
+    private static final int NUMBER_OF_EDITORS = 1;
+
+    private static final int NUMBER_OF_INSTRUCTORS = 1;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
 
-        List<User> users = userUtilService.addUsers(testPrefix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
+        List<User> users = userUtilService.addUsers(testPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
         student = userRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userRepository.save(student);
         student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
+
+        final var event = new ScienceEvent();
+        event.setIdentity(student.getLogin());
+        event.setTimestamp(ZonedDateTime.now());
+        event.setType(ScienceEventType.EXERCISE__OPEN);
+        scienceEvent = scienceEventRepository.save(event);
     }
 
     public void tearDown() throws IOException {
@@ -127,6 +143,12 @@ public class UserTestService {
         assertThat(deletedUser.getRegistrationNumber()).isNull();
         assertThat(deletedUser.getImageUrl()).isNull();
         assertThat(deletedUser.getActivated()).isFalse();
+
+        // check only if owner of event is asserted
+        if (originalUser.getLogin().equals(scienceEvent.getIdentity())) {
+            final var deletedEvent = scienceEventRepository.findById(scienceEvent.getId()).orElseThrow();
+            assertThat(deletedEvent.getIdentity()).isEqualTo(deletedUser.getLogin());
+        }
     }
 
     private void assertThatUserWasNotSoftDeleted(User originalUser, User deletedUser) throws Exception {
@@ -138,6 +160,12 @@ public class UserTestService {
         assertThat(deletedUser.getEmail()).isEqualTo(originalUser.getEmail());
         assertThat(deletedUser.getRegistrationNumber()).isEqualTo(originalUser.getVisibleRegistrationNumber());
         assertThat(deletedUser.getImageUrl()).isEqualTo(originalUser.getImageUrl());
+
+        // check only if owner of event is asserted
+        if (originalUser.getLogin().equals(scienceEvent.getIdentity())) {
+            final var unchangedEvent = scienceEventRepository.findById(scienceEvent.getId()).orElseThrow();
+            assertThat(unchangedEvent.getIdentity()).isEqualTo(originalUser.getLogin());
+        }
     }
 
     // Test
@@ -595,7 +623,7 @@ public class UserTestService {
         params.add("status", "");
         params.add("courseIds", "");
         List<UserDTO> users = request.getList("/api/admin/users", HttpStatus.OK, UserDTO.class, params);
-        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors); // admin is not returned
+        assertThat(users).hasSize(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS); // admin is not returned
     }
 
     // Test
@@ -634,7 +662,7 @@ public class UserTestService {
         params.add("courseIds", "");
         List<User> users = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(1);
-        assertThat(users.get(0).getEmail()).isEqualTo(student.getEmail());
+        assertThat(users.getFirst().getEmail()).isEqualTo(student.getEmail());
     }
 
     // Test
@@ -713,11 +741,11 @@ public class UserTestService {
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
-        assertThat(dto.getPassword()).isNotEmpty();
+        assertThat(dto.password()).isNotEmpty();
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        assertThat(passwordService.checkPasswordMatch(dto.getPassword(), currentUser.getPassword())).isTrue();
+        assertThat(passwordService.checkPasswordMatch(dto.password(), currentUser.getPassword())).isTrue();
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
@@ -735,7 +763,7 @@ public class UserTestService {
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
-        assertThat(dto.getPassword()).isNull();
+        assertThat(dto.password()).isNull();
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -754,7 +782,7 @@ public class UserTestService {
         userRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
-        assertThat(dto.getPassword()).isNull();
+        assertThat(dto.password()).isNull();
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
@@ -773,13 +801,32 @@ public class UserTestService {
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
-        assertThat(dto.getPassword()).isNull();
+        assertThat(dto.password()).isNull();
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isFalse();
+    }
+
+    // Test
+    public void addAndDeleteSshPublicKey() throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+
+        // adding invalid key should fail
+        String invalidSshKey = "invalid key";
+        request.putWithResponseBody("/api/users/sshpublickey", invalidSshKey, String.class, HttpStatus.BAD_REQUEST, true);
+
+        // adding valid key should work correctly
+        String validSshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
+        request.putWithResponseBody("/api/users/sshpublickey", validSshKey, String.class, HttpStatus.OK, true);
+        assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(validSshKey);
+
+        // deleting the key shoul work correctly
+        request.delete("/api/users/sshpublickey", HttpStatus.OK);
+        assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(null);
     }
 
     public UserRepository getUserRepository() {

@@ -107,7 +107,7 @@
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
                     >
                         @if (saveBusy) {
-                            <fa-icon [icon]="faSpinner" [spin]="true" />
+                            <fa-icon [icon]="faSpinner" animation="spin" />
                         }
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="entity.action.save"></span>
@@ -120,7 +120,7 @@
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
                     >
                         @if (submitBusy) {
-                            <fa-icon [icon]="faSpinner" [spin]="true" />
+                            <fa-icon [icon]="faSpinner" animation="spin" />
                         }
                         <span jhiTranslate="entity.action.submit"></span>
                     </button>
@@ -131,7 +131,7 @@
                             [disabled]="!(exercise?.isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
                         >
                             @if (cancelBusy) {
-                                <fa-icon [icon]="faSpinner" [spin]="true" />
+                                <fa-icon [icon]="faSpinner" animation="spin" />
                             }
                             <span jhiTranslate="entity.action.cancel"></span>
                         </button>
@@ -145,7 +145,7 @@
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
                     >
                         @if (submitBusy) {
-                            <fa-icon [icon]="faSpinner" [spin]="true" />
+                            <fa-icon [icon]="faSpinner" animation="spin" />
                         }
                         <span jhiTranslate="artemisApp.assessment.button.overrideAssessment"></span>
                     </button>
@@ -153,7 +153,7 @@
                 @if (result?.completionDate && exercise?.isAtLeastInstructor && (exercise!.type === ExerciseType.MODELING || exercise!.type === ExerciseType.TEXT)) {
                     <button class="btn m-1 btn-primary" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()">
                         @if (submitBusy) {
-                            <fa-icon [icon]="faSpinner" [spin]="true" />
+                            <fa-icon [icon]="faSpinner" animation="spin" />
                         }
                         <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission"></span>
                     </button>
@@ -170,7 +170,7 @@
                         [ngbTooltip]="nextSubmissionShortcut"
                     >
                         @if (nextSubmissionBusy) {
-                            <fa-icon [icon]="faSpinner" [spin]="true" />
+                            <fa-icon [icon]="faSpinner" animation="spin" />
                         }
                         <span jhiTranslate="artemisApp.assessment.button.nextSubmission"></span>
                     </button>

@@ -20,13 +20,12 @@ export class ExerciseResultPage {
     }
 
     async shouldShowExerciseTitle(title: string) {
-        const exerciseTitle = this.page.locator('#exercise-header');
-        await expect(exerciseTitle).toContainText(title);
-        await expect(exerciseTitle).toBeVisible();
+        await expect(this.page.locator('#exercise-header')).toContainText(title, { timeout: 10000 });
+        await expect(this.page.locator('#exercise-header')).toBeVisible();
     }
 
     async shouldShowScore(percentage: number) {
-        await Commands.reloadUntilFound(this.page, '#submission-result-graded');
+        await Commands.reloadUntilFound(this.page, this.page.locator('jhi-course-exercise-details #submission-result-graded'), 4000, 60000);
         await expect(this.page.locator('.tab-bar-exercise-details').getByText(`${percentage}%`)).toBeVisible();
     }
 

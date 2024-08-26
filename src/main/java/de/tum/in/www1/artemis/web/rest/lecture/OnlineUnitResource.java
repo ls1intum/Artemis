@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Optional;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -57,12 +58,15 @@ public class OnlineUnitResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final LectureUnitService lectureUnitService;
+
     public OnlineUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, OnlineUnitRepository onlineUnitRepository,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.onlineUnitRepository = onlineUnitRepository;
         this.competencyProgressService = competencyProgressService;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -97,13 +101,17 @@ public class OnlineUnitResource {
             throw new BadRequestException();
         }
 
-        checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
-        validateUrl(onlineUnit);
+        var existingOnlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnit.getId());
+
+        checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
+        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
 
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
-        competencyProgressService.updateProgressByLearningObjectAsync(result);
+
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingOnlineUnit, Optional.of(onlineUnit));
+
         return ResponseEntity.ok(result);
     }
 
@@ -123,7 +131,7 @@ public class OnlineUnitResource {
             throw new BadRequestException();
         }
 
-        validateUrl(onlineUnit);
+        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
@@ -153,29 +161,26 @@ public class OnlineUnitResource {
     @GetMapping("lectures/online-units/fetch-online-resource")
     @EnforceAtLeastEditor
     public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link) {
+        // Ensure that the link is a correctly formed URL
+        URL url = lectureUnitService.validateUrlStringAndReturnUrl(link);
+
+        if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
+            throw new BadRequestException("The specified link uses an unsupported protocol");
+        }
+
+        if (!InternetDomainName.isValid(url.getHost()) || "localhost".equalsIgnoreCase(url.getHost())) {
+            throw new BadRequestException("The specified link does not contain a valid domain");
+        }
+
+        log.info("Requesting online resource at {}", url);
+
         try {
-            // Ensure that the link is a correctly formed URL
-            URL url = new URL(link);
-
-            if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
-                throw new BadRequestException("The specified link uses an unsupported protocol");
-            }
-
-            if (!InternetDomainName.isValid(url.getHost()) || "localhost".equalsIgnoreCase(url.getHost())) {
-                throw new BadRequestException("The specified link does not contain a valid domain");
-            }
-
-            log.info("Requesting online resource at {}", url);
-
             // Request the document, limited to 3 seconds and 500 KB (enough for most websites)
             Document document = Jsoup.connect(url.toString()).timeout(3000).maxBodySize(500000).get();
             String title = getMetaTagContent(document, "title");
             String description = getMetaTagContent(document, "description");
 
             return ResponseEntity.ok(new OnlineResourceDTO(url.toString(), title, description));
-        }
-        catch (MalformedURLException e) {
-            throw new BadRequestException("The specified link is not a valid URL");
         }
         catch (IOException e) {
             throw new InternalServerErrorException("Error while retrieving metadata from link");
@@ -200,20 +205,6 @@ public class OnlineUnitResource {
             return element.attr("content");
         }
         return "";
-    }
-
-    /**
-     * Validates the source url of an online unit.
-     *
-     * @param onlineUnit The online unit to check the source URL for.
-     */
-    private void validateUrl(OnlineUnit onlineUnit) {
-        try {
-            new URL(onlineUnit.getSource());
-        }
-        catch (MalformedURLException exception) {
-            throw new BadRequestException();
-        }
     }
 
     /**

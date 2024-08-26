@@ -2,11 +2,10 @@ import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/
 import dayjs from 'dayjs/esm';
 import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subscription, combineLatest, of, take } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -33,9 +32,9 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -66,8 +65,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     @ViewChildren(ShortAnswerQuestionComponent)
     shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
 
-    private subscription: Subscription;
-    private subscriptionData: Subscription;
+    private routeAndDataSubscription: Subscription;
 
     runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
 
@@ -84,7 +82,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     disconnected = false;
     unsavedChanges = false;
 
-    sendWebsocket?: (submission: QuizSubmission) => void;
     showingResult = false;
     userScore: number;
 
@@ -97,10 +94,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     result: Result;
-    questionScores = {};
+    questionScores: { [id: number]: number } = {};
     quizId: number;
     courseId: number;
-    interval: any;
+    interval?: number;
+    autoSaveInterval?: number;
+    autoSaveTimer = 0;
     quizStarted = false;
     startDate: dayjs.Dayjs | undefined;
     endDate: dayjs.Dayjs | undefined;
@@ -111,7 +110,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * Websocket channels
      */
-    submissionChannel: string;
     participationChannel: string;
     quizExerciseChannel: string;
     quizBatchChannel: string;
@@ -133,7 +131,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private jhiWebsocketService: JhiWebsocketService,
         private quizExerciseService: QuizExerciseService,
         private participationService: ParticipationService,
-        private participationWebsocketService: ParticipationWebsocketService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private quizParticipationService: QuizParticipationService,
@@ -147,11 +144,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isMobile = isMobile(window.navigator.userAgent).any;
         // set correct mode
-        this.subscriptionData = this.route.data.subscribe((data) => {
-            this.mode = data.mode;
-            this.subscription = this.route.params.subscribe((params) => {
+        this.routeAndDataSubscription = combineLatest([this.route.data, this.route.params, this.route.parent?.parent?.params ?? of({ courseId: undefined })]).subscribe(
+            ([data, params, parentParams]) => {
+                this.mode = data.mode;
                 this.quizId = Number(params['exerciseId']);
-                this.courseId = Number(params['courseId']);
+                this.courseId = Number(parentParams['courseId']);
                 // init according to mode
                 switch (this.mode) {
                     case 'practice':
@@ -167,17 +164,18 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.initLiveMode();
                         break;
                 }
-            });
-        });
+            },
+        );
         // update displayed times in UI regularly
-        this.interval = setInterval(() => {
+        this.interval = window.setInterval(() => {
             this.updateDisplayedTimes();
             this.checkForQuizEnd();
         }, UI_RELOAD_TIME);
     }
 
     ngOnDestroy() {
-        clearInterval(this.interval);
+        window.clearInterval(this.interval);
+        window.clearInterval(this.autoSaveInterval);
         /**
          * unsubscribe from all subscribed websocket channels when page is closed
          */
@@ -185,9 +183,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             clearTimeout(timeout);
         });
 
-        if (this.submissionChannel) {
-            this.jhiWebsocketService.unsubscribe('/user' + this.submissionChannel);
-        }
         if (this.participationChannel) {
             this.jhiWebsocketService.unsubscribe(this.participationChannel);
         }
@@ -195,12 +190,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.jhiWebsocketService.unsubscribe(this.quizExerciseChannel);
         }
         this.websocketSubscription?.unsubscribe();
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
-        if (this.subscriptionData) {
-            this.subscriptionData.unsubscribe();
-        }
+        this.routeAndDataSubscription?.unsubscribe();
     }
 
     /**
@@ -210,10 +200,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // listen to connect / disconnect events
         this.websocketSubscription = this.jhiWebsocketService.connectionState.subscribe((status) => {
             if (status.connected && this.disconnected) {
-                // if the disconnect happened during the live quiz and there are unsaved changes, we trigger a selection changed event to save the submission on the server
-                if (this.unsavedChanges && this.sendWebsocket) {
-                    this.onSelectionChanged();
-                }
+                // if the disconnect happened during the live quiz and there are unsaved changes, we save the submission on the server
+                this.triggerSave(false);
                 // if the quiz was not yet started, we might have missed the quiz start => refresh
                 if (this.quizBatch && !this.quizBatch.started) {
                     this.refreshQuiz(true);
@@ -226,9 +214,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         });
 
         this.subscribeToWebsocketChannels();
+        this.setupAutoSave();
 
         // load the quiz (and existing submission if quiz has started)
-        this.participationService.findParticipationForCurrentUser(this.quizId).subscribe({
+        this.participationService.startQuizParticipation(this.quizId).subscribe({
             next: (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
@@ -302,32 +291,34 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         );
     }
 
+    setupAutoSave(): void {
+        // Clear existing autosaves - only one may run at a time
+        this.stopAutoSave();
+        this.autoSaveInterval = window.setInterval(() => {
+            if (this.waitingForQuizStart) {
+                // The quiz has not started. No need to autosave yet.
+                return;
+            }
+            if (this.remainingTimeSeconds < 0 || this.submission.submitted) {
+                this.stopAutoSave();
+                return;
+            }
+            this.autoSaveTimer++;
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
+                this.triggerSave();
+            }
+        }, AUTOSAVE_CHECK_INTERVAL);
+    }
+
+    stopAutoSave(): void {
+        window.clearInterval(this.autoSaveInterval);
+        this.autoSaveInterval = undefined;
+    }
+
     /**
      * subscribe to any outstanding websocket channels
      */
     subscribeToWebsocketChannels() {
-        if (!this.submissionChannel) {
-            this.submissionChannel = '/topic/quizExercise/' + this.quizId + '/submission';
-
-            // submission channel => react to new submissions
-            this.jhiWebsocketService.subscribe('/user' + this.submissionChannel);
-            this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe({
-                next: (payload) => {
-                    if (payload.error) {
-                        this.onSaveError(payload.error);
-                    }
-                },
-                error: (error) => {
-                    this.onSaveError(error);
-                },
-            });
-
-            // save answers (submissions) through websocket
-            this.sendWebsocket = (submission: QuizSubmission) => {
-                this.jhiWebsocketService.send(this.submissionChannel, submission);
-            };
-        }
-
         if (!this.participationChannel) {
             this.participationChannel = '/user/topic/exercise/' + this.quizId + '/participation';
             // TODO: subscribe for new results instead if this is what we are actually interested in
@@ -379,6 +370,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             const endDate = this.endDate;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
+                // Get the diff as a floating point number in seconds
                 this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
@@ -443,10 +435,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     checkForQuizEnd() {
-        const running = this.mode === 'live' && !!this.quizBatch && this.remainingTimeSeconds >= 0 && this.quizExercise?.quizMode !== QuizMode.SYNCHRONIZED;
+        const running = this.mode === 'live' && !!this.quizBatch && this.remainingTimeSeconds >= 0;
         if (!running && this.previousRunning) {
-            if (!this.submission.submitted && this.submission.submissionDate) {
-                this.alertService.success('artemisApp.quizExercise.submitSuccess');
+            // Rely on the grace period to store any unsaved changes at the end of the quiz
+            if (!this.submission.submitted) {
+                this.stopAutoSave();
+                this.triggerSave();
             }
         }
         this.previousRunning = running;
@@ -470,17 +464,22 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
         if (this.quizExercise.quizQuestions) {
             this.quizExercise.quizQuestions.forEach((question) => {
-                if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.selectedAnswerOptions.set(question.id!, []);
-                } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.dragAndDropMappings.set(question.id!, []);
-                } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.shortAnswerSubmittedTexts.set(question.id!, []);
-                } else {
-                    console.error('Unknown question type: ' + question);
+                switch (question.type) {
+                    case QuizQuestionType.MULTIPLE_CHOICE:
+                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.selectedAnswerOptions.set(question.id!, []);
+                        break;
+                    case QuizQuestionType.DRAG_AND_DROP:
+                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.dragAndDropMappings.set(question.id!, []);
+                        break;
+                    case QuizQuestionType.SHORT_ANSWER:
+                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.shortAnswerSubmittedTexts.set(question.id!, []);
+                        break;
+                    default:
+                        console.error('Unknown question type: ' + question);
+                        break;
                 }
             }, this);
         }
@@ -507,17 +506,22 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     return answer.quizQuestion!.id === question.id;
                 });
 
-                if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.selectedAnswerOptions.set(question.id!, (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || []);
-                } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.dragAndDropMappings.set(question.id!, (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || []);
-                } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.shortAnswerSubmittedTexts.set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []);
-                } else {
-                    console.error('Unknown question type: ' + question);
+                switch (question.type) {
+                    case QuizQuestionType.MULTIPLE_CHOICE:
+                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.selectedAnswerOptions.set(question.id!, (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || []);
+                        break;
+                    case QuizQuestionType.DRAG_AND_DROP:
+                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.dragAndDropMappings.set(question.id!, (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || []);
+                        break;
+                    case QuizQuestionType.SHORT_ANSWER:
+                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.shortAnswerSubmittedTexts.set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []);
+                        break;
+                    default:
+                        console.error('Unknown question type: ' + question);
+                        break;
                 }
             }, this);
         }
@@ -687,32 +691,36 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             if (fullQuestionFromServer) {
                 clientQuestion.explanation = fullQuestionFromServer.explanation;
 
-                if (clientQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    const mcClientQuestion = clientQuestion as MultipleChoiceQuestion;
-                    const mcFullQuestionFromServer = fullQuestionFromServer as MultipleChoiceQuestion;
+                switch (clientQuestion.type) {
+                    case QuizQuestionType.MULTIPLE_CHOICE:
+                        const mcClientQuestion = clientQuestion as MultipleChoiceQuestion;
+                        const mcFullQuestionFromServer = fullQuestionFromServer as MultipleChoiceQuestion;
 
-                    const answerOptions = mcClientQuestion.answerOptions!;
-                    answerOptions.forEach((clientAnswerOption) => {
-                        // find updated answerOption
-                        const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions!.find((option) => {
-                            return clientAnswerOption.id === option.id;
+                        const answerOptions = mcClientQuestion.answerOptions!;
+                        answerOptions.forEach((clientAnswerOption) => {
+                            // find updated answerOption
+                            const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions!.find((option) => {
+                                return clientAnswerOption.id === option.id;
+                            });
+                            if (fullAnswerOptionFromServer) {
+                                clientAnswerOption.explanation = fullAnswerOptionFromServer.explanation;
+                                clientAnswerOption.isCorrect = fullAnswerOptionFromServer.isCorrect;
+                            }
                         });
-                        if (fullAnswerOptionFromServer) {
-                            clientAnswerOption.explanation = fullAnswerOptionFromServer.explanation;
-                            clientAnswerOption.isCorrect = fullAnswerOptionFromServer.isCorrect;
-                        }
-                    });
-                } else if (clientQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                    const dndClientQuestion = clientQuestion as DragAndDropQuestion;
-                    const dndFullQuestionFromServer = fullQuestionFromServer as DragAndDropQuestion;
-
-                    dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
-                } else if (clientQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                    const shortAnswerClientQuestion = clientQuestion as ShortAnswerQuestion;
-                    const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
-                    shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
-                } else {
-                    captureException(new Error('Unknown question type: ' + clientQuestion));
+                        break;
+                    case QuizQuestionType.DRAG_AND_DROP:
+                        const dndClientQuestion = clientQuestion as DragAndDropQuestion;
+                        const dndFullQuestionFromServer = fullQuestionFromServer as DragAndDropQuestion;
+                        dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
+                        break;
+                    case QuizQuestionType.SHORT_ANSWER:
+                        const shortAnswerClientQuestion = clientQuestion as ShortAnswerQuestion;
+                        const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
+                        shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
+                        break;
+                    default:
+                        captureException(new Error('Unknown question type: ' + clientQuestion));
+                        break;
                 }
             }
         }, this);
@@ -760,17 +768,26 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * Callback method to be triggered when the user changes any of the answers in the quiz (in sub components based on the question type)
      */
     onSelectionChanged() {
-        this.applySelection();
-        if (this.sendWebsocket) {
-            if (!this.disconnected) {
-                // this.isSaving = true;
-                this.submission.submissionDate = this.serverDateService.now();
-                this.sendWebsocket(this.submission);
-                this.unsavedChanges = false;
-                this.updateSubmissionTime();
-            } else {
-                this.unsavedChanges = true;
-            }
+        this.unsavedChanges = true;
+    }
+
+    triggerSave(resetAutoSaveTimer = true): void {
+        if (resetAutoSaveTimer) {
+            this.autoSaveTimer = 0;
+        }
+        if (this.unsavedChanges && !this.isSubmitting) {
+            this.applySelection();
+            this.submission.submissionDate = this.serverDateService.now();
+            this.quizParticipationService
+                .saveOrSubmitForLiveMode(this.submission, this.quizId, false)
+                .pipe(take(1))
+                .subscribe({
+                    next: () => {
+                        this.unsavedChanges = false;
+                        this.updateSubmissionTime();
+                    },
+                    error: (error: HttpErrorResponse) => this.onSaveError(error.message),
+                });
         }
     }
 
@@ -816,21 +833,25 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
 
         for (const question of this.quizExercise.quizQuestions) {
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                const options = this.selectedAnswerOptions.get(question.id!);
-                if (options && options.length === 0) {
-                    return false;
-                }
-            } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                const mappings = this.dragAndDropMappings.get(question.id!);
-                if (mappings && mappings.length === 0) {
-                    return false;
-                }
-            } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                const submittedTexts = this.shortAnswerSubmittedTexts.get(question.id!);
-                if (submittedTexts && submittedTexts.length === 0) {
-                    return false;
-                }
+            switch (question.type) {
+                case QuizQuestionType.MULTIPLE_CHOICE:
+                    const options = this.selectedAnswerOptions.get(question.id!);
+                    if (options && options.length === 0) {
+                        return false;
+                    }
+                    break;
+                case QuizQuestionType.DRAG_AND_DROP:
+                    const mappings = this.dragAndDropMappings.get(question.id!);
+                    if (mappings && mappings.length === 0) {
+                        return false;
+                    }
+                    break;
+                case QuizQuestionType.SHORT_ANSWER:
+                    const submittedTexts = this.shortAnswerSubmittedTexts.get(question.id!);
+                    if (submittedTexts && submittedTexts.length === 0) {
+                        return false;
+                    }
+                    break;
             }
         }
 
@@ -876,10 +897,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     // copy submission and send it through websocket with 'submitted = true'
                     const quizSubmission = new QuizSubmission();
                     quizSubmission.submittedAnswers = this.submission.submittedAnswers;
-                    this.quizParticipationService.submitForLiveMode(quizSubmission, this.quizId).subscribe({
+                    this.quizParticipationService.saveOrSubmitForLiveMode(quizSubmission, this.quizId, true).subscribe({
                         next: (response: HttpResponse<QuizSubmission>) => {
                             this.submission = response.body!;
                             this.isSubmitting = false;
+                            this.unsavedChanges = false;
                             this.updateSubmissionTime();
                             this.applySubmission();
                             if (this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {

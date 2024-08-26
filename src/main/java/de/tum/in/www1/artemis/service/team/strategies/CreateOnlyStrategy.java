@@ -34,7 +34,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
 
     /**
      * Filters the teams from the given source exercise and returns only those that can be imported into the destination exercise without conflicts
-     *
+     * <p>
      * Conditions for being conflict-free:
      * 1. No clash in team short name
      * 2. No overlapping students
@@ -53,7 +53,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
 
     /**
      * Filters the teams from the given source exercise and returns only those that can be imported into the destination exercise without conflicts
-     *
+     * <p>
      * Conditions for being conflict-free:
      * 1. No clash in team short name
      * 2. No overlapping students
@@ -71,7 +71,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
 
     /**
      * Filters the teams from the given team list and returns only those that do not have conflicts with the existing ones
-     *
+     * <p>
      * Conditions for being conflict-free:
      * 1. No clash in team short name
      * 2. No overlapping students

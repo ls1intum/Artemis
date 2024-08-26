@@ -8,6 +8,7 @@ import { COURSE_BASE } from '../constants';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { UserCredentials } from '../users';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 /**
  * A class which encapsulates all API requests related to exams.
@@ -160,7 +161,8 @@ export class ExamAPIRequests {
      * @param exam the exam for which the missing exams are generated
      */
     async generateMissingIndividualExams(exam: Exam) {
-        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/generate-missing-student-exams`);
+        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/generate-missing-student-exams`);
+        return await response.json();
     }
 
     /**
@@ -169,5 +171,32 @@ export class ExamAPIRequests {
      */
     async prepareExerciseStartForExam(exam: Exam) {
         await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/start-exercises`);
+    }
+
+    /**
+     * Gets the exam scores
+     * @param exam the exam to get the scores for
+     */
+    async getExamScores(exam: Exam) {
+        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/scores`);
+        return await response.json();
+    }
+
+    /**
+     * Sets the exam grading scale
+     * @param exam the exam for which the grading scale is set
+     * @param gradingScale the grading scale to set
+     */
+    async setExamGradingScale(exam: Exam, gradingScale: any) {
+        const data = {
+            exam,
+            ...gradingScale,
+        };
+        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data });
+    }
+
+    async getGradeSummary(exam: Exam, studentExam: StudentExam) {
+        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/${studentExam.id}/grade-summary`);
+        return await response.json();
     }
 }

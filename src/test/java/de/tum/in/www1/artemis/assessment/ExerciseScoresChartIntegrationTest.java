@@ -18,27 +18,22 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
 class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "exercisescoreschart";
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -49,26 +44,13 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
     @Autowired
     private ParticipationUtilService participationUtilService;
 
-    Long idOfCourse;
+    private Long idOfCourse;
 
-    Long idOfTeam1;
+    private Long idOfIndividualTextExercise;
 
-    Long idOfTeam2;
+    private Long idOfIndividualTextExerciseWithoutParticipants;
 
-    Long idOfStudent1;
-
-    Long idOfStudent2;
-
-    Long idOfStudent3;
-
-    Long idOfIndividualTextExercise;
-
-    Long idOfIndividualTextExerciseWithoutParticipants;
-
-    Long idOfTeamTextExercise;
-
-    @Autowired
-    private UserRepository userRepository;
+    private Long idOfTeamTextExercise;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -95,15 +77,12 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        idOfStudent1 = student1.getId();
         User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
-        idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
+        Long idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
         User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
-        idOfStudent2 = student2.getId();
         User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
-        idOfStudent3 = student3.getId();
         User tutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
-        idOfTeam2 = teamUtilService.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
+        Long idOfTeam2 = teamUtilService.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
 
         // Creating result for student1
         participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);

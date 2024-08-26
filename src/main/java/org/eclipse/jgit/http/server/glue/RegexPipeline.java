@@ -56,11 +56,8 @@ class RegexPipeline extends UrlPipeline {
             pattern = Pattern.compile(p);
         }
 
-        Binder(Pattern p) {
-            pattern = p;
-        }
-
-        @Override UrlPipeline create() {
+        @Override
+        UrlPipeline create() {
             return new RegexPipeline(pattern, getFilters(), getServlet());
         }
     }
@@ -72,12 +69,14 @@ class RegexPipeline extends UrlPipeline {
         this.pattern = pattern;
     }
 
-    @Override boolean match(HttpServletRequest req) {
+    @Override
+    boolean match(HttpServletRequest req) {
         final String pathInfo = req.getPathInfo();
         return pathInfo != null && pattern.matcher(pathInfo).matches();
     }
 
-    @Override void service(HttpServletRequest req, HttpServletResponse rsp) throws ServletException, IOException {
+    @Override
+    void service(HttpServletRequest req, HttpServletResponse rsp) throws ServletException, IOException {
         final String reqInfo = req.getPathInfo();
         if (reqInfo == null) {
             rsp.sendError(SC_NOT_FOUND);
@@ -128,7 +127,8 @@ class RegexPipeline extends UrlPipeline {
         }
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return "Pipeline[regex: " + pattern + " ]";
     }
 }

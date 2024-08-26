@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import javax.naming.InvalidNameException;
@@ -94,15 +95,46 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    void testFetchPush_usingVcsAccessToken() {
+        var programmingParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var participationVcsAccessToken = localVCLocalCITestService.getParticipationVcsAccessToken(student.getId(), programmingParticipation.getId());
+        var token = participationVcsAccessToken.getVcsAccessToken();
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Fetch from and push to the remote repository with participation VCS access token
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
+
+        // Fetch from and push to the remote repository with user VCS access token
+        var studentWithToken = userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, token, ZonedDateTime.now().plusDays(1));
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
+
+        // Try to fetch and push, when token is removed and re-added, which makes the previous token invalid
+        userUtilService.deleteUserVcsAccessToken(studentWithToken);
+        localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
+        localVCLocalCITestService.createParticipationVcsAccessToken(student, programmingParticipation.getId());
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+
+        // Try to fetch and push with removed participation
+        localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
+        localVCLocalCITestService.deleteParticipation(programmingParticipation);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+    }
+
+    @Test
     void testFetchPush_wrongCredentials() throws InvalidNameException {
-        var student1 = new LdapUserDto().username(TEST_PREFIX + "student1");
+        var student1 = new LdapUserDto().login(TEST_PREFIX + "student1");
         student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
 
-        var fakeUser = new LdapUserDto().username(localVCBaseUsername);
+        var fakeUser = new LdapUserDto().login(localVCBaseUsername);
         fakeUser.setUid(new LdapName("cn=" + localVCBaseUsername + ",ou=test,o=lab"));
 
-        doReturn(Optional.of(student1)).when(ldapUserService).findByUsername(student1.getUsername());
-        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByUsername(localVCBaseUsername);
+        doReturn(Optional.of(student1)).when(ldapUserService).findByLogin(student1.getLogin());
+        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByLogin(localVCBaseUsername);
 
         doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
 
@@ -206,9 +238,10 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
     }
 
+    // TODO add test for force push over ssh, which should work
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testInstructorTriesToForcePush() throws Exception {
+    void testInstructorTriesToForcePushOverHttp() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         String assignmentRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, assignmentRepositorySlug);
@@ -221,17 +254,17 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
 
-        // Force push to template repository (should be possible)
+        // Force push to template repository (should not be possible)
         remoteRefUpdate = setupAndTryForcePush(templateRepository, templateRepoUri, instructor1Login, projectKey1, templateRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
 
-        // Force push to solution repository (should be possible)
+        // Force push to solution repository (should not be possible)
         remoteRefUpdate = setupAndTryForcePush(solutionRepository, solutionRepoUri, instructor1Login, projectKey1, solutionRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
 
-        // Force push to rests repository (should be possible)
+        // Force push to rests repository (should not be possible)
         remoteRefUpdate = setupAndTryForcePush(testsRepository, testsRepoUri, instructor1Login, projectKey1, testsRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
     }
 
     private RemoteRefUpdate setupAndTryForcePush(LocalRepository originalRepository, String repositoryUri, String login, String projectKey, String repositorySlug)

@@ -23,7 +23,7 @@
         position: absolute;
         pointer-events: none;
         touch-action: none;
-        outline: var(--cropper-overlay-color, white) solid 100vw;
+        outline: var(--cropper-overlay-color) solid 100vw;
         top: 0;
         left: 0;
     }
@@ -50,7 +50,7 @@
             right: 0;
             pointer-events: none;
             border: dashed 1px;
-            opacity: 0.75;
+            opacity: 0;
             color: inherit;
             z-index: 1;
         }

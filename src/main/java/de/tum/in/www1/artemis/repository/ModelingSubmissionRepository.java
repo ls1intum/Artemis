@@ -8,20 +8,19 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the ModelingSubmission entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubmission, Long> {
+public interface ModelingSubmissionRepository extends ArtemisJpaRepository<ModelingSubmission, Long> {
 
     @Query("""
             SELECT DISTINCT submission
@@ -43,14 +42,14 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
     Optional<ModelingSubmission> findByIdWithEagerResultAndAssessorAndFeedback(@Param("submissionId") Long submissionId);
 
     /**
-     * Load the modeling submission with the given id together with its result, the feedback list of the result, the assessor of the result, its participation and all results of
-     * the participation.
+     * Load the modeling submission with the given id together with its result, the feedback list of the result, the assessor of the result, the assessment note of the result,
+     * its participation and all results of the participation.
      *
      * @param submissionId the id of the modeling submission that should be loaded from the database
      * @return the modeling submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
-    Optional<ModelingSubmission> findWithResultsFeedbacksAssessorAndParticipationResultsById(Long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote", "participation", "participation.results" })
+    Optional<ModelingSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(Long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ModelingSubmission> findWithEagerResultById(Long submissionId);
@@ -66,16 +65,6 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
     List<ModelingSubmission> findSubmittedByExerciseIdWithEagerResultsAndFeedback(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Get the modeling submission with the given id from the database. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the modeling submission with the given id
-     */
-    default ModelingSubmission findByIdElseThrow(Long submissionId) {
-        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
-    }
-
-    /**
      * Get the modeling submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
      * result. Throws an EntityNotFoundException if no submission could be found for the given id.
      *
@@ -83,17 +72,18 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @return the modeling submission with the given id
      */
     default ModelingSubmission findByIdWithEagerResultAndFeedbackElseThrow(Long submissionId) {
-        return findByIdWithEagerResultAndAssessorAndFeedback(submissionId).orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
+        return getValueElseThrow(findByIdWithEagerResultAndAssessorAndFeedback(submissionId), submissionId);
     }
 
     /**
      * Get the modeling submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
-     * its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
+     * the assessment note of the result, its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given
+     * id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the modeling submission with the given id
      */
-    default ModelingSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long submissionId) {
-        return findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
+    default ModelingSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(Long submissionId) {
+        return getValueElseThrow(findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId), submissionId);
     }
 }

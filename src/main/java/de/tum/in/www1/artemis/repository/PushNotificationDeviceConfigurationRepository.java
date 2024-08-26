@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,13 +16,14 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfigurationId;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * The Repository used for PushNotificationDeviceConfiguration
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface PushNotificationDeviceConfigurationRepository extends JpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
+public interface PushNotificationDeviceConfigurationRepository extends ArtemisJpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
 
     /**
      * @param users      a list of users you want the deviceTokens for.

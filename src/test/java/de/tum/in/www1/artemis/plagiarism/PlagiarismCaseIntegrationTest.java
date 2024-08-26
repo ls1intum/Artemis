@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.plagiarism;
 
-import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict.*;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict.NO_PLAGIARISM;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict.POINT_DEDUCTION;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict.WARNING;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
@@ -14,19 +16,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.plagiarism.*;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismVerdictDTO;
 
@@ -41,22 +47,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     private PostRepository postRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private Course course;
 
@@ -80,7 +74,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         // We need at least 3 cases
         textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         coursePlagiarismCases = createPlagiarismCases(numberOfPlagiarismCases, textExercise);
-        plagiarismCase1 = coursePlagiarismCases.get(0);
+        plagiarismCase1 = coursePlagiarismCases.getFirst();
 
         examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examPlagiarismCases = createPlagiarismCases(2, examTextExercise);
@@ -146,7 +140,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     void testGetPlagiarismCasesForCourseForInstructor() throws Exception {
         var plagiarismCasesResponse = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK, PlagiarismCase.class);
         assertThat(plagiarismCasesResponse).as("should get course plagiarism cases for instructor").containsExactlyInAnyOrderElementsOf(coursePlagiarismCases);
-        for (var submission : plagiarismCasesResponse.get(0).getPlagiarismSubmissions()) {
+        for (var submission : plagiarismCasesResponse.getFirst().getPlagiarismSubmissions()) {
             assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isNull();
             assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isNull();
             assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isNull();
@@ -206,7 +200,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         var plagiarismCasesResponse = request.getList("/api/courses/" + examCourse.getId() + "/exams/" + exam.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK,
                 PlagiarismCase.class);
         assertThat(plagiarismCasesResponse).as("should get exam plagiarism cases for instructor").containsExactlyInAnyOrderElementsOf(examPlagiarismCases);
-        for (var submission : plagiarismCasesResponse.get(0).getPlagiarismSubmissions()) {
+        for (var submission : plagiarismCasesResponse.getFirst().getPlagiarismSubmissions()) {
             assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should remove unneeded elements from the response").isNull();
             assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should filter out submission A").isNull();
             assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should filter out submission B").isNull();

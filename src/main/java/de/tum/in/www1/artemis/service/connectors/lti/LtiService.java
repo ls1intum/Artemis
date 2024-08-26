@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -83,45 +82,52 @@ public class LtiService {
      * @throws InternalAuthenticationServiceException if no email is provided, or if no user can be authenticated, this exception will be thrown
      */
     public void authenticateLtiUser(String email, String username, String firstName, String lastName, boolean requireExistingUser) throws InternalAuthenticationServiceException {
-
+        log.info("Authenticating LTI user with email: {}, username: {}, firstName: {}, lastName: {}, requireExistingUser: {}", email, username, firstName, lastName,
+                requireExistingUser);
         if (!StringUtils.hasLength(email)) {
+            log.warn("No email address sent by launch request. Please make sure the user has an accessible email address.");
             throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
         }
 
         if (SecurityUtils.isAuthenticated()) {
+            log.info("User is already signed in. Checking if email matches the one provided in the launch.");
             User user = userRepository.getUser();
             if (email.equalsIgnoreCase(user.getEmail())) { // 1. Case: User is already signed in and email matches the one provided in the launch
+                log.info("User is already signed in and email matches the one provided in the launch. No further action required.");
                 return;
             }
             else {
+                log.info("User is already signed in but email does not match the one provided in the launch. Signing out user.");
                 SecurityContextHolder.getContext().setAuthentication(null); // User is signed in but email does not match, meaning launch is for a different user
             }
         }
 
         // 2. Case: Lookup user with the LTI email address and make sure it's not in use
-        final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
-        if (usernameLookupByEmail.isPresent()) {
+        if (artemisAuthenticationProvider.getUsernameForEmail(email).isPresent() || userRepository.findOneByEmailIgnoreCase(email).isPresent()) {
+            log.info("User with email {} already exists. Email is already in use.", email);
             throw new LtiEmailAlreadyInUseException();
         }
 
         // 3. Case: Create new user if an existing user is not required
         if (!requireExistingUser) {
+            log.info("Creating new user from launch request: {}, username: {}, firstName: {}, lastName: {}", email, username, firstName, lastName);
             SecurityContextHolder.getContext().setAuthentication(createNewUserFromLaunchRequest(email, username, firstName, lastName));
             return;
         }
 
+        log.info("Could not find existing user or create new LTI user.");
         throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user."); // If user couldn't be authenticated, throw an error
     }
 
     @NotNull
-    protected Authentication createNewUserFromLaunchRequest(String email, String username, String firstName, String lastName) {
-        final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
+    protected Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
+        final var user = userRepository.findOneByLogin(login).orElseGet(() -> {
             final User newUser;
             final var groups = new HashSet<String>();
             groups.add(LTI_GROUP_NAME);
 
             var password = RandomUtil.generatePassword();
-            newUser = userCreationService.createUser(username, password, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            newUser = userCreationService.createUser(login, password, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
 
@@ -135,7 +141,7 @@ public class LtiService {
 
         log.info("createNewUserFromLaunchRequest: {}", user);
 
-        log.info("Signing in as {}", username);
+        log.info("Signing in as {}", login);
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY);
     }
 
@@ -163,14 +169,6 @@ public class LtiService {
             groups.add(courseStudentGroupName);
             user.setGroups(groups);
             userCreationService.saveUser(user);
-
-            // try to sync with authentication service
-            try {
-                artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
-            }
-            catch (ArtemisAuthenticationException e) {
-                // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
-            }
         }
     }
 
@@ -181,15 +179,20 @@ public class LtiService {
      * @param response             the response to add the JWT cookie to
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
+        // TODO SK: why do we logout the user here if it was already activated?
+
         User user = userRepository.getUser();
 
         if (!user.getActivated()) {
+            log.info("User is not activated. Adding JWT cookie for activation.");
+            log.info("Add JWT cookie so the user will be logged in");
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
             uriComponentsBuilder.queryParam("initialize", "");
         }
         else {
+            log.info("User is activated. Adding JWT cookie for logout.");
             prepareLogoutCookie(response);
             uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }

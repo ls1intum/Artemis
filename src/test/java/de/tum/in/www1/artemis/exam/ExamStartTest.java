@@ -44,11 +44,11 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
@@ -148,7 +148,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testStartExercisesWithTextExercise() throws Exception {
         // creating exercise
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
@@ -162,7 +162,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise()).isEqualTo(textExercise);
             assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember()).isNotNull();
-            assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().get(0));
+            assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().getFirst());
             assertThat(participation.getSubmissions()).hasSize(1);
             var textSubmission = (TextSubmission) participation.getSubmissions().iterator().next();
             assertThat(textSubmission.getText()).isNull();
@@ -173,9 +173,9 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testStartExercisesWithModelingExercise() throws Exception {
         // creating exercise
-        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam.getExerciseGroups().get(0));
-        exam.getExerciseGroups().get(0).addExercise(modelingExercise);
-        exerciseGroupRepository.save(exam.getExerciseGroups().get(0));
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam.getExerciseGroups().getFirst());
+        exam.getExerciseGroups().getFirst().addExercise(modelingExercise);
+        exerciseGroupRepository.save(exam.getExerciseGroups().getFirst());
         modelingExercise = exerciseRepo.save(modelingExercise);
 
         createStudentExams(modelingExercise);
@@ -185,7 +185,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise()).isEqualTo(modelingExercise);
             assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember()).isNotNull();
-            assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().get(0));
+            assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().getFirst());
             assertThat(participation.getSubmissions()).hasSize(1);
             var modelingSubmission = (ModelingSubmission) participation.getSubmissions().iterator().next();
             assertThat(modelingSubmission.getModel()).isNull();
@@ -207,7 +207,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise()).isEqualTo(programmingExercise);
             assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember()).isNotNull();
-            assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().get(0));
+            assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().getFirst());
             // No initial submissions should be created for programming exercises
             assertThat(participation.getSubmissions()).isEmpty();
             assertThat(((ProgrammingExerciseParticipation) participation).isLocked()).isTrue();
@@ -244,7 +244,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise()).isEqualTo(programmingExercise);
             assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember()).isNotNull();
-            assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().get(0));
+            assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().getFirst());
             // No initial submissions should be created for programming exercises
             assertThat(participation.getSubmissions()).isEmpty();
             ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
@@ -269,11 +269,12 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     }
 
     private ProgrammingExercise createProgrammingExercise() {
-        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exam.getExerciseGroups().get(0));
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exam.getExerciseGroups().getFirst());
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepo.save(programmingExercise);
         programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        exam.getExerciseGroups().get(0).addExercise(programmingExercise);
-        exerciseGroupRepository.save(exam.getExerciseGroups().get(0));
+        exam.getExerciseGroups().getFirst().addExercise(programmingExercise);
+        exerciseGroupRepository.save(exam.getExerciseGroups().getFirst());
         return programmingExercise;
     }
 

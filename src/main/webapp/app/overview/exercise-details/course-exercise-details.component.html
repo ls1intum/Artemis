@@ -1,6 +1,11 @@
 @if (exercise) {
     <div class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
-        <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [submissionPolicy]="submissionPolicy" [course]="course">
+        <jhi-header-exercise-page-with-details
+            [exercise]="exercise"
+            [studentParticipation]="gradedStudentParticipation"
+            [submissionPolicy]="submissionPolicy"
+            [course]="exercise.course"
+        >
             <span pagetitle>{{ exercise.title }}</span>
         </jhi-header-exercise-page-with-details>
         <div class="tab-bar-exercise-details justify-content-end">
@@ -108,7 +113,7 @@
                     <div class="row">
                         <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex">
                             <div class="col-auto">
-                                <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | artemisTranslate }}</h3>
+                                <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.recentResults"></h3>
                             </div>
                         </div>
                         <div class="row">
@@ -125,7 +130,7 @@
                         @if (showMoreResults) {
                             <div class="row mb-2 mt-2 align-items-baseline">
                                 <div class="col-auto">
-                                    <h3>{{ 'artemisApp.courseOverview.exerciseDetails.allResults' | artemisTranslate }}</h3>
+                                    <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.allResults"></h3>
                                 </div>
                             </div>
                             <div class="row">
@@ -148,9 +153,7 @@
                                         </div>
                                     }
                                     @if (!sortedHistoryResults) {
-                                        <div class="no-results">
-                                            {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
-                                        </div>
+                                        <div class="no-results" jhiTranslate="artemisApp.courseOverview.exerciseDetails.noResults"></div>
                                     }
                                 </div>
                             </div>
@@ -165,7 +168,7 @@
                 @if (exampleSolutionInfo?.exampleSolutionPublished) {
                     <div class="row mb-2 mt-2 align-items-baseline">
                         <div class="control-label" (click)="changeExampleSolution()">
-                            <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
+                            <span class="h3 pe-2" jhiTranslate="artemisApp.exercise.exampleSolution"></span>
                             <fa-icon class="pe-3" [icon]="exampleSolutionCollapsed ? faAngleDown : faAngleUp" />
                         </div>
                     </div>
@@ -235,6 +238,9 @@
                         <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" />
                     </div>
                 }
+                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
+                    <jhi-exercise-chatbot-button />
+                }
                 <jhi-exercise-hint-button-overlay
                     class="p-3"
                     [availableExerciseHints]="availableExerciseHints"
@@ -254,8 +260,5 @@
             </div>
         </div>
         <jhi-lti-initializer />
-        @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
-            <jhi-tutor-chatbot-button />
-        }
     </div>
 }

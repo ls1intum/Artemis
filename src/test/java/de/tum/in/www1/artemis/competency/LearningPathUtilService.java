@@ -7,9 +7,12 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 
 /**
@@ -30,6 +33,9 @@ public class LearningPathUtilService {
     @Autowired
     private CompetencyRepository competencyRepository;
 
+    @Autowired
+    private CourseCompetencyRepository courseCompetencyRepository;
+
     /**
      * Enable and generate learning paths for course.
      *
@@ -37,7 +43,7 @@ public class LearningPathUtilService {
      * @return the updated course
      */
     public Course enableAndGenerateLearningPathsForCourse(Course course) {
-        var eagerlyLoadedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(course.getId());
+        var eagerlyLoadedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
         learningPathService.generateLearningPaths(eagerlyLoadedCourse);
         eagerlyLoadedCourse.setLearningPathsEnabled(true);
         return courseRepository.save(eagerlyLoadedCourse);
@@ -50,7 +56,7 @@ public class LearningPathUtilService {
      * @return the persisted learning path
      */
     public LearningPath createLearningPathInCourse(Course course) {
-        final var competencies = competencyRepository.findAllForCourse(course.getId());
+        final var competencies = courseCompetencyRepository.findAllForCourse(course.getId());
         LearningPath learningPath = createLearningPath(competencies);
         learningPath.setCourse(course);
         return learningPathRepository.save(learningPath);
@@ -74,7 +80,7 @@ public class LearningPathUtilService {
      * @param competencies the competencies that will be linked to the learning path
      * @return the persisted learning path
      */
-    public LearningPath createLearningPath(Set<Competency> competencies) {
+    public LearningPath createLearningPath(Set<CourseCompetency> competencies) {
         LearningPath learningPath = new LearningPath();
         learningPath.setCompetencies(competencies);
         return learningPathRepository.save(learningPath);

@@ -21,12 +21,17 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -38,10 +43,16 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -51,6 +62,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
     }
@@ -108,6 +120,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
                     something else""";
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
         programmingExercise.setProjectType(null);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         String actualFeedback = createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false);
         assertThat(actualFeedback).isEqualTo("""
@@ -275,6 +288,37 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     }
 
     @Test
+    void shouldGenerateNewTestCasesWithVisibilityAlways() {
+        programmingExercise.setExerciseGroup(null);
+
+        testGenerateNewTestCases(programmingExercise, Visibility.ALWAYS);
+    }
+
+    @Test
+    void shouldGenerateNewTestCasesWithVisibilityAfterDueDate() {
+        ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        programmingExercise.setExerciseGroup(exerciseGroup1);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        testGenerateNewTestCases(programmingExercise, Visibility.AFTER_DUE_DATE);
+    }
+
+    private void testGenerateNewTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {
+        // We do not want to use the test cases generated in the setup
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+
+        var result = generateResult(List.of("test1", "test2"), Collections.emptyList());
+        feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).hasSize(2);
+
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            assertThat(testCase.getVisibility()).isEqualTo(expectedVisibility);
+        }
+    }
+
+    @Test
     void shouldFilterOutDuplicateTestCases() {
         // We do not want to use the test cases generated in the setup
         testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
@@ -312,7 +356,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     void shouldMapNonJavaTestsToDefaultTestCaseType() {
         Set<ProgrammingExerciseTestCase> testCases;
 
-        for (ProgrammingLanguage language : ProgrammingLanguage.values()) {
+        for (ProgrammingLanguage language : ProgrammingLanguage.getEnabledLanguages()) {
             if (language == ProgrammingLanguage.JAVA) {
                 continue;
             }
@@ -332,7 +376,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         final List<Feedback> scaFeedbacks = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(List.of(scaReport));
         assertThat(scaFeedbacks).hasSize(1);
 
-        final Feedback scaFeedback = scaFeedbacks.get(0);
+        final Feedback scaFeedback = scaFeedbacks.getFirst();
         assertThat(scaFeedback.getHasLongFeedbackText()).isFalse();
         assertThat(scaFeedback.getLongFeedback()).isEmpty();
         assertThat(scaFeedback.getDetailText()).hasSizeGreaterThan(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH)
@@ -342,17 +386,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     @NotNull
     private static StaticCodeAnalysisReportDTO createStaticCodeAnalysisReportDTO() {
         final String longText = "0".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH * 2);
-
-        final var scaIssue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
-        scaIssue.setCategory("scaCategory");
-        scaIssue.setMessage(longText);
-        scaIssue.setStartColumn(0);
-        scaIssue.setEndColumn(123);
-        scaIssue.setFilePath("some/long/file/Path.java");
-
-        final StaticCodeAnalysisReportDTO scaReport = new StaticCodeAnalysisReportDTO();
-        scaReport.setTool(StaticCodeAnalysisTool.CHECKSTYLE);
-        scaReport.setIssues(List.of(scaIssue));
-        return scaReport;
+        final StaticCodeAnalysisIssue scaIssue = new StaticCodeAnalysisIssue("some/long/file/Path.java", null, null, 0, 123, "RuleName", "scaCategory", longText, null, null);
+        return new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.CHECKSTYLE, List.of(scaIssue));
     }
 }

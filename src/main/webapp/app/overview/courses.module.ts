@@ -17,7 +17,6 @@ import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { NgxChartsModule, PieChartModule } from '@swimlane/ngx-charts';
-import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 
@@ -41,13 +40,11 @@ import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
     declarations: [
         CoursesComponent,
         CourseOverviewComponent,
-        HeaderCourseComponent,
         CourseCardComponent,
         CourseExercisesComponent,
         CourseLecturesComponent,
         CourseLectureRowComponent,
         CourseUnenrollmentModalComponent,
     ],
-    exports: [HeaderCourseComponent],
 })
 export class ArtemisCoursesModule {}

@@ -9,3 +9,15 @@
 .button-resize {
     min-width: 245px; // prevent buttons from cutting text when resizing
 }
+
+.legend-icon-wrapper {
+    background-color: var(--bs-body-color);
+    height: 29px;
+    width: 29px;
+    border-radius: 100%;
+}
+
+.warning-icon-wrapper {
+    background-color: var(--bs-yellow);
+    color: var(--bs-bg-color);
+}

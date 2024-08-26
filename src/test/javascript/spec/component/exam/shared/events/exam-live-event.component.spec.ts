@@ -1,7 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
-import { ExamLiveEvent, ExamLiveEventType, ExamWideAnnouncementEvent, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import {
+    ExamLiveEvent,
+    ExamLiveEventType,
+    ExamWideAnnouncementEvent,
+    ProblemStatementUpdateEvent,
+    WorkingTimeUpdateEvent,
+} from 'app/exam/participate/exam-participation-live-events.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -10,6 +16,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockDirective } from 'ng-mocks';
 
 describe('ExamLiveEventComponent', () => {
     let component: ExamLiveEventComponent;
@@ -17,7 +25,15 @@ describe('ExamLiveEventComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ExamLiveEventComponent, WorkingTimeChangeComponent, ArtemisTranslatePipe, ArtemisDatePipe, HtmlForMarkdownPipe, ArtemisDurationFromSecondsPipe],
+            declarations: [
+                ExamLiveEventComponent,
+                WorkingTimeChangeComponent,
+                ArtemisTranslatePipe,
+                ArtemisDatePipe,
+                HtmlForMarkdownPipe,
+                ArtemisDurationFromSecondsPipe,
+                MockDirective(TranslateDirective),
+            ],
             imports: [FontAwesomeModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
@@ -83,6 +99,28 @@ describe('ExamLiveEventComponent', () => {
         expect(titleElement.getAttribute('jhiTranslate')).toBe('artemisApp.exam.events.messages.workingTimeUpdate.titleEveryone');
     });
 
+    it('should display problem statement update when event is of type PROBLEM_STATEMENT_UPDATE', () => {
+        component.event = {
+            eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
+            text: 'Dear students, the problem statement of the exercise was changed',
+            problemStatement: 'New problem statement',
+            exerciseId: 1,
+            exerciseName: 'Programming Exercise',
+            createdBy: 'John Doe',
+        } as ProblemStatementUpdateEvent;
+
+        fixture.detectChanges();
+
+        const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
+        const authorElement = fixture.debugElement.query(By.css('.author > span:last-child')).nativeElement;
+        const contentElement = fixture.debugElement.query(By.css('.content > div')).nativeElement;
+
+        expect(typeElement.textContent).toContain('artemisApp.exam.events.type.problemStatementUpdate');
+        expect(authorElement.textContent).toBe('John Doe');
+        expect(contentElement.innerHTML).toContain('Dear students, the problem statement of the exercise was changed');
+        expect(contentElement.innerHTML).toContain('artemisApp.exam.events.messages.problemStatementUpdate.description');
+    });
+
     it('should emit event when acknowledge button is clicked', () => {
         const mockEvent: ExamLiveEvent = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
@@ -96,6 +134,25 @@ describe('ExamLiveEventComponent', () => {
         const acknowledgeSpy = jest.spyOn(component.onAcknowledge, 'emit');
         const button = fixture.debugElement.query(By.css('button'));
         button.nativeElement.click();
+
+        expect(acknowledgeSpy).toHaveBeenCalledWith(mockEvent);
+    });
+
+    it('should emit event when navigate to exercise button is clicked', () => {
+        const mockEvent: ExamLiveEvent = {
+            eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
+            createdBy: 'John Doe',
+        } as any as ExamLiveEvent;
+        component.event = mockEvent;
+        component.showAcknowledge = true;
+
+        fixture.detectChanges();
+
+        const acknowledgeSpy = jest.spyOn(component.onNavigate, 'emit');
+        const buttons = fixture.debugElement.queryAll(By.css('button'));
+        expect(buttons).toHaveLength(2);
+        // Navigate to exercise is the second button
+        buttons[1].nativeElement.click();
 
         expect(acknowledgeSpy).toHaveBeenCalledWith(mockEvent);
     });

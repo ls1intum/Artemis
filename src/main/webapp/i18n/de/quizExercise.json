@@ -1,5 +1,11 @@
 {
     "artemisApp": {
+        "quizWarning": {
+            "title": "Achtung!",
+            "question": "Mögliche Leistungsprobleme",
+            "description": "Du verwendest in dieser Quizaufgabe eine sehr große Anzahl an Short-Answer Elementen und/oder Drag-and-Drop Elementen. Dies kann zu erheblichen Performancebeeinträchtigungen führen. Bist du sicher, dass du die Aufgabe so speichern möchtest?",
+            "confirmButton": "Trotzdem speichern"
+        },
         "quizExercise": {
             "home": {
                 "title": "Quiz",
@@ -88,7 +94,7 @@
             "addMultipleChoiceQuestion": "Multiple-Choice Frage hinzufügen",
             "addDragAndDropQuestion": "Drag-And-Drop Frage hinzufügen",
             "addShortAnswerQuestion": "Short-Answer Frage hinzufügen",
-            "addApollonDragAndDropQuestion": "Apollon Drag-And-Drop Frage erstellen",
+            "addApollonDragAndDropQuestion": "Apollon Drag-And-Drop Frage hinzufügen",
             "addExistingQuestions": "Vorhandene Fragen hinzufügen",
             "fromAFile": "Aus einer Datei",
             "fromACourse": "Von einem Kurs",
@@ -114,6 +120,7 @@
             "numberOfQuestions": "Anzahl an Fragen",
             "quizInstructions": {
                 "live": "Beantworte alle Fragen in der verbleibenden Zeit und klick erst dann auf die Schaltfläche \"Absenden\", wenn du fertig bist.",
+                "autoSave": "Deine Antworten werden alle 30 Sekunden automatisch gespeichert.",
                 "wait": "Warte bis das Quiz beendet ist, um deine Ergebnisse zu sehen.",
                 "result": "Du hast das Quiz mit {{userScore}} von {{maxScore}} Punkten abgeschlossen ({{percentage}} %).",
                 "waitForStart": "Bitte warte.<br><br>Diese Seite lädt automatisch neu, sobald das Quiz beginnt.",
@@ -137,6 +144,8 @@
             "notParticipatedText": "Das Quiz ist beendet und du hast nicht daran teilgenommen. Es gibt keine Ergebnisse, die angezeigt werden können.",
             "statisticsNotPublished": "Die Übungsleitung hat keine Statistiken freigegeben.",
             "successfullySubmittedText": "Deine Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse werden angezeigt, nachdem das Quiz beendet ist.<br><br>Wenn die Ergebnisse 60 Sekunden nach Quiz Ende nicht automatisch angezeigt werden, dann lade die Seite bitte neu.",
+            "evaluateQuizExercise": "Quiz auswerten",
+            "evaluateQuizExerciseSuccess": "Quiz-Aufgabe erfolgreich ausgewertet!",
             "re-evaluate": {
                 "title": "Quiz für {{ param }} überarbeiten",
                 "resetQuiz": "Setze Quiz zurück",
@@ -168,7 +177,7 @@
                     "no_changes": "Keine Änderungen, welche die bestehenden Ergebnisse beeinflussen",
                     "quizStatistic": "Die bestehende Statistiken müssen neu berechnet werden!",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
-                    "exam": "Dieses Quiz ist eine Klausuraufgabe. Stellen Sie sicher, dass das Quiz bereits evaluiert wurde bevor eine Überarbeitung vorgenommen wird!",
+                    "exam": "Dieses Quiz ist eine Klausuraufgabe. Stelle sicher, dass das Quiz bereits evaluiert wurde bevor eine Überarbeitung vorgenommen wird!",
                     "resulttext": {
                         "element_deleted": "Das Frage-Element wird aus allen Ergebnissen entfernt",
                         "element_invalid": "Alle Teilnehmenden erhalten die Punkte für das ungültige Frage-Element",
@@ -225,7 +234,7 @@
                 "proportional_with_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Um Rätselraten zu vermeiden, wird für jeden Fehler der gleiche Anteil von den erreichten Punkten abgezogen. Beispiel: Wenn die Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Jede falsche Antwortmöglichkeit zieht 0,6 Punkte ab. Studierende mit 3 richtigen und 2 falschen Antworten erhalten dann 0,6 Punkte.",
                 "proportional_without_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Bei falschen Antworten werden keine Punkte abgezogen. Beispiel: Wenn die Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Studierende mit 3 richtigen und 2 falschen Antworten erhalten dann 1,8 Punkte."
             },
-            "importJSON": "Fragen importieren (JSON)",
+            "importJSON": "Fragen importieren (JSON/Zip)",
             "importWarningShort": "Ungültige Fragen gefunden",
             "importWarningLong": "Bei den folgenden Fragen ist ein ungültiges Flag gesetzt. Bist du sicher, dass du fortfahren möchtest? <strong>In diesem Fall werden die ungültigen Flags zurückgesetzt</ strong>.",
             "confirmImport": "Weiter",

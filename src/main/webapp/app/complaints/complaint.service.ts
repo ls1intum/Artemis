@@ -7,9 +7,10 @@ import { ComplaintResponseService } from 'app/complaints/complaint-response.serv
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { map } from 'rxjs/operators';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/utils/date.utils';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
@@ -21,8 +22,6 @@ export interface IComplaintService {
     create: (complaint: Complaint, examId: number) => Observable<EntityResponseType>;
     findBySubmissionId: (participationId: number) => Observable<EntityResponseType>;
     getComplaintsForTestRun: (exerciseId: number) => Observable<EntityResponseTypeArray>;
-    getMoreFeedbackRequestsForTutor: (exerciseId: number) => Observable<EntityResponseTypeArray>;
-    getNumberOfAllowedComplaintsInCourse: (courseId: number) => Observable<number>;
     findAllByTutorIdForCourseId: (tutorId: number, courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByTutorIdForExerciseId: (tutorId: number, exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
@@ -32,8 +31,7 @@ export interface IComplaintService {
 
 @Injectable({ providedIn: 'root' })
 export class ComplaintService implements IComplaintService {
-    private apiUrl = 'api';
-    private resourceUrl = this.apiUrl + '/complaints';
+    private resourceUrl = 'api/complaints';
 
     constructor(
         private http: HttpClient,
@@ -82,18 +80,11 @@ export class ComplaintService implements IComplaintService {
 
     /**
      * Create a new complaint.
-     * @param complaint
-     * @param examId the id of the exam
+     * @param complaintRequest
      */
-    create(complaint: Complaint, examId?: number): Observable<EntityResponseType> {
-        const copy = this.convertComplaintDatesFromClient(complaint);
-        if (examId) {
-            return this.http
-                .post<Complaint>(`${this.resourceUrl}/exam/${examId}`, copy, { observe: 'response' })
-                .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
-        }
+    create(complaintRequest: ComplaintRequestDTO): Observable<EntityResponseType> {
         return this.http
-            .post<Complaint>(this.resourceUrl, copy, { observe: 'response' })
+            .post<Complaint>(this.resourceUrl, complaintRequest, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
     }
 
@@ -103,7 +94,7 @@ export class ComplaintService implements IComplaintService {
      */
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Complaint>(`${this.resourceUrl}/submissions/${submissionId}`, { observe: 'response' })
+            .get<Complaint>(`${this.resourceUrl}?submissionId=${submissionId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
     }
 
@@ -113,28 +104,8 @@ export class ComplaintService implements IComplaintService {
      */
     getComplaintsForTestRun(exerciseId: number): Observable<EntityResponseTypeArray> {
         return this.http
-            .get<Complaint[]>(`${this.apiUrl}/exercises/${exerciseId}/complaints-for-test-run-dashboard`, { observe: 'response' })
+            .get<Complaint[]>(`${this.resourceUrl}?exerciseId=${exerciseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
-    }
-
-    /**
-     * Find more feedback requests for tutor in this exercise.
-     * @param exerciseId
-     */
-    getMoreFeedbackRequestsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
-        return this.http
-            .get<Complaint[]>(`${this.apiUrl}/exercises/${exerciseId}/more-feedback-for-assessment-dashboard`, { observe: 'response' })
-            .pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
-    }
-
-    /**
-     * Get number of allowed complaints in this course.
-     * @param courseId
-     * @param teamMode If true, the number of allowed complaints for the user's team is returned
-     */
-    getNumberOfAllowedComplaintsInCourse(courseId: number, teamMode = false): Observable<number> {
-        // Note: 0 is the default value in case the server returns something that does not make sense
-        return this.http.get<number>(`${this.apiUrl}/courses/${courseId}/allowed-complaints?teamMode=${teamMode}`) ?? 0;
     }
 
     /**
@@ -144,7 +115,7 @@ export class ComplaintService implements IComplaintService {
      * @param complaintType
      */
     findAllByTutorIdForCourseId(tutorId: number, courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.apiUrl}/courses/${courseId}/complaints?complaintType=${complaintType}&tutorId=${tutorId}`;
+        const url = `${this.resourceUrl}?courseId=${courseId}&complaintType=${complaintType}&tutorId=${tutorId}`;
         return this.requestComplaintsFromUrl(url);
     }
 
@@ -154,7 +125,7 @@ export class ComplaintService implements IComplaintService {
      * @param complaintType - the type of complaint
      */
     findAllWithoutStudentInformationForCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.apiUrl}/courses/${courseId}/complaints?complaintType=${complaintType}&allComplaintsForTutor=true`;
+        const url = `${this.resourceUrl}?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
         return this.requestComplaintsFromUrl(url);
     }
 
@@ -165,7 +136,7 @@ export class ComplaintService implements IComplaintService {
      * @param complaintType
      */
     findAllByTutorIdForExerciseId(tutorId: number, exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.apiUrl}/exercises/${exerciseId}/complaints?complaintType=${complaintType}&tutorId=${tutorId}`;
+        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&complaintType=${complaintType}&tutorId=${tutorId}`;
         return this.requestComplaintsFromUrl(url);
     }
 
@@ -175,7 +146,7 @@ export class ComplaintService implements IComplaintService {
      * @param complaintType
      */
     findAllByCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.apiUrl}/courses/${courseId}/complaints?complaintType=${complaintType}`;
+        const url = `${this.resourceUrl}?courseId=${courseId}&complaintType=${complaintType}`;
         return this.requestComplaintsFromUrl(url);
     }
 
@@ -185,7 +156,7 @@ export class ComplaintService implements IComplaintService {
      * @param examId
      */
     findAllByCourseIdAndExamId(courseId: number, examId: number): Observable<EntityResponseTypeArray> {
-        const url = `${this.apiUrl}/courses/${courseId}/exams/${examId}/complaints`;
+        const url = `${this.resourceUrl}?courseId=${courseId}&examId=${examId}`;
         return this.requestComplaintsFromUrl(url);
     }
 
@@ -195,7 +166,7 @@ export class ComplaintService implements IComplaintService {
      * @param complaintType
      */
     findAllByExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.apiUrl}/exercises/${exerciseId}/complaints?complaintType=${complaintType}`;
+        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&complaintType=${complaintType}`;
         return this.requestComplaintsFromUrl(url);
     }
 
@@ -272,12 +243,6 @@ export class ComplaintService implements IComplaintService {
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
         return this.http.get<Complaint[]>(url, { observe: 'response' }).pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
-    }
-
-    private convertComplaintDatesFromClient(complaint: Complaint): Complaint {
-        return Object.assign({}, complaint, {
-            submittedTime: convertDateFromClient(complaint.submittedTime),
-        });
     }
 
     private convertComplaintEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {

@@ -1,4 +1,9 @@
 .conversation-messages {
+    --message-input-height-prod: 171px;
+    --message-input-height-dev: 187px;
+    --search-height: 52px;
+    --channel-header-height: 52px;
+
     .search-active {
         input {
             border: 1px solid var(--primary);
@@ -35,8 +40,16 @@
     }
 
     .posting-infinite-scroll-container {
-        max-height: 700px;
+        max-height: calc(75vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
         overflow-y: auto;
+
+        &.content-height-dev {
+            max-height: calc(75vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+        }
+
+        @media (max-width: 768px) {
+            max-height: calc(75vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height)) !important;
+        }
     }
 
     .envelope {

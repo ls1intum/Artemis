@@ -153,6 +153,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 }
 
                 this.initializePropertiesFromSubmission(submission);
+                this.validateAssessment();
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
@@ -175,6 +176,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res) => {
                     this.initializePropertiesFromSubmission(res.body!);
+                    this.validateAssessment();
                 },
                 error: (error: HttpErrorResponse) => {
                     this.loadingInitialSubmission = false;
@@ -293,7 +295,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     onSaveAssessment() {
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .saveAssessment(this.assessments, this.submission!.id!)
+            .saveAssessment(this.assessments, this.submission!.id!, this.result?.assessmentNote?.note)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (result: Result) => {
@@ -316,7 +318,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         }
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .saveAssessment(this.assessments, this.submission!.id!, true)
+            .saveAssessment(this.assessments, this.submission!.id!, this.result?.assessmentNote?.note, true)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (result: Result) => {
@@ -327,7 +329,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 },
                 error: (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
             });
-        this.assessmentsAreValid = false;
     }
 
     /**
@@ -459,7 +460,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         }
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .updateAssessmentAfterComplaint(this.assessments, assessmentAfterComplaint.complaintResponse, this.submission!.id!)
+            .updateAssessmentAfterComplaint(this.assessments, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.result!.assessmentNote?.note)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (response) => {

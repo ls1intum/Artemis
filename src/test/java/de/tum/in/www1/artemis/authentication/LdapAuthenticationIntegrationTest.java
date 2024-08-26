@@ -26,8 +26,7 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -57,14 +56,11 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     protected CourseUtilService courseUtilService;
 
-    @Autowired
-    protected ExerciseUtilService exerciseUtilService;
+    private static final String NON_EXISTING_LOGIN = TEST_PREFIX + "na";
 
-    private static final String NON_EXISTING_USERNAME = TEST_PREFIX + "na";
+    private static final String LOGIN = TEST_PREFIX + "student1";
 
-    private static final String USERNAME = TEST_PREFIX + "student1";
-
-    private static final String NONEXISTENT_USERNAME = TEST_PREFIX + "student2";
+    private static final String NONEXISTENT_LOGIN = TEST_PREFIX + "student2";
 
     protected ProgrammingExercise programmingExercise;
 
@@ -83,14 +79,14 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
-        userRepository.findOneByLogin(USERNAME).ifPresent(userRepository::delete);
-        userRepository.findOneByLogin(NONEXISTENT_USERNAME).ifPresent(userRepository::delete);
+        userRepository.findOneByLogin(LOGIN).ifPresent(userRepository::delete);
+        userRepository.findOneByLogin(NONEXISTENT_LOGIN).ifPresent(userRepository::delete);
 
-        var ldapUserDTO = new LdapUserDto().username(USERNAME);
+        var ldapUserDTO = new LdapUserDto().login(LOGIN);
         ldapUserDTO.setUid(new LdapName("cn=student1,ou=test,o=lab"));
 
-        doReturn(Optional.of(ldapUserDTO)).when(ldapUserService).findByUsername(USERNAME);
-        doReturn(Optional.empty()).when(ldapUserService).findByUsername(NONEXISTENT_USERNAME);
+        doReturn(Optional.of(ldapUserDTO)).when(ldapUserService).findByLogin(LOGIN);
+        doReturn(Optional.empty()).when(ldapUserService).findByLogin(NONEXISTENT_LOGIN);
         doReturn(true).when(ldapTemplate).compare(ldapUserDTO.getUid().toString(), "userPassword", Utf8.encode(USER_PASSWORD));
         doReturn(false).when(ldapTemplate).compare(ldapUserDTO.getUid().toString(), "userPassword", Utf8.encode(INCORRECT_PASSWORD));
     }
@@ -99,7 +95,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithAnonymousUser
     void testJWTAuthentication() throws Exception {
         LoginVM loginVM = new LoginVM();
-        loginVM.setUsername(USERNAME);
+        loginVM.setUsername(LOGIN);
         loginVM.setPassword(USER_PASSWORD);
         loginVM.setRememberMe(true);
 
@@ -113,18 +109,18 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = "admin", roles = { "ADMIN" })
     void testImportUsers() throws Exception {
-        StudentDTO existingUser = new StudentDTO(new User((long) 1, USERNAME, "", "", "de", ""));
-        StudentDTO nonExistingUser = new StudentDTO(new User((long) 1, NON_EXISTING_USERNAME, "", "", "de", ""));
+        StudentDTO existingUser = new StudentDTO(new User((long) 1, LOGIN, "", "", "de", ""));
+        StudentDTO nonExistingUser = new StudentDTO(new User((long) 1, NON_EXISTING_LOGIN, "", "", "de", ""));
         var output = request.postListWithResponseBody("/api/admin/users/import", List.of(existingUser, nonExistingUser), StudentDTO.class, HttpStatus.OK);
         assertThat(output).hasSize(1);
-        assertThat(output.get(0).login()).isEqualTo(NON_EXISTING_USERNAME);
+        assertThat(output.getFirst().login()).isEqualTo(NON_EXISTING_LOGIN);
     }
 
     @Test
     @WithAnonymousUser
     void testIncorrectPasswordAttempt() throws Exception {
         LoginVM loginVM = new LoginVM();
-        loginVM.setUsername(USERNAME);
+        loginVM.setUsername(LOGIN);
         loginVM.setPassword(INCORRECT_PASSWORD);
         loginVM.setRememberMe(true);
 
@@ -139,7 +135,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithAnonymousUser
     void testNonExistentUserNameAttempt() throws Exception {
         LoginVM loginVM = new LoginVM();
-        loginVM.setUsername(NONEXISTENT_USERNAME);
+        loginVM.setUsername(NONEXISTENT_LOGIN);
         loginVM.setPassword(USER_PASSWORD);
         loginVM.setRememberMe(true);
 
@@ -154,7 +150,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithAnonymousUser
     void testEmptyPasswordAttempt() throws Exception {
         LoginVM loginVM = new LoginVM();
-        loginVM.setUsername(USERNAME);
+        loginVM.setUsername(LOGIN);
         loginVM.setPassword("");
         loginVM.setRememberMe(true);
 

@@ -26,7 +26,7 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
@@ -35,7 +35,16 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import {
+    ExamLiveEventType,
+    ExamParticipationLiveEventsService,
+    ProblemStatementUpdateEvent,
+    WorkingTimeUpdateEvent,
+} from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -53,6 +62,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly MODELING = ExerciseType.MODELING;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILEUPLOAD = ExerciseType.FILE_UPLOAD;
+
+    // needed for recalculation of exam content height
+    readonly EXAM_HEIGHT_OFFSET = 88;
 
     courseId: number;
     examId: number;
@@ -79,6 +91,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     handInEarly = false;
     handInPossible = true;
     submitInProgress = false;
+    attendanceChecked = false;
 
     examSummaryButtonSecondsLeft = 10;
     examSummaryButtonTimer: ReturnType<typeof setInterval>;
@@ -88,7 +101,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     errorSubscription: Subscription;
     websocketSubscription?: Subscription;
-    liveEventsSubscription?: Subscription;
+    workingTimeUpdateEventsSubscription?: Subscription;
+    problemStatementUpdateEventsSubscription?: Subscription;
+    profileSubscription?: Subscription;
+
+    isProduction = true;
+    isTestServer = false;
+
+    sidebarData: SidebarData;
+    sidebarExercises: SidebarCardElement[] = [];
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -139,6 +160,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private liveEventsService: ExamParticipationLiveEventsService,
         private courseService: CourseManagementService,
         private courseStorageService: CourseStorageService,
+        private examExerciseUpdateService: ExamExerciseUpdateService,
+        private examManagementService: ExamManagementService,
+        private profileService: ProfileService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -150,8 +174,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
+        });
+        this.route.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
@@ -191,6 +217,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
         });
+
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
+        });
     }
 
     loadAndDisplaySummary() {
@@ -202,6 +233,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             },
             error: () => (this.loadingExam = false),
         });
+        if (!this.testExam) {
+            this.examParticipationService.resetExamLayout();
+        }
     }
 
     canDeactivate() {
@@ -242,11 +276,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Keep working time
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
-
-            // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
-            const exercises: Exercise[] = this.studentExam.exercises!;
-            const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
-            this.examParticipationService.setExamExerciseIds(exerciseIds);
+            // no need to change the whole page layout for test runs
+            if (this.testRunId) {
+                this.examParticipationService.setExamLayout(false, true);
+            } else {
+                this.examParticipationService.setExamLayout();
+            }
             // set endDate with workingTime
             if (!!this.testRunId || this.testExam) {
                 this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
@@ -256,6 +291,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             }
             // initializes array which manages submission component and exam overview initialization
             this.pageComponentVisited = new Array(studentExam.exercises!.length).fill(false);
+            this.prepareSidebarData();
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
             this.studentExam.exercises!.forEach((exercise) => {
@@ -288,6 +324,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     });
                 }
             });
+            this.subscribeToProblemStatementUpdates();
             this.initializeOverviewPage();
         }
         this.examStartConfirmed = true;
@@ -363,6 +400,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
                     }
 
+                    if (this.testExam) {
+                        this.examParticipationService.resetExamLayout();
+                    }
+
                     this.examSummaryButtonTimer = setInterval(() => {
                         this.examSummaryButtonSecondsLeft -= 1;
                         if (this.examSummaryButtonSecondsLeft === 0) {
@@ -427,6 +468,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * Called when a user wants to hand in early or decides to continue.
      */
     toggleHandInEarly() {
+        // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
+        if (this.exam.testExam || !this.exam.examWithAttendanceCheck || this.handInEarly) {
+            this.handleHandInEarly();
+        } else {
+            this.examManagementService.isAttendanceChecked(this.courseId, this.examId).subscribe((res) => {
+                if (res.body) {
+                    this.attendanceChecked = res.body;
+                }
+                this.handleHandInEarly();
+            });
+        }
+    }
+
+    handleHandInEarly() {
         this.handInEarly = !this.handInEarly;
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
@@ -443,6 +498,26 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Reset the visited pages array so ngOnInit will be called for only the active page
             this.resetPageComponentVisited(this.exerciseIndex);
         }
+    }
+
+    /**
+     * Returns whether the student failed to submit on time. In this case the end page is adapted.
+     */
+    get studentFailedToSubmit(): boolean {
+        if (this.testRunId) {
+            return false;
+        }
+        let individualStudentEndDate;
+        if (this.exam.testExam) {
+            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
+                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
+            } else {
+                return false;
+            }
+        } else {
+            individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
+        }
+        return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 
     /**
@@ -493,13 +568,25 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.exam.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
     }
 
+    checkVerticalOverflow(): boolean {
+        // Get the sidebar-content element
+        const sidebarContent = document.querySelector('.content-exam-height');
+        if (sidebarContent) {
+            return sidebarContent.scrollHeight > sidebarContent.clientHeight;
+        }
+        return false;
+    }
+
     ngOnDestroy(): void {
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
         });
         this.errorSubscription.unsubscribe();
         this.websocketSubscription?.unsubscribe();
-        this.liveEventsSubscription?.unsubscribe();
+        this.workingTimeUpdateEventsSubscription?.unsubscribe();
+        this.problemStatementUpdateEventsSubscription?.unsubscribe();
+        this.examParticipationService.resetExamLayout();
+        this.profileSubscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 
@@ -561,17 +648,31 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private subscribeToWorkingTimeUpdates(startDate: dayjs.Dayjs) {
-        if (this.liveEventsSubscription) {
-            this.liveEventsSubscription.unsubscribe();
+        if (this.workingTimeUpdateEventsSubscription) {
+            this.workingTimeUpdateEventsSubscription.unsubscribe();
         }
-        this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]).subscribe((event: WorkingTimeUpdateEvent) => {
-            // Create new object to make change detection work, otherwise the date will not update
-            this.studentExam = { ...this.studentExam, workingTime: event.newWorkingTime! };
-            this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
-            this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
-            this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
-            this.liveEventsService.acknowledgeEvent(event, false);
-        });
+        this.workingTimeUpdateEventsSubscription = this.liveEventsService
+            .observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE])
+            .subscribe((event: WorkingTimeUpdateEvent) => {
+                // Create new object to make change detection work, otherwise the date will not update
+                this.studentExam = { ...this.studentExam, workingTime: event.newWorkingTime! };
+                this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
+                this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
+                this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+                this.liveEventsService.acknowledgeEvent(event, false);
+            });
+    }
+
+    private subscribeToProblemStatementUpdates() {
+        if (this.problemStatementUpdateEventsSubscription) {
+            this.problemStatementUpdateEventsSubscription.unsubscribe();
+        }
+        this.problemStatementUpdateEventsSubscription = this.liveEventsService
+            .observeNewEventsAsSystem([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE])
+            .subscribe((event: ProblemStatementUpdateEvent) => {
+                this.updateProblemStatement(event);
+                this.liveEventsService.acknowledgeEvent(event, false);
+            });
     }
 
     /**
@@ -642,6 +743,23 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (activeComponent) {
             activeComponent.onActivate();
         }
+    }
+
+    updateSidebarData() {
+        this.sidebarData = {
+            groupByCategory: false,
+            sidebarType: 'inExam',
+            ungroupedData: this.sidebarExercises,
+        };
+    }
+
+    prepareSidebarData() {
+        if (!this.studentExam.exercises) {
+            return;
+        }
+
+        this.sidebarExercises = this.examParticipationService.mapExercisesToSidebarCardElements(this.studentExam.exercises!);
+        this.updateSidebarData();
     }
 
     /**
@@ -841,5 +959,35 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
             });
+    }
+
+    /**
+     * Updates the problem statement of an exercise.
+     * If the exercise was already opened, the problem statement is updated using ExamExerciseUpdateService,
+     * and differences between the old and new problem statements are highlighted.
+     *
+     * If the exercise wasn't previously opened, the problem statement will be updated without highlighting differences.
+     * This is because ExamExerciseUpdateHighlighterComponents are initialized only when a student opens an exercise.
+     *
+     * We avoid initializing all exercise components when a student opens an exam to prevent system overload.
+     * For large exams, initializing all components at once could result in even 16,000 REST calls, potentially overloading the system.
+     */
+    private updateProblemStatement(event: ProblemStatementUpdateEvent): void {
+        const index = this.studentExam.exercises!.findIndex((exercise) => exercise.id === event.exerciseId);
+        const wasExerciseOpened = this.pageComponentVisited[index];
+        if (wasExerciseOpened) {
+            this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
+        } else {
+            const exercise = this.studentExam.exercises![index];
+            exercise.problemStatement = event.problemStatement;
+        }
+    }
+
+    /**
+     * Updates the current exam height offset property to recalculate the height of exam sidebar and sidebar content
+     * @param newHeight New exam bar height calculated based on the window resizements
+     */
+    updateHeight(newHeight: number) {
+        document.documentElement.style.setProperty('--exam-height-offset', `${newHeight + this.EXAM_HEIGHT_OFFSET}px`);
     }
 }

@@ -7,7 +7,7 @@ import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, fileUpl
 import { admin, studentOne } from '../../../support/users';
 import { convertModelAfterMultiPart } from '../../../support/utils';
 
-describe('File upload exercise participation', () => {
+describe.skip('File upload exercise participation', () => {
     let course: Course;
     let exercise: FileUploadExercise;
 

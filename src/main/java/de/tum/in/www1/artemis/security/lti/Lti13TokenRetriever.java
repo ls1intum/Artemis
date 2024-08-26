@@ -3,12 +3,20 @@ package de.tum.in.www1.artemis.security.lti;
 import java.net.URI;
 import java.security.KeyPair;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -16,7 +24,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -41,7 +50,7 @@ public class Lti13TokenRetriever {
 
     private static final Logger log = LoggerFactory.getLogger(Lti13TokenRetriever.class);
 
-    private static final int JWT_LIFETIME = 60;
+    public static final int JWT_LIFETIME_SECONDS = 60;
 
     public Lti13TokenRetriever(OAuth2JWKSService keyPairService, RestTemplate restTemplate) {
         this.oAuth2JWKSService = keyPairService;
@@ -79,9 +88,9 @@ public class Lti13TokenRetriever {
             if (exchange.getBody() == null) {
                 return null;
             }
-            return JsonParser.parseString(exchange.getBody()).getAsJsonObject().get("access_token").getAsString();
+            return new ObjectMapper().readTree(exchange.getBody()).get("access_token").asText();
         }
-        catch (HttpClientErrorException e) {
+        catch (HttpClientErrorException | JsonProcessingException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());
             return null;
         }
@@ -96,7 +105,6 @@ public class Lti13TokenRetriever {
      *                                 that the consuming service may require.
      * @return A serialized signed JWT as a String.
      * @throws IllegalArgumentException If no JWK could be retrieved for the provided client registration ID.
-     * @throws JOSEException            If there is an error creating the RSA key pair or signing the JWT.
      */
     public String createDeepLinkingJWT(String clientRegistrationId, Map<String, Object> customClaims) {
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistrationId);
@@ -114,7 +122,8 @@ public class Lti13TokenRetriever {
                 claimSetBuilder.claim(entry.getKey(), entry.getValue());
             }
 
-            JWTClaimsSet claimsSet = claimSetBuilder.issueTime(Date.from(Instant.now())).expirationTime(Date.from(Instant.now().plusSeconds(JWT_LIFETIME))).build();
+            var now = Instant.now();
+            JWTClaimsSet claimsSet = claimSetBuilder.issueTime(Date.from(now)).expirationTime(Date.from(now.plusSeconds(JWT_LIFETIME_SECONDS))).build();
 
             JWSHeader jwt = new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).keyID(jwk.getKeyID()).build();
             SignedJWT signedJWT = new SignedJWT(jwt, claimsSet);
@@ -140,9 +149,10 @@ public class Lti13TokenRetriever {
             KeyPair keyPair = jwk.toRSAKey().toKeyPair();
             RSASSASigner signer = new RSASSASigner(keyPair.getPrivate());
 
+            var now = Instant.now();
             JWTClaimsSet claimsSet = new JWTClaimsSet.Builder().issuer(clientRegistration.getClientId()).subject(clientRegistration.getClientId())
-                    .audience(clientRegistration.getProviderDetails().getTokenUri()).issueTime(Date.from(Instant.now())).jwtID(UUID.randomUUID().toString())
-                    .expirationTime(Date.from(Instant.now().plusSeconds(JWT_LIFETIME))).build();
+                    .audience(clientRegistration.getProviderDetails().getTokenUri()).issueTime(Date.from(now)).jwtID(UUID.randomUUID().toString())
+                    .expirationTime(Date.from(now.plusSeconds(JWT_LIFETIME_SECONDS))).build();
 
             JWSHeader jwt = new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).keyID(jwk.getKeyID()).build();
             SignedJWT signedJWT = new SignedJWT(jwt, claimsSet);

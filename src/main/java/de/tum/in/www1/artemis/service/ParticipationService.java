@@ -3,7 +3,13 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -12,14 +18,36 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
@@ -71,13 +99,20 @@ public class ParticipationService {
 
     private final Optional<SharedQueueManagementService> localCISharedBuildJobQueueService;
 
+    private final ProfileService profileService;
+
+    private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
+
+    private final CompetencyProgressService competencyProgressService;
+
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService) {
+            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, CompetencyProgressService competencyProgressService) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -96,6 +131,9 @@ public class ParticipationService {
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
+        this.profileService = profileService;
+        this.participationVCSAccessTokenService = participationVCSAccessTokenService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -195,11 +233,18 @@ public class ParticipationService {
         participation.setInitializationState(InitializationState.UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
+
         // StartedDate is used to link a Participation to a test exam exercise
         if (initializationDate != null) {
             participation.setInitializationDate(initializationDate);
         }
-        return studentParticipationRepository.saveAndFlush(participation);
+        participation = studentParticipationRepository.saveAndFlush(participation);
+
+        if (exercise instanceof ProgrammingExercise && participant instanceof User user && profileService.isLocalVcsActive()) {
+            participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
+        }
+
+        return participation;
     }
 
     /**
@@ -224,12 +269,11 @@ public class ParticipationService {
      *
      * @param exercise                           the programming exercise that the currently active user (student) wants to start
      * @param participation                      inactive participation
-     * @param setInitializationDate              flag if the InitializationDate should be set to the current time
      * @param optionalGradedStudentParticipation the graded participation of that student, if present
      * @param useGradedParticipation             flag if the graded student participation should be used as baseline for the new repository
      * @return started participation
      */
-    private StudentParticipation startPracticeMode(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate,
+    private StudentParticipation startPracticeMode(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation,
             Optional<StudentParticipation> optionalGradedStudentParticipation, boolean useGradedParticipation) {
         // Step 1a) create the student repository (based on the template repository or graded participation)
         if (useGradedParticipation && optionalGradedStudentParticipation.isPresent()
@@ -240,7 +284,7 @@ public class ParticipationService {
             participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
         }
 
-        return startProgrammingParticipation(exercise, participation, setInitializationDate);
+        return startProgrammingParticipation(exercise, participation, true);
     }
 
     private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
@@ -275,7 +319,7 @@ public class ParticipationService {
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
-        if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
+        if (!(exercise instanceof ProgrammingExercise)) {
             throw new IllegalStateException("Only programming exercises support the practice mode at the moment");
         }
 
@@ -293,6 +337,9 @@ public class ParticipationService {
             participation.setParticipant(participant);
             participation.setPracticeMode(true);
             participation = studentParticipationRepository.saveAndFlush(participation);
+            if (participant instanceof User user) {
+                participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
+            }
         }
         else {
             // make sure participation and exercise are connected
@@ -300,9 +347,8 @@ public class ParticipationService {
             participation.setExercise(exercise);
         }
 
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-        participation = startPracticeMode(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, true, optionalGradedStudentParticipation,
-                useGradedParticipation);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+        participation = startPracticeMode(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, optionalGradedStudentParticipation, useGradedParticipation);
 
         return studentParticipationRepository.saveAndFlush(participation);
     }
@@ -655,6 +701,7 @@ public class ParticipationService {
      * @return the list of programming exercise participations belonging to exercise and student
      */
     public List<StudentParticipation> findByExerciseAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
+        // TODO: do we really need to fetch all this information here?
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
             return optionalTeam
@@ -708,7 +755,7 @@ public class ParticipationService {
 
     /**
      * Updates the individual due date for each given participation.
-     *
+     * <p>
      * Only sets individual due dates if the exercise has a due date and the
      * individual due date is after this regular due date.
      *
@@ -761,11 +808,13 @@ public class ParticipationService {
             var repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
-            if (deleteBuildPlan && buildPlanId != null) {
+            // If LocalVC is active the flag deleteBuildPlan is ignored and build plans are always deleted
+            if ((deleteBuildPlan || profileService.isLocalVcsActive()) && buildPlanId != null) {
                 final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
                 continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
             }
-            if (deleteRepository && programmingExerciseParticipation.getRepositoryUri() != null) {
+            // If LocalVC is active the flag deleteRepository is ignored and repositories are always deleted
+            if ((deleteRepository || profileService.isLocalVcsActive()) && programmingExerciseParticipation.getRepositoryUri() != null) {
                 try {
                     versionControlService.orElseThrow().deleteRepository(repositoryUri);
                 }
@@ -775,6 +824,8 @@ public class ParticipationService {
             }
             // delete local repository cache
             gitService.deleteLocalRepository(repositoryUri);
+
+            participationVCSAccessTokenService.deleteByParticipationId(participationId);
         }
 
         // If local CI is active, remove all queued jobs for participation
@@ -825,19 +876,24 @@ public class ParticipationService {
     /**
      * Delete all participations belonging to the given exercise
      *
-     * @param exerciseId       the id of the exercise
-     * @param deleteBuildPlan  specify if build plan should be deleted
-     * @param deleteRepository specify if repository should be deleted
+     * @param exercise                      the exercise
+     * @param deleteBuildPlan               specify if build plan should be deleted
+     * @param deleteRepository              specify if repository should be deleted
+     * @param recalculateCompetencyProgress specify if the competency progress should be recalculated
      */
-    public void deleteAllByExerciseId(long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
-        var participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
-        log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exerciseId);
+    public void deleteAllByExercise(Exercise exercise, boolean deleteBuildPlan, boolean deleteRepository, boolean recalculateCompetencyProgress) {
+        var participationsToDelete = studentParticipationRepository.findByExerciseId(exercise.getId());
+        log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exercise.getId());
 
         // First remove all participant scores, as we are deleting all participations for the exercise
-        participantScoreRepository.deleteAllByExerciseId(exerciseId);
+        participantScoreRepository.deleteAllByExerciseId(exercise.getId());
 
         for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository, false);
+        }
+
+        if (recalculateCompetencyProgress) {
+            competencyProgressService.updateProgressByLearningObjectAsync(exercise);
         }
     }
 

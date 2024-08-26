@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_DELETED_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_DELETED_TITLE;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
 import static org.assertj.core.api.Assertions.assertThat;
 

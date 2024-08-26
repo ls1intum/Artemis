@@ -39,7 +39,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         const glyphMarginDomNode = document.createElement('div');
         glyphMarginDomNode.id = `monaco-editor-glyph-margin-widget-${id}`;
         glyphMarginDomNode.className = `codicon codicon-${this.type}`;
-        this.glyphMarginWidget = new MonacoEditorGlyphMarginWidget(editor, id, glyphMarginDomNode, lineNumber);
+        this.glyphMarginWidget = new MonacoEditorGlyphMarginWidget(editor, id, glyphMarginDomNode, lineNumber, monaco.editor.GlyphMarginLane.Center);
         this.setupListeners();
     }
 

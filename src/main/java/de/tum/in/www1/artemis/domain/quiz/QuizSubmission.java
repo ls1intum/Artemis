@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -32,5 +34,16 @@ public class QuizSubmission extends AbstractQuizSubmission {
     @Override
     public String toString() {
         return "QuizSubmission{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + "'" + "}";
+    }
+
+    /**
+     * Remove details that should not be sent to the client from the quiz questions.
+     */
+    public void filterForStudentsDuringQuiz() {
+        for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
+            if (submittedAnswer.getQuizQuestion() != null) {
+                submittedAnswer.getQuizQuestion().filterForStudentsDuringQuiz();
+            }
+        }
     }
 }

@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +15,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,9 +24,20 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.domain.lecture.Slide;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.SlideRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -32,8 +47,6 @@ public class LectureUnitService {
 
     private final LectureRepository lectureRepository;
 
-    private final CompetencyRepository competencyRepository;
-
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
     private final FileService fileService;
@@ -42,15 +55,24 @@ public class LectureUnitService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, CompetencyRepository competencyRepository,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository) {
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
+
+    private final CompetencyProgressService competencyProgressService;
+
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
+    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository, Optional<PyrisWebhookService> pyrisWebhookService,
+            CompetencyProgressService competencyProgressService, CourseCompetencyRepository courseCompetencyRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
-        this.competencyRepository = competencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
         this.slideRepository = slideRepository;
         this.exerciseRepository = exerciseRepository;
+        this.pyrisWebhookService = pyrisWebhookService;
+        this.courseCompetencyRepository = courseCompetencyRepository;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -67,7 +89,8 @@ public class LectureUnitService {
             if (existingCompletion.isEmpty()) {
                 LectureUnitCompletion completion = createLectureUnitCompletion(lectureUnit, user);
                 try {
-                    lectureUnitCompletionRepository.save(completion);
+                    // Flush, so that the asynchronous mastery calculation uses the correct completion status
+                    lectureUnitCompletionRepository.saveAndFlush(completion);
                 }
                 catch (DataIntegrityViolationException e) {
                     // In rare instances the completion status might already exist if this method runs in parallel.
@@ -76,7 +99,6 @@ public class LectureUnitService {
             }
         }
         else {
-            // Delete the completion status for this lecture unit (if it exists)
             existingCompletion.ifPresent(lectureUnitCompletionRepository::delete);
         }
     }
@@ -134,9 +156,9 @@ public class LectureUnitService {
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competencies
-            Set<Competency> competencies = lectureUnitToDelete.getCompetencies();
-            competencyRepository.saveAll(competencies.stream().map(competency -> {
-                competency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
+            Set<CourseCompetency> competencies = lectureUnitToDelete.getCompetencies();
+            courseCompetencyRepository.saveAll(competencies.stream().map(competency -> {
+                competency = courseCompetencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
                 competency.getLectureUnits().remove(lectureUnitToDelete);
                 return competency;
             }).toList());
@@ -149,6 +171,7 @@ public class LectureUnitService {
                 for (Slide slide : slides) {
                     fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
                 }
+                pyrisWebhookService.ifPresent(service -> service.deleteLectureFromPyrisDB(List.of(attachmentUnit)));
                 slideRepository.deleteAll(slides);
             }
         }
@@ -157,6 +180,11 @@ public class LectureUnitService {
         // Creating a new list of lecture units without the one we want to remove
         lecture.getLectureUnits().removeIf(unit -> unit == null || unit.getId().equals(lectureUnitToDelete.getId()));
         lectureRepository.save(lecture);
+
+        if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
+            // update associated competency progress objects
+            competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
+        }
     }
 
     /**
@@ -166,7 +194,7 @@ public class LectureUnitService {
      * @param lectureUnitsToAdd    A set of lecture units to link to the specified competency
      * @param lectureUnitsToRemove A set of lecture units to unlink from the specified competency
      */
-    public void linkLectureUnitsToCompetency(Competency competency, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
+    public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
         final Predicate<LectureUnit> isExerciseUnit = lectureUnit -> lectureUnit instanceof ExerciseUnit;
 
         // Remove the competency from the old lecture units
@@ -193,8 +221,24 @@ public class LectureUnitService {
      * @param lectureUnits set of lecture units
      * @param competency   competency to remove
      */
-    public void removeCompetency(Set<LectureUnit> lectureUnits, Competency competency) {
+    public void removeCompetency(Set<LectureUnit> lectureUnits, CourseCompetency competency) {
         lectureUnits.forEach(lectureUnit -> lectureUnit.getCompetencies().remove(competency));
         lectureUnitRepository.saveAll(lectureUnits);
+    }
+
+    /**
+     * Validates the given URL string and returns the URL object
+     *
+     * @param urlString The URL string to validate
+     * @return The URL object
+     * @throws BadRequestException If the URL string is invalid
+     */
+    public URL validateUrlStringAndReturnUrl(String urlString) {
+        try {
+            return new URI(urlString).toURL();
+        }
+        catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+            throw new BadRequestException();
+        }
     }
 }

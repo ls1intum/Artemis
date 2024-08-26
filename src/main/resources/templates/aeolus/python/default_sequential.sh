@@ -4,7 +4,6 @@ export AEOLUS_INITIAL_DIRECTORY=${PWD}
 compile_the_code () {
   echo '⚙️ executing compile_the_code'
   python3 -m compileall . -q
-
 }
 
 run_structural_tests () {

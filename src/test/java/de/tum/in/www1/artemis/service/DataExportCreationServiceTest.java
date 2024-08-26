@@ -2,8 +2,15 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,11 +19,14 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,11 +57,13 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
+import de.tum.in.www1.artemis.domain.science.ScienceEvent;
+import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
@@ -60,6 +72,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.science.ScienceUtilService;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.export.DataExportCreationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -95,6 +108,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ScienceUtilService scienceUtilService;
 
     @Autowired
     private ExamRepository examRepository;
@@ -151,7 +167,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
         apollonRequestMockProvider.enableMockingOfRequests();
 
-        // mock apollon conversion 8 times, because the last test includes 8 modeling exercises, because each test adds modeling exercises
+        // mock apollon conversion 8 times, because the last test includes 8 modeling
+        // exercises, because each test adds modeling exercises
         for (int i = 0; i < 8; i++) {
             mockApollonConversion();
         }
@@ -175,6 +192,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         boolean assessmentDueDateInTheFuture = false;
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, "short");
         createCommunicationData(TEST_PREFIX + "student1", course);
+        var scienceEvents = createScienceEvents(TEST_PREFIX + "student1");
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
@@ -186,7 +204,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         Predicate<Path> generalUserInformationCsv = path -> "general_user_information.csv".equals(path.getFileName().toString());
         Predicate<Path> readmeMd = path -> "README.md".equals(path.getFileName().toString());
         Predicate<Path> courseDir = path -> path.getFileName().toString().startsWith("course_short");
-        assertThat(extractedZipDirPath).isDirectoryContaining(generalUserInformationCsv).isDirectoryContaining(readmeMd).isDirectoryContaining(courseDir);
+        Predicate<Path> scienceEventsCsv = path -> "science_events.csv".equals(path.getFileName().toString());
+        assertThat(extractedZipDirPath).isDirectoryContaining(generalUserInformationCsv).isDirectoryContaining(readmeMd).isDirectoryContaining(courseDir)
+                .isDirectoryContaining(scienceEventsCsv);
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "short");
         var exercisesDirPath = courseDirPath.resolve("exercises");
         assertThat(courseDirPath).isDirectoryContaining(exercisesDirPath::equals);
@@ -195,6 +215,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling3")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("Text1"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Programming")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("quiz"));
         assertCommunicationDataCsvFile(courseDirPath);
+        assertScienceEventsCSVFile(extractedZipDirPath, scienceEvents);
         for (var exercisePath : getExerciseDirectoryPaths(exercisesDirPath)) {
             assertCorrectContentForExercise(exercisePath, true, assessmentDueDateInTheFuture);
         }
@@ -205,6 +226,37 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     private void assertCommunicationDataCsvFile(Path courseDirPath) {
         assertThat(courseDirPath).isDirectoryContaining(path -> "messages_posts_reactions.csv".equals(path.getFileName().toString()));
+    }
+
+    /**
+     * Asserts the content of the science events CSV file.
+     * Allows for a 500ns difference between the timestamps due to the reimport from the csv export.
+     *
+     * @param extractedZipDirPath The path to the extracted zip directory
+     * @param events              The set of science events to compare with the content of the CSV file
+     */
+    private void assertScienceEventsCSVFile(Path extractedZipDirPath, Set<ScienceEvent> events) {
+        assertThat(extractedZipDirPath).isDirectoryContaining(path -> "science_events.csv".equals(path.getFileName().toString()));
+
+        Set<ScienceEvent> actual = new HashSet<>();
+
+        try (var reader = Files.newBufferedReader(extractedZipDirPath.resolve("science_events.csv"));
+                var csvParser = new CSVParser(reader, CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build())) {
+            var records = csvParser.getRecords();
+            assertThat(records.size()).isEqualTo(events.size());
+            for (var record : records) {
+                var scienceEvent = new ScienceEvent();
+                scienceEvent.setTimestamp(ZonedDateTime.parse(record.get("timestamp")));
+                scienceEvent.setType(ScienceEventType.valueOf(record.get("event_type")));
+                scienceEvent.setResourceId(Long.parseLong(record.get("resource_id")));
+                scienceEvent.setIdentity(TEST_PREFIX + "student1");
+                actual.add(scienceEvent);
+            }
+        }
+        catch (IOException e) {
+            fail("Failed while reading science events CSV file");
+        }
+        assertThat(actual).usingElementComparator(ScienceUtilService.scienceEventComparator).containsExactlyInAnyOrderElementsOf(events);
     }
 
     private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture, String courseShortName) throws Exception {
@@ -275,8 +327,19 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     private void createPlagiarismData(String userLogin, ProgrammingExercise programmingExercise, List<Exercise> exercises) {
         exerciseUtilService.createPlagiarismCaseForUserForExercise(programmingExercise, userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
-        exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(0), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
+        exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.getFirst(), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
         exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(1), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
+    }
+
+    private Set<ScienceEvent> createScienceEvents(String userLogin) {
+
+        ZonedDateTime timestamp = ZonedDateTime.now();
+        // Rounding timestamp due to rounding during export
+        timestamp = timestamp.withNano(timestamp.getNano() - timestamp.getNano() % 10000);
+        return Set.of(scienceUtilService.createScienceEvent(userLogin, ScienceEventType.EXERCISE__OPEN, 1L, timestamp),
+                scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN, 2L, timestamp.plusMinutes(1)),
+                scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN_UNIT, 3L, timestamp.plusSeconds(30)));
+
     }
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
@@ -293,7 +356,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
         examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, programmingExerciseTestService.studentRepo.localRepoFile.toURI());
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
-        var submission = studentExams.iterator().next().getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().iterator().next();
+        var submission = studentExams.iterator().next().getExercises().getFirst().getStudentParticipations().iterator().next().getSubmissions().iterator().next();
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         var feedback = new Feedback();
         feedback.setCredits(1.0);
@@ -316,7 +379,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var loginUser2 = TEST_PREFIX + "student2";
         conversationUtilService.addMessageInChannelOfCourseForUser(loginUser2, course, "student 2 message");
         var posts = postRepository.findPostsByAuthorIdAndCourseId(userUtilService.getUserByLogin(loginUser2).getId(), course.getId());
-        conversationUtilService.addReactionForUserToPost(TEST_PREFIX + "student1", posts.get(0));
+        conversationUtilService.addReactionForUserToPost(TEST_PREFIX + "student1", posts.getFirst());
     }
 
     private void assertNoResultsFile(Path exerciseDirPath) {
@@ -335,8 +398,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
             assertThat(exerciseDirPath).isDirectoryContaining(resultsFile);
         }
         if (exerciseDirPath.toString().contains("Programming")) {
-            // zip file of the repository
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_ZIP));
+            // directory of the repository
+            assertThat(exerciseDirPath).isDirectoryContaining(Files::isDirectory);
             // programming course exercise has a plagiarism case
             if (courseExercise) {
                 assertThat(exerciseDirPath)
@@ -441,7 +504,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
         paths.sort(Comparator.comparing(Path::getFileName));
         if (firstResult) {
-            return paths.get(0);
+            return paths.getFirst();
         }
         if (paths.size() > 1) {
             return paths.get(1);
@@ -492,7 +555,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var loginUser2 = TEST_PREFIX + "student2";
         conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
         var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userUtilService.getUserByLogin(loginUser2).getId());
-        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.get(0));
+        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.getFirst());
     }
 
     @Test
@@ -541,7 +604,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var loginUser2 = TEST_PREFIX + "student2";
         conversationUtilService.addMessageInChannelOfCourseForUser(loginUser2, course, "message student2");
         var posts = postRepository.findPostsByAuthorIdAndCourseId(userUtilService.getUserByLogin(loginUser2).getId(), course.getId());
-        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", posts.get(0));
+        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", posts.getFirst());
     }
 
     @Test
@@ -576,7 +639,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
         conversationUtilService.addOneMessageForUserInCourse(TEST_PREFIX + "student1", course, "only one post");
         var dataExport = initDataExport();
-        // by setting the course groups to a different value we simulate unenrollment because the user is no longer part of the user group and hence, the course.
+        // by setting the course groups to a different value, we simulate unenrollment
+        // because the user is no longer part of the user group and hence, the course.
         courseUtilService.updateCourseGroups("abc", course, "");
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());

@@ -12,7 +12,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { Team } from 'app/entities/team.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Competency } from 'app/entities/competency.model';
+import { CourseCompetency } from 'app/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
@@ -87,7 +87,7 @@ export abstract class Exercise implements BaseEntity {
     public bonusPoints?: number;
     public assessmentType?: AssessmentType;
     public allowComplaintsForAutomaticAssessments?: boolean;
-    public allowManualFeedbackRequests?: boolean;
+    public allowFeedbackRequests?: boolean;
     public difficulty?: DifficultyLevel;
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
     public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
@@ -105,7 +105,7 @@ export abstract class Exercise implements BaseEntity {
     public posts?: Post[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
-    public competencies?: Competency[];
+    public competencies?: CourseCompetency[];
 
     public plagiarismDetectionConfig?: PlagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG; // default value
 
@@ -124,6 +124,7 @@ export abstract class Exercise implements BaseEntity {
     public averageRating?: number;
     public numberOfRatings?: number;
     public channelName?: string;
+    public completed?: boolean;
 
     // helper attributes
     public secondCorrectionEnabled = false;
@@ -158,7 +159,7 @@ export abstract class Exercise implements BaseEntity {
         this.exampleSolutionPublicationDateError = false;
         this.presentationScoreEnabled = false; // default value;
         this.allowComplaintsForAutomaticAssessments = false; // default value;
-        this.allowManualFeedbackRequests = false; // default value;
+        this.allowFeedbackRequests = false; // default value;
     }
 
     /**
@@ -269,7 +270,7 @@ export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
     }
 }
 
-export function resetDates(exercise: Exercise) {
+export function resetForImport(exercise: Exercise) {
     exercise.releaseDate = undefined;
     exercise.startDate = undefined;
     exercise.dueDate = undefined;
@@ -278,5 +279,7 @@ export function resetDates(exercise: Exercise) {
 
     // without dates set, they can only be false
     exercise.allowComplaintsForAutomaticAssessments = false;
-    exercise.allowManualFeedbackRequests = false;
+    exercise.allowFeedbackRequests = false;
+
+    exercise.competencies = [];
 }

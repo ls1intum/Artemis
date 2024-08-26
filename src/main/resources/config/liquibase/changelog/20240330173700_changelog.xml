@@ -1,9 +1,0 @@
-<?xml version="1.1" encoding="UTF-8" standalone="no"?>
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet author="krusche" id="20240330171400">
-        <renameColumn tableName="plagiarism_result_similarity_distribution" oldColumnName="value" newColumnName="frequency" columnDataType="int"/>
-        <renameColumn tableName="jhi_persistent_audit_evt_data" oldColumnName="value" newColumnName="event_data" columnDataType="varchar(255)"/>
-    </changeSet>
-</databaseChangeLog>

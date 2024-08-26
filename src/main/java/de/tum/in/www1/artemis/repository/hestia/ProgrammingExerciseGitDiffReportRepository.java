@@ -5,19 +5,19 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the ProgrammingExerciseGitDiffReport entity.
  */
 @Repository
 @Profile(PROFILE_CORE)
-public interface ProgrammingExerciseGitDiffReportRepository extends JpaRepository<ProgrammingExerciseGitDiffReport, Long> {
+public interface ProgrammingExerciseGitDiffReportRepository extends ArtemisJpaRepository<ProgrammingExerciseGitDiffReport, Long> {
 
     /**
      * Avoid using this method. Use ProgrammingExerciseGitDiffReportService::getReportOfExercise instead

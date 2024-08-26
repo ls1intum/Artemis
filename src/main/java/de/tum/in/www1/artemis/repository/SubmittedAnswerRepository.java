@@ -6,20 +6,20 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the SubmittedAnswer entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface SubmittedAnswerRepository extends JpaRepository<SubmittedAnswer, Long> {
+public interface SubmittedAnswerRepository extends ArtemisJpaRepository<SubmittedAnswer, Long> {
 
     Set<SubmittedAnswer> findBySubmission(QuizSubmission quizSubmission);
 

@@ -3,10 +3,9 @@
 Integrated Code Lifecycle Setup
 -------------------------------
 
-This section describes how to set up a programming exercise environment based on Integrated Code Lifecycle.
-These two systems are integrated into the Artemis server application and thus the setup is greatly simplified compared to the external options.
+This section describes how to set up a programming exercise environment based on the Integrated Code Lifecycle, which includes a local Version Control system and a local Continuous Integration system.
+These two systems are integrated into the Artemis server application, and thus, the setup is greatly simplified compared to the external options.
 This also reduces system requirements as you do not have to run any systems in addition to the Artemis server.
-For now, this setup is only recommended for development and testing purposes.
 If you are setting Artemis up for the first time, these are the steps you should follow:
 
 - Install and run Docker: https://docs.docker.com/get-docker
@@ -43,9 +42,16 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
                use-external: false
            version-control:
                url: http://localhost:8080
-           # Only necessary on Windows:
            continuous-integration:
+               # Only necessary on ARM-based systems, the default is amd64 for Intel/AMD systems
+               # ARM-based systems include Apple M-series, Raspberry Pi, etc.
+               image-architecture: arm64
+               # Only necessary on Windows:
                docker-connection-uri: tcp://localhost:2375
+       eureka:
+           client:
+               register-with-eureka: false
+               fetch-registry: false
 
 The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
 
@@ -69,7 +75,7 @@ The Local CI subsystem of the Integrated Code Lifecycle is used to automatically
        artemis:
            continuous-integration:
                 specify-concurrent-builds: true
-                // The number of concurrent builds that can be executed
+                # The number of concurrent builds that can be executed
                 concurrent-build-size: 2
 
 .. _Start Artemis:
@@ -115,9 +121,7 @@ To create a course with registered users, you can use the scripts from ``support
     </iframe>
 
 - Make sure that the result of your submission is displayed in the Artemis UI.
-
-.. HINT::
-   At the moment, the Local VC system only supports accessing repositories via HTTP(S) and Basic Auth. We plan to add SSH support in the future. For now, you need to enter your Artemis credentials (username and password) when accessing template, solution, test, and assignment repositories.
+- Users can access their repositories via HTTPS and SSH. For SSH to work, you must first :ref:`configure SSH <configure-ssh-access>`.
 
 For unauthorized access, your Git client will display the respective error message:
 

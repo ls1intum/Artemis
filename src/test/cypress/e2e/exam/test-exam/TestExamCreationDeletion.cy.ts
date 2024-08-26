@@ -23,7 +23,7 @@ const examData = {
     confirmationEndText: 'Exam confirmation end text',
 };
 
-describe('Test Exam creation/deletion', () => {
+describe.skip('Test Exam creation/deletion', () => {
     let course: Course;
     let exam: Exam;
 

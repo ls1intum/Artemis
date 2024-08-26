@@ -7,21 +7,22 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data repository for the ConversationParticipant entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ConversationParticipantRepository extends JpaRepository<ConversationParticipant, Long> {
+public interface ConversationParticipantRepository extends ArtemisJpaRepository<ConversationParticipant, Long> {
 
     @Query("""
             SELECT DISTINCT conversationParticipant
@@ -64,8 +65,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
     Optional<ConversationParticipant> findConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 
     default ConversationParticipant findConversationParticipantByConversationIdAndUserIdElseThrow(Long conversationId, Long userId) {
-        return this.findConversationParticipantByConversationIdAndUserId(conversationId, userId)
-                .orElseThrow(() -> new EntityNotFoundException("Conversation participant not found!"));
+        return getValueElseThrow(findConversationParticipantByConversationIdAndUserId(conversationId, userId));
     }
 
     @Query("""

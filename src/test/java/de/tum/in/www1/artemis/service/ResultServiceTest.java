@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
@@ -115,7 +115,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsBeforePublish() {
-        Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
+        Exam exam = examStudentParticipation.getExercise().getExam();
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(2));
         examRepository.save(exam);
         Result result = participationUtilService.addResultToParticipation(null, null, examStudentParticipation);
@@ -129,7 +129,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsAfterPublish() {
-        Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
+        Exam exam = examStudentParticipation.getExercise().getExam();
         exam.setPublishResultsDate(ZonedDateTime.now().minusDays(2));
         examRepository.save(exam);
         Result result = participationUtilService.addResultToParticipation(null, null, examStudentParticipation);

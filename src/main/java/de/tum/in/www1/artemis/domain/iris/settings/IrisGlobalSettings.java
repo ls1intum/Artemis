@@ -1,6 +1,12 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 
 import org.hibernate.Hibernate;
 
@@ -25,8 +31,8 @@ public class IrisGlobalSettings extends IrisSettings {
     @Column(name = "enable_auto_update_hestia")
     private boolean enableAutoUpdateHestia;
 
-    @Column(name = "enable_auto_update_code_editor")
-    private boolean enableAutoUpdateCodeEditor;
+    @Column(name = "enable_auto_update_lecture_ingestion")
+    private boolean enableAutoUpdateLectureIngestion;
 
     @Column(name = "enable_auto_update_competency_generation")
     private boolean enableAutoUpdateCompetencyGeneration;
@@ -36,12 +42,12 @@ public class IrisGlobalSettings extends IrisSettings {
     private IrisChatSubSettings irisChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "iris_hestia_settings_id")
-    private IrisHestiaSubSettings irisHestiaSettings;
+    @JoinColumn(name = "iris_lecture_ingestion_settings_id")
+    private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "iris_code_editor_settings_id")
-    private IrisCodeEditorSubSettings irisCodeEditorSettings;
+    @JoinColumn(name = "iris_hestia_settings_id")
+    private IrisHestiaSubSettings irisHestiaSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_competency_generation_settings_id")
@@ -75,6 +81,14 @@ public class IrisGlobalSettings extends IrisSettings {
         this.enableAutoUpdateChat = enableAutoUpdateChat;
     }
 
+    public boolean isEnableAutoUpdateLectureIngestion() {
+        return enableAutoUpdateLectureIngestion;
+    }
+
+    public void setEnableAutoUpdateLectureIngestion(boolean enableAutoUpdateLectureIngestion) {
+        this.enableAutoUpdateLectureIngestion = enableAutoUpdateLectureIngestion;
+    }
+
     public boolean isEnableAutoUpdateHestia() {
         return enableAutoUpdateHestia;
     }
@@ -83,20 +97,22 @@ public class IrisGlobalSettings extends IrisSettings {
         this.enableAutoUpdateHestia = enableAutoUpdateHestia;
     }
 
-    public boolean isEnableAutoUpdateCodeEditor() {
-        return enableAutoUpdateCodeEditor;
-    }
-
-    public void setEnableAutoUpdateCodeEditor(boolean enableAutoUpdateCodeEditor) {
-        this.enableAutoUpdateCodeEditor = enableAutoUpdateCodeEditor;
-    }
-
     public boolean isEnableAutoUpdateCompetencyGeneration() {
         return enableAutoUpdateCompetencyGeneration;
     }
 
     public void setEnableAutoUpdateCompetencyGeneration(boolean enableAutoUpdateCompetencyGeneration) {
         this.enableAutoUpdateCompetencyGeneration = enableAutoUpdateCompetencyGeneration;
+    }
+
+    @Override
+    public IrisLectureIngestionSubSettings getIrisLectureIngestionSettings() {
+        return irisLectureIngestionSettings;
+    }
+
+    @Override
+    public void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings) {
+        this.irisLectureIngestionSettings = irisLectureIngestionSettings;
     }
 
     @Override
@@ -117,16 +133,6 @@ public class IrisGlobalSettings extends IrisSettings {
     @Override
     public void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings) {
         this.irisHestiaSettings = irisHestiaSettings;
-    }
-
-    @Override
-    public IrisCodeEditorSubSettings getIrisCodeEditorSettings() {
-        return irisCodeEditorSettings;
-    }
-
-    @Override
-    public void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings) {
-        this.irisCodeEditorSettings = irisCodeEditorSettings;
     }
 
     @Override

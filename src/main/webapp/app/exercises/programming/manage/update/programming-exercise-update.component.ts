@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingDates } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingExerciseBuildConfig, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,7 +18,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { EXERCISE_TITLE_NAME_PATTERN, EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
@@ -38,11 +38,7 @@ import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programmin
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
-
-export interface ImportOptions {
-    recreateBuildPlans: boolean;
-    updateTemplate: boolean;
-}
+import { ImportOptions } from 'app/types/programming-exercises';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -95,7 +91,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
-    private selectedProjectTypeValue: ProjectType;
+    private selectedProjectTypeValue?: ProjectType;
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -119,7 +115,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     // length of < 3 is also accepted in order to provide more accurate validation error messages
     readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
-    titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -147,14 +142,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
         updateTemplate: false,
+        setTestCaseVisibilityToAfterDueDate: false,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
-    public projectTypes: ProjectType[] = [];
+    public projectTypes?: ProjectType[] = [];
     // flag describing if the template and solution projects should include a dependency
     public withDependenciesValue = false;
 
-    public modePickerOptions: ModePickerOption<ProjectType>[] = [];
+    public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -208,15 +204,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * used in the template to display warnings.
      */
     refreshAuxiliaryRepositoryChecks() {
+        if (!this.programmingExercise?.auxiliaryRepositories) {
+            return;
+        }
+
         let legalNameAndDirs = false;
         // Check that there are no duplicate names.
         const names = new Set<string | undefined>();
-        const auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
-        auxReposWithName.forEach((auxiliaryRepository) => {
+        const auxReposWithName = this.programmingExercise.auxiliaryRepositories?.filter((auxiliaryRepository) => auxiliaryRepository.name);
+        auxReposWithName?.forEach((auxiliaryRepository) => {
             names.add(auxiliaryRepository.name);
             legalNameAndDirs ||= !this.invalidRepositoryNamePattern.test(auxiliaryRepository.name!);
         });
-        this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName.length;
+        this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName?.length;
 
         // Check that there are no duplicate checkout directories
         const directories = new Set<string | undefined>();
@@ -228,7 +228,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
 
         // Check that there are no empty/incorrect repository names and directories
-        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName.length && !legalNameAndDirs;
+        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName?.length && !legalNameAndDirs;
 
         // Combining auxiliary variables to one to keep the template readable
         this.auxiliaryRepositoriesValid = this.auxiliaryRepositoryNamedCorrectly && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories;
@@ -251,8 +251,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
         this.auxiliaryRepositoriesSupported = programmingLanguageFeature.auxiliaryRepositoriesSupported;
         // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox
-        this.projectTypes = programmingLanguageFeature.projectTypes.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
-        this.modePickerOptions = this.projectTypes.map((projectType) => ({
+        this.projectTypes = programmingLanguageFeature.projectTypes?.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
+        this.modePickerOptions = this.projectTypes?.map((projectType) => ({
             value: projectType,
             labelKey: 'artemisApp.programmingExercise.projectTypes.' + projectType.toString(),
             btnClass: 'btn-secondary',
@@ -260,12 +260,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         if (languageChanged) {
             // Reset project type when changing programming language as not all programming languages support (the same) project types
-            this.programmingExercise.projectType = this.projectTypes[0];
-            this.selectedProjectTypeValue = this.projectTypes[0]!;
+            this.programmingExercise.projectType = this.projectTypes?.[0];
+            this.selectedProjectTypeValue = this.projectTypes?.[0];
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
-            this.programmingExercise.windFile = undefined;
-            this.programmingExercise.buildPlanConfiguration = undefined;
+            if (this.programmingExercise.buildConfig) {
+                this.programmingExercise.buildConfig.windfile = undefined;
+                this.programmingExercise.buildConfig.buildPlanConfiguration = undefined;
+            } else {
+                this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
+            }
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -274,8 +278,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
 
-        // Automatically enable the checkout of the solution repository for Haskell exercises
-        this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
+        if (language == ProgrammingLanguage.HASKELL || language == ProgrammingLanguage.OCAML) {
+            // Instructors typically test against the example solution for Haskell and OCAML exercises.
+            // If supported by the current CI configuration, this line activates the option per default.
+            this.programmingExercise.buildConfig!.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
+        }
+        if (!this.checkoutSolutionRepositoryAllowed) {
+            this.programmingExercise.buildConfig!.checkoutSolutionRepository = false;
+        }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
@@ -306,7 +316,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
-    get selectedProjectType() {
+    get selectedProjectType(): ProjectType | undefined {
         return this.selectedProjectTypeValue;
     }
 
@@ -379,8 +389,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            if (this.programmingExercise.buildPlanConfiguration) {
-                this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+            if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
+                this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig!.buildPlanConfiguration);
             }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
@@ -482,13 +492,23 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     calculateFormStatusSections() {
         this.formStatusSections = [
-            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle', valid: this.exerciseInfoComponent?.formValid ?? false },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
+                valid: this.exerciseInfoComponent?.formValid ?? false,
+            },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
-                valid: this.exerciseDifficultyComponent?.teamConfigComponent.formValid ?? false,
+                valid: (this.exerciseDifficultyComponent?.teamConfigComponent.formValid && this.validIdeSelection()) ?? false,
             },
-            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle', valid: this.exerciseLanguageComponent?.formValid ?? false },
-            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle', valid: true, empty: !this.programmingExercise.problemStatement },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
+                valid: this.exerciseLanguageComponent?.formValid ?? false,
+            },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
+                valid: true,
+                empty: !this.programmingExercise.problemStatement,
+            },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(this.exerciseGradingComponent?.formValid && (this.isExamMode || this.exercisePlagiarismComponent?.formValid)),
@@ -544,7 +564,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.isExamMode = false;
         }
         this.loadCourseExerciseCategories(courseId);
-        resetProgrammingDates(this.programmingExercise);
+        resetProgrammingForImport(this.programmingExercise);
 
         this.programmingExercise.projectKey = undefined;
         if (this.programmingExercise.submissionPolicy) {
@@ -594,11 +614,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Saves the programming exercise with the provided input
      */
     saveExercise() {
-        if (this.programmingExercise.customizeBuildPlanWithAeolus) {
-            this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windFile!);
+        // trim potential whitespaces that can lead to issues
+        if (this.programmingExercise.buildConfig!.windfile?.metadata?.docker?.image) {
+            this.programmingExercise.buildConfig!.windfile.metadata.docker.image = this.programmingExercise.buildConfig!.windfile.metadata.docker.image.trim();
+        }
+
+        if (this.programmingExercise.customizeBuildPlanWithAeolus || this.isImportFromFile) {
+            this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windfile!);
         } else {
-            this.programmingExercise.buildPlanConfiguration = undefined;
-            this.programmingExercise.windFile = undefined;
+            this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
+            this.programmingExercise.buildConfig!.windfile = undefined;
         }
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
@@ -616,14 +641,21 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             });
         }
 
-        // If the auxiliary repositories were edited after the creation of the exercise, the changes have to be done manually in the VCS and CIS
-        const changedAuxiliaryRepository =
-            (this.programmingExercise.auxiliaryRepositories?.length ?? 0) < (this.backupExercise?.auxiliaryRepositories?.length ?? 0) ||
-            this.programmingExercise.auxiliaryRepositories?.some((auxRepo, index) => {
-                const otherAuxRepo = this.backupExercise?.auxiliaryRepositories?.[index];
-                return !otherAuxRepo || auxRepo.name !== otherAuxRepo.name || auxRepo.checkoutDirectory !== otherAuxRepo.checkoutDirectory;
+        /*
+         If properties for an auxiliary repository were edited, the changes have to be done manually in the VCS and CIS.
+         Creating or deleting new auxiliary repositories works automatically and does not throw a warning.
+         We check that by verifying all "current" repositories with an ID (meaning they are not new) with their backup.
+         */
+        const changedAuxiliaryRepositoryProperties = this.programmingExercise.auxiliaryRepositories?.some((auxRepo) => {
+            // Ignore new auxiliary repositories
+            if (!auxRepo.id) return false;
+
+            // Verify unchanged properties for all existing auxiliary repositories
+            return this.backupExercise?.auxiliaryRepositories?.some((backupAuxRepo) => {
+                return backupAuxRepo.id === auxRepo.id && (backupAuxRepo.name !== auxRepo.name || backupAuxRepo.checkoutDirectory !== auxRepo.checkoutDirectory);
             });
-        if (changedAuxiliaryRepository && this.programmingExercise.id) {
+        });
+        if (changedAuxiliaryRepositoryProperties && this.programmingExercise.id) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
                 message: 'artemisApp.programmingExercise.auxiliaryRepository.editedWarning',
@@ -632,9 +664,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromExistingExercise) {
-            this.subscribeToSaveResponse(
-                this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions.recreateBuildPlans, this.importOptions.updateTemplate),
-            );
+            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
@@ -832,7 +862,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.title.undefined',
                 translateValues: {},
             });
-        } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
+        } else if (!EXERCISE_TITLE_NAME_REGEX.test(this.programmingExercise.title)) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
                 translateValues: {},
@@ -1030,7 +1060,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.programmingExercise.course = undefined;
         this.programmingExercise.projectKey = undefined;
 
-        resetProgrammingDates(this.programmingExercise);
+        resetProgrammingForImport(this.programmingExercise);
 
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
         // we need to get it from the history object as setting the programming language
@@ -1052,7 +1082,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             customBuildPlansSupported: this.customBuildPlansSupported,
             invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
             invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            titleNamePattern: this.titleNamePattern,
+            titleNamePattern: EXERCISE_TITLE_NAME_PATTERN,
             shortNamePattern: this.shortNamePattern,
             updateRepositoryName: this.updateRepositoryName,
             updateCheckoutDirectory: this.updateCheckoutDirectory,

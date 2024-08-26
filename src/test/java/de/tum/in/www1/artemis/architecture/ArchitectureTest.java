@@ -14,7 +14,6 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
-import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
@@ -29,7 +28,9 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -60,6 +62,7 @@ import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -67,7 +70,10 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.in.www1.artemis.AbstractArtemisIntegrationTest;
+import de.tum.in.www1.artemis.authorization.AuthorizationTestService;
 import de.tum.in.www1.artemis.config.ApplicationConfiguration;
+import de.tum.in.www1.artemis.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
@@ -84,19 +90,25 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
  */
 class ArchitectureTest extends AbstractArchitectureTest {
 
+    private static final Logger log = LoggerFactory.getLogger(ArchitectureTest.class);
+
     @Test
     void testNoJUnit4() {
         ArchRule noJUnit4Imports = noClasses().should().dependOnClassesThat().resideInAPackage("org.junit");
-        ArchRule noPublicTests = noMethods().that().areAnnotatedWith(Test.class).or().areAnnotatedWith(ParameterizedTest.class).or().areAnnotatedWith(BeforeEach.class).or()
-                .areAnnotatedWith(BeforeAll.class).or().areAnnotatedWith(AfterEach.class).or().areAnnotatedWith(AfterAll.class).should().bePublic();
+        noJUnit4Imports.check(testClasses);
+    }
+
+    @Test
+    void testClassNameAndVisibility() {
         ArchRule classNames = methods().that().areAnnotatedWith(Test.class).should().beDeclaredInClassesThat().haveNameMatching(".*Test").orShould().beDeclaredInClassesThat()
                 .areAnnotatedWith(Nested.class);
         ArchRule noPublicTestClasses = noClasses().that().haveNameMatching(".*Test").should().bePublic();
+        ArchRule noPublicTests = noMethods().that().areAnnotatedWith(Test.class).or().areAnnotatedWith(ParameterizedTest.class).or().areAnnotatedWith(BeforeEach.class).or()
+                .areAnnotatedWith(BeforeAll.class).or().areAnnotatedWith(AfterEach.class).or().areAnnotatedWith(AfterAll.class).should().bePublic();
 
-        noJUnit4Imports.check(testClasses);
-        noPublicTests.check(testClasses);
         classNames.check(testClasses);
         noPublicTestClasses.check(testClasses.that(are(not(simpleNameContaining("Abstract")))));
+        noPublicTests.check(testClasses);
     }
 
     @Test
@@ -195,12 +207,31 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testDTOImplementations() {
+        var dtoRecordRule = classes().that().haveSimpleNameEndingWith("DTO").and().areNotInterfaces().should().beRecords().andShould().beAnnotatedWith(JsonInclude.class)
+                .because("All DTOs should be records and annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)");
+        var result = dtoRecordRule.evaluate(allClasses);
+        log.info("Current number of DTO classes: {}", result.getFailureReport().getDetails().size());
+        log.info("Current DTO classes: {}", result.getFailureReport().getDetails());
+        // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
+        assertThat(result.getFailureReport().getDetails()).hasSize(26);
+
+        var dtoPackageRule = classes().that().resideInAPackage("..dto").should().haveSimpleNameEndingWith("DTO");
+        result = dtoPackageRule.evaluate(allClasses);
+        log.info("Current number of DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails().size());
+        log.info("Current DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails());
+        // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
+        assertThat(result.getFailureReport().getDetails()).hasSize(32);
+    }
+
+    @Test
     void testGsonExclusion() {
         // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
         var result = gsonUsageRule.evaluate(allClasses);
+        log.info("Current number of Gson usages: {}", result.getFailureReport().getDetails().size());
         // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSize(840);
+        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(664);
     }
 
     /**
@@ -227,7 +258,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void ensureSpringComponentsAreProfileAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
                 .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
-                .doNotBelongToAnyOf(ApplicationConfiguration.class).should(beProfileAnnotated())
+                .doNotBelongToAnyOf(ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class).should(beProfileAnnotated())
                 .because("we want to be able to exclude these classes from application startup by specifying profiles");
 
         rule.check(productionClasses);
@@ -244,7 +275,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public void check(T item, ConditionEvents events) {
-                var annotation = item.getAnnotations().stream().filter(rawType(JsonInclude.class)).findAny().orElseThrow();
+                var annotation = findJavaAnnotation(item, JsonInclude.class);
                 var valueProperty = annotation.tryGetExplicitlyDeclaredProperty("value");
                 if (valueProperty.isEmpty()) {
                     // @JsonInclude() is ok since it allows explicitly including properties
@@ -285,9 +316,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         @Override
         public void check(JavaClass item, ConditionEvents events) {
             item.getDirectDependenciesFromSelf().stream().map(Dependency::getTargetClass).filter(targetClass -> targetClass.isAnnotatedWith(RestController.class))
-                    .forEach(targetClass -> {
-                        events.add(violated(item, "%s imports the RestController %s".formatted(item.getName(), targetClass.getName())));
-                    });
+                    .filter(targetClass -> item.getEnclosingClass().map(c -> !c.equals(targetClass)).orElse(true))
+                    .forEach(targetClass -> events.add(violated(item, "%s imports the RestController %s".formatted(item.getName(), targetClass.getName()))));
         }
     };
 
@@ -297,5 +327,72 @@ class ArchitectureTest extends AbstractArchitectureTest {
         final var exceptions = new String[] { "PublicResourcesConfiguration", "QuizProcessCacheTask", "QuizStartTask" };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
+    }
+
+    @Test
+    void hasMatchingAuthorizationTestClassBeCorrectlyImplemented() throws NoSuchMethodException {
+        // Prepare the method that the authorization test should call to be identified as such
+        Method allCheckMethod = AuthorizationTestService.class.getMethod("testAllEndpoints", Map.class);
+        Method condCheckMethod = AuthorizationTestService.class.getMethod("testConditionalEndpoints", Map.class);
+        String identifyingPackage = "authorization";
+
+        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
+                .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod))).because(
+                        "every test environment should have a corresponding authorization test covering the endpoints of this environment. Examples are \"AuthorizationJenkinsGitlabTest\" or \"AuthorizationGitlabCISamlTest\".");
+        rule.check(testClasses);
+    }
+
+    private DescribedPredicate<JavaClass> beDirectSubclassOf(Class<?> clazz) {
+        return new DescribedPredicate<>("be implemented in direct subclass of " + clazz.getSimpleName()) {
+
+            @Override
+            public boolean test(JavaClass javaClass) {
+                var superClasses = javaClass.getAllRawSuperclasses();
+                if (superClasses.isEmpty()) {
+                    // Tested class has no superclass
+                    return false;
+                }
+                return superClasses.getFirst().getFullName().equals(clazz.getName());
+            }
+        };
+    }
+
+    private ArchCondition<JavaClass> haveMatchingTestClassCallingAMethod(String identifyingPackage, Set<Method> signatureMethods) {
+        return new ArchCondition<>("have matching authorization test class") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                if (!hasMatchingTestClassCallingMethod(item, identifyingPackage, signatureMethods)) {
+                    events.add(violated(item, item.getFullName() + " does not have a matching test class in an \"" + identifyingPackage + "\" package "
+                            + "containing a test method that calls any given signature methods"));
+                }
+            }
+        };
+    }
+
+    private boolean hasMatchingTestClassCallingMethod(JavaClass javaClass, String identifyingPackage, Set<Method> signatureMethods) {
+        var subclasses = javaClass.getSubclasses();
+        // Check all subclasses of the given abstract test class to search for an authorization test class
+        for (JavaClass subclass : subclasses) {
+            // The test class es expected to reside inside an identifying package. We could match the full path, but this is more flexible.
+            if (!subclass.getPackageName().contains(identifyingPackage)) {
+                continue;
+            }
+            var methods = subclass.getMethods();
+            // Search for a test method that calls a signature method
+            for (JavaMethod method : methods) {
+                if (!method.isAnnotatedWith(Test.class) && !method.getRawReturnType().reflect().equals(Void.class)) {
+                    // Is not a test method
+                    continue;
+                }
+                if (method.getMethodCallsFromSelf().stream()
+                        .anyMatch(call -> signatureMethods.stream().anyMatch(checkMethod -> call.getTargetOwner().getFullName().equals(checkMethod.getDeclaringClass().getName())
+                                && call.getTarget().getName().equals(checkMethod.getName())))) {
+                    // Calls one of the signature methods
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

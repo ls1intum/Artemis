@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -85,7 +86,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testSuccessfulPublishBuildPlan() throws JsonProcessingException {
         Windfile mockWindfile = new Windfile();
         var expectedPlanKey = "PLAN";
-        mockWindfile.setId("PROJECT-" + expectedPlanKey);
+        mockWindfile.setPreProcessingMetadata("PROJECT-" + expectedPlanKey, null, null, null, null, null, null);
 
         aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, expectedPlanKey);
         String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.JENKINS);
@@ -99,7 +100,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testFailedPublishBuildPlan() throws JsonProcessingException {
         Windfile mockWindfile = new Windfile();
         var expectedPlanKey = "PLAN";
-        mockWindfile.setId("PROJECT-" + expectedPlanKey);
+        mockWindfile.setPreProcessingMetadata("PROJECT-" + expectedPlanKey, null, null, null, null, null, null);
 
         aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
         String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.JENKINS);
@@ -123,14 +124,14 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(map).containsKey(ASSIGNMENT_REPO_NAME);
         AeolusRepository testRepo = map.get(TEST_REPO_NAME);
         assertThat(testRepo).isNotNull();
-        assertThat(testRepo.getBranch()).isEqualTo(branch);
-        assertThat(testRepo.getPath()).isEqualTo(testDirectory);
-        assertThat(testRepo.getUrl()).isEqualTo(testRepositoryUri.toString());
+        assertThat(testRepo.branch()).isEqualTo(branch);
+        assertThat(testRepo.path()).isEqualTo(testDirectory);
+        assertThat(testRepo.url()).isEqualTo(testRepositoryUri.toString());
         AeolusRepository assignmentRepo = map.get(ASSIGNMENT_REPO_NAME);
         assertThat(assignmentRepo).isNotNull();
-        assertThat(assignmentRepo.getBranch()).isEqualTo(branch);
-        assertThat(assignmentRepo.getPath()).isEqualTo(assignmentDirectory);
-        assertThat(assignmentRepo.getUrl()).isEqualTo(repositoryUri.toString());
+        assertThat(assignmentRepo.branch()).isEqualTo(branch);
+        assertThat(assignmentRepo.path()).isEqualTo(assignmentDirectory);
+        assertThat(assignmentRepo.url()).isEqualTo(repositoryUri.toString());
         assertThat(map).doesNotContainKey(SOLUTION_REPO_NAME);
     }
 
@@ -152,20 +153,20 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(map).containsKey(ASSIGNMENT_REPO_NAME);
         AeolusRepository testRepo = map.get(TEST_REPO_NAME);
         assertThat(testRepo).isNotNull();
-        assertThat(testRepo.getBranch()).isEqualTo(branch);
-        assertThat(testRepo.getPath()).isEqualTo(testDirectory);
-        assertThat(testRepo.getUrl()).isEqualTo(testRepositoryUri.toString());
+        assertThat(testRepo.branch()).isEqualTo(branch);
+        assertThat(testRepo.path()).isEqualTo(testDirectory);
+        assertThat(testRepo.url()).isEqualTo(testRepositoryUri.toString());
         AeolusRepository assignmentRepo = map.get(ASSIGNMENT_REPO_NAME);
         assertThat(assignmentRepo).isNotNull();
-        assertThat(assignmentRepo.getBranch()).isEqualTo(branch);
-        assertThat(assignmentRepo.getPath()).isEqualTo(assignmentDirectory);
-        assertThat(assignmentRepo.getUrl()).isEqualTo(repositoryUri.toString());
+        assertThat(assignmentRepo.branch()).isEqualTo(branch);
+        assertThat(assignmentRepo.path()).isEqualTo(assignmentDirectory);
+        assertThat(assignmentRepo.url()).isEqualTo(repositoryUri.toString());
         assertThat(map).containsKey(SOLUTION_REPO_NAME);
         AeolusRepository solutionRepo = map.get(SOLUTION_REPO_NAME);
         assertThat(solutionRepo).isNotNull();
-        assertThat(solutionRepo.getBranch()).isEqualTo(branch);
-        assertThat(solutionRepo.getPath()).isEqualTo(solutionDirectory);
-        assertThat(solutionRepo.getUrl()).isEqualTo(solutionRepositoryUri.toString());
+        assertThat(solutionRepo.branch()).isEqualTo(branch);
+        assertThat(solutionRepo.path()).isEqualTo(solutionDirectory);
+        assertThat(solutionRepo.url()).isEqualTo(solutionRepositoryUri.toString());
     }
 
     @Test
@@ -185,10 +186,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     private Windfile getWindfile() {
         Windfile windfile = new Windfile();
         windfile.setApi("v0.0.1");
-        windfile.setMetadata(new WindfileMetadata());
-        windfile.getMetadata().setName("test");
-        windfile.getMetadata().setDescription("test");
-        windfile.getMetadata().setId("test");
+        windfile.setMetadata(new WindfileMetadata("test", "test", "test", null, null, null, null, null));
         windfile.setActions(List.of(new ScriptAction()));
         return windfile;
     }
@@ -200,12 +198,13 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testShouldNotGenerateAnything() throws JsonProcessingException {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise.setBuildPlanConfiguration(getSerializedWindfile());
+        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(getSerializedWindfile());
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setSequentialTestRuns(true);
-        programmingExercise.setTestwiseCoverageEnabled(true);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(true);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNull();
     }
@@ -221,10 +220,11 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testGetDefaultWindfileFor() {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setSequentialTestRuns(true);
-        programmingExercise.setTestwiseCoverageEnabled(true);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(true);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         assertThat(windfile).isNull();
     }

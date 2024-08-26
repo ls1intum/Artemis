@@ -1,66 +1,75 @@
-<div class="container d-flex flex-column align-items-left justify-content-left">
-    <h2 style="text-align: left; font-weight: normal; margin-bottom: 30px">
-        <span>
-            {{ 'artemisApp.studentExamDetail.exercises' | artemisTranslate }}
-        </span>
-        <br />
-    </h2>
-</div>
-<div class="container d-flex flex-column align-items-center justify-content-center">
+<h3 class="text-left fw-normal">
+    <span jhiTranslate="artemisApp.studentExamDetail.overview"></span>
+</h3>
+<hr />
+
+<div class="container d-flex flex-column align-items-center justify-content-center" [style.maxWidth.px]="1200">
     <table class="table table-striped table-bordered exercise-table">
         <thead>
             <tr>
-                <th style="max-width: 30px">
+                <th [style.width.%]="1">
                     <span>#</span>
                 </th>
-                <th style="max-width: 30px">
-                    <span>
-                        {{ 'artemisApp.examParticipation.exerciseType' | artemisTranslate }}
-                    </span>
+                <th [style.width.%]="1">
+                    <span jhiTranslate="artemisApp.examParticipation.exerciseType"></span>
                 </th>
-                <th>
-                    <span>
-                        {{ 'artemisApp.examParticipation.exerciseName' | artemisTranslate }}
-                    </span>
+                <th [style.width.%]="30">
+                    <span jhiTranslate="artemisApp.examParticipation.exerciseName"></span>
                 </th>
-                <th>
-                    <span>
-                        {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}
-                    </span>
+                <th [style.width.%]="1">
+                    <span jhiTranslate="artemisApp.examParticipation.exercisePoints"></span>
                 </th>
-                <th style="max-width: 50px">
-                    <span>
-                        {{ 'artemisApp.examParticipation.examStatus' | artemisTranslate }}
-                    </span>
+                <th [style.width.%]="showResultWidth">
+                    <span jhiTranslate="artemisApp.examParticipation.examStatus"> </span>
                 </th>
             </tr>
         </thead>
         <tbody>
             @for (item of examExerciseOverviewItems; track item; let i = $index) {
                 <tr>
-                    <td style="max-width: 30px">
+                    <td>
                         {{ i + 1 }}
                     </td>
-                    <td style="max-width: 30px">
-                        <div [ngbTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate">
-                            <fa-icon [icon]="getIcon(item.exercise.type)" placement="right auto" />
+                    <td>
+                        <div>
+                            <fa-icon [ngbTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate" [icon]="getIcon(item.exercise.type)" placement="right auto" />
                         </div>
                     </td>
-                    <td style="max-width: 100px; font-weight: bold">
+                    <td class="fw-bold">
                         <a class="w-100" (click)="openExercise(item.exercise)">
                             {{ item.exercise.exerciseGroup?.title }}
                         </a>
                     </td>
-                    <td style="max-width: 30px">
+                    <td>
                         {{ item.exercise.maxPoints }}
                     </td>
-                    <td style="max-width: 50px; font-weight: bold">
-                        <div
-                            style="max-width: 10px"
-                            [ngClass]="setExerciseIconStatus(item)"
-                            [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(item.exercise) | artemisTranslate"
-                        >
-                            <fa-icon [icon]="item.icon!" />
+                    <td class="fw-bold">
+                        <div class="d-flex align-items-center">
+                            <div
+                                class="me-3"
+                                [ngClass]="setExerciseIconStatus(item)"
+                                [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(item.exercise) | artemisTranslate"
+                            >
+                                <fa-icon [icon]="item.icon!" />
+                            </div>
+                            <div>
+                                @if (
+                                    item.exercise.studentParticipations !== undefined &&
+                                    item.exercise.type === ExerciseType.PROGRAMMING &&
+                                    item.exercise.studentParticipations.length > 0
+                                ) {
+                                    <jhi-updating-result
+                                        id="jhi-updating-result-{{ i }}"
+                                        (showResult)="updateShowResultWidth()"
+                                        [exercise]="item.exercise"
+                                        [showUngradedResults]="true"
+                                        [showBadge]="true"
+                                        [participation]="item.exercise.studentParticipations[0]"
+                                        [personalParticipation]="true"
+                                        class="me-2"
+                                    />
+                                }
+                            </div>
                         </div>
                     </td>
                 </tr>

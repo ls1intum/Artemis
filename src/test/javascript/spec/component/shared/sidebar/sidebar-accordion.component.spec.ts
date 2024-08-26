@@ -1,16 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
-import { SidebarCardComponent } from 'app/shared/sidebar/sidebar-card/sidebar-card.component';
+import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
+import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { RouterModule } from '@angular/router';
+import { AccordionAddOptionsComponent } from 'app/shared/sidebar/accordion-add-options/accordion-add-options.component';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
@@ -20,7 +22,16 @@ describe('SidebarAccordionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(NgbTooltipModule), MockModule(NgbCollapseModule), MockModule(RouterModule)],
-            declarations: [SidebarAccordionComponent, SidebarCardComponent, SidebarCardItemComponent, SearchFilterPipe, SearchFilterComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [
+                SidebarAccordionComponent,
+                SidebarCardMediumComponent,
+                MockComponent(AccordionAddOptionsComponent),
+                SidebarCardItemComponent,
+                SidebarCardDirective,
+                SearchFilterPipe,
+                SearchFilterComponent,
+                MockPipe(ArtemisTranslatePipe),
+            ],
         }).compileComponents();
     });
 
@@ -31,20 +42,20 @@ describe('SidebarAccordionComponent', () => {
 
         component.groupedData = {
             current: {
-                entityData: [{ title: 'Title 1', type: 'Type A', id: 1 }],
+                entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M' }],
             },
             past: {
-                entityData: [{ title: 'Title 2', type: 'Type B', id: 2 }],
+                entityData: [{ title: 'Title 2', type: 'Type B', id: 2, size: 'M' }],
             },
             future: {
-                entityData: [{ title: 'Title 3', type: 'Type C', id: 3 }],
+                entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M' }],
             },
             noDate: {
-                entityData: [{ title: 'Title 4', type: 'Type D', id: 4 }],
+                entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M' }],
             },
         };
         component.routeParams = { exerciseId: 3 };
-        component.collapseState = { current: false, past: false, future: true, noDate: true };
+        component.collapseState = { current: false, dueSoon: false, past: false, future: true, noDate: true };
         fixture.detectChanges();
     });
 
@@ -65,7 +76,7 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should toggle collapse state when group header is clicked', () => {
-        const groupHeader = debugElement.query(By.css('#test-accordion-item-header'));
+        const groupHeader = debugElement.query(By.css('#test-accordion-item-header-current'));
         groupHeader.triggerEventHandler('click', null);
         fixture.detectChanges();
 

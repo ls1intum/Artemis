@@ -12,7 +12,6 @@ import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questi
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
 import { ExamResultOverviewComponent } from 'app/exam/participate/summary/result-overview/exam-result-overview.component';
@@ -32,6 +31,7 @@ import { ArtemisTextParticipationModule } from 'app/exercises/text/participate/t
 import { ArtemisFileUploadParticipationModule } from 'app/exercises/file-upload/participate/file-upload-participation.module';
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
+import { NoDataComponent } from 'app/shared/no-data-component';
 
 @NgModule({
     imports: [
@@ -43,7 +43,6 @@ import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsib
         ArtemisModelingEditorModule,
         ArtemisFullscreenModule,
         ArtemisResultModule,
-        ArtemisCoursesModule,
         ArtemisComplaintsModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisProgrammingExerciseManagementModule,
@@ -57,6 +56,7 @@ import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsib
         ArtemisTextParticipationModule,
         ArtemisFileUploadParticipationModule,
         ArtemisFeedbackModule,
+        NoDataComponent,
     ],
     declarations: [
         ExamResultSummaryComponent,

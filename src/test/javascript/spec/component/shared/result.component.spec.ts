@@ -7,7 +7,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -25,6 +25,7 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 import { of } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -84,7 +85,7 @@ describe('ResultComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
-            declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe)],
+            declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ParticipationService, useValue: participationServiceMock },
@@ -258,13 +259,22 @@ describe('ResultComponent', () => {
 
     it('should display the correct message for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE and FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE', () => {
         comp.templateStatus = ResultTemplateStatus.MISSING;
+
+        // Test for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE
         comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
         fixture.detectChanges();
-        const compiled = fixture.nativeElement;
-        expect(compiled.textContent).toContain('artemisApp.result.missing.programmingFailedSubmission.message');
-        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
+        let compiled = fixture.nativeElement;
+        let spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
+        expect(spanElement).not.toBeNull();
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.result.missing.programmingFailedSubmission.message');
+
+        // Test for FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE
+        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
         fixture.detectChanges();
-        expect(compiled.textContent).toContain('artemisApp.result.missing.programmingFailedSubmission.message');
+        compiled = fixture.nativeElement;
+        spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
+        expect(spanElement).not.toBeNull();
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.result.missing.programmingFailedSubmission.message');
     });
 
     it('should display the submitted text for SUBMITTED template status', () => {
@@ -293,5 +303,78 @@ describe('ResultComponent', () => {
         fixture.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-late');
         expect(submittedSpan).toBeTruthy();
+    });
+
+    describe('ResultComponent - Graded Results', () => {
+        beforeEach(() => {
+            comp.participation = mockParticipation;
+        });
+
+        it('should display the first rated result if showUngradedResults is false', () => {
+            comp.participation.results = [{ id: 2, rated: false, score: 50 } as Result, mockResult, { id: 3, rated: false, score: 70 } as Result];
+            comp.showUngradedResults = false;
+            comp.ngOnInit();
+
+            expect(comp.result).toEqual(mockResult);
+        });
+
+        it('should display the first result if showUngradedResults is true', () => {
+            comp.participation.results = [{ id: 2, rated: false, score: 50 } as Result, mockResult];
+            comp.showUngradedResults = true;
+            comp.ngOnInit();
+
+            expect(comp.result).toEqual(comp.participation.results[0]);
+        });
+
+        it('should not have a result if there are no rated results and showUngradedResults is false', () => {
+            comp.participation.results = [{ id: 2, rated: false, score: 50 } as Result, { id: 3, rated: false, score: 70 } as Result];
+            comp.showUngradedResults = false;
+            comp.ngOnInit();
+
+            expect(comp.result).toBeUndefined();
+        });
+    });
+
+    describe('ResultComponent - Feedback Generation', () => {
+        beforeEach(() => {
+            jest.useFakeTimers();
+            comp.result = { ...mockResult, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'minute') };
+            comp.exercise = mockExercise;
+            comp.participation = mockParticipation;
+        });
+
+        afterEach(() => {
+            jest.clearAllTimers();
+        });
+
+        it('should call evaluate again after the specified due time', () => {
+            comp.result = { ...comp.result, completionDate: dayjs().add(2, 'seconds') };
+            comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+            comp.evaluate();
+
+            comp.result.completionDate = dayjs().subtract(2, 'seconds');
+            jest.runOnlyPendingTimers();
+
+            expect(comp.templateStatus).not.toEqual(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
+        });
+
+        it('should clear the timeout if the component is destroyed before the feedback generation is complete', () => {
+            comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+            comp.evaluate();
+            expect(jest.getTimerCount()).toBe(1);
+
+            comp.ngOnDestroy();
+            expect(jest.getTimerCount()).toBe(0);
+        });
+    });
+
+    it('should use special handling if result is an automatic AI result', () => {
+        comp.result = { ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
+        jest.spyOn(Result, 'isAthenaAIResult').mockReturnValue(true);
+
+        comp.evaluate();
+
+        expect(comp.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
+        expect(comp.resultTooltip).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
     });
 });

@@ -12,6 +12,7 @@ import { Location } from '@angular/common';
 import { Submission } from 'app/entities/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 import { Course } from 'app/entities/course.model';
+import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
 
 export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };
 
@@ -33,6 +34,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     complaintText?: string;
     handled: boolean;
     complaintResponse: ComplaintResponse = new ComplaintResponse();
+    complaintResponseUpdate: ComplaintResponseUpdateDTO;
     ComplaintType = ComplaintType;
     isLoading = false;
     showLockDuration = false;
@@ -68,6 +70,8 @@ export class ComplaintsForTutorComponent implements OnInit {
             } else {
                 if (this.isAllowedToRespond) {
                     if (this.complaint.complaintResponse) {
+                        this.complaintResponseUpdate = new ComplaintResponseUpdateDTO();
+                        this.complaintResponseUpdate.action = ComplaintAction.REFRESH_LOCK;
                         this.refreshLock();
                     } else {
                         this.createLock();
@@ -111,7 +115,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             // update the lock
             this.isLoading = true;
             this.complaintResponseService
-                .refreshLock(this.complaint.id!)
+                .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint.id!)
                 .pipe(
                     finalize(() => {
                         this.isLoading = false;
@@ -185,7 +189,11 @@ export class ComplaintsForTutorComponent implements OnInit {
                 },
             });
         } else {
-            // If the complaint was rejected or it was a more feedback request, just the complaint response is updated.
+            // If the complaint was rejected, or it was a more feedback request, just the complaint response is updated.
+            this.complaintResponseUpdate = new ComplaintResponseUpdateDTO();
+            this.complaintResponseUpdate.action = ComplaintAction.RESOLVE_COMPLAINT;
+            this.complaintResponseUpdate.responseText = this.complaintResponse.responseText;
+            this.complaintResponseUpdate.complaintIsAccepted = this.complaintResponse.complaint.accepted;
             this.resolveComplaint();
         }
     }
@@ -193,7 +201,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     private resolveComplaint() {
         this.isLoading = true;
         this.complaintResponseService
-            .resolveComplaint(this.complaintResponse)
+            .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaintResponse.complaint!.id)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

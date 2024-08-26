@@ -5,7 +5,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
@@ -15,7 +15,6 @@ import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
-import { ApollonEditor } from '@ls1intum/apollon';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
@@ -57,7 +56,7 @@ describe('ModelingEditorComponent', () => {
         fixture.detectChanges();
 
         // test
-        component.ngAfterViewInit();
+        await component.ngAfterViewInit();
         const editor: ApollonEditor = component['apollonEditor'] as ApollonEditor;
         // Check that editor exists
         expect(editor).toBeDefined();
@@ -81,7 +80,7 @@ describe('ModelingEditorComponent', () => {
         const model = classDiagram;
         component.umlModel = model;
         fixture.detectChanges();
-        component.ngAfterViewInit();
+        await component.ngAfterViewInit();
 
         const changedModel = cloneDeep(model) as any;
         changedModel.elements = {};

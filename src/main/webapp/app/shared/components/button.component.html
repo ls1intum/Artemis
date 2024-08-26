@@ -1,13 +1,14 @@
 <button
     [ngClass]="['jhi-btn', 'btn', btnType, btnSize]"
     [type]="shouldSubmit ? 'submit' : 'button'"
-    ngbTooltip="{{ tooltip | artemisTranslate }}"
+    [ngbTooltip]="tooltip | artemisTranslate"
     (click)="onClick.emit($event)"
     [jhiFeatureToggle]="featureToggle"
     [overwriteDisabled]="disabled || isLoading"
+    [placement]="tooltipPlacement"
 >
     @if (isLoading) {
-        <fa-icon class="jhi-btn__loading sm" [icon]="faCircleNotch" [spin]="true" />
+        <fa-icon class="jhi-btn__loading sm" [icon]="faCircleNotch" animation="spin" />
     }
     @if (icon && !isLoading) {
         <fa-icon class="jhi-btn__icon sm" [icon]="icon" [fixedWidth]="true" />

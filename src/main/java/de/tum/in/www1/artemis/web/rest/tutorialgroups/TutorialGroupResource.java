@@ -4,9 +4,16 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.util.DateUtil.isIso8601DateString;
 import static de.tum.in.www1.artemis.web.rest.util.DateUtil.isIso8601TimeString;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
@@ -17,14 +24,26 @@ import jakarta.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
@@ -38,6 +57,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -282,6 +302,7 @@ public class TutorialGroupResource {
      * @param notificationText               the optional notification text
      * @param updateTutorialGroupChannelName whether the tutorial group channel name should be updated with the new tutorial group title or not
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
             @Nullable Boolean updateTutorialGroupChannelName) {
     }
@@ -297,7 +318,7 @@ public class TutorialGroupResource {
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+    public ResponseEntity<TutorialGroup> update(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestBody @Valid TutorialGroupUpdateDTO tutorialGroupUpdateDTO) {
         TutorialGroup updatedTutorialGroup = tutorialGroupUpdateDTO.tutorialGroup();
         log.debug("REST request to update TutorialGroup : {}", updatedTutorialGroup);
@@ -306,7 +327,7 @@ public class TutorialGroupResource {
         }
         var oldTutorialGroup = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         updatedTutorialGroup.setCourse(oldTutorialGroup.getCourse());
-        checkEntityIdMatchesPathIds(oldTutorialGroup, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
+        checkEntityIdMatchesPathIds(oldTutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, oldTutorialGroup.getCourse(), responsibleUser);
 
@@ -359,7 +380,7 @@ public class TutorialGroupResource {
         if (StringUtils.hasText(tutorialGroupUpdateDTO.notificationText())) {
             tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(oldTutorialGroup,
                     updatedTutorialGroup.getTeachingAssistant() == null || !updatedTutorialGroup.getTeachingAssistant().equals(responsibleUser),
-                    StringUtils.trimWhitespace(tutorialGroupUpdateDTO.notificationText()));
+                    tutorialGroupUpdateDTO.notificationText().strip());
         }
 
         overrideValues(updatedTutorialGroup, oldTutorialGroup);
@@ -434,13 +455,13 @@ public class TutorialGroupResource {
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<Set<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+    public ResponseEntity<Set<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestBody Set<StudentDTO> studentDtos) {
         log.debug("REST request to register {} to tutorial group {}", studentDtos, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
-        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
         Set<StudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDtos,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.ok().body(notFoundStudentDtos);
@@ -520,6 +541,58 @@ public class TutorialGroupResource {
     }
 
     /**
+     * GET /courses/:courseId/tutorial-groups/export : Export tutorial groups for a specific course to a CSV file.
+     *
+     * @param courseId the id of the course for which the tutorial groups should be exported
+     * @param fields   the list of fields to include in the CSV export
+     * @return the ResponseEntity with status 200 (OK) and the CSV file containing the tutorial groups
+     */
+    @GetMapping(value = "courses/{courseId}/tutorial-groups/export/csv", produces = "text/csv")
+    @EnforceAtLeastInstructorInCourse
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<byte[]> exportTutorialGroupsToCSV(@PathVariable Long courseId, @RequestParam List<String> fields) {
+        log.debug("REST request to export TutorialGroups to CSV for course: {}", courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        String csvContent = "";
+        try {
+            csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, fields);
+        }
+        catch (IOException e) {
+            throw new BadRequestException("Error occurred while exporting tutorial groups", e);
+        }
+        byte[] bytes = csvContent.getBytes(StandardCharsets.UTF_8);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(new MediaType("text", "csv"));
+        headers.setContentDispositionFormData("attachment", "tutorial-groups.csv");
+        headers.setContentLength(bytes.length);
+
+        return ResponseEntity.ok().headers(headers).body(bytes);
+    }
+
+    /**
+     * GET /courses/:courseId/tutorial-groups/export/json : Export tutorial groups to JSON.
+     *
+     * @param courseId the id of the course to which the tutorial groups belong to
+     * @param fields   the fields to be included in the export
+     * @return ResponseEntity with the JSON data of the tutorial groups
+     */
+    @GetMapping(value = "courses/{courseId}/tutorial-groups/export/json", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastInstructorInCourse
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<String> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
+        log.debug("REST request to export TutorialGroups to JSON for course: {}", courseId);
+        try {
+            String json = tutorialGroupService.exportTutorialGroupsToJSON(courseId, fields);
+            return ResponseEntity.ok().body(json);
+        }
+        catch (JsonProcessingException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to process JSON export");
+        }
+    }
+
+    /**
      * Describes the Errors that can lead to a failed import of a tutorial group registration
      */
     public enum TutorialGroupImportErrors {
@@ -531,14 +604,16 @@ public class TutorialGroupResource {
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful,
-            @Nullable TutorialGroupImportErrors error) {
+            @Nullable TutorialGroupImportErrors error, @Nullable String campus, @Nullable Integer capacity, @Nullable String language, @Nullable String additionalInformation,
+            @Nullable Boolean isOnline) {
 
         public TutorialGroupRegistrationImportDTO withImportResult(boolean importSuccessful, TutorialGroupImportErrors error) {
-            return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful, error);
+            return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful, error, campus(), capacity(), language(), additionalInformation(), isOnline());
         }
 
-        public TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student) {
-            this(title, student, null, null);
+        public TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable String campus, @Nullable Integer capacity,
+                @Nullable String language, @Nullable String additionalInformation, @Nullable Boolean isOnline) {
+            this(title, student, null, null, campus, capacity, language, additionalInformation, isOnline);
         }
 
         @Override
@@ -567,7 +642,9 @@ public class TutorialGroupResource {
 
         @Override
         public String toString() {
-            return "TutorialGroupRegistrationImportDTO{" + "title='" + title + '\'' + ", student=" + student + ", importSuccessful=" + importSuccessful + ", error=" + error + '}';
+            return "TutorialGroupRegistrationImportDTO{" + "title='" + title + '\'' + ", student=" + student + ", importSuccessful=" + importSuccessful + ", error=" + error
+                    + ", campus=" + campus + ", capacity=" + capacity + ", language=" + language + ", additionalInformation=" + additionalInformation + ", isOnline=" + isOnline
+                    + '}';
         }
     }
 }

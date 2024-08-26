@@ -11,6 +11,7 @@ import static de.tum.in.www1.artemis.config.Constants.USER_LAST_NAME_AFTER_SOFT_
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.Role.ADMIN;
 import static de.tum.in.www1.artemis.security.Role.STUDENT;
+import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
 import java.time.Instant;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -39,17 +41,18 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
@@ -72,9 +75,6 @@ import tech.jhipster.security.RandomUtil;
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
-
-    @Value("${artemis.user-management.use-external}")
-    private Boolean useExternalUserManagement;
 
     @Value("${artemis.user-management.internal-admin.username:#{null}}")
     private Optional<String> artemisInternalAdminUsername;
@@ -99,8 +99,6 @@ public class UserService {
 
     private final Optional<CIUserManagementService> optionalCIUserManagementService;
 
-    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
-
     private final CacheManager cacheManager;
 
     private final AuthorityRepository authorityRepository;
@@ -111,10 +109,15 @@ public class UserService {
 
     private final FileService fileService;
 
+    private final ScienceEventRepository scienceEventRepository;
+
+    private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, InstanceMessageSendService instanceMessageSendService, FileService fileService) {
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -125,9 +128,10 @@ public class UserService {
         this.passwordService = passwordService;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
-        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
+        this.scienceEventRepository = scienceEventRepository;
+        this.participationVCSAccessTokenService = participationVCSAccessTokenService;
     }
 
     /**
@@ -311,6 +315,7 @@ public class UserService {
             }
             catch (VersionControlException e) {
                 log.error("An error occurred while registering GitLab user {}:", savedNonActivatedUser.getLogin(), e);
+                participationVCSAccessTokenService.deleteAllByUserId(savedNonActivatedUser.getId());
                 userRepository.delete(savedNonActivatedUser);
                 clearUserCaches(savedNonActivatedUser);
                 userRepository.flush();
@@ -367,7 +372,7 @@ public class UserService {
      * @return a new user or null if the LDAP user was not found
      */
     public Optional<User> createUserFromLdapWithLogin(String login) {
-        return findUserInLdap(login, () -> ldapUserService.orElseThrow().findByUsername(login));
+        return findUserInLdap(login, () -> ldapUserService.orElseThrow().findByLogin(login));
     }
 
     /**
@@ -377,7 +382,7 @@ public class UserService {
      * @return a new user or null if the LDAP user was not found
      */
     public Optional<User> createUserFromLdapWithEmail(String email) {
-        return findUserInLdap(email, () -> ldapUserService.orElseThrow().findByEmail(email));
+        return findUserInLdap(email, () -> ldapUserService.orElseThrow().findByAnyEmail(email));
     }
 
     /**
@@ -396,7 +401,7 @@ public class UserService {
      * Note: this method should only be used if the user does not yet exist in the database
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
-     * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByUsername(email)"
+     * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByLogin(email)"
      * @return a new user or null if the LDAP user was not found
      */
     private Optional<User> findUserInLdap(String userIdentifier, Supplier<Optional<LdapUserDto>> userSupplierFunction) {
@@ -407,11 +412,11 @@ public class UserService {
             Optional<LdapUserDto> ldapUserOptional = userSupplierFunction.get();
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
-                log.info("Ldap User {} has login: {}", ldapUser.getFirstName() + " " + ldapUser.getFirstName(), ldapUser.getUsername());
+                log.info("Ldap User {} has login: {}", ldapUser.getFirstName() + " " + ldapUser.getFirstName(), ldapUser.getLogin());
 
                 // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number, or it is wrong
-                if (StringUtils.hasText(ldapUser.getUsername())) {
-                    var existingUser = userRepository.findOneByLogin(ldapUser.getUsername());
+                if (StringUtils.hasText(ldapUser.getLogin())) {
+                    var existingUser = userRepository.findOneByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
                         existingUser.get().setRegistrationNumber(ldapUser.getRegistrationNumber());
                         saveUser(existingUser.get());
@@ -420,11 +425,8 @@ public class UserService {
                 }
 
                 // Use empty password, so that we don't store the credentials of external users in the Artemis DB
-                User user = userCreationService.createUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
+                User user = userCreationService.createUser(ldapUser.getLogin(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
-                if (useExternalUserManagement) {
-                    artemisAuthenticationProvider.createUserInExternalUserManagement(user);
-                }
                 return Optional.of(user);
             }
             else {
@@ -452,14 +454,6 @@ public class UserService {
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(oldUserLogin, user, removedGroups, addedGroups, newPassword));
         optionalCIUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(oldUserLogin, user, newPassword, addedGroups, removedGroups));
-
-        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group));
-        try {
-            addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group));
-        }
-        catch (ArtemisAuthenticationException e) {
-            // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
-        }
     }
 
     /**
@@ -469,6 +463,7 @@ public class UserService {
      */
     public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
+            participationVCSAccessTokenService.deleteAllByUserId(user.getId());
             user.setDeleted(true);
             anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
@@ -486,10 +481,11 @@ public class UserService {
         final Set<String> originalGroups = user.getGroups();
         final String randomPassword = RandomUtil.generatePassword();
         final String userImageString = user.getImageUrl();
+        final String anonymizedLogin = lowerCase(RandomUtil.generateRandomAlphanumericString(), Locale.ENGLISH);
 
         user.setFirstName(USER_FIRST_NAME_AFTER_SOFT_DELETE);
         user.setLastName(USER_LAST_NAME_AFTER_SOFT_DELETE);
-        user.setLogin(RandomUtil.generateRandomAlphanumericString());
+        user.setLogin(anonymizedLogin);
         user.setPassword(randomPassword);
         user.setEmail(RandomUtil.generateRandomAlphanumericString() + USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
         user.setRegistrationNumber(null);
@@ -500,6 +496,8 @@ public class UserService {
         userRepository.save(user);
         clearUserCaches(user);
         userRepository.flush();
+
+        scienceEventRepository.renameIdentity(originalLogin, anonymizedLogin);
 
         if (userImageString != null) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString)), 0);
@@ -631,7 +629,6 @@ public class UserService {
      * @param groupName the name of the group which should be deleted
      */
     public void deleteGroup(String groupName) {
-        artemisAuthenticationProvider.deleteGroup(groupName);
         removeGroupFromUsers(groupName);
     }
 
@@ -658,12 +655,6 @@ public class UserService {
      */
     public void addUserToGroup(User user, String group) {
         addUserToGroupInternal(user, group); // internal Artemis database
-        try {
-            artemisAuthenticationProvider.addUserToGroup(user, group);
-        }
-        catch (ArtemisAuthenticationException e) {
-            // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
-        }
         // e.g. Gitlab: TODO: include the role to distinguish more cases
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group)));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
@@ -692,7 +683,6 @@ public class UserService {
      */
     public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
-        artemisAuthenticationProvider.removeUserFromGroup(user, group);
         // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of()));
         // e.g. Jenkins
@@ -831,5 +821,29 @@ public class UserService {
         }
 
         return notFoundUsers;
+    }
+
+    /**
+     * Get the vcs access token associated with a user and a participation
+     *
+     * @param user            the user associated with the vcs access token
+     * @param participationId the participation's participationId associated with the vcs access token
+     *
+     * @return the users participation vcs access token, or throws an exception if it does not exist
+     */
+    public ParticipationVCSAccessToken getParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
+        return participationVCSAccessTokenService.findByUserIdAndParticipationIdOrElseThrow(user.getId(), participationId);
+    }
+
+    /**
+     * Create a vcs access token associated with a user and a participation, and return it
+     *
+     * @param user            the user associated with the vcs access token
+     * @param participationId the participation's participationId associated with the vcs access token
+     *
+     * @return the users newly created participation vcs access token, or throws an exception if it already existed
+     */
+    public ParticipationVCSAccessToken createParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
+        return participationVCSAccessTokenService.createVcsAccessTokenForUserAndParticipationIdOrElseThrow(user, participationId);
     }
 }
