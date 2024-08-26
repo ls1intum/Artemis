@@ -156,7 +156,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 profileService = debugElement.injector.get(ProfileService);
 
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of(new ProfileInfo()));
+                const newProfileInfo = new ProfileInfo();
+                newProfileInfo.activeProfiles = [];
+                getProfileInfoSub.mockReturnValue(of(newProfileInfo));
             });
     });
 
