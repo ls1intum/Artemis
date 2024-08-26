@@ -1,17 +1,15 @@
 <div class="d-flex align-items-center justify-content-between">
-    <!--    TODO: Translations-->
-    <h5 class="m-0">Courses</h5>
+    <h5 class="m-0" [jhiTranslate]="columnBaseTranslationKey() + '.table.title'"></h5>
     <div>
         <div class="d-flex align-items-center">
             @if (isLoading()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
-            <!--            TODO Translations:-->
             <input
                 id="import-objects-search"
                 type="search"
                 class="form-control ms-2 rounded"
-                [placeholder]="'Search'"
+                [placeholder]="'global.importTable.searchPlaceholder' | artemisTranslate"
                 aria-label="Search"
                 [(ngModel)]="searchTerm"
                 (ngModelChange)="search()"
@@ -35,7 +33,7 @@
                 @for (column of columns(); track column) {
                     <th class="col-4 clickable" (click)="setSortedColumn(column.name)">
                         <div class="d-flex align-items-center">
-                            <span [jhiTranslate]="'artemisApp.' + entityName() + '.importAll.table.' + column.name"></span>
+                            <span [jhiTranslate]="columnBaseTranslationKey() + '.table.columns.' + column.name"></span>
                             <ng-container
                                 *ngTemplateOutlet="sortIcon; context: { sortedColumn: column.name, currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }"
                             ></ng-container>
@@ -62,8 +60,7 @@
                 </tr>
             } @empty {
                 <tr>
-                    <!--                  TODO: Translations-->
-                    <td [colSpan]="columns().length + 2" class="text-center text-secondary"><em>No courses found</em></td>
+                    <td [colSpan]="columns().length + 2" class="text-center text-secondary"><em jhiTranslate="global.generic.emptyList"></em></td>
                 </tr>
             }
         </tbody>

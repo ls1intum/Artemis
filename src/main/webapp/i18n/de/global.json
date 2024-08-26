@@ -15,6 +15,9 @@
             "copied": "Kopiert",
             "new": "Neu"
         },
+        "importTable": {
+            "searchPlaceholder": "Suchen"
+        },
         "menu": {
             "home": "Startseite",
             "overview": "Kursübersicht",
