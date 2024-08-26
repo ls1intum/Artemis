@@ -18,9 +18,9 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                 id="field_submissionPolicy"
                 [disabled]="!editable"
             >
-                <option value="none">{{ 'artemisApp.programmingExercise.submissionPolicy.none.optionLabel' | artemisTranslate }}</option>
-                <option value="lock_repository">{{ 'artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel' | artemisTranslate }}</option>
-                <option value="submission_penalty">{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel' | artemisTranslate }}</option>
+                <option value="none" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.none.optionLabel"></option>
+                <option value="lock_repository" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel"></option>
+                <option value="submission_penalty" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel"></option>
             </select>
         </div>
         @if (!isNonePolicy) {

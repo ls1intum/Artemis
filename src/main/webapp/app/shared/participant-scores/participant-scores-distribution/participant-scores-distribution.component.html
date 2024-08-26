@@ -28,17 +28,17 @@
         @if (gradingScaleExists && !isBonus) {
             <div class="d-flex justify-content-center align-items-center">
                 <div class="color-box insufficient-performance"></div>
-                <span class="ms-2">{{ 'artemisApp.examScores.insufficientPerformance' | artemisTranslate }}</span>
+                <span class="ms-2" jhiTranslate="artemisApp.examScores.insufficientPerformance"></span>
                 <div class="ms-4 color-box sufficient-performance"></div>
-                <span class="ms-2">{{ 'artemisApp.examScores.sufficientPerformance' | artemisTranslate }}</span>
+                <span class="ms-2" jhiTranslate="artemisApp.examScores.sufficientPerformance"></span>
             </div>
         }
         @if (!gradingScaleExists || isBonus) {
             <div class="d-flex justify-content-center align-items-center">
                 <div class="color-box critical-performance"></div>
-                <span class="ms-2">{{ 'artemisApp.examScores.criticalPerformance' | artemisTranslate }}</span>
+                <span class="ms-2" jhiTranslate="artemisApp.examScores.criticalPerformance"></span>
                 <div class="ms-4 color-box sufficient-performance"></div>
-                <span class="ms-2">{{ 'artemisApp.examScores.uncriticalPerformance' | artemisTranslate }}</span>
+                <span class="ms-2" jhiTranslate="artemisApp.examScores.uncriticalPerformance"></span>
             </div>
         }
         <jhi-help-icon class="ms-2" placement="right auto" text="{{ helpIconTooltip }}" />
