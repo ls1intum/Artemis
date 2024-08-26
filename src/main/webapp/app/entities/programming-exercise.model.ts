@@ -66,7 +66,7 @@ export class ProgrammingExerciseBuildConfig {
     public checkoutPath?: string;
     public timeoutSeconds?: number;
     public dockerFlags?: string;
-    public windFile?: WindFile;
+    public windfile?: WindFile;
     public testwiseCoverageEnabled?: boolean;
     public theiaImage?: string;
 
@@ -179,7 +179,7 @@ export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExercis
     buildConfig.buildPlanConfiguration = exerciseJson.buildPlanConfiguration ?? '';
     buildConfig.checkoutSolutionRepository = exerciseJson.checkoutSolutionRepository ?? false;
     buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;
-    buildConfig.windFile = exerciseJson.windFile ?? undefined;
+    buildConfig.windfile = exerciseJson.windfile ?? undefined;
     buildConfig.buildScript = exerciseJson.buildScript ?? '';
     buildConfig.testwiseCoverageEnabled = exerciseJson.testwiseCoverageEnabled ?? false;
     buildConfig.dockerFlags = exerciseJson.dockerFlags ?? '';

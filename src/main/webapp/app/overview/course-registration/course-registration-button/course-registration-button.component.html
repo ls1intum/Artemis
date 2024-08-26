@@ -11,7 +11,5 @@
     />
 }
 @if (!course.enrollmentConfirmationMessage!) {
-    <button class="btn btn-primary" (click)="registerForCourse(course.id!)" [disabled]="loading">
-        {{ 'artemisApp.studentDashboard.enroll.enrollInCourse' | artemisTranslate }}
-    </button>
+    <button class="btn btn-primary" (click)="registerForCourse(course.id!)" [disabled]="loading" jhiTranslate="artemisApp.studentDashboard.enroll.enrollInCourse"></button>
 }

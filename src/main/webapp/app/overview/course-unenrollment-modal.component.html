@@ -1,7 +1,5 @@
 <div class="modal-header">
-    <h4 class="modal-title">
-        {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.title' | artemisTranslate }}
-    </h4>
+    <h4 class="modal-title" jhiTranslate="artemisApp.courseOverview.exerciseList.details.unenrollmentModal.title"></h4>
 </div>
 <div class="modal-body">
     <div class="unenrollment-info">
@@ -10,9 +8,7 @@
             <b>{{ course?.title }}</b> ?
         </div>
         @if (!canEnrollAgain) {
-            <div>
-                {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.reenrollmentNotPossible' | artemisTranslate }}
-            </div>
+            <div jhiTranslate="artemisApp.courseOverview.exerciseList.details.unenrollmentModal.reenrollmentNotPossible"></div>
         }
         @if (canEnrollAgain) {
             <div>
@@ -22,22 +18,16 @@
         }
     </div>
     <form class="unenrollment-confirmation" [formGroup]="confirmationForm" style="margin-top: 1rem">
-        <label class="form-control-label" for="field_confirmation_input">
-            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.confirmationInput' | artemisTranslate }}
-        </label>
+        <label class="form-control-label" for="field_confirmation_input" jhiTranslate="artemisApp.courseOverview.exerciseList.details.unenrollmentModal.confirmationInput"></label>
         <input type="text" class="form-control" name="confirmationInput" id="field_confirmation_input" formControlName="confirmationInput" required />
     </form>
 </div>
 <div class="modal-footer">
     <button class="btn btn-outline-secondary" id="course-unenrollment-cancel-button" (click)="onCancel()">
         <fa-icon [icon]="faXmark" />
-        <span class="d-sm-inline">
-            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.cancelButton' | artemisTranslate }}
-        </span>
+        <span class="d-sm-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.details.unenrollmentModal.cancelButton"></span>
     </button>
     <button class="btn btn-danger" id="course-unenrollment-accept-button" [disabled]="!isValidInput" (click)="onUnenroll()">
-        <span class="d-sm-inline">
-            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.acceptButton' | artemisTranslate }}
-        </span>
+        <span class="d-sm-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.details.unenrollmentModal.acceptButton"></span>
     </button>
 </div>

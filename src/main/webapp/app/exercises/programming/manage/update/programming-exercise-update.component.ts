@@ -266,7 +266,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
             if (this.programmingExercise.buildConfig) {
-                this.programmingExercise.buildConfig.windFile = undefined;
+                this.programmingExercise.buildConfig.windfile = undefined;
                 this.programmingExercise.buildConfig.buildPlanConfiguration = undefined;
             } else {
                 this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
@@ -391,7 +391,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
             if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
-                this.programmingExercise.buildConfig!.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig!.buildPlanConfiguration);
+                this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig!.buildPlanConfiguration);
             }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
@@ -617,15 +617,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     saveExercise() {
         // trim potential whitespaces that can lead to issues
-        if (this.programmingExercise.buildConfig!.windFile?.metadata?.docker?.image) {
-            this.programmingExercise.buildConfig!.windFile.metadata.docker.image = this.programmingExercise.buildConfig!.windFile.metadata.docker.image.trim();
+        if (this.programmingExercise.buildConfig!.windfile?.metadata?.docker?.image) {
+            this.programmingExercise.buildConfig!.windfile.metadata.docker.image = this.programmingExercise.buildConfig!.windfile.metadata.docker.image.trim();
         }
 
-        if (this.programmingExercise.customizeBuildPlanWithAeolus) {
-            this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windFile!);
+        if (this.programmingExercise.customizeBuildPlanWithAeolus || this.isImportFromFile) {
+            this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windfile!);
         } else {
             this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-            this.programmingExercise.buildConfig!.windFile = undefined;
+            this.programmingExercise.buildConfig!.windfile = undefined;
         }
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
