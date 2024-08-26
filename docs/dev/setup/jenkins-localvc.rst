@@ -1,7 +1,7 @@
-.. _Jenkins and GitLab Setup:
+.. _Jenkins and LocalVC Setup:
 
-Jenkins and GitLab Setup
-------------------------
+Jenkins and LocalVC Setup
+-------------------------
 
 This section describes how to set up a programming exercise environment
 based on Jenkins and GitLab. Optional commands are in curly brackets ``{}``.
@@ -1010,7 +1010,7 @@ You should also update the Jenkins plugins regularly due to security
 reasons. You can update them directly in the Web User Interface in the
 Plugin Manager.
 
-.. _jenkins_build_agents_gitlab:
+.. _jenkins_build_agents:
 
 Build agents
 ^^^^^^^^^^^^
