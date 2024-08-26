@@ -27,12 +27,21 @@
                 />
                 <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title"></span>
                 @if (!programmingExerciseCreationConfig.validIdeSelection()) {
-                    <fa-icon
-                        [icon]="faQuestionCircle"
-                        class="text-danger"
-                        [placement]="'top'"
-                        ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alert' | artemisTranslate }}"
-                    />
+                    @if (theiaEnabled) {
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-danger"
+                            [placement]="'top'"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alert' | artemisTranslate }}"
+                        />
+                    } @else {
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-danger"
+                            [placement]="'top'"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alertNoTheia' | artemisTranslate }}"
+                        />
+                    }
                 }
             </label>
         </div>
@@ -50,12 +59,21 @@
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title"></span>
                     @if (!programmingExerciseCreationConfig.validIdeSelection()) {
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-danger"
-                            [placement]="'top'"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate }}"
-                        />
+                        @if (theiaEnabled) {
+                            <fa-icon
+                                [icon]="faQuestionCircle"
+                                class="text-danger"
+                                [placement]="'top'"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate }}"
+                            />
+                        } @else {
+                            <fa-icon
+                                [icon]="faQuestionCircle"
+                                class="text-danger"
+                                [placement]="'top'"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia' | artemisTranslate }}"
+                            />
+                        }
                     }
                 </label>
             </div>

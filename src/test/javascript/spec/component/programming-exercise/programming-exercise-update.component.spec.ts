@@ -67,6 +67,9 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_THEIA } from 'app/app.constants';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -80,6 +83,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let exerciseGroupService: ExerciseGroupService;
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
+    let profileService: ProfileService;
+
+    let getProfileInfoSub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -147,6 +153,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
                 programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
                 alertService = debugElement.injector.get(AlertService);
+                profileService = debugElement.injector.get(ProfileService);
+
+                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+                getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/', activeProfiles: [] } as ProfileInfo));
             });
     });
 
@@ -792,14 +802,46 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
-        it('find validation errors for invalid ide selection', () => {
+        it.each([
+            [
+                'find validation errors for invalid ide selection',
+                {
+                    activeProfiles: [PROFILE_THEIA],
+                },
+                {
+                    translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                    translateValues: {},
+                },
+            ],
+            [
+                'find validation errors for invalid ide selection without theia profile',
+                {
+                    activeProfiles: [],
+                },
+                {
+                    translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia',
+                    translateValues: {},
+                },
+            ],
+        ])('%s', (description, profileInfo, expectedException) => {
+            getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+
+            getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
+
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: comp.programmingExercise });
+
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
             comp.programmingExercise.allowOnlineEditor = false;
             comp.programmingExercise.allowOfflineIde = false;
             comp.programmingExercise.allowOnlineIde = false;
-            expect(comp.getInvalidReasons()).toContainEqual({
-                translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
-                translateValues: {},
-            });
+
+            fixture.detectChanges();
+
+            expect(comp.getInvalidReasons()).toContainEqual(expectedException);
         });
 
         it('find validation errors for invalid online IDE image', () => {

@@ -30,7 +30,7 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
-import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
+import { PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
@@ -136,6 +136,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
     public customBuildPlansSupported: string = '';
+    public theiaEnabled = false;
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -404,50 +405,52 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         });
 
         // If it is an import from this instance, just get the course, otherwise handle the edit and new cases
-        this.activatedRoute.url
-            .pipe(
-                tap((segments) => {
-                    this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
-                    this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
-                }),
-                switchMap(() => this.activatedRoute.params),
-                tap((params) => {
-                    if (this.isImportFromFile) {
-                        this.createProgrammingExerciseForImportFromFile();
-                    }
-                    if (this.isImportFromExistingExercise) {
-                        this.createProgrammingExerciseForImport(params);
-                    } else {
-                        if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
-                            this.isExamMode = true;
-                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
-                                this.programmingExercise.exerciseGroup = res.body!;
-                                if (!params['exerciseId'] && this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
-                                    this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
-                                }
-                            });
-                            // we need the course id  to make the request to the server if it's an import from file
-                            if (this.isImportFromFile) {
-                                this.courseId = params['courseId'];
-                                this.loadCourseExerciseCategories(params['courseId']);
-                            }
-                        } else if (params['courseId']) {
-                            this.courseId = params['courseId'];
-                            this.isExamMode = false;
-                            this.courseService.find(this.courseId).subscribe((res) => {
-                                this.programmingExercise.course = res.body!;
-                                if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
-                                    this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
-                                }
-                                this.exerciseCategories = this.programmingExercise.categories || [];
-
-                                this.loadCourseExerciseCategories(this.programmingExercise.course!.id!);
-                            });
+        if (this.activatedRoute && this.activatedRoute.url) {
+            this.activatedRoute.url
+                .pipe(
+                    tap((segments) => {
+                        this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
+                        this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                    }),
+                    switchMap(() => this.activatedRoute.params),
+                    tap((params) => {
+                        if (this.isImportFromFile) {
+                            this.createProgrammingExerciseForImportFromFile();
                         }
-                    }
-                }),
-            )
-            .subscribe();
+                        if (this.isImportFromExistingExercise) {
+                            this.createProgrammingExerciseForImport(params);
+                        } else {
+                            if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+                                this.isExamMode = true;
+                                this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
+                                    this.programmingExercise.exerciseGroup = res.body!;
+                                    if (!params['exerciseId'] && this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                        this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
+                                    }
+                                });
+                                // we need the course id  to make the request to the server if it's an import from file
+                                if (this.isImportFromFile) {
+                                    this.courseId = params['courseId'];
+                                    this.loadCourseExerciseCategories(params['courseId']);
+                                }
+                            } else if (params['courseId']) {
+                                this.courseId = params['courseId'];
+                                this.isExamMode = false;
+                                this.courseService.find(this.courseId).subscribe((res) => {
+                                    this.programmingExercise.course = res.body!;
+                                    if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                        this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
+                                    }
+                                    this.exerciseCategories = this.programmingExercise.categories || [];
+
+                                    this.loadCourseExerciseCategories(this.programmingExercise.course!.id!);
+                                });
+                            }
+                        }
+                    }),
+                )
+                .subscribe();
+        }
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
@@ -471,6 +474,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             }
             if (profileInfo?.activeProfiles.includes(PROFILE_AEOLUS)) {
                 this.customBuildPlansSupported = PROFILE_AEOLUS;
+            }
+            if (profileInfo?.activeProfiles.includes(PROFILE_THEIA)) {
+                this.theiaEnabled = true;
             }
         });
         this.defineSupportedProgrammingLanguages();
@@ -826,7 +832,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * checking if at least one of Online Editor, Offline Ide, or Online Ide is selected
      */
     validIdeSelection = () => {
-        return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde || this.programmingExercise?.allowOnlineIde;
+        if (this.theiaEnabled) {
+            return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde || this.programmingExercise?.allowOnlineIde;
+        } else {
+            return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde;
+        }
     };
 
     /**
@@ -1054,8 +1064,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     private validateExerciseIdeSelection(validationErrorReasons: ValidationReason[]): void {
         if (!this.validIdeSelection()) {
+            const translateKey = this.theiaEnabled ? 'artemisApp.programmingExercise.allowOnlineEditor.alert' : 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia';
             validationErrorReasons.push({
-                translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                translateKey: translateKey,
                 translateValues: {},
             });
         }
