@@ -125,8 +125,7 @@ describe('CompetencyManagementComponent', () => {
         const getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
         const getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettingsResponse));
 
-        fixture.detectChanges();
-        await fixture.whenStable();
+        component['loadIrisEnabled']();
         fixture.detectChanges();
 
         const generateButton = fixture.nativeElement.querySelector('#generateButton');
