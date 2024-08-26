@@ -25,6 +25,8 @@ import { toObservable } from '@angular/core/rxjs-interop';
 export class ThemeSwitchComponent implements OnInit, OnDestroy {
     protected readonly faSync = faSync;
 
+    private readonly themeService = inject(ThemeService);
+
     popoverPlacement = input.required<PlacementArray>();
     popover = viewChild.required<NgbPopover>('popover');
 
@@ -33,8 +35,6 @@ export class ThemeSwitchComponent implements OnInit, OnDestroy {
 
     animate = signal(true);
     openPopupAfterNextChange = signal(false);
-
-    private themeService = inject(ThemeService);
 
     private closeTimerSubscription: Subscription | undefined;
     private reopenPopupSubscription = toObservable(this.themeService.currentTheme)
