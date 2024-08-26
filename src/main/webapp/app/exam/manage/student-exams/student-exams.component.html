@@ -177,7 +177,7 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
-                    <span>{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                    <span jhiTranslate="{{ value ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                 </ng-template>
             </ngx-datatable-column>
             <ngx-datatable-column prop="submitted" [minWidth]="80" [width]="80">
@@ -188,7 +188,7 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
-                    <span class="submitted">{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                    <span class="submitted" jhiTranslate="{{ value ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                 </ng-template>
             </ngx-datatable-column>
             <ngx-datatable-column prop="submissionDate" [minWidth]="130" [width]="130">
