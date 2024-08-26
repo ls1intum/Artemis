@@ -15,7 +15,7 @@
             "idePreferencesPage": {
                 "description": "Choose the IDEs you want to use for opening programming exercises.",
                 "default": "Default",
-                "jetbrainsHelp": "To use Jetbrains IDEs, please install the Jetbrains Toolbox."
+                "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox."
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
@@ -44,7 +44,7 @@
                 "NOTIFICATION_SETTINGS": "Notification Settings",
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH",
-                "idePreferences": "IDE Preferences"
+                "IDE_PREFERENCES": "IDE Preferences"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",

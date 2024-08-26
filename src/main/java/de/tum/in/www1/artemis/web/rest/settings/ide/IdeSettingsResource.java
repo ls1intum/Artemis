@@ -157,7 +157,7 @@ public class IdeSettingsResource {
      * @param ide the ide to check for orphan removal
      */
     private void orphanRemoval(Ide ide) {
-        // TODO should be handled by orphan removal annotation in IDE, but does not work
+        // should be handled by orphan removal annotation in IDE, but annotation is still buggy with many-to-one
         if (ide == null || Arrays.stream(Ide.PREDEFINED_IDES).anyMatch(predefinedIde -> predefinedIde.getDeepLink().equals(ide.getDeepLink()))) {
             return;
         }

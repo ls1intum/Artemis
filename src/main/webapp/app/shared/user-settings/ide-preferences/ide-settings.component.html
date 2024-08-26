@@ -1,22 +1,20 @@
-<h1 jhiTranslate="artemisApp.userSettings.categories.idePreferences">
-    <!--Default IDE Settings-->
-</h1>
+<h1 jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"></h1>
 <div class="list-group d-block">
     <div class="list-group-item pb-3">
         <dt>
             <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.description"></span>
             <jhi-help-icon placement="right auto" text="artemisApp.userSettings.idePreferencesPage.jetbrainsHelp" />
         </dt>
-        <dt class="py-2" jhiTranslate="artemisApp.userSettings.idePreferencesPage.default"></dt>
+        <h5 class="py-2" jhiTranslate="artemisApp.userSettings.idePreferencesPage.default"></h5>
         <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: ProgrammingLanguage.EMPTY }"></ng-container>
     </div>
     <!-- Display each customized Programming Language -->
     @for (programmingLanguage of assignedProgrammingLanguages; track programmingLanguage) {
         <div class="list-group-item pb-3">
             <div class="item-container d-flex flex-row justify-content-between align-items-center pb-2">
-                <dt>
+                <h5>
                     {{ programmingLanguage }}
-                </dt>
+                </h5>
                 <button class="btn btn-sm btn-outline-danger" (click)="removeProgrammingLanguage(programmingLanguage)">
                     <fa-icon [icon]="faTrash"></fa-icon>
                 </button>

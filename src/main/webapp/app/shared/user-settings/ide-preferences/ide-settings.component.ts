@@ -11,6 +11,9 @@ import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IdeSettingsComponent implements OnInit {
+    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly faPlus = faPlus;
+    protected readonly faTrash = faTrash;
     protected PREDEFINED_IDE: Ide[] = [{ name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' }];
 
     programmingLanguageToIde: WritableSignal<Map<ProgrammingLanguage, Ide>> = signal(new Map([[ProgrammingLanguage.EMPTY, this.PREDEFINED_IDE[0]]]));
@@ -73,8 +76,4 @@ export class IdeSettingsComponent implements OnInit {
     isIdeOfProgrammingLanguage(programmingLanguage: ProgrammingLanguage, ide: Ide): boolean {
         return ideEquals(this.programmingLanguageToIde().get(programmingLanguage), ide);
     }
-
-    protected readonly ProgrammingLanguage = ProgrammingLanguage;
-    protected readonly faPlus = faPlus;
-    protected readonly faTrash = faTrash;
 }

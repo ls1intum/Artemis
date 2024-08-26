@@ -13,7 +13,7 @@ export class ExternalCloningService {
     }
 
     /**
-     * Builds an url to clone a Repository in the corresponding ide
+     * Builds the url to clone a repository in the corresponding ide
      * @param cloneUrl the url of the repository to clone
      * @param ide the ide with the deeplink to build the url for
      */

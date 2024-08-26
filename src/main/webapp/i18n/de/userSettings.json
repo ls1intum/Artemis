@@ -15,7 +15,7 @@
             "idePreferencesPage": {
                 "description": "Wähle die IDEs, die du für das Öffnen von Programmieraufgaben verwenden möchtest.",
                 "default": "Standard",
-                "jetbrainsHelp": "Um Jetbrains IDEs zu verwenden, installiere bitte die Jetbrains Toolbox."
+                "jetbrainsHelp": "Um JetBrains IDEs zu verwenden, installiere bitte die JetBrains Toolbox."
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
@@ -44,7 +44,7 @@
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH",
-                "idePreferences": "IDE Präferenzen"
+                "IDE_PREFERENCES": "IDE Präferenzen"
             },
             "settingGroupNames": {
                 "weeklySummary": "Wöchentliche Zusammenfassung",

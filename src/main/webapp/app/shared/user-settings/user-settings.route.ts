@@ -55,7 +55,7 @@ export const userSettingsState: Routes = [
                 path: 'ide-preferences',
                 component: IdeSettingsComponent,
                 data: {
-                    pageTitle: 'artemisApp.userSettings.categories.idePreferences',
+                    pageTitle: 'artemisApp.userSettings.categories.IDE_PREFERENCES',
                 },
             },
         ],
