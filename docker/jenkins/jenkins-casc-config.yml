@@ -16,32 +16,18 @@ credentials:
   system:
     domainCredentials:
       - credentials:
-          - gitLabApiTokenImpl:
-              id: artemis_gitlab_api_token
-              scope: GLOBAL
-              apiToken: jenkins-gitlab-token # Access token generated in Gitlab with the "api" and "read_repository" permissions.
-              description: 'Gitlab Api Token for Artemis'
           - string:
               id: artemis_notification_plugin_token # Value of the "artemis-authentication-token-key" defined key in application-artemis.yml
               description: 'Access token for Artemis Test Notification Plugin'
               scope: GLOBAL
               secret: artemis_admin  # Value of the "artemis-authentication-token-value" key defined in application-artemis.yml
           - usernamePassword:
-              id: artemis_gitlab_admin_credentials
+              id: artemis_localvc_credentials
               scope: GLOBAL
-              username: "root" # The Gitlab admin username.
-              password: "artemis_admin" # The Gitlab admin password.
-              description: "Gitlab Admin credentials for Artemis"
+              username: "jenkins" # artemis.version-control.build-agent-git-username
+              password: "artemis_admin" # artemis.version-control.build-agent-git-password
+              description: "LocalVC credentials for Artemis"
 unclassified:
   timestamper:
     elapsedTimeFormat: "'<b>'yyyy-MM-dd'T'HH:mm:ssX'</b> '"
     systemTimeFormat: "'<b>'yyyy-MM-dd'T'HH:mm:ssX'</b> '"
-  gitlabconnectionconfig:
-    connections:
-      - apiTokenId: artemis_gitlab_api_token
-        clientBuilderId: "autodetect"
-        connectionTimeout: 20
-        ignoreCertificateErrors: true
-        name: "Artemis Gitlab"
-        readTimeout: 10
-        url: "http://gitlab:80" # Url of the Gitlab instance
