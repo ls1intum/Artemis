@@ -69,7 +69,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
     void testImportLectureToCourse() {
         int lectureCount = this.course2.getLectures().size();
 
-        lectureImportService.importLecture(this.lecture1, this.course2);
+        lectureImportService.importLecture(this.lecture1, this.course2, true);
 
         assertThat(this.course2.getLectures()).hasSize(lectureCount + 1);
 

@@ -67,7 +67,7 @@ public class LectureImportService {
      * @return The lecture in the new course
      */
     @Transactional // Required to circumvent errors with ordered collection of lecture units
-    public Lecture importLecture(final Lecture importedLecture, final Course course) {
+    public Lecture importLecture(final Lecture importedLecture, final Course course, boolean importLectureUnits) {
         log.debug("Creating a new Lecture based on lecture {}", importedLecture);
 
         // Copy the lecture itself to the new course
@@ -77,21 +77,9 @@ public class LectureImportService {
         lecture.setStartDate(importedLecture.getStartDate());
         lecture.setEndDate(importedLecture.getEndDate());
         lecture.setVisibleDate(importedLecture.getVisibleDate());
+        lecture.setCourse(course);
 
         lecture = lectureRepository.save(lecture);
-        course.addLectures(lecture);
-
-        log.debug("Importing lecture units from lecture");
-        List<LectureUnit> lectureUnits = new ArrayList<>();
-        for (LectureUnit lectureUnit : importedLecture.getLectureUnits()) {
-            LectureUnit clonedLectureUnit = lectureUnitImportService.importLectureUnit(lectureUnit, lecture);
-            if (clonedLectureUnit != null) {
-                clonedLectureUnit.setLecture(lecture);
-                lectureUnits.add(clonedLectureUnit);
-            }
-        }
-        lecture.setLectureUnits(lectureUnits);
-        lectureUnitRepository.saveAll(lectureUnits);
 
         log.debug("Importing attachments from lecture");
         Set<Attachment> attachments = new HashSet<>();
@@ -103,11 +91,26 @@ public class LectureImportService {
         lecture.setAttachments(attachments);
         attachmentRepository.saveAll(attachments);
 
-        // Send lectures to pyris
-        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
-                    lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).map(lectureUnit -> (AttachmentUnit) lectureUnit).toList());
+        if (importLectureUnits) {
+            log.debug("Importing lecture units from lecture");
+            List<LectureUnit> lectureUnits = new ArrayList<>();
+            for (LectureUnit lectureUnit : importedLecture.getLectureUnits()) {
+                LectureUnit clonedLectureUnit = lectureUnitImportService.importLectureUnit(lectureUnit, lecture);
+                if (clonedLectureUnit != null) {
+                    clonedLectureUnit.setLecture(lecture);
+                    lectureUnits.add(clonedLectureUnit);
+                }
+            }
+            lecture.setLectureUnits(lectureUnits);
+            lectureUnitRepository.saveAll(lectureUnits);
+
+            // Send lectures to pyris
+            if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
+                pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
+                        lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).map(lectureUnit -> (AttachmentUnit) lectureUnit).toList());
+            }
         }
+
         // Save again to establish the ordered list relationship
         return lectureRepository.save(lecture);
     }

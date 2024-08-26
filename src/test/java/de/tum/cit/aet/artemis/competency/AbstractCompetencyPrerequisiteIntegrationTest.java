@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.competency;
 
+import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -93,9 +95,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     protected Lecture lecture;
 
-    protected long idOfTextUnitOfLectureOne;
+    protected TextUnit textUnitOfLectureOne;
 
-    protected long idOfAttachmentUnitOfLectureOne;
+    protected AttachmentUnit attachmentUnitOfLectureOne;
 
     protected TextExercise teamTextExercise;
 
@@ -134,18 +136,17 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     void creatingLectureUnitsOfLecture(CourseCompetency competency) {
         // creating lecture units for lecture one
-
         TextUnit textUnit = new TextUnit();
         textUnit.setName("TextUnitOfLectureOne");
         textUnit.setCompetencies(Set.of(competency));
         textUnit = textUnitRepository.save(textUnit);
-        idOfTextUnitOfLectureOne = textUnit.getId();
+        textUnitOfLectureOne = textUnit;
 
-        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
         attachmentUnit.setName("AttachmentUnitOfLectureOne");
         attachmentUnit.setCompetencies(Set.of(competency));
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
-        idOfAttachmentUnitOfLectureOne = attachmentUnit.getId();
+        attachmentUnitOfLectureOne = attachmentUnit;
 
         ExerciseUnit textExerciseUnit = new ExerciseUnit();
         textExerciseUnit.setExercise(textExercise);
@@ -202,7 +203,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         competencyProgressUtilService.createCompetencyProgress(competency, student2, 10, 1);
 
-        final var textUnit = textUnitRepository.findById(idOfTextUnitOfLectureOne).get();
+        final var textUnit = textUnitRepository.findById(textUnitOfLectureOne.getId()).get();
         lectureUtilService.completeLectureUnitForUser(textUnit, student2);
 
         CourseCompetency response = getCall(course.getId(), competency.getId(), HttpStatus.OK);
@@ -299,16 +300,16 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void deleteLectureUnitShouldUpdateCompetency() throws Exception {
-        request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + idOfTextUnitOfLectureOne, HttpStatus.OK);
+        request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + textUnitOfLectureOne.getId(), HttpStatus.OK);
         CourseCompetency result = getCall(course.getId(), competency.getId(), HttpStatus.OK);
-        assertThat(result.getLectureUnits()).map(LectureUnit::getId).containsExactly(idOfAttachmentUnitOfLectureOne);
+        assertThat(result.getLectureUnits()).map(LectureUnit::getId).containsExactly(attachmentUnitOfLectureOne.getId());
     }
 
     abstract CourseCompetency updateCall(long courseId, CourseCompetency competency, HttpStatus expectedStatus) throws Exception;
 
     // Test
     void shouldUpdateCompetency() throws Exception {
-        LectureUnit textLectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(idOfTextUnitOfLectureOne);
+        LectureUnit textLectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(textUnitOfLectureOne.getId());
         competency.setTitle("Updated");
         competency.removeLectureUnit(textLectureUnit);
         competency.setDescription("Updated Description");
@@ -403,6 +404,54 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         assertThat(importedCompetency.getLectureUnits()).isEmpty();
         assertThat(importedCompetency.getUserProgress()).isEmpty();
         verify(competencyProgressService, never()).updateProgressByCompetencyAsync(importedCompetency);
+    }
+
+    // Test
+    void shouldImportExerciseAndLectureWithCompetency() throws Exception {
+        ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
+        textExercise.setReleaseDate(releaseDate);
+        exerciseRepository.save(textExercise);
+
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(competency.getId()), Optional.empty(), false, true, true, Optional.empty(), false);
+        importCall(course2.getId(), importOptions, HttpStatus.CREATED);
+
+        course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
+        assertThat(course2.getExercises()).hasSize(1);
+        assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(releaseDate, HalfSecond());
+        assertThat(course2.getLectures()).hasSize(1);
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getName()).isEqualTo(textUnitOfLectureOne.getName());
+    }
+
+    // Test
+    void shouldImportExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
+        textExercise.setReleaseDate(releaseDate);
+        exerciseRepository.save(textExercise);
+
+        ZonedDateTime visibleDate = ZonedDateTime.of(2022, 7, 10, 14, 0, 0, 0, ZoneId.of("UTC"));
+        long visibleDateDiff = visibleDate.toEpochSecond() - releaseDate.toEpochSecond();
+        lecture.setVisibleDate(visibleDate);
+        lectureRepository.save(lecture);
+
+        ZonedDateTime releaseDateTextUnit = ZonedDateTime.of(2022, 7, 10, 20, 0, 0, 0, ZoneId.of("UTC"));
+        long releaseDateDiff = releaseDateTextUnit.toEpochSecond() - releaseDate.toEpochSecond();
+        textUnitOfLectureOne.setReleaseDate(releaseDate);
+        textUnitRepository.save(textUnitOfLectureOne);
+
+        ZonedDateTime newReleaseDate = ZonedDateTime.of(2024, 7, 14, 8, 0, 0, 0, ZoneId.of("UTC"));
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(competency.getId()), Optional.empty(), false, true, true, Optional.of(newReleaseDate),
+                true);
+        importCall(course2.getId(), importOptions, HttpStatus.CREATED);
+
+        course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
+        assertThat(course2.getExercises()).hasSize(1);
+        assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(newReleaseDate, HalfSecond());
+        assertThat(course2.getLectures()).hasSize(1);
+        assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
+                .isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
     }
 
     // Test

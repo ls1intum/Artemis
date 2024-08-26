@@ -189,7 +189,7 @@ public class CompetencyResource {
         long competencyId = importOptions.competencyIds().iterator().next();
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
-        var competencyToImport = courseCompetencyRepository.findByIdElseThrow(competencyId);
+        var competencyToImport = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(competencyId);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), null);
         if (competencyToImport.getCourse().getId().equals(courseId)) {

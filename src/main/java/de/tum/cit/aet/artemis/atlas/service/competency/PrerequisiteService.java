@@ -65,7 +65,7 @@ public class PrerequisiteService extends CourseCompetencyService {
             idToImportedPrerequisite.put(prerequisite.getId(), new CompetencyWithTailRelationDTO(importedPrerequisite, new ArrayList<>()));
         }
 
-        return importCourseCompetencies(course, idToImportedPrerequisite, importOptions);
+        return importCourseCompetencies(course, prerequisites, idToImportedPrerequisite, importOptions);
     }
 
     /**

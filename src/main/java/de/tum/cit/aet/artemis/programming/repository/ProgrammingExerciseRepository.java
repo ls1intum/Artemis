@@ -362,6 +362,11 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(
             @Param("exerciseId") long exerciseId);
 
+    default ProgrammingExercise findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigElseThrow(long exerciseId)
+            throws EntityNotFoundException {
+        return getValueElseThrow(findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(exerciseId), exerciseId);
+    }
+
     /**
      * Returns all programming exercises that have a due date after {@code now} and have tests marked with
      * {@link Visibility#AFTER_DUE_DATE} but no buildAndTestStudentSubmissionsAfterDueDate.
