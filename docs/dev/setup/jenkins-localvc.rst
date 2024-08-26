@@ -4,7 +4,7 @@ Jenkins and LocalVC Setup
 -------------------------
 
 This section describes how to set up a programming exercise environment
-based on Jenkins and GitLab. Optional commands are in curly brackets ``{}``.
+based on Jenkins and LocalVC, which is integrated in Artemis. Optional commands are in curly brackets ``{}``.
 
 The following assumes that all instances run on separate servers. If you
 have one single server, or your own NGINX instance, just skip all NGINX
@@ -30,7 +30,7 @@ Artemis
 ^^^^^^^
 
 In order to use Artemis with Jenkins as **Continuous Integration**
-Server and Gitlab as **Version Control** Server, you have to configure
+Server and LocalVC as integrated **Version Control** Server, you have to configure
 the file ``application-prod.yml`` (Production Server) or
 ``application-artemis.yml`` (Local Development) accordingly. Please note
 that all values in ``<..>`` have to be configured properly. These values
@@ -55,10 +55,9 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
         login:
             account-name: TUM
     version-control:
-        url: http://localhost:8081
+        url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
         user: root
-        password: artemis_admin # created in Gitlab Server Quickstart step 2
-        token: artemis-gitlab-token # generated in Gitlab Server Quickstart steps 4 and 5
+        password: dummy # have to be set, but does not matter for LocalVC
     continuous-integration:
         user: artemis_admin
         password: artemis_admin
@@ -80,30 +79,30 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
         port: 8080
         url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
 
-In addition, you have to start Artemis with the profiles ``gitlab`` and
+In addition, you have to start Artemis with the profiles ``localvc`` and
 ``jenkins`` so that the correct adapters will be used, e.g.:
 
 ::
 
-   --spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling
+   --spring.profiles.active=dev,jenkins,localvc,artemis,scheduling
 
 Please read :ref:`Server Setup` for more details.
 
 For a local setup on Windows you can use `http://host.docker.internal` appended
-by the chosen ports as the version-control and continuous-integration url.
+by the chosen ports as the continuous-integration url.
 
-Make sure to change the ``server.url`` value in ``application-dev.yml``
-or ``application-prod.yml`` accordingly. This value will be used for the
-communication hooks from GitLab to Artemis and from Jenkins to Artemis.
+Make sure to change the ``server.url`` and ``version-control.url`` value in ``application-dev.yml``
+or ``application-prod.yml`` accordingly. The ``server.url`` value will be used for the
+communication hooks from Jenkins to Artemis.
 In case you use a different port than 80 (http) or 443 (https) for the
-communication, you have to append it to the ``server.url`` value,
+communication, you have to append it to the both urls value,
 e.g. \ ``127.0.0.1:8080``.
 
 When you start Artemis for the first time, it will automatically create
 an admin user.
 
 **Note:** Sometimes Artemis does not generate the admin user which may lead to a startup
-error. You will have to create the user manually in the MySQL database and in GitLab. Make sure
+error. You will have to create the user manually in the MySQL database. Make sure
 both are set up correctly and follow these steps:
 
 1.  Use the tool mentioned above to generate a password hash.
@@ -124,16 +123,6 @@ both are set up correctly and follow these steps:
 
         INSERT INTO `artemis`.`jhi_user_authority` (`user_id`, `authority_name`) VALUES (1,"ROLE_ADMIN");
         INSERT INTO `artemis`.`jhi_user_authority` (`user_id`, `authority_name`) VALUES (1,"ROLE_USER");
-
-4. Create a user in Gitlab (``http://your-gitlab-domain/admin/users/new``) and make sure that the username and
-email are the same as the user from the database:
-
-.. figure:: jenkins-gitlab/gitlab_admin_user.png
-
-5. Edit the new admin user (``http://your-gitlab-domain/admin/users/artemis_admin/edit``) to set the password to the
-same value as in the database:
-
-.. figure:: jenkins-gitlab/gitlab_admin_user_password.png
 
 Starting the Artemis server should now succeed.
 
