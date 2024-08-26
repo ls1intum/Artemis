@@ -52,7 +52,7 @@
             </div>
             @if (competency.softDueDate) {
                 <div class="col-sm col py-2" style="max-width: fit-content">
-                    <span style="vertical-align: middle"> {{ 'artemisApp.competency.competencyCard.softDueDate' | artemisTranslate }} </span>
+                    <span style="vertical-align: middle" jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
                     <span class="badge" [ngClass]="softDueDatePassed && !isMastered ? 'bg-danger' : 'bg-success'" id="date-badge">
                         {{ competency.softDueDate! | artemisTimeAgo }}
                     </span>

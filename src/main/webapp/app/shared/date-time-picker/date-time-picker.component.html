@@ -41,7 +41,7 @@
     <owl-date-time [startAt]="startDate" #dt />
 </div>
 @if (dateInput.invalid || (requiredField && !dateInput.value)) {
-    <div class="invalid-feedback">{{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: labelName } }}</div>
+    <div class="invalid-feedback" jhiTranslate="entity.dateMissingOrNotValid" [translateValues]="{ labelName: labelName }"></div>
 }
 @if (warning) {
     <div class="invalid-feedback">

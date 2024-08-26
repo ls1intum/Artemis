@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -27,6 +27,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
     styleUrls: ['standardized-competency-management.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     protected isLoading = false;
@@ -63,6 +64,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         private alertService: AlertService,
         private modalService: NgbModal,
         private translateService: TranslateService,
+        private changeDetectorRef: ChangeDetectorRef,
     ) {
         super();
     }
@@ -85,6 +87,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                 });
 
                 this.isLoading = false;
+                this.changeDetectorRef.detectChanges();
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
@@ -130,6 +133,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                     this.isEditing = false;
                     this.selectedKnowledgeArea = undefined;
                 }
+                this.changeDetectorRef.detectChanges();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -152,6 +156,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         if (!(this.selectedKnowledgeArea?.id || this.selectedCompetency) && !this.isEditing) {
                             this.selectedKnowledgeArea = resultKnowledgeArea;
                         }
+                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -167,6 +172,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         if (resultKnowledgeArea.id === this.selectedKnowledgeArea?.id) {
                             this.selectedKnowledgeArea = resultKnowledgeArea;
                         }
+                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -205,6 +211,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                     this.isEditing = false;
                     this.selectedCompetency = undefined;
                 }
+                this.changeDetectorRef.detectChanges();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -227,6 +234,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         if (!(this.selectedCompetency?.id || this.selectedKnowledgeArea) && !this.isEditing) {
                             this.selectedCompetency = resultCompetency;
                         }
+                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -244,6 +252,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         if (resultCompetency.id === this.selectedCompetency?.id) {
                             this.selectedCompetency = resultCompetency;
                         }
+                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
