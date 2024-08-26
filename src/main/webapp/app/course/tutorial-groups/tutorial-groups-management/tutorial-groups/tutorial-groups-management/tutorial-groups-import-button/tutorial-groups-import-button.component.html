@@ -1,13 +1,13 @@
 <button id="importDialogButton" (click)="openTutorialGroupImportDialog($event)" ngbDropdownItem>
-    <span>{{ 'artemisApp.tutorialGroupImportDialog.importButton' | artemisTranslate }}</span>
+    <span jhiTranslate="artemisApp.tutorialGroupImportDialog.importButton"></span>
 </button>
 
 <ng-template #warning let-warning>
     <div class="modal-header">
-        <h4 class="modal-title">{{ 'artemisApp.tutorialGroupImportDialog.warning' | artemisTranslate }}</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.tutorialGroupImportDialog.warning"></h4>
     </div>
     <div class="modal-body">
-        <p>{{ 'artemisApp.tutorialGroupImportDialog.finishedWarning' | artemisTranslate }}</p>
+        <p jhiTranslate="artemisApp.tutorialGroupImportDialog.finishedWarning"></p>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-light" (click)="warning.close()">Ok</button>

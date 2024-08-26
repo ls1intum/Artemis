@@ -3,15 +3,14 @@
         <h2>
             <span id="legal-document-update-heading" data-cy="legalDocumentPageHeading" jhiTranslate="{{ titleKey }}"></span>
         </h2>
-        <jhi-markdown-editor
+        <jhi-markdown-editor-monaco
             [markdown]="legalDocument.text"
-            (markdownChange)="checkUnsavedChanges($event)"
+            (markdownChange)="onContentChanged($event)"
             [resizableMinHeight]="MIN_HEIGHT"
             [resizableMaxHeight]="MAX_HEIGHT"
+            [initialEditorHeight]="MIN_HEIGHT"
             [enableFileUpload]="false"
-            [minHeightEditor]="700"
             class="markdown-editor"
-            (onEditSelect)="updateTextIfLanguageChangedInPreview()"
         />
         <div>
             @if (!unsavedChanges && !isSaving) {
@@ -34,13 +33,7 @@
             }
         </div>
         <div class="btn-below-editor">
-            <button
-                type="submit"
-                (click)="updateLegalDocument()"
-                class="btn btn-primary"
-                id="update-legal-document-btn"
-                [disabled]="!markdownEditor?.markdown || markdownEditor?.markdown?.trim() === '' || isSaving"
-            >
+            <button type="submit" (click)="updateLegalDocument()" class="btn btn-primary" id="update-legal-document-btn" [disabled]="!currentContentTrimmed || isSaving">
                 <fa-icon [icon]="faSave" />
                 <span jhiTranslate="entity.action.save"></span>
             </button>

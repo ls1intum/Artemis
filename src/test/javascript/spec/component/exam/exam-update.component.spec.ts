@@ -19,7 +19,6 @@ import { Exam } from 'app/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -43,6 +42,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     template: '',
@@ -77,7 +77,7 @@ describe('ExamUpdateComponent', () => {
                 declarations: [
                     ExamUpdateComponent,
                     MockComponent(FormDateTimePickerComponent),
-                    MockComponent(MarkdownEditorComponent),
+                    MockComponent(MarkdownEditorMonacoComponent),
                     MockComponent(DataTableComponent),
                     DummyComponent,
                     MockPipe(ArtemisTranslatePipe),
@@ -606,7 +606,7 @@ describe('ExamUpdateComponent', () => {
                     ExamUpdateComponent,
                     ExamExerciseImportComponent,
                     MockComponent(FormDateTimePickerComponent),
-                    MockComponent(MarkdownEditorComponent),
+                    MockComponent(MarkdownEditorMonacoComponent),
                     MockComponent(DataTableComponent),
                     DummyComponent,
                     MockPipe(ArtemisTranslatePipe),

@@ -2,17 +2,18 @@
     <div
         #wrapper
         class="markdown-editor-wrapper"
-        [style.overflow]="inPreviewMode ? 'auto' : 'visible'"
-        [style.height.px]="inPreviewMode ? undefined : targetWrapperHeight"
+        [style.overflow]="inEditMode ? 'visible' : 'auto'"
+        [style.height.px]="inEditMode ? targetWrapperHeight : undefined"
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
+        [style.min-height.px]="minWrapperHeight"
     >
         <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
-            <ng-container ngbNavItem="editor_edit">
+            <ng-container [ngbNavItem]="TAB_EDIT">
                 @if (showEditButton) {
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
                 }
                 <ng-template ngbNavContent>
-                    <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': !inPreviewMode, 'd-none': inPreviewMode }">
+                    <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': inEditMode, 'd-none': !inEditMode }">
                         <jhi-monaco-editor
                             class="h-100"
                             [shrinkToFit]="false"
@@ -20,6 +21,7 @@
                             (textChanged)="onTextChanged($event)"
                             (contentHeightChanged)="onContentHeightChanged($event)"
                             (drop)="onFileDrop($event)"
+                            (onBlurEditor)="onBlurEditor.emit()"
                         />
                         @if (enableFileUpload) {
                             <div class="d-flex" #fileUploadFooter>
@@ -48,16 +50,31 @@
                     </div>
                 </ng-template>
             </ng-container>
-            <ng-container ngbNavItem="editor_preview">
+            <ng-container [ngbNavItem]="TAB_VISUAL">
+                @if (showVisualButton) {
+                    <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" jhiTranslate="entity.action.visual"></a>
+                }
+                <ng-template ngbNavContent>
+                    <div class="mt-1 mb-2 mx-2 overflow-auto">
+                        <ng-content select="[#visual]"></ng-content>
+                    </div>
+                </ng-template>
+            </ng-container>
+            <ng-container [ngbNavItem]="TAB_PREVIEW">
                 @if (showPreviewButton) {
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
                 }
                 <ng-template ngbNavContent>
-                    <ng-content class="overflow-auto" select="[#previewMonaco]" />
-                    <!-- TODO preview handling for other exercise types -->
+                    <div class="mt-1 mb-2 mx-2 overflow-auto">
+                        <ng-content class="overflow-auto p-1" select="[#previewMonaco]">
+                            @if (showDefaultPreview) {
+                                <div class="p-0 m-0 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml"></div>
+                            }
+                        </ng-content>
+                    </div>
                 </ng-template>
             </ng-container>
-            @if (!inPreviewMode) {
+            @if (inEditMode) {
                 <ng-container ngbNavItem>
                     <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
                         <!-- Standard -->
@@ -194,7 +211,7 @@
         </nav>
         <div [ngbNavOutlet]="nav"></div>
     </div>
-    @if (enableResize && !inPreviewMode) {
+    @if (enableResize && inEditMode) {
         <div #resizePlaceholder [style.cursor]="isResizing ? 'ns-resize' : undefined" class="d-flex justify-content-center resize-placeholder">
             <fa-icon
                 cdkDrag

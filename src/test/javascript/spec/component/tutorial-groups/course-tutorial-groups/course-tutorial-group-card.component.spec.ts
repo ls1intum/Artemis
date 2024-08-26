@@ -1,13 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CourseTutorialGroupCardComponent } from 'app/overview/course-tutorial-groups/course-tutorial-group-card/course-tutorial-group-card.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Course } from 'app/entities/course.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('CourseTutorialGroupCardComponent', () => {
     let component: CourseTutorialGroupCardComponent;
@@ -18,7 +20,16 @@ describe('CourseTutorialGroupCardComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([])],
-            declarations: [CourseTutorialGroupCardComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseTutorialGroupCardComponent, MockComponent(FaIconComponent), TranslatePipeMock, MockDirective(TranslateDirective)],
+            providers: [
+                {
+                    provide: TranslateService,
+                    useValue: {
+                        instant: (key: string) => key,
+                        get: (key: string) => key,
+                    },
+                },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CourseTutorialGroupCardComponent);
