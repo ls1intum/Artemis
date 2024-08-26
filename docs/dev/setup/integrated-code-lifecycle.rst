@@ -65,7 +65,7 @@ Make sure that Artemis can access docker by activating the "Expose daemon on tcp
 
 If you are running Artemis on Linux, and are using Docker Desktop, you also need to add a property ``artemis.continuous-integration.docker-connection-uri``.
 The value should be the path to your unix socket for connecting to the Docker daemon, as shown above.
-In IntelliJ this might require you to first go into "Settings => Build, Execution, Deployment => Docker", add a new instance by clicking the '+',
+IntelliJ can help you to dermine the path by navigating into "Settings => Build, Execution, Deployment => Docker". Add a new instance by clicking the '+' icon,
 select "Unix socket" and choose the Docker Desktop socket (by default should be named "desktop-linux").
 Now simply look at the path in grey and set that path as the value for the ``artemis.continuous-integration.docker-connection-uri`` property.
 
