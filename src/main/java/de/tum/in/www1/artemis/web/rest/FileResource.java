@@ -448,21 +448,21 @@ public class FileResource {
     }
 
     /**
-     * GET files/courses/{courseId}/attachments/{attachmenUnitId}/file : Returns the file associated with the
+     * GET files/courses/{courseId}/attachment-units/{attachmenUnitId} : Returns the file associated with the
      * given attachmentUnit ID as a downloadable resource
      *
      * @param courseId         The ID of the course that the Attachment belongs to
      * @param attachmentUnitId the ID of the attachment to retrieve
      * @return ResponseEntity containing the file as a resource
      */
-    @GetMapping("files/courses/{courseId}/attachments/attachment-units/{attachmentUnitId}")
+    @GetMapping("files/courses/{courseId}/attachment-units/{attachmentUnitId}")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
         log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Attachment attachment = attachmentUnit.getAttachment();
-        checkAttachmentExistsInCourseOrThrow(course, attachment);
+        checkAttachmentUnitExistsInCourseOrThrow(course, attachmentUnit);
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
@@ -605,6 +605,18 @@ public class FileResource {
     private void checkAttachmentExistsInCourseOrThrow(Course course, Attachment attachment) {
         if (!attachment.getLecture().getCourse().equals(course)) {
             throw new EntityNotFoundException("This attachment does not exist in this course.");
+        }
+    }
+
+    /**
+     * Checks if the attachment exists in the mentioned course
+     *
+     * @param course         the course to check if the attachment is part of it
+     * @param attachmentUnit the attachment unit for which the existence should be checked
+     */
+    private void checkAttachmentUnitExistsInCourseOrThrow(Course course, AttachmentUnit attachmentUnit) {
+        if (!attachmentUnit.getLecture().getCourse().equals(course)) {
+            throw new EntityNotFoundException("This attachment unit does not exist in this course.");
         }
     }
 
