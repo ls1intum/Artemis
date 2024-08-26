@@ -5,8 +5,7 @@
         [routerLink]="['/courses', course.id!]"
         [ngStyle]="{ '--background-color-for-hover': courseColor }"
     >
-        <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-        <div class="container ps-0 d-flex align-items-center ms-1">
+        <div class="d-flex align-items-center justify-content-between gap-1">
             @if (course.courseIcon) {
                 <div class="col-auto">
                     <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
@@ -16,16 +15,19 @@
                     <span class="fs-4">{{ course.title | slice: 0 : 1 }}</span>
                 </div>
             }
-            <div class="col text-center card-header-title">
+            <div class="text-center px-2">
                 <h5 class="card-title">
                     {{ course.title }}
                 </h5>
+            </div>
+            <div>
+                <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
             </div>
         </div>
     </div>
     <div class="card-body rounded-bottom-4 border-lightgrey pt-3">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-        <div class="d-flex flex-column justify-content-between">
+        <div class="d-flex flex-column justify-content-between gap-1">
             <div class="information-box-wrapper ms-1">
                 <div class="row mt-1">
                     <div class="col-7" [ngClass]="{ 'col-12': !(exerciseCount && (totalReachableScore || totalAbsoluteScore)) }">
@@ -52,7 +54,7 @@
                         <hr />
                         <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></div>
                         @if (nextRelevantExercise) {
-                            <a class="fw-bold btn-exercise exercise-title exercise-guided-tour" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]">
+                            <a class="fw-bold btn-wrapper exercise-title exercise-guided-tour" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]">
                                 {{ nextRelevantExercise.title }}
                             </a>
                         } @else {
@@ -87,7 +89,7 @@
             </div>
             @if (course.isAtLeastTutor) {
                 <div class="d-flex justify-content-start align-items-center ms-1 mt-1">
-                    <a class="fw-bold btn-management" [routerLink]="['/course-management', course.id!]">
+                    <a class="fw-bold btn-wrapper" [routerLink]="['/course-management', course.id!]">
                         <span jhiTranslate="artemisApp.studentDashboard.cardManageCourse"></span>
                         <fa-icon class="ms-1" [icon]="faArrowRight" />
                     </a>
