@@ -71,11 +71,9 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.activatedRoute.parent!.params.subscribe(async (params) => {
-            this.courseId = params['courseId'];
-            if (this.courseId) {
-                await this.loadData();
-                this.loadIrisEnabled();
-            }
+            this.courseId = Number(params['courseId']);
+            await this.loadData();
+            this.loadIrisEnabled();
         });
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
@@ -131,7 +129,10 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             backdrop: 'static',
         });
         modalRef.componentInstance.courseId = signal<number>(this.courseId);
-        const importResults: ImportAllCourseCompetenciesResult = await modalRef.result;
+        const importResults: ImportAllCourseCompetenciesResult | undefined = await modalRef.result;
+        if (!importResults) {
+            return;
+        }
         const courseTitle = importResults.course.title ?? '';
         try {
             const importedCompetencies = await this.courseCompetencyApiService.importAllByCourseId(this.courseId, importResults.courseCompetencyImportOptions);
@@ -176,7 +177,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      */
     async createRelation(relation: CompetencyRelation) {
         try {
-            const createdRelation = await this.courseCompetencyApiService.createCourseCompetencyRelation(this.courseId, relation);
+            const createdRelation = await this.courseCompetencyApiService.createCourseCompetencyRelation(this.courseId, <CompetencyRelationDTO>{
+                headCompetencyId: relation.headCompetency?.id,
+                tailCompetencyId: relation.tailCompetency?.id,
+                relationType: relation.type,
+            });
             this.relations = this.relations.concat(dtoToCompetencyRelation(createdRelation));
         } catch (error) {
             onError(this.alertService, error);
