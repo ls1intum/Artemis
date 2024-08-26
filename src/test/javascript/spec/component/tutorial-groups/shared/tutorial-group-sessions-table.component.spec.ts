@@ -3,7 +3,7 @@ import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from '../stubs/tutorial-group-sessions-table-stub.component';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { generateExampleTutorialGroupSession } from '../helpers/tutorialGroupSessionExampleModels';
 import dayjs from 'dayjs/esm';
@@ -11,6 +11,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -63,6 +64,7 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
                 MockExtraColumnComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
+                MockDirective(TranslateDirective),
             ],
         })
             .compileComponents()
@@ -112,7 +114,13 @@ describe('TutorialGroupSessionTableComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NgbCollapseMocksModule],
-            declarations: [TutorialGroupSessionsTableComponent, TutorialGroupSessionRowStubComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            declarations: [
+                TutorialGroupSessionsTableComponent,
+                TutorialGroupSessionRowStubComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(TranslateDirective),
+            ],
         })
             .compileComponents()
             .then(() => {

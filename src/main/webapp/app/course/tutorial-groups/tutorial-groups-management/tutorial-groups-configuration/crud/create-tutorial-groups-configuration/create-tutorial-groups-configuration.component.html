@@ -1,7 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <h3>{{ 'artemisApp.pages.createTutorialGroupsConfiguration.title' | artemisTranslate }}</h3>
-    <div class="alert alert-info" role="alert">
-        {{ 'artemisApp.pages.createTutorialGroupsConfiguration.explanation' | artemisTranslate }}
-    </div>
+    <h3 jhiTranslate="artemisApp.pages.createTutorialGroupsConfiguration.title"></h3>
+    <div class="alert alert-info" role="alert" jhiTranslate="artemisApp.pages.createTutorialGroupsConfiguration.explanation"></div>
     <jhi-tutorial-groups-configuration-form [isEditMode]="false" (formSubmitted)="createTutorialsGroupConfiguration($event)" [course]="course" />
 </jhi-loading-indicator-container>
