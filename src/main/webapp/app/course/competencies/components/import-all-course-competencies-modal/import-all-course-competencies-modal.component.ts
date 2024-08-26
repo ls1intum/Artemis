@@ -60,7 +60,7 @@ export class ImportAllCourseCompetenciesModalComponent {
 
     public selectCourse(course: Course): void {
         const courseCompetencyImportOptions = <CourseCompetencyImportOptionsDTO>{
-            sourceCourseId: course.id,
+            sourceCourseId: this.courseId(),
             importExercises: this.importSettings().importExercises,
             importLectures: this.importSettings().importLectures,
             importRelations: this.importSettings().importRelations,
