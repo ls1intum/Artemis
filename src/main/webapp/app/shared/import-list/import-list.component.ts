@@ -38,7 +38,7 @@ export class ImportListComponent<T extends BaseEntity> {
     private readonly pagingService = inject(PagingService);
 
     readonly columns = input.required<Column<T>[]>();
-    readonly entityName = input.required<string>();
+    readonly columnBaseTranslationKey = input.required<string>();
     readonly disabledIds = input<number[]>([]);
 
     readonly onRowSelection = output<T>();

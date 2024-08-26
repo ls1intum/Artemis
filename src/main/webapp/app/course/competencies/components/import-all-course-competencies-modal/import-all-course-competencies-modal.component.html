@@ -1,7 +1,7 @@
 <div>
     <div class="col p-3">
         <div class="d-flex justify-content-between">
-            <h5 class="m-0">Import all course competencies</h5>
+            <h5 class="m-0" jhiTranslate="artemisApp.courseCompetency.importAll.title"></h5>
             <fa-icon id="close-button" (click)="closeModal()" [icon]="closeIcon" size="lg" class="clickable" aria-label="Close" />
         </div>
     </div>
@@ -9,7 +9,13 @@
     <div class="p-3">
         <jhi-import-course-competencies-settings [(importSettings)]="importSettings" />
         <div class="mt-4">
-            <jhi-import-list entityName="competency" [columns]="tableColumns" [disabledIds]="disabledIds()" (onRowSelection)="selectCourse($event)" />
+            <jhi-import-list
+                columnBaseTranslationKey="artemisApp.courseCompetency.importAll"
+                [columns]="tableColumns"
+                [disabledIds]="disabledIds()"
+                (onRowSelection)="selectCourse($event)"
+                title="artemisApp.courseCompetency.importAll.table.title"
+            />
         </div>
     </div>
 </div>

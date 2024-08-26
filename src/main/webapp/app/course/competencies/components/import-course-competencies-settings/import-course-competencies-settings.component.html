@@ -1,15 +1,51 @@
 <div class="import-settings-container p-3">
     <div class="row m-0">
-        <ng-container *ngTemplateOutlet="importSettingTemplate; context: { value: importRelations(), setting: 'importRelations', label: 'Import relations' }"></ng-container>
-        <ng-container *ngTemplateOutlet="importSettingTemplate; context: { value: importExercises(), setting: 'importExercises', label: 'Import exercises' }"></ng-container>
-        <ng-container *ngTemplateOutlet="importSettingTemplate; context: { value: importLectures(), setting: 'importLectures', label: 'Import lectures' }"></ng-container>
+        @let baseTranslationKey = 'artemisApp.courseCompetency.importSettings';
+        <ng-container
+            *ngTemplateOutlet="
+                importSettingTemplate;
+                context: {
+                    value: importRelations(),
+                    setting: 'importRelations',
+                    label: baseTranslationKey + '.importRelationsLabel',
+                    tooltip: baseTranslationKey + '.importRelationsTooltip',
+                }
+            "
+        ></ng-container>
+        <ng-container
+            *ngTemplateOutlet="
+                importSettingTemplate;
+                context: {
+                    value: importExercises(),
+                    setting: 'importExercises',
+                    label: baseTranslationKey + '.importExercisesLabel',
+                    tooltip: baseTranslationKey + '.importExercisesTooltip',
+                }
+            "
+        ></ng-container>
+        <ng-container
+            *ngTemplateOutlet="
+                importSettingTemplate;
+                context: {
+                    value: importLectures(),
+                    setting: 'importLectures',
+                    label: baseTranslationKey + '.importLecturesLabel',
+                    tooltip: baseTranslationKey + '.importLecturesTooltip',
+                }
+            "
+        ></ng-container>
     </div>
     <hr class="my-3" />
     <div class="row m-0">
         <div class="col p-0 pe-2">
             <div class="d-flex align-items-center">
-                <label for="reference-date-field">Reference date</label>
-                <fa-icon [icon]="faQuestionCircle" size="sm" class="ms-1 text-secondary" />
+                <label for="reference-date-field" jhiTranslate="artemisApp.courseCompetency.importSettings.referenceDateLabel"></label>
+                <fa-icon
+                    [icon]="faQuestionCircle"
+                    size="sm"
+                    class="ms-1 text-secondary"
+                    [ngbTooltip]="'artemisApp.courseCompetency.importSettings.referenceDateTooltip' | artemisTranslate"
+                />
             </div>
             <div class="d-flex">
                 <input
@@ -35,8 +71,13 @@
         </div>
         <div class="col p-0 ps-2 align-items-center">
             <div class="d-flex align-items-center">
-                <label for="reference-date-type-select">Date type</label>
-                <fa-icon [icon]="faQuestionCircle" size="sm" class="ms-1 text-secondary" />
+                <label for="reference-date-type-select" jhiTranslate="artemisApp.courseCompetency.importSettings.referenceDateTypeLabel"></label>
+                <fa-icon
+                    [icon]="faQuestionCircle"
+                    size="sm"
+                    class="ms-1 text-secondary"
+                    [ngbTooltip]="'artemisApp.courseCompetency.importSettings.referenceDateTypeTooltip' | artemisTranslate"
+                />
             </div>
             <select
                 [required]="referenceDate()"
@@ -47,18 +88,18 @@
                 name="dateTypes"
                 class="form-select"
             >
-                <option disabled [selected]="isReleaseDate() === undefined">-- select an option --</option>
-                <option value="true">Release date</option>
-                <option value="false">Due date</option>
+                <option disabled [selected]="isReleaseDate() === undefined" jhiTranslate="artemisApp.courseCompetency.importSettings.referenceDateType.noSelection"></option>
+                <option value="true" jhiTranslate="artemisApp.courseCompetency.importSettings.referenceDateType.releaseDate"></option>
+                <option value="false" jhiTranslate="artemisApp.courseCompetency.importSettings.referenceDateType.dueDate"></option>
             </select>
         </div>
     </div>
 </div>
 
-<ng-template #importSettingTemplate let-value="value" let-setting="setting" let-label="label">
+<ng-template #importSettingTemplate let-value="value" let-setting="setting" let-label="label" let-tooltip="tooltip">
     <div class="col p-0 d-flex align-items-center">
         <input [id]="setting + '-checkbox'" type="checkbox" [checked]="value" (click)="toggleImportSetting(setting)" />
-        <label [for]="setting + '-checkbox'" class="ms-2">{{ label }}</label>
-        <fa-icon [icon]="faQuestionCircle" size="sm" class="ms-1 text-secondary" />
+        <label [for]="setting + '-checkbox'" class="ms-2" [jhiTranslate]="label"></label>
+        <fa-icon [icon]="faQuestionCircle" size="sm" class="ms-1 text-secondary" [ngbTooltip]="tooltip | artemisTranslate" />
     </div>
 </ng-template>
