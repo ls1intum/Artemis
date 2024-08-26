@@ -6,7 +6,8 @@ import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions
  */
 export class MonacoTaskAction extends MonacoEditorDomainAction {
     static readonly ID = 'monaco-task.action';
-    static readonly INSERT_TASK_TEXT = '[task][Task Short Description](testCaseName)\n';
+    static readonly TEXT = '[Task Short Description](testCaseName)\n';
+
     constructor() {
         super(MonacoTaskAction.ID, 'artemisApp.programmingExercise.problemStatement.taskCommand', undefined, undefined);
     }
@@ -16,7 +17,11 @@ export class MonacoTaskAction extends MonacoEditorDomainAction {
      * @param editor The editor in which to insert the task.
      */
     run(editor: monaco.editor.ICodeEditor): void {
-        this.replaceTextAtCurrentSelection(editor, MonacoTaskAction.INSERT_TASK_TEXT);
+        this.replaceTextAtCurrentSelection(editor, `${this.getOpeningIdentifier()}${MonacoTaskAction.TEXT}`);
         editor.focus();
+    }
+
+    getOpeningIdentifier(): string {
+        return '[task]';
     }
 }
