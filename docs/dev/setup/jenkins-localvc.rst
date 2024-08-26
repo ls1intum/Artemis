@@ -58,12 +58,14 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
         url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
         user: root
         password: dummy # have to be set, but does not matter for LocalVC
+        build-agent-git-username: jenkins
+        build-agent-git-password: artemis_admin # choose some strong password and username (gives read access to all repositories)
     continuous-integration:
         user: artemis_admin
         password: artemis_admin
         url: http://localhost:8082
         secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
-        vcs-credentials: artemis_gitlab_admin_credentials
+        vcs-credentials: artemis_localvc_credentials
         artemis-authentication-token-key: artemis_notification_plugin_token
         artemis-authentication-token-value: artemis_admin
         build-timeout: 30
@@ -73,7 +75,7 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
    jenkins:
        internal-urls:
            ci-url: http://jenkins:8080
-           vcs-url: http://gitlab:80
+           vcs-url: http://localhost:8080
        use-crumb: false
    server:
         port: 8080
@@ -89,9 +91,9 @@ In addition, you have to start Artemis with the profiles ``localvc`` and
 Please read :ref:`Server Setup` for more details.
 
 For a local setup on Windows you can use `http://host.docker.internal` appended
-by the chosen ports as the continuous-integration url.
+by the chosen ports as the continuous-integration url and the internal vcs url.
 
-Make sure to change the ``server.url`` and ``version-control.url`` value in ``application-dev.yml``
+Make sure to change the ``server.url`` and ``artemis.version-control.url`` value in ``application-dev.yml``
 or ``application-prod.yml`` accordingly. The ``server.url`` value will be used for the
 communication hooks from Jenkins to Artemis.
 In case you use a different port than 80 (http) or 443 (https) for the
@@ -455,19 +457,9 @@ Automated Jenkins Server Setup
 The following steps describe how to deploy a pre-configured version of the Jenkins server.
 This is ideal as a quickstart for developers. For a more detailed setup, see
 `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
-In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config.yml``) and
-generate random access tokens and push tokens.
+In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config.yml``) and push tokens.
 
-1. Create a new access token in GitLab named ``Jenkins`` and give it **api** and **read_repository** rights. You can
-do either do it manually or using the following command:
-
-    .. code:: bash
-
-        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api', 'read_repository'], name: 'Jenkins', expires_at: 365.days.from_now); token.set_token('jenkins-gitlab-token'); token.save!"
-
-
-
-2. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
+1. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
 
     .. code:: bash
 
@@ -477,7 +469,7 @@ do either do it manually or using the following command:
    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
    in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
 
-3. You need to generate the `secret-push-token`.
+2. You need to generate the `secret-push-token`.
 
    ..
        Workaround as long as Github Issue 5973 (Default Push Notifications GitLab → Jenkins not working)
@@ -488,7 +480,7 @@ do either do it manually or using the following command:
    `Gitlab to Jenkins push notification token <#gitlab-to-jenkins-push-notification-token>`__ to generate the token.
    In a production setup, you should use a random ``master.key`` in the file ``gitlab-jenkins-mysql.yml``.
 
-4. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
+3. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
 
 .. code:: yaml
 
@@ -499,15 +491,17 @@ do either do it manually or using the following command:
                 username: artemis_admin
                 password: artemis_admin
         version-control:
-            url: http://localhost:8081
-            user: artemis_admin
-            password: artemis_admin
+            url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
+            user: root
+            password: dummy # have to be set, but does not matter for LocalVC
+            build-agent-git-username: jenkins
+            build-agent-git-password: artemis_admin # choose some strong password and username (gives read access to all repositories)
         continuous-integration:
             user: artemis_admin
             password: artemis_admin
             url: http://localhost:8082
             secret-push-token: # pre-generated or replaced in Automated Jenkins Server step 3
-            vcs-credentials: artemis_gitlab_admin_credentials
+            vcs-credentials: artemis_localvc_credentials
             artemis-authentication-token-key: artemis_notification_plugin_token
             artemis-authentication-token-value: artemis_admin
 
@@ -520,9 +514,9 @@ do either do it manually or using the following command:
     jenkins:
         internal-urls:
             ci-url: http://jenkins:8080
-            vcs-url: http://gitlab:80
+            vcs-url: http://localhost:8080
 
-6. You're done. You can now run Artemis with the GitLab/Jenkins environment.
+6. You're done. You can now run Artemis with the LocalVC/Jenkins environment.
 
 Manual Jenkins Server Setup
 """""""""""""""""""""""""""
@@ -834,16 +828,16 @@ Server Notification Token
            continuous-integration:
                artemis-authentication-token-value: the.actual.value.of.the.notification.token
 
-GitLab Repository Access
-########################
+LocalVC Repository Access
+#########################
 
 1. Create a new Jenkins credentials containing the username and password
-   of the GitLab administrator account:
+   of the build-agent-git-user:
 
    1. **Kind**: Username with password
    2. **Scope**: Global
-   3. **Username**: *the_username_you_chose_for_the_gitlab_admin_user*
-   4. **Password**: *the_password_you_chose_for_the_gitlab_admin_user*
+   3. **Username**: *the_username_you_chose_at_build-agent-git-username*
+   4. **Password**: *the_password_you_chose_at_build-agent-git-password*
    5. Leave the ID field blank
    6. The description is up to you
 
