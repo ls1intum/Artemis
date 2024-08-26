@@ -40,7 +40,13 @@
                         <a href="https://guides.github.com/features/mastering-markdown/"> GitHub Markdown Guide</a>
                     </small>
                     <!-- not included in reactive form -->
-                    <jhi-markdown-editor aria-describedby="contentHelp" id="content" class="markdown-editor" [(markdown)]="content" (markdownChange)="onMarkdownChange($event)" />
+                    <jhi-markdown-editor-monaco
+                        aria-describedby="contentHelp"
+                        id="content"
+                        class="markdown-editor"
+                        [(markdown)]="content"
+                        (markdownChange)="onMarkdownChange($event)"
+                    />
                 </div>
                 <div class="row">
                     <div class="col-12">
