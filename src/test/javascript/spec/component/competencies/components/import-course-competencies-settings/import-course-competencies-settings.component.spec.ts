@@ -3,6 +3,8 @@ import {
     CourseCompetencyImportSettings,
     ImportCourseCompetenciesSettingsComponent,
 } from 'app/course/competencies/components/import-course-competencies-settings/import-course-competencies-settings.component';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ImportCourseCompetenciesSettingsComponent', () => {
     let component: ImportCourseCompetenciesSettingsComponent;
@@ -11,6 +13,12 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ImportCourseCompetenciesSettingsComponent],
+            providers: [
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ImportCourseCompetenciesSettingsComponent);
