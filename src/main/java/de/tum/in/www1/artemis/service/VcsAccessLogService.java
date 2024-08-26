@@ -41,6 +41,8 @@ public class VcsAccessLogService {
      * @param participation           The participation which owns the repository
      * @param actionType              The action type: READ or WRITE
      * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation) or SSH
+     * @param commitHash              The latest commit hash
+     * @param ipAddress               The ip address of the user accessing the repository
      */
     public void storeAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
             String commitHash, String ipAddress) {
