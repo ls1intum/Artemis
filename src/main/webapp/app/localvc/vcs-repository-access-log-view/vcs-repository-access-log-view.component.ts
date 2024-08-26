@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
@@ -18,7 +18,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     standalone: true,
     imports: [ArtemisSharedCommonModule],
 })
-export class VcsRepositoryAccessLogViewComponent implements OnInit, OnDestroy {
+export class VcsRepositoryAccessLogViewComponent implements OnInit {
     participationId: number;
     vcsAccessLogEntries: VcsAccessLogDTO[];
     protected dialogErrorSource = new Subject<string>();
@@ -37,11 +37,6 @@ export class VcsRepositoryAccessLogViewComponent implements OnInit, OnDestroy {
         private router: Router,
         private alertService: AlertService,
     ) {}
-
-    ngOnDestroy(): void {
-        this.participationId = 0;
-        // throw new Error('Method not implemented.');
-    }
 
     ngOnInit(): void {
         this.routeVcsAccessLog = this.router.url + '/vcs-access-log';
