@@ -96,9 +96,11 @@
                             @if ((generateParticipationStatus | async) === 'failed') {
                                 <div class="d-flex justify-content-center align-items-center">
                                     <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
-                                    <button class="btn btn-sm btn-primary px-3 ms-2" (click)="createParticipationForExercise(this.activeExamPage.exercise!).subscribe()">
-                                        {{ 'artemisApp.examParticipation.generateParticipationRetry' | artemisTranslate }}
-                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-primary px-3 ms-2"
+                                        (click)="createParticipationForExercise(this.activeExamPage.exercise!).subscribe()"
+                                        jhiTranslate="artemisApp.examParticipation.generateParticipationRetry"
+                                    ></button>
                                 </div>
                             }
 

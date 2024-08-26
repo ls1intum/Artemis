@@ -30,19 +30,13 @@
                             <td>
                                 @switch (getNotificationState(notification)) {
                                     @case (ACTIVE) {
-                                        <span class="badge bg-success">
-                                            {{ 'artemisApp.systemNotification.active' | artemisTranslate }}
-                                        </span>
+                                        <span class="badge bg-success" jhiTranslate="artemisApp.systemNotification.active"></span>
                                     }
                                     @case (EXPIRED) {
-                                        <span class="badge bg-danger">
-                                            {{ 'artemisApp.systemNotification.expired' | artemisTranslate }}
-                                        </span>
+                                        <span class="badge bg-danger" jhiTranslate="artemisApp.systemNotification.expired"></span>
                                     }
                                     @case (SCHEDULED) {
-                                        <span class="badge bg-info">
-                                            {{ 'artemisApp.systemNotification.scheduled' | artemisTranslate }}
-                                        </span>
+                                        <span class="badge bg-info" jhiTranslate="artemisApp.systemNotification.scheduled"></span>
                                     }
                                 }
                             </td>

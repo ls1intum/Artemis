@@ -48,7 +48,7 @@
                 <thead>
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
                         <th class="d-none d-md-table-cell" jhiSortBy="id">
-                            <span>{{ 'global.field.id' | artemisTranslate }}</span>
+                            <span jhiTranslate="global.field.id"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th class="d-none d-md-table-cell" jhiSortBy="id">
@@ -84,8 +84,8 @@
                                 <a> {{ testRun.user?.name || '--' }}</a>
                             </td>
                             <td class="working-time">{{ testRun.workingTime || 0 | artemisDurationFromSeconds }}</td>
-                            <td class="started">{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-                            <td class="submitted">{{ (testRun.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+                            <td class="started" jhiTranslate="{{ testRun.started ? 'global.generic.yes' : 'global.generic.no' }}"></td>
+                            <td class="submitted" jhiTranslate="{{ testRun.submitted ? 'global.generic.yes' : 'global.generic.no' }}"></td>
                             <td>{{ testRun.submissionDate | artemisDate }}</td>
                             <td [width]="350">
                                 <div class="w-100 text-end">
