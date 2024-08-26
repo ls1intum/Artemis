@@ -29,7 +29,7 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
      * Find the access log entry which does not have any commit hash yet
      *
      * @param participationId The id of the participation the repository belongs to
-     * @return a log entry belonging with the participationId, which has no commit hash
+     * @return a log entry belonging to the participationId, which has no commit hash
      */
     @Query("""
             SELECT vcsAccessLog

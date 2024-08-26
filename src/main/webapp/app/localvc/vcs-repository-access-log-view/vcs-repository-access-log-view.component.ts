@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -29,11 +27,9 @@ export class VcsRepositoryAccessLogViewComponent implements OnInit {
     exercise: ProgrammingExercise;
 
     constructor(
-        private accountService: AccountService,
         public domainService: DomainService,
         private route: ActivatedRoute,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private programmingExerciseService: ProgrammingExerciseService,
         private router: Router,
         private alertService: AlertService,
     ) {}
@@ -43,32 +39,27 @@ export class VcsRepositoryAccessLogViewComponent implements OnInit {
         this.paramSub = this.route.params.subscribe((params) => {
             const participationId = Number(params['participationId']);
             const exerciseId = Number(params['exerciseId']);
-            const reposiotryType = params['repositoryType'];
+            const repositoryType = params['repositoryType'];
             if (participationId) {
                 this.loadVcsAccessLogForParticipation(participationId);
             } else {
-                this.loadVcsAccessLog(exerciseId, reposiotryType);
+                this.loadVcsAccessLog(exerciseId, repositoryType);
             }
         });
     }
 
-    private loadVcsAccessLogForParticipation(participationId: number) {
-        this.programmingExerciseParticipationService.getVcsAccessLogForParticipation(participationId).subscribe({
-            next: (next: VcsAccessLogDTO[] | undefined) => {
-                if (next) {
-                    this.vcsAccessLogEntries = next;
-                    this.dialogErrorSource.next('');
-                }
-            },
-            error: (error: HttpErrorResponse) => {
-                this.dialogErrorSource.next(error.message);
-                this.alertService.error('artemisApp.repository.vcsAccessLog.error');
-            },
-        });
+    public loadVcsAccessLogForParticipation(participationId: number) {
+        const accessLogEntries: Observable<VcsAccessLogDTO[] | undefined> = this.programmingExerciseParticipationService.getVcsAccessLogForParticipation(participationId);
+        this.extractEntries(accessLogEntries);
     }
 
-    private loadVcsAccessLog(exerciseId: number, reposiotryType: any) {
-        this.programmingExerciseParticipationService.getVcsAccessLogForExerciseRepository(exerciseId, reposiotryType).subscribe({
+    public loadVcsAccessLog(exerciseId: number, repositoryType: any) {
+        const accessLogEntries: Observable<VcsAccessLogDTO[] | undefined> = this.programmingExerciseParticipationService.getVcsAccessLogForRepository(exerciseId, repositoryType);
+        this.extractEntries(accessLogEntries);
+    }
+
+    private extractEntries(accessLogEntries: Observable<VcsAccessLogDTO[] | undefined>) {
+        accessLogEntries.subscribe({
             next: (next: VcsAccessLogDTO[] | undefined) => {
                 if (next) {
                     this.vcsAccessLogEntries = next;

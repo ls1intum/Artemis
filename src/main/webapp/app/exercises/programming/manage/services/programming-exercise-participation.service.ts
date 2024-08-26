@@ -157,7 +157,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
             .pipe(map((res: HttpResponse<VcsAccessLogDTO[]>) => res.body ?? undefined));
     }
 
-    getVcsAccessLogForExerciseRepository(exerciseId: number, repositoryType: string) {
+    getVcsAccessLogForRepository(exerciseId: number, repositoryType: string) {
         const params: { [key: string]: number | string } = {};
         if (repositoryType) {
             params['repositoryType'] = repositoryType;
