@@ -3,6 +3,7 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
 import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-emoji-picker',
@@ -21,7 +22,7 @@ export class EmojiPickerComponent implements OnDestroy {
     themeSubscription: Subscription;
 
     constructor(private themeService: ThemeService) {
-        this.themeSubscription = themeService.getCurrentThemeObservable().subscribe((theme) => {
+        this.themeSubscription = toObservable(themeService.currentTheme).subscribe((theme) => {
             this.dark = theme === Theme.DARK;
             this.singleImageFunction = this.dark ? EmojiUtils.singleDarkModeEmojiUrlFn : () => '';
         });

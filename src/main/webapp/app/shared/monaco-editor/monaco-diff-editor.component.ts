@@ -1,4 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 import * as monaco from 'monaco-editor';
@@ -62,6 +63,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         renderer.appendChild(elementRef.nativeElement, this.monacoDiffEditorContainerElement);
         this.setupDiffListener();
         this.setupContentHeightListeners();
+        this.themeSubscription = toObservable(this.themeService.currentTheme).subscribe((theme) => this.changeTheme(theme));
     }
 
     ngOnInit(): void {
@@ -69,7 +71,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
             this.layout();
         });
         this.resizeObserver.observe(this.monacoDiffEditorContainerElement);
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
     ngOnDestroy(): void {

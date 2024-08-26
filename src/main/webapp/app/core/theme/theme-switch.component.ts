@@ -1,8 +1,13 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { PlacementArray } from '@ng-bootstrap/ng-bootstrap/util/positioning';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { fromEvent } from 'rxjs';
+import { Subscription, delay, fromEvent, timer } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.
@@ -13,70 +18,72 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
     styleUrls: ['theme-switch.component.scss'],
+    imports: [TranslateModule, CommonModule, ArtemisSharedModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
 })
-export class ThemeSwitchComponent implements OnInit {
-    @ViewChild('popover') popover: NgbPopover;
+export class ThemeSwitchComponent implements OnInit, OnDestroy {
+    popoverPlacement = input.required<PlacementArray>();
+    popover = viewChild.required<NgbPopover>('popover');
 
-    @Input() popoverPlacement: string;
+    isDarkTheme = computed(() => this.themeService.currentTheme() === Theme.DARK);
+    isSyncedWithOS = computed(() => this.themeService.preference() === undefined);
 
-    isDark = false;
-    isSynced = false;
-    animate = true;
-    openPopupAfterNextChange = false;
-    closeTimeout: any;
+    animate = signal(true);
+    openPopupAfterNextChange = signal(false);
 
-    // Icons
-    faSync = faSync;
+    private themeService = inject(ThemeService);
 
-    constructor(private themeService: ThemeService) {}
+    protected readonly faSync = faSync;
 
-    ngOnInit() {
-        // Listen to theme changes to change our own state accordingly
-        this.themeService.getCurrentThemeObservable().subscribe((theme) => {
-            this.isDark = theme === Theme.DARK;
-            this.animate = true;
+    private closeTimerSubscription: Subscription | undefined;
+    private reopenPopupSubscription = toObservable(this.themeService.currentTheme)
+        .pipe(delay(250))
+        .subscribe(() => {
+            this.animate.set(true);
             if (this.openPopupAfterNextChange) {
-                this.openPopupAfterNextChange = false;
-                setTimeout(() => this.openPopover(), 250);
+                this.openPopupAfterNextChange.set(false);
+                this.openPopover();
             }
         });
 
-        // Listen to preference changes
-        this.themeService.getPreferenceObservable().subscribe((themeOrUndefined) => {
-            this.isSynced = !themeOrUndefined;
-        });
-
+    ngOnInit() {
         // Workaround as we can't dynamically change the "autoClose" property on popovers
         fromEvent(window, 'click').subscribe((e) => {
             const popoverContentElement = document.getElementById('theme-switch-popover-content');
-            if (this.popover.isOpen() && !popoverContentElement?.contains(e.target as Node)) {
+            if (this.popover().isOpen() && !popoverContentElement?.contains(e.target as Node)) {
                 this.closePopover();
             }
         });
     }
 
+    ngOnDestroy() {
+        this.reopenPopupSubscription.unsubscribe();
+        this.closeTimerSubscription?.unsubscribe();
+    }
+
     openPopover() {
-        this.popover?.open();
-        clearTimeout(this.closeTimeout);
+        this.popover().open();
+        this.closeTimerSubscription?.unsubscribe();
     }
 
     closePopover() {
-        clearTimeout(this.closeTimeout);
-        this.popover?.close();
+        this.popover().close();
+        this.closeTimerSubscription?.unsubscribe();
     }
 
     mouseLeave() {
-        clearTimeout(this.closeTimeout);
-        this.closeTimeout = setTimeout(() => this.closePopover(), 250);
+        this.closeTimerSubscription?.unsubscribe();
+        this.closeTimerSubscription = timer(250).subscribe(() => this.closePopover());
     }
 
     /**
      * Changes the theme to the currently not active theme.
      */
     toggleTheme() {
-        this.animate = false;
-        this.openPopupAfterNextChange = true;
-        setTimeout(() => this.themeService.applyThemeExplicitly(this.isDark ? Theme.LIGHT : Theme.DARK));
+        this.animate.set(false);
+        this.openPopupAfterNextChange.set(true);
+        this.themeService.applyTheme(this.isDarkTheme() ? Theme.LIGHT : Theme.DARK);
     }
 
     /**
@@ -85,6 +92,6 @@ export class ThemeSwitchComponent implements OnInit {
      * - if it's currently not synced, we remove the preference to apply the system theme
      */
     toggleSynced() {
-        this.themeService.applyThemeExplicitly(this.isSynced ? this.themeService.getCurrentTheme() : undefined);
+        this.themeService.applyTheme(this.isSyncedWithOS() ? this.themeService.currentTheme() : undefined);
     }
 }

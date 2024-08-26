@@ -1,13 +1,14 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { round } from 'app/shared/util/utils';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-progress-bar',
     templateUrl: './progress-bar.component.html',
 })
-export class ProgressBarComponent implements OnInit, OnChanges, OnDestroy {
+export class ProgressBarComponent implements OnChanges, OnDestroy {
     @Input() public tooltip: string;
     @Input() public percentage: number;
     @Input() public numerator: number;
@@ -20,10 +21,8 @@ export class ProgressBarComponent implements OnInit, OnChanges, OnDestroy {
     constructor(
         private themeService: ThemeService,
         private ref: ChangeDetectorRef,
-    ) {}
-
-    ngOnInit() {
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe(() => {
+    ) {
+        this.themeSubscription = toObservable(this.themeService.currentTheme).subscribe(() => {
             this.chooseProgressBarTextColor();
 
             // Manually run change detection as it doesn't do it automatically for some reason
@@ -60,7 +59,7 @@ export class ProgressBarComponent implements OnInit, OnChanges, OnDestroy {
      * Function to change the text color to indicate a finished status
      */
     chooseProgressBarTextColor() {
-        switch (this.themeService.getCurrentTheme()) {
+        switch (this.themeService.currentTheme()) {
             case Theme.DARK:
                 this.foregroundColorClass = 'text-white';
                 break;

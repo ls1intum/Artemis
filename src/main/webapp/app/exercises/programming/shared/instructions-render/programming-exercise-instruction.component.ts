@@ -39,6 +39,7 @@ import diff from 'html-diff-ts';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -105,7 +106,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private injector: EnvironmentInjector,
     ) {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
-        this.themeChangeSubscription = themeService.getCurrentThemeObservable().subscribe(() => {
+        this.themeChangeSubscription = toObservable(themeService.currentTheme).subscribe(() => {
             this.updateMarkdown();
         });
     }

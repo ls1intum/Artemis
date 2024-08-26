@@ -4,6 +4,7 @@ import { Cacheable } from 'ts-cacheable';
 import { Observable, Subject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 const themeChangedSubject = new Subject<void>();
 
@@ -21,8 +22,7 @@ export class ProgrammingExercisePlantUmlService {
         private themeService: ThemeService,
     ) {
         this.encoder = new HttpUrlCustomEncoder();
-        this.themeService
-            .getCurrentThemeObservable()
+        toObservable(this.themeService.currentTheme)
             .pipe(tap(() => themeChangedSubject.next()))
             .subscribe();
     }
@@ -43,7 +43,7 @@ export class ProgrammingExercisePlantUmlService {
     getPlantUmlImage(plantUml: string) {
         return this.http
             .get(`${this.resourceUrl}/png`, {
-                params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.getCurrentTheme() === Theme.DARK),
+                params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.currentTheme() === Theme.DARK),
                 responseType: 'arraybuffer',
             })
             .pipe(map((res) => this.convertPlantUmlResponseToBase64(res)));
@@ -64,7 +64,7 @@ export class ProgrammingExercisePlantUmlService {
     })
     getPlantUmlSvg(plantUml: string): Observable<string> {
         return this.http.get(`${this.resourceUrl}/svg`, {
-            params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.getCurrentTheme() === Theme.DARK),
+            params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.currentTheme() === Theme.DARK),
             responseType: 'text',
         });
     }

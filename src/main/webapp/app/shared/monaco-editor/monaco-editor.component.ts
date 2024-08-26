@@ -10,6 +10,7 @@ import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-li
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -62,6 +63,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
         this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
         renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
+        this.themeSubscription = toObservable(this.themeService.currentTheme).subscribe((theme) => this.changeTheme(theme));
     }
 
     @Input()
@@ -127,8 +129,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
             this.onBlurEditor.emit();
         });
-
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
     ngOnDestroy() {

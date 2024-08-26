@@ -1,7 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, Observable } from 'rxjs';
 
 export const THEME_LOCAL_STORAGE_KEY = 'artemisapp.theme.preference';
 export const THEME_OVERRIDE_ID = 'artemis-theme-override';
@@ -48,43 +47,42 @@ export class Theme {
 })
 export class ThemeService {
     /**
-     * The currently applied theme
+     * The currently applied theme as WritableSignal.
      */
-    private currentTheme: Theme = Theme.LIGHT;
+    private _currentTheme = signal(Theme.LIGHT);
+
     /**
-     * A behavior subject that fires for each new applied theme.
+     * The currently applied theme as ReadonlySignal.
      */
-    private currentThemeSubject: BehaviorSubject<Theme> = new BehaviorSubject<Theme>(Theme.LIGHT);
+    public readonly currentTheme = this._currentTheme.asReadonly();
+
     /**
-     * A behavior subject that fires if the user preference changes.
-     * Can be either a theme for an explicit theme or undefined if system settings are preferred
+     * The user preference changes as WritableSignal.
+     * If changed, the theme is applied immediately.
      */
-    private preferenceSubject: BehaviorSubject<Theme | undefined> = new BehaviorSubject<Theme | undefined>(undefined);
+    private _preference = signal<Theme | undefined>(undefined);
+
+    /**
+     * The user preference changes as ReadonlySignal.
+     * Can be either a theme for an explicit theme or undefined if system settings are preferred.
+     */
+    public readonly preference = this._preference.asReadonly();
+
+    private localStorageService = inject(LocalStorageService);
 
     private darkSchemeMediaQuery: MediaQueryList;
 
-    constructor(private localStorageService: LocalStorageService) {}
-
-    /**
-     * Returns the currently active theme.
-     */
-    public getCurrentTheme(): Theme {
-        return this.currentTheme;
-    }
-
-    /**
-     * Returns an observable that will be fired immediately for the current theme and for each future theme change until unsubscribed.
-     */
-    public getCurrentThemeObservable(): Observable<Theme> {
-        return this.currentThemeSubject.asObservable();
-    }
-
-    /**
-     * Returns an observable that will be fired immediately for the current user preference and if the user preference changes.
-     * Can be either a theme for an explicit theme or undefined if system settings are preferred
-     */
-    public getPreferenceObservable(): Observable<Theme | undefined> {
-        return this.preferenceSubject.asObservable();
+    constructor() {
+        // Apply the theme as soon as the preference changes
+        effect(
+            () => {
+                this.applyThemeInternal(this.preference() ?? Theme.LIGHT);
+            },
+            {
+                // This should usually be avoided in favor of `computed()`
+                allowSignalWrites: true,
+            },
+        );
     }
 
     /**
@@ -95,40 +93,22 @@ export class ThemeService {
     initialize() {
         this.darkSchemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         if (this.darkSchemeMediaQuery.media !== 'not all') {
-            this.darkSchemeMediaQuery.addEventListener('change', () => this.applyPreferredTheme());
+            this.darkSchemeMediaQuery.addEventListener('change', () => {
+                if (this.darkSchemeMediaQuery.matches) {
+                    this._preference.set(Theme.DARK);
+                } else {
+                    this._preference.set(Theme.LIGHT);
+                }
+            });
         }
 
         addEventListener('storage', (event) => {
             if (event.key === 'jhi-' + THEME_LOCAL_STORAGE_KEY) {
-                this.preferenceSubject.next(this.getStoredTheme());
-                this.applyPreferredTheme();
+                this._preference.set(this.getStoredTheme());
             }
         });
 
-        this.applyPreferredTheme();
-        this.preferenceSubject.next(this.getStoredTheme());
-    }
-
-    /**
-     * Applies the preferred theme.
-     * The preferred theme is either
-     * - the theme stored in local storage, if present, or else
-     * - the system preference, if present, or else
-     * - the default theme
-     */
-    private applyPreferredTheme() {
-        const storedTheme = this.getStoredTheme();
-        if (storedTheme) {
-            this.applyThemeInternal(storedTheme);
-            return;
-        }
-
-        if (this.darkSchemeMediaQuery.matches) {
-            this.applyThemeInternal(Theme.DARK);
-            return;
-        }
-
-        this.applyThemeInternal(Theme.LIGHT);
+        this._preference.set(this.getStoredTheme());
     }
 
     /**
@@ -140,7 +120,7 @@ export class ThemeService {
 
         // An unknown theme was stored. Let's clear it
         if (storedIdentifier && !storedTheme) {
-            this.storePreference(undefined);
+            this.localStorageService.clear(THEME_LOCAL_STORAGE_KEY);
         }
 
         return storedTheme;
@@ -180,9 +160,13 @@ export class ThemeService {
      *
      * @param theme the theme to be applied; pass undefined to use system preference mode
      */
-    public applyThemeExplicitly(theme: Theme | undefined) {
-        this.storePreference(theme);
-        this.applyPreferredTheme();
+    public applyTheme(theme: Theme | undefined) {
+        if (theme) {
+            this.localStorageService.store(THEME_LOCAL_STORAGE_KEY, theme.identifier);
+        } else {
+            this.localStorageService.clear(THEME_LOCAL_STORAGE_KEY);
+        }
+        this._preference.set(theme);
     }
 
     private applyThemeInternal(theme: Theme) {
@@ -191,7 +175,7 @@ export class ThemeService {
         }
 
         // Do not inject or remove anything from the DOM if the applied theme is the current theme
-        if (this.currentTheme === theme) {
+        if (this._currentTheme() === theme) {
             return;
         }
 
@@ -202,9 +186,7 @@ export class ThemeService {
             // The default theme is always injected by Angular; therefore, we just need to remove
             // our theme override, if present
             overrideTag?.remove();
-
-            this.currentTheme = theme;
-            this.currentThemeSubject.next(theme);
+            this._currentTheme.set(theme);
         } else {
             // If the theme is not the default theme, we need to add a theme override stylesheet to the page header
 
@@ -222,26 +204,13 @@ export class ThemeService {
             // and fire the subject to inform other services and components
             newTag.onload = () => {
                 overrideTag?.remove();
-                this.currentTheme = theme;
-                this.currentThemeSubject.next(theme);
+                this._currentTheme.set(theme);
             };
 
             // Insert the new stylesheet link tag after the last existing link tag
             const existingLinkTags = head.getElementsByTagName('link');
             const lastLinkTag = existingLinkTags[existingLinkTags.length - 1];
             head.insertBefore(newTag, lastLinkTag?.nextSibling);
-        }
-    }
-
-    private storePreference(theme?: Theme) {
-        if (theme) {
-            this.localStorageService.store(THEME_LOCAL_STORAGE_KEY, theme.identifier);
-        } else {
-            this.localStorageService.clear(THEME_LOCAL_STORAGE_KEY);
-        }
-
-        if (this.preferenceSubject.getValue() !== theme) {
-            this.preferenceSubject.next(theme);
         }
     }
 

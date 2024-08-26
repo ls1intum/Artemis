@@ -22,6 +22,7 @@ import 'brace/mode/assembly_x86';
 import 'brace/mode/vhdl';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 declare let ace: any;
 
@@ -80,6 +81,7 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
             this._editor = ace['edit'](el);
         });
         this._editor.$blockScrolling = Infinity;
+        this.themeSubscription = toObservable(this.themeService.currentTheme).subscribe(() => this.setThemeFromMode());
     }
 
     ngOnInit() {
@@ -101,8 +103,6 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     initEvents() {
         this._editor.on('change', () => this.updateText());
         this._editor.on('paste', () => this.updateText());
-
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe(() => this.setThemeFromMode());
     }
 
     updateText() {
@@ -171,7 +171,7 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     }
 
     private setThemeFromMode() {
-        const currentApplicationTheme = this.themeService.getCurrentTheme();
+        const currentApplicationTheme = this.themeService.currentTheme();
         this._theme = this._mode.toLowerCase() === 'markdown' ? currentApplicationTheme.markdownAceTheme : currentApplicationTheme.codeAceTheme;
         this._editor.setTheme(`ace/theme/${this._theme}`);
     }

@@ -2,6 +2,7 @@ import { Component, Input, OnDestroy } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
 import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-emoji',
@@ -17,7 +18,7 @@ export class EmojiComponent implements OnDestroy {
     themeSubscription: Subscription;
 
     constructor(private themeService: ThemeService) {
-        this.themeSubscription = themeService.getCurrentThemeObservable().subscribe((theme) => {
+        this.themeSubscription = toObservable(themeService.currentTheme).subscribe((theme) => {
             this.dark = theme === Theme.DARK;
         });
     }
