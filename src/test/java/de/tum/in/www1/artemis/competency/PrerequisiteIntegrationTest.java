@@ -227,6 +227,12 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportExerciseAndLectureWithCompetency();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForImport() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForImport();

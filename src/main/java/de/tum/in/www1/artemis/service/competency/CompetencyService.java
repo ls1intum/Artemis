@@ -65,7 +65,7 @@ public class CompetencyService extends CourseCompetencyService {
             idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
         }
 
-        return importCourseCompetencies(course, idToImportedCompetency, importOptions);
+        return importCourseCompetencies(course, competencies, idToImportedCompetency, importOptions);
     }
 
     /**

@@ -181,7 +181,7 @@ public class CourseCompetencyService {
             idToImportedCompetency.put(courseCompetency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
         }
 
-        return importCourseCompetencies(course, idToImportedCompetency, importOptions);
+        return importCourseCompetencies(course, courseCompetencies, idToImportedCompetency, importOptions);
     }
 
     /**
@@ -192,8 +192,8 @@ public class CourseCompetencyService {
      * @param importOptions          the import options
      * @return The set of imported competencies, each also containing the relations it is the tail competency for.
      */
-    public Set<CompetencyWithTailRelationDTO> importCourseCompetencies(Course course, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
-            CompetencyImportOptionsDTO importOptions) {
+    public Set<CompetencyWithTailRelationDTO> importCourseCompetencies(Course course, Collection<? extends CourseCompetency> competenciesToImport,
+            Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency, CompetencyImportOptionsDTO importOptions) {
         if (course.getLearningPathsEnabled()) {
             var importedCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList();
             learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
@@ -217,7 +217,7 @@ public class CourseCompetencyService {
             }
         }
 
-        learningObjectImportService.importRelatedLearningObjects(null, idToImportedCompetency, course, importOptions);
+        learningObjectImportService.importRelatedLearningObjects(competenciesToImport, idToImportedCompetency, course, importOptions);
 
         return new HashSet<>(idToImportedCompetency.values());
     }
