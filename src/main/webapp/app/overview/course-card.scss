@@ -10,6 +10,7 @@
     }
 
     .card-header {
+        z-index: 2;
         position: relative;
         height: 85px;
         display: flex;
@@ -79,13 +80,12 @@
         }
 
         .btn-exercise {
-            color: var(--bs-body-color);
             z-index: 2;
             position: relative;
 
-            &:hover {
-                text-decoration: none !important;
-            }
+            // &:hover {
+            //     text-decoration: none !important;
+            // }
         }
     }
 }

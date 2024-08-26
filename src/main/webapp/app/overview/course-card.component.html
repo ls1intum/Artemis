@@ -1,4 +1,4 @@
-<div class="card rounded-4 border-white flex-grow-1" [class.guided-tour]="hasGuidedTour">
+<div class="card rounded-4 flex-grow-1" [class.guided-tour]="hasGuidedTour">
     <div
         id="course-{{ course.id }}-header"
         class="card-header rounded-top-4 text-white px-3"
@@ -23,9 +23,9 @@
             </div>
         </div>
     </div>
-    <div class="card-body rounded-bottom-4 border border-lightgrey pt-3">
+    <div class="card-body rounded-bottom-4 border-lightgrey pt-3">
+        <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="d-flex flex-column justify-content-between">
-            <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
             <div class="information-box-wrapper ms-1">
                 <div class="row mt-1">
                     <div class="col-7" [ngClass]="{ 'col-12': !(exerciseCount && (totalReachableScore || totalAbsoluteScore)) }">
