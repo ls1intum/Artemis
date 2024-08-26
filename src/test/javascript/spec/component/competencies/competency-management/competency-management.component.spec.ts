@@ -8,7 +8,6 @@ import { ActivatedRoute } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
@@ -20,7 +19,7 @@ import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/import-all-competencies.component';
+import { ImportAllCompetenciesComponent } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -29,12 +28,16 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyRelationGraphStubComponent } from './competency-relation-graph-stub.component';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
-import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
+import {
+    ImportAllCourseCompetenciesModalComponent,
+    ImportAllCourseCompetenciesResult,
+} from 'app/course/competencies/components/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 
 describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
     let component: CompetencyManagementComponent;
-    let courseCompetencyService: CourseCompetencyService;
+    let courseCompetencyApiService: CourseCompetencyApiService;
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
@@ -78,7 +81,7 @@ describe('CompetencyManagementComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CompetencyManagementComponent);
                 component = fixture.componentInstance;
-                courseCompetencyService = TestBed.inject(CourseCompetencyService);
+                courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
 
                 const competency: Competency = new Competency();
@@ -92,17 +95,15 @@ describe('CompetencyManagementComponent', () => {
                 courseCompetencyProgress.numberOfMasteredStudents = 5;
                 courseCompetencyProgress.averageStudentScore = 90;
 
-                getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: [competency, { id: 5, type: CourseCompetencyType.COMPETENCY } as Competency, { id: 3, type: CourseCompetencyType.PREREQUISITE } as Prerequisite],
-                            status: 200,
-                        }),
-                    ),
-                );
-                getCompetencyRelationsSpy = jest
-                    .spyOn(courseCompetencyService, 'getCompetencyRelations')
-                    .mockReturnValue(of(new HttpResponse({ body: [{ id: 1 } as CompetencyRelation], status: 200 })));
+                getAllForCourseSpy = jest.spyOn(courseCompetencyApiService, 'getCourseCompetenciesByCourseId').mockResolvedValue([
+                    competency,
+                    { id: 5, type: CourseCompetencyType.COMPETENCY } as Competency,
+                    {
+                        id: 3,
+                        type: CourseCompetencyType.PREREQUISITE,
+                    } as Prerequisite,
+                ]);
+                getCompetencyRelationsSpy = jest.spyOn(courseCompetencyApiService, 'getCourseCompetencyRelations').mockResolvedValue([{ id: 1 } as CompetencyRelation]);
             });
     });
 
@@ -110,7 +111,7 @@ describe('CompetencyManagementComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should show generate button if IRIS is enabled', () => {
+    it('should show generate button if IRIS is enabled', async () => {
         profileService = TestBed.inject(ProfileService);
         irisSettingsService = TestBed.inject(IrisSettingsService);
         const profileInfoResponse = {
@@ -125,17 +126,18 @@ describe('CompetencyManagementComponent', () => {
         const getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettingsResponse));
 
         fixture.detectChanges();
-        return fixture.whenStable().then(() => {
-            const generateButton = fixture.debugElement.query(By.css('#generateButton'));
+        await fixture.whenStable();
+        fixture.detectChanges();
 
-            expect(getProfileInfoSpy).toHaveBeenCalled();
-            expect(getIrisSettingsSpy).toHaveBeenCalled();
-            expect(generateButton).not.toBeNull();
-        });
+        const generateButton = fixture.nativeElement.querySelector('#generateButton');
+
+        expect(getProfileInfoSpy).toHaveBeenCalled();
+        expect(getIrisSettingsSpy).toHaveBeenCalled();
+        expect(generateButton).not.toBeNull();
     });
 
-    it('should load competencies and prerequisites', () => {
-        component.loadData();
+    it('should load competencies and prerequisites', async () => {
+        await component.loadData();
 
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getCompetencyRelationsSpy).toHaveBeenCalledOnce();
@@ -144,10 +146,17 @@ describe('CompetencyManagementComponent', () => {
         expect(component.prerequisites).toHaveLength(1);
     });
 
-    it('should open import modal and update values', () => {
-        const modalResult: ImportAllFromCourseResult = {
-            courseForImportDTO: { id: 1 },
-            importRelations: false,
+    it('should open import modal and update values', async () => {
+        fixture.detectChanges();
+        const modalResult: ImportAllCourseCompetenciesResult = {
+            course: { id: 1, title: 'Course 1' },
+            courseCompetencyImportOptions: {
+                sourceCourseId: 3,
+                importRelations: true,
+                competencyIds: [5, 4],
+                importLectures: true,
+                importExercises: true,
+            },
         };
         const modalRef = {
             result: Promise.resolve(modalResult),
@@ -157,38 +166,43 @@ describe('CompetencyManagementComponent', () => {
             { competency: { id: 1, type: CourseCompetencyType.COMPETENCY }, tailRelations: [{ id: 11 }] },
             { competency: { id: 2, type: CourseCompetencyType.COMPETENCY } },
         ];
-        const response = new HttpResponse({
-            body: importedCompetencies,
-            status: 200,
-        });
 
         jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
-        jest.spyOn(courseCompetencyService, 'importAll').mockReturnValue(of(response));
-        fixture.detectChanges();
+        jest.spyOn(courseCompetencyApiService, 'importAllByCourseId').mockResolvedValue(importedCompetencies);
+        await component.loadData();
         const existingCompetencies = component.competencies.length;
         const existingRelations = component.relations.length;
 
         const importButton = fixture.debugElement.query(By.css('#courseCompetencyImportAllButton'));
         importButton.nativeElement.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(modalService.open).toHaveBeenCalledWith(ImportAllCourseCompetenciesModalComponent, {
+            size: 'lg',
+            backdrop: 'static',
+        });
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        expect(modalService.open).toHaveBeenCalledWith(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalRef.componentInstance.disabledIds).toEqual([1]);
         expect(component.competencies).toHaveLength(existingCompetencies + 2);
         expect(component.relations).toHaveLength(existingRelations + 1);
     });
 
-    it('should handle create relation callback', () => {
+    it('should handle create relation callback', async () => {
         const relation: CompetencyRelation = { id: 1 };
-        const response = new HttpResponse({
-            body: relation,
-            status: 200,
-        });
-        jest.spyOn(courseCompetencyService, 'createCompetencyRelation').mockReturnValue(of(response));
+        jest.spyOn(courseCompetencyApiService, 'createCourseCompetencyRelation').mockResolvedValue(relation);
+
         fixture.detectChanges();
+        await fixture.whenStable();
+
         const existingRelations = component.relations.length;
 
         const relationGraph: CompetencyRelationGraphStubComponent = fixture.debugElement.query(By.directive(CompetencyRelationGraphStubComponent)).componentInstance;
+        expect(relationGraph).toBeDefined();
         relationGraph.onCreateRelation.emit(relation);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(component.relations).toHaveLength(existingRelations + 1);
     });
@@ -209,15 +223,20 @@ describe('CompetencyManagementComponent', () => {
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 
-    it('should remove relation', () => {
-        jest.spyOn(courseCompetencyService, 'removeCompetencyRelation').mockReturnValue(of(new HttpResponse<any>()));
+    it('should remove relation', async () => {
+        jest.spyOn(courseCompetencyApiService, 'deleteCourseCompetencyRelation').mockResolvedValue();
         fixture.detectChanges();
-        component.relations = [{ id: 1 }, { id: 2 }];
+        component.relations = <CompetencyRelation[]>[{ id: 1, headCompetency: { id: 5 }, tailCompetency: { id: 3 } }];
 
-        component['removeRelation'](1);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
         expect(component.relations).toHaveLength(1);
-        expect(component.relations.at(0)?.id).toBe(2);
+
+        await component['removeRelation'](1);
+
+        expect(component.relations).toHaveLength(0);
     });
 
     it('should remove competency and its relation', () => {
