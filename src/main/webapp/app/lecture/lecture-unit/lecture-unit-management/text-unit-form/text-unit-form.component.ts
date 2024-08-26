@@ -35,17 +35,18 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     @Output()
     onCancel: EventEmitter<any> = new EventEmitter<any>();
 
-    private readonly formBuilder = inject(FormBuilder);
+    // not included in reactive form
+    content: string | undefined;
+    contentLoadedFromCache = false;
+    firstMarkdownChangeHappened = false;
 
+    private readonly formBuilder = inject(FormBuilder);
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         competencies: [undefined as Competency[] | undefined],
     });
-    // not included in reactive form
-    content: string | undefined;
-    contentLoadedFromCache = false;
-    firstMarkdownChangeHappened = false;
+
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
     isFormValid = computed(() => this.statusChanges() === 'VALID');
 
@@ -66,7 +67,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(): void {
-        this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
@@ -93,13 +93,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
                 this.firstMarkdownChangeHappened = true;
             }
         });
-        this.initializeForm();
-    }
-
-    private initializeForm() {
-        if (this.form) {
-            return;
-        }
     }
 
     private setFormValues(formData: TextUnitFormData) {

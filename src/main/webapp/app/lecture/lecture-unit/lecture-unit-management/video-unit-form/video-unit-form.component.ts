@@ -1,10 +1,11 @@
 import dayjs from 'dayjs/esm';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, computed, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Competency } from 'app/entities/competency.model';
 import { Subscription } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface VideoUnitFormData {
     name?: string;
@@ -58,7 +59,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     selector: 'jhi-video-unit-form',
     templateUrl: './video-unit-form.component.html',
 })
-export class VideoUnitFormComponent implements OnInit, OnChanges, OnDestroy {
+export class VideoUnitFormComponent implements OnChanges, OnDestroy {
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
 
@@ -69,7 +70,6 @@ export class VideoUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     @Output()
     formSubmitted: EventEmitter<VideoUnitFormData> = new EventEmitter<VideoUnitFormData>();
-    form: FormGroup;
 
     @Input()
     hasCancelButton: boolean;
@@ -79,11 +79,19 @@ export class VideoUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
-    isFormValid = signal<boolean>(false);
+    private readonly formBuilder = inject(FormBuilder);
+    form: FormGroup = this.formBuilder.group({
+        name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+        description: [undefined as string | undefined, [Validators.maxLength(1000)]],
+        releaseDate: [undefined as dayjs.Dayjs | undefined],
+        source: [undefined as string | undefined, [Validators.required, this.videoSourceUrlValidator]],
+        urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
+        competencies: [undefined as Competency[] | undefined],
+    });
+    private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
+    isFormValid = computed(() => this.statusChanges() === 'VALID');
 
     private formValidityChangesSubscription: Subscription;
-
-    constructor(private fb: FormBuilder) {}
 
     get nameControl() {
         return this.form.get('name');
@@ -106,39 +114,13 @@ export class VideoUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(): void {
-        this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
     }
 
-    ngOnInit(): void {
-        this.initializeForm();
-    }
-
     ngOnDestroy() {
         this.formValidityChangesSubscription.unsubscribe();
-    }
-
-    private initializeForm() {
-        if (this.form) {
-            return;
-        }
-        this.form = this.fb.group({
-            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined as string | undefined, [Validators.maxLength(1000)]],
-            releaseDate: [undefined as dayjs.Dayjs | undefined],
-            source: [undefined as string | undefined, [Validators.required, this.videoSourceUrlValidator]],
-            urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
-            competencies: [undefined as Competency[] | undefined],
-        });
-
-        if (this.formValidityChangesSubscription) {
-            this.formValidityChangesSubscription.unsubscribe();
-        }
-        this.formValidityChangesSubscription = this.form.statusChanges.subscribe(() => {
-            this.isFormValid.set(this.form.valid);
-        });
     }
 
     private setFormValues(formData: VideoUnitFormData) {
