@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, computed, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, computed, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -59,7 +59,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     selector: 'jhi-video-unit-form',
     templateUrl: './video-unit-form.component.html',
 })
-export class VideoUnitFormComponent implements OnChanges, OnDestroy {
+export class VideoUnitFormComponent implements OnChanges {
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
 
@@ -117,10 +117,6 @@ export class VideoUnitFormComponent implements OnChanges, OnDestroy {
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
-    }
-
-    ngOnDestroy() {
-        this.formValidityChangesSubscription.unsubscribe();
     }
 
     private setFormValues(formData: VideoUnitFormData) {
