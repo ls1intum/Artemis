@@ -264,9 +264,10 @@
                     @if (statusHeaderControl?.invalid && (statusHeaderControl?.dirty || statusHeaderControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (statusHeaderControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
-                                </div>
+                                <div
+                                    jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.maxLengthValidationError"
+                                    [translateValues]="{ max: '255' }"
+                                ></div>
                             }
                         </div>
                     }
@@ -284,9 +285,10 @@
                     @if (fixedPlaceValueControl?.invalid && (fixedPlaceValueControl?.dirty || fixedPlaceValueControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (fixedPlaceValueControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
-                                </div>
+                                <div
+                                    jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.maxLengthValidationError"
+                                    [translateValues]="{ max: '255' }"
+                                ></div>
                             }
                         </div>
                     }
@@ -429,14 +431,17 @@
             <div class="flex-shrink-0 me-2 d-flex">
                 @if (!isImportDone) {
                     <div>
-                        <strong>{{ 'artemisApp.tutorialGroupImportDialog.table.footer.total' | artemisTranslate: { count: allRegistrations.length } }}</strong>
+                        <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.total" [translateValues]="{ count: allRegistrations.length }"></strong>
                     </div>
                 } @else {
                     <div>
-                        <strong>{{ 'artemisApp.tutorialGroupImportDialog.table.footer.imported' | artemisTranslate: { count: numberOfImportedRegistrations } }}</strong>
+                        <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.imported" [translateValues]="{ count: numberOfImportedRegistrations }"></strong>
                     </div>
                     <div class="ms-2">
-                        <strong>{{ 'artemisApp.tutorialGroupImportDialog.table.footer.notImported' | artemisTranslate: { count: numberOfNotImportedRegistration } }}</strong>
+                        <strong
+                            jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.notImported"
+                            [translateValues]="{ count: numberOfNotImportedRegistration }"
+                        ></strong>
                     </div>
                 }
             </div>
@@ -450,7 +455,7 @@
             @if (!isImportDone) {
                 <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="import()">
                     <fa-icon [icon]="faFileImport" class="me-2" />
-                    <span>{{ 'entity.action.to-import' | artemisTranslate }}</span>
+                    <span jhiTranslate="entity.action.to-import"></span>
                     <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
                 </button>
             } @else {

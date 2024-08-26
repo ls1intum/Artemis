@@ -28,6 +28,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
@@ -96,6 +97,7 @@ describe('CodeButtonComponent', () => {
                 MockPipe(SafeUrlPipe),
                 MockDirective(FeatureToggleDirective),
                 MockComponent(HelpIconComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 MockProvider(AlertService),
