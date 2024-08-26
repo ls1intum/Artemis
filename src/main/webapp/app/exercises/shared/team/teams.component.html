@@ -7,11 +7,11 @@
             <div class="d-flex align-items-center">
                 <label class="radio-inline mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="teamCriteria.filterProp" (click)="updateTeamFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
-                    <span class="ms-1">{{ 'artemisApp.team.filters.all' | artemisTranslate }}</span>
+                    <span class="ms-1" jhiTranslate="artemisApp.team.filters.all"></span>
                 </label>
                 <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="teamCriteria.filterProp" (click)="updateTeamFilter(FilterProp.OWN)" [value]="FilterProp.OWN" />
-                    <span class="ms-1">{{ 'artemisApp.team.filters.own' | artemisTranslate }}</span>
+                    <span class="ms-1" jhiTranslate="artemisApp.team.filters.own"></span>
                 </label>
             </div>
         </div>

@@ -14,19 +14,13 @@
         @if (courseDescriptionControl.invalid && (courseDescriptionControl.dirty || courseDescriptionControl.touched)) {
             <div class="alert alert-danger mb-0">
                 @if (courseDescriptionControl.errors?.required) {
-                    <div>
-                        {{ 'artemisApp.competency.generate.courseDescription.requiredValidationError' | artemisTranslate }}
-                    </div>
+                    <div jhiTranslate="artemisApp.competency.generate.courseDescription.requiredValidationError"></div>
                 }
                 @if (courseDescriptionControl.errors?.minlength) {
-                    <div>
-                        {{ 'artemisApp.competency.generate.courseDescription.minlengthValidationError' | artemisTranslate: { min: DESCRIPTION_MIN } }}
-                    </div>
+                    <div jhiTranslate="artemisApp.competency.generate.courseDescription.minlengthValidationError" [translateValues]="{ min: DESCRIPTION_MIN }"></div>
                 }
                 @if (courseDescriptionControl.errors?.maxlength) {
-                    <div>
-                        {{ 'artemisApp.competency.generate.courseDescription.maxlengthValidationError' | artemisTranslate: { max: DESCRIPTION_MAX } }}
-                    </div>
+                    <div jhiTranslate="artemisApp.competency.generate.courseDescription.maxlengthValidationError" [translateValues]="{ max: DESCRIPTION_MAX }"></div>
                 }
             </div>
         }

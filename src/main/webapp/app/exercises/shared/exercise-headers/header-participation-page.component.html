@@ -4,7 +4,7 @@
             <div class="col-12 col-sm-12 col-lg-5 d-flex flex-column justify-content-center">
                 <h4 class="fw-medium"><ng-content select="[pagetitle]" /></h4>
                 <div class="d-flex align-items-center">
-                    <h6 class="me-2 mb-0 fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}</h6>
+                    <h6 class="me-2 mb-0 fw-medium" jhiTranslate="artemisApp.courseOverview.exerciseDetails.dueDate"></h6>
                     <span>{{ (dueDate | artemisDate) || 'N/A' }}</span>
                     @if (dueDate) {
                         <span [ngClass]="exerciseStatusBadge" class="badge ms-2">{{ dueDate | artemisTimeAgo }}</span>
@@ -12,7 +12,7 @@
                 </div>
                 @if (exercise.categories) {
                     <div class="d-sm-flex">
-                        <h6 class="me-1 fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h6>
+                        <h6 class="me-1 fw-medium" jhiTranslate="artemisApp.courseOverview.exerciseDetails.categories"></h6>
                         @for (category of exerciseCategories; track category) {
                             <h6 class="fw-medium">
                                 <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
@@ -26,7 +26,7 @@
                     @if (exercise.maxPoints) {
                         <tr>
                             <td>
-                                <h6 class="fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}</h6>
+                                <h6 class="fw-medium" jhiTranslate="artemisApp.courseOverview.exerciseDetails.points"></h6>
                             </td>
                             <td>
                                 <span>
