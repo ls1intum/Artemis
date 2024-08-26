@@ -156,7 +156,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 profileService = debugElement.injector.get(ProfileService);
 
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/', activeProfiles: [] } as ProfileInfo));
+                getProfileInfoSub.mockReturnValue(of(new ProfileInfo()));
             });
     });
 
@@ -826,7 +826,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         ])('%s', (description, profileInfo, expectedException) => {
             getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
 
-            getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
+            const newProfileInfo = new ProfileInfo();
+            newProfileInfo.activeProfiles = profileInfo.activeProfiles;
+
+            getProfileInfoSub.mockReturnValue(of(newProfileInfo));
 
             const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
