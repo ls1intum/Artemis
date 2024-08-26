@@ -150,7 +150,6 @@ public class LocalVCServletService {
         this.programmingTriggerService = programmingTriggerService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
-
     }
 
     /**
