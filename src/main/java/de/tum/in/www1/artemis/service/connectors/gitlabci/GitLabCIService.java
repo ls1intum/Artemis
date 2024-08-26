@@ -150,7 +150,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
             projectApi.updateProject(project);
 
-            setRepositoryVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
+            setRepositoryVariableIfUnset(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
         }
         catch (GitLabApiException e) {
             throw new GitLabCIException("Error enabling CI for " + repositoryUri, e);
@@ -231,7 +231,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         return projectAccessToken.getToken();
     }
 
-    private void setRepositoryVariable(String repositoryPath, String key, String value) {
+    private void setRepositoryVariableIfUnset(String repositoryPath, String key, String value) {
         final ProjectApi projectApi = gitlab.getProjectApi();
         if (projectApi.getOptionalVariable(repositoryPath, key).isEmpty()) {
             try {
