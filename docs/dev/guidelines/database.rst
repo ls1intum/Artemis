@@ -1,8 +1,6 @@
-**********************
-Database Relationships
-**********************
-
-WORK IN PROGRESS
+********
+Database
+********
 
 1. Retrieving and Building Objects
 ==================================

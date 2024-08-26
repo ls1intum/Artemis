@@ -69,6 +69,7 @@ import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.compone
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 @NgModule({
     imports: [
@@ -122,6 +123,7 @@ import { HeaderCourseComponent } from 'app/overview/header-course.component';
         IrisModule,
         DetailModule,
         SubmissionResultStatusModule,
+        ArtemisMarkdownEditorModule,
     ],
     declarations: [
         CourseManagementComponent,

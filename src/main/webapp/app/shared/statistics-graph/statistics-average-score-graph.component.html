@@ -1,6 +1,6 @@
 <div class="row mb-3 d-flex justify-content-center">
     <div class="col-xl-1 d-flex flex-column">
-        <h3>{{ 'artemisApp.course.averageScore' | artemisTranslate }}</h3>
+        <h3 jhiTranslate="artemisApp.course.averageScore"></h3>
         <h4>{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage }}%</h4>
     </div>
     <div class="row col-xl-11 chart-row">
@@ -58,15 +58,15 @@
                         id="filter-dropdown-button"
                     >
                         <fa-icon [icon]="faFilter" />
-                        <span>{{
-                            'artemisApp.courseOverview.exerciseList.filter'
-                                | artemisTranslate: { num: exerciseTypeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }
-                        }}</span>
+                        <span
+                            jhiTranslate="artemisApp.courseOverview.exerciseList.filter"
+                            [translateValues]="{ num: exerciseTypeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }"
+                        ></span>
                     </button>
                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                         @if (exerciseTypeFilter.typeSet.size) {
                             <li>
-                                <b class="ms-2">{{ 'artemisApp.exercise-scores-chart.includeType' | artemisTranslate }}</b>
+                                <b class="ms-2" jhiTranslate="artemisApp.exercise-scores-chart.includeType"></b>
                             </li>
                         }
                         @for (type of exerciseTypeFilter.typeSet; track type) {
@@ -83,12 +83,12 @@
                             </li>
                         }
                         <li class="mt-1 mb-1">
-                            <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeIndividualCategories' | artemisTranslate }}</b>
+                            <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></b>
                         </li>
                         <li>
                             <label class="mb-1">
                                 <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="chartCategoryFilter.allCategoriesSelected" type="checkbox" />
-                                <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeAllCategories' | artemisTranslate }}</b>
+                                <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeAllCategories"></b>
                             </label>
                         </li>
                         @if (chartCategoryFilter.exercisesWithoutCategoriesPresent) {
@@ -100,7 +100,7 @@
                                         [checked]="chartCategoryFilter.includeExercisesWithNoCategory"
                                         type="checkbox"
                                     />
-                                    <span class="ms-2">{{ 'artemisApp.courseOverview.statistics.exercisesWithNoCategories' | artemisTranslate }}</span>
+                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.exercisesWithNoCategories"></span>
                                 </label>
                             </li>
                         }
