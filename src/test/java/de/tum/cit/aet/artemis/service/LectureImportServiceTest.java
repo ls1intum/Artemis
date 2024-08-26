@@ -71,6 +71,8 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         lectureImportService.importLecture(this.lecture1, this.course2, true);
 
+        this.course2 = courseRepository.findByIdWithLecturesElseThrow(course2.getId());
+
         assertThat(this.course2.getLectures()).hasSize(lectureCount + 1);
 
         // Find the imported lecture and fetch it with lecture units

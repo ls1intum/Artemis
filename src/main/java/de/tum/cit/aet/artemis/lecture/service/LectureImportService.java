@@ -4,8 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -39,23 +37,13 @@ public class LectureImportService {
 
     private final LectureRepository lectureRepository;
 
-    private final LectureUnitRepository lectureUnitRepository;
-
     private final AttachmentRepository attachmentRepository;
-
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
-
-    private final Optional<IrisSettingsRepository> irisSettingsRepository;
 
     private final LectureUnitImportService lectureUnitImportService;
 
-    public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository,
-            Optional<PyrisWebhookService> pyrisWebhookService, Optional<IrisSettingsRepository> irisSettingsRepository, LectureUnitImportService lectureUnitImportService) {
+    public LectureImportService(LectureRepository lectureRepository, AttachmentRepository attachmentRepository, LectureUnitImportService lectureUnitImportService) {
         this.lectureRepository = lectureRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
-        this.pyrisWebhookService = pyrisWebhookService;
-        this.irisSettingsRepository = irisSettingsRepository;
         this.lectureUnitImportService = lectureUnitImportService;
     }
 
@@ -81,6 +69,13 @@ public class LectureImportService {
 
         lecture = lectureRepository.save(lecture);
 
+        if (importLectureUnits) {
+            lectureUnitImportService.importLectureUnits(importedLecture, lecture);
+        }
+        else {
+            importedLecture.setLectureUnits(new ArrayList<>());
+        }
+
         log.debug("Importing attachments from lecture");
         Set<Attachment> attachments = new HashSet<>();
         for (Attachment attachment : importedLecture.getAttachments()) {
@@ -90,26 +85,6 @@ public class LectureImportService {
         }
         lecture.setAttachments(attachments);
         attachmentRepository.saveAll(attachments);
-
-        if (importLectureUnits) {
-            log.debug("Importing lecture units from lecture");
-            List<LectureUnit> lectureUnits = new ArrayList<>();
-            for (LectureUnit lectureUnit : importedLecture.getLectureUnits()) {
-                LectureUnit clonedLectureUnit = lectureUnitImportService.importLectureUnit(lectureUnit, lecture);
-                if (clonedLectureUnit != null) {
-                    clonedLectureUnit.setLecture(lecture);
-                    lectureUnits.add(clonedLectureUnit);
-                }
-            }
-            lecture.setLectureUnits(lectureUnits);
-            lectureUnitRepository.saveAll(lectureUnits);
-
-            // Send lectures to pyris
-            if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-                pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
-                        lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).map(lectureUnit -> (AttachmentUnit) lectureUnit).toList());
-            }
-        }
 
         // Save again to establish the ordered list relationship
         return lectureRepository.save(lecture);

@@ -134,7 +134,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         const importResults: ImportAllCourseCompetenciesResult = await modalRef.result;
         const courseTitle = importResults.course.title ?? '';
         try {
-            const importedCompetencies = await this.courseCompetencyApiService.importAllByCourseId(importResults.course.id!, importResults.courseCompetencyImportOptions);
+            const importedCompetencies = await this.courseCompetencyApiService.importAllByCourseId(this.courseId, importResults.courseCompetencyImportOptions);
             if (importedCompetencies.length > 0) {
                 this.alertService.success(`artemisApp.courseCompetency.importAll.success`, {
                     noOfCompetencies: importedCompetencies.length,

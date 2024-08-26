@@ -155,17 +155,10 @@ public class LearningObjectImportService {
             setAllDates(importedExercises, importedLectures, importedLectureUnits, importedCourseCompetencies, importOptions.referenceDate().get(), importOptions.isReleaseDate());
         }
 
-        if (!importedExercises.isEmpty()) {
-            exerciseRepository.saveAll(importedExercises);
-        }
-        if (!importedLectureUnits.isEmpty()) {
-            lectureUnitRepository.saveAll(importedLectureUnits);
-        }
-        if (!importedLectures.isEmpty()) {
-            lectureRepository.saveAll(importedLectures);
-        }
-
         courseCompetencyRepository.saveAll(importedCourseCompetencies);
+        exerciseRepository.saveAll(importedExercises);
+        lectureRepository.saveAll(importedLectures);
+        lectureUnitRepository.saveAll(importedLectureUnits);
     }
 
     private void importOrLoadExercises(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
@@ -245,21 +238,16 @@ public class LearningObjectImportService {
                 Lecture sourceLecture = sourceLectureUnit.getLecture();
 
                 Optional<Lecture> foundLecture = lectureRepository.findByTitleAndCourseIdWithLectureUnits(sourceLecture.getTitle(), courseToImportInto.getId());
-                Lecture importedLecture = foundLecture.orElseGet(() -> {
-                    Lecture lecture = lectureImportService.importLecture(sourceLecture, courseToImportInto, false);
-                    lecture.setLectureUnits(new ArrayList<>());
-                    return lecture;
-                });
+                Lecture importedLecture = foundLecture.orElseGet(() -> lectureImportService.importLecture(sourceLecture, courseToImportInto, false));
                 importedLectures.add(importedLecture);
 
                 Optional<LectureUnit> foundLectureUnit = lectureUnitRepository.findByNameAndCourseId(sourceLectureUnit.getName(), courseToImportInto.getId());
-                LectureUnit importedLectureUnit = foundLectureUnit.orElseGet(() -> lectureUnitImportService.importLectureUnit(sourceLectureUnit, importedLecture));
+                LectureUnit importedLectureUnit = foundLectureUnit.orElseGet(() -> lectureUnitImportService.importLectureUnit(sourceLectureUnit));
                 importedLectureUnits.add(importedLectureUnit);
 
                 importedLecture.getLectureUnits().add(importedLectureUnit);
                 importedLectureUnit.setLecture(importedLecture);
 
-                importedLectureUnit.getCompetencies().add(idToImportedCompetency.get(sourceCourseCompetency.getId()).competency());
                 idToImportedCompetency.get(sourceCourseCompetency.getId()).competency().getLectureUnits().add(importedLectureUnit);
             }
         }

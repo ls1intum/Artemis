@@ -4,6 +4,9 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,8 @@ import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -35,70 +40,104 @@ public class LectureUnitImportService {
 
     private final SlideSplitterService slideSplitterService;
 
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
+
+    private final Optional<IrisSettingsRepository> irisSettingsRepository;
+
     public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, FileService fileService,
-                                    SlideSplitterService slideSplitterService) {
+                                    SlideSplitterService slideSplitterService, Optional<PyrisWebhookService> pyrisWebhookService, Optional<IrisSettingsRepository> irisSettingsRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
+        this.pyrisWebhookService = pyrisWebhookService;
+        this.irisSettingsRepository = irisSettingsRepository;
+    }
+
+    /**
+     * This function imports the lecture units from the {@code importedLecture} and appends them to the {@code lecture}
+     *
+     * @param importedLecture The original lecture to be copied
+     * @param lecture         The new lecture to which the lecture units are appended
+     */
+    public void importLectureUnits(Lecture importedLecture, Lecture lecture) {
+        log.debug("Importing lecture units from lecture");
+        List<LectureUnit> lectureUnits = new ArrayList<>();
+        for (LectureUnit lectureUnit : importedLecture.getLectureUnits()) {
+            LectureUnit clonedLectureUnit = importLectureUnit(lectureUnit);
+            if (clonedLectureUnit != null) {
+                clonedLectureUnit.setLecture(lecture);
+                lectureUnits.add(clonedLectureUnit);
+            }
+        }
+        lecture.setLectureUnits(lectureUnits);
+        lectureUnitRepository.saveAll(lectureUnits);
+
+        // Send lectures to pyris
+        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
+            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
+                    lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).map(lectureUnit -> (AttachmentUnit) lectureUnit).toList());
+        }
     }
 
     /**
      * This function imports the {@code importedLectureUnit} and returns it
      *
      * @param importedLectureUnit The original lecture unit to be copied
-     * @param newLecture          The new lecture to which the lecture units are appended
      * @return The imported lecture unit
      */
-    public LectureUnit importLectureUnit(final LectureUnit importedLectureUnit, final Lecture newLecture) {
+    public LectureUnit importLectureUnit(final LectureUnit importedLectureUnit) {
         log.debug("Creating a new LectureUnit from lecture unit {}", importedLectureUnit);
 
-        if (importedLectureUnit instanceof TextUnit importedTextUnit) {
-            TextUnit textUnit = new TextUnit();
-            textUnit.setName(importedTextUnit.getName());
-            textUnit.setReleaseDate(importedTextUnit.getReleaseDate());
-            textUnit.setContent(importedTextUnit.getContent());
-            return textUnit;
-        }
-        else if (importedLectureUnit instanceof VideoUnit importedVideoUnit) {
-            VideoUnit videoUnit = new VideoUnit();
-            videoUnit.setName(importedVideoUnit.getName());
-            videoUnit.setReleaseDate(importedVideoUnit.getReleaseDate());
-            videoUnit.setDescription(importedVideoUnit.getDescription());
-            videoUnit.setSource(importedVideoUnit.getSource());
-            return videoUnit;
-        }
-        else if (importedLectureUnit instanceof AttachmentUnit importedAttachmentUnit) {
-            // Create and save the attachment unit, then the attachment itself, as the id is needed for file handling
-            AttachmentUnit attachmentUnit = new AttachmentUnit();
-            attachmentUnit.setDescription(importedAttachmentUnit.getDescription());
-            attachmentUnit.setLecture(newLecture);
-            lectureUnitRepository.save(attachmentUnit);
+        switch (importedLectureUnit) {
+            case TextUnit importedTextUnit -> {
+                TextUnit textUnit = new TextUnit();
+                textUnit.setName(importedTextUnit.getName());
+                textUnit.setReleaseDate(importedTextUnit.getReleaseDate());
+                textUnit.setContent(importedTextUnit.getContent());
 
-            Attachment attachment = importAttachment(attachmentUnit.getId(), importedAttachmentUnit.getAttachment());
-            attachment.setAttachmentUnit(attachmentUnit);
-            attachmentRepository.save(attachment);
-            if (attachment.getLink().endsWith(".pdf")) {
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(attachmentUnit);
+                return lectureUnitRepository.save(textUnit);
             }
-            attachmentUnit.setAttachment(attachment);
-            return attachmentUnit;
-        }
-        else if (importedLectureUnit instanceof OnlineUnit importedOnlineUnit) {
-            OnlineUnit onlineUnit = new OnlineUnit();
-            onlineUnit.setName(importedOnlineUnit.getName());
-            onlineUnit.setReleaseDate(importedOnlineUnit.getReleaseDate());
-            onlineUnit.setDescription(importedOnlineUnit.getDescription());
-            onlineUnit.setSource(importedOnlineUnit.getSource());
+            case VideoUnit importedVideoUnit -> {
+                VideoUnit videoUnit = new VideoUnit();
+                videoUnit.setName(importedVideoUnit.getName());
+                videoUnit.setReleaseDate(importedVideoUnit.getReleaseDate());
+                videoUnit.setDescription(importedVideoUnit.getDescription());
+                videoUnit.setSource(importedVideoUnit.getSource());
 
-            return onlineUnit;
+                return lectureUnitRepository.save(videoUnit);
+            }
+            case AttachmentUnit importedAttachmentUnit -> {
+                // Create and save the attachment unit, then the attachment itself, as the id is needed for file handling
+                AttachmentUnit attachmentUnit = new AttachmentUnit();
+                attachmentUnit.setDescription(importedAttachmentUnit.getDescription());
+                attachmentUnit = lectureUnitRepository.save(attachmentUnit);
+
+                Attachment attachment = importAttachment(attachmentUnit.getId(), importedAttachmentUnit.getAttachment());
+                attachment.setAttachmentUnit(attachmentUnit);
+                attachmentRepository.save(attachment);
+                if (attachment.getLink().endsWith(".pdf")) {
+                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(attachmentUnit);
+                }
+                attachmentUnit.setAttachment(attachment);
+                return attachmentUnit;
+            }
+            case OnlineUnit importedOnlineUnit -> {
+                OnlineUnit onlineUnit = new OnlineUnit();
+                onlineUnit.setName(importedOnlineUnit.getName());
+                onlineUnit.setReleaseDate(importedOnlineUnit.getReleaseDate());
+                onlineUnit.setDescription(importedOnlineUnit.getDescription());
+                onlineUnit.setSource(importedOnlineUnit.getSource());
+
+                return lectureUnitRepository.save(onlineUnit);
+            }
+            case ExerciseUnit ignored -> {
+                // TODO: Import exercises and link them to the exerciseUnit
+                // We have a dedicated exercise import system, so this is left out for now
+                return null;
+            }
+            default -> throw new IllegalArgumentException("Unknown lecture unit type: " + importedLectureUnit.getClass());
         }
-        else if (importedLectureUnit instanceof ExerciseUnit) {
-            // TODO: Import exercises and link them to the exerciseUnit
-            // We have a dedicated exercise import system, so this is left out for now
-            return null;
-        }
-        return null;
     }
 
     /**
