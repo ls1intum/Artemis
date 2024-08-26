@@ -29,11 +29,13 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.vcstokens.VcsAccessLog;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.VcsAccessLogRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
@@ -46,6 +48,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.programming.RepositoryService;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
+import de.tum.in.www1.artemis.web.rest.dto.VcsAccessLogDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -79,11 +82,13 @@ public class ProgrammingExerciseParticipationResource {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final VcsAccessLogRepository vcsAccessLogRepository;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            StudentExamRepository studentExamRepository) {
+            StudentExamRepository studentExamRepository, VcsAccessLogRepository vcsAccessLogRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -95,6 +100,7 @@ public class ProgrammingExerciseParticipationResource {
         this.participationAuthCheckService = participationAuthCheckService;
         this.repositoryService = repositoryService;
         this.studentExamRepository = studentExamRepository;
+        this.vcsAccessLogRepository = vcsAccessLogRepository;
     }
 
     /**
@@ -306,6 +312,23 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
+     * GET /programming-exercise-participations/{participationId}/vcs-access-log :
+     * Here we check if the user is least an instructor for the exercise. If true the user can have access to the vcs access log of any participation of the exercise.
+     *
+     * @param participationId the id of the participation for which to retrieve the vcs access log
+     * @return the ResponseEntity with status 200 (OK) and with body containing a list of vcsAccessLogDTOs of the participation
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/vcs-access-log")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForParticipationRepo(@PathVariable long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.findAllByParticipationId(participationId);
+        var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
+        return ResponseEntity.ok(vcsAccessLogDTOs);
+    }
+
+    /**
      * GET /programming-exercise/{exerciseID}/commit-history/{repositoryType} : Get the commit history of a programming exercise repository. The repository type can be TEMPLATE or
      * SOLUTION or TESTS.
      * Here we check is at least a teaching assistant for the exercise.
@@ -390,6 +413,32 @@ public class ProgrammingExerciseParticipationResource {
         else {
             throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
         }
+    }
+
+    /**
+     * Retrieves the VCS access logs for the specified programming exercise's template or solution participation
+     *
+     * @param exerciseId     the ID of the programming exercise
+     * @param repositoryType the type of repository (either TEMPLATE or SOLUTION) for which to retrieve the logs.
+     * @return a {@link ResponseEntity} containing a list of {@link VcsAccessLogDTO} objects representing
+     *         the VCS access logs.
+     * @throws BadRequestAlertException if the repository type is invalid
+     */
+    @GetMapping("programming-exercise/{exerciseId}/vcs-access-log/{repositoryType}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForExerciseRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) {
+
+        if (repositoryType != RepositoryType.TEMPLATE && repositoryType != RepositoryType.SOLUTION) {
+            throw new BadRequestAlertException("Can only get vcs access log from template and assignment repositories", ENTITY_NAME, "incorrect repositoryType");
+        }
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+
+        var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
+
+        List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+        var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
+        return ResponseEntity.ok(vcsAccessLogDTOs);
     }
 
     /**

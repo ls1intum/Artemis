@@ -76,4 +76,32 @@ public class VcsAccessLog extends DomainObject {
     public void setCommitHash(String commitHash) {
         this.commitHash = commitHash;
     }
+
+    public User getUser() {
+        return user;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getCommitHash() {
+        return commitHash;
+    }
+
+    public ZonedDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public AuthenticationMechanism getAuthenticationMechanism() {
+        return authenticationMechanism;
+    }
+
+    public RepositoryActionType getRepositoryActionType() {
+        return repositoryActionType;
+    }
 }

@@ -8,6 +8,7 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable, map, tap } from 'rxjs';
 import { CommitInfo } from 'app/entities/programming-submission.model';
+import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number, withSubmission: boolean) => Observable<Result | undefined>;
@@ -143,6 +144,27 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      */
     retrieveCommitsInfoForParticipation(participationId: number): Observable<CommitInfo[]> {
         return this.http.get<CommitInfo[]>(`${this.resourceUrlParticipations}${participationId}/commits-info`);
+    }
+
+    /**
+     * Get the repository files with content for a given participation id at a specific commit hash.
+     * The current user needs to be at least a instructor in the course of the participation.
+     * @param participationId of the participation to get the commit infos for
+     */
+    getVcsAccessLogForParticipation(participationId: number): Observable<VcsAccessLogDTO[] | undefined> {
+        return this.http
+            .get<VcsAccessLogDTO[]>(`${this.resourceUrlParticipations}${participationId}/vcs-access-log`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<VcsAccessLogDTO[]>) => res.body ?? undefined));
+    }
+
+    getVcsAccessLogForExerciseRepository(exerciseId: number, repositoryType: string) {
+        const params: { [key: string]: number | string } = {};
+        if (repositoryType) {
+            params['repositoryType'] = repositoryType;
+        }
+        return this.http
+            .get<VcsAccessLogDTO[]>(`${this.resourceUrl}${exerciseId}/vcs-access-log/${repositoryType}`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<VcsAccessLogDTO[]>) => res.body ?? undefined));
     }
 
     /**
