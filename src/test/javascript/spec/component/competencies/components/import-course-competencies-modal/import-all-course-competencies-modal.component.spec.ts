@@ -74,7 +74,7 @@ describe('ImportAllCourseCompetenciesModalComponent', () => {
         expect(closeModalSpy).toHaveBeenCalledWith({
             course: course,
             courseCompetencyImportOptions: {
-                sourceCourseId: 1,
+                sourceCourseId: courseId,
                 importExercises: false,
                 importLectures: false,
                 importRelations: false,
