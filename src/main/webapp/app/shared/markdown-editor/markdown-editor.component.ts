@@ -41,7 +41,7 @@ import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/in
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
-    SMALL = 200,
+    SMALL = 300,
     MEDIUM = 500,
     LARGE = 1000,
     EXTRA_LARGE = 1500,
