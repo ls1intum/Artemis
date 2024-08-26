@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_THEIA;
 
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +22,6 @@ public class TheiaConfigurationResource {
 
     private final TheiaConfiguration theiaConfiguration;
 
-    @Autowired
     public TheiaConfigurationResource(TheiaConfiguration theiaConfiguration) {
         this.theiaConfiguration = theiaConfiguration;
     }
