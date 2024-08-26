@@ -40,6 +40,7 @@ export class MetricsComponent implements OnInit {
             this.threads = threadDump.threads;
             this.updatingMetrics = false;
             this.changeDetector.markForCheck();
+            console.log(metrics);
         });
     }
 
@@ -58,4 +59,6 @@ export class MetricsComponent implements OnInit {
     metricsKeyExistsAndObjectNotEmpty(key: keyof Metrics): boolean {
         return Boolean(this.metrics?.[key] && JSON.stringify(this.metrics[key]) !== '{}');
     }
+
+    protected readonly console = console;
 }

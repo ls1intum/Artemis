@@ -16,4 +16,13 @@ export class JvmMemoryComponent {
      * boolean field saying if the metrics are in the process of being updated
      */
     @Input() updating?: boolean;
+
+    fun2() {
+        for (const i in this.jvmMemoryMetrics) {
+            console.log(i);
+        }
+        console.log(Object.keys(this.jvmMemoryMetrics!));
+    }
+
+    protected readonly Object = Object;
 }
