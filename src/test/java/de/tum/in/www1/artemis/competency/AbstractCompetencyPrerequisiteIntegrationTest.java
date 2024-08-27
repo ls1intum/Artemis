@@ -91,7 +91,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     protected Course course2;
 
-    protected CourseCompetency competency;
+    protected CourseCompetency courseCompetency;
 
     protected Lecture lecture;
 
@@ -114,16 +114,15 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
         // creating course
         course = courseUtilService.createCourse();
-
         course2 = courseUtilService.createCourse();
 
-        competency = createCourseCompetencyForCourse.apply(course);
+        courseCompetency = createCourseCompetencyForCourse.apply(course);
         lecture = createLecture(course);
 
-        textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(competency), false);
-        teamTextExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(competency), true);
+        textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(courseCompetency), false);
+        teamTextExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(courseCompetency), true);
 
-        creatingLectureUnitsOfLecture(competency);
+        creatingLectureUnitsOfLecture(courseCompetency);
     }
 
     CompetencyRelation createRelation(CourseCompetency tail, CourseCompetency head, RelationType type) {
@@ -191,23 +190,23 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void shouldReturnCompetencyForStudent() throws Exception {
-        CourseCompetency response = getCall(course.getId(), competency.getId(), HttpStatus.OK);
-        assertThat(response.getId()).isEqualTo(competency.getId());
+        CourseCompetency response = getCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
+        assertThat(response.getId()).isEqualTo(courseCompetency.getId());
     }
 
     // Test
     void testShouldOnlySendUserSpecificData(String TEST_PREFIX) throws Exception {
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 1);
+        competencyProgressUtilService.createCompetencyProgress(courseCompetency, student1, 0, 1);
 
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        competencyProgressUtilService.createCompetencyProgress(competency, student2, 10, 1);
+        competencyProgressUtilService.createCompetencyProgress(courseCompetency, student2, 10, 1);
 
         final var textUnit = textUnitRepository.findById(textUnitOfLectureOne.getId()).get();
         lectureUtilService.completeLectureUnitForUser(textUnit, student2);
 
-        CourseCompetency response = getCall(course.getId(), competency.getId(), HttpStatus.OK);
-        assertThat(response.getId()).isEqualTo(competency.getId());
+        CourseCompetency response = getCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
+        assertThat(response.getId()).isEqualTo(courseCompetency.getId());
 
         // only progress of student1 is fetched
         assertThat(response.getUserProgress()).hasSize(1);
@@ -218,12 +217,12 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void shouldReturnForbiddenForUserNotInCourse() throws Exception {
-        getCall(course.getId(), competency.getId(), HttpStatus.FORBIDDEN);
+        getCall(course.getId(), courseCompetency.getId(), HttpStatus.FORBIDDEN);
     }
 
     // Test
     void shouldReturnBadRequestForWrongCourse() throws Exception {
-        getCall(course2.getId(), competency.getId(), HttpStatus.BAD_REQUEST);
+        getCall(course2.getId(), courseCompetency.getId(), HttpStatus.BAD_REQUEST);
     }
 
     abstract List<? extends CourseCompetency> getAllCall(long courseId, HttpStatus expectedStatus) throws Exception;
@@ -245,7 +244,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
         List<? extends CourseCompetency> competenciesOfCourse = getAllCall(course.getId(), HttpStatus.OK);
 
-        assertThat(competenciesOfCourse).anyMatch(c -> c.getId().equals(competency.getId()));
+        assertThat(competenciesOfCourse).anyMatch(c -> c.getId().equals(courseCompetency.getId()));
         assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().orElseThrow().getLectureUnits()).isEmpty();
     }
 
@@ -258,15 +257,15 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void shouldDeleteCompetencyWhenInstructor() throws Exception {
-        deleteCall(course.getId(), competency.getId(), HttpStatus.OK);
-        getCall(course.getId(), competency.getId(), HttpStatus.NOT_FOUND);
+        deleteCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
+        getCall(course.getId(), courseCompetency.getId(), HttpStatus.NOT_FOUND);
     }
 
     // Test
     void shouldDeleteCompetencyAndRelations(CourseCompetency competency2) throws Exception {
-        createRelation(competency, competency2, RelationType.EXTENDS);
+        createRelation(courseCompetency, competency2, RelationType.EXTENDS);
 
-        deleteCall(course.getId(), competency.getId(), HttpStatus.OK);
+        deleteCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
         assertThat(relations).isEmpty();
@@ -274,17 +273,17 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void shouldReturnForbiddenForInstructorOfOtherCourseForDelete() throws Exception {
-        deleteCall(course.getId(), competency.getId(), HttpStatus.FORBIDDEN);
+        deleteCall(course.getId(), courseCompetency.getId(), HttpStatus.FORBIDDEN);
     }
 
     // Test
     void deleteCourseShouldAlsoDeleteCompetencyAndRelations(CourseCompetency competency2) throws Exception {
-        CompetencyRelation relation = createRelation(competency, competency2, RelationType.EXTENDS);
+        CompetencyRelation relation = createRelation(courseCompetency, competency2, RelationType.EXTENDS);
         Prerequisite prerequisite = prerequisiteUtilService.createPrerequisite(course);
 
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
-        assertThat(courseCompetencyRepository.existsById(competency.getId())).isFalse();
+        assertThat(courseCompetencyRepository.existsById(courseCompetency.getId())).isFalse();
         assertThat(courseCompetencyRepository.existsById(competency2.getId())).isFalse();
         assertThat(competencyRelationRepository.existsById(relation.getId())).isFalse();
         assertThat(prerequisiteRepository.existsById(prerequisite.getId())).isFalse();
@@ -294,14 +293,14 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
     void deleteLectureShouldUpdateCompetency() throws Exception {
         request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
 
-        CourseCompetency result = getCall(course.getId(), competency.getId(), HttpStatus.OK);
+        CourseCompetency result = getCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
         assertThat(result.getLectureUnits()).isEmpty();
     }
 
     // Test
     void deleteLectureUnitShouldUpdateCompetency() throws Exception {
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + textUnitOfLectureOne.getId(), HttpStatus.OK);
-        CourseCompetency result = getCall(course.getId(), competency.getId(), HttpStatus.OK);
+        CourseCompetency result = getCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
         assertThat(result.getLectureUnits()).map(LectureUnit::getId).containsExactly(attachmentUnitOfLectureOne.getId());
     }
 
@@ -310,11 +309,11 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
     // Test
     void shouldUpdateCompetency() throws Exception {
         LectureUnit textLectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(textUnitOfLectureOne.getId());
-        competency.setTitle("Updated");
-        competency.removeLectureUnit(textLectureUnit);
-        competency.setDescription("Updated Description");
+        courseCompetency.setTitle("Updated");
+        courseCompetency.removeLectureUnit(textLectureUnit);
+        courseCompetency.setDescription("Updated Description");
 
-        CourseCompetency result = updateCall(course.getId(), competency, HttpStatus.OK);
+        CourseCompetency result = updateCall(course.getId(), courseCompetency, HttpStatus.OK);
 
         assertThat(result.getTitle()).isEqualTo("Updated");
         assertThat(result.getDescription()).isEqualTo("Updated Description");
@@ -323,8 +322,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void shouldReturnBadRequestForCompetencyWithoutId() throws Exception {
-        competency.setId(null);
-        updateCall(course.getId(), competency, HttpStatus.BAD_REQUEST);
+        courseCompetency.setId(null);
+        updateCall(course.getId(), courseCompetency, HttpStatus.BAD_REQUEST);
     }
 
     // Test
@@ -392,14 +391,14 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void shouldImportCompetency() throws Exception {
-        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(competency.getId()), Optional.empty(), false, false, false, Optional.empty(), false);
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(courseCompetency.getId()), Optional.empty(), false, false, false, Optional.empty(), false);
         CourseCompetency importedCompetency = importCall(course2.getId(), importOptions, HttpStatus.CREATED);
 
         assertThat(courseCompetencyRepository.findById(importedCompetency.getId())).isNotEmpty();
-        assertThat(importedCompetency.getTitle()).isEqualTo(competency.getTitle());
-        assertThat(importedCompetency.getDescription()).isEqualTo(competency.getDescription());
-        assertThat(importedCompetency.getMasteryThreshold()).isEqualTo(competency.getMasteryThreshold());
-        assertThat(importedCompetency.getTaxonomy()).isEqualTo(competency.getTaxonomy());
+        assertThat(importedCompetency.getTitle()).isEqualTo(courseCompetency.getTitle());
+        assertThat(importedCompetency.getDescription()).isEqualTo(courseCompetency.getDescription());
+        assertThat(importedCompetency.getMasteryThreshold()).isEqualTo(courseCompetency.getMasteryThreshold());
+        assertThat(importedCompetency.getTaxonomy()).isEqualTo(courseCompetency.getTaxonomy());
         assertThat(importedCompetency.getExercises()).isEmpty();
         assertThat(importedCompetency.getLectureUnits()).isEmpty();
         assertThat(importedCompetency.getUserProgress()).isEmpty();
@@ -412,19 +411,22 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         textExercise.setReleaseDate(releaseDate);
         exerciseRepository.save(textExercise);
 
-        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(competency.getId()), Optional.empty(), false, true, true, Optional.empty(), false);
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(courseCompetency.getId()), Optional.empty(), false, true, true, Optional.empty(), false);
         importCall(course2.getId(), importOptions, HttpStatus.CREATED);
 
         course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
-        assertThat(course2.getExercises()).hasSize(1);
-        assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(releaseDate, HalfSecond());
+        assertThat(course2.getExercises()).hasSize(2);
         assertThat(course2.getLectures()).hasSize(1);
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getName()).isEqualTo(textUnitOfLectureOne.getName());
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(2);
     }
 
     // Test
     void shouldImportExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        teamTextExercise.setCompetencies(null);
+        exerciseRepository.save(teamTextExercise);
+        attachmentUnitOfLectureOne.setCompetencies(null);
+        attachmentUnitRepository.save(attachmentUnitOfLectureOne);
+
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
         textExercise.setReleaseDate(releaseDate);
         exerciseRepository.save(textExercise);
@@ -436,12 +438,12 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
         ZonedDateTime releaseDateTextUnit = ZonedDateTime.of(2022, 7, 10, 20, 0, 0, 0, ZoneId.of("UTC"));
         long releaseDateDiff = releaseDateTextUnit.toEpochSecond() - releaseDate.toEpochSecond();
-        textUnitOfLectureOne.setReleaseDate(releaseDate);
+        textUnitOfLectureOne.setReleaseDate(releaseDateTextUnit);
         textUnitRepository.save(textUnitOfLectureOne);
 
         ZonedDateTime newReleaseDate = ZonedDateTime.of(2024, 7, 14, 8, 0, 0, 0, ZoneId.of("UTC"));
-        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(competency.getId()), Optional.empty(), false, true, true, Optional.of(newReleaseDate),
-                true);
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(courseCompetency.getId()), Optional.empty(), false, true, true,
+                Optional.of(newReleaseDate), true);
         importCall(course2.getId(), importOptions, HttpStatus.CREATED);
 
         course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
@@ -537,6 +539,52 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         // relations should be empty when not importing them
         assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
         assertThat(competencyDTOList.get(1).tailRelations()).isNull();
+    }
+
+    // Test
+    void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course.getId()), false, true, true, Optional.empty(), false);
+        importAllCall(course2.getId(), importOptions, HttpStatus.CREATED);
+
+        course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
+        assertThat(course2.getExercises()).hasSize(2);
+        assertThat(course2.getLectures()).hasSize(1);
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(2);
+    }
+
+    // Test
+    void shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        teamTextExercise.setCompetencies(null);
+        exerciseRepository.save(teamTextExercise);
+        attachmentUnitOfLectureOne.setCompetencies(null);
+        attachmentUnitRepository.save(attachmentUnitOfLectureOne);
+
+        ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
+        textExercise.setReleaseDate(releaseDate);
+        exerciseRepository.save(textExercise);
+
+        ZonedDateTime visibleDate = ZonedDateTime.of(2022, 7, 10, 14, 0, 0, 0, ZoneId.of("UTC"));
+        long visibleDateDiff = visibleDate.toEpochSecond() - releaseDate.toEpochSecond();
+        lecture.setVisibleDate(visibleDate);
+        lectureRepository.save(lecture);
+
+        ZonedDateTime releaseDateTextUnit = ZonedDateTime.of(2022, 7, 10, 20, 0, 0, 0, ZoneId.of("UTC"));
+        long releaseDateDiff = releaseDateTextUnit.toEpochSecond() - releaseDate.toEpochSecond();
+        textUnitOfLectureOne.setReleaseDate(releaseDateTextUnit);
+        textUnitRepository.save(textUnitOfLectureOne);
+
+        ZonedDateTime newReleaseDate = ZonedDateTime.of(2024, 7, 14, 8, 0, 0, 0, ZoneId.of("UTC"));
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course.getId()), false, true, true, Optional.of(newReleaseDate), true);
+        importAllCall(course2.getId(), importOptions, HttpStatus.CREATED);
+
+        course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
+        assertThat(course2.getExercises()).hasSize(1);
+        assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(newReleaseDate, HalfSecond());
+        assertThat(course2.getLectures()).hasSize(1);
+        assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
+                .isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
     }
 
     // Test

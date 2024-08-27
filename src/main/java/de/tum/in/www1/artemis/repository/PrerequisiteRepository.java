@@ -23,7 +23,8 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
             FROM Prerequisite p
                 LEFT JOIN FETCH p.exercises
                 LEFT JOIN FETCH p.lectureUnits lu
-                LEFT JOIN FETCH lu.lecture
+                LEFT JOIN FETCH lu.lecture l
+                LEFT JOIN FETCH l.attachments
             WHERE p.course.id = :courseId
             """)
     Set<Prerequisite> findAllForCourseWithExercisesAndLectureUnitsAndLectures(@Param("courseId") long courseId);
