@@ -1,7 +1,7 @@
 import { ArtemisTestModule } from '../../test.module';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -22,6 +22,7 @@ describe('ThemeSwitchComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ThemeSwitchComponent);
                 themeService = TestBed.inject(ThemeService);
+                fixture.componentRef.setInput('popoverPlacement', ['bottom']);
                 component = fixture.componentInstance;
                 // @ts-ignore
                 component.popover = { open: jest.fn(), close: jest.fn() };
@@ -30,18 +31,15 @@ describe('ThemeSwitchComponent', () => {
 
     afterEach(() => jest.restoreAllMocks());
 
-    it('oninit: subscribe to theme service', fakeAsync(() => {
-        const subscribeSpy = jest.spyOn(themeService, 'getCurrentThemeObservable');
-
-        component.ngOnInit();
-        expect(subscribeSpy).toHaveBeenCalledOnce();
-    }));
-
     it('theme toggles correctly', fakeAsync(() => {
+        const applyThemeSpy = jest.spyOn(themeService, 'applyTheme');
+
         component.ngOnInit();
         component.toggleTheme();
-        expect(component.animate).toBeFalse();
-        expect(component.openPopupAfterNextChange).toBeTrue();
+
+        expect(applyThemeSpy).toHaveBeenCalledWith(Theme.DARK);
+        expect(component.animate()).toBeFalse();
+        expect(component.openPopupAfterNextChange()).toBeTrue();
 
         tick();
 
@@ -51,19 +49,17 @@ describe('ThemeSwitchComponent', () => {
     }));
 
     it('os sync toggles correctly', fakeAsync(() => {
+        const applyThemeSpy = jest.spyOn(themeService, 'applyTheme');
+
         component.ngOnInit();
         component.toggleSynced();
 
-        tick();
-
-        expect(component.isSynced).toBeFalse();
+        expect(applyThemeSpy).toHaveBeenCalledWith(Theme.LIGHT);
+        expect(component.isSyncedWithOS()).toBeFalse();
         component.toggleSynced();
 
-        tick();
-
-        expect(component.isSynced).toBeTrue();
-
-        flush();
+        expect(applyThemeSpy).toHaveBeenCalledWith(undefined);
+        expect(component.isSyncedWithOS()).toBeTrue();
     }));
 
     it('opens and closes the popover', fakeAsync(() => {
@@ -83,9 +79,9 @@ describe('ThemeSwitchComponent', () => {
     }));
 
     function expectSwitchToDark() {
-        expect(component.isDark).toBeTrue();
-        expect(component.animate).toBeTrue();
-        expect(component.openPopupAfterNextChange).toBeFalse();
+        expect(component.isDarkTheme()).toBeTrue();
+        expect(component.animate()).toBeTrue();
+        expect(component.openPopupAfterNextChange()).toBeFalse();
 
         tick(250);
 

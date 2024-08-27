@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { PlacementArray } from '@ng-bootstrap/ng-bootstrap/util/positioning';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { Subscription, delay, fromEvent, timer } from 'rxjs';
+import { Subscription, delay, filter, fromEvent, tap, timer } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { toObservable } from '@angular/core/rxjs-interop';
@@ -38,14 +38,13 @@ export class ThemeSwitchComponent implements OnInit, OnDestroy {
 
     private closeTimerSubscription: Subscription | undefined;
     private reopenPopupSubscription = toObservable(this.themeService.currentTheme)
-        .pipe(delay(250))
-        .subscribe(() => {
-            this.animate.set(true);
-            if (this.openPopupAfterNextChange) {
-                this.openPopupAfterNextChange.set(false);
-                this.openPopover();
-            }
-        });
+        .pipe(
+            tap(() => this.animate.set(true)),
+            filter(() => this.openPopupAfterNextChange()),
+            tap(() => this.openPopupAfterNextChange.set(false)),
+            delay(250),
+        )
+        .subscribe(() => this.openPopover());
 
     ngOnInit() {
         // Workaround as we can't dynamically change the "autoClose" property on popovers
