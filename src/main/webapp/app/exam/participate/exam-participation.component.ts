@@ -63,6 +63,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILEUPLOAD = ExerciseType.FILE_UPLOAD;
 
+    // needed for recalculation of exam content height
+    readonly EXAM_HEIGHT_OFFSET = 88;
+
     courseId: number;
     examId: number;
     testRunId: number;
@@ -495,6 +498,26 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Reset the visited pages array so ngOnInit will be called for only the active page
             this.resetPageComponentVisited(this.exerciseIndex);
         }
+    }
+
+    /**
+     * Returns whether the student failed to submit on time. In this case the end page is adapted.
+     */
+    get studentFailedToSubmit(): boolean {
+        if (this.testRunId) {
+            return false;
+        }
+        let individualStudentEndDate;
+        if (this.exam.testExam) {
+            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
+                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
+            } else {
+                return false;
+            }
+        } else {
+            individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
+        }
+        return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 
     /**
@@ -958,5 +981,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const exercise = this.studentExam.exercises![index];
             exercise.problemStatement = event.problemStatement;
         }
+    }
+
+    /**
+     * Updates the current exam height offset property to recalculate the height of exam sidebar and sidebar content
+     * @param newHeight New exam bar height calculated based on the window resizements
+     */
+    updateHeight(newHeight: number) {
+        document.documentElement.style.setProperty('--exam-height-offset', `${newHeight + this.EXAM_HEIGHT_OFFSET}px`);
     }
 }

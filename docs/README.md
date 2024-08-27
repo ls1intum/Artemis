@@ -60,11 +60,11 @@ RtD will build and deploy changes automatically.
 You can install Sphinx using `pip` or choose a system-wide installation instead.
 When using pip, consider using [Python virtual environments].
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt --break-system-packages
 ```
 or
 ```bash
-pip3 install -r requirements.txt
+pip3 install -r requirements.txt --break-system-packages
 ```
 The [Installing Sphinx] documentation explains more install options.
 For macOS, it is recommended to install it using homebrew:

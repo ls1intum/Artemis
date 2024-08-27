@@ -2,17 +2,27 @@
     <div
         #wrapper
         class="markdown-editor-wrapper"
-        [style.overflow]="inPreviewMode ? 'auto' : 'hidden'"
-        [style.height.px]="inPreviewMode ? undefined : targetWrapperHeight"
+        [style.overflow]="inEditMode ? 'visible' : 'auto'"
+        [style.height.px]="inEditMode ? targetWrapperHeight : undefined"
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
+        [style.min-height.px]="minWrapperHeight"
     >
         <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
-            <!-- TODO if show edit -->
-            <ng-container ngbNavItem="editor_edit">
-                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
+            <ng-container [ngbNavItem]="TAB_EDIT">
+                @if (showEditButton) {
+                    <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
+                }
                 <ng-template ngbNavContent>
-                    <div class="markdown-editor markdown-editor-wrapper d-flex flex-column">
-                        <jhi-monaco-editor class="h-100" [shrinkToFit]="false" [stickyScroll]="false" (textChanged)="onTextChanged($event)" (drop)="onFileDrop($event)" />
+                    <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': inEditMode, 'd-none': !inEditMode }">
+                        <jhi-monaco-editor
+                            class="h-100"
+                            [shrinkToFit]="false"
+                            [stickyScroll]="false"
+                            (textChanged)="onTextChanged($event)"
+                            (contentHeightChanged)="onContentHeightChanged($event)"
+                            (drop)="onFileDrop($event)"
+                            (onBlurEditor)="onBlurEditor.emit()"
+                        />
                         @if (enableFileUpload) {
                             <div class="d-flex" #fileUploadFooter>
                                 <input
@@ -40,14 +50,31 @@
                     </div>
                 </ng-template>
             </ng-container>
-            <ng-container ngbNavItem="editor_preview">
-                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
+            <ng-container [ngbNavItem]="TAB_VISUAL">
+                @if (showVisualButton) {
+                    <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" jhiTranslate="entity.action.visual"></a>
+                }
                 <ng-template ngbNavContent>
-                    <ng-content class="overflow-auto" select="[#previewMonaco]" />
-                    <!-- TODO preview handling for other exercise types -->
+                    <div class="mt-1 mb-2 mx-2 overflow-auto">
+                        <ng-content select="[#visual]"></ng-content>
+                    </div>
                 </ng-template>
             </ng-container>
-            @if (!inPreviewMode) {
+            <ng-container [ngbNavItem]="TAB_PREVIEW">
+                @if (showPreviewButton) {
+                    <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
+                }
+                <ng-template ngbNavContent>
+                    <div class="mt-1 mb-2 mx-2 overflow-auto">
+                        <ng-content class="overflow-auto p-1" select="[#previewMonaco]">
+                            @if (showDefaultPreview) {
+                                <div class="p-0 m-0 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml"></div>
+                            }
+                        </ng-content>
+                    </div>
+                </ng-template>
+            </ng-container>
+            @if (inEditMode) {
                 <ng-container ngbNavItem>
                     <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
                         <!-- Standard -->
@@ -58,10 +85,10 @@
                         @if (displayedActions.header.length > 0) {
                             <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
                                 <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
-                                    <span [jhiTranslate]="headerActions.translationKey"></span>
+                                    <span [jhiTranslate]="headerActions!.translationKey"></span>
                                 </button>
                                 <div class="dropdown-menu" ngbDropdownMenu>
-                                    @for (action of headerActions.actions; track action.id) {
+                                    @for (action of displayedActions.header; track action.id) {
                                         <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor()">
                                             <span [jhiTranslate]="action.translationKey"></span>
                                         </button>
@@ -98,6 +125,82 @@
                                 </div>
                             </div>
                         }
+                        <!-- Special case: Lecture attachment reference. -->
+                        @if (displayedActions.lecture) {
+                            <button [matMenuTriggerFor]="subMenuLecture" type="button" class="btn btn-sm py-0 m-0">
+                                <span [jhiTranslate]="displayedActions.lecture.translationKey"></span>
+                                <fa-icon [icon]="faAngleDown" class="ms-1" />
+                            </button>
+                            <mat-menu #subMenuLecture="matMenu" type="button">
+                                @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
+                                    <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
+                                        {{ lecture.title }}
+                                    </button>
+                                    <mat-menu #lectureMenuUnits="matMenu" type="button">
+                                        <button
+                                            class="border-bottom ps-1 me-1"
+                                            mat-menu-item
+                                            (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })"
+                                            type="button"
+                                        >
+                                            {{ lecture.title }}
+                                        </button>
+                                        @for (unit of lecture.attachmentUnits; track unit.id) {
+                                            <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
+                                                <span>{{ unit.name }}</span>
+                                            </button>
+                                            <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
+                                                <button
+                                                    class="border-bottom ps-1 me-1"
+                                                    mat-menu-item
+                                                    (click)="
+                                                        displayedActions.lecture.executeInCurrentEditor({
+                                                            reference: ReferenceType.ATTACHMENT_UNITS,
+                                                            lecture,
+                                                            attachmentUnit: unit,
+                                                        })
+                                                    "
+                                                    type="button"
+                                                >
+                                                    {{ unit.name }}
+                                                </button>
+                                                @for (slide of unit.slides; track slide.id) {
+                                                    <button
+                                                        class="ps-1 me-1"
+                                                        mat-menu-item
+                                                        (click)="
+                                                            displayedActions.lecture.executeInCurrentEditor({
+                                                                reference: ReferenceType.SLIDE,
+                                                                lecture,
+                                                                slide,
+                                                                attachmentUnit: unit,
+                                                            })
+                                                        "
+                                                        type="button"
+                                                    >
+                                                        <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: slide.slideNumber }"></span>
+                                                    </button>
+                                                } @empty {
+                                                    <ng-container [ngTemplateOutlet]="noItemsAvailable" />
+                                                }
+                                            </mat-menu>
+                                        }
+                                        @for (attachment of lecture.attachments; track attachment.id) {
+                                            <button
+                                                class="ps-1 me-1"
+                                                mat-menu-item
+                                                type="button"
+                                                (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture, attachment })"
+                                            >
+                                                <span>{{ attachment.name }}</span>
+                                            </button>
+                                        }
+                                    </mat-menu>
+                                } @empty {
+                                    <ng-container [ngTemplateOutlet]="noItemsAvailable" />
+                                }
+                            </mat-menu>
+                        }
                         <!-- Meta -->
                         @for (action of displayedActions.meta; track action.id) {
                             <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
@@ -108,7 +211,7 @@
         </nav>
         <div [ngbNavOutlet]="nav"></div>
     </div>
-    @if (enableResize && !inPreviewMode) {
+    @if (enableResize && inEditMode) {
         <div #resizePlaceholder [style.cursor]="isResizing ? 'ns-resize' : undefined" class="d-flex justify-content-center resize-placeholder">
             <fa-icon
                 cdkDrag
@@ -133,4 +236,8 @@
             <span [jhiTranslate]="action.translationKey"></span>
         }
     </button>
+</ng-template>
+
+<ng-template #noItemsAvailable>
+    <button class="ps-1 me-1" mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
 </ng-template>

@@ -10,7 +10,47 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum ProgrammingLanguage {
 
-    JAVA("java"), PYTHON("py"), C("c", "cpp"), HASKELL("hs"), KOTLIN("kt"), VHDL("vhd"), ASSEMBLER("asm"), SWIFT("swift"), OCAML("ml"), EMPTY("");
+    // @formatter:off
+    EMPTY(""),
+    JAVA("java"),
+    PYTHON("py"),
+    C("c", "cpp"),
+    HASKELL("hs"),
+    KOTLIN("kt"),
+    VHDL("vhd"),
+    ASSEMBLER("asm"),
+    SWIFT("swift"),
+    OCAML("ml"),
+    JAVASCRIPT("js"),
+    C_SHARP("cs"),
+    C_PLUS_PLUS("c", "h", "cpp", "hpp"),
+    SQL("sql"),
+    R("R"),
+    TYPESCRIPT("ts"),
+    RUST("rs"),
+    GO("go"),
+    MATLAB("m"),
+    BASH("sh"),
+    RUBY("rb"),
+    POWERSHELL("ps1"),
+    ADA("adb", "ads"),
+    DART("dart"),
+    PHP("php");
+
+    private static final Set<ProgrammingLanguage> ENABLED_LANGUAGES = Set.of(
+        EMPTY,
+        JAVA,
+        PYTHON,
+        C,
+        HASKELL,
+        KOTLIN,
+        VHDL,
+        ASSEMBLER,
+        SWIFT,
+        OCAML,
+        RUST
+    );
+    // @formatter:on
 
     private final Set<String> fileExtensions;
 
@@ -20,6 +60,10 @@ public enum ProgrammingLanguage {
 
     public Set<String> getFileExtensions() {
         return fileExtensions;
+    }
+
+    public static Set<ProgrammingLanguage> getEnabledLanguages() {
+        return ENABLED_LANGUAGES;
     }
 
     /**

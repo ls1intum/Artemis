@@ -1,30 +1,36 @@
 <div class="col-12">
-    <jhi-markdown-editor
+    <jhi-markdown-editor-monaco
         class="markdown-editor background-editor-color w-100"
         [markdown]="content"
         (markdownChange)="updateField($event)"
-        [resizableMinHeight]="editorHeight"
         (onEditSelect)="previewMode = false"
         (onPreviewSelect)="previewMode = true"
-        [metaCommands]="[]"
-        [headerCommands]="[]"
-        [defaultCommands]="defaultCommands"
+        [metaActions]="[]"
+        [headerActions]="undefined"
+        [defaultActions]="defaultActions"
+        [lectureReferenceAction]="lectureAttachmentReferenceAction"
         [enableFileUpload]="false"
-        [colorCommands]="[]"
+        [colorAction]="undefined"
+        [enableResize]="false"
         [showDefaultPreview]="false"
+        [useDefaultMarkdownEditorOptions]="false"
+        [linkEditorHeightToContentHeight]="true"
+        [initialEditorHeight]="editorHeight"
+        [resizableMinHeight]="editorHeight"
+        [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
+        (keydown)="onKeyDown($event)"
     >
-        <!-- Preview -->
-        <ng-container id="preview">
+        <ng-container id="previewMonaco">
             @if (previewMode) {
                 <jhi-posting-content [content]="content" />
             }
             <hr />
         </ng-container>
         <!-- End of Preview-->
-    </jhi-markdown-editor>
+    </jhi-markdown-editor-monaco>
 </div>
 @if (isInputLengthDisplayed || (content?.length ?? 0) > maxContentLength) {
-    <div class="col text-end">
+    <div class="col mt-1 text-end">
         <p class="small my-0 ms-2" [ngStyle]="{ color: content?.length! > maxContentLength || content?.length! === 0 ? 'red' : 'inherit' }">
             {{ content?.length ?? 0 }} / {{ maxContentLength }}
         </p>

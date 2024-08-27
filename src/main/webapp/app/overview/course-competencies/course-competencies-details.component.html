@@ -2,7 +2,7 @@
 @if (isLoading) {
     <div class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
-            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+            <span class="sr-only" jhiTranslate="loading"></span>
         </div>
     </div>
 }
@@ -16,7 +16,7 @@
                         <fa-icon
                             [icon]="getIcon(competency.taxonomy)"
                             [fixedWidth]="true"
-                            [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                            [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                             container="body"
                         />
                         <span>{{ competency!.title }}</span>
@@ -33,7 +33,7 @@
                 </div>
                 @if (competency.softDueDate) {
                     <div class="col-auto text-right">
-                        <span style="vertical-align: middle"> {{ 'artemisApp.competency.competencyCard.softDueDate' | artemisTranslate }} </span>
+                        <span style="vertical-align: middle" jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
                         <span class="badge" [ngClass]="softDueDatePassed ? 'bg-danger' : 'bg-success'" id="date-badge"> {{ competency.softDueDate | artemisTimeAgo }} </span>
                     </div>
                 }
@@ -41,7 +41,7 @@
                     @if (competency.course?.isAtLeastInstructor) {
                         <a class="btn btn-sm btn-warning float-end" [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']">
                             <fa-icon [icon]="faPencilAlt" />
-                            <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                         </a>
                     }
                 </div>

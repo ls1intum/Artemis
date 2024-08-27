@@ -1,0 +1,135 @@
+<form [formGroup]="form">
+    @if (!isInConnectMode) {
+        <div class="form-group">
+            <label for="title" [jhiTranslate]="'artemisApp.' + competencyType + '.title'"></label>
+            <input
+                type="text"
+                class="form-control"
+                id="title"
+                formControlName="title"
+                [placeholder]="'artemisApp.' + competencyType + '.create.titlePlaceholder' | artemisTranslate"
+            />
+            @if (titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)) {
+                <div class="alert alert-danger">
+                    @if (titleControl?.errors?.required) {
+                        <div [jhiTranslate]="'artemisApp.' + competencyType + '.create.titleRequiredValidationError'"></div>
+                    }
+                    @if (titleControl?.errors?.maxlength) {
+                        <div [jhiTranslate]="'artemisApp.' + competencyType + '.titleMaxLengthValidationError'" [translateValues]="{ max: competencyValidators.TITLE_MAX }"></div>
+                    }
+                    @if (titleControl?.errors?.titleUnique) {
+                        <div jhiTranslate="artemisApp.courseCompetency.create.titleUniqueValidationError"></div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    @if (!isInConnectMode) {
+        <div class="form-group">
+            <label for="description" jhiTranslate="artemisApp.courseCompetency.description"></label>
+            <jhi-markdown-editor-monaco
+                [markdown]="descriptionControl?.value"
+                (markdownChange)="updateDescriptionControl($event)"
+                id="description"
+                class="markdown-preview"
+                [enableFileUpload]="false"
+            />
+            @if (descriptionControl?.invalid && descriptionControl?.dirty) {
+                <div class="alert alert-danger">
+                    @if (descriptionControl?.errors?.maxlength) {
+                        <div
+                            [jhiTranslate]="'artemisApp.competency.' + competencyType + '.descriptionMaxLengthValidationError'"
+                            [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
+                        ></div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    <div class="form-group">
+        <jhi-date-time-picker
+            id="softDueDate"
+            labelName="{{ 'artemisApp.' + competencyType + '.create.softDueDate' | artemisTranslate }}"
+            labelTooltip="{{ 'artemisApp.' + competencyType + '.create.softDueDateHint' | artemisTranslate }}"
+            formControlName="softDueDate"
+        />
+    </div>
+    @if (!isInConnectMode) {
+        <div class="form-group">
+            <label for="taxonomy">
+                {{ 'artemisApp.courseCompetency.taxonomy' | artemisTranslate }}
+                @if (suggestedTaxonomies?.length) {
+                    <small> ({{ 'artemisApp.courseCompetency.create.suggestedTaxonomy' | artemisTranslate }}: {{ suggestedTaxonomies.join(', ') }}) </small>
+                }
+            </label>
+            <jhi-taxonomy-select selectId="taxonomy" [form]="taxonomyControl" />
+        </div>
+    }
+    @if (!isInConnectMode) {
+        <div class="form-group">
+            <label for="masteryThreshold">
+                {{ 'artemisApp.courseCompetency.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? DEFAULT_MASTERY_THRESHOLD }}%
+                @if (averageStudentScore) {
+                    <small> ({{ 'artemisApp.courseCompetency.create.averageMastery' | artemisTranslate }}: {{ averageStudentScore }}%) </small>
+                }
+            </label>
+            <input type="range" min="0" max="100" class="form-range" id="masteryThreshold" formControlName="masteryThreshold" />
+        </div>
+    }
+    <div class="form-group">
+        <input type="checkbox" class="form-check-input" id="optional" formControlName="optional" />
+        <label class="form-control-label" [jhiTranslate]="'artemisApp.' + competencyType + '.optional'" for="optional"></label>
+        <jhi-help-icon [text]="'artemisApp.' + competencyType + '.optionalDescription'" />
+    </div>
+    <div>
+        <label [jhiTranslate]="'artemisApp.' + competencyType + '.create.connectWithLectureUnits'"></label>
+        @if (lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0) {
+            <div [hidden]="isInSingleLectureMode" ngbDropdown class="mb-2">
+                <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
+                    {{
+                        selectedLectureInDropdown ? getLectureTitleForDropdown(selectedLectureInDropdown) : ('artemisApp.courseCompetency.create.selectLecture' | artemisTranslate)
+                    }}
+                </button>
+                <div ngbDropdownMenu>
+                    @for (lecture of lecturesOfCourseWithLectureUnits; track lecture) {
+                        <button ngbDropdownItem type="button" (click)="selectLectureInDropdown(lecture)">
+                            {{ getLectureTitleForDropdown(lecture) }}
+                        </button>
+                    }
+                </div>
+            </div>
+        } @else {
+            <div class="alert alert-info" jhiTranslate="artemisApp.courseCompetency.create.noLectures"></div>
+        }
+        @if (selectedLectureInDropdown) {
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>id</th>
+                            <th jhiTranslate="artemisApp.courseCompetency.create.lectureUnitTable.type"></th>
+                            <th jhiTranslate="artemisApp.courseCompetency.create.lectureUnitTable.name"></th>
+                            <th jhiTranslate="artemisApp.courseCompetency.create.lectureUnitTable.releaseDate"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (lectureUnit of selectedLectureInDropdown.lectureUnits; track lectureUnit) {
+                            <tr class="lectureUnitRow" (click)="selectLectureUnitInTable(lectureUnit)" [class.table-primary]="isLectureUnitAlreadySelectedInTable(lectureUnit)">
+                                <td>{{ lectureUnit.id ? lectureUnit.id : '' }}</td>
+                                <td>{{ lectureUnit.type ? lectureUnit.type : '' }}</td>
+                                <td>{{ lectureUnitService.getLectureUnitName(lectureUnit) ? lectureUnitService.getLectureUnitName(lectureUnit) : '' }}</td>
+                                <td>
+                                    {{
+                                        lectureUnitService.getLectureUnitReleaseDate(lectureUnit)
+                                            ? lectureUnitService.getLectureUnitReleaseDate(lectureUnit)!.format('MMM DD YYYY, HH:mm:ss')
+                                            : ''
+                                    }}
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</form>

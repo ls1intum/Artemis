@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
@@ -58,6 +60,8 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
@@ -80,7 +84,8 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, ChannelService channelService) {
+            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, ChannelService channelService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
@@ -96,6 +101,7 @@ public class ProgrammingExerciseImportBasicService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.solutionEntryRepository = solutionEntryRepository;
         this.channelService = channelService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -127,14 +133,16 @@ public class ProgrammingExerciseImportBasicService {
         setupTestRepository(newProgrammingExercise);
         programmingExerciseService.initParticipations(newProgrammingExercise);
 
-        if (newProgrammingExercise.getBuildPlanConfiguration() == null) {
+        newProgrammingExercise.getBuildConfig().setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+        if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
-            newProgrammingExercise.setBuildPlanConfiguration(originalProgrammingExercise.getBuildPlanConfiguration());
+            newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
         }
 
         // Hints, tasks, test cases and static code analysis categories
         final Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(originalProgrammingExercise, newProgrammingExercise);
 
+        newProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig()));
         final ProgrammingExercise importedExercise = programmingExerciseRepository.save(newProgrammingExercise);
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
@@ -192,12 +200,11 @@ public class ProgrammingExerciseImportBasicService {
     private void prepareBasicExerciseInformation(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newProgrammingExercise);
+        setupBuildConfig(newProgrammingExercise, originalProgrammingExercise);
 
-        if (originalProgrammingExercise.hasBuildPlanAccessSecretSet()) {
-            newProgrammingExercise.generateAndSetBuildPlanAccessSecret();
+        if (originalProgrammingExercise.getBuildConfig().hasBuildPlanAccessSecretSet()) {
+            newProgrammingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
         }
-
-        newProgrammingExercise.setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
     }
 
     /**
@@ -209,6 +216,22 @@ public class ProgrammingExerciseImportBasicService {
     private void setupTestRepository(ProgrammingExercise newExercise) {
         final var testRepoName = newExercise.generateRepositoryName(RepositoryType.TESTS);
         newExercise.setTestRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(newExercise.getProjectKey(), testRepoName).toString());
+    }
+
+    private void setupBuildConfig(ProgrammingExercise newExercise, ProgrammingExercise originalExercise) {
+        if (newExercise.getBuildConfig() != null) {
+            var buildConfig = newExercise.getBuildConfig();
+            buildConfig.setId(null);
+            buildConfig.setProgrammingExercise(null);
+            newExercise.setBuildConfig(buildConfig);
+        }
+        else if (originalExercise.getBuildConfig() != null) {
+            var buildConfig = new ProgrammingExerciseBuildConfig(originalExercise.getBuildConfig());
+            newExercise.setBuildConfig(buildConfig);
+        }
+        else {
+            newExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        }
     }
 
     /**

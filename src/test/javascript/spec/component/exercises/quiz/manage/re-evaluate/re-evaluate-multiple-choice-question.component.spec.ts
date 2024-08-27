@@ -4,13 +4,13 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { ArtemisTestModule } from '../../../../../test.module';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgModel } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Directive, Input } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: '[sortableData]' })
@@ -31,7 +31,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
             declarations: [
                 ReEvaluateMultipleChoiceQuestionComponent,
                 MockComponent(MultipleChoiceQuestionEditComponent),
-                MockComponent(MarkdownEditorComponent),
+                MockComponent(MarkdownEditorMonacoComponent),
                 MockDirective(NgModel),
                 MockDirective(MockSortableDataDirective),
                 MockPipe(ArtemisTranslatePipe),

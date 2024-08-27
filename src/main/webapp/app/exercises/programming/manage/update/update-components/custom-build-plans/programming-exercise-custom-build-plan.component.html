@@ -6,13 +6,18 @@
     </div>
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
         <div class="row m-1">
-            @if (programmingExercise.windFile && programmingExercise.windFile.metadata && programmingExercise.windFile.metadata.docker) {
-                <jhi-programming-exercise-docker-image [dockerImage]="programmingExercise.windFile.metadata.docker.image" (dockerImageChange)="setDockerImage($event)" />
+            @if (programmingExercise.buildConfig?.windfile && programmingExercise.buildConfig?.windfile?.metadata && programmingExercise.buildConfig?.windfile?.metadata?.docker) {
+                <jhi-programming-exercise-docker-image
+                    [dockerImage]="programmingExercise.buildConfig!.windfile!.metadata.docker.image"
+                    (dockerImageChange)="setDockerImage($event)"
+                />
             }
-            <div class="card col-12 col-md-12">
-                <div class="card-text">
-                    <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
-                    <jhi-ace-editor #editor (textChanged)="codeChanged($event)" />
+            <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
+            <div class="ms-1 p-0 card col-12 col-md-12">
+                <div class="card-text d-flex flex-column" [style.height.vh]="40">
+                    <div class="mh-100 flex-shrink-1 flex-grow-1">
+                        <jhi-monaco-editor #editor [stickyScroll]="false" [shrinkToFit]="false" (textChanged)="codeChanged($event)" />
+                    </div>
                 </div>
             </div>
         </div>

@@ -4,43 +4,43 @@
             <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" (sortChange)="sortRows()">
                 <th>#</th>
                 <th jhiSortBy="name">
-                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.name' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.name"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 <th jhiSortBy="points">
-                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.points' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.points"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 <th jhiSortBy="numberOfAssessments">
-                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAssessments' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAssessments"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 <th jhiSortBy="numberOfAcceptedComplaints">
-                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAcceptedComplaints' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAcceptedComplaints"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 @if (!isExamMode) {
                     <th jhiSortBy="numberOfNotAnsweredMoreFeedbackRequests">
-                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
+                        <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }
                 <th jhiSortBy="numberOfComplaintResponses">
-                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfComplaintResponses' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfComplaintResponses"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 @if (!isExamMode) {
                     <th jhiSortBy="numberOfAnsweredMoreFeedbackRequests">
-                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
+                        <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }
                 <th jhiSortBy="averageScore">
-                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.averageScore' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.averageScore"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
                 <th jhiSortBy="averageRating">
-                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.averageRating' | artemisTranslate }}</a>
+                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.averageRating"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
             </tr>

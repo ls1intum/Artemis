@@ -9,6 +9,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -96,6 +97,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Output()
     textChanged = new EventEmitter<string>();
 
+    @Output()
+    contentHeightChanged = new EventEmitter<number>();
+
+    @Output()
+    onBlurEditor = new EventEmitter<void>();
+
+    private contentHeightListener?: monaco.IDisposable;
+    private textChangedListener?: monaco.IDisposable;
+    private blurEditorWidgetListener?: monaco.IDisposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
@@ -104,9 +114,19 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
         resizeObserver.observe(this.monacoEditorContainerElement);
 
-        this._editor.onDidChangeModelContent(() => {
+        this.textChangedListener = this._editor.onDidChangeModelContent(() => {
             this.emitTextChangeEvent();
         }, this);
+
+        this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
+            if (event.contentHeightChanged) {
+                this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight));
+            }
+        });
+
+        this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+            this.onBlurEditor.emit();
+        });
 
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
@@ -115,6 +135,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.reset();
         this._editor.dispose();
         this.themeSubscription?.unsubscribe();
+        this.textChangedListener?.dispose();
+        this.contentHeightListener?.dispose();
+        this.blurEditorWidgetListener?.dispose();
     }
 
     private emitTextChangeEvent() {
@@ -148,6 +171,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     getText(): string {
         return this._editor.getValue();
+    }
+
+    getContentHeight(): number {
+        return this._editor.getContentHeight() + this._editor.getOption(monaco.editor.EditorOption.lineHeight);
     }
 
     setText(text: string): void {
@@ -200,6 +227,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         monaco.editor.setModelLanguage(model, languageId !== undefined ? languageId : model.getLanguageId());
         model.setEOL(monaco.editor.EndOfLineSequence.LF);
         this._editor.setModel(model);
+    }
+
+    /**
+     * Updates the indentation size of the editor in the current model.
+     * @param indentSize The size of the indentation in spaces.
+     */
+    updateModelIndentationSize(indentSize: number): void {
+        this._editor.getModel()?.updateOptions({ indentSize });
     }
 
     disposeModels() {
@@ -355,5 +390,23 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.updateOptions({
             wordWrap: value ? 'on' : 'off',
         });
+    }
+
+    /**
+     * Sets the line number from which the editor should start counting.
+     * @param startLineNumber The line number to start counting from (starting at 1).
+     */
+    setStartLineNumber(startLineNumber: number): void {
+        this._editor.updateOptions({
+            lineNumbers: (number) => `${startLineNumber + number - 1}`,
+        });
+    }
+
+    /**
+     * Applies the given options to the editor.
+     * @param options The options to apply.
+     */
+    applyOptionPreset(options: MonacoEditorOptionPreset): void {
+        options.apply(this._editor);
     }
 }

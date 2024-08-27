@@ -191,11 +191,13 @@
                         <div class="ms-2 radio-label-with-explanation">
                             <strong>
                                 {{ 'artemisApp.team.importStrategy.options.purgeExisting.label' | artemisTranslate }}
-                                <span class="badge bg-danger ms-1">{{ 'artemisApp.team.importStrategy.options.purgeExisting.badge' | artemisTranslate }}</span>
+                                <span class="badge bg-danger ms-1" jhiTranslate="artemisApp.team.importStrategy.options.purgeExisting.badge"></span>
                             </strong>
-                            <p [class.text-body-secondary]="importStrategy !== ImportStrategy.PURGE_EXISTING" class="explanation mb-2">
-                                {{ 'artemisApp.team.importStrategy.options.purgeExisting.explanation' | artemisTranslate }}
-                            </p>
+                            <p
+                                [class.text-body-secondary]="importStrategy !== ImportStrategy.PURGE_EXISTING"
+                                class="explanation mb-2"
+                                jhiTranslate="artemisApp.team.importStrategy.options.purgeExisting.explanation"
+                            ></p>
                         </div>
                     </label>
                     <label class="d-flex align-items-start">
@@ -210,11 +212,13 @@
                         <div class="ms-2 radio-label-with-explanation">
                             <strong>
                                 {{ 'artemisApp.team.importStrategy.options.createOnly.label' | artemisTranslate }}
-                                <span class="badge bg-success ms-1">{{ 'artemisApp.team.importStrategy.options.createOnly.badge' | artemisTranslate }}</span>
+                                <span class="badge bg-success ms-1" jhiTranslate="artemisApp.team.importStrategy.options.createOnly.badge"></span>
                             </strong>
-                            <p [class.text-body-secondary]="importStrategy !== ImportStrategy.CREATE_ONLY" class="explanation mb-0">
-                                {{ 'artemisApp.team.importStrategy.options.createOnly.explanation' | artemisTranslate }}
-                            </p>
+                            <p
+                                [class.text-body-secondary]="importStrategy !== ImportStrategy.CREATE_ONLY"
+                                class="explanation mb-0"
+                                jhiTranslate="artemisApp.team.importStrategy.options.createOnly.explanation"
+                            ></p>
                         </div>
                     </label>
                 </div>
@@ -226,28 +230,26 @@
             <div class="flex-shrink-0 me-2 d-flex">
                 @if (studentsAppearInMultipleTeams) {
                     <div>
-                        <strong>{{ 'artemisApp.team.importPreview.studentsInMultipleTeams' | artemisTranslate }}</strong>
+                        <strong jhiTranslate="artemisApp.team.importPreview.studentsInMultipleTeams"></strong>
                     </div>
                 } @else {
                     @if (numberOfTeamsToBeImported! === 0) {
                         <div>
                             @if (sourceTeams.length === 0) {
-                                <strong>{{ 'artemisApp.team.importPreview.noTeamsToImport' | artemisTranslate }}</strong>
+                                <strong jhiTranslate="artemisApp.team.importPreview.noTeamsToImport"></strong>
                             }
                             @if (sourceTeams.length > 0) {
-                                <strong>{{ 'artemisApp.team.importPreview.noConflictFreeTeamsToImport' | artemisTranslate }}</strong>
+                                <strong jhiTranslate="artemisApp.team.importPreview.noConflictFreeTeamsToImport"></strong>
                             }
                         </div>
                     }
                     @if (numberOfTeamsToBeImported! > 0) {
                         @if (numberOfTeamsToBeDeleted! > 0) {
-                            <div class="me-3">
-                                <strong>{{ 'artemisApp.team.importPreview.teamsToBeDeleted' | artemisTranslate }}</strong> {{ numberOfTeamsToBeDeleted! }}
-                            </div>
+                            <div class="me-3"><strong jhiTranslate="artemisApp.team.importPreview.teamsToBeDeleted"></strong> {{ numberOfTeamsToBeDeleted! }}</div>
                         }
                         @if (numberOfTeamsToBeImported! !== numberOfTeamsAfterImport!) {
                             <div class="me-3">
-                                <strong>{{ 'artemisApp.team.importPreview.teamsToBeImported' | artemisTranslate }}</strong> {{ numberOfTeamsToBeImported! }}
+                                <strong jhiTranslate="artemisApp.team.importPreview.teamsToBeImported"></strong> {{ numberOfTeamsToBeImported! }}
                                 @if (numberOfTeamsToBeImported! < sourceTeams.length) {
                                     <span jhiTranslate="artemisApp.team.importPreview.outOf" [translateValues]="{ number: sourceTeams.length }">
                                         (out of {{ sourceTeams.length }})
@@ -255,9 +257,7 @@
                                 }
                             </div>
                         }
-                        <div>
-                            <strong>{{ 'artemisApp.team.importPreview.totalTeamsAfterImport' | artemisTranslate }}</strong> {{ numberOfTeamsAfterImport! }}
-                        </div>
+                        <div><strong jhiTranslate="artemisApp.team.importPreview.totalTeamsAfterImport"></strong> {{ numberOfTeamsAfterImport! }}</div>
                     }
                 }
             </div>

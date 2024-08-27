@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public interface BuildPlanRepository extends ArtemisJpaRepository<BuildPlan, Long> {
 
@@ -26,14 +25,26 @@ public interface BuildPlanRepository extends ArtemisJpaRepository<BuildPlan, Lon
     @Query("""
             SELECT buildPlan
             FROM BuildPlan buildPlan
+                INNER JOIN FETCH buildPlan.programmingExercises programmingExercises
+                LEFT JOIN FETCH programmingExercises.buildConfig buildConfig
+            WHERE programmingExercises.id = :exerciseId
+            """)
+    Optional<BuildPlan> findByProgrammingExercises_IdWithProgrammingExercisesWithBuildConfig(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT buildPlan
+            FROM BuildPlan buildPlan
                 JOIN buildPlan.programmingExercises programmingExercises
             WHERE programmingExercises.id = :exerciseId
                 """)
     Optional<BuildPlan> findByProgrammingExercises_Id(@Param("exerciseId") long exerciseId);
 
     default BuildPlan findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(final long exerciseId) {
-        return findByProgrammingExercises_IdWithProgrammingExercises(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Could not find a build plan for exercise " + exerciseId));
+        return getValueElseThrow(findByProgrammingExercises_IdWithProgrammingExercises(exerciseId));
+    }
+
+    default BuildPlan findByProgrammingExercises_IdWithProgrammingExercisesWithBuildConfigElseThrow(final long exerciseId) {
+        return getValueElseThrow(findByProgrammingExercises_IdWithProgrammingExercisesWithBuildConfig(exerciseId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "programmingExercises" })
