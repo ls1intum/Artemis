@@ -7,12 +7,6 @@ import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-sc
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
-import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
-import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
-import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
-import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DragDropModule } from '@angular/cdk/drag-drop';
@@ -21,6 +15,12 @@ import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollaps
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
+import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
+import { MonacoWrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-wrong-multiple-choice-answer.action';
+import { MonacoCorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-correct-multiple-choice-answer.action';
+import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
@@ -47,7 +47,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
                 MultipleChoiceQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(QuizScoringInfoModalComponent),
-                MockComponent(MarkdownEditorComponent),
+                MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(DragAndDropQuestionComponent),
                 MockComponent(MultipleChoiceQuestionComponent),
@@ -91,12 +91,12 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should parse answer options but not question titles', () => {
-        component.domainCommandsFound([
-            ['text1', new TestCaseCommand()],
-            ['text2', new CorrectOptionCommand()],
-            ['text3', new IncorrectOptionCommand()],
-            ['text4', new ExplanationCommand()],
-            ['text5', new HintCommand()],
+        component.domainActionsFound([
+            { text: 'text1', action: new MonacoTestCaseAction() },
+            { text: 'text2', action: new MonacoCorrectMultipleChoiceAnswerAction() },
+            { text: 'text3', action: new MonacoWrongMultipleChoiceAnswerAction() },
+            { text: 'text4', action: new MonacoQuizExplanationAction() },
+            { text: 'text5', action: new MonacoQuizHintAction() },
         ]);
 
         const expected: MultipleChoiceQuestion = {
@@ -129,12 +129,12 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should parse answer options with question titles', () => {
-        component.domainCommandsFound([
-            ['text1', new ExplanationCommand()],
-            ['text2', new HintCommand()],
-            ['text3', new TestCaseCommand()],
-            ['text4', new CorrectOptionCommand()],
-            ['text5', new IncorrectOptionCommand()],
+        component.domainActionsFound([
+            { text: 'text1', action: new MonacoQuizExplanationAction() },
+            { text: 'text2', action: new MonacoQuizHintAction() },
+            { text: 'text3', action: new MonacoTestCaseAction() },
+            { text: 'text4', action: new MonacoCorrectMultipleChoiceAnswerAction() },
+            { text: 'text5', action: new MonacoWrongMultipleChoiceAnswerAction() },
         ]);
 
         const expected: MultipleChoiceQuestion = {
@@ -165,7 +165,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should parse question titles', () => {
-        component.domainCommandsFound([['text1', null]]);
+        component.domainActionsFound([{ text: 'text1', action: undefined }]);
 
         const expected: MultipleChoiceQuestion = {
             id: question.id,
@@ -183,8 +183,8 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
-    it('should find no domain commands', () => {
-        component.domainCommandsFound([]);
+    it('should find no domain actions', () => {
+        component.domainActionsFound([]);
 
         expectCleanupQuestion();
         expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
