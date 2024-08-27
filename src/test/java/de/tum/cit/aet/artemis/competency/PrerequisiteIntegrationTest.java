@@ -43,7 +43,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
         private void testAllPreAuthorizeInstructor() throws Exception {
             request.put("/api/courses/" + course.getId() + "/prerequisites", new Prerequisite(), HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/prerequisites", new Prerequisite(), HttpStatus.FORBIDDEN);
-            request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.FORBIDDEN);
+            request.delete("/api/courses/" + course.getId() + "/prerequisites/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/prerequisites/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
             // import
             request.post("/api/courses/" + course.getId() + "/prerequisites/import-all", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
