@@ -37,12 +37,17 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.vcstokens.AuthenticationMechanism;
+import de.tum.in.www1.artemis.domain.vcstokens.VcsAccessLog;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.VcsAccessLogRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
+import de.tum.in.www1.artemis.web.rest.dto.VcsAccessLogDTO;
+import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -60,6 +65,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Autowired
     private ParticipationRepository participationRepository;
+
+    @Autowired
+    private VcsAccessLogRepository vcsAccessLogRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
@@ -753,6 +761,28 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
         doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
         request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetVcsAccessLog() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
+        var user = userRepository.getUser();
+        vcsAccessLogRepository.save(new VcsAccessLog(user, participation, "instructor", "instructorMail@mail.de", RepositoryActionType.READ, AuthenticationMechanism.SSH, "", ""));
+        var li = request.getList(participationsBaseUrl + participation.getId() + "/vcs-access-log", HttpStatus.OK, VcsAccessLogDTO.class);
+        assertThat(li.size()).isEqualTo(1);
+        assertThat(li.getFirst().userId()).isEqualTo(user.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetVcsAccessLogOfTemplateParticipation() throws Exception {
+        var user = userRepository.getUser();
+        vcsAccessLogRepository.save(new VcsAccessLog(user, programmingExercise.getTemplateParticipation(), "instructor", "instructorMail@mail.de", RepositoryActionType.READ,
+                AuthenticationMechanism.SSH, "", ""));
+        var li = request.getList("/api/programming-exercise/" + programmingExercise.getId() + "/vcs-access-log/TEMPLATE", HttpStatus.OK, VcsAccessLogDTO.class);
+        assertThat(li.size()).isEqualTo(1);
+        assertThat(li.getFirst().userId()).isEqualTo(user.getId());
     }
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
