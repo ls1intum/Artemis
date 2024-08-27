@@ -192,7 +192,7 @@ public class PrerequisiteResource {
         long prerequisiteId = importOptions.competencyIds().iterator().next();
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
-        var prerequisiteToImport = courseCompetencyRepository.findByIdElseThrow(prerequisiteId);
+        var prerequisiteToImport = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(prerequisiteId);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, prerequisiteToImport.getCourse(), null);
         if (prerequisiteToImport.getCourse().getId().equals(courseId)) {
