@@ -3,6 +3,7 @@ import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-com
 import { ArtemisTestModule } from '../../test.module';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { By } from '@angular/platform-browser';
 
 describe('AssessmentComplaintAlertComponent', () => {
     let component: AssessmentComplaintAlertComponent;
@@ -42,16 +43,16 @@ describe('AssessmentComplaintAlertComponent', () => {
     it('should show complaint alert text for complaint', () => {
         setComplaintOfType(ComplaintType.COMPLAINT);
 
-        const alertNode = fixture.debugElement.children[0];
+        const alertNode = fixture.debugElement.query(By.css('.alert-info'));
         expect(alertNode).toBeTruthy();
-        expect(alertNode.nativeElement.textContent).toContain('artemisApp.complaint.hint');
+        expect(alertNode.attributes['jhiTranslate']).toBe('artemisApp.complaint.hint');
     });
 
     it('should show complaint alert text for more feedback request', () => {
         setComplaintOfType(ComplaintType.MORE_FEEDBACK);
 
-        const alertNode = fixture.debugElement.children[0];
+        const alertNode = fixture.debugElement.query(By.css('.alert-info'));
         expect(alertNode).toBeTruthy();
-        expect(alertNode.nativeElement.textContent).toContain('artemisApp.moreFeedback.hint');
+        expect(alertNode.attributes['jhiTranslate']).toBe('artemisApp.moreFeedback.hint');
     });
 });
