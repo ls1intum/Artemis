@@ -89,16 +89,22 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(long exerciseId, String username);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
+    @Query("""
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.submissions s
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :username
+            ORDER BY participation.id DESC
+            """)
+    List<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
 
     default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
         return getValueElseThrow(findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username));
     }
 
-    // TODO Michal Kawka
     default ProgrammingExerciseStudentParticipation findFirstWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return getValueElseThrow(findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username));
+        return getValueElseThrow(findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username).stream().findFirst());
     }
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
