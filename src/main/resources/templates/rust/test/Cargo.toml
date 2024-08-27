@@ -1,0 +1,13 @@
+[package]
+name = "rust-template-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chrono = { version = "0.4.38", default-features = false }
+rust-template-exercise = { path = "assignment" }
+syn = { version = "2.0.72", features = ["full"] }
+rust_template_test_macros = { path = "./rust_template_test_macros" }
+
+[build-dependencies]
+syn = { version = "2.0.72", features = ["full"] }
