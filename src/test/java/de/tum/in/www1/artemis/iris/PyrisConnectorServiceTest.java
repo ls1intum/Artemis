@@ -39,7 +39,7 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testExceptionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockRunError(httpStatus);
 
-        assertThatThrownBy(() -> pyrisConnectorService.executePipeline("tutor-chat", "default", null)).isInstanceOf(exceptionClass);
+        assertThatThrownBy(() -> pyrisConnectorService.executePipeline("programming-exercise-chat", "default", null)).isInstanceOf(exceptionClass);
     }
 
     @ParameterizedTest

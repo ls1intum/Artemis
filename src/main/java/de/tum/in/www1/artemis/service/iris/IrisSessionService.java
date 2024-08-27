@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisProgrammingExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatBasedFeatureInterface;
@@ -134,7 +134,7 @@ public class IrisSessionService {
     @SuppressWarnings("unchecked")
     private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
         return switch (session) {
-            case IrisExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
+            case IrisProgrammingExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
             case IrisCourseChatSession courseChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCourseChatSessionService, courseChatSession);
             case IrisHestiaSession hestiaSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, hestiaSession);
             case null, default -> throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());

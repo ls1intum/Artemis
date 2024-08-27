@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisProgrammingExerciseChatSession;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisUserDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.ProgrammingExerciseChatJob;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.service.metrics.LearningMetricsService;
@@ -123,8 +124,8 @@ public class PyrisPipelineService {
     }
 
     /**
-     * Execute the exercise chat pipeline for the given session.
-     * It provides specific data for the exercise chat pipeline, including:
+     * Execute the programming exercise chat pipeline for the given session.
+     * It requires specific data for the pipeline, including:
      * - The latest submission of the student
      * - The programming exercise
      * - The course the exercise is part of
@@ -136,12 +137,13 @@ public class PyrisPipelineService {
      * @param session          the chat session
      * @see PyrisPipelineService#executePipeline for more details on the pipeline execution process.
      */
-    public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session) {
+    public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise,
+            IrisProgrammingExerciseChatSession session) {
         // @formatter:off
         executePipeline(
-                "tutor-chat", // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
+                "programming-exercise-chat",
                 variant,
-                pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()),
+                pyrisJobService.createTokenForJob(token -> new ProgrammingExerciseChatJob(token, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId())),
                 executionDto -> {
                     var course = exercise.getCourseViaExerciseGroupOrCourseMember();
                     return new PyrisExerciseChatPipelineExecutionDTO(
