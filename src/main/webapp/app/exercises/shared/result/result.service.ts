@@ -113,7 +113,7 @@ export class ResultService implements IResultService {
     private getResultStringNonProgrammingExerciseWithAIFeedback(result: Result, relativeScore: number, points: number, short: boolean | undefined): string {
         let aiFeedbackMessage: string = '';
         if (isAIResultAndIsBeingProcessed(result)) {
-            aiFeedbackMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+            return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         } else if (isAIResultAndTimedOut(result)) {
             aiFeedbackMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
         } else {

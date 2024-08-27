@@ -132,7 +132,7 @@ export function isAIResultAndProcessed(result: Result | undefined) {
 }
 
 export function isAIResultAndIsBeingProcessed(result: Result | undefined) {
-    return result && Result.isAthenaAIResult(result) && result.successful === undefined && result.completionDate && dayjs().isSameOrBefore(result.completionDate);
+    return result && Result.isAthenaAIResult(result) && result.successful === undefined; // && result.completionDate && dayjs().isSameOrBefore(result.completionDate
 }
 
 export const evaluateTemplateStatus = (

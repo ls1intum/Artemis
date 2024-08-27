@@ -38,7 +38,7 @@
             }
         }
         @case (ResultTemplateStatus.HAS_RESULT) {
-            @if (result) {
+            @if (result && !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === false)) {
                 @if (showIcon) {
                     @if (result.successful === undefined) {
                         <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" animation="spin" size="lg" />
@@ -49,9 +49,9 @@
                 <span
                     [class]="textColorClass"
                     class="guided-tour result"
-                    [ngClass]="{ 'clickable-result': !isInSidebarCard && exercise?.type !== ExerciseType.QUIZ }"
+                    [ngClass]="{ 'clickable-result': !isInSidebarCard && exercise?.type !== ExerciseType.QUIZ && result.successful !== undefined }"
                     id="result-score"
-                    (click)="!isInSidebarCard ? showDetails(result!) : ''"
+                    (click)="!isInSidebarCard && result.successful !== undefined ? showDetails(result!) : ''"
                 >
                     <span [ngbTooltip]="resultTooltip | artemisTranslate">
                         {{ resultString }}
@@ -61,7 +61,7 @@
                             <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle" />
                         </span>
                     }
-                    @if (!isInSidebarCard) {
+                    @if (!isInSidebarCard && !!result!.successful) {
                         <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
                     }
                 </span>
@@ -73,7 +73,7 @@
                         </a>
                     </span>
                 }
-                @if (showBadge) {
+                @if (showBadge && !!result!.successful) {
                     <span class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
                         {{ badge.text | artemisTranslate | uppercase }}
                     </span>

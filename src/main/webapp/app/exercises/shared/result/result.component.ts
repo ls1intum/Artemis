@@ -305,4 +305,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             });
         }
     }
+
+    protected readonly AssessmentType = AssessmentType;
 }
