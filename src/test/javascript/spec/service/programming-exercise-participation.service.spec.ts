@@ -177,4 +177,21 @@ describe('ProgrammingExerciseParticipation Service', () => {
         req.flush(files);
         tick();
     }));
+
+    it('should make GET request to retrieve vcs access log for participation', fakeAsync(() => {
+        const participationId = 42;
+        service.getVcsAccessLogForParticipation(participationId).subscribe();
+        const expectedURL = `${resourceUrlParticipations}${participationId}/vcs-access-log`;
+        httpMock.expectOne({ method: 'GET', url: expectedURL });
+        tick();
+    }));
+
+    it('should make GET request to retrieve vcs access log for the template repository', fakeAsync(() => {
+        const exerciseId = 42;
+        const repositoryType = 'TEMPLATE';
+        service.getVcsAccessLogForRepository(exerciseId, repositoryType).subscribe();
+        const expectedURL = `${resourceUrl}${exerciseId}/vcs-access-log/${repositoryType}`;
+        httpMock.expectOne({ method: 'GET', url: expectedURL });
+        tick();
+    }));
 });
