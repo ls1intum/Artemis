@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisProgrammingExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisExerciseChatSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisProgrammingExerciseChatSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisHealthIndicator;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
@@ -28,12 +28,12 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
- * REST controller for managing {@link IrisExerciseChatSession}.
+ * REST controller for managing {@link IrisProgrammingExerciseChatSession}.
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/iris/exercise-chat/")
-public class IrisExerciseChatSessionResource {
+@RequestMapping("api/iris/programming-exercise-chat/")
+public class IrisProgrammingExerciseChatSessionResource {
 
     protected final UserRepository userRepository;
 
@@ -47,12 +47,12 @@ public class IrisExerciseChatSessionResource {
 
     protected final ExerciseRepository exerciseRepository;
 
-    private final IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
+    private final IrisProgrammingExerciseChatSessionRepository irisProgrammingExerciseChatSessionRepository;
 
-    protected IrisExerciseChatSessionResource(IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, UserRepository userRepository,
+    protected IrisProgrammingExerciseChatSessionResource(IrisProgrammingExerciseChatSessionRepository irisProgrammingExerciseChatSessionRepository, UserRepository userRepository,
             ExerciseRepository exerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator,
             IrisRateLimitService irisRateLimitService) {
-        this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
+        this.irisProgrammingExerciseChatSessionRepository = irisProgrammingExerciseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
@@ -69,14 +69,14 @@ public class IrisExerciseChatSessionResource {
      */
     @PostMapping("{exerciseId}/sessions/current")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<IrisExerciseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<IrisProgrammingExerciseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var sessionOptional = irisExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream()
+        var sessionOptional = irisProgrammingExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream()
                 .findFirst();
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
@@ -95,14 +95,14 @@ public class IrisExerciseChatSessionResource {
      */
     @GetMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<List<IrisExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<IrisProgrammingExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var sessions = irisExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+        var sessions = irisProgrammingExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
         return ResponseEntity.ok(sessions);
     }
@@ -117,14 +117,14 @@ public class IrisExerciseChatSessionResource {
      */
     @PostMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<IrisExerciseChatSession> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<IrisProgrammingExerciseChatSession> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var session = irisExerciseChatSessionRepository.save(new IrisExerciseChatSession(programmingExercise, user));
+        var session = irisProgrammingExerciseChatSessionRepository.save(new IrisProgrammingExerciseChatSession(programmingExercise, user));
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);

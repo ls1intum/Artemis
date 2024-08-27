@@ -38,7 +38,8 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = IrisExerciseChatSession.class, name = "chat"), // TODO: Legacy. Should ideally be "exercise_chat"
+    @JsonSubTypes.Type(value = IrisTextExerciseChatSession.class, name = "text_exercise_chat"),
+    @JsonSubTypes.Type(value = IrisExerciseChatSession.class, name = "chat"), // TODO: Legacy. Should ideally be "programming_exercise_chat"
     @JsonSubTypes.Type(value = IrisCourseChatSession.class, name = "course_chat"),
 })
 // @formatter:on

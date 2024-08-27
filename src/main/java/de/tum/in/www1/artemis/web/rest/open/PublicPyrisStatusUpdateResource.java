@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompe
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CompetencyExtractionJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.ProgrammingExerciseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -46,7 +46,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * POST public/pyris/pipelines/tutor-chat/runs/:runId/status : Set the status of an exercise chat job
+     * POST public/pyris/pipelines/programming-exercise-chat/runs/:runId/status : Set the status of a programming exercise chat job
      * <p>
      * Uses custom token based authentication.
      *
@@ -57,10 +57,10 @@ public class PublicPyrisStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
-    @PostMapping("pipelines/tutor-chat/runs/{runId}/status") // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
+    @PostMapping("pipelines/programming-exercise-chat/runs/{runId}/status")
     @EnforceNothing
     public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ExerciseChatJob.class);
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ProgrammingExerciseChatJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }

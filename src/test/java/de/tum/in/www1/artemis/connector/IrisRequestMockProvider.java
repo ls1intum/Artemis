@@ -87,7 +87,7 @@ public class IrisRequestMockProvider {
     public void mockRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/programming-exercise-chat/default/run"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
@@ -124,7 +124,7 @@ public class IrisRequestMockProvider {
     public void mockRunError(int httpStatus) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/programming-exercise-chat/default/run"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
         // @formatter:on

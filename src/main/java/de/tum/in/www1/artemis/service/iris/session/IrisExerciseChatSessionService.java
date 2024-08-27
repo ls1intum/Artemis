@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
-import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisProgrammingExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.ProgrammingExerciseChatJob;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Service
 @Profile("iris")
-public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
+public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisProgrammingExerciseChatSession> implements IrisRateLimitedFeatureInterface {
 
     private final IrisMessageService irisMessageService;
 
@@ -85,11 +85,11 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param user     The user the session belongs to
      * @return The created session
      */
-    public IrisExerciseChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
+    public IrisProgrammingExerciseChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        return irisSessionRepository.save(new IrisExerciseChatSession(exercise, user));
+        return irisSessionRepository.save(new IrisProgrammingExerciseChatSession(exercise, user));
     }
 
     /**
@@ -101,7 +101,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param session The session to check
      */
     @Override
-    public void checkHasAccessTo(User user, IrisExerciseChatSession session) {
+    public void checkHasAccessTo(User user, IrisProgrammingExerciseChatSession session) {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, session.getExercise(), user);
         if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Session", session.getId());
@@ -114,12 +114,12 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param session The session to check
      */
     @Override
-    public void checkIsFeatureActivatedFor(IrisExerciseChatSession session) {
+    public void checkIsFeatureActivatedFor(IrisProgrammingExerciseChatSession session) {
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, session.getExercise());
     }
 
     @Override
-    public void sendOverWebsocket(IrisExerciseChatSession session, IrisMessage message) {
+    public void sendOverWebsocket(IrisProgrammingExerciseChatSession session, IrisMessage message) {
         irisChatWebsocketService.sendMessage(session, message, null);
     }
 
@@ -135,8 +135,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param session The chat session to send to the LLM
      */
     @Override
-    public void requestAndHandleResponse(IrisExerciseChatSession session) {
-        var chatSession = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+    public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session) {
+        var chatSession = (IrisProgrammingExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         if (chatSession.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
@@ -158,13 +158,13 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     /**
-     * Handles the status update of a ExerciseChatJob by sending the result to the student via the Websocket.
+     * Handles the status update of a ProgrammingExerciseChatJob by sending the result to the student via the Websocket.
      *
      * @param job          The job that was executed
      * @param statusUpdate The status update of the job
      */
-    public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var session = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
+    public void handleStatusUpdate(ProgrammingExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        var session = (IrisProgrammingExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));

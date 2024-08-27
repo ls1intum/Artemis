@@ -14,8 +14,8 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CompetencyExtractionJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.ProgrammingExerciseChatJob;
 import de.tum.in.www1.artemis.service.iris.IrisCompetencyGenerationService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
@@ -43,12 +43,13 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handles the status update of a exercise chat job and forwards it to {@link IrisExerciseChatSessionService#handleStatusUpdate(ExerciseChatJob, PyrisChatStatusUpdateDTO)}
+     * Handles the status update of a exercise chat job and forwards it to
+     * {@link IrisExerciseChatSessionService#handleStatusUpdate(ProgrammingExerciseChatJob, PyrisChatStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
-    public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+    public void handleStatusUpdate(ProgrammingExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         irisExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminated(statusUpdate.stages(), job.jobId());
