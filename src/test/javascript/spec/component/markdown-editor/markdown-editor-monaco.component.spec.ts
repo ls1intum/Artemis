@@ -21,6 +21,7 @@ import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/mon
 import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
 import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
+import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -86,9 +87,26 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
         const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
-        comp.onNavChanged({ nextId: 'editor', activeId: 'editor_preview', preventDefault: jest.fn() });
+        comp.onNavChanged({ nextId: MarkdownEditorMonacoComponent.TAB_EDIT, activeId: MarkdownEditorMonacoComponent.TAB_PREVIEW, preventDefault: jest.fn() });
         expect(adjustEditorDimensionsSpy).toHaveBeenCalledOnce();
         expect(focusSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should emit when leaving the visual tab', () => {
+        const emitSpy = jest.spyOn(comp.onLeaveVisualTab, 'emit');
+        fixture.detectChanges();
+        comp.onNavChanged({ nextId: MarkdownEditorMonacoComponent.TAB_EDIT, activeId: MarkdownEditorMonacoComponent.TAB_VISUAL, preventDefault: jest.fn() });
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+        { tab: MarkdownEditorMonacoComponent.TAB_EDIT, flags: [true, false, false] },
+        { tab: MarkdownEditorMonacoComponent.TAB_PREVIEW, flags: [false, true, false] },
+        { tab: MarkdownEditorMonacoComponent.TAB_VISUAL, flags: [false, false, true] },
+    ])(`should set the correct flags when navigating to $tab`, ({ tab, flags }) => {
+        fixture.detectChanges();
+        comp.onNavChanged({ nextId: tab, activeId: MarkdownEditorMonacoComponent.TAB_EDIT, preventDefault: jest.fn() });
+        expect([comp.inEditMode, comp.inPreviewMode, comp.inVisualMode]).toEqual(flags);
     });
 
     it('should embed manually uploaded files', () => {
@@ -213,11 +231,9 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should react to content height changes if the height is linked to the editor', () => {
         comp.linkEditorHeightToContentHeight = true;
-        comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
-        comp.resizableMinHeight = MarkdownEditorHeight.SMALL;
         comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
         fixture.detectChanges();
-        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.MEDIUM);
+        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.SMALL);
         comp.onContentHeightChanged(1500);
         expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.LARGE);
         comp.onContentHeightChanged(20);
@@ -235,11 +251,11 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(comp.targetWrapperHeight).toBe(300 - wrapperTop - dragElemHeight / 2);
     });
 
-    it('should forward enableTextFieldMode call', () => {
+    it('should use the correct options to enable text field mode', () => {
         fixture.detectChanges();
-        const setTextFieldModeSpy = jest.spyOn(comp.monacoEditor, 'enableTextFieldMode');
+        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
         comp.enableTextFieldMode();
-        expect(setTextFieldModeSpy).toHaveBeenCalledOnce();
+        expect(applySpy).toHaveBeenCalledExactlyOnceWith(COMMUNICATION_MARKDOWN_EDITOR_OPTIONS);
     });
 
     it('should apply option presets to the editor', () => {
