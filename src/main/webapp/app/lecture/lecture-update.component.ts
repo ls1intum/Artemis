@@ -35,12 +35,12 @@ export class LectureUpdateComponent implements OnInit {
 
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
 
-    titleSection = viewChild.required(LectureTitleChannelNameComponent);
-    periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
-    unitSection = viewChild(LectureUpdateWizardUnitsComponent);
+    titleSection: Signal<LectureTitleChannelNameComponent> = viewChild.required(LectureTitleChannelNameComponent);
+    periodSectionDatepicker: Signal<readonly FormDateTimePickerComponent[]> = viewChildren(FormDateTimePickerComponent);
+    unitSection: Signal<LectureUpdateWizardUnitsComponent | undefined> = viewChild(LectureUpdateWizardUnitsComponent);
 
     isPeriodSectionValid: Signal<boolean> = computed(() => {
-        for (const periodSectionDatepicker of this.periodSectionDatepickers()) {
+        for (const periodSectionDatepicker of this.periodSectionDatepicker()) {
             if (!periodSectionDatepicker.isValid()) {
                 return false;
             }
@@ -94,6 +94,7 @@ export class LectureUpdateComponent implements OnInit {
                 },
             ];
 
+            // only in edit mode we have the lecture id which is currently required to store units and attachments
             if (this.isEditMode()) {
                 updatedFormStatusSections = [
                     ...updatedFormStatusSections,
