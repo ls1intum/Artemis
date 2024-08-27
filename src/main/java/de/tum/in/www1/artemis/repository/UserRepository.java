@@ -13,6 +13,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -38,6 +40,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.ConversationNotificationRecipientSummary;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
@@ -96,14 +99,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
-    Optional<User> findOneWithAuthoritiesByLogin(String login);
-
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(String login, boolean isInternal);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    Optional<User> findOneWithGroupsAndAuthoritiesByEmailAndIsInternal(String email, boolean isInternal);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
@@ -263,6 +266,35 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     List<User> searchByNameInGroups(@Param("groupNames") Set<String> groupNames, @Param("nameOfUser") String nameOfUser);
 
+    @Query("""
+            SELECT user.id
+            FROM User user
+                LEFT JOIN user.groups userGroup
+            WHERE user.isDeleted = FALSE
+                AND :groupName = userGroup
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
+            """)
+    List<Long> findUserIdsByLoginOrNameInGroup(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "groups")
+    List<User> findUsersWithGroupsByIdIn(List<Long> ids);
+
+    @Query("""
+            SELECT COUNT(user)
+            FROM User user
+                LEFT JOIN user.groups userGroup
+            WHERE user.isDeleted = FALSE
+                AND :groupName = userGroup
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
+            """)
+    long countUsersByLoginOrNameInGroup(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
+
     /**
      * Search for all users by login or name in a group
      *
@@ -271,42 +303,84 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param groupName   Name of group in which to search for users
      * @return all users matching search criteria in the group converted to DTOs
      */
-    @Query(value = """
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND :groupName = userGroup
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """, countQuery = """
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND :groupName = userGroup
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<User> searchAllByLoginOrNameInGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
+    default Page<User> searchAllWithGroupsByLoginOrNameInGroup(Pageable pageable, String loginOrName, String groupName) {
+        List<Long> ids = findUserIdsByLoginOrNameInGroup(loginOrName, groupName, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersWithGroupsByIdIn(ids);
+        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroup(loginOrName, groupName));
+    }
 
-    @Query(value = """
+    @Query("""
+            SELECT user.id
+            FROM User user
+                LEFT JOIN user.groups userGroup
+            WHERE user.isDeleted = FALSE
+                AND userGroup IN :groupNames
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                ) AND user.id <> :idOfUser
+            """)
+    List<Long> findUserIdsByLoginOrNameInGroupsNotUserId(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("idOfUser") long idOfUser,
+            Pageable pageable);
+
+    @Query("""
             SELECT user
             FROM User user
                 LEFT JOIN FETCH user.groups userGroup
+            WHERE user.id IN :ids
+            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
+            """)
+    List<User> findUsersByIdsWithGroupsOrdered(@Param("ids") List<Long> ids);
+
+    @Query("""
+            SELECT COUNT(user)
+            FROM User user
+                LEFT JOIN user.groups userGroup
+            WHERE user.isDeleted = FALSE
+                AND userGroup IN :groupNames
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                ) AND user.id <> :idOfUser
+            """)
+    long countUsersByLoginOrNameInGroupsNotUserId(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("idOfUser") long idOfUser);
+
+    /**
+     * Searches for {@link User} entities by login or name within specified groups, excluding a specific user ID.
+     * The results are paginated.
+     *
+     * @param pageable    the pagination information.
+     * @param loginOrName the login or name to search for.
+     * @param groupNames  the set of group names to limit the search within.
+     * @param idOfUser    the ID of the user to exclude from the search results.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
+    default Page<User> searchAllWithGroupsByLoginOrNameInGroupsNotUserId(Pageable pageable, String loginOrName, Set<String> groupNames, long idOfUser) {
+        List<Long> ids = findUserIdsByLoginOrNameInGroupsNotUserId(loginOrName, groupNames, idOfUser, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersByIdsWithGroupsOrdered(ids);
+        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroupsNotUserId(loginOrName, groupNames, idOfUser));
+    }
+
+    @Query("""
+            SELECT user.id
+            FROM User user
+                LEFT JOIN user.groups userGroup
             WHERE user.isDeleted = FALSE
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND user.id <> :idOfUser
-            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
-            """, countQuery = """
+                )
+            """)
+    List<Long> findUserIdsByLoginOrNameInGroups(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, Pageable pageable);
+
+    @Query("""
             SELECT COUNT(user)
             FROM User user
                 LEFT JOIN user.groups userGroup
@@ -315,12 +389,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND user.id <> :idOfUser
-            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
+                )
             """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<User> searchAllByLoginOrNameInGroupsNotUserId(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
-            @Param("idOfUser") long idOfUser);
+    long countUsersByLoginOrNameInGroups(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
 
     /**
      * Search for all users by login or name within the provided groups
@@ -330,34 +401,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param groupNames  Names of groups in which to search for users
      * @return All users matching search criteria
      */
-    @Query(value = """
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """, countQuery = """
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
+    default Page<User> searchAllWithGroupsByLoginOrNameInGroups(Pageable pageable, String loginOrName, Set<String> groupNames) {
+        List<Long> ids = findUserIdsByLoginOrNameInGroups(loginOrName, groupNames, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersWithGroupsByIdIn(ids);
+        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroups(loginOrName, groupNames));
+    }
 
-    @Query(value = """
+    @Query("""
             SELECT DISTINCT user
             FROM User user
-                LEFT JOIN FETCH user.groups
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.isDeleted = FALSE
@@ -367,7 +422,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
-            """, countQuery = """
+            """)
+    List<User> findUsersByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
+
+    @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
@@ -380,23 +438,45 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
+    long countUsersByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
-    @Query(value = """
-             SELECT DISTINCT user
-             FROM User user
-                 LEFT JOIN FETCH user.groups userGroup
-                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-             WHERE user.isDeleted = FALSE
+    /**
+     * Searches for {@link User} entities by login or name within a specific conversation.
+     * The results are paginated.
+     *
+     * @param pageable       the pagination information.
+     * @param loginOrName    the login or name to search for.
+     * @param conversationId the ID of the conversation to limit the search within.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
+    default Page<User> searchAllWithGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
+        List<Long> ids = findUsersByLoginOrNameInConversation(loginOrName, conversationId, pageable).stream().map(DomainObject::getId).toList();
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersWithGroupsByIdIn(ids);
+        long total = countUsersByLoginOrNameInConversation(loginOrName, conversationId);
+        return new PageImpl<>(users, pageable, total);
+    }
+
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN user.groups userGroup
+                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+            WHERE user.isDeleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
                     OR user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND userGroup IN :groupNames
-            """, countQuery = """
+            """)
+    List<User> findUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
+            @Param("groupNames") Set<String> groupNames, Pageable pageable);
+
+    @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
                 JOIN user.groups userGroup
@@ -410,14 +490,33 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND userGroup IN :groupNames
             """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
+    long countUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames);
 
-    @Query(value = """
+    /**
+     * Searches for {@link User} entities by login or name within a specific conversation and course groups.
+     * The results are paginated.
+     *
+     * @param pageable       the pagination information.
+     * @param loginOrName    the login or name to search for.
+     * @param conversationId the ID of the conversation to limit the search within.
+     * @param groupNames     the set of course group names to limit the search within.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
+    default Page<User> searchAllWithCourseGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId, Set<String> groupNames) {
+        List<Long> ids = findUsersByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames, pageable).stream().map(DomainObject::getId).toList();
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersWithGroupsByIdIn(ids);
+        long total = countUsersByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames);
+        return new PageImpl<>(users, pageable, total);
+    }
+
+    @Query("""
             SELECT DISTINCT user
             FROM User user
-                JOIN FETCH user.groups userGroup
+                JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.isDeleted = FALSE
@@ -427,7 +526,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND conversationParticipant.isModerator = TRUE
-            """, countQuery = """
+            """)
+    List<User> findModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
+
+    @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
                 JOIN user.groups userGroup
@@ -441,8 +543,26 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND conversationParticipant.isModerator = TRUE
             """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch
-    Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
+    long countModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
+
+    /**
+     * Searches for channel moderator {@link User} entities by login or name within a specific conversation.
+     * The results are paginated.
+     *
+     * @param pageable       the pagination information.
+     * @param loginOrName    the login or name to search for.
+     * @param conversationId the ID of the conversation to limit the search within.
+     * @return a paginated list of channel moderator {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
+    default Page<User> searchChannelModeratorsWithGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
+        List<Long> ids = findModeratorsByLoginOrNameInConversation(loginOrName, conversationId, pageable).stream().map(DomainObject::getId).toList();
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findDistinctUsersWithGroupsByIdIn(ids); // these users are moderators
+        long total = countModeratorsByLoginOrNameInConversation(loginOrName, conversationId);
+        return new PageImpl<>(users, pageable, total);
+    }
 
     /**
      * Search for all users by login or name in a group and convert them to {@link UserDTO}
@@ -453,7 +573,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return all users matching search criteria in the group converted to {@link UserDTO}
      */
     default Page<UserDTO> searchAllUsersByLoginOrNameInGroupAndConvertToDTO(Pageable pageable, String loginOrName, String groupName) {
-        Page<User> users = searchAllByLoginOrNameInGroup(pageable, loginOrName, groupName);
+        Page<User> users = searchAllWithGroupsByLoginOrNameInGroup(pageable, loginOrName, groupName);
         return users.map(UserDTO::new);
     }
 
@@ -484,18 +604,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
-    /**
-     * Searches for users in a course by their login or full name.
-     *
-     * @param page        Pageable related info (e.g. for page size)
-     * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
-     * @param courseId    Id of the course the user has to be a member of
-     * @return list of found users that match the search criteria
-     */
-    @Query(value = """
+    @Query("""
             SELECT DISTINCT user
             FROM User user
-                LEFT JOIN FETCH user.groups userGroup
+                JOIN user.groups userGroup
                 JOIN Course course ON course.id = :courseId
             WHERE user.isDeleted = FALSE
                 AND (
@@ -506,11 +618,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR course.teachingAssistantGroupName = userGroup
                     OR course.editorGroupName = userGroup
                     OR course.instructorGroupName = userGroup
-                )
-            """, countQuery = """
+               )
+            """)
+    List<User> findUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "groups")
+    List<User> findDistinctUsersWithGroupsByIdIn(List<Long> ids);
+
+    @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
-                LEFT JOIN user.groups userGroup
+                JOIN user.groups userGroup
                 JOIN Course course ON course.id = :courseId
             WHERE user.isDeleted = FALSE
                 AND (
@@ -523,11 +641,79 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR course.instructorGroupName = userGroup
                 )
             """)
-    Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
+    long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 
-    // TODO: rewrite this query, pageable does not work well with left join fetch
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable);
+    /**
+     * Searches for users by login or name within a course and returns a list of distinct users along with their groups.
+     * This method avoids in-memory paging by retrieving the user IDs directly from the database.
+     *
+     * @param pageable    the pagination information
+     * @param loginOrName the login or name of the users to search for
+     * @param courseId    the ID of the course to search within
+     * @return a list of distinct users with their groups, or an empty list if no users are found
+     */
+    default List<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnList(Pageable pageable, String loginOrName, long courseId) {
+        List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
+
+        if (userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return findDistinctUsersWithGroupsByIdIn(userIds);
+    }
+
+    /**
+     * Searches for users by login or name within a course and returns a paginated list of distinct users along with their groups.
+     * This method avoids in-memory paging by retrieving the user IDs directly from the database.
+     *
+     * @param pageable    the pagination information
+     * @param loginOrName the login or name of the users to search for
+     * @param courseId    the ID of the course to search within
+     * @return a {@code Page} containing a list of distinct users with their groups, or an empty page if no users are found
+     */
+    default Page<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
+        List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
+
+        if (userIds.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        List<User> users = findDistinctUsersWithGroupsByIdIn(userIds);
+        long total = countUsersByLoginOrNameInCourse(loginOrName, courseId);
+
+        return new PageImpl<>(users, pageable, total);
+    }
+
+    @Query("""
+            SELECT user.id
+            FROM User user
+            WHERE user.isDeleted = FALSE
+            """)
+    List<Long> findUserIdsByIsDeletedIsFalse(Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(user)
+            FROM User user
+            WHERE user.isDeleted = FALSE
+            """)
+    long countUsersByIsDeletedIsFalse();
+
+    /**
+     * Retrieves a paginated list of {@link User} entities that are not marked as deleted,
+     * with their associated groups.
+     *
+     * @param pageable the pagination information.
+     * @return a paginated list of {@link User} entities that are not marked as deleted. If no entities are found, returns an empty page.
+     */
+    default Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable) {
+        List<Long> ids = findUserIdsByIsDeletedIsFalse(pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersWithGroupsByIdIn(ids);
+        long total = countUsersByIsDeletedIsFalse();
+        return new PageImpl<>(users, pageable, total);
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse();
@@ -669,8 +855,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @NotNull
     default User getUser() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
+        return getValueElseThrow(findOneByLogin(currentUserLogin));
     }
 
     /**
@@ -693,8 +878,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     default long getUserIdElseThrow() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<Long> userId = findIdByLogin(currentUserLogin);
-        return userId.orElseThrow(() -> new EntityNotFoundException("User: " + currentUserLogin));
+        return getArbitraryValueElseThrow(findIdByLogin(currentUserLogin), currentUserLogin);
     }
 
     /**
@@ -705,7 +889,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     @NotNull
     default User getUserByLoginElseThrow(String login) {
-        return findOneByLogin(login).orElseThrow(() -> new EntityNotFoundException("User: " + login));
+        return getValueElseThrow(findOneByLogin(login));
     }
 
     /**
@@ -716,8 +900,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @NotNull
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin));
     }
 
     /**
@@ -728,8 +911,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @NotNull
     default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
     }
 
     /**
@@ -741,13 +923,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @NotNull
     default User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
-    }
-
-    @NotNull
-    private User unwrapOptionalUser(Optional<User> optionalUser, String currentUserLogin) {
-        return optionalUser.orElseThrow(() -> new EntityNotFoundException("No user found with login: " + currentUserLogin));
+        return getValueElseThrow(findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin));
     }
 
     private String getCurrentUserLogin() {
@@ -766,8 +942,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     @NotNull
     default User getUserWithGroupsAndAuthorities(@NotNull String username) {
-        Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(username);
-        return unwrapOptionalUser(user, username);
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
     }
 
     /**
@@ -811,7 +986,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     @NotNull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
-        return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId), userId);
     }
 
     /**
@@ -822,7 +997,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     @NotNull
     default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
-        return findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId), userId);
     }
 
     /**
@@ -833,7 +1008,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     @NotNull
     default User findWithLearningPathsByIdElseThrow(long userId) {
-        return findWithLearningPathsById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+        return getValueElseThrow(findWithLearningPathsById(userId), userId);
     }
 
     /**

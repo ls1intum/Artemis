@@ -12,10 +12,10 @@
                             <tr>
                                 <th><span>ID</span></th>
                                 <th>
-                                    <span>{{ 'artemisApp.lecture.wizardMode.competencyTitle' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.lecture.wizardMode.competencyTitle"></span>
                                 </th>
                                 <th>
-                                    <span>{{ 'artemisApp.lecture.wizardMode.competencyConnectedUnits' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.lecture.wizardMode.competencyConnectedUnits"></span>
                                 </th>
                                 <th></th>
                             </tr>
@@ -26,9 +26,7 @@
                                     <td>
                                         {{ competency.id }}
                                         @if (currentlyProcessedCompetency?.id === competency?.id) {
-                                            <div class="edit-overlay">
-                                                {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
-                                            </div>
+                                            <div class="edit-overlay" jhiTranslate="artemisApp.lecture.attachments.isBeingEdited"></div>
                                         }
                                     </td>
                                     <td>{{ competency.title }}</td>
@@ -65,21 +63,21 @@
     @if (isLoadingCompetencies) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
-                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                <span class="sr-only" jhiTranslate="loading"></span>
             </div>
         </div>
     }
     @if (!isEditingCompetency) {
         <div class="form-group">
             <button id="addCompetencyButton" class="btn btn-primary" type="button" [disabled]="isAddingCompetency" (click)="showCreateCompetency()">
-                <span>{{ 'artemisApp.competency.createCompetency.title' | artemisTranslate }}</span>
+                <span jhiTranslate="artemisApp.competency.create.title"></span>
             </button>
         </div>
     }
     @if (isLoadingCompetencyForm) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
-                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                <span class="sr-only" jhiTranslate="loading"></span>
             </div>
         </div>
     }

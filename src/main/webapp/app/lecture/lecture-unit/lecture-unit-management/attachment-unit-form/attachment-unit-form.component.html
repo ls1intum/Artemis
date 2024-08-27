@@ -13,20 +13,16 @@
                 @if (nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (nameControl?.errors?.required) {
-                            <div>
-                                {{ 'artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError"></div>
                         }
                         @if (nameControl?.errors?.maxlength) {
-                            <div>
-                                {{ 'artemisApp.attachmentUnit.createAttachmentUnit.nameMaxLengthValidationError' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.nameMaxLengthValidationError"></div>
                         }
                     </div>
                 }
             </div>
             <div class="form-group">
-                <label for="description">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.description' | artemisTranslate }}</label>
+                <label for="description" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.description"></label>
                 <textarea
                     class="form-control"
                     id="description"
@@ -37,16 +33,14 @@
                 @if (descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (descriptionControl?.errors?.maxlength) {
-                            <div>
-                                {{ 'artemisApp.attachmentUnit.createAttachmentUnit.descriptionMaxLengthValidationError' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.descriptionMaxLengthValidationError"></div>
                         }
                     </div>
                 }
             </div>
             <div class="form-group">
                 <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
-                <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
+                <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation"></small>
                 <fa-icon
                     [icon]="faQuestionCircle"
                     [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
@@ -73,9 +67,7 @@
                     </div>
                 }
                 @if (!fileName && fileInputTouched) {
-                    <div class="alert alert-danger">
-                        {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError' | artemisTranslate }}
-                    </div>
+                    <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError"></div>
                 }
             </div>
             <div class="form-group">
@@ -90,7 +82,7 @@
                 />
             </div>
             <div class="form-group" [hidden]="!isEditMode">
-                <label for="updateNotificationText">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationText' | artemisTranslate }}</label>
+                <label for="updateNotificationText" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationText"></label>
                 <textarea
                     class="form-control"
                     id="updateNotificationText"
@@ -102,21 +94,19 @@
                 @if (updateNotificationTextControl?.invalid && (updateNotificationTextControl?.dirty || updateNotificationTextControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (updateNotificationTextControl?.errors?.maxlength) {
-                            <div>
-                                {{ 'artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationTextMaxLengthValidationError' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationTextMaxLengthValidationError"></div>
                         }
                     </div>
                 }
             </div>
             <div class="form-group">
-                <label for="version">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.version' | artemisTranslate }}</label>
+                <label for="version" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.version"></label>
                 <input id="version" class="form-control disabled" type="text" readonly formControlName="version" />
             </div>
             <div class="row">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                        <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                        <span jhiTranslate="entity.action.submit"></span>
                     </button>
                     @if (hasCancelButton) {
                         <button type="button" (click)="cancelForm()" class="btn btn-default">

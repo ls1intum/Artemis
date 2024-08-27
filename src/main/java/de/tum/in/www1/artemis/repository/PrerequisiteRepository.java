@@ -2,32 +2,55 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the {@link Prerequisite} entity.
  */
-public interface PrerequisiteRepository extends JpaRepository<Prerequisite, Long> {
+public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisite, Long> {
 
     List<Prerequisite> findAllByCourseIdOrderById(long courseId);
 
-    Optional<Prerequisite> findByIdAndCourseId(long prerequisiteId, long courseId);
+    @Query("""
+            SELECT c
+            FROM Prerequisite c
+            WHERE c.course.id = :courseId
+            """)
+    Set<Prerequisite> findAllForCourse(@Param("courseId") long courseId);
 
-    /**
-     * Finds a prerequisite with the given id in the course of the given id. If it does not exist throws a {@link EntityNotFoundException}
-     *
-     * @param prerequisiteId the id of the prerequisite to find
-     * @param courseId       the id of the course
-     * @return the prerequisite
-     */
-    default Prerequisite findByIdAndCourseIdElseThrow(long prerequisiteId, long courseId) {
-        return findByIdAndCourseId(prerequisiteId, courseId).orElseThrow(() -> new EntityNotFoundException("Prerequisite", prerequisiteId));
+    @Query("""
+            SELECT c
+            FROM Prerequisite c
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.exercises
+            WHERE c.id = :competencyId
+            """)
+    Optional<Prerequisite> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
+
+    @Query("""
+            SELECT c
+            FROM Prerequisite c
+                LEFT JOIN FETCH c.lectureUnits lu
+            WHERE c.id = :competencyId
+            """)
+    Optional<Prerequisite> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
+
+    default Prerequisite findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {
+        return getValueElseThrow(findByIdWithLectureUnitsAndExercises(competencyId), competencyId);
+    }
+
+    default Prerequisite findByIdWithLectureUnitsElseThrow(long competencyId) {
+        return getValueElseThrow(findByIdWithLectureUnits(competencyId), competencyId);
     }
 
     long countByCourse(Course course);
+
+    List<Prerequisite> findByCourseIdOrderById(long courseId);
 }

@@ -43,7 +43,7 @@ import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-moda
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 
-@Component({ selector: 'jhi-markdown-editor', template: '' })
+@Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
     @Input() markdown: string;
     @Input() enableResize = false;

@@ -7,9 +7,7 @@
         <div class="modal-body">
             <!-- info if announcement is created-->
             @if (this.editType === EditType.CREATE && isCommunicationPage && getAsChannel(posting.conversation)?.isAnnouncementChannel) {
-                <div class="alert alert-warning">
-                    {{ 'artemisApp.metis.post.announcementHint' | artemisTranslate }}
-                </div>
+                <div class="alert alert-warning" jhiTranslate="artemisApp.metis.post.announcementHint"></div>
             }
             <!-- title -->
             <div class="position-relative mb-3">
@@ -69,7 +67,7 @@
                     <jhi-help-icon text="artemisApp.metis.post.contentTooltip" />
                 </div>
                 <div class="row mb-2">
-                    <jhi-posting-markdown-editor formControlName="content" [editorHeight]="editorHeight" [maxContentLength]="maxContentLength" />
+                    <jhi-posting-markdown-editor formControlName="content" [editorHeight]="editorHeight" [maxContentLength]="maxContentLength" [suppressNewlineOnEnter]="false" />
                 </div>
             </div>
         </div>

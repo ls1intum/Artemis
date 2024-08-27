@@ -62,6 +62,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -77,6 +78,9 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
+
+    @Autowired
+    private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
 
     @Autowired
     private BuildLogEntryService buildLogEntryService;
@@ -161,7 +165,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
         assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
         assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getWindfile().getMetadata().docker().getFullImageName());
+        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getWindfile().getMetadata().docker().getFullImageName());
         assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
         assertThat(buildJob.getBuildAgentAddress()).isNotEmpty();
         assertThat(buildJob.getPriority()).isEqualTo(2);
@@ -190,6 +194,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         String expectedErrorMessage = "Could not find participation for repository";
 
         // student participation
+        participationVcsAccessTokenService.deleteByParticipationId(studentParticipation.getId());
         programmingExerciseStudentParticipationRepository.delete(studentParticipation);
         assertThatExceptionOfType(VersionControlException.class)
                 .isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()))
@@ -269,6 +274,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     void testProjectTypeIsNull() {
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         programmingExercise.setProjectType(null);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
 
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
@@ -362,6 +368,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStaticCodeAnalysis() throws IOException {
         programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);

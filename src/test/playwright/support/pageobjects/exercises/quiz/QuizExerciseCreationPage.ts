@@ -25,8 +25,8 @@ export class QuizExerciseCreationPage {
         await this.page.locator('#score').fill(points.toString());
 
         const fileContent = await Fixtures.get('exercise/quiz/multiple_choice/question.txt');
-        const textInputField = this.page.locator('.ace_text-input');
-        await textInputField.focus();
+        const textInputField = this.page.locator('.monaco-editor');
+        await textInputField.click();
         await textInputField.pressSequentially(fileContent!);
     }
 
@@ -35,9 +35,9 @@ export class QuizExerciseCreationPage {
         await this.page.locator('#short-answer-question-title').fill(title);
 
         const fileContent = await Fixtures.get('exercise/quiz/short_answer/question.txt');
-        const textInputField = this.page.locator('.ace_text-input');
+        const textInputField = this.page.locator('.monaco-editor');
         await clearTextField(textInputField);
-        await this.page.locator('.ace_text-input').fill(fileContent!);
+        await this.page.locator('.monaco-editor textarea').fill(fileContent!);
         await this.page.locator('#short-answer-show-visual').click();
     }
 
@@ -61,9 +61,9 @@ export class QuizExerciseCreationPage {
         await drag(this.page, dragLocator, dropLocator);
 
         const fileContent = await Fixtures.get('exercise/quiz/drag_and_drop/question.txt');
-        const textInputField = this.page.locator('.ace_text-input');
+        const textInputField = this.page.locator('.monaco-editor');
         await clearTextField(textInputField);
-        await textInputField.fill(fileContent!);
+        await textInputField.pressSequentially(fileContent!);
     }
 
     async createDragAndDropItem(text: string) {

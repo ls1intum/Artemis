@@ -16,7 +16,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the ExerciseGroup entity.
@@ -48,6 +47,6 @@ public interface ExerciseGroupRepository extends ArtemisJpaRepository<ExerciseGr
      */
     @NotNull
     default ExerciseGroup findByIdWithExercisesElseThrow(long exerciseGroupId) {
-        return findWithExercisesById(exerciseGroupId).orElseThrow(() -> new EntityNotFoundException("ExerciseGroup", exerciseGroupId));
+        return getValueElseThrow(findWithExercisesById(exerciseGroupId), exerciseGroupId);
     }
 }

@@ -1,8 +1,8 @@
 @if (activeConversation && course) {
-    <div class="conversation-header">
+    <div>
         <div class="d-flex justify-content-between flex-wrap">
             <div>
-                <h3 class="conversation-name d-inline-block rounded p-2 info" (click)="openConversationDetailDialog($event, INFO)">
+                <h4 class="pointer d-inline-block rounded px-3 py-2 info" (click)="openConversationDetailDialog($event, INFO)">
                     @if (activeConversationAsChannel) {
                         <jhi-channel-icon
                             [isPublic]="activeConversationAsChannel.isPublic!"
@@ -14,37 +14,44 @@
                         <jhi-group-chat-icon />
                     }
                     {{ conversationService.getConversationName(activeConversation, true) }}
-                </h3>
+                </h4>
             </div>
             @if (activeConversationAsChannel) {
                 @if (activeConversationAsChannel.tutorialGroupId && activeConversationAsChannel.tutorialGroupTitle) {
                     <div class="p-2">
-                        <a class="btn btn-info" [routerLink]="['/courses', course.id, 'tutorial-groups', activeConversationAsChannel.tutorialGroupId]" role="button">{{
-                            'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate: { title: activeConversationAsChannel.tutorialGroupTitle }
-                        }}</a>
+                        <a
+                            class="btn btn-info"
+                            [routerLink]="['/courses', course.id, 'tutorial-groups', activeConversationAsChannel.tutorialGroupId]"
+                            role="button"
+                            jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
+                            [translateValues]="{ title: activeConversationAsChannel.tutorialGroupTitle }"
+                        ></a>
                     </div>
                 }
             }
-            <div class="d-flex flex-wrap">
-                <div class="btn-toolbar p-2" role="toolbar">
+            <div class="d-flex flex-wrap gap-2 p-2">
+                <div class="btn-toolbar" role="toolbar">
                     <div class="btn-group me-1" role="group">
-                        <button type="button" class="btn btn-outline-secondary search" (click)="toggleSearchBar()">
+                        <button type="button" class="btn btn-outline-secondary btn-sm search" (click)="toggleSearchBar()">
                             <fa-icon [icon]="faSearch" />
                         </button>
                     </div>
                 </div>
-                <div class="btn-toolbar p-2" role="toolbar">
+                <div class="btn-toolbar" role="toolbar">
                     <div class="btn-group me-1" role="group">
                         @if (activeConversationAsChannel?.subTypeReferenceId) {
-                            <a class="btn btn-outline-secondary sub-type-reference" [routerLink]="channelSubTypeReferenceRouterLink">
-                                {{ channelSubTypeReferenceTranslationKey | artemisTranslate }}
+                            <a
+                                [jhiTranslate]="channelSubTypeReferenceTranslationKey ?? ''"
+                                class="btn btn-sm btn-outline-secondary sub-type-reference"
+                                [routerLink]="channelSubTypeReferenceRouterLink"
+                            >
                             </a>
                         }
-                        <button type="button" class="btn btn-outline-secondary members" (click)="openConversationDetailDialog($event, MEMBERS)">
+                        <button type="button" class="btn btn-sm btn-outline-secondary members" (click)="openConversationDetailDialog($event, MEMBERS)">
                             <fa-icon [icon]="faUserGroup" /> {{ activeConversation.numberOfMembers || 0 }}
                         </button>
                         @if (canAddUsers(activeConversation)) {
-                            <button type="button" class="btn btn-outline-secondary addUsers" (click)="openAddUsersDialog($event)">
+                            <button type="button" class="btn btn-sm btn-outline-secondary addUsers" (click)="openAddUsersDialog($event)">
                                 <fa-icon [icon]="faUserPlus" />
                             </button>
                         }
@@ -55,7 +62,7 @@
         @if (activeConversationAsChannel) {
             @if (activeConversationAsChannel.topic && activeConversationAsChannel.topic.length > 0) {
                 <div class="text-body-secondary d-flex justify-content-between px-2">
-                    <span class="d-inline-block conversation-topic">{{ activeConversationAsChannel.topic }}</span>
+                    <span id="conversation-topic" class="d-inline-block mw-100">{{ activeConversationAsChannel.topic }}</span>
                 </div>
             }
         }

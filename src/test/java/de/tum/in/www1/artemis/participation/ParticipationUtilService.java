@@ -66,6 +66,7 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -85,6 +86,9 @@ public class ParticipationUtilService {
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -313,7 +317,7 @@ public class ParticipationUtilService {
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
-
+        participationVCSAccessTokenService.createParticipationVCSAccessToken(userUtilService.getUserByLogin(login), participation);
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
     }
 
