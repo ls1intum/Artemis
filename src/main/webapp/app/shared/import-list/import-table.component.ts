@@ -20,13 +20,13 @@ export type Column<T extends BaseEntity> = {
 };
 
 @Component({
-    selector: 'jhi-import-list',
+    selector: 'jhi-import-table',
     standalone: true,
     imports: [ArtemisSharedCommonModule],
-    templateUrl: './import-list.component.html',
-    styleUrl: './import-list.component.scss',
+    templateUrl: './import-table.component.html',
+    styleUrl: './import-table.component.scss',
 })
-export class ImportListComponent<T extends BaseEntity> {
+export class ImportTableComponent<T extends BaseEntity> {
     protected readonly SortingOrder = SortingOrder;
 
     protected readonly faSort = faSort;
