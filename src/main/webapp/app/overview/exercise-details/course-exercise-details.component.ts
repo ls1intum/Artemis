@@ -249,7 +249,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private filterUnfinishedResults(participations?: StudentParticipation[]) {
         participations?.forEach((participation: Participation) => {
             if (participation.results) {
-                participation.results = participation.results.filter((result: Result) => result.completionDate);
+                participation.results = participation.results.filter((result: Result) => result.completionDate && result.successful !== undefined);
             }
         });
     }
@@ -312,6 +312,18 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         changedParticipation.results?.length! > this.gradedStudentParticipation?.results?.length!
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
+                    }
+                    if (
+                        changedParticipation.results?.length! > this.gradedStudentParticipation?.results?.length! &&
+                        changedParticipation.results?.last()!.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                        changedParticipation.results?.last()!.successful !== undefined
+                    ) {
+                        // undefined result success is being used to indicate the the feedback is being processed
+                        if (changedParticipation.results?.last()!.successful) {
+                            this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                        } else if (!changedParticipation.results?.last()!.successful) {
+                            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
+                        }
                     }
                     if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
                         this.exercise.studentParticipations = this.studentParticipations.map((participation) =>
