@@ -17,14 +17,14 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
     let component: VcsRepositoryAccessLogViewComponent;
     let fixture: ComponentFixture<VcsRepositoryAccessLogViewComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
-    const usreId = 4;
+    const userId = 4;
     let participationVcsAccessLogSpy: jest.SpyInstance;
     let repositoryVcsAccessLogSpy: jest.SpyInstance;
 
     const mockVcsAccessLog: VcsAccessLogDTO[] = [
         {
             id: 1,
-            userId: usreId,
+            userId: userId,
             name: 'authorName',
             email: 'authorEmail',
             commitHash: 'abcde',
@@ -34,7 +34,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         },
         {
             id: 2,
-            userId: usreId,
+            userId: userId,
             name: 'authorName',
             email: 'authorEmail',
             commitHash: 'fffee',
@@ -74,7 +74,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         expect(component).toBeTruthy();
         expect(participationVcsAccessLogSpy).toHaveBeenCalled();
         expect(component.vcsAccessLogEntries).toHaveLength(2);
-        expect(component.vcsAccessLogEntries[0].userId).toBe(usreId);
+        expect(component.vcsAccessLogEntries[0].userId).toBe(userId);
     });
 
     it('should load template repository vcs access log', () => {
@@ -83,6 +83,6 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         component.ngOnInit();
         expect(repositoryVcsAccessLogSpy).toHaveBeenCalled();
         expect(component.vcsAccessLogEntries).toHaveLength(2);
-        expect(component.vcsAccessLogEntries[0].userId).toBe(usreId);
+        expect(component.vcsAccessLogEntries[0].userId).toBe(userId);
     });
 });
