@@ -446,36 +446,6 @@ Jenkins Credentials
 Go to *Manage Jenkins → Security → Credentials → Jenkins → Global credentials* and create the
 following credentials
 
-GitLab API Token
-################
-
-1. Create a new access token in GitLab named ``Jenkins`` and give it
-   **api** rights and **read_repository** rights. For detailed
-   instructions on how to create such a token follow `Gitlab Access
-   Token <#gitlab-access-token>`__.
-
-   .. figure:: jenkins-gitlab/gitlab_jenkins_token_rights.png
-      :align: center
-
-2. Copy the generated token and create new Jenkins credentials:
-
-   1. **Kind**: GitLab API token
-   2. **Scope**: Global
-   3. **API token**: *your.copied.token*
-   4. Leave the ID field blank
-   5. The description is up to you
-
-3. Go to the Jenkins settings *Manage Jenkins → System*. There
-   you will find the GitLab settings. Fill in the URL of your GitLab
-   instance and select the just created API token in the credentials
-   dropdown. After you click on “Test Connection”, everything should
-   work fine. If you have problems finding the right URL for your local docker setup,
-   you can try `http://host.docker.internal:8081` for Windows or `http://docker.for.mac.host.internal:8081` for Mac
-   if GitLab is reachable over port 8081.
-
-   .. figure:: jenkins-gitlab/jenkins_gitlab_configuration.png
-      :align: center
-
 Server Notification Token
 #########################
 
