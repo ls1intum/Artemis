@@ -10,7 +10,7 @@
                 <!-- PROBLEM STATEMENT START -->
                 <div class="row mt-2 mb-2 align-items-baseline" id="problem-statement">
                     <div class="col-12 col-md-12 markdown-preview problem-statement">
-                        <h3>{{ 'artemisApp.exercise.problemStatement' | artemisTranslate }}</h3>
+                        <h3 jhiTranslate="artemisApp.exercise.problemStatement"></h3>
                         <p
                             [innerHTML]="
                                 exercise?.problemStatement ? (exercise.problemStatement | htmlForMarkdown) : ('artemisApp.exercise.emptyProblemStatement' | artemisTranslate)
@@ -20,7 +20,7 @@
                 </div>
                 <!-- PROBLEM STATEMENT END -->
                 <div class="row mb-2 mt-2 align-items-baseline">
-                    <h3 class="pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</h3>
+                    <h3 class="pe-2" jhiTranslate="artemisApp.exercise.exampleSolution"></h3>
                 </div>
                 <dl class="row-md jh-entity-details markdown-preview">
                     @if (exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution) {

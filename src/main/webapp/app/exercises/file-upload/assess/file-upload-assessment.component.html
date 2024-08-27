@@ -30,7 +30,7 @@
                     <div class="row">
                         @if (submission?.filePath) {
                             <div class="col-12 card-text">
-                                <a class="text-primary" (click)="downloadFile(submission!.filePath!)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate }}</a>
+                                <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"></a>
                                 <span class="ms-2 badge bg-info">{{ attachmentExtension(submission!.filePath!) | uppercase }}</span>
                             </div>
                         }
@@ -77,7 +77,7 @@
                 <div class="row">
                     @if (submission?.filePath) {
                         <div class="col-12 card-text">
-                            <a class="text-primary" (click)="downloadFile(submission!.filePath!)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate }}</a>
+                            <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"></a>
                             <span class="ms-2 badge bg-info">{{ attachmentExtension(submission!.filePath!) | uppercase }}</span>
                         </div>
                     }

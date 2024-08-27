@@ -1,11 +1,9 @@
 <div>
     <div>
         <div class="d-flex justify-content-between">
-            <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title' | artemisTranslate }}</h4>
+            <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title"></h4>
             @if (tableFiltered) {
-                <button type="button" class="btn btn-info" (click)="resetTableFilter()">
-                    {{ 'artemisApp.programmingExercise.configureGrading.charts.resetFilter' | artemisTranslate }}
-                </button>
+                <button type="button" class="btn btn-info" (click)="resetTableFilter()" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"></button>
             }
         </div>
         <p>
@@ -28,37 +26,35 @@
                 <br />
                 @if ([testCaseBarTitle.WEIGHT_EN, testCaseBarTitle.WEIGHT_DE].includes(model.series)) {
                     <div>
-                        <span>
-                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                        </span>
+                        <span
+                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip"
+                            [translateValues]="{ percentage: model.value.toFixed(2) }"
+                        ></span>
                         <br />
-                        <span>
-                            {{
-                                'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
-                                    | artemisTranslate: { percentage: model.bonus.toFixed(2) }
-                            }}
-                        </span>
+                        <span
+                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip"
+                            [translateValues]="{ percentage: model.bonus.toFixed(2) }"
+                        ></span>
                     </div>
                 }
                 @if ([testCaseBarTitle.WEIGHT_AND_BONUS_EN, testCaseBarTitle.WEIGHT_AND_BONUS_DE].includes(model.series)) {
                     <div>
-                        <span>
-                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip' | artemisTranslate: { percentage: model.weight.toFixed(2) } }}
-                        </span>
+                        <span
+                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip"
+                            [translateValues]="{ percentage: model.weight.toFixed(2) }"
+                        ></span>
                         <br />
-                        <span>
-                            {{
-                                'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
-                                    | artemisTranslate: { percentage: model.value.toFixed(2) }
-                            }}
-                        </span>
+                        <span
+                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip"
+                            [translateValues]="{ percentage: model.value.toFixed(2) }"
+                        ></span>
                     </div>
                 }
             </ng-template>
         </ngx-charts-bar-horizontal-normalized>
     </div>
     <div class="mt-4">
-        <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title' | artemisTranslate }}</h4>
+        <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title"></h4>
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
     </div>
     <div #containerRefPoints class="points-chart bg-light">
@@ -74,9 +70,10 @@
             <ng-template #tooltipTemplate let-model="model">
                 <b>{{ model.name }}</b>
                 <br />
-                <span>
-                    {{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                </span>
+                <span
+                    jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip"
+                    [translateValues]="{ percentage: model.value.toFixed(2) }"
+                ></span>
             </ng-template>
         </ngx-charts-bar-horizontal-stacked>
     </div>
