@@ -1,9 +1,7 @@
 @if (quizParticipation.quizQuestions && quizParticipation.quizQuestions.length > 0) {
     <div class="quiz-container">
         @if (showMissingResultsNotice) {
-            <div class="alert alert-info mb-2">
-                {{ 'artemisApp.exam.examSummary.missingResultNotice' | artemisTranslate }}
-            </div>
+            <div class="alert alert-info mb-2" jhiTranslate="artemisApp.exam.examSummary.missingResultNotice"></div>
         }
         @for (question of quizParticipation.quizQuestions!; track question; let i = $index) {
             <div class="quiz-content">

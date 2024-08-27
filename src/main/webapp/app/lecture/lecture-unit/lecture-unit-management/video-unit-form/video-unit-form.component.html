@@ -14,20 +14,16 @@
                     @if (nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (nameControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.videoUnit.createVideoUnit.nameRequiredValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.nameRequiredValidationError"></div>
                             }
                             @if (nameControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.videoUnit.createVideoUnit.nameMaxLengthValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.nameMaxLengthValidationError"></div>
                             }
                         </div>
                     }
                 </div>
                 <div class="form-group">
-                    <label for="description">{{ 'artemisApp.videoUnit.createVideoUnit.description' | artemisTranslate }}</label>
+                    <label for="description" jhiTranslate="artemisApp.videoUnit.createVideoUnit.description"></label>
                     <textarea
                         class="form-control"
                         id="description"
@@ -38,9 +34,7 @@
                     @if (descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (descriptionControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.videoUnit.createVideoUnit.descriptionMaxLengthValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.descriptionMaxLengthValidationError"></div>
                             }
                         </div>
                     }
@@ -63,7 +57,7 @@
                         </div>
                         <div class="col-1"></div>
                         <div class="col-7">
-                            <label for="urlHelper">{{ 'artemisApp.videoUnit.createVideoUnit.urlVideoHelper' | artemisTranslate }}</label>
+                            <label for="urlHelper" jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlVideoHelper"></label>
                         </div>
                     </div>
                     <div class="row">
@@ -90,29 +84,21 @@
                             @if (sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)) {
                                 <div class="alert alert-danger">
                                     @if (sourceControl?.errors?.required) {
-                                        <div>
-                                            {{ 'artemisApp.videoUnit.createVideoUnit.sourceRequiredValidationError' | artemisTranslate }}
-                                        </div>
+                                        <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.sourceRequiredValidationError"></div>
                                     }
                                     @if (sourceControl?.errors?.invalidVideoUrl) {
-                                        <div>
-                                            {{ 'artemisApp.videoUnit.createVideoUnit.sourceURLValidationError' | artemisTranslate }}
-                                        </div>
+                                        <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.sourceURLValidationError"></div>
                                     }
                                 </div>
                             }
                         </div>
                         <div class="col-1"></div>
                         <div class="col-7">
-                            <small id="urlHelperExplanation" class="form-text text-body-secondary">{{
-                                'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | artemisTranslate
-                            }}</small>
+                            <small id="urlHelperExplanation" class="form-text text-body-secondary" jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder"></small>
                             @if (urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)) {
                                 <div class="alert alert-danger">
                                     @if (urlHelperControl?.errors?.invalidVideoUrl) {
-                                        <div>
-                                            {{ 'artemisApp.videoUnit.createVideoUnit.urlHelperValidationError' | artemisTranslate }}
-                                        </div>
+                                        <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlHelperValidationError"></div>
                                     }
                                 </div>
                             }
@@ -122,7 +108,7 @@
                 <div class="row">
                     <div class="col-12">
                         <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                            <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                            <span jhiTranslate="entity.action.submit"></span>
                         </button>
                         @if (hasCancelButton) {
                             <button type="button" (click)="cancelForm()" class="btn btn-default">

@@ -20,28 +20,28 @@
             #instance="ngbTypeahead"
         />
         @if (isSearching) {
-            <small class="form-text text-body-secondary">{{ 'artemisApp.userSelector.searchingText' | artemisTranslate }}</small>
+            <small class="form-text text-body-secondary" jhiTranslate="artemisApp.userSelector.searchingText"></small>
             <br />
         }
         @if (searchFailed) {
-            <small>{{ 'artemisApp.userSelector.searchFailedText' | artemisTranslate }}</small>
+            <small jhiTranslate="artemisApp.userSelector.searchFailedText"></small>
             <br />
         }
         @if (searchStudents) {
-            <small class="form-text text-body-secondary">{{ 'artemisApp.userSelector.helpText' | artemisTranslate }}</small>
+            <small class="form-text text-body-secondary" jhiTranslate="artemisApp.userSelector.helpText"></small>
         }
     </div>
     <div class="text-end">
         @if (rolesToAllowSearchingIn.includes('students')) {
             <div class="form-check form-check-inline">
                 <input type="checkbox" class="form-check-input" id="students" [checked]="searchStudents" (change)="searchStudents = !searchStudents; onFilterChange()" />
-                <label class="form-check-label" for="students">{{ 'artemisApp.course.students' | artemisTranslate }}</label>
+                <label class="form-check-label" for="students" jhiTranslate="artemisApp.course.students"></label>
             </div>
         }
         @if (rolesToAllowSearchingIn.includes('tutors')) {
             <div class="form-check form-check-inline">
                 <input type="checkbox" class="form-check-input" id="tutors" [checked]="searchTutors" (change)="searchTutors = !searchTutors; onFilterChange()" />
-                <label class="form-check-label" for="tutors">{{ 'artemisApp.course.tutors' | artemisTranslate }}</label>
+                <label class="form-check-label" for="tutors" jhiTranslate="artemisApp.course.tutors"></label>
             </div>
         }
         @if (rolesToAllowSearchingIn.includes('instructors')) {
@@ -53,7 +53,7 @@
                     [checked]="searchInstructors"
                     (change)="searchInstructors = !searchInstructors; onFilterChange()"
                 />
-                <label class="form-check-label" for="instructors">{{ 'artemisApp.course.instructors' | artemisTranslate }}</label>
+                <label class="form-check-label" for="instructors" jhiTranslate="artemisApp.course.instructors"></label>
             </div>
         }
     </div>
