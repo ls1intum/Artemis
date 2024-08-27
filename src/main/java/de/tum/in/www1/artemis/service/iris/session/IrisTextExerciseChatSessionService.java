@@ -53,7 +53,7 @@ public class IrisTextExerciseChatSessionService {
         }
         // TODO: Figure out which DB call is needed here
         var exercise = textExerciseRepository.findWithGradingCriteriaById(textExerciseSession.getExercise().getId()).orElseThrow();
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise)) {
+        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.CHAT, exercise)) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
     }

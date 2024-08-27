@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 
 export enum IrisSubSettingsType {
-    CHAT = 'chat',
+    CHAT = 'chat', // TODO: Split this up into COURSE_CHAT, PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT
     COMPETENCY_GENERATION = 'competency-generation',
     LECTURE_INGESTION = 'lecture-ingestion',
 }
