@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 @Profile(PROFILE_CORE)
@@ -169,9 +170,7 @@ public class TextExerciseFeedbackService {
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
-            automaticResult.setSuccessful(false);
-            // Broadcast that something went wrong
-            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
+            throw new InternalServerErrorException("Something went wrong... AI Feedback could not be generated");
         }
     }
 }

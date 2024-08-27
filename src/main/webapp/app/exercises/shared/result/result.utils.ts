@@ -132,7 +132,7 @@ export function isAIResultAndProcessed(result: Result | undefined) {
 }
 
 export function isAIResultAndIsBeingProcessed(result: Result | undefined) {
-    return result && Result.isAthenaAIResult(result) && result.successful === undefined; // && result.completionDate && dayjs().isSameOrBefore(result.completionDate
+    return result && Result.isAthenaAIResult(result) && result.successful === undefined && result.completionDate && dayjs().isSameOrBefore(result.completionDate);
 }
 
 export const evaluateTemplateStatus = (
@@ -168,6 +168,9 @@ export const evaluateTemplateStatus = (
             // Submission is in due time of exercise and has a result with score
             if (!assessmentDueDate || assessmentDueDate.isBefore(dayjs()) || !isManualResult(result)) {
                 // the assessment due date has passed (or there was none) (or it is not manual feedback)
+                if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === undefined) {
+                    return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+                }
                 return ResultTemplateStatus.HAS_RESULT;
             } else {
                 // the assessment period is still active
