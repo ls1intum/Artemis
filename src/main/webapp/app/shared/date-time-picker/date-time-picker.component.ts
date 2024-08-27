@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, forwardRef, input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -28,9 +28,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() labelTooltip: string;
     @Input() value: any;
     @Input() disabled: boolean;
-    @Input() error: boolean;
-    @Input() warning: boolean;
-    @Input() requiredField: boolean = false;
+    error = input(false);
+    warning = input(false);
+    requiredField = input(false);
     @Input() startAt?: dayjs.Dayjs; // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
     @Input() min?: dayjs.Dayjs; // Dates before this date are not selectable.
     @Input() max?: dayjs.Dayjs; // Dates after this date are not selectable.
