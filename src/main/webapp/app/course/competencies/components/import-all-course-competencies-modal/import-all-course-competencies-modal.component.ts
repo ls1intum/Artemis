@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ImportListComponent } from 'app/shared/import-list/import-list.component';
+import { ImportTableComponent } from 'app/shared/import-list/import-table.component';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
 import { Column } from 'app/shared/import/import.component';
@@ -36,7 +36,7 @@ export interface ImportAllCourseCompetenciesResult {
 @Component({
     selector: 'jhi-import-all-course-competencies-modal',
     standalone: true,
-    imports: [ArtemisSharedCommonModule, ImportListComponent, ImportCourseCompetenciesSettingsComponent],
+    imports: [ArtemisSharedCommonModule, ImportTableComponent, ImportCourseCompetenciesSettingsComponent],
     providers: [
         {
             provide: PagingService,

@@ -1,6 +1,6 @@
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Column, ImportListComponent } from 'app/shared/import-list/import-list.component';
+import { Column, ImportTableComponent } from 'app/shared/import-list/import-table.component';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { Course } from 'app/entities/course.model';
 import { Observable, of } from 'rxjs';
@@ -10,9 +10,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 
-describe('ImportListComponent', () => {
-    let component: ImportListComponent<Course>;
-    let fixture: ComponentFixture<ImportListComponent<Course>>;
+describe('ImportTableComponent', () => {
+    let component: ImportTableComponent<Course>;
+    let fixture: ComponentFixture<ImportTableComponent<Course>>;
 
     let pagingService: PagingService<Course>;
     let alertService: AlertService;
@@ -35,7 +35,7 @@ describe('ImportListComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ImportListComponent],
+            imports: [ImportTableComponent],
             providers: [
                 {
                     provide: TranslateService,
@@ -80,10 +80,10 @@ describe('ImportListComponent', () => {
         alertService = TestBed.inject(AlertService);
         searchSpy = jest.spyOn(pagingService, 'search').mockReturnValue(of(searchResult));
 
-        fixture = TestBed.createComponent(ImportListComponent);
+        fixture = TestBed.createComponent(ImportTableComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('columns', columns);
-        fixture.componentRef.setInput('entityName', 'course');
+        fixture.componentRef.setInput('columnBaseTranslationKey', 'translationKey');
     });
 
     it('should initialize', () => {
