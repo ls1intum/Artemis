@@ -329,7 +329,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
         // In the future, there may be more than one feedback node per line.
         const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-        // Feedback is stored with 0-based lines, but the lines of Monaco are 1-based. We add 1 to correct this
+        // Feedback is stored with 0-based lines, but the lines of the Monaco editor used in Artemis are 1-based. We add 1 to correct this
         this.editor.addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
     }
 
