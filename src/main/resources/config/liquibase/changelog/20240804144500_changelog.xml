@@ -16,7 +16,7 @@
             <column name="participation_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="name" type="varchar(50)">
+            <column name="name" type="varchar(100)">
                 <constraints nullable="false"/>
             </column>
             <column name="email" type="varchar(100)">
