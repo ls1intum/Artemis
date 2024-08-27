@@ -43,7 +43,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     routeVcsAccessLog: string;
     repositoryUri: string;
     repositoryType: ProgrammingExerciseInstructorRepositoryType | 'USER';
-
+    vcsAccessLogEnabled = false;
     result: Result;
     resultHasInlineFeedback = false;
     showInlineFeedback = false;
@@ -88,6 +88,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             const participationId = Number(params['participationId']);
             this.repositoryType = participationId ? 'USER' : params['repositoryType'];
             this.routeVcsAccessLog = this.router.url + '/vcs-access-log';
+            this.vcsAccessLogEnabled = this.router.url.includes('course-management') && params['repositoryType'] != 'TESTS';
 
             if (this.repositoryType === 'USER') {
                 this.loadStudentParticipation(participationId);
