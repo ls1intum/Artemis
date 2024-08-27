@@ -85,8 +85,7 @@ public class TextExerciseFeedbackService {
 
     /**
      * Handles the request for generating feedback for a text exercise.
-     * This method decides whether to generate feedback automatically using Athena,
-     * or notify a tutor to manually process the feedback.
+     * Unlike programming exercises a tutor is not notified if Athena is not available.
      *
      * @param exerciseId    the id of the programming exercise.
      * @param participation the student participation associated with the exercise.
@@ -97,13 +96,8 @@ public class TextExerciseFeedbackService {
         if (this.athenaFeedbackSuggestionsService.isPresent()) {
             this.checkRateLimitOrThrow(participation);
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, textExercise));
-            return participation;
         }
-        else {
-            log.debug("tutor is responsible to process feedback request: {}", exerciseId);
-            groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(textExercise);
-            return participation;
-        }
+        return participation;
     }
 
     /**
@@ -124,17 +118,13 @@ public class TextExerciseFeedbackService {
         }
         var submission = submissionOptional.get();
 
-        var automaticResult = this.submissionService.saveNewEmptyResult(submission);
+        Result automaticResult = new Result();
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(true);
         automaticResult.setScore(0.0);
         automaticResult.setSuccessful(null);
-        // automaticResult.setCompletionDate(ZonedDateTime.now().plusSeconds(30));
-        automaticResult = this.resultRepository.save(automaticResult);
-
-        // This will create a new submission without results, this is important so that tutor assessment works as it used to.
-        textSubmissionService.handleTextSubmission((TextSubmission) submission, textExercise, participation.getStudent().get());
-
+        automaticResult.setSubmission(submission);
+        automaticResult.setParticipation(participation);
         try {
             this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
 
@@ -156,21 +146,32 @@ public class TextExerciseFeedbackService {
             for (Feedback feedback : feedbacks) {
                 totalFeedbacksScore += feedback.getCredits();
             }
-
+            totalFeedbacksScore = totalFeedbacksScore / textExercise.getMaxPoints() * 100;
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());
-            automaticResult.setScore(totalFeedbacksScore / textExercise.getMaxPoints() * 100);
-            this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
-            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
 
+            // Limit between 0 and 100%
+            if (totalFeedbacksScore < 0) {
+                automaticResult.setScore(0.0);
+            }
+            else if (totalFeedbacksScore > 100) {
+                totalFeedbacksScore = 100.0;
+            }
+            automaticResult.setScore(totalFeedbacksScore);
+
+            automaticResult = this.resultRepository.save(automaticResult);
+            this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
+            submissionService.saveNewResult(submission, automaticResult);
+
+            // This will create a new submission without results, this is important so that tutor assessment works as it used to.
+            textSubmissionService.saveNewSubmissionAfterAthenaFeedback((TextSubmission) submission, textExercise, participation.getStudent().get());
+            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
             automaticResult.setSuccessful(false);
-            automaticResult.setCompletionDate(ZonedDateTime.now());
-            this.resultRepository.save(automaticResult);
+            // Broadcast that something went wrong
             this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
-
         }
     }
 }
