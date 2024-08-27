@@ -283,6 +283,18 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportAllExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        super.shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorNotInCourse() throws Exception {
         super.shouldReturnForbiddenForInstructorNotInCourse();
@@ -324,5 +336,17 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportCompetencies() throws Exception {
         super.shouldImportCompetencies(prerequisiteUtilService::createPrerequisite);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportCompetenciesExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportCompetenciesExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        super.shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates();
     }
 }

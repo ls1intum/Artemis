@@ -343,4 +343,16 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     void shouldImportCompetencies() throws Exception {
         super.shouldImportCompetencies(competencyUtilService::createCompetency);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportCompetenciesExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportCompetenciesExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        super.shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates();
+    }
 }

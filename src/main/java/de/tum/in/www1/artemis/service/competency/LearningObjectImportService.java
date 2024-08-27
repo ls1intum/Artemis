@@ -18,7 +18,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.glassfish.jersey.internal.util.Producer;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -182,16 +181,15 @@ public class LearningObjectImportService {
     private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) throws JsonProcessingException {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
-            case FileUploadExercise fileUploadExercise -> importOrLoadExercise(fileUploadExercise, course, fileUploadExerciseRepository::findByTitleAndCourseId,
-                    Function.identity(), FileUploadExercise::new, fileUploadExerciseImportService::importFileUploadExercise);
-            case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findByTitleAndCourseId,
-                    exercise -> modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(exercise.getId()), ModelingExercise::new,
+            case FileUploadExercise fileUploadExercise -> importOrLoadExercise(fileUploadExercise, course, fileUploadExerciseRepository::findWithCompetenciesByTitleAndCourseId,
+                    Function.identity(), fileUploadExerciseImportService::importFileUploadExercise);
+            case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findWithCompetenciesByTitleAndCourseId,
+                    exercise -> modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(exercise.getId()),
                     modelingExerciseImportService::importModelingExercise);
-            case TextExercise textExercise -> importOrLoadExercise(textExercise, course, textExerciseRepository::findByTitleAndCourseId,
-                    exercise -> textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(exercise.getId()), TextExercise::new,
-                    textExerciseImportService::importTextExercise);
+            case TextExercise textExercise -> importOrLoadExercise(textExercise, course, textExerciseRepository::findWithCompetenciesByTitleAndCourseId,
+                    exercise -> textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(exercise.getId()), textExerciseImportService::importTextExercise);
             case QuizExercise quizExercise ->
-                importOrLoadExercise(quizExercise, course, quizExerciseRepository::findByTitleAndCourseId, Function.identity(), QuizExercise::new, (exercise, templateExercise) -> {
+                importOrLoadExercise(quizExercise, course, quizExerciseRepository::findWithCompetenciesByTitleAndCourseId, Function.identity(), (exercise, templateExercise) -> {
                     try {
                         return quizExerciseImportService.importQuizExercise(exercise, templateExercise, null);
                     }
@@ -204,8 +202,9 @@ public class LearningObjectImportService {
     }
 
     private Exercise importOrLoadProgrammingExercise(ProgrammingExercise programmingExercise, Course course) throws JsonProcessingException {
-        Optional<ProgrammingExercise> foundByTitle = programmingExerciseRepository.findByTitleAndCourseId(programmingExercise.getTitle(), course.getId());
-        Optional<ProgrammingExercise> foundByShortName = programmingExerciseRepository.findByShortNameAndCourseId(programmingExercise.getShortName(), course.getId());
+        Optional<ProgrammingExercise> foundByTitle = programmingExerciseRepository.findWithCompetenciesByTitleAndCourseId(programmingExercise.getTitle(), course.getId());
+        Optional<ProgrammingExercise> foundByShortName = programmingExerciseRepository.findByShortNameAndCourseIdWithCompetencies(programmingExercise.getShortName(),
+                course.getId());
 
         if (foundByTitle.isPresent() && foundByShortName.isPresent() && !foundByTitle.get().equals(foundByShortName.get())) {
             throw new IllegalArgumentException("Two programming exercises with the title or short name already exist in the course");
@@ -218,43 +217,38 @@ public class LearningObjectImportService {
             return foundByShortName.get();
         }
         else {
-            programmingExercise = programmingExerciseRepository
-                    .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigElseThrow(programmingExercise.getId());
+            programmingExercise = programmingExerciseRepository.findByIdForImportElseThrow(programmingExercise.getId());
             // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
             var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
             programmingExercise.setTasks(new ArrayList<>(templateTasks));
             Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
             programmingExercise.setGradingCriteria(gradingCriteria);
 
-            ProgrammingExercise templateExercise = new ProgrammingExercise();
-            copyExerciseDates(programmingExercise, templateExercise);
+            programmingExercise.setCourse(course);
+            programmingExercise.forceNewProjectKey();
+            programmingExercise.setTeams(new HashSet<>());
+            programmingExercise.setStudentParticipations(new HashSet<>());
+            programmingExercise.setTutorParticipations(new HashSet<>());
+            programmingExercise.setExampleSubmissions(new HashSet<>());
+            programmingExercise.setAttachments(new HashSet<>());
+            programmingExercise.setPosts(new HashSet<>());
+            programmingExercise.setPlagiarismCases(new HashSet<>());
 
-            return programmingExerciseImportService.importProgrammingExercise(programmingExercise, templateExercise, false, false, false);
+            return programmingExerciseImportService.importProgrammingExercise(programmingExercise, programmingExercise, false, false, false);
         }
     }
 
     private <E extends Exercise> Exercise importOrLoadExercise(E exercise, Course course, BiFunction<String, Long, Optional<E>> findFunction, Function<E, E> loadForImport,
-            Producer<E> templateFunction, BiFunction<E, E, E> importFunction) {
+            BiFunction<E, E, E> importFunction) {
         Optional<E> foundByTitle = findFunction.apply(exercise.getTitle(), course.getId());
         if (foundByTitle.isPresent()) {
             return foundByTitle.get();
         }
         else {
-            E templateExercise = templateFunction.call();
-            templateExercise.setCourse(course);
-            copyExerciseDates(exercise, templateExercise);
-            return importFunction.apply(loadForImport.apply(exercise), templateExercise);
-        }
-    }
+            exercise = loadForImport.apply(exercise);
+            exercise.setCourse(course);
 
-    private void copyExerciseDates(Exercise sourceExercise, Exercise targetExercise) {
-        targetExercise.setReleaseDate(sourceExercise.getReleaseDate());
-        targetExercise.setStartDate(sourceExercise.getStartDate());
-        targetExercise.setDueDate(sourceExercise.getDueDate());
-        targetExercise.setAssessmentDueDate(sourceExercise.getAssessmentDueDate());
-        targetExercise.setExampleSolutionPublicationDate(sourceExercise.getExampleSolutionPublicationDate());
-        if (sourceExercise instanceof ProgrammingExercise sourceProgrammingExercise && targetExercise instanceof ProgrammingExercise targetProgrammingExercise) {
-            targetProgrammingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(sourceProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+            return importFunction.apply(exercise, exercise);
         }
     }
 
@@ -262,23 +256,31 @@ public class LearningObjectImportService {
             Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) {
         for (CourseCompetency sourceCourseCompetency : sourceCourseCompetencies) {
             for (LectureUnit sourceLectureUnit : sourceCourseCompetency.getLectureUnits()) {
-                Lecture sourceLecture = sourceLectureUnit.getLecture();
+                Optional<LectureUnit> foundLectureUnit = lectureUnitRepository.findByNameAndCourseIdWithCompetencies(sourceLectureUnit.getName(), courseToImportInto.getId());
 
-                Optional<Lecture> foundLecture = Optional.ofNullable(titleToImportedLectures.get(sourceLecture.getTitle()));
-                if (foundLecture.isEmpty()) {
-                    foundLecture = lectureRepository.findByTitleAndCourseIdWithLectureUnits(sourceLecture.getTitle(), courseToImportInto.getId());
+                LectureUnit importedLectureUnit;
+                if (foundLectureUnit.isEmpty()) {
+                    Lecture sourceLecture = sourceLectureUnit.getLecture();
+
+                    Optional<Lecture> foundLecture = Optional.ofNullable(titleToImportedLectures.get(sourceLecture.getTitle()));
+                    if (foundLecture.isEmpty()) {
+                        foundLecture = lectureRepository.findByTitleAndCourseIdWithLectureUnits(sourceLecture.getTitle(), courseToImportInto.getId());
+                    }
+                    Lecture importedLecture = foundLecture.orElseGet(() -> lectureImportService.importLecture(sourceLecture, courseToImportInto, false));
+                    titleToImportedLectures.put(importedLecture.getTitle(), importedLecture);
+
+                    importedLectureUnit = foundLectureUnit.orElseGet(() -> lectureUnitRepository.save(lectureUnitImportService.importLectureUnit(sourceLectureUnit)));
+
+                    importedLecture.getLectureUnits().add(importedLectureUnit);
+                    importedLectureUnit.setLecture(importedLecture);
                 }
-                Lecture importedLecture = foundLecture.orElseGet(() -> lectureImportService.importLecture(sourceLecture, courseToImportInto, false));
-                titleToImportedLectures.put(importedLecture.getTitle(), importedLecture);
+                else {
+                    importedLectureUnit = foundLectureUnit.get();
+                }
 
-                Optional<LectureUnit> foundLectureUnit = lectureUnitRepository.findByNameAndCourseId(sourceLectureUnit.getName(), courseToImportInto.getId());
-                LectureUnit importedLectureUnit = foundLectureUnit.orElseGet(() -> lectureUnitRepository.save(lectureUnitImportService.importLectureUnit(sourceLectureUnit)));
                 importedLectureUnits.add(importedLectureUnit);
 
-                importedLecture.getLectureUnits().add(importedLectureUnit);
-                importedLectureUnit.setLecture(importedLecture);
-
-                idToImportedCompetency.get(sourceCourseCompetency.getId()).competency().getLectureUnits().add(importedLectureUnit);
+                importedLectureUnit.getCompetencies().add(idToImportedCompetency.get(sourceCourseCompetency.getId()).competency());
             }
         }
     }

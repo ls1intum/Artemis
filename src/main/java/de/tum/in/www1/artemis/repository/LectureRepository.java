@@ -106,7 +106,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH lecture.lectureUnits
             WHERE lecture.title = :title AND lecture.course.id = :courseId
             """)
-    Optional<Lecture> findByTitleAndCourseIdWithLectureUnits(String title, long courseId);
+    Optional<Lecture> findByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);

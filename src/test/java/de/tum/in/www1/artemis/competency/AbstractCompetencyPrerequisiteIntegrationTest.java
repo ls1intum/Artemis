@@ -668,4 +668,55 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
         assertThat(competencyDTOList.get(1).tailRelations()).isNull();
     }
+
+    // Test
+    void shouldImportCompetenciesExerciseAndLectureWithCompetency() throws Exception {
+        ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
+        textExercise.setReleaseDate(releaseDate);
+        exerciseRepository.save(textExercise);
+
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(courseCompetency.getId()), Optional.empty(), false, true, true, Optional.empty(), false);
+        importBulkCall(course2.getId(), importOptions, HttpStatus.CREATED);
+
+        course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
+        assertThat(course2.getExercises()).hasSize(2);
+        assertThat(course2.getLectures()).hasSize(1);
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(2);
+    }
+
+    // Test
+    void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        teamTextExercise.setCompetencies(null);
+        exerciseRepository.save(teamTextExercise);
+        attachmentUnitOfLectureOne.setCompetencies(null);
+        attachmentUnitRepository.save(attachmentUnitOfLectureOne);
+
+        ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
+        textExercise.setReleaseDate(releaseDate);
+        exerciseRepository.save(textExercise);
+
+        ZonedDateTime visibleDate = ZonedDateTime.of(2022, 7, 10, 14, 0, 0, 0, ZoneId.of("UTC"));
+        long visibleDateDiff = visibleDate.toEpochSecond() - releaseDate.toEpochSecond();
+        lecture.setVisibleDate(visibleDate);
+        lectureRepository.save(lecture);
+
+        ZonedDateTime releaseDateTextUnit = ZonedDateTime.of(2022, 7, 10, 20, 0, 0, 0, ZoneId.of("UTC"));
+        long releaseDateDiff = releaseDateTextUnit.toEpochSecond() - releaseDate.toEpochSecond();
+        textUnitOfLectureOne.setReleaseDate(releaseDateTextUnit);
+        textUnitRepository.save(textUnitOfLectureOne);
+
+        ZonedDateTime newReleaseDate = ZonedDateTime.of(2024, 7, 14, 8, 0, 0, 0, ZoneId.of("UTC"));
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(courseCompetency.getId()), Optional.empty(), false, true, true,
+                Optional.of(newReleaseDate), true);
+        importBulkCall(course2.getId(), importOptions, HttpStatus.CREATED);
+
+        course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
+        assertThat(course2.getExercises()).hasSize(1);
+        assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(newReleaseDate, HalfSecond());
+        assertThat(course2.getLectures()).hasSize(1);
+        assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
+        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
+                .isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
+    }
 }

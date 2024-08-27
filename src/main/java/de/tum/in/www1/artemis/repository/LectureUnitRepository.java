@@ -64,10 +64,11 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     @Query("""
             SELECT lu
             FROM LectureUnit lu
+                LEFT JOIN FETCH lu.competencies
             WHERE lu.name = :name
                 AND lu.lecture.course.id = :courseId
             """)
-    Optional<LectureUnit> findByNameAndCourseId(@Param("name") String name, @Param("courseId") Long courseId);
+    Optional<LectureUnit> findByNameAndCourseIdWithCompetencies(@Param("name") String name, @Param("courseId") Long courseId);
 
     default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
         return getValueElseThrow(findByIdWithCompletedUsers(lectureUnitId), lectureUnitId);

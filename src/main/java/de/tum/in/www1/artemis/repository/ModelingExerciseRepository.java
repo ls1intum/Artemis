@@ -54,6 +54,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
                 LEFT JOIN FETCH results.assessor
                 LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
                 LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
+                LEFT JOIN FETCH modelingExercise.gradingCriteria
             WHERE modelingExercise.id = :exerciseId
             """)
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(@Param("exerciseId") Long exerciseId);
@@ -94,7 +95,14 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
 
-    Optional<ModelingExercise> findByTitleAndCourseId(String title, long courseId);
+    @Query("""
+            SELECT m
+            FROM ModelingExercise m
+                LEFT JOIN FETCH m.competencies
+            WHERE m.title = :title
+                AND m.course.id = :courseId
+            """)
+    Optional<ModelingExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
 
     @NotNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {

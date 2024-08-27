@@ -62,7 +62,14 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
     Optional<TextExercise> findWithGradingCriteriaById(long exerciseId);
 
-    Optional<TextExercise> findByTitleAndCourseId(String title, long courseId);
+    @Query("""
+            SELECT t
+            FROM TextExercise t
+                LEFT JOIN FETCH t.competencies
+            WHERE t.title = :title
+                AND t.course.id = :courseId
+            """)
+    Optional<TextExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
 
     @NotNull
     default TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {
