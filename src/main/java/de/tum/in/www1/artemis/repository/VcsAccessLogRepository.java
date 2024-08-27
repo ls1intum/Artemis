@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,4 +54,17 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
             ORDER BY vcsAccessLog.id ASC
             """)
     List<VcsAccessLog> findAllByParticipationId(long participationId);
+
+    /**
+     * Retrieves a list of {@link VcsAccessLog} entities associated with the specified participation ID.
+     * The results are ordered by the log ID in ascending order.
+     *
+     * @return a list of {@link VcsAccessLog} entities for the given participation ID, sorted by log ID in ascending order.
+     */
+    @Query("""
+            SELECT vcsAccessLog.id
+            FROM VcsAccessLog vcsAccessLog
+            WHERE vcsAccessLog.timestamp < :date
+            """)
+    List<Long> findAllIdsBeforeDate(ZonedDateTime date);
 }
