@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.velocity.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -365,75 +366,67 @@ public class ParticipationResource {
     public ResponseEntity<StudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request for feedback request: {}", exerciseId);
 
-        // Different approach for text Exercises, default else is programming exercises
-        Optional<TextExercise> textExerciseOpt = textExerciseRepository.findById(exerciseId);
-        if (textExerciseOpt.isPresent()) {
-            return handleTextExerciseFeedbackRequest(textExerciseOpt.get(), principal);
+        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
+
+        if (!(exercise instanceof TextExercise) && !(exercise instanceof ProgrammingExercise)) {
+            throw new BadRequestAlertException("Unsupported exercise type", "participation", "unsupported type");
         }
 
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-
-        if (programmingExercise.isExamExercise()) {
-            throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
-        }
-
-        if (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate())) {
-            throw new BadRequestAlertException("The due date is over", "participation", "preconditions not met");
-        }
-
-        var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        checkAccessPermissionOwner(participation, user);
-        programmingExercise.validateSettingsForFeedbackRequest();
-
-        var studentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
-        var result = studentParticipation.findLatestLegalResult();
-        if (result == null) {
-            throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
-        }
-
-        var currentDate = now();
-        var participationIndividualDueDate = participation.getIndividualDueDate();
-        if (participationIndividualDueDate != null && currentDate.isAfter(participationIndividualDueDate)) {
-            throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
-        }
-
-        participation = this.programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exerciseId, studentParticipation, programmingExercise);
-
-        return ResponseEntity.ok().body(participation);
+        return handleExerciseFeedbackRequest(exercise, principal);
     }
 
-    private ResponseEntity<StudentParticipation> handleTextExerciseFeedbackRequest(TextExercise textExercise, Principal principal) {
-
-        if (textExercise.isExamExercise()) {
+    private ResponseEntity<StudentParticipation> handleExerciseFeedbackRequest(Exercise exercise, Principal principal) {
+        // Validate exercise and timing
+        if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
         }
-
-        if (textExercise.getDueDate() != null && now().isAfter(textExercise.getDueDate())) {
+        if (exercise.getDueDate() != null && now().isAfter(exercise.getDueDate())) {
             throw new BadRequestAlertException("The due date is over", "participation", "preconditions not met");
         }
-
-        var participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(textExercise.getId(), principal.getName()).get();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        checkAccessPermissionOwner(participation, user);
-
-        var studentParticipation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
-        var submissions = submissionRepository.findAllByParticipationId(studentParticipation.getId());
-
-        if (submissions.isEmpty()) {
-            throw new BadRequestAlertException("You need to submit at least once", "participation", "preconditions not met");
+        if (exercise instanceof ProgrammingExercise) {
+            ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
         }
 
+        // Get and validate participation
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        StudentParticipation participation = (exercise instanceof ProgrammingExercise)
+                ? programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, principal.getName())
+                : studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), principal.getName())
+                        .orElseThrow(() -> new ResourceNotFoundException("Participation not found"));
+
+        checkAccessPermissionOwner(participation, user);
+        participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
+
+        // Check submission requirements
+        if (exercise instanceof TextExercise) {
+            if (submissionRepository.findAllByParticipationId(participation.getId()).isEmpty()) {
+                throw new BadRequestAlertException("You need to submit at least once", "participation", "preconditions not met");
+            }
+        }
+        else if (exercise instanceof ProgrammingExercise) {
+            if (participation.findLatestLegalResult() == null) {
+                throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
+            }
+        }
+
+        // Check if feedback has already been requested
         var currentDate = now();
         var participationIndividualDueDate = participation.getIndividualDueDate();
         if (participationIndividualDueDate != null && currentDate.isAfter(participationIndividualDueDate)) {
             throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
-        participation = this.textExerciseFeedbackService.handleNonGradedFeedbackRequest(textExercise.getId(), studentParticipation, textExercise);
 
-        return ResponseEntity.ok().body(participation);
+        // Process feedback request
+        StudentParticipation updatedParticipation;
+        if (exercise instanceof TextExercise) {
+            updatedParticipation = textExerciseFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(), participation, (TextExercise) exercise);
+        }
+        else {
+            updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
+                    (ProgrammingExerciseStudentParticipation) participation, (ProgrammingExercise) exercise);
+        }
+
+        return ResponseEntity.ok().body(updatedParticipation);
     }
 
     /**
