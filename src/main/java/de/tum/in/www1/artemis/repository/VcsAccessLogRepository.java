@@ -53,18 +53,20 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
             WHERE vcsAccessLog.participation.id = :participationId
             ORDER BY vcsAccessLog.id ASC
             """)
-    List<VcsAccessLog> findAllByParticipationId(long participationId);
+    List<VcsAccessLog> findAllByParticipationId(@Param("participationId") long participationId);
 
     /**
      * Retrieves a list of {@link VcsAccessLog} entities associated with the specified participation ID.
      * The results are ordered by the log ID in ascending order.
      *
-     * @return a list of {@link VcsAccessLog} entities for the given participation ID, sorted by log ID in ascending order.
+     * @param date The date before which all log ids should be fetched
+     *
+     * @return a list of ids of the access logs, which have a timestamp before the date
      */
     @Query("""
             SELECT vcsAccessLog.id
             FROM VcsAccessLog vcsAccessLog
             WHERE vcsAccessLog.timestamp < :date
             """)
-    List<Long> findAllIdsBeforeDate(ZonedDateTime date);
+    List<Long> findAllIdsBeforeDate(@Param("date") ZonedDateTime date);
 }
