@@ -13,6 +13,7 @@ config.read('config.ini')
 
 # Constants
 STUDENTS_TO_CREATE = int(config.get('Settings', 'students')) + 1
+COMMITS_PER_STUDENT = int(config.get('Settings', 'commits'))
 
 CLIENT_URL = config.get('Settings', 'client_url')
 SERVER_URL = config.get('Settings', 'server_url')
@@ -67,8 +68,9 @@ def main():
         logging.info(f"Added participation for {username} in the programming exercise {exercise_id} successfully")
         participation_id = participation_response.get('id')
 
-        commit(user_session, participation_id, CLIENT_URL)
-        logging.info(f"Added commit for {username} in the programming exercise {exercise_id} successfully")
+        for _ in range(COMMITS_PER_STUDENT):
+            commit(user_session, participation_id, CLIENT_URL)
+            logging.info(f"Added commit for {username} in the programming exercise {exercise_id} successfully")
         print(f"Participation and Commit done for user: {username}")
 
     # (Optional) Step 7 : Delete all created students

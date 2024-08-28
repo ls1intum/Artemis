@@ -35,6 +35,8 @@ The main script orchestrates the entire process, from user creation to course se
 
 -  If you want to change the amount of students created, you can modify the `students` variable in the config.ini file.
 
+-  If you want to change the amount of commits each student should perform in the example exercise, you can modify the `comments` variable in the config.ini file.
+
 -  This will automatically perform all the necessary steps:
 
 1.  Authenticate as admin.
