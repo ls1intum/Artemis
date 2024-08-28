@@ -1,9 +1,0 @@
-.invisible-anchor {
-    position: absolute;
-    width: 0;
-    height: 0;
-}
-
-#anchor::after {
-    display: none;
-}

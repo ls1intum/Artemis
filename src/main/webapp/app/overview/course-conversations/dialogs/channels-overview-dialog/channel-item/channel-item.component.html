@@ -18,28 +18,42 @@
             }
             @if (channel.tutorialGroupId && channel.tutorialGroupTitle) {
                 <div>
-                    <span class="badge bg-info rounded-pill">{{
-                        'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate: { title: channel.tutorialGroupTitle }
-                    }}</span>
+                    <span
+                        class="badge bg-info rounded-pill"
+                        jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
+                        [translateValues]="{ title: channel.tutorialGroupTitle }"
+                    ></span>
                 </div>
             }
         </div>
         <div class="interaction">
             @if (canJoinChannel(channel)) {
-                <button [id]="'register' + channel.id" type="button" class="btn btn-primary" (click)="emitChannelAction($event, 'register')">
-                    {{ 'artemisApp.dialogs.channelOverview.actions.join' | artemisTranslate }}
-                </button>
+                <button
+                    [id]="'register' + channel.id"
+                    type="button"
+                    class="btn btn-primary"
+                    (click)="emitChannelAction($event, 'register')"
+                    jhiTranslate="artemisApp.dialogs.channelOverview.actions.join"
+                ></button>
                 <!--ToDo:  Introduce method to view public channel even if no participant maybe hacky around with visitor status or something? -->
             }
             @if (!!channel.isMember) {
-                <button [id]="'view' + channel.id" type="button" class="btn btn-secondary" (click)="emitChannelAction($event, 'view')">
-                    {{ 'artemisApp.dialogs.channelOverview.actions.view' | artemisTranslate }}
-                </button>
+                <button
+                    [id]="'view' + channel.id"
+                    type="button"
+                    class="btn btn-secondary"
+                    (click)="emitChannelAction($event, 'view')"
+                    jhiTranslate="artemisApp.dialogs.channelOverview.actions.view"
+                ></button>
             }
             @if (canLeaveConversation(channel)) {
-                <button [id]="'deregister' + channel.id" type="button" class="btn btn-danger" (click)="emitChannelAction($event, 'deregister')">
-                    {{ 'artemisApp.dialogs.channelOverview.actions.leave' | artemisTranslate }}
-                </button>
+                <button
+                    [id]="'deregister' + channel.id"
+                    type="button"
+                    class="btn btn-danger"
+                    (click)="emitChannelAction($event, 'deregister')"
+                    jhiTranslate="artemisApp.dialogs.channelOverview.actions.leave"
+                ></button>
             }
         </div>
     </div>

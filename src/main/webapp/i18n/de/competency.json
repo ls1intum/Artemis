@@ -75,7 +75,7 @@
                 "saveModalTitle": "Speichern bestätigen",
                 "saveModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
                 "errorWarning": "Speichern nicht möglich, weil fehlerhafte Kompetenzen vorliegen",
-                "loading": "Generiere Kompetenzvorschläge... Das kann eine Weile dauern.",
+                "loading": "Generiere Kompetenzvorschläge...",
                 "courseDescription": {
                     "title": "Kursbeschreibung eingeben",
                     "placeholder": "Bitte gib eine Kursbeschreibung ein",
@@ -86,7 +86,7 @@
                     "regenerateTooltip": "Zusätzliche Kompetenzvorschläge generieren",
                     "infoTooltip": "Gib eine Beschreibung ein, die sich auf den theoretischen/praktischen Inhalt und Lernziele des Kurses fokussiert. Iris generiert daraus Vorschläge für Kompetenzen, die du in deinen Kurs einfügen könntest.",
                     "success": "{{ noOfCompetencies }} Kompetenzvorschläge generiert.",
-                    "warning": "Keine Kompetenzvorschläge generiert. Versuche, eine ausführlichere Kursbeschreibung zu verwenden. Wenn das Problem weiterhin besteht, wende dich an die Administratoren."
+                    "warning": "Keine Kompetenzvorschläge generiert. Wenn das Problem weiterhin besteht, wende dich an die Administratoren."
                 }
             },
             "importAll": {
