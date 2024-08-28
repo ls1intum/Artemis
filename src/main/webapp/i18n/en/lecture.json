@@ -73,7 +73,7 @@
             "wizardMode": {
                 "steps": {
                     "titleStepTitle": "Title",
-                    "titleStepMessage": "Add a title and meaningful description to the new lecture.",
+                    "titleStepMessage": "Add a title and meaningful description to the lecture.",
                     "periodStepTitle": "Period",
                     "periodStepMessage": "Specify the begin and end dates of the lecture.",
                     "attachmentsStepTitle": "Attachments",

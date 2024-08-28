@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, Signal, ViewChild, computed, effect, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -14,6 +14,10 @@ import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
+import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
+import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -21,15 +25,36 @@ import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/mona
     styleUrls: ['./lecture-update.component.scss'],
 })
 export class LectureUpdateComponent implements OnInit {
-    readonly documentationType: DocumentationType = 'Lecture';
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faSave = faSave;
+    protected readonly faPuzzleProcess = faPuzzlePiece;
+    protected readonly faBan = faBan;
+    protected readonly faHandShakeAngle = faHandshakeAngle;
+
+    protected readonly documentationType: DocumentationType = 'Lecture';
 
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
+
+    titleSection: Signal<LectureTitleChannelNameComponent> = viewChild.required(LectureTitleChannelNameComponent);
+    periodSectionDatepicker: Signal<readonly FormDateTimePickerComponent[]> = viewChildren(FormDateTimePickerComponent);
+    unitSection: Signal<LectureUpdateWizardUnitsComponent | undefined> = viewChild(LectureUpdateWizardUnitsComponent);
+
+    isPeriodSectionValid: Signal<boolean> = computed(() => {
+        for (const periodSectionDatepicker of this.periodSectionDatepicker()) {
+            if (!periodSectionDatepicker.isValid()) {
+                return false;
+            }
+        }
+        return true;
+    });
 
     lecture: Lecture;
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
     isShowingWizardMode: boolean;
+
+    formStatusSections: FormSectionStatus[];
 
     courses: Course[];
 
@@ -38,17 +63,12 @@ export class LectureUpdateComponent implements OnInit {
     fileName: string;
     fileInputTouched = false;
 
-    // Icons
-    faQuestionCircle = faQuestionCircle;
-    faSave = faSave;
-    faPuzzleProcess = faPuzzlePiece;
-    faBan = faBan;
-    faHandShakeAngle = faHandshakeAngle;
-
     // A human-readable list of allowed file extensions
     readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
     // The list of file extensions for the "accept" attribute of the file input field
     readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+
+    isEditMode = signal<boolean>(false);
 
     toggleModeFunction = () => this.toggleWizardMode();
     saveLectureFunction = () => this.save();
@@ -60,7 +80,38 @@ export class LectureUpdateComponent implements OnInit {
         protected activatedRoute: ActivatedRoute,
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
-    ) {}
+    ) {
+        effect(() => {
+            // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+            let updatedFormStatusSections: FormSectionStatus[] = [
+                {
+                    title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
+                    valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
+                },
+                {
+                    title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
+                    valid: Boolean(this.isPeriodSectionValid()),
+                },
+            ];
+
+            // only in edit mode we have the lecture id which is currently required to store units and attachments
+            if (this.isEditMode()) {
+                updatedFormStatusSections = [
+                    ...updatedFormStatusSections,
+                    {
+                        title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
+                        valid: true, // TODO retrieve the valid status
+                    },
+                    {
+                        title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
+                        valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+                    },
+                ];
+            }
+
+            this.formStatusSections = updatedFormStatusSections;
+        });
+    }
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
@@ -85,12 +136,14 @@ export class LectureUpdateComponent implements OnInit {
                 this.isShowingWizardMode = params.shouldBeInWizardMode;
             }
         });
+
+        this.isEditMode.set(this.lecture.id !== undefined);
     }
 
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing lecture
-     * Returns to the overview page if there is no previous state and we created a new lecture
+     * Returns to the detail page if there is no previous state, and we edited an existing lecture
+     * Returns to the overview page if there is no previous state, and we created a new lecture
      */
     previousState() {
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture.course!.id!.toString(), 'lectures'], this.lecture.id?.toString());

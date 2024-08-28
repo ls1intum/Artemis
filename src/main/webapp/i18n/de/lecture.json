@@ -73,7 +73,7 @@
             "wizardMode": {
                 "steps": {
                     "titleStepTitle": "Titel",
-                    "titleStepMessage": "Gib einen Titel und eine aussagekräftige Beschreibung für die neue Vorlesung ein.",
+                    "titleStepMessage": "Gib einen Titel und eine aussagekräftige Beschreibung für die Vorlesung ein.",
                     "periodStepTitle": "Zeitraum",
                     "periodStepMessage": "Lege das Start- und Enddatum der Vorlesung fest.",
                     "attachmentsStepTitle": "Anhänge",

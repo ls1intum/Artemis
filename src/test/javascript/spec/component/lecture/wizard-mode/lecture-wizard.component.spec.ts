@@ -12,11 +12,10 @@ import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-up
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lecture-update-wizard-step.component';
-import { LectureUpdateWizardCompetenciesComponent } from 'app/lecture/wizard-mode/lecture-wizard-competencies.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
-import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
-import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
+import { LectureUpdatePeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
+import { LectureUpdateTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import dayjs from 'dayjs/esm';
@@ -32,11 +31,10 @@ describe('LectureWizardComponent', () => {
                 LectureUpdateWizardComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(LectureUpdateWizardStepComponent),
-                MockComponent(LectureUpdateWizardCompetenciesComponent),
                 MockComponent(LectureUpdateWizardUnitsComponent),
                 MockComponent(LectureUpdateWizardAttachmentsComponent),
-                MockComponent(LectureUpdateWizardPeriodComponent),
-                MockComponent(LectureUpdateWizardTitleComponent),
+                MockComponent(LectureUpdatePeriodComponent),
+                MockComponent(LectureUpdateTitleComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
             ],
@@ -75,7 +73,7 @@ describe('LectureWizardComponent', () => {
         expect(wizardComponent).not.toBeNull();
 
         wizardComponentFixture.whenStable().then(() => {
-            expect(wizardComponent.currentStep).toBe(5);
+            expect(wizardComponent.currentStep).toBe(4);
         });
     }));
 
@@ -122,7 +120,7 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             expect(wizardComponent.currentStep).toBe(1);
-            wizardComponent.next();
+            wizardComponent.progressToNextStep();
             expect(wizardComponent.currentStep).toBe(2);
         });
     }));
@@ -134,8 +132,8 @@ describe('LectureWizardComponent', () => {
         wizardComponentFixture.detectChanges();
 
         wizardComponentFixture.whenStable().then(() => {
-            expect(wizardComponent.currentStep).toBe(5);
-            wizardComponent.next();
+            expect(wizardComponent.currentStep).toBe(4);
+            wizardComponent.progressToNextStep();
             expect(saveStub).toHaveBeenCalledOnce();
         });
     }));
@@ -147,46 +145,6 @@ describe('LectureWizardComponent', () => {
             wizardComponent.currentStep = 2;
             wizardComponent.onLectureCreationSucceeded();
             expect(wizardComponent.currentStep).toBe(3);
-        });
-    }));
-
-    it('should return is completed for smaller step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCompleted(1);
-            expect(result).toBeTrue();
-        });
-    }));
-
-    it('should not return is completed for bigger step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCompleted(3);
-            expect(result).toBeFalse();
-        });
-    }));
-
-    it('should return is current for same step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCurrent(2);
-            expect(result).toBeTrue();
-        });
-    }));
-
-    it('should not return is current for different step', fakeAsync(() => {
-        wizardComponentFixture.detectChanges();
-
-        wizardComponentFixture.whenStable().then(() => {
-            wizardComponent.currentStep = 2;
-            const result = wizardComponent.isCurrent(1);
-            expect(result).toBeFalse();
         });
     }));
 

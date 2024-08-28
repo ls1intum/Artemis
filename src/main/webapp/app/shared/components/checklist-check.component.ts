@@ -8,11 +8,10 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./checklist-check.component.scss'],
 })
 export class ChecklistCheckComponent {
+    protected readonly faTimes = faTimes;
+    protected readonly faCheckCircle = faCheckCircle;
+
     @Input() checkAttribute: boolean | undefined = false;
     @Input() iconColor?: string;
     @Input() size?: SizeProp;
-
-    // Icons
-    faTimes = faTimes;
-    faCheckCircle = faCheckCircle;
 }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, computed, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -16,35 +16,47 @@ import dayjs from 'dayjs/esm';
     ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
+    protected readonly faCalendarAlt = faCalendarAlt;
+    protected readonly faGlobe = faGlobe;
+    protected readonly faClock = faClock;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faCircleXmark = faCircleXmark;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
     @Input() labelName: string;
     @Input() labelTooltip: string;
     @Input() value: any;
     @Input() disabled: boolean;
-    @Input() error: boolean;
-    @Input() warning: boolean;
-    @Input() requiredField: boolean = false;
-    @Input() startAt?: dayjs.Dayjs; // Default selected date. By default this sets it to the current time without seconds or milliseconds;
+    error = input(false);
+    warning = input(false);
+    requiredField = input(false);
+    @Input() startAt?: dayjs.Dayjs; // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
     @Input() min?: dayjs.Dayjs; // Dates before this date are not selectable.
     @Input() max?: dayjs.Dayjs; // Dates after this date are not selectable.
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
     @Output() valueChange = new EventEmitter();
 
-    // Icons
-    faCalendarAlt = faCalendarAlt;
-    faGlobe = faGlobe;
-    faClock = faClock;
-    faQuestionCircle = faQuestionCircle;
-    faCircleXmark = faCircleXmark;
-    readonly faTriangleExclamation = faTriangleExclamation;
-
     private onChange?: (val?: dayjs.Dayjs) => void;
+
+    protected isInputValid = signal<boolean>(false);
+    protected dateInputValue = signal<string>('');
+    isValid = computed(() => {
+        const isInvalid = this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()) || this.warning();
+        return !isInvalid;
+    });
+
+    updateSignals(): void {
+        this.isInputValid.set(!Boolean(this.dateInput.invalid));
+        this.dateInputValue.set(this.dateInput.value);
+    }
 
     /**
      * Emits the value change from component.
      */
     valueChanged() {
         this.valueChange.emit();
+        this.updateSignals();
     }
 
     /**
@@ -58,6 +70,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         } else {
             this.value = value;
         }
+        this.updateSignals();
     }
 
     /**
@@ -118,5 +131,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     clearDate() {
         this.dateInput.reset(undefined);
+        this.updateSignals();
     }
 }
