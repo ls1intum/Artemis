@@ -39,10 +39,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     @Output()
     questionDeleted = new EventEmitter();
 
-    /** Ace Editor configuration constants **/
     questionEditorText = '';
-
-    /** Status boolean for collapse status **/
     isQuestionCollapsed: boolean;
 
     /** Set default preview of the markdown editor as preview for the multiple choice question **/
