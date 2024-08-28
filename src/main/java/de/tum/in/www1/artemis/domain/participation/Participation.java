@@ -124,8 +124,8 @@ public abstract class Participation extends DomainObject implements Participatio
      * The value is 1 for practice mode course exercises
      * The value is 0-255 for test exam exercises. For each subsequent participation the number is increased by one
      */
-    @Column(name = "number_of_attempts")
-    private int numberOfAttempts = 0;
+    @Column(name = "attempt")
+    private int attempt = 0;
 
     /**
      * This property stores the total number of submissions in this participation. Not stored in the database, computed dynamically and used in showing statistics to the user in
@@ -253,12 +253,12 @@ public abstract class Participation extends DomainObject implements Participatio
         this.submissions = submissions;
     }
 
-    public int getNumberOfAttempts() {
-        return numberOfAttempts;
+    public int getAttempt() {
+        return attempt;
     }
 
-    public void setNumberOfAttempts(int index) {
-        this.numberOfAttempts = index;
+    public void setAttempt(int index) {
+        this.attempt = index;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

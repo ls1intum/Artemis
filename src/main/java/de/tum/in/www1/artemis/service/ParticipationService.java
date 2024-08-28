@@ -156,7 +156,7 @@ public class ParticipationService {
             List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), participant.getId());
             participations.forEach(studentParticipation -> studentParticipation.setInitializationState(InitializationState.FINISHED));
             participation = createNewParticipation(exercise, participant);
-            participation.setNumberOfAttempts(participations.size());
+            participation.setAttempt(participations.size());
             participations.add(participation);
             studentParticipationRepository.saveAll(participations);
         }
@@ -278,7 +278,7 @@ public class ParticipationService {
         }
 
         // For practice mode 1 is always set. For more information see Participation.class
-        participation.setNumberOfAttempts(1);
+        participation.setAttempt(1);
 
         return startProgrammingParticipation(exercise, participation);
     }
@@ -462,7 +462,7 @@ public class ParticipationService {
             VersionControlService vcs = versionControlService.orElseThrow();
             String templateBranch = vcs.getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
-            var newRepoUri = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getNumberOfAttempts());
+            var newRepoUri = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt());
             // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
