@@ -458,6 +458,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
         log.debug("Save quiz exercise to database: {}", quizExercise);
+
         return quizExerciseRepository.saveAndFlush(quizExercise);
     }
 

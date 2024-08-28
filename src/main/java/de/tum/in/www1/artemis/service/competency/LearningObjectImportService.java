@@ -50,6 +50,7 @@ import de.tum.in.www1.artemis.service.LectureImportService;
 import de.tum.in.www1.artemis.service.LectureUnitImportService;
 import de.tum.in.www1.artemis.service.ModelingExerciseImportService;
 import de.tum.in.www1.artemis.service.TextExerciseImportService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionConfigHelper;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseImportService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportOptionsDTO;
@@ -182,21 +183,21 @@ public class LearningObjectImportService {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
             case FileUploadExercise fileUploadExercise -> importOrLoadExercise(fileUploadExercise, course, fileUploadExerciseRepository::findWithCompetenciesByTitleAndCourseId,
-                    Function.identity(), fileUploadExerciseImportService::importFileUploadExercise);
+                    fileUploadExerciseRepository::findWithGradingCriteriaByIdElseThrow, fileUploadExerciseImportService::importFileUploadExercise);
             case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findWithCompetenciesByTitleAndCourseId,
-                    exercise -> modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(exercise.getId()),
+                    modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow,
                     modelingExerciseImportService::importModelingExercise);
             case TextExercise textExercise -> importOrLoadExercise(textExercise, course, textExerciseRepository::findWithCompetenciesByTitleAndCourseId,
-                    exercise -> textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(exercise.getId()), textExerciseImportService::importTextExercise);
-            case QuizExercise quizExercise ->
-                importOrLoadExercise(quizExercise, course, quizExerciseRepository::findWithCompetenciesByTitleAndCourseId, Function.identity(), (exercise, templateExercise) -> {
-                    try {
-                        return quizExerciseImportService.importQuizExercise(exercise, templateExercise, null);
-                    }
-                    catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                    textExerciseRepository::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, textExerciseImportService::importTextExercise);
+            case QuizExercise quizExercise -> importOrLoadExercise(quizExercise, course, quizExerciseRepository::findWithCompetenciesByTitleAndCourseId,
+                    quizExerciseRepository::findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, (exercise, templateExercise) -> {
+                        try {
+                            return quizExerciseImportService.importQuizExercise(exercise, templateExercise, null);
+                        }
+                        catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             default -> throw new IllegalStateException("Unexpected value: " + sourceExercise);
         };
     }
@@ -224,29 +225,42 @@ public class LearningObjectImportService {
             Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
             programmingExercise.setGradingCriteria(gradingCriteria);
 
-            programmingExercise.setCourse(course);
-            programmingExercise.forceNewProjectKey();
-            programmingExercise.setTeams(new HashSet<>());
-            programmingExercise.setStudentParticipations(new HashSet<>());
-            programmingExercise.setTutorParticipations(new HashSet<>());
-            programmingExercise.setExampleSubmissions(new HashSet<>());
-            programmingExercise.setAttachments(new HashSet<>());
-            programmingExercise.setPosts(new HashSet<>());
-            programmingExercise.setPlagiarismCases(new HashSet<>());
+            ProgrammingExercise newExercise = programmingExerciseRepository
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(
+                            programmingExercise.getId());
+            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(newExercise, programmingExerciseRepository);
+            newExercise.setCourse(course);
+            newExercise.forceNewProjectKey();
+            newExercise.setTasks(null);
 
-            return programmingExerciseImportService.importProgrammingExercise(programmingExercise, programmingExercise, false, false, false);
+            newExercise.setExerciseHints(new HashSet<>());
+            newExercise.setTestCases(new HashSet<>());
+            newExercise.setStaticCodeAnalysisCategories(new HashSet<>());
+            newExercise.setTeams(new HashSet<>());
+            newExercise.setGradingCriteria(new HashSet<>());
+            newExercise.setStudentParticipations(new HashSet<>());
+            newExercise.setTutorParticipations(new HashSet<>());
+            newExercise.setExampleSubmissions(new HashSet<>());
+            newExercise.setAttachments(new HashSet<>());
+            newExercise.setPosts(new HashSet<>());
+            newExercise.setPlagiarismCases(new HashSet<>());
+            newExercise.setCompetencies(new HashSet<>());
+
+            return programmingExerciseImportService.importProgrammingExercise(programmingExercise, newExercise, false, false, false);
         }
     }
 
-    private <E extends Exercise> Exercise importOrLoadExercise(E exercise, Course course, BiFunction<String, Long, Optional<E>> findFunction, Function<E, E> loadForImport,
+    private <E extends Exercise> Exercise importOrLoadExercise(E exercise, Course course, BiFunction<String, Long, Optional<E>> findFunction, Function<Long, E> loadForImport,
             BiFunction<E, E, E> importFunction) {
         Optional<E> foundByTitle = findFunction.apply(exercise.getTitle(), course.getId());
         if (foundByTitle.isPresent()) {
             return foundByTitle.get();
         }
         else {
-            exercise = loadForImport.apply(exercise);
+            exercise = loadForImport.apply(exercise.getId());
             exercise.setCourse(course);
+            exercise.setId(null);
+            exercise.setCompetencies(new HashSet<>());
 
             return importFunction.apply(exercise, exercise);
         }
@@ -280,7 +294,7 @@ public class LearningObjectImportService {
 
                 importedLectureUnits.add(importedLectureUnit);
 
-                importedLectureUnit.getCompetencies().add(idToImportedCompetency.get(sourceCourseCompetency.getId()).competency());
+                idToImportedCompetency.get(sourceCourseCompetency.getId()).competency().getLectureUnits().add(importedLectureUnit);
             }
         }
     }

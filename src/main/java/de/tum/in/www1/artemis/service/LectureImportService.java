@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -30,10 +32,14 @@ public class LectureImportService {
 
     private final LectureUnitImportService lectureUnitImportService;
 
-    public LectureImportService(LectureRepository lectureRepository, AttachmentRepository attachmentRepository, LectureUnitImportService lectureUnitImportService) {
+    private final ChannelService channelService;
+
+    public LectureImportService(LectureRepository lectureRepository, AttachmentRepository attachmentRepository, LectureUnitImportService lectureUnitImportService,
+            ChannelService channelService) {
         this.lectureRepository = lectureRepository;
         this.attachmentRepository = attachmentRepository;
         this.lectureUnitImportService = lectureUnitImportService;
+        this.channelService = channelService;
     }
 
     /**
@@ -76,6 +82,10 @@ public class LectureImportService {
         attachmentRepository.saveAll(attachments);
 
         // Save again to establish the ordered list relationship
-        return lectureRepository.save(lecture);
+        Lecture savedLecture = lectureRepository.save(lecture);
+
+        channelService.createLectureChannel(savedLecture, Optional.empty());
+
+        return savedLecture;
     }
 }
