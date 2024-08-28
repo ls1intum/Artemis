@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
@@ -177,6 +178,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
         if (isTeamExercise) {
             textExercise.setMode(ExerciseMode.TEAM);
+            TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
+            teamAssignmentConfig.setMinTeamSize(1);
+            teamAssignmentConfig.setMaxTeamSize(2);
+            textExercise.setTeamAssignmentConfig(teamAssignmentConfig);
         }
 
         textExercise.setMaxPoints(10.0);
