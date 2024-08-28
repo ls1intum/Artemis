@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest.settings.ide;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,10 +57,10 @@ public class IdeSettingsResource {
      */
     @GetMapping("ide-settings/predefined")
     @EnforceAtLeastStudent
-    public ResponseEntity<IdeDTO[]> getPredefinedIdes() {
+    public ResponseEntity<List<IdeDTO>> getPredefinedIdes() {
         log.debug("REST request to get predefined IDEs");
 
-        IdeDTO[] ideRecords = Arrays.stream(Ide.PREDEFINED_IDES).map(IdeDTO::new).toArray(IdeDTO[]::new);
+        List<IdeDTO> ideRecords = Arrays.stream(Ide.PREDEFINED_IDES).map(IdeDTO::new).toList();
         log.debug("Successfully queried predefined IDEs");
 
         return ResponseEntity.ok(ideRecords);
@@ -72,13 +73,12 @@ public class IdeSettingsResource {
      */
     @GetMapping("ide-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<IdeMappingDTO[]> getIdesOfUser() {
+    public ResponseEntity<List<IdeMappingDTO>> getIdesOfUser() {
         User user = userRepository.getUser();
         log.debug("REST request to get IDEs of user {}", user.getLogin());
 
         var ideMappings = userIdeMappingRepository.findAllByUserId(user.getId());
-        IdeMappingDTO[] ideRecords = ideMappings.stream().map(ideMapping -> new IdeMappingDTO(ideMapping.getProgrammingLanguage(), ideMapping.getIde()))
-                .toArray(IdeMappingDTO[]::new);
+        List<IdeMappingDTO> ideRecords = ideMappings.stream().map(ideMapping -> new IdeMappingDTO(ideMapping.getProgrammingLanguage(), ideMapping.getIde())).toList();
         log.debug("Successfully queried IDEs of user {}", user.getLogin());
 
         return ResponseEntity.ok(ideRecords);
