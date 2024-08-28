@@ -549,8 +549,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void requestFeedbackSuccess_withAthenaSuccess() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var textCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(course);
+        textCourse.setRestrictedAthenaModulesAccess(true);
+        this.courseRepository.save(textCourse);
 
         this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
@@ -620,8 +623,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void requestFeedbackSuccess_withAthenaFailure() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var textCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(course);
+        textCourse.setRestrictedAthenaModulesAccess(true);
+        this.courseRepository.save(textCourse);
 
         this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
