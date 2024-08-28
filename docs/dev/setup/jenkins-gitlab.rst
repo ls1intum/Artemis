@@ -466,7 +466,7 @@ Automated Jenkins Server Setup
 The following steps describe how to deploy a pre-configured version of the Jenkins server.
 This is ideal as a quickstart for developers. For a more detailed setup, see
 `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
-In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config.yml``) and
+In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config-gitlab.yml``) and
 generate random access tokens and push tokens.
 
 1. Create a new access token in GitLab named ``Jenkins`` and give it **api** and **read_repository** rights. You can
@@ -486,9 +486,9 @@ do either do it manually or using the following command:
        docker compose -f docker/<Jenkins setup to be launched>.yml up -d
 
    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
-   in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
+   in ``jenkins-casc-config-gitlab.yml`` (defaults to ``artemis_admin`` as both username and password).
 
-3. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
+3. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config-gitlab.yml``:
 
 .. code:: yaml
 
