@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -41,10 +42,14 @@ public class LectureImportService {
 
     private final LectureUnitImportService lectureUnitImportService;
 
-    public LectureImportService(LectureRepository lectureRepository, AttachmentRepository attachmentRepository, LectureUnitImportService lectureUnitImportService) {
+    private final ChannelService channelService;
+
+    public LectureImportService(LectureRepository lectureRepository, AttachmentRepository attachmentRepository, LectureUnitImportService lectureUnitImportService,
+            ChannelService channelService) {
         this.lectureRepository = lectureRepository;
         this.attachmentRepository = attachmentRepository;
         this.lectureUnitImportService = lectureUnitImportService;
+        this.channelService = channelService;
     }
 
     /**
@@ -87,6 +92,10 @@ public class LectureImportService {
         attachmentRepository.saveAll(attachments);
 
         // Save again to establish the ordered list relationship
-        return lectureRepository.save(lecture);
+        Lecture savedLecture = lectureRepository.save(lecture);
+
+        channelService.createLectureChannel(savedLecture, Optional.empty());
+
+        return savedLecture;
     }
 }
