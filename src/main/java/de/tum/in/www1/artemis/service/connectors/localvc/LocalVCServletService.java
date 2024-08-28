@@ -406,7 +406,10 @@ public class LocalVCServletService {
      * @param user                     The user that wants to access the repository.
      * @param exercise                 The exercise the repository belongs to.
      * @param repositoryActionType     The type of the action the user wants to perform.
+     * @param authenticationMechanism  The authentication mechanism used by the user to authenticate to the repository
+     * @param ipAddress                The ip address of the user
      * @param localVCRepositoryUri     The URI of the local repository.
+     *
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository.
      */
     public void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType,
