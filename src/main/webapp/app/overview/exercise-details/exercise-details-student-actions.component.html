@@ -255,7 +255,7 @@
                             class="btn btn-primary"
                             (click)="requestFeedback()"
                             [class.btn-sm]="smallButtons"
-                            [disabled]="gradedParticipation?.submissions?.length == 1 && !gradedParticipation!.submissions![0].submitted"
+                            [disabled]="!gradedParticipation?.submissions?.last()?.submitted || isGeneratingFeedback"
                             [id]="'request-feedback-' + exercise.id"
                             [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
                         >

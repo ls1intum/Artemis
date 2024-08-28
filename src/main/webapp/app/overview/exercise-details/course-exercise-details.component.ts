@@ -99,12 +99,12 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
+    isGeneratingFeedback: boolean = false;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
-
     // Icons
     faBook = faBook;
     faEye = faEye;
@@ -310,6 +310,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         changedParticipation.id === this.gradedStudentParticipation?.id &&
                         (changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0)
                     ) {
+                        this.isGeneratingFeedback = false;
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
                     if (
@@ -317,6 +318,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         changedParticipation.results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                         changedParticipation.results?.last()?.successful !== undefined
                     ) {
+                        this.isGeneratingFeedback = false;
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
                     }
                     if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
@@ -449,4 +451,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     changeExampleSolution() {
         this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
+
+    setIsGeneratingFeedback() {}
 }

@@ -666,6 +666,21 @@ public class ParticipationService {
     }
 
     /**
+     * Get one participation (in any state) by its student and exercise with eager submissions else throw exception.
+     *
+     * @param exercise the exercise for which to find a participation
+     * @param username the username of the student
+     * @return the participation of the given student and exercise with eager submissions in any state
+     */
+    public StudentParticipation findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyStateElseThrow(Exercise exercise, String username) {
+        Optional<StudentParticipation> optionalParticipation = findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, username);
+        if (optionalParticipation.isEmpty()) {
+            throw new EntityNotFoundException("No participation found in exercise with id " + exercise.getId() + " for user " + username);
+        }
+        return optionalParticipation.get();
+    }
+
+    /**
      * Get all exercise participations belonging to exercise and student.
      *
      * @param exercise  the exercise
@@ -701,7 +716,7 @@ public class ParticipationService {
      * @return the participation with latest submission and result
      * @throws EntityNotFoundException
      */
-    public StudentParticipation findTextExerciseParticipationWithLatestSubmissionAndResult(Long participationId) throws EntityNotFoundException {
+    public StudentParticipation findTextExerciseParticipationWithLatestSubmissionAndResultOrElseThrow(Long participationId) throws EntityNotFoundException {
         Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
         if (participation.isEmpty() || !(participation.get() instanceof StudentParticipation studentParticipation)) {
             throw new EntityNotFoundException("No text exercise participation found with id " + participationId);

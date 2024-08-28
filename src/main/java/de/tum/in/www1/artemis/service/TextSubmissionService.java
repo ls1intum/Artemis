@@ -94,14 +94,9 @@ public class TextSubmissionService extends SubmissionService {
      * @return the saved text submission
      */
     public TextSubmission saveNewSubmissionAfterAthenaFeedback(TextSubmission textSubmission, TextExercise textExercise, User user) {
-        // To ensure that a new submission is created when Athena Feedback is present
-        // final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyStateElseThrow(textExercise, user.getLogin());
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(textExercise, user.getLogin());
-        if (optionalParticipation.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + textExercise.getId());
-        }
+        final var participation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyStateElseThrow(textExercise, user.getLogin());
         textSubmission.setId(null);
-        return save(textSubmission, optionalParticipation.get(), textExercise, user);
+        return save(textSubmission, participation, textExercise, user);
     }
 
     /**

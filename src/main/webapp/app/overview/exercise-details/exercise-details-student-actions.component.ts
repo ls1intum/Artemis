@@ -1,4 +1,4 @@
-import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -39,6 +39,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() courseId: number;
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
+    @Input() isGeneratingFeedback: boolean;
+
+    @Output() generatingFeedback = new EventEmitter<void>();
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
@@ -243,9 +246,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     requestFeedback() {
+        if (!this.assureConditionsSatisfied()) return;
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            if (!this.assureConditionsSatisfied()) return;
-
             const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
             if (!window.confirm(confirmLockRepository)) {
                 return;
@@ -255,6 +257,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
+                    this.generatingFeedback.emit();
                     this.feedbackSent = true;
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                 }
@@ -328,12 +331,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      */
     assureConditionsSatisfied(): boolean {
         this.updateParticipations();
-        const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
-        const someHiddenTestsPassed = latestResult?.score !== undefined;
-        const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
-        if (!someHiddenTestsPassed) {
-            window.alert(testsNotPassedWarning);
-            return false;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
+            const someHiddenTestsPassed = latestResult?.score !== undefined;
+            const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
+            if (!someHiddenTestsPassed) {
+                window.alert(testsNotPassedWarning);
+                return false;
+            }
         }
 
         const afterDueDate = !this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
@@ -354,7 +359,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
             const countOfSuccessfulRequests = athenaResults.filter((result) => result.successful === true).length;
 
-            if (countOfSuccessfulRequests >= 20) {
+            if (countOfSuccessfulRequests >= 10) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
                 window.alert(rateLimitExceededWarning);
                 return false;

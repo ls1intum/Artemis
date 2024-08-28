@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
@@ -50,8 +49,8 @@ public class TextExerciseFeedbackService {
 
     private final TextSubmissionService textSubmissionService;
 
-    public TextExerciseFeedbackService(GroupNotificationService groupNotificationService, Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService,
-            SubmissionService submissionService, ResultService resultService, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository,
+    public TextExerciseFeedbackService(Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService,
+            ResultService resultService, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository,
             ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextSubmissionService textSubmissionService) {
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.submissionService = submissionService;
@@ -101,7 +100,7 @@ public class TextExerciseFeedbackService {
         log.debug("Using athena to generate (text exercise) feedback request: {}", textExercise.getId());
 
         // athena takes over the control here
-        var submissionOptional = participationService.findTextExerciseParticipationWithLatestSubmissionAndResult(participation.getId()).findLatestSubmission();
+        var submissionOptional = participationService.findTextExerciseParticipationWithLatestSubmissionAndResultOrElseThrow(participation.getId()).findLatestSubmission();
 
         if (submissionOptional.isEmpty()) {
             throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
@@ -145,7 +144,6 @@ public class TextExerciseFeedbackService {
             automaticResult = this.resultRepository.save(automaticResult);
             resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
             submissionService.saveNewResult(submission, automaticResult);
-
             // This will create a new submission without results, this is important so that tutor assessment works as it used to.
             textSubmissionService.saveNewSubmissionAfterAthenaFeedback((TextSubmission) submission, textExercise, participation.getStudent().get());
             this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);

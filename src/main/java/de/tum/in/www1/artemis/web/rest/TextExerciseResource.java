@@ -428,7 +428,6 @@ public class TextExerciseResource {
                 textSubmission.setResults(athenaResults);
                 Set<Result> athenaResultsSet = new HashSet<Result>(athenaResults);
                 participation.setResults(athenaResultsSet);
-
             }
 
             Result result = textSubmission.getLatestResult();
