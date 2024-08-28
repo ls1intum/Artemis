@@ -38,8 +38,6 @@ public class TextExerciseFeedbackService {
 
     private final Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService;
 
-    private final GroupNotificationService groupNotificationService;
-
     private final ResultWebsocketService resultWebsocketService;
 
     private final SubmissionService submissionService;
@@ -55,7 +53,6 @@ public class TextExerciseFeedbackService {
     public TextExerciseFeedbackService(GroupNotificationService groupNotificationService, Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService,
             SubmissionService submissionService, ResultService resultService, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository,
             ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextSubmissionService textSubmissionService) {
-        this.groupNotificationService = groupNotificationService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.submissionService = submissionService;
         this.resultService = resultService;
