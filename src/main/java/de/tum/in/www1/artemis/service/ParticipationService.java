@@ -703,10 +703,10 @@ public class ParticipationService {
      */
     public StudentParticipation findTextExerciseParticipationWithLatestSubmissionAndResult(Long participationId) throws EntityNotFoundException {
         Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
-        if (participation.isEmpty() || !(participation.get() instanceof StudentParticipation)) {
+        if (participation.isEmpty() || !(participation.get() instanceof StudentParticipation studentParticipation)) {
             throw new EntityNotFoundException("No text exercise participation found with id " + participationId);
         }
-        return (StudentParticipation) participation.get();
+        return studentParticipation;
     }
 
     /**

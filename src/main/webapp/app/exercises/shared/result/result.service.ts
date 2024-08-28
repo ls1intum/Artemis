@@ -114,10 +114,9 @@ export class ResultService implements IResultService {
         let aiFeedbackMessage: string = '';
         if (result && Result.isAthenaAIResult(result) && result.successful === undefined) {
             return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
-        } else {
-            aiFeedbackMessage = this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         }
-        return aiFeedbackMessage + ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
+        aiFeedbackMessage = this.getResultStringNonProgrammingExercise(relativeScore, points, short);
+        return `${aiFeedbackMessage} (${this.translateService.instant('artemisApp.result.preliminary')})`;
     }
 
     /**

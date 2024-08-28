@@ -361,7 +361,7 @@ public class ParticipationResource {
     public ResponseEntity<StudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request for feedback request: {}", exerciseId);
 
-        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!(exercise instanceof TextExercise) && !(exercise instanceof ProgrammingExercise)) {
             throw new BadRequestAlertException("Unsupported exercise type", "participation", "unsupported type");

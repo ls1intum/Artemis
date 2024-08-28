@@ -43,6 +43,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
+    protected readonly AssessmentType = AssessmentType;
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
@@ -305,6 +306,4 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             });
         }
     }
-
-    protected readonly AssessmentType = AssessmentType;
 }

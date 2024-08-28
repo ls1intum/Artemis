@@ -81,7 +81,6 @@ public class TextSubmissionService extends SubmissionService {
         if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             textSubmission.setSubmitted(true);
         }
-        textSubmission.setType(SubmissionType.MANUAL);
 
         textSubmission = save(textSubmission, participation, exercise, user);
         return textSubmission;
@@ -96,12 +95,12 @@ public class TextSubmissionService extends SubmissionService {
      */
     public TextSubmission saveNewSubmissionAfterAthenaFeedback(TextSubmission textSubmission, TextExercise textExercise, User user) {
         // To ensure that a new submission is created when Athena Feedback is present
+        // final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyStateElseThrow(textExercise, user.getLogin());
         final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(textExercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + textExercise.getId());
         }
         textSubmission.setId(null);
-        textSubmission.setType(SubmissionType.EXTERNAL);
         return save(textSubmission, optionalParticipation.get(), textExercise, user);
     }
 
@@ -117,6 +116,7 @@ public class TextSubmissionService extends SubmissionService {
     private TextSubmission save(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, User user) {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
+        textSubmission.setType(SubmissionType.MANUAL);
         participation.addSubmission(textSubmission);
 
         if (participation.getInitializationState() != InitializationState.FINISHED) {

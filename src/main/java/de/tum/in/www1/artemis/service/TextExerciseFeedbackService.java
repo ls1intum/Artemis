@@ -140,17 +140,10 @@ public class TextExerciseFeedbackService {
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());
 
-            // Limit between 0 and 100%
-            if (totalFeedbacksScore < 0) {
-                automaticResult.setScore(0.0);
-            }
-            else if (totalFeedbacksScore > 100) {
-                totalFeedbacksScore = 100.0;
-            }
-            automaticResult.setScore(totalFeedbacksScore);
+            automaticResult.setScore(Math.clamp(totalFeedbacksScore, 0, 100));
 
             automaticResult = this.resultRepository.save(automaticResult);
-            this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
+            resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
             submissionService.saveNewResult(submission, automaticResult);
 
             // This will create a new submission without results, this is important so that tutor assessment works as it used to.

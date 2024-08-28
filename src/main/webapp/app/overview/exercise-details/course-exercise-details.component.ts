@@ -308,15 +308,14 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         changedParticipation.exercise?.dueDate &&
                         hasExerciseDueDatePassed(changedParticipation.exercise, changedParticipation) &&
                         changedParticipation.id === this.gradedStudentParticipation?.id &&
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                        changedParticipation.results?.length! > (this.gradedStudentParticipation?.results?.length || 0)
+                        (changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0)
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
                     if (
-                        changedParticipation.results?.length! > (this.gradedStudentParticipation?.results?.length || 0) &&
-                        changedParticipation.results?.last()!.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                        changedParticipation.results?.last()!.successful !== undefined
+                        (changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0) &&
+                        changedParticipation.results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                        changedParticipation.results?.last()?.successful !== undefined
                     ) {
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
                     }
