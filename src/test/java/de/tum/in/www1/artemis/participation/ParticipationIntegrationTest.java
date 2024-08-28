@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_
 import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -97,7 +96,6 @@ import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 class ParticipationIntegrationTest extends AbstractAthenaTest {
@@ -657,14 +655,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         resultText2.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(resultText2);
 
-        assertThrows(InternalServerErrorException.class, () -> {
-            request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
-        });
-
         doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(any(), any());
         doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
-
-        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
@@ -674,6 +666,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.isSuccessful()).isFalse();
         assertThat(invokedResult.isAthenaAutomatic()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(0);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
+
+        verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(resultCaptor.capture().getParticipation(), any());
+
+        Result invokedTextResult = resultCaptor.getAllValues().get(1);
+        assertThat(invokedTextResult).isNull();
 
         localRepo.resetLocalRepo();
     }
