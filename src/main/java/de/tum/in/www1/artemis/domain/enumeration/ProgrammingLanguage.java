@@ -48,6 +48,7 @@ public enum ProgrammingLanguage {
         ASSEMBLER,
         SWIFT,
         OCAML,
+        RUST,
         JAVASCRIPT
     );
     // @formatter:on
