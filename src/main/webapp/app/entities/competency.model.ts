@@ -20,7 +20,6 @@ export enum CompetencyTaxonomy {
 }
 
 export enum CompetencyRelationType {
-    RELATES = 'RELATES',
     ASSUMES = 'ASSUMES',
     EXTENDS = 'EXTENDS',
     MATCHES = 'MATCHES',
@@ -32,29 +31,52 @@ export enum CompetencyRelationError {
     EXISTING = 'EXISTING',
 }
 
-export enum CompetencyValidators {
+export enum CourseCompetencyValidators {
     TITLE_MAX = 255,
     DESCRIPTION_MAX = 10000,
+    MASTERY_THRESHOLD_MIN = 0,
+    MASTERY_THRESHOLD_MAX = 100,
 }
 
-export const DEFAULT_MASTERY_THRESHOLD = 50;
+// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in CourseCompetency.java
+export enum CourseCompetencyType {
+    COMPETENCY = 'competency',
+    PREREQUISITE = 'prerequisite',
+}
 
-export class Competency implements BaseEntity {
-    public id?: number;
-    public title?: string;
-    public description?: string;
-    public softDueDate?: dayjs.Dayjs;
-    public taxonomy?: CompetencyTaxonomy;
-    public masteryThreshold?: number;
-    public optional?: boolean;
-    public course?: Course;
-    public exercises?: Exercise[];
-    public lectureUnits?: LectureUnit[];
-    public userProgress?: CompetencyProgress[];
-    public courseProgress?: CourseCompetencyProgress;
-    public linkedStandardizedCompetency?: StandardizedCompetency;
+export const DEFAULT_MASTERY_THRESHOLD = 100;
 
-    constructor() {}
+export abstract class BaseCompetency implements BaseEntity {
+    id?: number;
+    title?: string;
+    description?: string;
+    taxonomy?: CompetencyTaxonomy;
+}
+
+export abstract class CourseCompetency extends BaseCompetency {
+    softDueDate?: dayjs.Dayjs;
+    masteryThreshold?: number;
+    optional?: boolean;
+    linkedStandardizedCompetency?: StandardizedCompetency;
+    exercises?: Exercise[];
+    lectureUnits?: LectureUnit[];
+    userProgress?: CompetencyProgress[];
+    courseProgress?: CourseCompetencyProgress;
+    course?: Course;
+    linkedCourseCompetency?: CourseCompetency;
+
+    public type?: CourseCompetencyType;
+
+    protected constructor(type: CourseCompetencyType) {
+        super();
+        this.type = type;
+    }
+}
+
+export class Competency extends CourseCompetency {
+    constructor() {
+        super(CourseCompetencyType.COMPETENCY);
+    }
 }
 
 export class CompetencyJol {
@@ -112,9 +134,19 @@ export interface CompetencyImportResponseDTO extends BaseEntity {
     linkedStandardizedCompetencyId?: number;
 }
 
+export enum ConfidenceReason {
+    NO_REASON = 'NO_REASON',
+    RECENT_SCORES_LOWER = 'RECENT_SCORES_LOWER',
+    RECENT_SCORES_HIGHER = 'RECENT_SCORES_HIGHER',
+    MORE_EASY_POINTS = 'MORE_EASY_POINTS',
+    MORE_HARD_POINTS = 'MORE_HARD_POINTS',
+    QUICKLY_SOLVED_EXERCISES = 'QUICKLY_SOLVED_EXERCISES',
+}
+
 export class CompetencyProgress {
     public progress?: number;
     public confidence?: number;
+    public confidenceReason?: ConfidenceReason;
 
     constructor() {}
 }
@@ -130,11 +162,9 @@ export class CourseCompetencyProgress {
 
 export class CompetencyRelation implements BaseEntity {
     public id?: number;
-    public tailCompetency?: Competency;
-    public headCompetency?: Competency;
+    public tailCompetency?: CourseCompetency;
+    public headCompetency?: CourseCompetency;
     public type?: CompetencyRelationType;
-
-    constructor() {}
 }
 
 export class CompetencyRelationDTO implements BaseEntity {
@@ -142,8 +172,6 @@ export class CompetencyRelationDTO implements BaseEntity {
     tailCompetencyId?: number;
     headCompetencyId?: number;
     relationType?: CompetencyRelationType;
-
-    constructor() {}
 }
 
 /**
@@ -161,7 +189,7 @@ export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelatio
 }
 
 export class CompetencyWithTailRelationDTO {
-    competency?: Competency;
+    competency?: CourseCompetency;
     tailRelations?: CompetencyRelationDTO[];
 
     constructor() {}
@@ -184,15 +212,27 @@ export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     return icons[competencyTaxonomy] as IconProp;
 }
 
-export function getProgress(competencyProgress: CompetencyProgress) {
+/**
+ * The progress depends on the amount of completed lecture units and the achieved scores in the exercises.
+ * @param competencyProgress The progress in the competency
+ */
+export function getProgress(competencyProgress: CompetencyProgress | undefined): number {
     return Math.round(competencyProgress?.progress ?? 0);
 }
 
-export function getConfidence(competencyProgress: CompetencyProgress, masteryThreshold: number): number {
-    return Math.min(Math.round(((competencyProgress?.confidence ?? 0) / (masteryThreshold ?? 100)) * 100), 100);
+/**
+ * The confidence is a factor for the progress, normally near 1. It depends on different heuristics and determines if the mastery is lower/higher than the progress.
+ * @param competencyProgress The progress in the competency
+ */
+export function getConfidence(competencyProgress: CompetencyProgress | undefined): number {
+    return competencyProgress?.confidence ?? 1;
 }
 
-export function getMastery(competencyProgress: CompetencyProgress, masteryThreshold: number): number {
-    const weight = 2 / 3;
-    return Math.round((1 - weight) * getProgress(competencyProgress) + weight * getConfidence(competencyProgress, masteryThreshold));
+/**
+ * The mastery is the final value that is shown to the user. It is the product of the progress and the confidence.
+ * @param competencyProgress The progress in the competency
+ */
+export function getMastery(competencyProgress: CompetencyProgress | undefined): number {
+    // clamp the value between 0 and 100
+    return Math.min(100, Math.max(0, Math.round(getProgress(competencyProgress) * getConfidence(competencyProgress))));
 }

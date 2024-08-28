@@ -53,6 +53,7 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @AfterEach
+    @Override
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository);
         super.resetSpyBeans();

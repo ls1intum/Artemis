@@ -21,6 +21,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -62,7 +63,7 @@ public class AeolusTemplateService {
     @EventListener(ApplicationReadyEvent.class)
     public void cacheOnBoot() {
         // load all scripts into the cache
-        var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
+        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
@@ -170,8 +171,9 @@ public class AeolusTemplateService {
      */
     public Windfile getDefaultWindfileFor(ProgrammingExercise exercise) {
         try {
+            ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             return getWindfileFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                    exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
+                    buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
             log.info("No windfile for the settings of exercise {}", exercise.getId(), e);

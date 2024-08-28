@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTime;
+import static de.tum.in.www1.artemis.service.util.TimeUtil.toRelativeTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -24,8 +26,10 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.repository.metrics.ExerciseMetricsRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
 
 class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -33,9 +37,11 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private static final String TEST_PREFIX = "metricsintegration";
 
     @Autowired
-    private ParticipantScoreScheduleService participantScoreScheduleService;
+    private ExerciseMetricsRepository exerciseMetricsRepository;
 
     private Course course;
+
+    private Course courseWithTestRuns;
 
     private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
 
@@ -49,6 +55,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
 
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
+        courseWithTestRuns = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTestRunsAndTwoUsers(TEST_PREFIX, true);
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "user1337");
     }
@@ -146,6 +153,47 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             }));
 
             assertThat(latestSubmissions).isEqualTo(expectedMap);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldFindLatestSubmissionDates() throws Exception {
+            Set<Long> exerciseIds = new HashSet<Long>();
+            final var exercises = exerciseRepository.findAllExercisesByCourseId(courseWithTestRuns.getId()).stream()
+                    .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
+
+            Set<ResourceTimestampDTO> expectedSet = exercises.map(exercise -> {
+                exerciseIds.add(exercise.getId());
+
+                final var latestSubmissionDate = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun())
+                        .flatMap(participation -> participation.getSubmissions().stream()).map(Submission::getSubmissionDate).max(Comparator.naturalOrder());
+
+                return latestSubmissionDate.map(date -> new ResourceTimestampDTO(exercise.getId(), date));
+            }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+
+            Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestSubmissionDates(exerciseIds);
+            assertThat(result).isEqualTo(expectedSet);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldFindLatestSubmissionDatesByUser() throws Exception {
+            Set<Long> exerciseIds = new HashSet<Long>();
+            final var exercises = exerciseRepository.findAllExercisesByCourseId(courseWithTestRuns.getId()).stream()
+                    .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
+            final var userID = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
+
+            Set<ResourceTimestampDTO> expectedSet = exercises.flatMap(exercise -> {
+                exerciseIds.add(exercise.getId());
+                final var latestSubmissionDate = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun())
+                        .filter(participation -> participation.getStudent().map(student -> student.getId().equals(userID)).orElse(false))
+                        .flatMap(participation -> participation.getSubmissions().stream()).map(Submission::getSubmissionDate).max(Comparator.naturalOrder());
+
+                return latestSubmissionDate.map(date -> new ResourceTimestampDTO(exercise.getId(), date)).stream();
+            }).collect(Collectors.toSet());
+
+            Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userID);
+            assertThat(result).isEqualTo(expectedSet);
         }
     }
 }

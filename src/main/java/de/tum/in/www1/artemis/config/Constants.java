@@ -30,6 +30,8 @@ public final class Constants {
     // Regex for acceptable logins
     public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
 
+    public static final String SIMPLE_EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+
     public static final String SYSTEM_ACCOUNT = "system";
 
     public static final String DEFAULT_LANGUAGE = "en";
@@ -76,7 +78,9 @@ public final class Constants {
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
-    public static final String TUM_LDAP_EMAIL = "imHauptEMail";
+    public static final String TUM_LDAP_MAIN_EMAIL = "imHauptEMail";
+
+    public static final String TUM_LDAP_EMAILS = "imEmailAdressen";
 
     // NOTE: the following values for programming exercises are hard-coded at the moment
     public static final String TEST_REPO_NAME = "tests";
@@ -225,7 +229,9 @@ public final class Constants {
 
     public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
-    public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "versionControlAccessToken";
+    public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "useVersionControlAccessToken";
+
+    public static final String INFO_SHOW_CLONE_URL_WITHOUT_TOKEN = "showCloneUrlWithoutToken";
 
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
@@ -308,6 +314,17 @@ public final class Constants {
     public static final String PROFILE_SCHEDULING = "scheduling";
 
     /**
+     * The name of the Spring profile used for Theia as an external online IDE.
+     */
+    public static final String PROFILE_THEIA = "theia";
+
+    /**
+     * The InfoContributor's detail key for the Theia Portal URL
+     */
+
+    public static final String THEIA_PORTAL_URL = "theiaPortalURL";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
@@ -336,6 +353,16 @@ public final class Constants {
      * The directory to which repositories temporarely get cloned for the build job execution
      */
     public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
+
+    /**
+     * Minimum score for a result to be considered successful and shown in green
+     */
+    public static final int MIN_SCORE_GREEN = 80;
+
+    /**
+     * Minimum score for a result to be considered partially successful and shown in orange
+     */
+    public static final int MIN_SCORE_ORANGE = 40;
 
     private Constants() {
     }

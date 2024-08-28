@@ -57,7 +57,7 @@ public abstract class AbstractGitService {
 
     private JGitKeyCache jgitKeyCache;
 
-    private TransportConfigCallback sshCallback;
+    protected TransportConfigCallback sshCallback;
 
     private SshdSessionFactory sshdSessionFactory;
 
@@ -238,9 +238,7 @@ public abstract class AbstractGitService {
         return authenticate(Git.lsRemoteRepository());
     }
 
-    protected <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
-        return command.setTransportConfigCallback(sshCallback);
-    }
+    protected abstract <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command);
 
     protected CloneCommand cloneCommand() {
         return authenticate(Git.cloneRepository());

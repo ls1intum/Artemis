@@ -21,6 +21,10 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Settings",
+                    "lectureIngestionSettings": {
+                        "title": "Lecture Ingestion Settings",
+                        "autoIngestOnAttachmentUpload": "Send Lectures To Pyris Automatically"
+                    },
                     "hestiaSettings": "Hestia Settings",
                     "competencyGenerationSettings": "Competency Generation Settings",
                     "enabled-disabled": "Enabled/Disabled",
@@ -65,6 +69,7 @@
                     "tooltip": "If enabled, the specific global Iris settings will be automatically updated when a new release of Artemis provides new Iris settings.",
                     "chatLabel": "Auto Update Chat Settings",
                     "hestiaLabel": "Auto Update Hestia Settings",
+                    "lectureIngestionLabel": "Auto Update Lecture Ingestion Settings",
                     "competencyGenerationLabel": "Auto Update Competency Generation Settings"
                 }
             },

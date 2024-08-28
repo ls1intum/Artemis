@@ -96,6 +96,7 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
      *
      * @param quizExercise the changed quizExercise-object
      */
+    @Override
     public void checkAndDeleteReferences(QuizExercise quizExercise) {
 
         // Delete all references to question, dropLocations and dragItem if the question was deleted

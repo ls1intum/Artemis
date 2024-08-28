@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -127,7 +128,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             // update Successful-Flag in Result
             StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
             studentParticipation.setExercise(quizExercise);
-            result.evaluateQuizSubmission();
+            result.evaluateQuizSubmission(quizExercise);
 
             submissions.add(quizSubmission);
         }
@@ -258,7 +259,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private void handleDndQuizDragItemsCreation(DragAndDropQuestion dragAndDropQuestion, Map<String, MultipartFile> fileMap) throws IOException {
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
             if (dragItem.getPictureFilePath() != null) {
-                saveDndDragItemPicture(dragItem, fileMap);
+                saveDndDragItemPicture(dragItem, fileMap, null);
             }
         }
     }
@@ -323,7 +324,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             String newDragItemPath = dragItem.getPictureFilePath();
             if (dragItem.getPictureFilePath() != null && !oldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
-                saveDndDragItemPicture(dragItem, fileMap);
+                saveDndDragItemPicture(dragItem, fileMap, null);
             }
         }
     }
@@ -379,15 +380,16 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param dragItem the drag item
      * @param files    all provided files
+     * @param entityId The entity id connected to this file, can be question id for background, or the drag item id for drag item images
      */
-    public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files) throws IOException {
+    public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long entityId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
         if (file == null) {
             // Should not be reached as the file is validated before
             throw new BadRequestAlertException("The file " + dragItem.getPictureFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathService.getDragItemFilePath(), file, null).toString());
+        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathService.getDragItemFilePath(), file, entityId).toString());
     }
 
     /**
@@ -457,5 +459,30 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // and delete the now orphaned entries from the database
         log.debug("Save quiz exercise to database: {}", quizExercise);
         return quizExerciseRepository.saveAndFlush(quizExercise);
+    }
+
+    /**
+     *
+     * @param newQuizExercise the newly created quiz exercise, after importing basis of imported exercise
+     * @param files           the new files to be added to the newQuizExercise which do not have a previous path and need to be saved in the server
+     * @return the new exercise with the updated file paths which have been created and saved
+     * @throws IOException throws IO exception if corrupted files
+     */
+    public QuizExercise uploadNewFilesToNewImportedQuiz(QuizExercise newQuizExercise, List<MultipartFile> files) throws IOException {
+        Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
+        for (var question : newQuizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+                URI publicPathUri = URI.create(dragAndDropQuestion.getBackgroundFilePath());
+                if (FilePathService.actualPathForPublicPath(publicPathUri) == null) {
+                    saveDndQuestionBackground(dragAndDropQuestion, fileMap, dragAndDropQuestion.getId());
+                }
+                for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
+                    if (dragItem.getPictureFilePath() != null && FilePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath())) == null) {
+                        saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
+                    }
+                }
+            }
+        }
+        return newQuizExercise;
     }
 }

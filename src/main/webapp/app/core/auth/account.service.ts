@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { SessionStorageService } from 'ngx-webstorage';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { setUser } from '@sentry/angular-ivy';
+import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -139,7 +139,7 @@ export class AccountService implements IAccountService {
 
         if (this.versionControlAccessTokenRequired === undefined) {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken ?? false;
+                this.versionControlAccessTokenRequired = profileInfo.useVersionControlAccessToken ?? false;
             });
         }
 
@@ -327,10 +327,47 @@ export class AccountService implements IAccountService {
         this.prefilledUsernameValue = prefilledUsername;
     }
 
+    /**
+     * Sends the added SSH key to the server
+     *
+     * @param sshPublicKey
+     */
     addSshPublicKey(sshPublicKey: string): Observable<void> {
         if (this.userIdentity) {
             this.userIdentity.sshPublicKey = sshPublicKey;
         }
         return this.http.put<void>('api/users/sshpublickey', sshPublicKey);
+    }
+
+    /**
+     * Sends a request to the server to delete the user's current SSH key
+     */
+    deleteSshPublicKey(): Observable<void> {
+        if (this.userIdentity) {
+            this.userIdentity.sshPublicKey = undefined;
+        }
+        return this.http.delete<void>('api/users/sshpublickey');
+    }
+
+    /**
+     * Sends a request to the server to obtain the VCS access token for a specific participation.
+     * Users can use this access token to clone the repository belonging to a participation.
+     *
+     * @param participationId The participation for which the VCS access token is requested
+     */
+    getVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
+        const params = new HttpParams().set('participationId', participationId);
+        return this.http.get<string>('api/users/vcsToken', { observe: 'response', params, responseType: 'text' as 'json' });
+    }
+
+    /**
+     * Sends a request to the server, to create a VCS access token for a specific participation.
+     * Users can use this access token to clone the repository belonging to a participation.
+     *
+     * @param participationId The participation for which the VCS access token should get created
+     */
+    createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
+        const params = new HttpParams().set('participationId', participationId);
+        return this.http.put<string>('api/users/vcsToken', null, { observe: 'response', params, responseType: 'text' as 'json' });
     }
 }

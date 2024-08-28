@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
@@ -55,9 +54,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private SourceRepository sourceRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private StandardizedCompetencyUtilService standardizedCompetencyUtilService;
@@ -206,7 +202,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldDeleteCompetencyWithLinkedCompetency() throws Exception {
                 long deletedId = standardizedCompetency.getId();
-                Competency competency = new Competency("title", "description", null, null, null, false);
+                Competency competency = new Competency("title", "description", null, 100, null, false);
                 competency.setLinkedStandardizedCompetency(standardizedCompetency);
                 competency = competencyRepository.save(competency);
 
@@ -389,11 +385,11 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
 
                 var competencies = standardizedCompetencyRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
                 competencies = competencies.subList(competencies.size() - 2, competencies.size());
-                var competency1Actual = competencies.get(0);
+                var competency1Actual = competencies.getFirst();
                 var competency2Actual = competencies.get(1);
                 var knowledgeAreas = knowledgeAreaRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
                 knowledgeAreas = knowledgeAreas.subList(knowledgeAreas.size() - 2, knowledgeAreas.size());
-                var knowledgeArea1Actual = knowledgeAreas.get(0);
+                var knowledgeArea1Actual = knowledgeAreas.getFirst();
                 var knowledgeArea2Actual = knowledgeAreas.get(1);
                 var sources = sourceRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
                 sources = sources.subList(sources.size() - 2, sources.size());

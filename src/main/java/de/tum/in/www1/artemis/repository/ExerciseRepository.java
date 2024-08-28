@@ -347,6 +347,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise e
                 LEFT JOIN FETCH e.posts
                 LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.submissionPolicy
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
@@ -483,7 +484,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
 
     @NotNull
     default Exercise findWithCompetenciesByIdElseThrow(long exerciseId) throws EntityNotFoundException {
-        return findWithCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        return getValueElseThrow(findWithCompetenciesById(exerciseId), exerciseId);
     }
 
     /**
@@ -494,7 +495,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      */
     @NotNull
     default Exercise findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(Long exerciseId) {
-        return findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        return getValueElseThrow(findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId), exerciseId);
     }
 
     /**
@@ -526,11 +527,11 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      */
     @NotNull
     default Exercise findByIdWithStudentParticipationsElseThrow(Long exerciseId) {
-        return findByIdWithEagerParticipations(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        return getValueElseThrow(findByIdWithEagerParticipations(exerciseId), exerciseId);
     }
 
     default Exercise findByIdWithEagerExampleSubmissionsElseThrow(Long exerciseId) {
-        return findByIdWithEagerExampleSubmissions(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        return getValueElseThrow(findByIdWithEagerExampleSubmissions(exerciseId), exerciseId);
     }
 
     /**

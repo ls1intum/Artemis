@@ -26,8 +26,8 @@
         <span class="badge bg-warning" [jhiTranslate]="'artemisApp.dataTable.search.noResults'"> No results </span>
     </div>
     <div class="search-info" [class.active]="searchQueryTooShort">
-        <span class="badge bg-info" [jhiTranslate]="'artemisApp.dataExport.searchQueryTooShort'" [translateValues]="{ length: minSearchQueryLength }">
-            Please enter at least {{ minSearchQueryLength }} characters
+        <span class="badge bg-info" [jhiTranslate]="'artemisApp.dataExport.searchQueryTooShort'" [translateValues]="{ length: MIN_SEARCH_QUERY_LENGTH }">
+            Please enter at least {{ MIN_SEARCH_QUERY_LENGTH }} characters
         </span>
     </div>
 </div>

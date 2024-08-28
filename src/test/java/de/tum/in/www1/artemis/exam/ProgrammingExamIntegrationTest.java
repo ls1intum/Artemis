@@ -28,7 +28,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -41,19 +40,15 @@ import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestServic
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 
 class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "programmingexamtest";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private ExamRepository examRepository;
@@ -65,16 +60,13 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -236,12 +228,14 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     void lockAllRepositories() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
-        ExerciseGroup exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
 
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExerciseRepository.save(programmingExercise);
 
         ProgrammingExercise programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExerciseRepository.save(programmingExercise2);
 
         Integer numOfLockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", Optional.empty(),
@@ -272,12 +266,14 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     void unlockAllRepositories() throws Exception {
         assertThat(studentExamRepository.findStudentExam(new ProgrammingExercise(), null)).isEmpty();
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
-        ExerciseGroup exerciseGroup1 = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup1 = exam.getExerciseGroups().getFirst();
 
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExerciseRepository.save(programmingExercise);
 
         ProgrammingExercise programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExerciseRepository.save(programmingExercise2);
 
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
@@ -339,7 +335,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         exam.setId(null);
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
-        exerciseRepo.save(programming);
+        programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
+        exerciseRepository.save(programming);
 
         doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
@@ -354,7 +351,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_programmingExerciseSameShortNameOrTitle(String shortName1, String shortName2, String title1, String title2) throws Exception {
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
         ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
 

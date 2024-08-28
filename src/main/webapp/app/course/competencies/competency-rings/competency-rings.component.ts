@@ -8,7 +8,6 @@ import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 })
 export class CompetencyRingsComponent {
     @Input() progress = 0;
-    @Input() confidence = 0;
     @Input() mastery = 0;
     @Input() playAnimation = true;
     @Input() hideTooltip = false;
@@ -21,13 +20,6 @@ export class CompetencyRingsComponent {
             return 0;
         }
         return this.percentageRange(this.progress);
-    }
-
-    get confidencePercentage(): number {
-        if (this.hideProgress) {
-            return 0;
-        }
-        return this.percentageRange(this.confidence);
     }
 
     get masteryPercentage(): number {

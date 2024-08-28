@@ -42,7 +42,7 @@
                 id="teamShortName"
                 required
                 minlength="3"
-                [pattern]="shortNamePattern"
+                [pattern]="SHORT_NAME_PATTERN"
                 [(ngModel)]="pendingTeam.shortName"
                 (ngModelChange)="onTeamShortNameChanged($event)"
                 [disabled]="shortNameReadOnly"

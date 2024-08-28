@@ -12,7 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { AccordionGroups, SidebarCardElement, SidebarData, TutorialGroupCategory } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, TutorialGroupCategory } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
 
@@ -20,6 +20,12 @@ const TUTORIAL_UNIT_GROUPS: AccordionGroups = {
     registered: { entityData: [] },
     further: { entityData: [] },
     all: { entityData: [] },
+};
+
+const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    registered: false,
+    all: true,
+    further: true,
 };
 
 @Component({
@@ -42,6 +48,7 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     sidebarData: SidebarData;
     sortedTutorialGroups: TutorialGroup[] = [];
     accordionTutorialGroupsGroups: AccordionGroups = TUTORIAL_UNIT_GROUPS;
+    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     sidebarTutorialGroups: SidebarCardElement[] = [];
 
     constructor(
@@ -83,7 +90,7 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     navigateToTutorialGroup() {
         const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(this.tutorialGroups);
         const lastSelectedTutorialGroup = this.getLastSelectedTutorialGroup();
-        const tutorialGroupId = this.route.firstChild?.snapshot.params.exerciseId;
+        const tutorialGroupId = this.route.firstChild?.snapshot.params.tutorialGroupId;
         if (!tutorialGroupId && lastSelectedTutorialGroup) {
             this.router.navigate([lastSelectedTutorialGroup], { relativeTo: this.route, replaceUrl: true });
             this.tutorialGroupSelected = true;

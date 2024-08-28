@@ -101,6 +101,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         return invalid != null && invalid;
     }
 
+    @Override
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
     }

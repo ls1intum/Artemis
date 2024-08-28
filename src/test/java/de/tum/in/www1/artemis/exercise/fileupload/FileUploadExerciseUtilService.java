@@ -39,11 +39,11 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 @Service
 public class FileUploadExerciseUtilService {
 
-    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 
-    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+    private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
 
-    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -75,10 +75,12 @@ public class FileUploadExerciseUtilService {
     /**
      * Creates and saves a new Course and an Exam with one mandatory FileUploadExercise.
      *
+     * @param startDateBeforeCurrentTime True, if the start date of the created Exam with one mandatory FileUploadExercis should be before the current time, needed for
+     *                                       examLiveEvent tests
      * @return The created FileUploadExercise
      */
-    public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+    public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise(boolean startDateBeforeCurrentTime) {
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, startDateBeforeCurrentTime);
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
         return exerciseRepo.save(fileUploadExercise);
     }
@@ -89,16 +91,16 @@ public class FileUploadExerciseUtilService {
      * @return A List containing the created FileUploadExercises
      */
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
-        FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf",
+        FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
                 course);
         releasedFileUploadExercise.setTitle("released");
-        FileUploadExercise finishedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf",
+        FileUploadExercise finishedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
                 course);
         finishedFileUploadExercise.setTitle("finished");
-        FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
+        FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP, "png,pdf", course);
         assessedFileUploadExercise.setTitle("assessed");
 
         var fileUploadExercises = new ArrayList<FileUploadExercise>();
@@ -117,7 +119,7 @@ public class FileUploadExerciseUtilService {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
         assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
         exerciseRepo.saveAll(fileUploadExercises);
-        long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
+        long courseId = fileUploadExercises.getFirst().getCourseViaExerciseGroupOrCourseMember().getId();
         Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
         List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
         assertThat(exercises).as("three exercises got stored").hasSize(3);
@@ -131,18 +133,18 @@ public class FileUploadExerciseUtilService {
      * @return The created Course
      */
     public Course addCourseWithFourFileUploadExercise() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
-        FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf",
+        FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
                 course);
         releasedFileUploadExercise.setTitle("released");
-        FileUploadExercise finishedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf",
+        FileUploadExercise finishedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
                 course);
         finishedFileUploadExercise.setTitle("finished");
-        FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
+        FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP, "png,pdf", course);
         assessedFileUploadExercise.setTitle("assessed");
-        FileUploadExercise noDueDateFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, null, pastTimestamp, "png,pdf", course);
+        FileUploadExercise noDueDateFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, null, PAST_TIMESTAMP, "png,pdf", course);
         noDueDateFileUploadExercise.setTitle("noDueDate");
 
         var fileUploadExercises = new ArrayList<FileUploadExercise>();
@@ -161,8 +163,8 @@ public class FileUploadExerciseUtilService {
      * @return The created Course
      */
     public Course addCourseWithFileUploadExercise() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP, "png,pdf", course);
         assessedFileUploadExercise.setTitle("assessed");
         course.addExercises(assessedFileUploadExercise);
         courseRepo.save(course);

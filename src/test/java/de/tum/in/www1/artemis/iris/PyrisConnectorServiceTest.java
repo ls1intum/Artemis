@@ -42,6 +42,13 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
         assertThatThrownBy(() -> pyrisConnectorService.executePipeline("tutor-chat", "default", null)).isInstanceOf(exceptionClass);
     }
 
+    @ParameterizedTest
+    @MethodSource("irisExceptions")
+    void testExceptionIngestionV2(int httpStatus, Class<?> exceptionClass) {
+        irisRequestMockProvider.mockIngestionWebhookRunError(httpStatus);
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureWebhook("fullIngestion", null)).isInstanceOf(exceptionClass);
+    }
+
     @Test
     void testOfferedModels() throws Exception {
         irisRequestMockProvider.mockModelsResponse();
@@ -57,4 +64,5 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
         assertThatThrownBy(() -> pyrisConnectorService.getOfferedModels()).isInstanceOf(PyrisConnectorException.class);
     }
+
 }

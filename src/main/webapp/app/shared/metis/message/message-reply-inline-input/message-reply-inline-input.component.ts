@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -15,6 +15,9 @@ import { LocalStorageService } from 'ngx-webstorage';
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
     warningDismissed = false;
+
+    @Output()
+    valueChange = new EventEmitter<void>();
 
     constructor(
         protected metisService: MetisService,
@@ -33,7 +36,6 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     ngOnChanges(changes: SimpleChanges | void) {
         if (this.formGroup && changes) {
             for (const propName in changes) {
-                // eslint-disable-next-line no-prototype-builtins
                 if (changes.hasOwnProperty(propName) && propName === 'posting') {
                     if (changes['posting'].previousValue?.post?.id === changes['posting'].currentValue?.post?.id) {
                         this.posting.content = this.formGroup.get('content')?.value;

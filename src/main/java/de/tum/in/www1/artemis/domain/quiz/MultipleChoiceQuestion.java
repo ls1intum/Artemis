@@ -88,6 +88,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      *
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      */
+    @Override
     public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof MultipleChoiceQuestion mcOriginalQuestion) {
             undoUnallowedAnswerChanges(mcOriginalQuestion);
@@ -131,6 +132,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      * @return a boolean which is true if the answer-changes make an update necessary and false if not
      */
+    @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof MultipleChoiceQuestion mcOriginalQuestion) {
             return checkAnswersIfRecalculationIsNecessary(mcOriginalQuestion);

@@ -136,7 +136,7 @@ public class ProgrammingExerciseRepositoryService {
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
         final Path generalTemplatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())
                 .resolve(projectTypeTemplateDir);
-        Resource[] resources = resourceLoaderService.getResources(generalTemplatePath);
+        Resource[] resources = resourceLoaderService.getFileResources(generalTemplatePath);
 
         Path prefix = Path.of(programmingLanguage).resolve(projectTypeTemplateDir);
 
@@ -152,7 +152,7 @@ public class ProgrammingExerciseRepositoryService {
             final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(projectTypeTemplateDir);
             final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(projectTypeTemplateDir);
 
-            final Resource[] projectTypeSpecificResources = resourceLoaderService.getResources(projectTypeTemplatePath);
+            final Resource[] projectTypeSpecificResources = resourceLoaderService.getFileResources(projectTypeTemplatePath);
 
             if (ProjectType.XCODE.equals(projectType)) {
                 // For Xcode, we don't share source code, so we only copy files once
@@ -229,6 +229,13 @@ public class ProgrammingExerciseRepositoryService {
         createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
     }
 
+    /**
+     * Creates and initializes all auxiliary repositories for a new programming exercise.
+     *
+     * @param projectKey          The key of the project the exercise belongs to. Can be found in the programming exercise.
+     * @param programmingExercise The programming exercise for which the auxiliary repositories should be created.
+     * @throws GitAPIException Thrown in case creating a repository fails.
+     */
     private void createAndInitializeAuxiliaryRepositories(final String projectKey, final ProgrammingExercise programmingExercise) throws GitAPIException {
         for (final AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             final String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
@@ -238,6 +245,56 @@ public class ProgrammingExerciseRepositoryService {
             final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);
             gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
         }
+    }
+
+    /**
+     * Handles the VC part of auxiliary repositories when updating a programming exercise. Does not modify the database.
+     *
+     * @param programmingExerciseBeforeUpdate The programming exercise before the update
+     * @param updatedProgrammingExercise      The programming exercise after the update
+     */
+    public void handleAuxiliaryRepositoriesWhenUpdatingExercises(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        // Create new VC repositories for new auxiliary repositories
+        updatedProgrammingExercise.getAuxiliaryRepositories().stream().filter(repo -> (repo.getId() == null)).forEach(repo -> {
+            try {
+                createAndInitializeAuxiliaryRepository(updatedProgrammingExercise, repo);
+            }
+            catch (GitAPIException ex) {
+                log.error("Could not create new auxiliary repository", ex);
+            }
+        });
+
+        // Remove VC repositories for deleted auxiliary repositories
+        programmingExerciseBeforeUpdate.getAuxiliaryRepositories().stream()
+                .filter(repo -> updatedProgrammingExercise.getAuxiliaryRepositories().stream().noneMatch(updatedRepo -> repo.getId().equals(updatedRepo.getId())))
+                .forEach(this::removeAuxiliaryRepository);
+    }
+
+    /**
+     * Creates and initializes a specific auxiliary repository if not existent.
+     *
+     * @param programmingExercise The programming exercise for which the repository should be created.
+     * @throws GitAPIException Thrown in case creating the repository fails.
+     */
+    private void createAndInitializeAuxiliaryRepository(final ProgrammingExercise programmingExercise, final AuxiliaryRepository repo) throws GitAPIException {
+        final String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
+        versionControlService.orElseThrow().createRepository(programmingExercise.getProjectKey(), repositoryName, null);
+        repo.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(programmingExercise.getProjectKey(), repositoryName).toString());
+
+        final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);
+        gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
+    }
+
+    /**
+     * Deletes an auxiliary repository from the version control system if existent. Performs no DB changes.
+     *
+     * @param auxiliaryRepository The auxiliary repository to delete.
+     */
+    private void removeAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
+        if (auxiliaryRepository.getId() == null) {
+            throw new IllegalArgumentException("Cannot delete auxiliary repository without id");
+        }
+        versionControlService.orElseThrow().deleteRepository(auxiliaryRepository.getVcsRepositoryUri());
     }
 
     /**
@@ -312,7 +369,7 @@ public class ProgrammingExerciseRepositoryService {
         // Java supports multiple variants as test template
         final Path projectTemplatePath = getJavaProjectTemplatePath(templatePath, projectType);
 
-        final Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
+        final Resource[] projectTemplate = resourceLoaderService.getFileResources(projectTemplatePath);
         // keep the folder structure
         fileService.copyResources(projectTemplate, Path.of("projectTemplate"), repoLocalPath, true);
 
@@ -330,9 +387,9 @@ public class ProgrammingExerciseRepositoryService {
         // Keep or delete static code analysis configuration in the build configuration file
         sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
         // Keep or delete testwise coverage configuration in the build file
-        sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()));
+        sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.getBuildConfig().isTestwiseCoverageEnabled()));
 
-        if (programmingExercise.hasSequentialTestRuns()) {
+        if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
         }
         else {
@@ -375,7 +432,7 @@ public class ProgrammingExerciseRepositoryService {
         final Path projectTypeProjectTemplatePath = projectTypeTemplatePath.resolve("projectTemplate");
 
         try {
-            final Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
+            final Resource[] projectTypeProjectTemplate = resourceLoaderService.getFileResources(projectTypeProjectTemplatePath);
             fileService.copyResources(projectTypeProjectTemplate, resources.projectTypePrefix, repoLocalPath, false);
         }
         catch (FileNotFoundException fileNotFoundException) {
@@ -397,7 +454,7 @@ public class ProgrammingExerciseRepositoryService {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
         final Path testFilePath = templatePath.resolve(TEST_FILES_PATH);
-        final Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
+        final Resource[] testFileResources = resourceLoaderService.getFileResources(testFilePath);
         final Path packagePath = repoLocalPath.resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath();
 
         sectionsMap.put("non-sequential", true);
@@ -440,7 +497,7 @@ public class ProgrammingExerciseRepositoryService {
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
         final Path staticCodeAnalysisConfigPath = templatePath.resolve("staticCodeAnalysisConfig");
-        final Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
+        final Resource[] staticCodeAnalysisResources = resourceLoaderService.getFileResources(staticCodeAnalysisConfigPath);
         fileService.copyResources(staticCodeAnalysisResources, resources.prefix, repoLocalPath, true);
     }
 
@@ -450,7 +507,7 @@ public class ProgrammingExerciseRepositoryService {
                 .resolve(TEST_DIR);
 
         try {
-            final Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
+            final Resource[] projectTypeTestFileResources = resourceLoaderService.getFileResources(projectTypeTemplatePath);
             // filter non-existing resources to avoid exceptions
             final List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
             for (final Resource resource : projectTypeTestFileResources) {
@@ -562,7 +619,7 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
-        final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+        final Resource[] buildStageResources = resourceLoaderService.getFileResources(buildStageResourcesPath);
         fileService.copyResources(buildStageResources, resourcePrefix, packagePath, false);
 
         if (projectType != null) {
@@ -574,7 +631,7 @@ public class ProgrammingExerciseRepositoryService {
             throws IOException {
         final Path buildStageResourcesPath = projectTemplatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
         try {
-            final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+            final Resource[] buildStageResources = resourceLoaderService.getFileResources(buildStageResourcesPath);
             fileService.copyResources(buildStageResources, resourcePrefix, packagePath, false);
         }
         catch (FileNotFoundException fileNotFoundException) {
@@ -607,7 +664,7 @@ public class ProgrammingExerciseRepositoryService {
         replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replace(" ", "-")); // Used e.g. in artifactId
         replacements.put("${exerciseName}", programmingExercise.getTitle());
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
-        replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
+        replacements.put("${packaging}", programmingExercise.getBuildConfig().hasSequentialTestRuns() ? "pom" : "jar");
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }
 

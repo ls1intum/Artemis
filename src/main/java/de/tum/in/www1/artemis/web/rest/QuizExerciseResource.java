@@ -69,6 +69,7 @@ import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
@@ -78,6 +79,7 @@ import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseImportService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizMessagingService;
+import de.tum.in.www1.artemis.service.quiz.QuizResultService;
 import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
 import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
@@ -99,10 +101,12 @@ public class QuizExerciseResource {
 
     private static final String ENTITY_NAME = "quizExercise";
 
-    private final QuizSubmissionService quizSubmissionService;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    private final QuizSubmissionService quizSubmissionService;
+
+    private final QuizResultService quizResultService;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -144,13 +148,15 @@ public class QuizExerciseResource {
 
     private final ChannelRepository channelRepository;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             ExamDateService examDateService, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
-            QuizSubmissionService quizSubmissionService) {
+            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService, CompetencyProgressService competencyProgressService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -172,6 +178,8 @@ public class QuizExerciseResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.quizSubmissionService = quizSubmissionService;
+        this.quizResultService = quizResultService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -233,6 +241,8 @@ public class QuizExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
 
+        competencyProgressService.updateProgressByLearningObjectAsync(result);
+
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -266,7 +276,7 @@ public class QuizExerciseResource {
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        final var originalQuiz = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(exerciseId);
+        final var originalQuiz = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesElseThrow(exerciseId);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -296,6 +306,8 @@ public class QuizExerciseResource {
         if (updatedChannel != null) {
             quizExercise.setChannelName(updatedChannel.getName());
         }
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(quizExercise));
+
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -431,6 +443,9 @@ public class QuizExerciseResource {
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new AccessForbiddenException();
         }
+        if (quizExercise.isExamExercise()) {
+            throw new BadRequestAlertException("Students cannot join quiz batches for exam exercises", ENTITY_NAME, "notAllowedInExam");
+        }
 
         try {
             var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password());
@@ -454,6 +469,10 @@ public class QuizExerciseResource {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
+        if (quizExercise.isExamExercise()) {
+            throw new BadRequestAlertException("Batches cannot be created for exam exercises", ENTITY_NAME, "notAllowedInExam");
+        }
+
         // TODO: quiz cleanup: it should be possible to limit the number of batches a tutor can create
 
         var quizBatch = quizBatchService.createBatch(quizExercise, user);
@@ -476,10 +495,15 @@ public class QuizExerciseResource {
         QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(batch.getQuizExercise().getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
 
         if (!user.getId().equals(batch.getCreator())) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
+        }
+        else {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
+        }
+        if (quizExercise.isExamExercise()) {
+            throw new BadRequestAlertException("Batches cannot be started for exam exercises", ENTITY_NAME, "");
         }
 
         batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, ZonedDateTime.now()));
@@ -507,6 +531,10 @@ public class QuizExerciseResource {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        if (quizExercise.isExamExercise()) {
+            throw new BadRequestAlertException("These actions are not allowed for exam exercises", ENTITY_NAME, "notAllowedInExam");
+        }
 
         switch (action) {
             case START_NOW -> {
@@ -602,6 +630,26 @@ public class QuizExerciseResource {
     }
 
     /**
+     * POST /quiz-exercises/{exerciseId}/evaluate : Evaluate the quiz exercise
+     *
+     * @param quizExerciseId the id of the quiz exercise
+     * @return ResponseEntity void
+     */
+    @PostMapping("quiz-exercises/{quizExerciseId}/evaluate")
+    @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<Void> evaluateQuizExercise(@PathVariable Long quizExerciseId) {
+        log.debug("REST request to evaluate quiz exercise {}", quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
+        if (!quizExercise.isQuizEnded()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet.")).build();
+        }
+
+        quizResultService.evaluateQuizAndUpdateStatistics(quizExerciseId);
+        log.debug("Evaluation of quiz exercise {} finished", quizExerciseId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * DELETE /quiz-exercises/:quizExerciseId : delete the "id" quizExercise.
      *
      * @param quizExerciseId the id of the quizExercise to delete
@@ -611,7 +659,7 @@ public class QuizExerciseResource {
     @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
-        var quizExercise = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         List<DragAndDropQuestion> dragAndDropQuestions = quizExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion)
@@ -718,7 +766,7 @@ public class QuizExerciseResource {
     @PostMapping(value = "quiz-exercises/import/{sourceExerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestPart("exercise") QuizExercise importedExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException {
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
         log.info("REST request to import from quiz exercise : {}", sourceExerciseId);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
@@ -744,7 +792,8 @@ public class QuizExerciseResource {
         quizExerciseService.validateQuizExerciseFiles(importedExercise, nullsafeFiles, false);
 
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
-        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
+        QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
+
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }

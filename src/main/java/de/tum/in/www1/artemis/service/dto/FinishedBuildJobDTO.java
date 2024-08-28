@@ -66,7 +66,7 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
         ResultDTO resultDTO = buildJob.getResult() == null ? null : ResultDTO.of(buildJob.getResult());
 
         return new FinishedBuildJobDTO(buildJob.getBuildJobId(), buildJob.getName(), buildJob.getBuildAgentAddress(), buildJob.getParticipationId(), buildJob.getCourseId(),
-                buildJob.getExerciseId(), buildJob.getBuildStatus(), buildJob.getRepositoryType(), buildJob.getRepositoryName(), buildJob.getRepositoryType(),
+                buildJob.getExerciseId(), buildJob.getBuildStatus(), buildJob.getRepositoryType(), buildJob.getRepositoryName(), buildJob.getTriggeredByPushTo(),
                 buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate(), buildJob.getCommitHash(), resultDTO);
     }
 }

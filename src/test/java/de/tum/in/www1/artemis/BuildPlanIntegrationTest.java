@@ -9,16 +9,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -28,16 +27,10 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
     private BuildPlanRepository buildPlanRepository;
-
-    @Autowired
-    private ProgrammingTriggerService programmingTriggerService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -51,10 +44,14 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        var buildConfig = new ProgrammingExerciseBuildConfig();
         programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setSequentialTestRuns(false);
-        programmingExercise.setTestwiseCoverageEnabled(false);
+        buildConfig.setSequentialTestRuns(false);
+        buildConfig.setTestwiseCoverageEnabled(false);
+        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -72,8 +69,8 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     private void testReadAccess() throws Exception {
-        programmingExercise.generateAndSetBuildPlanAccessSecret();
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
     }
@@ -93,8 +90,8 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @Test
     void testPublicReadAccessWithSecret() throws Exception {
         final String buildPlan = request.get(
-                "/api/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.OK,
-                String.class);
+                "/api/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildConfig().getBuildPlanAccessSecret(),
+                HttpStatus.OK, String.class);
         assertThat(buildPlan).isNotEmpty();
     }
 

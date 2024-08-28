@@ -57,6 +57,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
 
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
     @JsonView(QuizView.Before.class)
+    @Override
     public String getType() {
         return "quiz";
     }
@@ -240,6 +241,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
         return true;
     }
 
+    @Override
     public List<QuizQuestion> getQuizQuestions() {
         return quizQuestions;
     }
@@ -621,6 +623,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     /**
      * Recreate missing pointers from children to parents that were removed by @JSONIgnore
      */
+    @Override
     public void reconnectJSONIgnoreAttributes() {
         QuizConfiguration.super.reconnectJSONIgnoreAttributes();
 

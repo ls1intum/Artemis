@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
@@ -37,4 +38,19 @@ public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<Le
             """)
     Set<LectureUnitCompletion> findByLectureUnitsAndUserId(@Param("lectureUnits") Collection<? extends LectureUnit> lectureUnits, @Param("userId") Long userId);
 
+    @Query("""
+            SELECT COUNT(lectureUnitCompletion)
+            FROM LectureUnitCompletion lectureUnitCompletion
+            WHERE lectureUnitCompletion.lectureUnit.id IN :lectureUnitIds
+                AND lectureUnitCompletion.user.id = :userId
+            """)
+    int countByLectureUnitIdsAndUserId(@Param("lectureUnitIds") Collection<Long> lectureUnitIds, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT user
+            FROM LectureUnitCompletion lectureUnitCompletion
+                LEFT JOIN lectureUnitCompletion.user user
+            WHERE lectureUnitCompletion.lectureUnit = :lectureUnit
+            """)
+    Set<User> findCompletedUsersForLectureUnit(@Param("lectureUnit") LectureUnit lectureUnit);
 }

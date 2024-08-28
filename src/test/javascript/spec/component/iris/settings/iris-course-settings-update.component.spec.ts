@@ -7,7 +7,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
-import { mockSettings } from './mock-settings';
+import { mockEmptySettings, mockSettings } from './mock-settings';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgModel } from '@angular/forms';
@@ -71,7 +71,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(getParentSettingsSpy).toHaveBeenCalledOnce();
 
         expect(fixture.debugElement.query(By.directive(IrisGlobalAutoupdateSettingsUpdateComponent))).toBeFalsy();
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(3);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(4);
     });
 
     it('Can deactivate correctly', () => {
@@ -93,5 +93,14 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         comp.settingsUpdateComponent!.saveIrisSettings();
         expect(setSettingsSpy).toHaveBeenCalledWith(1, irisSettings);
         expect(comp.settingsUpdateComponent!.irisSettings).toEqual(irisSettingsSaved);
+    });
+    it('Fills the settings if they are empty', () => {
+        fixture.detectChanges();
+        comp.settingsUpdateComponent!.irisSettings = mockEmptySettings();
+        comp.settingsUpdateComponent!.fillEmptyIrisSubSettings();
+        expect(comp.settingsUpdateComponent!.irisSettings.irisChatSettings).toBeTruthy();
+        expect(comp.settingsUpdateComponent!.irisSettings.irisLectureIngestionSettings).toBeTruthy();
+        expect(comp.settingsUpdateComponent!.irisSettings.irisHestiaSettings).toBeTruthy();
+        expect(comp.settingsUpdateComponent!.irisSettings.irisCompetencyGenerationSettings).toBeTruthy();
     });
 });

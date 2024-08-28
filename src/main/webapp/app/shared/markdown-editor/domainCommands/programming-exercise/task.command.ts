@@ -2,9 +2,9 @@ import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/doma
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 
 export class TaskCommand extends DomainTagCommand {
-    public static readonly identifier = '[task]';
-    public static readonly taskPlaceholder = 'Task Short Description';
-    public static readonly testCasePlaceholder = 'testCaseName';
+    public static readonly IDENTIFIER = '[task]';
+    public static readonly TASK_PLACE_HOLDER = 'Task Short Description';
+    public static readonly TEST_CASE_PLACEHOLDER = 'testCaseName';
 
     buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.taskCommand';
 
@@ -25,7 +25,7 @@ export class TaskCommand extends DomainTagCommand {
      * If you change the template, make sure to change it in all places!
      */
     private getTask() {
-        return `${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
+        return `${this.getOpeningIdentifier()}[${TaskCommand.TASK_PLACE_HOLDER}](${TaskCommand.TEST_CASE_PLACEHOLDER})`;
     }
 
     public getTagRegex(flags = ''): RegExp {
@@ -52,7 +52,7 @@ export class TaskCommand extends DomainTagCommand {
      * @desc identify the start of the task
      */
     getOpeningIdentifier(): string {
-        return TaskCommand.identifier;
+        return TaskCommand.IDENTIFIER;
     }
 
     /**

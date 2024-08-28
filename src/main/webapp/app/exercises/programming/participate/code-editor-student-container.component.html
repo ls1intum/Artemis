@@ -24,7 +24,6 @@
     }
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
         <jhi-code-editor-container
-            [useMonacoEditor]="true"
             [editable]="!repositoryIsLocked"
             [participation]="participation"
             [showEditorInstructions]="showEditorInstructions"
@@ -43,9 +42,8 @@
                     }
                 </span>
             </div>
-            <div submissionPolicy>
+            <div submissionPolicy class="ps-2 pt-1 justify-self-center">
                 @if (exercise.submissionPolicy && exercise.submissionPolicy.active && numberOfSubmissionsForSubmissionPolicy !== undefined) {
-                    <br />
                     <span>
                         {{
                             'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'

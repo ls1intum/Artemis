@@ -1,28 +1,37 @@
-import { Injectable } from '@angular/core';
-import { Observable, Subject, of, throwError } from 'rxjs';
-import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { catchError, map, tap } from 'rxjs/operators';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { Injectable } from '@angular/core';
+import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { captureException } from '@sentry/angular';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs/esm';
-import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
-import { cloneDeep } from 'lodash-es';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { captureException } from '@sentry/angular-ivy';
+import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { SidebarCardElement } from 'app/types/sidebar';
+import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 
-export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
+export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
 
-    private examExerciseIds: number[];
+    private examIsStartedSubject = new BehaviorSubject<boolean>(false);
+    examIsStarted$ = this.examIsStartedSubject.asObservable();
+
+    private testRunSubject = new BehaviorSubject<boolean>(false);
+    testRunStarted$ = this.testRunSubject.asObservable();
+
+    private examEndViewSubject = new BehaviorSubject<boolean>(false);
+    endViewDisplayed$ = this.examEndViewSubject.asObservable();
 
     public getResourceURL(courseId: number, examId: number): string {
         return `api/courses/${courseId}/exams/${examId}`;
@@ -102,16 +111,15 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param userId the id of the student if the current caller is an instructor, the grade info for current user's exam will be retrieved if this argument is empty
-     * @param isTestRun
+     * @param studentExamId the id of the student exam
      */
-    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number, isTestRun?: boolean): Observable<StudentExamWithGradeDTO> {
+    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, studentExamId: number, userId?: number): Observable<StudentExamWithGradeDTO> {
         let params = new HttpParams();
         if (userId) {
             params = params.set('userId', userId.toString());
         }
-        params = params.append('isTestRun', !!isTestRun);
 
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/grade-summary';
+        const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/grade-summary`;
         return this.httpClient.get<StudentExamWithGradeDTO>(url, { params });
     }
 
@@ -320,7 +328,11 @@ export class ExamParticipationService {
             return 'synced';
         }
         if (exercise.type !== ExerciseType.PROGRAMMING) {
-            return submission.isSynced ? 'synced' : 'notSynced';
+            if (submission.submitted) {
+                return submission.isSynced ? 'synced' : 'notSynced';
+            } else {
+                return submission.isSynced ? 'notStarted' : 'notSynced';
+            }
         }
         if (submission.submitted && submission.isSynced) {
             return 'submitted'; // You have submitted an exercise. You can submit again
@@ -331,11 +343,32 @@ export class ExamParticipationService {
         }
     }
 
-    public getExamExerciseIds(): number[] {
-        return this.examExerciseIds;
+    setEndView(isEndView: boolean) {
+        this.examEndViewSubject.next(isEndView);
     }
 
-    public setExamExerciseIds(examExerciseIds: number[]) {
-        this.examExerciseIds = examExerciseIds;
+    setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {
+        this.examIsStartedSubject.next(isExamStarted);
+        this.testRunSubject.next(isTestRun);
+    }
+
+    resetExamLayout() {
+        this.examIsStartedSubject.next(false);
+        this.testRunSubject.next(false);
+        document.documentElement.style.setProperty('--header-height', '68px'); // Set back to default value, because exam nav bar changes this property within the exam
+    }
+
+    mapExercisesToSidebarCardElements(exercises: Exercise[]) {
+        return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
+    }
+
+    mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
+        return {
+            title: exercise.exerciseGroup?.title ?? '',
+            id: exercise.id ?? '',
+            icon: getIcon(exercise.type),
+            rightIcon: faLightbulb,
+            size: 'M',
+        };
     }
 }

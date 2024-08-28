@@ -16,20 +16,20 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
     templateUrl: './legal-document-update.component.html',
 })
 export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked {
-    readonly supportedLanguages: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
+    readonly SUPPORTED_LANGUAGES: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
     readonly faBan = faBan;
     readonly faSave = faSave;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faCheckCircle = faCheckCircle;
     readonly faCircleNotch = faCircleNotch;
-    readonly languageOptions = this.supportedLanguages.map((language) => ({
+    readonly LANGUAGE_OPTIONS = this.SUPPORTED_LANGUAGES.map((language) => ({
         value: language,
         labelKey: 'artemisApp.legal.language.' + language,
         btnClass: 'btn-primary',
     }));
-    readonly defaultLanguage = LegalDocumentLanguage.GERMAN;
-    readonly maxHeight = MarkdownEditorHeight.EXTRA_LARGE;
-    readonly minHeight = MarkdownEditorHeight.MEDIUM;
+    readonly DEFAULT_LANGUAGE = LegalDocumentLanguage.GERMAN;
+    readonly MAX_HEIGHT = MarkdownEditorHeight.EXTRA_LARGE;
+    readonly MIN_HEIGHT = MarkdownEditorHeight.MEDIUM;
 
     legalDocument: LegalDocument;
     legalDocumentType: LegalDocumentType = LegalDocumentType.PRIVACY_STATEMENT;
@@ -37,7 +37,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     isSaving = false;
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
 
-    currentLanguage = this.defaultLanguage;
+    currentLanguage = this.DEFAULT_LANGUAGE;
     unsavedChangesWarning: NgbModalRef;
     titleKey: string;
     private languageChangeInPreview: boolean;
@@ -68,8 +68,8 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         }
         this.languageHelper.updateTitle(this.titleKey);
 
-        this.legalDocument = new LegalDocument(this.legalDocumentType, this.defaultLanguage);
-        this.getLegalDocumentForUpdate(this.legalDocumentType, this.defaultLanguage).subscribe((document) => {
+        this.legalDocument = new LegalDocument(this.legalDocumentType, this.DEFAULT_LANGUAGE);
+        this.getLegalDocumentForUpdate(this.legalDocumentType, this.DEFAULT_LANGUAGE).subscribe((document) => {
             this.legalDocument = document;
         });
     }

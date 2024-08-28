@@ -15,6 +15,10 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -30,6 +34,8 @@ export type CompetencyFormControls = {
 @Component({
     selector: 'jhi-generate-competencies',
     templateUrl: './generate-competencies.component.html',
+    standalone: true,
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
 })
 export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     courseId: number;
@@ -47,6 +53,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     readonly documentationType: DocumentationType = 'GenerateCompetencies';
 
     constructor(
+        private courseCompetencyService: CourseCompetencyService,
         private competencyService: CompetencyService,
         private alertService: AlertService,
         private activatedRoute: ActivatedRoute,
@@ -69,7 +76,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      */
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
-        this.competencyService
+        this.courseCompetencyService
             .generateCompetenciesFromCourseDescription(courseDescription, this.courseId)
             .pipe(
                 finalize(() => {

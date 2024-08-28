@@ -16,7 +16,7 @@ export class ExpandableSectionComponent implements OnInit {
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
 
-    readonly prefix = 'collapsed.';
+    readonly PREFIX = 'collapsed.';
 
     constructor(private localStorageService: LocalStorageService) {}
 
@@ -37,6 +37,6 @@ export class ExpandableSectionComponent implements OnInit {
      * Returns the key to identify the value in the local storage
      */
     get storageKey() {
-        return this.prefix + this.headerKey;
+        return this.PREFIX + this.headerKey;
     }
 }

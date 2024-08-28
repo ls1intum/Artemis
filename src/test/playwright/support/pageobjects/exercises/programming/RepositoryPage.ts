@@ -5,8 +5,8 @@ import { Commands } from '../../../commands';
 export class RepositoryPage {
     private readonly page: Page;
 
-    private static readonly checkBuildResultInterval = 2000;
-    private static readonly checkBuildResultTimeout = 90000;
+    private static readonly CHECK_BUILD_RESULT_INTERVAL = 2000;
+    private static readonly CHECK_BUILD_RESULT_TIMEOUT = 90000;
 
     constructor(page: Page) {
         this.page = page;
@@ -30,7 +30,7 @@ export class RepositoryPage {
 
                 if (commit.result) {
                     const commitResult = commitRow.locator('#result-score', { hasText: commit.result });
-                    await Commands.reloadUntilFound(this.page, commitResult, RepositoryPage.checkBuildResultInterval, RepositoryPage.checkBuildResultTimeout);
+                    await Commands.reloadUntilFound(this.page, commitResult, RepositoryPage.CHECK_BUILD_RESULT_INTERVAL, RepositoryPage.CHECK_BUILD_RESULT_TIMEOUT);
                 } else {
                     await expect(commitRow.locator('td', { hasText: 'No result' })).toBeVisible();
                 }

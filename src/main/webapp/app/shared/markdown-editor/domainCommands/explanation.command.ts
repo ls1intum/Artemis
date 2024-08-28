@@ -4,7 +4,7 @@ import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/doma
 export const explanationCommandIdentifier = '[exp]';
 
 export class ExplanationCommand extends DomainTagCommand {
-    public static readonly text = ' Add an explanation here (only visible in feedback after quiz has ended)';
+    public static readonly TEXT = ' Add an explanation here (only visible in feedback after quiz has ended)';
 
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addExplanation';
 
@@ -13,7 +13,7 @@ export class ExplanationCommand extends DomainTagCommand {
      * @desc Add a new explanation to answer option or question title in the text editor at the location of the cursor
      */
     execute(): void {
-        const text = '\n\t' + this.getOpeningIdentifier() + ExplanationCommand.text;
+        const text = '\n\t' + this.getOpeningIdentifier() + ExplanationCommand.TEXT;
         addTextAtCursor(text, this.aceEditor);
     }
 

@@ -48,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -111,7 +111,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JoinTable(name = "competency_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course" })
     @JsonView(QuizView.Before.class)
-    private Set<Competency> competencies = new HashSet<>();
+    private Set<CourseCompetency> competencies = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
@@ -236,11 +236,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     @Transient
     private String channelNameTransient;
-
-    @Override
-    public boolean isCompletedFor(User user) {
-        return this.getStudentParticipations().stream().anyMatch((participation) -> participation.getStudents().contains(user));
-    }
 
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
@@ -369,6 +364,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     @JsonIgnore
+    @Override
     public boolean isExamExercise() {
         return this.exerciseGroup != null;
     }
@@ -395,7 +391,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @return exam, to which the exercise belongs
      */
     @JsonIgnore
-    public Exam getExamViaExerciseGroupOrCourseMember() {
+    public Exam getExam() {
         if (isExamExercise()) {
             return this.getExerciseGroup().getExam();
         }
@@ -455,11 +451,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public Set<Competency> getCompetencies() {
+    @Override
+    public Set<CourseCompetency> getCompetencies() {
         return competencies;
     }
 
-    public void setCompetencies(Set<Competency> competencies) {
+    public void setCompetencies(Set<CourseCompetency> competencies) {
         this.competencies = competencies;
     }
 
@@ -956,8 +953,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     @JsonIgnore
     public boolean isExampleSolutionPublished() {
-        ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
-                : this.getExampleSolutionPublicationDate();
+        ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExam().getExampleSolutionPublicationDate() : this.getExampleSolutionPublicationDate();
         return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
     }
 
@@ -1039,7 +1035,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
      */
     public void disconnectRelatedEntities() {
-        Stream.of(competencies, teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, posts, plagiarismCases)
-                .filter(Objects::nonNull).forEach(Collection::clear);
+        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, posts, plagiarismCases).filter(Objects::nonNull)
+                .forEach(Collection::clear);
     }
 }

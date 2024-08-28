@@ -68,6 +68,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission that should be sent to the client
      * @return the assessment of the given submission
      */
+    @Override
     @GetMapping("file-upload-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
@@ -143,6 +144,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param resultId        - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
+    @Override
     @DeleteMapping("participations/{participationId}/file-upload-submissions/{submissionId}/results/{resultId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {

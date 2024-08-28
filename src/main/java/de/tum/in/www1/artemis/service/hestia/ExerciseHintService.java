@@ -157,6 +157,11 @@ public class ExerciseHintService {
      * @return All available exercise hints
      */
     public Set<ExerciseHint> getAvailableExerciseHints(ProgrammingExercise exercise, User user) {
+        var exerciseHints = exerciseHintRepository.findByExerciseId(exercise.getId());
+        if (exerciseHints.isEmpty()) {
+            return new HashSet<>();
+        }
+
         var submissions = getSubmissionsForStudent(exercise, user);
 
         if (submissions.isEmpty()) {
@@ -169,8 +174,6 @@ public class ExerciseHintService {
         if (latestResult == null || latestResult.getFeedbacks().isEmpty()) {
             return new HashSet<>();
         }
-
-        var exerciseHints = exerciseHintRepository.findByExerciseId(exercise.getId());
         var tasks = programmingExerciseTaskService.getSortedTasks(exercise);
 
         var subsequentNumberOfUnsuccessfulSubmissionsByTask = tasks.stream()

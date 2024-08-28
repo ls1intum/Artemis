@@ -1,0 +1,114 @@
+<div class="container">
+    <div class="d-flex align-items-center">
+        <h2 jhiTranslate="artemisApp.standardizedCompetency.courseImport.prerequisiteTitle"></h2>
+        <jhi-documentation-button [type]="documentationType" />
+    </div>
+    <jhi-standardized-competency-filter
+        [knowledgeAreasForSelect]="knowledgeAreasForSelect"
+        [knowledgeAreaFilter]="knowledgeAreaFilter"
+        [competencyTitleFilter]="competencyTitleFilter"
+        (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
+        (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
+    />
+    <div class="d-flex flex-wrap align-items-center mt-3 mb-2">
+        <h3 class="me-3 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
+        <jhi-button
+            class="me-1"
+            [btnSize]="ButtonSize.SMALL"
+            [icon]="faMinimize"
+            (onClick)="treeControl.collapseAll()"
+            tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
+        />
+        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="treeControl.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
+    </div>
+    @if (dataSource.data.length) {
+        <div class="d-flex">
+            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource" [treeControl]="treeControl">
+                <ng-template let-competency="competency" #competencyTemplate>
+                    <input type="checkbox" class="form-check-input me-2" (change)="toggleSelect(competency)" [(ngModel)]="competency.selected" />
+                    <div class="d-flex align-items-center clickable" (click)="openCompetencyDetails(competency)">
+                        <fa-icon
+                            class="me-2"
+                            [icon]="getIcon(competency.taxonomy)"
+                            [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                            [fixedWidth]="true"
+                        />
+                        <h6 class="mb-0">{{ competency.title }}</h6>
+                    </div>
+                </ng-template>
+            </jhi-knowledge-area-tree>
+            @if (selectedCompetency) {
+                <div style="background-color: var(--overview-light-background-color)" class="card d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
+                    <jhi-standardized-competency-detail
+                        [competency]="selectedCompetency"
+                        [sourceString]="sourceString"
+                        [knowledgeAreaTitle]="selectedCompetency.knowledgeAreaTitle ?? ''"
+                        (onClose)="closeCompetencyDetails()"
+                    />
+                </div>
+            }
+        </div>
+    } @else if (isLoading) {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="sr-only" jhiTranslate="loading"></span>
+            </div>
+        </div>
+    } @else {
+        <span jhiTranslate="artemisApp.standardizedCompetency.courseImport.empty"></span>
+    }
+    <h3 class="mt-3" jhiTranslate="artemisApp.standardizedCompetency.courseImport.selectedTitle"></h3>
+    @if (selectedCompetencies.length) {
+        <table class="table table-striped align-middle flex">
+            <thead (sortChange)="sortSelected($event)" class="thead-dark" jhiSort>
+                <tr class="flex-row">
+                    <th jhiSortBy="id" class="col-0.5">
+                        <span>#</span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="title" class="col-2">
+                        <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.title'"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th class="col">
+                        <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.description'"></span>
+                    </th>
+                    <th jhiSortBy="knowledgeAreaTitle" class="col-2">
+                        <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.knowledgeArea'"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <!-- column for buttons -->
+                    <th class="col-1"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (competency of selectedCompetencies; track competency.id) {
+                    <tr>
+                        <td class="col-0.5">{{ competency.id }}</td>
+                        <td class="col-2">{{ competency.title }}</td>
+                        <td class="markdown-preview col" [innerHTML]="competency.description | htmlForMarkdown"></td>
+                        <td class="col-2">{{ competency.knowledgeAreaTitle }}</td>
+                        <td class="col-1">
+                            <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTrash" (onClick)="deselectCompetency(competency)" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    } @else {
+        <span jhiTranslate="artemisApp.standardizedCompetency.courseImport.selectedEmpty"></span>
+    }
+    <div class="mt-3">
+        @if (selectedCompetencies.length) {
+            <div class="mb-1" jhiTranslate="artemisApp.standardizedCompetency.courseImport.selectedCompetencies" [translateValues]="{ count: selectedCompetencies.length }"></div>
+        }
+        <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
+        <jhi-button
+            [disabled]="!this.selectedCompetencies.length"
+            [isLoading]="isLoading"
+            [icon]="faFileImport"
+            [title]="'entity.action.to-import'"
+            (onClick)="importCompetencies()"
+        />
+    </div>
+</div>

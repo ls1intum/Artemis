@@ -135,7 +135,7 @@ export class CourseMessagesPage {
         await this.page.locator('.modal-content #submitButton').click();
         const response = await responsePromise;
         const channel: ChannelDTO = await response.json();
-        await this.page.waitForURL(`**/messages?conversationId=${channel.id}`);
+        await this.page.waitForURL(`**/communication?conversationId=${channel.id}`);
         expect(channel.isAnnouncementChannel).toBe(isAnnouncementChannel);
         expect(channel.isPublic).toBe(isPublic);
     }
@@ -153,7 +153,7 @@ export class CourseMessagesPage {
      * @returns The locator for the name element.
      */
     getName() {
-        return this.page.locator('h3.conversation-name');
+        return this.page.locator('h4.d-inline-block');
     }
 
     /**
@@ -161,7 +161,7 @@ export class CourseMessagesPage {
      * @returns The locator for the topic element.
      */
     getTopic() {
-        return this.page.locator('.conversation-topic');
+        return this.page.locator('#conversation-topic');
     }
 
     /**
@@ -212,7 +212,7 @@ export class CourseMessagesPage {
      * @param message - The message to be written.
      */
     async writeMessage(message: string) {
-        const messageField = this.page.locator('.markdown-editor .ace_editor');
+        const messageField = this.page.locator('.markdown-editor .monaco-editor');
         await messageField.click();
         await messageField.pressSequentially(message);
     }
@@ -243,7 +243,7 @@ export class CourseMessagesPage {
     async editMessage(messageId: number, message: string) {
         const postLocator = this.getSinglePost(messageId);
         await postLocator.locator('.editIcon').click();
-        const editorLocator = postLocator.locator('.markdown-editor .ace_editor');
+        const editorLocator = postLocator.locator('.markdown-editor .monaco-editor');
         await editorLocator.click();
         await editorLocator.pressSequentially(message);
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages/*`);
@@ -333,7 +333,7 @@ export class CourseMessagesPage {
      * @param conversationID - The ID of the conversation.
      */
     async listMembersButton(courseID: number, conversationID: number) {
-        await this.page.goto(`/courses/${courseID}/messages?conversationId=${conversationID}`);
+        await this.page.goto(`/courses/${courseID}/communication?conversationId=${conversationID}`);
         await this.page.locator('.members').click();
     }
 

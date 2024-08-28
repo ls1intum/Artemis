@@ -80,5 +80,6 @@ public abstract class SubmissionPolicy extends DomainObject {
         this.programmingExercise = programmingExercise;
     }
 
+    @Override
     public abstract String toString();
 }

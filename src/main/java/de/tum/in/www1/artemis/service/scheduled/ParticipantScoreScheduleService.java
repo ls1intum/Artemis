@@ -304,18 +304,20 @@ public class ParticipantScoreScheduleService {
 
             // Either use the existing participant score or create a new one
             var score = participantScore.orElseGet(() -> {
-                if (participant instanceof Team team) {
-                    var teamScore = new TeamScore();
-                    teamScore.setTeam(team);
-                    teamScore.setExercise(exercise);
-                    return teamScore;
-                }
-                else {
-                    User user = (User) participant;
-                    var studentScore = new StudentScore();
-                    studentScore.setUser(user);
-                    studentScore.setExercise(exercise);
-                    return studentScore;
+                switch (participant) {
+                    case Team team -> {
+                        var teamScore = new TeamScore();
+                        teamScore.setTeam(team);
+                        teamScore.setExercise(exercise);
+                        return teamScore;
+                    }
+                    case User user -> {
+                        var studentScore = new StudentScore();
+                        studentScore.setUser(user);
+                        studentScore.setExercise(exercise);
+                        return studentScore;
+                    }
+                    default -> throw new IllegalArgumentException("Unknown participant type: " + participant);
                 }
             });
 
@@ -333,7 +335,7 @@ public class ParticipantScoreScheduleService {
             if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
                 scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
             }
-            competencyProgressService.updateProgressByLearningObject(score.getExercise(), scoreParticipant.getParticipants());
+            competencyProgressService.updateProgressByLearningObjectSync(score.getExercise(), scoreParticipant.getParticipants());
         }
         catch (Exception e) {
             log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);

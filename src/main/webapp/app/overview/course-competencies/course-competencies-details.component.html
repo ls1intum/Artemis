@@ -16,7 +16,7 @@
                         <fa-icon
                             [icon]="getIcon(competency.taxonomy)"
                             [fixedWidth]="true"
-                            [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                            [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                             container="body"
                         />
                         <span>{{ competency!.title }}</span>
@@ -52,22 +52,22 @@
             <div class="col-lg-9 col-md-8">
                 <div class="row">
                     @for (lectureUnit of competency.lectureUnits; track lectureUnit) {
-                        <div class="col-12 col-lg-11">
+                        <div class="col-12 col-lg-11 mt-3">
                             @switch (lectureUnit.type) {
                                 @case (LectureUnitType.EXERCISE) {
                                     <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
                                 }
                                 @case (LectureUnitType.ATTACHMENT) {
-                                    <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.VIDEO) {
-                                    <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.TEXT) {
-                                    <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.ONLINE) {
-                                    <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                             }
                         </div>
@@ -78,7 +78,6 @@
                 <div class="w-50 mx-auto my-2">
                     <jhi-competency-rings
                         [progress]="progress"
-                        [confidence]="confidence"
                         [mastery]="mastery"
                         [hideProgress]="judgementOfLearningEnabled && promptForJolRating && judgementOfLearning === undefined"
                     />
@@ -86,18 +85,17 @@
                 @if (!promptForJolRating || !judgementOfLearningEnabled || judgementOfLearning !== undefined) {
                     <jhi-side-panel class="d-block mt-3" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
                         <div class="row mb-1 g-0">
-                            <div class="col-7">{{ 'artemisApp.competency.progress' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
-                            <div class="col-5">{{ progress }} %</div>
-                        </div>
-                        <div class="row mb-1 g-0">
-                            <div class="col-7">
-                                {{ 'artemisApp.competency.confidence' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.confidenceDescription" />
+                            <div class="col-7"><span jhiTranslate="artemisApp.competency.mastery"></span><jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
+                            <div class="col-5">
+                                <span> {{ mastery }} %</span>
+                                @if (competencyProgress?.confidenceReason && competencyProgress.confidenceReason !== ConfidenceReason.NO_REASON) {
+                                    <jhi-help-icon text="{{ 'artemisApp.competency.confidenceReasons.' + competencyProgress.confidenceReason }}" />
+                                }
                             </div>
-                            <div class="col-5">{{ confidence }} %</div>
                         </div>
                         <div class="row mb-1 g-0">
-                            <div class="col-7">{{ 'artemisApp.competency.mastery' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
-                            <div class="col-5">{{ mastery }} %</div>
+                            <div class="col-7"><span jhiTranslate="artemisApp.competency.progress"></span><jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
+                            <div class="col-5">{{ progress }} %</div>
                         </div>
                     </jhi-side-panel>
                 }

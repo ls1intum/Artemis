@@ -22,7 +22,7 @@ type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[]; asses
     providedIn: 'root',
 })
 export class TextAssessmentService {
-    private readonly resourceUrl = 'api';
+    private readonly RESOURCE_URL = 'api';
 
     constructor(
         private http: HttpClient,
@@ -40,7 +40,7 @@ export class TextAssessmentService {
     public save(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks, assessmentNote);
         return this.http
-            .put<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/text-assessment`, body, { observe: 'response' })
+            .put<Result>(`${this.RESOURCE_URL}/participations/${participationId}/results/${resultId}/text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
@@ -55,7 +55,7 @@ export class TextAssessmentService {
     public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks, assessmentNote);
         return this.http
-            .post<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
+            .post<Result>(`${this.RESOURCE_URL}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
@@ -66,7 +66,7 @@ export class TextAssessmentService {
     public addTextAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
         const body = Object.assign({}, assessmentEvent);
         return this.http
-            .post<TextAssessmentEvent>(this.resourceUrl + '/event-insights/text-assessment/events', body, { observe: 'response' })
+            .post<TextAssessmentEvent>(this.RESOURCE_URL + '/event-insights/text-assessment/events', body, { observe: 'response' })
             .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)));
     }
 
@@ -76,7 +76,7 @@ export class TextAssessmentService {
      * @param exerciseId the id of the respective assessment event exercise id
      */
     public getNumberOfTutorsInvolvedInAssessment(courseId: number, exerciseId: number): Observable<number> {
-        return this.http.get<number>(`${this.resourceUrl}/event-insights/text-assessment/courses/${courseId}/text-exercises/${exerciseId}/tutors-involved`);
+        return this.http.get<number>(`${this.RESOURCE_URL}/event-insights/text-assessment/courses/${courseId}/text-exercises/${exerciseId}/tutors-involved`);
     }
 
     /**
@@ -95,7 +95,7 @@ export class TextAssessmentService {
         participationId: number,
         assessmentNote?: string,
     ): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/text-assessment-after-complaint`;
+        const url = `${this.RESOURCE_URL}/participations/${participationId}/submissions/${submissionId}/text-assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             textBlocks,
@@ -106,7 +106,7 @@ export class TextAssessmentService {
     }
 
     saveExampleAssessment(exerciseId: number, exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment`;
+        const url = `${this.RESOURCE_URL}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment`;
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http.put<Result>(url, body, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
@@ -117,7 +117,7 @@ export class TextAssessmentService {
      * @param submissionId of corresponding submission of type {number}
      */
     public cancelAssessment(participationId: number, submissionId: number): Observable<void> {
-        return this.http.post<void>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/cancel-assessment`, undefined);
+        return this.http.post<void>(`${this.RESOURCE_URL}/participations/${participationId}/submissions/${submissionId}/cancel-assessment`, undefined);
     }
 
     /**
@@ -127,7 +127,7 @@ export class TextAssessmentService {
      * @param resultId     id of the result which is deleted
      */
     deleteAssessment(participationId: number, submissionId: number, resultId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/participations/${participationId}/text-submissions/${submissionId}/results/${resultId}`);
+        return this.http.delete<void>(`${this.RESOURCE_URL}/participations/${participationId}/text-submissions/${submissionId}/results/${resultId}`);
     }
 
     /**
@@ -144,7 +144,7 @@ export class TextAssessmentService {
             params = params.set('correction-round', correctionRound.toString());
         }
         return this.http
-            .get<StudentParticipation>(`${this.resourceUrl}/text-submissions/${submissionId}/for-assessment`, { observe: 'response', params })
+            .get<StudentParticipation>(`${this.RESOURCE_URL}/text-submissions/${submissionId}/for-assessment`, { observe: 'response', params })
             .pipe<HttpResponse<StudentParticipation>, StudentParticipation>(
                 // Wire up Result and Submission
                 tap((response: HttpResponse<StudentParticipation>) => {
@@ -171,7 +171,7 @@ export class TextAssessmentService {
      * @param submissionId id of the submission for which the example result should be retrieved of type {number}
      */
     public getExampleResult(exerciseId: number, submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/exercises/${exerciseId}/submissions/${submissionId}/example-result`);
+        return this.http.get<Result>(`${this.RESOURCE_URL}/exercises/${exerciseId}/submissions/${submissionId}/example-result`);
     }
 
     /**
@@ -181,7 +181,7 @@ export class TextAssessmentService {
      * @param exampleSubmissionId for which the example assessment should be deleted
      */
     public deleteExampleAssessment(exerciseId: number, exampleSubmissionId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment/feedback`);
+        return this.http.delete<void>(`${this.RESOURCE_URL}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment/feedback`);
     }
 
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): TextAssessmentDTO {

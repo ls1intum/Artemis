@@ -28,8 +28,8 @@
                 <div class="draggable-left">
                     <fa-icon [icon]="faGripLinesVertical" />
                 </div>
-                <div class="card" (click)="collapsed = !collapsed">
-                    <div class="card-header text-white bg-primary">
+                <div class="card">
+                    <div class="card-header text-white bg-primary" (click)="collapsed = !collapsed">
                         <h3 class="card-title">
                             <span class="me-1">
                                 <ng-content select="fa-icon[right-header]" />

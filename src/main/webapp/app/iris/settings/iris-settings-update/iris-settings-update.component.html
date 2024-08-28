@@ -30,6 +30,29 @@
         @if (settingsType !== EXERCISE) {
             <div>
                 <hr class="hr" />
+                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.lectureIngestionSettings.title"></h3>
+                <jhi-iris-common-sub-settings-update
+                    [subSettings]="irisSettings?.irisLectureIngestionSettings!"
+                    [parentSubSettings]="parentIrisSettings?.irisLectureIngestionSettings"
+                    [allIrisModels]="allIrisModels ?? []"
+                    [settingsType]="settingsType"
+                    (onChanges)="isDirty = true"
+                />
+            </div>
+        }
+        @if (settingsType === COURSE) {
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="autoLectureIngestion" [disabled]="!isAdmin" [(ngModel)]="autoLectureIngestion" />
+                <label
+                    class="form-check-label"
+                    for="autoLectureIngestion"
+                    jhiTranslate="artemisApp.iris.settings.subSettings.lectureIngestionSettings.autoIngestOnAttachmentUpload"
+                ></label>
+            </div>
+        }
+        @if (settingsType !== EXERCISE) {
+            <div>
+                <hr class="hr" />
                 <h3 jhiTranslate="artemisApp.iris.settings.subSettings.hestiaSettings"></h3>
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisHestiaSettings!"

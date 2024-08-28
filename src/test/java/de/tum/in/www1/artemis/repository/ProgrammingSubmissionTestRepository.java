@@ -8,20 +8,19 @@ import java.util.Optional;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity tests.
  */
 @Repository
-public interface ProgrammingSubmissionTestRepository extends JpaRepository<ProgrammingSubmission, Long> {
+public interface ProgrammingSubmissionTestRepository extends ArtemisJpaRepository<ProgrammingSubmission, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     @Query("""
@@ -39,14 +38,34 @@ public interface ProgrammingSubmissionTestRepository extends JpaRepository<Progr
      * @return the latest legal submission for the participation
      */
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(Long participationId) {
-        return findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType.ILLEGAL, participationId);
+        return findFirstWithResultsByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType.ILLEGAL, participationId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType type, Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
+    Optional<ProgrammingSubmission> findProgrammingSubmissionById(long programmingSubmissionId);
+
+    default Optional<ProgrammingSubmission> findFirstWithResultsByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType type,
+            Long participationId) {
+        var programmingSubmissionOptional = findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(type, participationId);
+        if (programmingSubmissionOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = programmingSubmissionOptional.get().getId();
+        return findProgrammingSubmissionById(id);
+    }
+
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
+
+    default Optional<ProgrammingSubmission> findFirstWithResultsByParticipationIdOrderBySubmissionDateDesc(Long participationId) {
+        var programmingSubmissionOptional = findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+        if (programmingSubmissionOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = programmingSubmissionOptional.get().getId();
+        return findProgrammingSubmissionById(id);
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(Long submissionId);
@@ -63,7 +82,7 @@ public interface ProgrammingSubmissionTestRepository extends JpaRepository<Progr
      */
     @NotNull
     default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
-        return findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Programming Submission", submissionId));
+        return getValueElseThrow(findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId), submissionId);
     }
 
     @EntityGraph(type = LOAD, attributePaths = "results")

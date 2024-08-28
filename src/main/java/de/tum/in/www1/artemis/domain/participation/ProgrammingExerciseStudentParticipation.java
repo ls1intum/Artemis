@@ -50,18 +50,22 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.branch = branch;
     }
 
+    @Override
     public String getRepositoryUri() {
         return repositoryUri;
     }
 
+    @Override
     public void setRepositoryUri(String repositoryUri) {
         this.repositoryUri = repositoryUri;
     }
 
+    @Override
     public String getBuildPlanId() {
         return buildPlanId;
     }
 
+    @Override
     public void setBuildPlanId(String buildPlanId) {
         this.buildPlanId = buildPlanId;
     }

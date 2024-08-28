@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -27,9 +26,6 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartParticipation() throws Exception {
@@ -39,9 +35,10 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         // Set the branch to null to force the usage of LocalVCService#getDefaultBranchOfRepository().
-        programmingExercise.setBranch(null);
+        programmingExercise.getBuildConfig().setBranch(null);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository to copy the student assignment repository from.
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
@@ -59,6 +56,10 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         assertThat(participation.getStudent()).contains(user);
         LocalVCRepositoryUri studentAssignmentRepositoryUri = new LocalVCRepositoryUri(projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUrl);
         assertThat(studentAssignmentRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
+
+        var vcsAccessToken = request.get("/api/users/vcsToken?participationId=" + participation.getId(), HttpStatus.OK, String.class);
+        assertThat(vcsAccessToken).isNotNull();
+        assertThat(vcsAccessToken).startsWith("vcpat");
 
         templateRepository.resetLocalRepo();
     }

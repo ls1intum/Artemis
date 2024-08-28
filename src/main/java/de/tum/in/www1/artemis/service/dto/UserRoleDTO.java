@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.domain.metis.UserRole;
  * A Data Transfer Object (DTO) representing a user's role within a course.
  *
  * <p>
- * This DTO contains the user ID, username, and role of a user. It is used to encapsulate and transfer
+ * This DTO contains the user ID, login, and role of a user. It is used to encapsulate and transfer
  * the user role information between different layers of the application.
  * </p>
  *
@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.metis.UserRole;
  * </p>
  *
  * @param userId   the unique identifier of the user
- * @param username the username of the user
+ * @param username the login of the user
  * @param role     the role of the user within the course, represented as a {@link UserRole} enum
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -26,6 +26,6 @@ public record UserRoleDTO(Long userId, String username, UserRole role) {
 
     @SuppressWarnings("unused")
     UserRoleDTO(Long userId, String username, String role) {
-        this(userId, username, UserRole.valueOf(role));
+        this(userId, username, role != null ? UserRole.valueOf(role) : null);
     }
 }

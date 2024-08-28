@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subject, of } from 'rxjs';
@@ -16,7 +17,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { MockDirective, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
@@ -26,10 +27,10 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { AdminUserService } from 'app/core/user/admin-user.service';
-import * as Sentry from '@sentry/angular-ivy';
+import * as Sentry from '@sentry/angular';
 // Preliminary mock before import to prevent errors
-jest.mock('@sentry/angular-ivy', () => {
-    const originalModule = jest.requireActual('@sentry/angular-ivy');
+jest.mock('@sentry/angular', () => {
+    const originalModule = jest.requireActual('@sentry/angular');
     return {
         ...originalModule,
         captureException: jest.fn(),
@@ -55,7 +56,7 @@ describe('UserManagementUpdateComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(MatFormFieldModule), MockModule(MatChipsModule), MockModule(MatAutocompleteModule)],
-            declarations: [UserManagementUpdateComponent, TranslatePipeMock, MockDirective(NgForm), MockDirective(NgModel)],
+            declarations: [UserManagementUpdateComponent, TranslatePipeMock, MockDirective(NgForm), MockDirective(NgModel), MockComponent(HelpIconComponent)],
             providers: [
                 FormBuilder,
                 {

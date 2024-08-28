@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
@@ -59,6 +60,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -73,6 +75,7 @@ import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -86,7 +89,6 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -120,6 +122,8 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final GitService gitService;
 
     private final Optional<VersionControlService> versionControlService;
@@ -133,8 +137,6 @@ public class ProgrammingExerciseService {
     private final ParticipationService participationService;
 
     private final UserRepository userRepository;
-
-    private final GroupNotificationService groupNotificationService;
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
 
@@ -182,11 +184,13 @@ public class ProgrammingExerciseService {
 
     private final ExerciseService exerciseService;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, GroupNotificationService groupNotificationService,
+            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
@@ -195,7 +199,8 @@ public class ProgrammingExerciseService {
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyProgressService competencyProgressService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -207,7 +212,6 @@ public class ProgrammingExerciseService {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.userRepository = userRepository;
-        this.groupNotificationService = groupNotificationService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -228,6 +232,8 @@ public class ProgrammingExerciseService {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.profileService = profileService;
         this.exerciseService = exerciseService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -263,13 +269,17 @@ public class ProgrammingExerciseService {
         // See https://github.com/ls1intum/Artemis/pull/7451/files#r1459228917
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
+        programmingExercise.getBuildConfig().setId(null);
 
         // We save once in order to generate an id for the programming exercise
+        var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
+        programmingExercise.setBuildConfig(savedBuildConfig);
         var savedProgrammingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
-
+        savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
+        programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
         // Step 1: Setting constant facts for a programming exercise
         savedProgrammingExercise.generateAndSetProjectKey();
-        savedProgrammingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
+        savedProgrammingExercise.getBuildConfig().setBranch(versionControl.getDefaultBranchOfArtemis());
 
         // Step 2: Creating repositories for new exercise
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
@@ -282,6 +292,7 @@ public class ProgrammingExerciseService {
         // Step 4b: Connecting base participations with the exercise
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
+        programmingExerciseBuildConfigRepository.saveAndFlush(savedProgrammingExercise.getBuildConfig());
         savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
 
         // Step 4c: Connect auxiliary repositories
@@ -298,11 +309,11 @@ public class ProgrammingExerciseService {
 
         // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins as
         // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
-        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
+        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(savedProgrammingExercise);
             if (windfile != null) {
-                savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
-                savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+                savedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+                programmingExerciseBuildConfigRepository.saveAndFlush(savedProgrammingExercise.getBuildConfig());
             }
             else {
                 log.warn("No windfile for the settings of exercise {}", savedProgrammingExercise.getId());
@@ -326,6 +337,8 @@ public class ProgrammingExerciseService {
         scheduleOperations(savedProgrammingExercise.getId());
         // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
+        // Step 12d: Update student competency progress
+        competencyProgressService.updateProgressByLearningObjectAsync(savedProgrammingExercise);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -361,13 +374,15 @@ public class ProgrammingExerciseService {
         validatePackageName(programmingExercise, programmingLanguageFeature);
         validateProjectType(programmingExercise, programmingLanguageFeature);
 
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+
         // Check if checkout solution repository is enabled
-        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
+        if (buildConfig.getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
             throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
         }
 
         // Check if testwise coverage analysis is enabled
-        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.testwiseCoverageAnalysisSupported()) {
+        if (Boolean.TRUE.equals(buildConfig.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.testwiseCoverageAnalysisSupported()) {
             throw new BadRequestAlertException("Testwise coverage analysis is not supported for this language", "Exercise", "testwiseCoverageAnalysisNotSupported");
         }
 
@@ -457,12 +472,12 @@ public class ProgrammingExerciseService {
 
         giveCIProjectPermissions(programmingExercise);
 
-        Windfile windfile = programmingExercise.getWindfile();
-        if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildScript() == null) {
+        Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
+        if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getBuildScript() == null) {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
-            programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
-            programmingExercise.setBuildScript(script);
-            programmingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
+            programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+            programmingExercise.getBuildConfig().setBuildScript(script);
+            programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         }
 
         // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
@@ -552,6 +567,7 @@ public class ProgrammingExerciseService {
 
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
+        programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
@@ -565,39 +581,43 @@ public class ProgrammingExerciseService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
+
         return savedProgrammingExercise;
     }
 
     /**
      * This method updates the build plan for the given programming exercise.
-     * It deletes the old build plan and creates a new one if the build plan configuration has changed.
+     * If LocalCI is not active, it deletes the old build plan and creates a new one if the build plan configuration has changed.
      *
      * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
      * @param updatedProgrammingExercise      the changed programming exercise with its new values
      */
     private void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
-        if (continuousIntegrationService.isEmpty()
-                || Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
+        if (continuousIntegrationService.isEmpty() || Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration(),
+                updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
             return;
         }
         // we only update the build plan configuration if it has changed and is not null, otherwise we
         // do not have a valid exercise anymore
-        if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
+        if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             if (!profileService.isLocalCiActive()) {
                 continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
                 continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
                 continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
                 resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
             }
-            if (buildScriptGenerationService.isPresent()) {
+            // For Aeolus, we have to regenerate the build script based on the new Windfile of the exercise.
+            // We skip this for pure LocalCI to prevent the build script from being overwritten by the default one.
+            if (profileService.isAeolusActive() && buildScriptGenerationService.isPresent()) {
                 String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
-                updatedProgrammingExercise.setBuildScript(script);
-                programmingExerciseRepository.save(updatedProgrammingExercise);
+                updatedProgrammingExercise.getBuildConfig().setBuildScript(script);
+                programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
             }
         }
         else {
             // if the user does not change the build plan configuration, we have to set the old one again
-            updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
+            updatedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration());
         }
     }
 

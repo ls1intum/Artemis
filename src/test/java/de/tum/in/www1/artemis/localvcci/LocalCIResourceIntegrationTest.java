@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
@@ -25,8 +26,8 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
@@ -34,6 +35,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
+import de.tum.in.www1.artemis.service.dto.BuildJobsStatisticsDTO;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
@@ -49,6 +51,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     protected BuildJob finishedJob1;
 
     protected BuildJob finishedJob2;
+
+    protected BuildJob finishedJob3;
 
     @Autowired
     private HazelcastInstance hazelcastInstance;
@@ -71,9 +75,6 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
-    @Autowired
-    private ResultRepository resultRepository;
-
     @BeforeEach
     void createJobs() {
         // temporarily remove listener to avoid triggering build job processing
@@ -81,25 +82,32 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
         JobTimingInfo jobTimingInfo1 = new JobTimingInfo(ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(3));
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
+        JobTimingInfo jobTimingInfo3 = new JobTimingInfo(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(9), ZonedDateTime.now().plusSeconds(150));
+
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
         job1 = new BuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)));
+        agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)), null);
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
         BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
                 buildConfig, null);
+        BuildJobQueueItem finishedJobQueueItem3 = new BuildJobQueueItem("5", "job5", "address1", 5, course.getId() + 2, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo3,
+                buildConfig, null);
         var result1 = new Result().successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var result2 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+        var result3 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
 
         resultRepository.save(result1);
         resultRepository.save(result2);
+        resultRepository.save(result3);
 
         finishedJob1 = new BuildJob(finishedJobQueueItem1, BuildStatus.SUCCESSFUL, result1);
         finishedJob2 = new BuildJob(finishedJobQueueItem2, BuildStatus.FAILED, result2);
+        finishedJob3 = new BuildJob(finishedJobQueueItem3, BuildStatus.FAILED, result3);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
@@ -242,15 +250,54 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetFinishedBuildJobs_returnsJobs() throws Exception {
+    void testGetFinishedBuildJobs_returnsSortedJobs() throws Exception {
         buildJobRepository.deleteAll();
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
+        buildJobRepository.save(finishedJob3);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
-        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO));
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).id()).isEqualTo(finishedJob1.getBuildJobId());
-        assertThat(result.get(1).id()).isEqualTo(finishedJob2.getBuildJobId());
+        pageableSearchDTO.setSortingOrder(SortingOrder.ASCENDING);
+        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
+        assertThat(result).hasSize(3);
+        assertThat(result.getFirst().id()).isEqualTo(finishedJob2.getBuildJobId());
+        assertThat(result.get(1).id()).isEqualTo(finishedJob3.getBuildJobId());
+        assertThat(result.get(2).id()).isEqualTo(finishedJob1.getBuildJobId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetFinishedBuildJobs_returnsFilteredJobs() throws Exception {
+        buildJobRepository.deleteAll();
+
+        // Create a failed job to filter for
+        JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(1).plusMinutes(2),
+                ZonedDateTime.now().plusDays(1).plusMinutes(10));
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
+        RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
+        var failedJob1 = new BuildJobQueueItem("5", "job5", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig, null);
+        var jobResult = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+        var failedFinishedJob = new BuildJob(failedJob1, BuildStatus.FAILED, jobResult);
+
+        // Save the jobs
+        buildJobRepository.save(finishedJob1);
+        buildJobRepository.save(finishedJob2);
+        resultRepository.save(jobResult);
+        buildJobRepository.save(failedFinishedJob);
+
+        // Filter for the failed job
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        LinkedMultiValueMap<String, String> searchParams = pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable");
+        searchParams.add("buildStatus", "FAILED");
+        searchParams.add("startDate", jobTimingInfo.buildStartDate().minusSeconds(10).toString());
+        searchParams.add("endDate", jobTimingInfo.buildCompletionDate().plusSeconds(10).toString());
+        searchParams.add("searchTerm", "short");
+        searchParams.add("buildDurationLower", "120");
+        searchParams.add("buildDurationUpper", "600");
+
+        // Check that only the failed job is returned
+        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, searchParams);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().id()).isEqualTo(failedFinishedJob.getBuildJobId());
     }
 
     @Test
@@ -261,7 +308,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         buildJobRepository.save(finishedJob2);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
         var result = request.getList("/api/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
-                pageableSearchUtilService.searchMapping(pageableSearchDTO));
+                pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id()).isEqualTo(finishedJob1.getBuildJobId());
     }
@@ -287,4 +334,17 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         }
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildJobStatistics() throws Exception {
+        buildJobRepository.deleteAll();
+        buildJobRepository.save(finishedJob1);
+        buildJobRepository.save(finishedJob2);
+        var response = request.get("/api/admin/build-job-statistics", HttpStatus.OK, BuildJobsStatisticsDTO.class);
+        assertThat(response).isNotNull();
+        assertThat(response.totalBuilds()).isEqualTo(2);
+        assertThat(response.successfulBuilds()).isEqualTo(1);
+        assertThat(response.failedBuilds()).isEqualTo(1);
+        assertThat(response.cancelledBuilds()).isEqualTo(0);
+    }
 }

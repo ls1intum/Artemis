@@ -19,7 +19,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the QuizExercise entity.
@@ -76,17 +75,15 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencies" })
+    Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesById(Long quizExerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
     Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
 
     @NotNull
-    default QuizExercise findWithEagerQuestionsByIdOrElseThrow(Long quizExerciseId) {
-        return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
-    }
-
-    @NotNull
     default QuizExercise findWithEagerBatchesByIdOrElseThrow(Long quizExerciseId) {
-        return findWithEagerBatchesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
+        return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
 
     /**
@@ -108,7 +105,18 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      */
     @NotNull
     default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
-        return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+        return getValueElseThrow(findWithEagerQuestionsById(quizExerciseId), quizExerciseId);
+    }
+
+    /**
+     * Get one quiz exercise by id and eagerly load questions
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    default QuizExercise findByIdWithQuestionsAndCompetenciesElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndCompetenciesById(quizExerciseId), quizExerciseId);
     }
 
     /**
@@ -119,7 +127,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      */
     @NotNull
     default QuizExercise findByIdWithBatchesElseThrow(Long quizExerciseId) {
-        return findWithEagerBatchesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+        return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
 
     /**
@@ -135,12 +143,12 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
 
     @NotNull
     default QuizExercise findByIdWithQuestionsAndStatisticsElseThrow(Long quizExerciseId) {
-        return findWithEagerQuestionsAndStatisticsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+        return getValueElseThrow(findWithEagerQuestionsAndStatisticsById(quizExerciseId), quizExerciseId);
     }
 
     @NotNull
     default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(Long quizExerciseId) {
-        return findWithEagerQuestionsAndStatisticsAndCompetenciesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+        return getValueElseThrow(findWithEagerQuestionsAndStatisticsAndCompetenciesById(quizExerciseId), quizExerciseId);
     }
 
     default List<QuizExercise> findAllPlannedToStartInTheFuture() {

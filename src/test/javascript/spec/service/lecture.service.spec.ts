@@ -210,5 +210,22 @@ describe('Lecture Service', () => {
             const results = service.convertLectureArrayDatesFromServer([elemDefault, elemDefault]);
             expect(results).toEqual([elemDefault, elemDefault]);
         });
+
+        it('should send a POST request to ingest lectures and return an OK response', () => {
+            const courseId = 123;
+            const lectureId = 456;
+            const expectedUrl = `api/courses/123/ingest?lectureId=456`;
+            const expectedStatus = 200;
+
+            service.ingestLecturesInPyris(courseId, lectureId).subscribe((response) => {
+                expect(response.status).toBe(expectedStatus);
+            });
+
+            const req = httpMock.expectOne({
+                url: expectedUrl,
+                method: 'POST',
+            });
+            expect(req.request.method).toBe('POST');
+        });
     });
 });

@@ -39,7 +39,7 @@ public interface LtiPlatformConfigurationRepository extends ArtemisJpaRepository
      */
     @NotNull
     default LtiPlatformConfiguration findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(long id) throws EntityNotFoundException {
-        return Optional.ofNullable(findWithEagerOnlineCourseConfigurationsById(id)).orElseThrow(() -> new EntityNotFoundException("LtiPlatformConfiguration", id));
+        return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationsById(id)), id);
     }
 
     /**

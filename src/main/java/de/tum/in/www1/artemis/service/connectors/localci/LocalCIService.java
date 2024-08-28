@@ -17,11 +17,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -47,16 +48,16 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final AeolusTemplateService aeolusTemplateService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final SharedQueueManagementService sharedQueueManagementService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SharedQueueManagementService sharedQueueManagementService) {
+            SharedQueueManagementService sharedQueueManagementService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
@@ -78,10 +79,11 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         }
         String script = buildScriptProviderService.getScriptFor(exercise);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
-        exercise.setBuildScript(script);
-        exercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
-        // recreating the build plans for the exercise means we need to store the updated exercise in the database
-        programmingExerciseRepository.save(exercise);
+        ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
+        buildConfig.setBuildScript(script);
+        buildConfig.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+        // recreating the build plans for the exercise means we need to store the updated build config in the database
+        programmingExerciseBuildConfigRepository.save(buildConfig);
     }
 
     @Override
@@ -194,6 +196,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      * @param participation to use its buildPlanId to find the artifact.
      * @return the html representation of the artifact page.
      */
+    @Override
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
         // TODO LOCALVC_CI: Extract artifacts from the container when running the build job, store them on disk, and retrieve them here.
         log.error("Unsupported action: LocalCIService.retrieveLatestArtifact()");

@@ -21,7 +21,6 @@ import {
     faChevronRight,
     faCircleNotch,
     faClipboard,
-    faComment,
     faComments,
     faDoorOpen,
     faEllipsis,
@@ -37,7 +36,7 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
@@ -59,7 +58,9 @@ import { facSidebar } from '../../content/icons/icons';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
+import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
@@ -105,7 +106,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
     hasUnreadMessages: boolean;
-    messagesRouteLoaded: boolean;
     communicationRouteLoaded: boolean;
     isProduction = true;
     isTestServer = false;
@@ -118,6 +118,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNavbarCollapsed = false;
     profileSubscription?: Subscription;
     showRefreshButton: boolean = false;
+    isExamStarted = false;
+    private examStartedSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
 
     // Properties to track hidden items for dropdown menu
@@ -133,7 +135,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
-    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent | CourseTutorialGroupsComponent | CourseConversationsComponent;
+    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -152,6 +154,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
     // Using a list query to be able to listen for changes (late mount); need both as this only returns native nodes
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
+
+    @ViewChild('itemsDrop', { static: true }) itemsDrop: NgbDropdown;
 
     // Icons
     faTimes = faTimes;
@@ -189,6 +193,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseAccessStorageService: CourseAccessStorageService,
         private profileService: ProfileService,
         private modalService: NgbModal,
+        private examParticipationService: ExamParticipationService,
     ) {}
 
     async ngOnInit() {
@@ -198,6 +203,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
+        });
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted = isStarted;
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -218,71 +226,42 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         await this.initAfterCourseLoad();
         this.sidebarItems = this.getSidebarItems();
         this.courseActionItems = this.getCourseActionItems();
-        this.updateVisibility(window.innerHeight);
-        this.updateMenuPosition();
+        this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
     }
 
     /** Listen window resize event by height */
     @HostListener('window: resize', ['$event'])
     onResize() {
-        this.dropdownOpen = false;
-        this.dropdownClickNumber = 0;
-        this.updateVisibility(window.innerHeight);
-        this.updateMenuPosition();
-    }
-
-    /** Listen click event whether on outside of the menu or one of the items in the menu to close the dropdown menu */
-    @HostListener('document: click', ['$event'])
-    onClickCloseDropdownMenu() {
-        if (this.dropdownOpen) {
-            this.dropdownClickNumber += 1;
-            if (this.dropdownClickNumber === 2) {
-                this.dropdownOpen = false;
-                this.dropdownClickNumber = 0;
-            }
-        }
+        this.updateVisibleNavbarItems(window.innerHeight);
+        if (!this.anyItemHidden) this.itemsDrop.close();
     }
 
     /** Update sidebar item's hidden property based on the window height to display three-dots */
-    updateVisibility(height: number) {
-        let thresholdLevelForCurrentSidebar = this.calculateThreshold();
+    updateVisibleNavbarItems(height: number) {
+        const threshold = this.calculateThreshold();
+        this.applyThreshold(threshold, height);
+    }
+
+    /**  Applies the visibility threshold to sidebar items, determining which items should be hidden.*/
+    private applyThreshold(threshold: number, height: number) {
         this.anyItemHidden = false;
         this.hiddenItems = [];
-
-        for (let i = 0; i < this.sidebarItems.length - 1; i++) {
-            this.thresholdsForEachSidebarItem.unshift(thresholdLevelForCurrentSidebar);
-            thresholdLevelForCurrentSidebar -= this.ITEM_HEIGHT;
-        }
-        this.thresholdsForEachSidebarItem.unshift(0);
-
-        this.sidebarItems.forEach((item, index) => {
-            item.hidden = height <= this.thresholdsForEachSidebarItem[index];
+        // Reverse the sidebar items to remove items starting from the bottom
+        const reversedSidebarItems = [...this.sidebarItems].reverse();
+        reversedSidebarItems.forEach((item, index) => {
+            const currentThreshold = threshold - index * this.ITEM_HEIGHT;
+            item.hidden = height <= currentThreshold;
             if (item.hidden) {
                 this.anyItemHidden = true;
-                this.hiddenItems.push(item);
+                this.hiddenItems.unshift(item);
             }
         });
     }
 
-    /** Calculate dropdown-menu position based on the number of entries in the sidebar */
-    updateMenuPosition() {
-        const leftSidebarItems: number = this.sidebarItems.length - this.hiddenItems.length;
-        this.dropdownOffset = leftSidebarItems * this.ITEM_HEIGHT + this.BREADCRUMB_AND_NAVBAR_HEIGHT;
-    }
-
     /** Calculate threshold levels based on the number of entries in the sidebar */
     calculateThreshold(): number {
-        const numberOfSidebarItems: number = this.sidebarItems.length;
-        return numberOfSidebarItems * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
-    }
-
-    toggleDropdown() {
-        this.dropdownOpen = !this.dropdownOpen;
-        // Refresh click numbers after toggle
-        if (!this.dropdownOpen) {
-            this.dropdownClickNumber = 0;
-        }
+        return this.sidebarItems.length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
     }
 
     /** initialize courses attribute by retrieving all courses from the server */
@@ -308,7 +287,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     /** Navigate to a new Course */
     switchCourse(course: Course) {
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-            this.router.navigate(['courses', course.id]);
+            this.router.navigate(['courses', course.id, 'exercises']);
         });
     }
 
@@ -333,13 +312,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             sidebarItems.unshift(examsItem);
         }
         if (isCommunicationEnabled(this.course)) {
-            const communicationItem: SidebarItem = this.getCommunicationItems();
-            sidebarItems.push(communicationItem);
-        }
-
-        if (isMessagingEnabled(this.course) || isCommunicationEnabled(this.course)) {
-            const messagesItem: SidebarItem = this.getMessagesItems();
-            sidebarItems.push(messagesItem);
+            const communicationsItem: SidebarItem = this.getCommunicationsItems();
+            sidebarItems.push(communicationsItem);
         }
 
         if (this.hasTutorialGroups()) {
@@ -395,30 +369,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         return examsItem;
     }
 
-    getCommunicationItems() {
-        const communicationItem: SidebarItem = {
-            routerLink: 'discussion',
-            icon: faComment,
+    getCommunicationsItems() {
+        const communicationsItem: SidebarItem = {
+            routerLink: 'communication',
+            icon: faComments,
             title: 'Communication',
             translation: 'artemisApp.courseOverview.menu.communication',
             hasInOrionProperty: true,
             showInOrionWindow: false,
             hidden: false,
         };
-        return communicationItem;
-    }
-
-    getMessagesItems() {
-        const messagesItem: SidebarItem = {
-            routerLink: 'messages',
-            icon: faComments,
-            title: 'Messages',
-            translation: 'artemisApp.courseOverview.menu.messages',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
-            hidden: false,
-        };
-        return messagesItem;
+        return communicationsItem;
     }
 
     getTutorialGroupsItems() {
@@ -514,7 +475,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.conversationServiceInstantiated && (this.messagesRouteLoaded || this.communicationRouteLoaded)) {
+        if (!this.conversationServiceInstantiated && this.communicationRouteLoaded) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -570,8 +531,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     onSubRouteActivate(componentRef: any) {
         this.getPageTitle();
         this.getShowRefreshButton();
-        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
-        this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
+        this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'communication';
 
         this.setUpConversationService();
 
@@ -592,6 +552,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             componentRef instanceof CourseExercisesComponent ||
             componentRef instanceof CourseLecturesComponent ||
             componentRef instanceof CourseTutorialGroupsComponent ||
+            componentRef instanceof CourseExamsComponent ||
             componentRef instanceof CourseConversationsComponent
         ) {
             this.activatedComponentReference = componentRef;
@@ -747,6 +708,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
+        this.examStartedSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();

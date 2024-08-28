@@ -1,0 +1,45 @@
+<div class="bg-light">
+    @if (learningObjects()) {
+        @for (learningObject of learningObjects(); let last = $last; track learningObject) {
+            <div
+                (click)="selectLearningObject(learningObject)"
+                class="row p-3 m-0 align-items-center"
+                [ngClass]="{
+                    'selected-learning-object': currentLearningObject()?.id === learningObject.id && currentLearningObject()?.type === learningObject.type,
+                    clickable: !learningObject.unreleased,
+                }"
+            >
+                @if (learningObject.unreleased) {
+                    <span class="col-md-auto p-0 text-muted" jhiTranslate="artemisApp.learningPath.navigation.overview.unreleasedLearningObjectLabel"></span>
+                    <fa-icon [icon]="faLock" class="col-md-auto text-muted" />
+                } @else {
+                    <span class="col-md-auto p-0">{{ learningObject.name }}</span>
+                }
+                @if (learningObject.completed) {
+                    <fa-icon [icon]="faCheckCircle" class="col-md-auto text-success" />
+                } @else if (nextLearningObjectOnPath()?.id === learningObject.id) {
+                    <div class="ms-2 col-md-auto next-learning-object-container">
+                        <small class="font-bold"
+                            ><strong><span jhiTranslate="artemisApp.learningPath.navigation.overview.nextLearningObjectOnPathLabel"></span></strong
+                        ></small>
+                    </div>
+                }
+            </div>
+            @if (!last) {
+                <hr class="m-0 p-0" />
+            }
+        } @empty {
+            <div class="p-3 empty-learning-objects-label">
+                <em
+                    ><small><span jhiTranslate="artemisApp.learningPath.navigation.overview.emptyLearningObjectsLabel"></span></small
+                ></em>
+            </div>
+        }
+    } @else {
+        <div class="row justify-content-center p-2">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only" jhiTranslate="loading"></span>
+            </div>
+        </div>
+    }
+</div>

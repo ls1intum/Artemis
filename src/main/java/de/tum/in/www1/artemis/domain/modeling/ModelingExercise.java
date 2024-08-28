@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 public class ModelingExercise extends Exercise {
 
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @Override
     public String getType() {
         return "modeling";
     }

@@ -20,7 +20,8 @@ import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
  * @param stages        the stages of the Pyris pipeline
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages) {
+public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages,
+        List<String> suggestions) {
 
     /**
      * Creates a new IrisWebsocketDTO instance with the given parameters
@@ -30,8 +31,8 @@ public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage messag
      * @param rateLimitInfo the rate limit information
      * @param stages        the stages of the Pyris pipeline
      */
-    public IrisWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages) {
-        this(determineType(message), message, rateLimitInfo, stages);
+    public IrisWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, List<String> suggestions) {
+        this(determineType(message), message, rateLimitInfo, stages, suggestions);
     }
 
     /**

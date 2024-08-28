@@ -123,9 +123,9 @@ public class QuizPointStatistic extends QuizStatistic {
      * @param countChange the int-value, which will be added to the Counter and participants
      */
     private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {
-        /**
-         * {@link RoundingUtil#roundScoreSpecifiedByCourseSettings}
-         * is not applicable here, as we need to sort the points into existing integer buckets
+        /*
+         * RoundingUtil#roundScoreSpecifiedByCourseSettings is not applicable here,
+         * as we need to sort the points into existing integer buckets
          */
         double points = Math.round(quiz.getOverallQuizPoints() * (score / 100));
 

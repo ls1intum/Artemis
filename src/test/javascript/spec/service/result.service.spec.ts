@@ -27,10 +27,10 @@ import {
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
 } from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import * as Sentry from '@sentry/angular-ivy';
+import * as Sentry from '@sentry/angular';
 // Preliminary mock before import to prevent errors
-jest.mock('@sentry/angular-ivy', () => {
-    const originalModule = jest.requireActual('@sentry/angular-ivy');
+jest.mock('@sentry/angular', () => {
+    const originalModule = jest.requireActual('@sentry/angular');
     return {
         ...originalModule,
         captureException: jest.fn(),
@@ -153,8 +153,7 @@ describe('ResultService', () => {
         const resultWithPoints2 = new ResultWithPointsPerGradingCriterion();
         resultWithPoints2.result = result2;
         resultWithPoints2.totalPoints = 50;
-        // @ts-ignore
-        resultWithPoints2.pointsPerCriterion = { '1': 20, '2': 30 };
+        resultWithPoints2.pointsPerCriterion = new Map(Object.entries({ '1': 20, '2': 30 }).map(([key, value]) => [Number(key), value]));
 
         const results = [resultWithPoints1, resultWithPoints2];
 

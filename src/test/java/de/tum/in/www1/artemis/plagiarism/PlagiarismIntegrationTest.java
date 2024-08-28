@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -31,7 +30,6 @@ import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismComparisonStatusDTO;
 
 class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -51,13 +49,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     private PlagiarismResultRepository plagiarismResultRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -76,7 +68,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
         course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
-        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise);
         var textSubmission = ParticipationFactory.generateTextSubmission("", Language.GERMAN, true);
 
@@ -227,7 +219,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeletePlagiarismComparisons_instructor() throws Exception {
         request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=false", HttpStatus.OK);
-        var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        var result = plagiarismResultRepository.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         assertThat(result).isNotNull();
         assertThat(result.getComparisons()).hasSize(1);
     }
@@ -236,7 +228,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeletePlagiarismComparisons_instructor_deleteAll() throws Exception {
         request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=true", HttpStatus.OK);
-        var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        var result = plagiarismResultRepository.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         assertThat(result).isNull();
     }
 

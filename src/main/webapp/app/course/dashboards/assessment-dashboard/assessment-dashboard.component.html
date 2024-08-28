@@ -27,12 +27,10 @@
                             <span jhiTranslate="entity.action.scores"></span>
                         </a>
                     }
-                    @if (course && course.isAtLeastInstructor) {
+                    @if (course?.isAtLeastInstructor) {
                         <a [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1 me-1">
-                            <fa-icon [icon]="faClipboard" /> <span jhitranslate="artemisApp.course.gradingSystem"></span>
+                            <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
                         </a>
-                    }
-                    @if (course && course.isAtLeastInstructor) {
                         <a [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md">
                             <fa-icon [icon]="faHeartBroken" />
                             <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>

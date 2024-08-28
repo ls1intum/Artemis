@@ -21,13 +21,22 @@ By completing lectures and exercises, students gain mastery of a competency (see
 
 A prerequisite is a competency that students are expected to have already mastered before the course. Instructors select competencies from previous courses they taught as a prerequisite, or create new ones.
 
+Competencies measure two metrics for each student:
+The progress starts at 0% and increases with every completed lecture unit and with the achieved score in exercises linked to the competency. The growth is linear, e.g. completing half of the lecture units and scoring 50% in all linked exercises results in 50% progress.
+The mastery is a weighted metric and is influenced by the following heuristics:
+
+* The mastery increases when the latest scores of the student are higher than the average score of all linked exercises and vice versa.
+* The mastery increases when the student proportionally achieved more points in exercises marked as hard compared to the distribution of points in the competency and vice versa.
+* A similar measurement applies to easy exercises, where the mastery is decreased for achieving proportionally more points in easy exercises.
+* If the student quickly solves programming exercises with a score of at least 80% based on the amount of pushes, the mastery increases. There is no decrease in mastery for slower students!
+
 Manage Competencies
 ^^^^^^^^^^^^^^^^^^^^
 Instructors can manage competencies and prerequisites of a course in the *Competency Management* view. Here they can:
 
 * View all competencies and prerequisites of their course
 * Create, edit or delete competencies and prerequisites
-* Manage relations between competencies (which are necessary to build learning paths)
+* :ref:`manage_relations` between competencies
 * :ref:`import_competencies` from other courses or the :ref:`standardized competency catalog<standardized_competency_catalog>`
 * :ref:`generate_competencies` using LLMs
 
@@ -40,8 +49,8 @@ Create/Edit Competencies
 
 | An instructor can create or edit competencies using the following form.
   Besides a title and description, they can set a `taxonomy <https://en.wikipedia.org/wiki/Bloom%27s_taxonomy>`_.
-| The mastery threshold describes the minimum average score required for a student to reach 100% confidence in this competency.
-  The current average score of all linked exercises shown on this page can be used as a basis for defining a reasonable threshold value.
+| The mastery threshold describes the minimum mastery required for a student to consider the competency as mastered.
+  The current average mastery shown on this page can be used as a basis for defining a reasonable threshold value.
 | Instructors can link competencies to lecture units on this page by first choosing a lecture and then selecting desired lecture units.
 
 |instructor-competency-edit|
@@ -49,6 +58,26 @@ Create/Edit Competencies
 Alternatively, instructors can also link competencies to an exercise or lecture unit on the respective management page using the selection box shown below.
 
 |instructor-competency-link|
+
+.. _manage_relations:
+
+Manage Relations
+^^^^^^^^^^^^^^^^
+
+| An Instructor can create relations between competencies by selecting a source and target competency from the dropdown menus.
+  They can also set a relation type, which can be one of the following:
+
+* *Assumes*: The head competency assumes the knowledge of the tail competency but does not deepen it. E.g. Class diagrams assume knowledge about object-oriented programming.
+* *Extends*: The head competency builds upon the knowledge of the tail competency and deepens it. E.g. Inheritance deepens the knowledge about object-oriented programming.
+* *Matches*: The knowledge of the head and tail competency match each other.
+
+| The relations are displayed in a diagram below the form and can be deleted by clicking on them.
+
+.. note::
+
+    Relations are necessary for the learning path generation. Without them, Artemis cannot suggest a reasonable order of competencies for students.
+
+|instructor-competency-relations|
 
 .. _import_competencies:
 
@@ -140,6 +169,8 @@ Once the feature is enabled, instructors get access to each student's learning p
     :width: 1000
 .. |instructor-competency-link| image:: instructor/competency-link.png
     :width: 600
+.. |instructor-competency-relations| image:: instructor/competency-relations.png
+    :width: 1000
 .. |instructor-generate-competencies| image:: instructor/generate-competencies.png
     :width: 1000
 .. |instructor-competency-recommendation| image:: instructor/competency-recommendation.png

@@ -1,9 +1,8 @@
-<div [id]="'item-' + posting.id" class="row m-1 answer-post">
+<div [id]="'item-' + posting.id" class="row" [ngClass]="isCommunicationPage ? 'module-bg mt-2 rounded-2' : 'answer-post m-1'">
     <jhi-answer-post-header
         [posting]="posting"
         [isReadOnlyMode]="isReadOnlyMode"
         (openPostingCreateEditModal)="createAnswerPostModal.open()"
-        [isCourseMessagesPage]="isCourseMessagesPage"
         [isCommunicationPage]="isCommunicationPage"
         [lastReadDate]="lastReadDate"
         [hasChannelModerationRights]="hasChannelModerationRights"

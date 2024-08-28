@@ -1,9 +1,9 @@
 <div class="option-buttons" (click)="$event.stopPropagation()">
-    <button class="favorite btn btn-sm btn-outline-secondary sidebar-button" (click)="onFavoriteClicked($event)" type="button">
+    <button class="favorite btn btn-outline-secondary sidebar-button px-0" (click)="onFavoriteClicked($event)" type="button">
         <fa-icon [icon]="conversation.isFavorite ? faHeartSolid : faHeartRegular" size="sm" />
     </button>
     <div ngbDropdown container="body" class="d-inline-block">
-        <button class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+        <button class="btn btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
             <fa-icon [icon]="faEllipsisVertical" size="sm" />
         </button>
         <div ngbDropdownMenu>
@@ -14,10 +14,12 @@
             }
             @if (!isOneToOneChat(conversation)) {
                 <button class="setting" ngbDropdownItem (click)="openConversationDetailDialog($event)">
+                    <fa-icon [icon]="faGear" size="sm" class="me-1" />
                     {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.settings' | artemisTranslate }}
                 </button>
             }
             <button class="mute" ngbDropdownItem (click)="onMuteClicked($event)">
+                <fa-icon [icon]="conversation.isMuted ? faVolumeUp : faVolumeXmark" size="sm" class="me-1" />
                 {{
                     conversation.isMuted
                         ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unmute' | artemisTranslate)
@@ -25,6 +27,7 @@
                 }}
             </button>
             <button class="hide" ngbDropdownItem (click)="onHiddenClicked($event)">
+                <fa-icon [icon]="conversation.isHidden ? faEye : faEyeSlash" size="sm" class="me-1" />
                 {{
                     conversation.isHidden
                         ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.show' | artemisTranslate)

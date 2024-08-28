@@ -14,7 +14,7 @@ import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/enti
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -30,7 +30,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { getNamesForAssessments } from '../assess/modeling-assessment.util';
+import { AssessmentNamesForModelId, getNamesForAssessments } from '../assess/modeling-assessment.util';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
@@ -57,6 +57,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     @Input() inputExercise?: ModelingExercise;
     @Input() inputSubmission?: ModelingSubmission;
     @Input() inputParticipation?: StudentParticipation;
+    @Input() isExamSummary = false;
 
     private subscription: Subscription;
     private resultUpdateListener: Subscription;
@@ -75,7 +76,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     submission: ModelingSubmission;
 
     assessmentResult?: Result;
-    assessmentsNames: Map<string, Map<string, string>>;
+    assessmentsNames: AssessmentNamesForModelId = {};
     totalScore: number;
 
     umlModel: UMLModel; // input model for Apollon
@@ -216,7 +217,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingExercise &&
             !!this.modelingExercise.dueDate &&
             !!this.participation.initializationDate &&
-            dayjs(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
+            dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.modelingExercise, this.participation));
+
         this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || dayjs().isAfter(this.modelingExercise.assessmentDueDate);
         if (this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);

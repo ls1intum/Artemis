@@ -38,7 +38,7 @@
     <div class="row m-0 pb-5">
         @if (quizExercise) {
             <div class="col-md-auto">
-                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top">
+                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top" [ngClass]="{ 'sticky-top-quiz': mode === 'preview' }">
                     @for (question of quizExercise.quizQuestions; track question; let i = $index) {
                         <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
                             @if (question.type === DRAG_AND_DROP) {
@@ -140,60 +140,72 @@
                         <span jhiTranslate="artemisApp.quizExercise.quizInstructions.autoSave"></span>
                     </div>
                     @if (!showingResult) {
-                        <div id="remaining-time">
-                            @if (!waitingForQuizStart) {
-                                <div>
-                                    <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
-                                    <span
-                                        id="remaining-time-value"
-                                        [ngClass]="{
-                                            'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration! / 4,
-                                            'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration! / 2,
-                                        }"
-                                    >
-                                        {{ remainingTimeText }}
-                                    </span>
-                                </div>
-                            }
-                            @if (mode === 'live' && waitingForQuizStart && quizExercise.remainingNumberOfAttempts !== 0) {
-                                <div>
-                                    <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
-                                </div>
-                            }
-                            @if (mode === 'live' && !waitingForQuizStart) {
-                                <div>
-                                    @if (!isMobile) {
-                                        <span ngbTooltip="{{ submission.submissionDate | artemisDate: 'long' : true }}" placement="right auto">
-                                            @if (!submission.submitted) {
-                                                <span jhiTranslate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
-                                            }
-                                            @if (submission.submitted) {
-                                                <span jhiTranslate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
-                                            }
-                                            @if (justSaved) {
-                                                <span jhiTranslate="justNow"></span>
-                                            }
-                                            @if (!justSaved && lastSavedTimeText !== '') {
-                                                <span>{{ lastSavedTimeText }}</span>
-                                            }
-                                            @if (!justSaved && lastSavedTimeText === '') {
-                                                <span jhiTranslate="artemisApp.quizExercise.lastSavedTimeNever"></span>
-                                            }
+                        <div id="remaining-time" class="d-flex justfiy-content-between gap-5">
+                            <div>
+                                @if (!waitingForQuizStart) {
+                                    <div>
+                                        <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
+                                        <span
+                                            id="remaining-time-value"
+                                            [ngClass]="{
+                                                'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration! / 4,
+                                                'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration! / 2,
+                                            }"
+                                        >
+                                            {{ remainingTimeText }}
                                         </span>
-                                    }
-                                    <!-- Only display save and submission hint without time stamps for mobile -->
-                                    @if (isMobile) {
-                                        <span ngbTooltip="{{ submission.submissionDate | artemisDate: 'long' : true }}" placement="right auto">
-                                            @if (!submission.submitted) {
-                                                <span jhiTranslate="artemisApp.quizExercise.lastSaved"></span>
-                                            }
-                                            @if (submission.submitted) {
-                                                <span jhiTranslate="artemisApp.quizExercise.submitted"></span>
-                                            }
-                                        </span>
-                                    }
-                                </div>
-                            }
+                                    </div>
+                                }
+                                @if (mode === 'live' && waitingForQuizStart && quizExercise.remainingNumberOfAttempts !== 0) {
+                                    <div>
+                                        <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
+                                    </div>
+                                }
+                                @if (mode === 'live' && !waitingForQuizStart) {
+                                    <div>
+                                        @if (!isMobile) {
+                                            <span ngbTooltip="{{ submission.submissionDate | artemisDate: 'long' : true }}" placement="right auto">
+                                                @if (!submission.submitted) {
+                                                    <span jhiTranslate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
+                                                }
+                                                @if (submission.submitted) {
+                                                    <span jhiTranslate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
+                                                }
+                                                @if (justSaved) {
+                                                    <span jhiTranslate="justNow"></span>
+                                                }
+                                                @if (!justSaved && lastSavedTimeText !== '') {
+                                                    <span>{{ lastSavedTimeText }}</span>
+                                                }
+                                                @if (!justSaved && lastSavedTimeText === '') {
+                                                    <span jhiTranslate="artemisApp.quizExercise.lastSavedTimeNever"></span>
+                                                }
+                                            </span>
+                                        }
+                                        <!-- Only display save and submission hint without time stamps for mobile -->
+                                        @if (isMobile) {
+                                            <span ngbTooltip="{{ submission.submissionDate | artemisDate: 'long' : true }}" placement="right auto">
+                                                @if (!submission.submitted) {
+                                                    <span jhiTranslate="artemisApp.quizExercise.lastSaved"></span>
+                                                }
+                                                @if (submission.submitted) {
+                                                    <span jhiTranslate="artemisApp.quizExercise.submitted"></span>
+                                                }
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                                @if (mode === 'practice') {
+                                    <div>
+                                        <span jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
+                                    </div>
+                                }
+                                @if (mode === 'preview') {
+                                    <div>
+                                        <span jhiTranslate="artemisApp.quizExercise.previewMode"></span>
+                                    </div>
+                                }
+                            </div>
                             @if (mode === 'live') {
                                 <jhi-connection-status class="connection-status-quiz">
                                     <ng-container innerContent>
@@ -202,16 +214,6 @@
                                         }
                                     </ng-container>
                                 </jhi-connection-status>
-                            }
-                            @if (mode === 'practice') {
-                                <div>
-                                    <span jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
-                                </div>
-                            }
-                            @if (mode === 'preview') {
-                                <div>
-                                    <span jhiTranslate="artemisApp.quizExercise.previewMode"></span>
-                                </div>
                             }
                         </div>
                     }

@@ -12,6 +12,7 @@ public class SimilarElementCount implements ModelElementRepository.ModelElementC
         this.elementId = elementId;
     }
 
+    @Override
     public String getElementId() {
         return elementId;
     }
@@ -20,6 +21,7 @@ public class SimilarElementCount implements ModelElementRepository.ModelElementC
         this.numberOfOtherElements = numberOfOtherElements;
     }
 
+    @Override
     public Long getNumberOfOtherElements() {
         return numberOfOtherElements;
     }

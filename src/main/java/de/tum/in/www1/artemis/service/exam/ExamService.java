@@ -98,6 +98,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
+import de.tum.in.www1.artemis.service.quiz.QuizResultService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 import de.tum.in.www1.artemis.web.rest.dto.BonusResultDTO;
@@ -124,6 +125,8 @@ public class ExamService {
 
     private static final int EXAM_ACTIVE_DAYS = 7;
 
+    private final QuizResultService quizResultService;
+
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
 
@@ -136,8 +139,6 @@ public class ExamService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final QuizExerciseRepository quizExerciseRepository;
-
-    private final ExamQuizService examQuizService;
 
     private final ExamDateService examDateService;
 
@@ -191,7 +192,7 @@ public class ExamService {
 
     private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
 
-    public ExamService(ExamDateService examDateService, ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
+    public ExamService(ExamDateService examDateService, ExamRepository examRepository, StudentExamRepository studentExamRepository,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, StudentParticipationRepository studentParticipationRepository,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ExamLiveEventsService examLiveEventsService,
@@ -199,14 +200,13 @@ public class ExamService {
             GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository,
             AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            CourseRepository courseRepository, QuizPoolService quizPoolService) {
+            CourseRepository courseRepository, QuizPoolService quizPoolService, QuizResultService quizResultService) {
         this.examDateService = examDateService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.examQuizService = examQuizService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -229,6 +229,7 @@ public class ExamService {
         this.courseRepository = courseRepository;
         this.quizPoolService = quizPoolService;
         this.defaultObjectMapper = new ObjectMapper();
+        this.quizResultService = quizResultService;
     }
 
     /**
@@ -629,6 +630,19 @@ public class ExamService {
     }
 
     /**
+     * Determines whether the student should see the result of the exam.
+     * This is the case if the exam is started and not ended yet or if the results are already published.
+     *
+     * @param studentExam   The student exam
+     * @param participation The participation of the student
+     * @return true if the student should see the result, false otherwise
+     */
+    public static boolean shouldStudentSeeResult(StudentExam studentExam, StudentParticipation participation) {
+        return (studentExam.getExam().isStarted() && !studentExam.isEnded() && participation instanceof ProgrammingExerciseStudentParticipation)
+                || studentExam.areResultsPublishedYet();
+    }
+
+    /**
      * Helper method which attaches the result to its participation.
      * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
      * We also attach the result if the results are already published for the exam.
@@ -641,8 +655,7 @@ public class ExamService {
      */
     private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
         // Only set the result during the exam for programming exercises (for direct automatic feedback) or after publishing the results
-        boolean isStudentAllowedToSeeResult = (studentExam.getExam().isStarted() && !studentExam.isEnded() && participation instanceof ProgrammingExerciseStudentParticipation)
-                || studentExam.areResultsPublishedYet();
+        boolean isStudentAllowedToSeeResult = shouldStudentSeeResult(studentExam, participation);
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
         // To prevent LazyInitializationException.
@@ -1138,7 +1151,7 @@ public class ExamService {
         long start = System.nanoTime();
         log.debug("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
         // Evaluate all quizzes for that exercise
-        quizExercises.stream().map(Exercise::getId).forEach(examQuizService::evaluateQuizAndUpdateStatistics);
+        quizExercises.stream().map(Exercise::getId).forEach(quizResultService::evaluateQuizAndUpdateStatistics);
         if (log.isDebugEnabled()) {
             log.debug("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
         }

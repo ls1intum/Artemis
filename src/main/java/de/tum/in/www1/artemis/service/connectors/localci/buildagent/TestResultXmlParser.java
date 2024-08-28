@@ -17,6 +17,9 @@ class TestResultXmlParser {
 
     private static final XmlMapper mapper = new XmlMapper();
 
+    // https://stackoverflow.com/a/4237934
+    private static final String INVALID_XML_CHARS = "[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]";
+
     /**
      * Parses the test result file and extracts failed and successful tests.
      *
@@ -27,6 +30,7 @@ class TestResultXmlParser {
      */
     static void processTestResultFile(String testResultFileString, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests)
             throws IOException {
+        testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
         TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
         // If the xml file is only one test suite, parse it directly
@@ -102,7 +106,15 @@ class TestResultXmlParser {
         private String detailedMessage;
 
         private String extractMessage() {
-            return message != null ? message : detailedMessage;
+            if (message != null) {
+                return message;
+            }
+            else if (detailedMessage != null) {
+                return detailedMessage;
+            }
+            // empty text nodes are deserialized as null instead of a string, see: https://github.com/FasterXML/jackson-dataformat-xml/issues/565
+            // note that this workaround does not fix the issue entirely, as strings of only whitespace become the empty string
+            return "";
         }
 
         @JacksonXmlProperty(isAttribute = true, localName = "message")

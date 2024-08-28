@@ -21,7 +21,7 @@ public interface CodeHintRepository extends ArtemisJpaRepository<CodeHint, Long>
 
     @NotNull
     default CodeHint findByIdWithSolutionEntriesElseThrow(long exerciseHintId) throws EntityNotFoundException {
-        return findByIdWithSolutionEntries(exerciseHintId).orElseThrow(() -> new EntityNotFoundException("Code Hint", exerciseHintId));
+        return getValueElseThrow(findByIdWithSolutionEntries(exerciseHintId), exerciseHintId);
     }
 
     @Query("""

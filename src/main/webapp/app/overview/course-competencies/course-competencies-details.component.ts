@@ -1,8 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Competency, CompetencyJol, CompetencyProgress, getIcon } from 'app/entities/competency.model';
-import { CompetencyService } from 'app/course/competencies/competency.service';
+import { Competency, CompetencyJol, CompetencyProgress, ConfidenceReason, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -15,6 +14,7 @@ import { Observable, Subscription, combineLatest, forkJoin } from 'rxjs';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 @Component({
     selector: 'jhi-course-competencies-details',
@@ -27,6 +27,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     courseId?: number;
     isLoading = false;
     competency: Competency;
+    competencyProgress: CompetencyProgress;
     judgementOfLearning: CompetencyJol | undefined;
     promptForJolRating = false;
     showFireworks = false;
@@ -34,6 +35,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     paramsSubscription: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
+    protected readonly ConfidenceReason = ConfidenceReason;
 
     faPencilAlt = faPencilAlt;
     getIcon = getIcon;
@@ -43,7 +45,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
         private courseStorageService: CourseStorageService,
         private alertService: AlertService,
         private activatedRoute: ActivatedRoute,
-        private competencyService: CompetencyService,
+        private courseCompetencyService: CourseCompetencyService,
         private lectureUnitService: LectureUnitService,
     ) {}
 
@@ -75,18 +77,19 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     private loadData() {
         this.isLoading = true;
 
-        const observables = [this.competencyService.findById(this.competencyId!, this.courseId!)] as Observable<
+        const observables = [this.courseCompetencyService.findById(this.competencyId!, this.courseId!)] as Observable<
             HttpResponse<Competency | Competency[] | { current: CompetencyJol; prior?: CompetencyJol }>
         >[];
 
         if (this.judgementOfLearningEnabled) {
-            observables.push(this.competencyService.getAllForCourse(this.courseId!));
-            observables.push(this.competencyService.getJoL(this.courseId!, this.competencyId!));
+            observables.push(this.courseCompetencyService.getAllForCourse(this.courseId!));
+            observables.push(this.courseCompetencyService.getJoL(this.courseId!, this.competencyId!));
         }
 
         forkJoin(observables).subscribe({
             next: ([competencyResp, courseCompetenciesResp, judgementOfLearningResp]) => {
                 this.competency = competencyResp.body! as Competency;
+                this.competencyProgress = this.getUserProgress();
 
                 if (this.judgementOfLearningEnabled) {
                     const competencies = courseCompetenciesResp.body! as Competency[];
@@ -94,10 +97,9 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
                     const judgementOfLearning = (judgementOfLearningResp?.body ?? undefined) as { current: CompetencyJol; prior?: CompetencyJol } | undefined;
                     if (
-                        judgementOfLearning &&
-                        progress &&
-                        (judgementOfLearning.current.competencyProgress !== (progress?.progress ?? 0) ||
-                            judgementOfLearning.current.competencyConfidence !== (progress?.confidence ?? 0))
+                        !judgementOfLearning?.current ||
+                        judgementOfLearning.current.competencyProgress !== (progress?.progress ?? 0) ||
+                        judgementOfLearning.current.competencyConfidence !== (progress?.confidence ?? 1)
                     ) {
                         this.judgementOfLearning = undefined;
                     } else {
@@ -134,24 +136,19 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
         if (this.competency.userProgress?.length) {
             return this.competency.userProgress.first()!;
         }
-        return { progress: 0, confidence: 0 } as CompetencyProgress;
+        return { progress: 0, confidence: 1 } as CompetencyProgress;
     }
 
     get progress(): number {
-        // The percentage of completed lecture units and participated exercises
-        return Math.round(this.getUserProgress().progress ?? 0);
+        return getProgress(this.competencyProgress);
     }
 
     get confidence(): number {
-        // Confidence level (average score in exercises) in proportion to the threshold value (max. 100 %)
-        // Example: If the student’s latest confidence level equals 60 % and the mastery threshold is set to 80 %, the ring would be 75 % full.
-        return Math.min(Math.round(((this.getUserProgress().confidence ?? 0) / (this.competency.masteryThreshold ?? 100)) * 100), 100);
+        return getConfidence(this.competencyProgress);
     }
 
     get mastery(): number {
-        // Advancement towards mastery as a weighted function of progress and confidence
-        const weight = 2 / 3;
-        return Math.round((1 - weight) * this.progress + weight * this.confidence);
+        return getMastery(this.competencyProgress);
     }
 
     get isMastered(): boolean {
@@ -167,7 +164,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
             next: () => {
                 event.lectureUnit.completed = event.completed;
 
-                this.competencyService.getProgress(this.competencyId!, this.courseId!, true).subscribe({
+                this.courseCompetencyService.getProgress(this.competencyId!, this.courseId!, true).subscribe({
                     next: (resp) => {
                         this.competency.userProgress = [resp.body!];
                         this.showFireworksIfMastered();
@@ -184,15 +181,5 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     get judgementOfLearningEnabled() {
         return (this.course?.studentCourseAnalyticsDashboardEnabled ?? false) && this.dashboardFeatureActive;
-    }
-
-    onRatingChange(newRating: number) {
-        this.judgementOfLearning = {
-            competencyId: this.competencyId!,
-            jolValue: newRating,
-            judgementTime: dayjs().toString(),
-            competencyProgress: this.progress,
-            competencyConfidence: this.confidence,
-        } satisfies CompetencyJol;
     }
 }

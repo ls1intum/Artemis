@@ -323,7 +323,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     default Optional<StudentExam> findStudentExam(Exercise exercise, StudentParticipation participation) {
         if (exercise.isExamExercise()) {
-            var examUser = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Exam Participation with " + participation.getId() + " has no student!"));
+            var examUser = getArbitraryValueElseThrow(participation.getStudent());
             return findByExerciseIdAndUserId(exercise.getId(), examUser.getId());
         }
         return Optional.empty();
@@ -337,7 +337,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     @NotNull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
-        return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+        return getValueElseThrow(findWithExercisesById(studentExamId), studentExamId);
     }
 
     /**
@@ -348,7 +348,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     @NotNull
     default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
-        return findWithExercisesSubmissionPolicyAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+        return getValueElseThrow(findWithExercisesSubmissionPolicyAndSessionsById(studentExamId), studentExamId);
     }
 
     /**
@@ -360,7 +360,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     @NotNull
     default Integer findMaxWorkingTimeByExamIdElseThrow(Long examId) {
-        return findMaxWorkingTimeByExamId(examId).orElseThrow(() -> new EntityNotFoundException("No student exams found for exam id " + examId));
+        return getArbitraryValueElseThrow(findMaxWorkingTimeByExamId(examId), Long.toString(examId));
     }
 
     /**
@@ -374,6 +374,11 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, ExamQuizQuestionsGenerator examQuizQuestionsGenerator) {
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
+
+        // In case the total number of exercises in the exam is not set by the instructor
+        if (exam.getNumberOfExercisesInExam() == null) {
+            throw new EntityNotFoundException("The number of exercises in the exam " + exam.getId() + " does not exist");
+        }
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Determine the default working time by computing the duration between start and end date of the exam

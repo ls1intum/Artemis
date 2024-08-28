@@ -76,6 +76,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -94,11 +95,11 @@ import de.tum.in.www1.artemis.util.TestResourceUtils;
 @Service
 public class CourseUtilService {
 
-    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 
-    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+    private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
 
-    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Autowired
     private CourseRepository courseRepo;
@@ -132,6 +133,9 @@ public class CourseUtilService {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ModelingSubmissionRepository modelingSubmissionRepo;
@@ -203,7 +207,7 @@ public class CourseUtilService {
      * @return The newly created course.
      */
     public Course createCourse(Long id) {
-        Course course = CourseFactory.generateCourse(id, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(id, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 
@@ -214,7 +218,7 @@ public class CourseUtilService {
      * @return The newly created course.
      */
     public Course createCourseWithUserPrefix(String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor", userPrefix + "editor",
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor", userPrefix + "editor",
                 userPrefix + "instructor");
         return courseRepo.save(course);
     }
@@ -225,7 +229,7 @@ public class CourseUtilService {
      * @return The newly created course.
      */
     public Course createCourseWithMessagingEnabled() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
         course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
         return courseRepo.save(course);
     }
@@ -238,7 +242,7 @@ public class CourseUtilService {
      * @return The new course.
      */
     public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
-        Course course = CourseFactory.generateCourse(null, shortName, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
+        Course course = CourseFactory.generateCourse(null, shortName, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
                 500, 500, true, true, 7);
         return courseRepo.save(course);
     }
@@ -390,6 +394,7 @@ public class CourseUtilService {
         modelingExercise = exerciseRepo.save(modelingExercise);
         textExercise = exerciseRepo.save(textExercise);
         exerciseRepo.save(fileUploadExercise);
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         exerciseRepo.save(programmingExercise);
         exerciseRepo.save(quizExercise);
 
@@ -493,14 +498,14 @@ public class CourseUtilService {
      */
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(String userPrefix, boolean hasAssessmentDueDatePassed) {
         var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
-        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
                 course);
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
-        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course);
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(pastTimestamp, assessmentTimestamp, QuizMode.SYNCHRONIZED, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png", course);
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, course);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(PAST_TIMESTAMP, assessmentTimestamp, QuizMode.SYNCHRONIZED, course);
 
         // Set assessment due dates
         modelingExercise.setAssessmentDueDate(assessmentTimestamp);
@@ -520,6 +525,7 @@ public class CourseUtilService {
         modelingExercise = exerciseRepo.save(modelingExercise);
         textExercise = exerciseRepo.save(textExercise);
         fileUploadExercise = exerciseRepo.save(fileUploadExercise);
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepo.save(programmingExercise);
         quizExercise = exerciseRepo.save(quizExercise);
 
@@ -649,6 +655,189 @@ public class CourseUtilService {
     }
 
     /**
+     * Creates and saves course with all exercise types. Also creates participations together with submissions and results.
+     * including test Runs and Late Submissions
+     *
+     * @param userPrefix                 The prefix of the course user groups.
+     * @param hasAssessmentDueDatePassed True, if the assessment due date of the exercises has passed.
+     * @return The created course.
+     */
+    public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTestRunsAndTwoUsers(String userPrefix, boolean hasAssessmentDueDatePassed) {
+        var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
+                course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png", course);
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, course);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(PAST_TIMESTAMP, assessmentTimestamp, QuizMode.SYNCHRONIZED, course);
+
+        // Set assessment due dates
+        modelingExercise.setAssessmentDueDate(assessmentTimestamp);
+        textExercise.setAssessmentDueDate(assessmentTimestamp);
+        fileUploadExercise.setAssessmentDueDate(assessmentTimestamp);
+        programmingExercise.setAssessmentDueDate(assessmentTimestamp);
+
+        // Add exercises to course
+        course.addExercises(modelingExercise);
+        course.addExercises(textExercise);
+        course.addExercises(fileUploadExercise);
+        course.addExercises(programmingExercise);
+        course.addExercises(quizExercise);
+
+        // Save course and exercises to database
+        Course courseSaved = courseRepo.save(course);
+        modelingExercise = exerciseRepo.save(modelingExercise);
+        textExercise = exerciseRepo.save(textExercise);
+        fileUploadExercise = exerciseRepo.save(fileUploadExercise);
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
+        programmingExercise = exerciseRepo.save(programmingExercise);
+        quizExercise = exerciseRepo.save(quizExercise);
+
+        // Get user and setup participations
+        User user = (userRepo.findOneByLogin(userPrefix + "student1")).orElseThrow();
+        User user2 = (userRepo.findOneByLogin(userPrefix + "student2")).orElseThrow();
+
+        StudentParticipation participationModeling = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise, user);
+        StudentParticipation participationText = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
+        participationText.setTestRun(true);
+        StudentParticipation participationText2 = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user2);
+        StudentParticipation participationFileUpload = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, fileUploadExercise, user);
+        StudentParticipation participationQuiz = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, quizExercise, user);
+        StudentParticipation participationProgramming = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, programmingExercise, user);
+
+        // Save participations
+        participationModeling = studentParticipationRepo.save(participationModeling);
+        participationText = studentParticipationRepo.save(participationText);
+        participationText2 = studentParticipationRepo.save(participationText2);
+        participationFileUpload = studentParticipationRepo.save(participationFileUpload);
+        participationQuiz = studentParticipationRepo.save(participationQuiz);
+        participationProgramming = studentParticipationRepo.save(participationProgramming);
+
+        // Setup results
+        Result resultModeling = generateResult(true, 10D);
+        resultModeling.setAssessmentType(AssessmentType.MANUAL);
+        resultModeling.setCompletionDate(ZonedDateTime.now());
+
+        Result resultText = generateResult(true, 12D);
+        resultText.setAssessmentType(AssessmentType.MANUAL);
+        resultText.setCompletionDate(ZonedDateTime.now());
+
+        Result resultFileUpload = generateResult(true, 0D);
+        resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
+        resultFileUpload.setCompletionDate(ZonedDateTime.now());
+
+        Result resultQuiz = generateResult(true, 0D);
+        resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultQuiz.setCompletionDate(ZonedDateTime.now());
+
+        Result resultProgramming = generateResult(true, 20D);
+        resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultProgramming.setCompletionDate(ZonedDateTime.now());
+
+        // Connect participations to results and vice versa
+        resultModeling.setParticipation(participationModeling);
+        resultText.setParticipation(participationText);
+        resultFileUpload.setParticipation(participationFileUpload);
+        resultQuiz.setParticipation(participationQuiz);
+        resultProgramming.setParticipation(participationProgramming);
+
+        participationModeling.addResult(resultModeling);
+        participationText.addResult(resultText);
+        participationFileUpload.addResult(resultFileUpload);
+        participationQuiz.addResult(resultQuiz);
+        participationProgramming.addResult(resultProgramming);
+
+        // Save results and participations
+        resultModeling = resultRepo.save(resultModeling);
+        resultText = resultRepo.save(resultText);
+        resultFileUpload = resultRepo.save(resultFileUpload);
+        resultQuiz = resultRepo.save(resultQuiz);
+        resultProgramming = resultRepo.save(resultProgramming);
+
+        participationModeling = studentParticipationRepo.save(participationModeling);
+        participationText = studentParticipationRepo.save(participationText);
+        participationText2 = studentParticipationRepo.save(participationText2);
+        participationFileUpload = studentParticipationRepo.save(participationFileUpload);
+        participationQuiz = studentParticipationRepo.save(participationQuiz);
+        participationProgramming = studentParticipationRepo.save(participationProgramming);
+
+        // Connect exercises with participations
+        modelingExercise.addParticipation(participationModeling);
+        textExercise.addParticipation(participationText);
+        textExercise.addParticipation(participationText2);
+        fileUploadExercise.addParticipation(participationFileUpload);
+        quizExercise.addParticipation(participationQuiz);
+        programmingExercise.addParticipation(participationProgramming);
+
+        // Setup submissions and connect with participations
+        ModelingSubmission modelingSubmission = ParticipationFactory.generateModelingSubmission("model1", true);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("text of text submission", Language.ENGLISH, true);
+        TextSubmission lateTextSubmission = ParticipationFactory.generateLateTextSubmission("text of late  text submission", Language.ENGLISH);
+        TextSubmission textSubmission2 = ParticipationFactory.generateTextSubmission("text of text submission", Language.ENGLISH, true);
+        FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
+        QuizSubmission quizSubmission = ParticipationFactory.generateQuizSubmission(true);
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+
+        // Save submissions
+        modelingSubmission = submissionRepository.save(modelingSubmission);
+        textSubmission = submissionRepository.save(textSubmission);
+        textSubmission2 = submissionRepository.save(textSubmission2);
+        lateTextSubmission = submissionRepository.save(lateTextSubmission);
+        fileUploadSubmission = submissionRepository.save(fileUploadSubmission);
+        quizSubmission = submissionRepository.save(quizSubmission);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        textSubmission2.setParticipation(participationText2);
+        lateTextSubmission.setParticipation(participationText);
+        modelingSubmission.setParticipation(participationModeling);
+        modelingSubmission.addResult(resultModeling);
+        textSubmission.setParticipation(participationText);
+        textSubmission.addResult(resultText);
+        fileUploadSubmission.setParticipation(participationFileUpload);
+        fileUploadSubmission.addResult(resultFileUpload);
+        quizSubmission.setParticipation(participationQuiz);
+        quizSubmission.addResult(resultQuiz);
+        programmingSubmission.setParticipation(participationProgramming);
+        programmingSubmission.addResult(resultProgramming);
+
+        // Save submissions
+        textSubmission2 = submissionRepository.save(textSubmission2);
+        lateTextSubmission = submissionRepository.save(lateTextSubmission);
+        modelingSubmission = submissionRepository.save(modelingSubmission);
+        textSubmission = submissionRepository.save(textSubmission);
+        fileUploadSubmission = submissionRepository.save(fileUploadSubmission);
+        quizSubmission = submissionRepository.save(quizSubmission);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        // Save exercises
+        exerciseRepo.save(modelingExercise);
+        exerciseRepo.save(textExercise);
+        exerciseRepo.save(fileUploadExercise);
+        exerciseRepo.save(programmingExercise);
+        exerciseRepo.save(quizExercise);
+
+        // Connect participations with submissions
+        participationModeling.setSubmissions(Set.of(modelingSubmission));
+        participationText.setSubmissions(Set.of(textSubmission));
+        participationText2.setSubmissions(Set.of(textSubmission2));
+        participationFileUpload.setSubmissions(Set.of(fileUploadSubmission));
+        participationQuiz.setSubmissions(Set.of(quizSubmission));
+        participationProgramming.setSubmissions(Set.of(programmingSubmission));
+
+        // Save participations
+        studentParticipationRepo.save(participationModeling);
+        studentParticipationRepo.save(participationText);
+        studentParticipationRepo.save(participationText2);
+        studentParticipationRepo.save(participationFileUpload);
+        studentParticipationRepo.save(participationQuiz);
+        studentParticipationRepo.save(participationProgramming);
+
+        return courseSaved;
+    }
+
+    /**
      * Adds online configuration to a course.
      *
      * @param course The course to which online configuration should be added.
@@ -667,7 +856,7 @@ public class CourseUtilService {
      * @return An empty course.
      */
     public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), studentGroupName, taGroupName, editorGroupName,
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, taGroupName, editorGroupName,
                 instructorGroupName);
         return courseRepo.save(course);
     }
@@ -688,7 +877,7 @@ public class CourseUtilService {
      * @return The newly created course.
      */
     public Course addCourseInOtherInstructionGroupAndExercise(String title) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "other-instructors");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "other-instructors");
         if ("Programming".equals(title)) {
             course = courseRepo.save(course);
 
@@ -696,6 +885,8 @@ public class CourseUtilService {
             ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
             programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
+            var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+            programmingExercise.setBuildConfig(savedBuildConfig);
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
             course.addExercises(programmingExercise);
             programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -704,15 +895,15 @@ public class CourseUtilService {
             assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         }
         else if ("Text".equals(title)) {
-            TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+            TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
             textExercise.setTitle("Text");
             course.addExercises(textExercise);
             courseRepo.save(course);
             exerciseRepo.save(textExercise);
         }
         else if (title.startsWith("ClassDiagram")) {
-            ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
-                    course);
+            ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP,
+                    DiagramType.ClassDiagram, course);
             modelingExercise.setTitle(title);
             course.addExercises(modelingExercise);
             courseRepo.save(course);
@@ -728,12 +919,12 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course addCourseWithModelingAndTextExercise() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
                 course);
         modelingExercise.setTitle("Modeling");
         course.addExercises(modelingExercise);
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
         textExercise.setTitle("Text");
         course.addExercises(textExercise);
         course = courseRepo.save(course);
@@ -748,18 +939,18 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course addCourseWithModelingAndTextAndFileUploadExercise() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
-        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
                 course);
         modelingExercise.setTitle("Modeling");
         course.addExercises(modelingExercise);
 
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
         textExercise.setTitle("Text");
         course.addExercises(textExercise);
 
-        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf", course);
         fileUploadExercise.setTitle("FileUpload");
         course.addExercises(fileUploadExercise);
 
@@ -844,16 +1035,16 @@ public class CourseUtilService {
     public Course addCourseWithExercisesAndSubmissions(String courseShortName, String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise,
             int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel, boolean assessmentDueDateInThePast)
             throws IOException {
-        Course course = CourseFactory.generateCourse(null, courseShortName, pastTimestamp, futureFutureTimestamp, new HashSet<>(), userPrefix + "student" + suffix,
+        Course course = CourseFactory.generateCourse(null, courseShortName, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), userPrefix + "student" + suffix,
                 userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
         ZonedDateTime assessmentDueDate;
-        ZonedDateTime releaseDate = pastTimestamp;
-        ZonedDateTime dueDate = pastTimestamp.plusHours(1);
+        ZonedDateTime releaseDate = PAST_TIMESTAMP;
+        ZonedDateTime dueDate = PAST_TIMESTAMP.plusHours(1);
         if (assessmentDueDateInThePast) {
-            assessmentDueDate = pastTimestamp.plusHours(2);
+            assessmentDueDate = PAST_TIMESTAMP.plusHours(2);
         }
         else {
-            assessmentDueDate = futureTimestamp.plusHours(2);
+            assessmentDueDate = FUTURE_TIMESTAMP.plusHours(2);
 
         }
         var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
@@ -1029,11 +1220,7 @@ public class CourseUtilService {
 
     public void enableMessagingForCourse(Course course) {
         CourseInformationSharingConfiguration currentConfig = course.getCourseInformationSharingConfiguration();
-        if (currentConfig == CourseInformationSharingConfiguration.DISABLED) {
-            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.MESSAGING_ONLY);
-            courseRepo.save(course);
-        }
-        else if (currentConfig == CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
+        if (currentConfig == CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
             courseRepo.save(course);
         }
@@ -1047,7 +1234,7 @@ public class CourseUtilService {
      */
     public Course createCourseWithTextExerciseAndTutor(String tutorLogin) {
         Course course = this.createCourse();
-        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP);
         StudentParticipation participation = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
         studentParticipationRepo.save(participation);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("some text", Language.ENGLISH, true);

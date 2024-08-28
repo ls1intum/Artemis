@@ -17,7 +17,9 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -96,19 +98,19 @@ public class UserTestService {
 
     private ScienceEvent scienceEvent;
 
-    private static final int numberOfStudents = 2;
+    private static final int NUMBER_OF_STUDENTS = 2;
 
-    private static final int numberOfTutors = 1;
+    private static final int NUMBER_OF_TUTORS = 1;
 
-    private static final int numberOfEditors = 1;
+    private static final int NUMBER_OF_EDITORS = 1;
 
-    private static final int numberOfInstructors = 1;
+    private static final int NUMBER_OF_INSTRUCTORS = 1;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
 
-        List<User> users = userUtilService.addUsers(testPrefix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
+        List<User> users = userUtilService.addUsers(testPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
         student = userRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userRepository.save(student);
@@ -621,7 +623,7 @@ public class UserTestService {
         params.add("status", "");
         params.add("courseIds", "");
         List<UserDTO> users = request.getList("/api/admin/users", HttpStatus.OK, UserDTO.class, params);
-        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors); // admin is not returned
+        assertThat(users).hasSize(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS); // admin is not returned
     }
 
     // Test
@@ -660,7 +662,7 @@ public class UserTestService {
         params.add("courseIds", "");
         List<User> users = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(1);
-        assertThat(users.get(0).getEmail()).isEqualTo(student.getEmail());
+        assertThat(users.getFirst().getEmail()).isEqualTo(student.getEmail());
     }
 
     // Test
@@ -806,6 +808,25 @@ public class UserTestService {
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isFalse();
+    }
+
+    // Test
+    public void addAndDeleteSshPublicKey() throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+
+        // adding invalid key should fail
+        String invalidSshKey = "invalid key";
+        request.putWithResponseBody("/api/users/sshpublickey", invalidSshKey, String.class, HttpStatus.BAD_REQUEST, true);
+
+        // adding valid key should work correctly
+        String validSshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
+        request.putWithResponseBody("/api/users/sshpublickey", validSshKey, String.class, HttpStatus.OK, true);
+        assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(validSshKey);
+
+        // deleting the key shoul work correctly
+        request.delete("/api/users/sshpublickey", HttpStatus.OK);
+        assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(null);
     }
 
     public UserRepository getUserRepository() {
