@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
@@ -177,6 +178,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
         if (isTeamExercise) {
             textExercise.setMode(ExerciseMode.TEAM);
+            TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
+            teamAssignmentConfig.setMinTeamSize(1);
+            teamAssignmentConfig.setMaxTeamSize(2);
+            textExercise.setTeamAssignmentConfig(teamAssignmentConfig);
         }
 
         textExercise.setMaxPoints(10.0);
