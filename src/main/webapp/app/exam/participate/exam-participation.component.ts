@@ -391,10 +391,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             )
             .subscribe({
                 next: () => {
-                    if (this.testExam) {
-                        // If we have a test exam, we reload the summary from the server right away
-                        this.loadAndDisplaySummary();
-                    }
                     this.submitInProgress = false;
 
                     // As we don't get the student exam from the server, we need to set the submitted flag and the submission date manually
@@ -411,6 +407,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     if (this.testExam) {
                         this.examParticipationService.resetExamLayout();
+                        this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'test-exam', this.studentExam.id]);
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {

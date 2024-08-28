@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, interval } from 'rxjs';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { Subscription, interval, lastValueFrom } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -12,7 +12,6 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
-import { lastValueFrom } from 'rxjs';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -100,6 +99,15 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
                 this.studentExams = response!;
                 this.prepareSidebarData();
             });
+
+        this.router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
+                this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId).subscribe((response: StudentExam[]) => {
+                    this.studentExams = response!;
+                    this.prepareSidebarData();
+                });
+            }
+        });
 
         if (this.course?.exams) {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
