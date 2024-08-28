@@ -11,6 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -19,6 +20,7 @@ type NavigationDirection = 'next' | 'prev';
     templateUrl: './pdf-preview.component.html',
     styleUrls: ['./pdf-preview.component.scss'],
     standalone: true,
+    imports: [ArtemisSharedModule],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
     @ViewChild('pdfContainer', { static: true }) pdfContainer: ElementRef<HTMLDivElement>;
