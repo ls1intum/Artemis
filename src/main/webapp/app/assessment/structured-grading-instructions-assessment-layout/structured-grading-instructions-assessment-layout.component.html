@@ -1,17 +1,17 @@
 @if (criteria) {
     <div class="mb-2">
         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
-            <fa-icon [icon]="faExpand" /> <span>{{ 'artemisApp.assessmentInstructions.expandAll' | artemisTranslate }}</span>
+            <fa-icon [icon]="faExpand" /> <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
         </button>
         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="collapseAll()">
-            <fa-icon [icon]="faCompress" /> <span>{{ 'artemisApp.assessmentInstructions.collapseAll' | artemisTranslate }}</span>
+            <fa-icon [icon]="faCompress" /> <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
         </button>
     </div>
 }
 @if (allowDrop) {
     <div class="alert alert-info">
         <fa-icon [icon]="faInfoCircle" />
-        <span>{{ 'artemisApp.exercise.dragDropInstruction' | artemisTranslate }}</span>
+        <span jhiTranslate="artemisApp.exercise.dragDropInstruction"></span>
     </div>
 }
 @for (criterion of criteria; track criterion; let criterionIndex = $index) {

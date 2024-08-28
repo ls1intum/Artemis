@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
@@ -56,6 +58,20 @@ public class PyrisJobService {
         var mapConfig = hazelcastInstance.getConfig().getMapConfig("pyris-job-map");
         mapConfig.setTimeToLiveSeconds(jobTimeout);
         jobMap = hazelcastInstance.getMap("pyris-job-map");
+    }
+
+    /**
+     * Creates a token for an arbitrary job, runs the provided function with the token as an argument,
+     * and stores the job in the job map.
+     *
+     * @param tokenToJobFunction the function to run with the token
+     * @return the generated token
+     */
+    public String createTokenForJob(Function<String, PyrisJob> tokenToJobFunction) {
+        var token = generateJobIdToken();
+        var job = tokenToJobFunction.apply(token);
+        jobMap.put(token, job);
+        return token;
     }
 
     public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
@@ -111,13 +127,15 @@ public class PyrisJobService {
      * 2. Retrieves the PyrisJob object associated with the provided token.
      * 3. Throws an AccessForbiddenException if the token is invalid or not provided.
      * <p>
-     * The token was previously generated via {@link #addJob(Long, Long, Long)}
+     * The token was previously generated via {@link #createTokenForJob(Function)}
      *
-     * @param request the HttpServletRequest object representing the incoming request
+     * @param request  the HttpServletRequest object representing the incoming request
+     * @param jobClass the class of the PyrisJob object to cast the retrieved job to
+     * @param <Job>    the type of the PyrisJob object
      * @return the PyrisJob object associated with the token
      * @throws AccessForbiddenException if the token is invalid or not provided
      */
-    public PyrisJob getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest request) {
+    public <Job extends PyrisJob> Job getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest request, Class<Job> jobClass) {
         var authHeader = request.getHeader("Authorization");
         if (!authHeader.startsWith("Bearer ")) {
             throw new AccessForbiddenException("No valid token provided");
@@ -127,7 +145,10 @@ public class PyrisJobService {
         if (job == null) {
             throw new AccessForbiddenException("No valid token provided");
         }
-        return job;
+        if (!jobClass.isInstance(job)) {
+            throw new ConflictException("Run ID is not a " + jobClass.getSimpleName(), "Job", "invalidRunId");
+        }
+        return jobClass.cast(job);
     }
 
     /**

@@ -7,7 +7,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -25,6 +25,7 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 import { of } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -84,7 +85,7 @@ describe('ResultComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
-            declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe)],
+            declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ParticipationService, useValue: participationServiceMock },
@@ -258,13 +259,22 @@ describe('ResultComponent', () => {
 
     it('should display the correct message for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE and FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE', () => {
         comp.templateStatus = ResultTemplateStatus.MISSING;
+
+        // Test for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE
         comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
         fixture.detectChanges();
-        const compiled = fixture.nativeElement;
-        expect(compiled.textContent).toContain('artemisApp.result.missing.programmingFailedSubmission.message');
-        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
+        let compiled = fixture.nativeElement;
+        let spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
+        expect(spanElement).not.toBeNull();
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.result.missing.programmingFailedSubmission.message');
+
+        // Test for FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE
+        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
         fixture.detectChanges();
-        expect(compiled.textContent).toContain('artemisApp.result.missing.programmingFailedSubmission.message');
+        compiled = fixture.nativeElement;
+        spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
+        expect(spanElement).not.toBeNull();
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.result.missing.programmingFailedSubmission.message');
     });
 
     it('should display the submitted text for SUBMITTED template status', () => {

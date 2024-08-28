@@ -39,9 +39,7 @@
         </a>
         @if (imageNotFound) {
             <div class="card">
-                <h5 class="card-body">
-                    <fa-icon class="px-1" [icon]="faBan" /><span>{{ 'artemisApp.markdownEditor.preview.slideNotFound' | artemisTranslate }}</span>
-                </h5>
+                <h5 class="card-body"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.slideNotFound"></span></h5>
             </div>
         }
     </div>

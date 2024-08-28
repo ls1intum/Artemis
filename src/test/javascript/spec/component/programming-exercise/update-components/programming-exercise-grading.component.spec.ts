@@ -22,6 +22,7 @@ import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.d
 import { NgbAlertsMocksModule } from '../../../helpers/mocks/directive/ngbAlertsMocks.module';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
@@ -46,6 +47,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(PresentationScoreComponent),
                 MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
