@@ -58,9 +58,6 @@ export class SubmissionResultStatusComponent implements OnChanges {
     }
 
     private setShouldShowResult(afterDueDate: boolean) {
-        if (this.exercise.type === ExerciseType.TEXT) {
-            this.showUngradedResults = !!this.exercise.allowFeedbackRequests;
-        }
         if (this.exercise.type === ExerciseType.QUIZ) {
             this.shouldShowResult = !!this.studentParticipation?.results?.length;
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
