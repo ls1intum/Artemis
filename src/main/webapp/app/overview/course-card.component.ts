@@ -19,6 +19,8 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['course-card.scss'],
 })
 export class CourseCardComponent implements OnChanges {
+    protected readonly faArrowRight = faArrowRight;
+
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     @Input() course: Course;
     @Input() hasGuidedTour: boolean;
@@ -33,9 +35,6 @@ export class CourseCardComponent implements OnChanges {
     totalAbsoluteScore: number;
 
     courseColor: string;
-
-    // Icons
-    readonly faArrowRight = faArrowRight;
 
     // ngx
     ngxDoughnutData: any[] = [

@@ -49,7 +49,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     async ngOnInit() {
         this.loadAndFilterCourses();
         (await this.teamService.teamAssignmentUpdates).subscribe();
-        this.courseService.setCourseOverviewBackground();
+        this.courseService.enableCourseOverviewBackground();
     }
 
     /**
@@ -59,7 +59,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
         if (this.quizExercisesChannels) {
             this.quizExercisesChannels.forEach((channel) => this.jhiWebsocketService.unsubscribe(channel));
         }
-        this.courseService.resetCourseOverviewBackground();
+        this.courseService.disableCourseOverviewBackground();
     }
 
     loadAndFilterCourses() {

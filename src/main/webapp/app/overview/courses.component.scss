@@ -44,6 +44,7 @@
     }
 }
 
+/** We adjust bottom paddings dynamically to be consistent with the spacing between cards */
 @media screen and (min-width: 1715px) {
     .col-xl-3 {
         padding-bottom: 1.5rem !important;

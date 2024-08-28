@@ -4,12 +4,25 @@
     max-width: 400px;
     transition: transform 0.2s linear;
 
+    @media screen and (max-width: 768px) and (min-width: 478px) {
+        max-width: 550px !important;
+    }
+
+    @media screen and (min-width: 2000px) {
+        max-width: 500px !important;
+    }
+
+    @media screen and (min-width: 2700px) {
+        max-width: 600px !important;
+    }
+
     &:hover {
         transform: scale(1.012);
         background-color: var(--hover-slightly-darker-body-bg);
     }
 
     .card-header {
+        // needed, otherwise hover effect won't work due to stretched-link class
         z-index: 2;
         position: relative;
         height: 85px;
@@ -50,12 +63,24 @@
     .card-body {
         .information-box-wrapper {
             height: 135px;
+
+            @media screen and (min-width: 2000px) {
+                margin-left: 1rem !important;
+            }
         }
 
         .chart-container {
             display: flex;
             align-items: center;
             justify-content: center;
+
+            @media screen and (max-width: 768px) and (min-width: 478px) {
+                justify-content: flex-end !important;
+            }
+
+            @media screen and (min-width: 2000px) {
+                justify-content: flex-end !important;
+            }
 
             .chart-level {
                 z-index: 2;
@@ -64,8 +89,15 @@
         }
 
         .btn-wrapper {
+            // needed, otherwise button won't work due to stretched-link class
             z-index: 2;
             position: relative;
+        }
+
+        .btn-management {
+            @media screen and (min-width: 2000px) {
+                margin-left: 1rem !important;
+            }
         }
 
         .exercise-title {
