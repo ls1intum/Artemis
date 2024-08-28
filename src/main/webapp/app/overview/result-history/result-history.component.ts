@@ -27,7 +27,7 @@ export class ResultHistoryComponent implements OnChanges {
 
     ngOnChanges(): void {
         this.showPreviousDivider = this.results.length > MAX_RESULT_HISTORY_LENGTH;
-        this.displayedResults = this.results.filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && !result.successful));
+        this.displayedResults = this.results.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful !== undefined);
         const successfulResultsLength = this.displayedResults.length;
         if (successfulResultsLength > MAX_RESULT_HISTORY_LENGTH) {
             this.displayedResults = this.displayedResults.slice(successfulResultsLength - MAX_RESULT_HISTORY_LENGTH);

@@ -66,15 +66,9 @@ public class TextExerciseFeedbackService {
 
         List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
 
-        long countOfAthenaResultsInProcessOrSuccessful = athenaResults.stream().filter(result -> result.isSuccessful() == null || result.isSuccessful() == Boolean.TRUE).count();
+        long countOfAthenaResults = athenaResults.size();
 
-        long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
-
-        // TODO For testing purposes, will be configurable in the future
-        if (countOfAthenaResultsInProcessOrSuccessful >= 10) {
-            throw new BadRequestAlertException("Cannot send additional AI feedback requests now. Try again later!", "participation", "preconditions not met");
-        }
-        if (countOfSuccessfulRequests >= 10) {
+        if (countOfAthenaResults >= 10) {
             throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
         }
     }

@@ -318,12 +318,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         changedParticipation.results?.last()!.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                         changedParticipation.results?.last()!.successful !== undefined
                     ) {
-                        // undefined result success is being used to indicate the the feedback is being processed
-                        if (changedParticipation.results?.last()!.successful) {
-                            this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
-                        } else if (!changedParticipation.results?.last()!.successful) {
-                            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
-                        }
+                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
                     }
                     if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
                         this.exercise.studentParticipations = this.studentParticipations.map((participation) =>

@@ -58,7 +58,7 @@
                             <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle" />
                         </span>
                     }
-                    @if (!isInSidebarCard && !!result!.successful) {
+                    @if (!isInSidebarCard) {
                         <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
                     }
                 </span>

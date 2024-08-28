@@ -20,6 +20,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { SubmissionType } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -250,6 +251,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             if (!window.confirm(confirmLockRepository)) {
                 return;
             }
+        }
+
+        if (this.exercise.type === ExerciseType.TEXT && this.gradedParticipation?.submissions!.last()!.type === SubmissionType.EXTERNAL) {
+            this.alertService.info('You have to submit again before receiving new Feedback');
+            return;
         }
         this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
             next: (participation: StudentParticipation) => {
