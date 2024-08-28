@@ -619,7 +619,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(any(), resultCaptor.capture());
 
-        Result invokedTextResult = resultCaptor.getAllValues().getFirst();
+        Result invokedTextResult = resultCaptor.getAllValues().get(1);
         assertThat(invokedTextResult).isNotNull();
         assertThat(invokedTextResult.getId()).isNotNull();
         assertThat(invokedTextResult.isSuccessful()).isTrue();
@@ -637,7 +637,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         this.exerciseRepository.save(programmingExercise);
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
+        this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
 
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
@@ -647,6 +647,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
+
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
@@ -657,6 +658,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(any(), any());
         doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
@@ -700,6 +703,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         Result invokedTextResult = resultCaptor.getAllValues().getFirst();
         assertThat(invokedTextResult).isNotNull();
+        assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedTextResult.getFeedbacks()).hasSize(0);
     }
 
     @Test
