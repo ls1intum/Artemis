@@ -1,3 +1,5 @@
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+
 jest.mock('pdfjs-dist', () => {
     return {
         getDocument: jest.fn(() => ({
@@ -39,6 +41,7 @@ import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.compone
 import { ElementRef } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('PdfPreviewComponent', () => {
     let component: PdfPreviewComponent;
@@ -79,6 +82,7 @@ describe('PdfPreviewComponent', () => {
                 { provide: AttachmentService, useValue: attachmentServiceMock },
                 { provide: AttachmentUnitService, useValue: attachmentUnitServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
