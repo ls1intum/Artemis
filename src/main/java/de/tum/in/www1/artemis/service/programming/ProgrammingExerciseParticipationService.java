@@ -207,8 +207,7 @@ public class ProgrammingExerciseParticipationService {
 
         if (exercise.isTestExamExercise()) {
             if (withSubmissions) {
-                participationOptional = studentParticipationRepository.findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(exercise.getId(), username,
-                        isTestRun);
+                participationOptional = studentParticipationRepository.findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
             }
             else {
                 participationOptional = studentParticipationRepository.findFirstByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(exercise.getId(), username, isTestRun);

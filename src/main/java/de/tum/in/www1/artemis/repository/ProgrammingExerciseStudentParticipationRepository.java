@@ -187,8 +187,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(@Param("exerciseId") long exerciseId,
+    @Query("""
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.submissions s
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :username
+                AND participation.testRun = :testRun
+            ORDER BY participation.id DESC
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
 
     @Query("""
