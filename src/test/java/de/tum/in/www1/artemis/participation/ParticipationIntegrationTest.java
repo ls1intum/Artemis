@@ -560,7 +560,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
 
-        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
@@ -630,7 +630,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("text");
 
-        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
