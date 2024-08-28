@@ -571,6 +571,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
+        participationRepo.save(textParticipation);
 
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
@@ -640,7 +641,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
-
+        participationRepo.save(textParticipation);
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
@@ -668,11 +669,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.getFeedbacks()).hasSize(0);
 
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
-
-        verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(resultCaptor.capture().getParticipation(), any());
+        // only 1 broadcast is done to let the student know that feedback generation was started
+        verify(resultWebsocketService, timeout(2000).times(1)).broadcastNewResult(resultCaptor.capture().getParticipation(), any());
 
         Result invokedTextResult = resultCaptor.getAllValues().get(1);
-        assertThat(invokedTextResult).isNull();
+        assertThat(invokedTextResult).isNotNull();
+        assertThat(invokedResult.isSuccessful()).isNull();
+        assertThat(invokedResult.getFeedbacks()).hasSize(0);
 
         localRepo.resetLocalRepo();
     }
