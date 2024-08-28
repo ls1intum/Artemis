@@ -552,6 +552,6 @@ public class ResultService {
             int taskNumber = tasks.stream().filter(task -> task.getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(detail.testCaseName()))).findFirst()
                     .map(task -> tasks.stream().toList().indexOf(task) + 1).orElse(0);
             return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber);
-        }).collect(Collectors.toList());
+        }).toList();
     }
 }
