@@ -69,7 +69,6 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
     });
 
     it('should load participation vcs access log', () => {
-        // Trigger ngOnInit
         component.ngOnInit();
         expect(component).toBeTruthy();
         expect(participationVcsAccessLogSpy).toHaveBeenCalled();
@@ -78,7 +77,6 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
     });
 
     it('should load template repository vcs access log', () => {
-        // Trigger ngOnInit
         route.params = of({ exerciseId: '10', repositoryType: 'TEMPLATE' });
         component.ngOnInit();
         expect(repositoryVcsAccessLogSpy).toHaveBeenCalled();
