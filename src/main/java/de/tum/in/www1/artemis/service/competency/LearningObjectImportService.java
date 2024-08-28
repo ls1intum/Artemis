@@ -231,25 +231,40 @@ public class LearningObjectImportService {
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(newExercise, programmingExerciseRepository);
             newExercise.setCourse(course);
             newExercise.forceNewProjectKey();
-            newExercise.setTasks(null);
 
-            newExercise.setExerciseHints(new HashSet<>());
-            newExercise.setTestCases(new HashSet<>());
-            newExercise.setStaticCodeAnalysisCategories(new HashSet<>());
-            newExercise.setTeams(new HashSet<>());
-            newExercise.setGradingCriteria(new HashSet<>());
-            newExercise.setStudentParticipations(new HashSet<>());
-            newExercise.setTutorParticipations(new HashSet<>());
-            newExercise.setExampleSubmissions(new HashSet<>());
-            newExercise.setAttachments(new HashSet<>());
-            newExercise.setPosts(new HashSet<>());
-            newExercise.setPlagiarismCases(new HashSet<>());
-            newExercise.setCompetencies(new HashSet<>());
+            clearProgrammingExerciseAttributes(newExercise);
 
             return programmingExerciseImportService.importProgrammingExercise(programmingExercise, newExercise, false, false, false);
         }
     }
 
+    private void clearProgrammingExerciseAttributes(ProgrammingExercise programmingExercise) {
+        programmingExercise.setTasks(null);
+        programmingExercise.setExerciseHints(new HashSet<>());
+        programmingExercise.setTestCases(new HashSet<>());
+        programmingExercise.setStaticCodeAnalysisCategories(new HashSet<>());
+        programmingExercise.setTeams(new HashSet<>());
+        programmingExercise.setGradingCriteria(new HashSet<>());
+        programmingExercise.setStudentParticipations(new HashSet<>());
+        programmingExercise.setTutorParticipations(new HashSet<>());
+        programmingExercise.setExampleSubmissions(new HashSet<>());
+        programmingExercise.setAttachments(new HashSet<>());
+        programmingExercise.setPosts(new HashSet<>());
+        programmingExercise.setPlagiarismCases(new HashSet<>());
+        programmingExercise.setCompetencies(new HashSet<>());
+    }
+
+    /**
+     * Imports or loads an exercise.
+     *
+     * @param exercise       The source exercise for the import
+     * @param course         The course to import the exercise into
+     * @param findFunction   The function to find an existing exercise by title
+     * @param loadForImport  The function to load an exercise for import
+     * @param importFunction The function to import the exercise
+     * @return The imported or loaded exercise
+     * @param <E> The type of the exercise
+     */
     private <E extends Exercise> Exercise importOrLoadExercise(E exercise, Course course, BiFunction<String, Long, Optional<E>> findFunction, Function<Long, E> loadForImport,
             BiFunction<E, E, E> importFunction) {
         Optional<E> foundByTitle = findFunction.apply(exercise.getTitle(), course.getId());
@@ -266,6 +281,15 @@ public class LearningObjectImportService {
         }
     }
 
+    /**
+     * Imports or loads a lecture unit. If the lecture unit needs to be imported, the lecture is imported or loaded as well.
+     *
+     * @param sourceCourseCompetencies The source course competencies to import from
+     * @param idToImportedCompetency   A map from the source competency IDs to the imported competencies
+     * @param courseToImportInto       The course to import the lecture unit into
+     * @param titleToImportedLectures  A map from the source lecture titles to the imported lectures
+     * @param importedLectureUnits     The set of imported lecture units
+     */
     private void importOrLoadLectureUnits(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
             Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) {
         for (CourseCompetency sourceCourseCompetency : sourceCourseCompetencies) {
@@ -320,6 +344,17 @@ public class LearningObjectImportService {
         }
     }
 
+    /**
+     * Finds the earliest relevant time and determines the time offset to apply to the dates of the imported learning objects.
+     *
+     * @param importedExercises          The imported exercises
+     * @param importedLectures           The imported lectures
+     * @param importedLectureUnits       The imported lecture units
+     * @param importedCourseCompetencies The imported competencies
+     * @param referenceDate              The reference date to calculate the offset from
+     * @param isReleaseDate              Whether the offset is for the release date or the due date
+     * @return The time offset to apply
+     */
     private long determineTimeOffset(Set<Exercise> importedExercises, Set<Lecture> importedLectures, Set<LectureUnit> importedLectureUnits,
             Set<CourseCompetency> importedCourseCompetencies, ZonedDateTime referenceDate, boolean isReleaseDate) {
         Optional<ZonedDateTime> earliestTime;

@@ -182,9 +182,9 @@
                 "importLecturesLabel": "Vorlesungen importieren",
                 "importLecturesTooltip": "Importiert alle Vorlesungen, die mit den importierten Kompetenzen verknüpft sind oder verknüpft sie, wenn eine Vorlesung mit diesem Namen bereits existiert",
                 "referenceDateLabel": "Referenzdatum",
-                "referenceDateTooltip": "Das Referenzdatum wird verwendet, um das Fälligkeitsdatum bzw. Veröffentlichungsdatum der importierten Aufgaben und Vorlesungen zu berechnen.",
+                "referenceDateTooltip": "Das Referenzdatum wird verwendet, um alle Daten der importierten Resourcen zu setzen. Das früheste Datum dieses Typs wird auf das Referenzdatum gesetzt und alle anderen Daten werden relativ dazu gesetzt.",
                 "referenceDateTypeLabel": "Referenzdatumstyp",
-                "referenceDateTypeTooltip": "Der Referenzdatumstyp wird verwendet, um das Fälligkeitsdatum der importierten Aufgaben und Vorlesungen zu berechnen. Wenn der Referenzdatumstyp auf 'Veröffentlichungsdatum' gesetzt ist, wird das Fälligkeitsdatum auf Basis des Veröffentlichungsdatums der importierten Aufgaben und Vorlesungen berechnet. Wenn der Referenzdatumstyp auf 'Fälligkeitsdatum' gesetzt ist, wird das Fälligkeitsdatum auf Basis des Fälligkeitsdatums der importierten Aufgaben und Vorlesungen berechnet.",
+                "referenceDateTypeTooltip": "'Veröffentlichungsdatum' bezieht sich auf das Veröffentlichungsdatum von Aufgaben und Vorlesungseinheiten sowie das Sichtbarkeitsdatum von Vorlesungen. 'Fälligkeitsdatum' bezieht sich auf das Fälligkeitsdatum von Aufgaben und Kompetenzen sowie Das Enddatum von Vorlesungen.",
                 "referenceDateType": {
                     "noSelection": "-- Wähle zuerst ein Referenzdatum --",
                     "releaseDate": "Veröffentlichungsdatum",
