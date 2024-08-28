@@ -16,7 +16,7 @@
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    @if (course.presentationScore !== 0) {
+                    @if (course.presentationScore) {
                         <th jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -58,7 +58,7 @@
                         <td>{{ fileUploadExercise.maxPoints }}</td>
                         <td>{{ fileUploadExercise.bonusPoints }}</td>
                         <td>{{ exerciseService.isIncludedInScore(fileUploadExercise) }}</td>
-                        @if (course.presentationScore !== 0) {
+                        @if (course.presentationScore) {
                             <td>{{ fileUploadExercise.presentationScoreEnabled }}</td>
                         }
                         <td>{{ fileUploadExercise.filePattern }}</td>

@@ -23,7 +23,7 @@
                     <th class="d-md-table-cell">
                         <span jhiTranslate="artemisApp.exercise.mode"></span>
                     </th>
-                    @if (course.presentationScore !== 0) {
+                    @if (course.presentationScore) {
                         <th class="d-md-table-cell" jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -147,7 +147,7 @@
                                 {{ programmingExercise.allowOnlineEditor ? ('artemisApp.exercise.yes' | artemisTranslate) : ('artemisApp.exercise.no' | artemisTranslate) }}
                             </div>
                         </td>
-                        @if (course.presentationScore !== 0) {
+                        @if (course.presentationScore) {
                             <td class="d-md-table-cell">{{ programmingExercise.presentationScoreEnabled }}</td>
                         }
                         <td class="d-md-table-cell">

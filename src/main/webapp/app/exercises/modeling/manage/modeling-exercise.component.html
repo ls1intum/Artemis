@@ -16,7 +16,7 @@
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    @if (course.presentationScore !== 0) {
+                    @if (course.presentationScore) {
                         <th jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -58,7 +58,7 @@
                         <td id="modeling-exercise-{{ modelingExercise.id }}-maxPoints">{{ modelingExercise.maxPoints }}</td>
                         <td id="modeling-exercise-{{ modelingExercise.id }}-bonusPoints">{{ modelingExercise.bonusPoints }}</td>
                         <td id="modeling-exercise-{{ modelingExercise.id }}-included">{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
-                        @if (course.presentationScore !== 0) {
+                        @if (course.presentationScore) {
                             <td>{{ modelingExercise.presentationScoreEnabled }}</td>
                         }
                         <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
