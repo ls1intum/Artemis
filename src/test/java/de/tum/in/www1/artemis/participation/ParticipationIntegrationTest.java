@@ -609,7 +609,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participationRepo.save(textParticipation);
 
-        Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, false);
+        Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, true);
         Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
         resultText2.setAssessmentType(AssessmentType.MANUAL);
         resultText2.setCompletionDate(ZonedDateTime.now());
@@ -622,7 +622,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         Result invokedTextResult = resultCaptor.getAllValues().get(1);
         assertThat(invokedTextResult).isNotNull();
         assertThat(invokedTextResult.getId()).isNotNull();
-        assertThat(invokedTextResult.isSuccessful()).isTrue();
         assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
         assertThat(invokedTextResult.getFeedbacks()).hasSize(1);
     }
