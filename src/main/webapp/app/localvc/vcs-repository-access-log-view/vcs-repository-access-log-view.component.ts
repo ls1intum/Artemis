@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
@@ -16,7 +16,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     standalone: true,
     imports: [ArtemisSharedCommonModule],
 })
-export class VcsRepositoryAccessLogViewComponent implements OnInit {
+export class VcsRepositoryAccessLogViewComponent implements OnInit, OnDestroy {
     participationId: number;
     vcsAccessLogEntries: VcsAccessLogDTO[];
     protected dialogErrorSource = new Subject<string>();
@@ -46,6 +46,10 @@ export class VcsRepositoryAccessLogViewComponent implements OnInit {
                 this.loadVcsAccessLog(exerciseId, repositoryType);
             }
         });
+    }
+
+    ngOnDestroy(): void {
+        this.paramSub.unsubscribe();
     }
 
     public loadVcsAccessLogForParticipation(participationId: number) {
