@@ -1,4 +1,3 @@
-import * as ace from 'brace';
 import { DebugElement } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -44,9 +43,6 @@ import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-st
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextEditorComponent', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist.js');
-
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
     let debugElement: DebugElement;

@@ -1,4 +1,3 @@
-import * as ace from 'brace';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
@@ -86,8 +85,6 @@ function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerCom
 }
 
 describe('CodeEditorTutorAssessmentContainerComponent', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist.js');
     let comp: CodeEditorTutorAssessmentContainerComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentContainerComponent>;
     let debugElement: DebugElement;
@@ -267,7 +264,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         // Stub
         const getFilesWithContentStub = jest.spyOn(repositoryFileService, 'getFilesWithContent');
         getFilesWithContentStub.mockReturnValue(of(templateFileSessionReturn));
-        // Stub for ace editor
+        // Stub for code editor
         const getFileStub = jest.spyOn(repositoryFileService, 'getFile');
         const fileSubject = new BehaviorSubject({ fileContent: 'new file text' });
         getFileStub.mockReturnValue(fileSubject);

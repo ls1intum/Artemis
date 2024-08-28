@@ -16,7 +16,6 @@ import { CommitState, EditorState } from 'app/exercises/programming/shared/code-
 import { MockModule } from 'ng-mocks';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 // Cartesian product helper function
@@ -50,7 +49,7 @@ describe('CodeEditorActionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(AceEditorModule), MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [CodeEditorActionsComponent, TranslatePipeMock, FeatureToggleDirective],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },

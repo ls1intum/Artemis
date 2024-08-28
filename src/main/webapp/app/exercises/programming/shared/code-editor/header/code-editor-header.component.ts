@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faGear } from '@fortawesome/free-solid-svg-icons';
+import { MAX_TAB_SIZE } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @Component({
     selector: 'jhi-code-editor-header',
