@@ -136,7 +136,7 @@ Automated Jenkins Server Setup
 The following steps describe how to deploy a pre-configured version of the Jenkins server.
 This is ideal as a quickstart for developers. For a more detailed setup, see
 `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
-In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config.yml``) and push tokens.
+In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config-localvc.yml``) and push tokens.
 
 1. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
 
@@ -146,9 +146,9 @@ In a production setup, you have to at least change the user credentials (in the 
        docker compose -f docker/<Jenkins setup to be launched>.yml up -d
 
    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
-   in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
+   in ``jenkins-casc-config-localvc.yml`` (defaults to ``artemis_admin`` as both username and password).
 
-2. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
+2. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config-localvc.yml``:
 
 .. code:: yaml
 
