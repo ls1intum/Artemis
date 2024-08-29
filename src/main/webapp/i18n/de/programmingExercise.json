@@ -316,7 +316,7 @@
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
                     "totalItems": "Insgesamt {{count}} Elemente",
-                    "error": "Ein Fehler ist beim Laden des Feedback aufgetreten."
+                    "error": "Beim Laden des Feedback ist ein Fehler aufgetreten."
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
