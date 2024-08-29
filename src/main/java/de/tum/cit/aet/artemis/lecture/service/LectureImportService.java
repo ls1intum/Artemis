@@ -55,8 +55,9 @@ public class LectureImportService {
     /**
      * Import the {@code importedLecture} including its lecture units and attachments to the {@code course}
      *
-     * @param importedLecture The lecture to be imported
-     * @param course          The course to import to
+     * @param importedLecture    The lecture to be imported
+     * @param course             The course to import to
+     * @param importLectureUnits Whether to import the lecture units of the lecture
      * @return The lecture in the new course
      */
     @Transactional // Required to circumvent errors with ordered collection of lecture units
