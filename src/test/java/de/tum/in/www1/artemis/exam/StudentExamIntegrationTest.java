@@ -1655,7 +1655,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
+            participationUtilService.addResultToSubmission(participation, latestSubmission.orElseThrow());
         }
         // evaluate quizzes
         request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
@@ -1843,7 +1843,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
+            participationUtilService.addResultToSubmission(participation, latestSubmission.orElseThrow());
         }
         exam.setPublishResultsDate(ZonedDateTime.now());
         exam = examRepository.save(exam);
@@ -2283,7 +2283,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
+            participationUtilService.addResultToSubmission(participation, latestSubmission.orElseThrow());
         }
         exam2.setPublishResultsDate(ZonedDateTime.now());
         exam2 = examRepository.save(exam2);

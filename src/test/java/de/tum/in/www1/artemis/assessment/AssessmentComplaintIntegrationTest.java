@@ -168,7 +168,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
         // 2 complaints are allowed, the course is created with 3 max complaints
-        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission().getParticipation(), 2, ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 2, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaintRequest, HttpStatus.CREATED);
 
@@ -180,7 +180,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission().getParticipation(), 3, ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 3, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
 
@@ -195,7 +195,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
-        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission().getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 3, ComplaintType.MORE_FEEDBACK);
 
         request.post("/api/complaints", complaintRequest, HttpStatus.CREATED);
 
@@ -400,7 +400,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         final var received = request.get("/api/complaints", HttpStatus.OK, Complaint.class, params);
 
-        assertThat(received.getResult().getSubmission().getParticipation()).as("Complaint should not contain participation").isNull();
+        assertThat(received.getResult().getSubmission()).as("Complaint should not contain submission").isNull();
     }
 
     @Test
@@ -575,8 +575,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSubmittedComplaints_byComplaintType() throws Exception {
-        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission().getParticipation(), 1, ComplaintType.COMPLAINT);
-        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission().getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 1, ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 2, ComplaintType.MORE_FEEDBACK);
 
         String complaintsUrl = "/api/complaints";
         LinkedMultiValueMap<String, String> paramsExercise = new LinkedMultiValueMap<>();

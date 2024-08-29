@@ -133,15 +133,14 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         var automaticFeedback = new Feedback().credits(0.0).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
         var automaticFeedbacks = new ArrayList<Feedback>();
         automaticFeedbacks.add(automaticFeedback);
-        var newManualResult = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation,
-                TEST_PREFIX + "tutor1", automaticFeedbacks);
-        programmingExerciseStudentParticipation.addResult(newManualResult);
+        var newManualResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, null, programmingSubmission, TEST_PREFIX + "tutor1",
+                automaticFeedbacks);
         // Set submission of newResult
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(newManualResult, programmingExerciseStudentParticipation, "123");
 
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
-        manualResult = ParticipationFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
+        manualResult = ParticipationFactory.generateResult(true, 90D).submission(programmingSubmission);
         manualResult.setFeedbacks(feedbacks);
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);

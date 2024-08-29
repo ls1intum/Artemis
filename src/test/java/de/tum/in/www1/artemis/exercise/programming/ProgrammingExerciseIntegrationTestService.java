@@ -73,6 +73,7 @@ import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -92,6 +93,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
@@ -101,6 +103,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
@@ -203,6 +206,9 @@ class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     private Course course;
 
@@ -333,7 +339,10 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        participationUtilService.addResultToParticipation(null, null, participation);
+        Submission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        submission = submissionRepository.save(submission);
+        participationUtilService.addResultToSubmission(null, null, submission);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
@@ -346,7 +355,10 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        participationUtilService.addResultToParticipation(null, null, participation);
+        Submission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        submission = submissionRepository.save(submission);
+        participationUtilService.addResultToSubmission(null, null, submission);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);

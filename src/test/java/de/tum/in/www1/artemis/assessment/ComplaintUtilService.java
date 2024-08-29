@@ -89,13 +89,13 @@ public class ComplaintUtilService {
      * Creates and saves a given number of complaints for the given participation and student.
      *
      * @param studentLogin       The student's login.
-     * @param participation      The participation to create the complaints for.
+     * @param submission         The submission to create the complaints for.
      * @param numberOfComplaints The number of complaints to create.
      * @param complaintType      The type of the complaints to create.
      */
-    public void addComplaints(String studentLogin, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
+    public void addComplaints(String studentLogin, Submission submission, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
-            Result dummyResult = new Result().participation(participation);
+            Result dummyResult = new Result().submission(submission);
             dummyResult = resultRepo.save(dummyResult);
             Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);

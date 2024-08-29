@@ -179,6 +179,7 @@ public class ComplaintResource {
         if (!isAtLeastInstructor && (!isTeamParticipation || !isTutorOfTeam)) {
             complaint.filterSensitiveInformation();
         }
+        complaint.getResult().setSubmission(null);
         return ResponseEntity.ok(complaint);
     }
 

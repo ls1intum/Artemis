@@ -134,11 +134,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     private ModelingExercise examModelingExercise;
 
-    private SolutionProgrammingExerciseParticipation solutionParticipation;
+    private ProgrammingSubmission solutionProgrammingSubmission;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     private StudentParticipation studentParticipation;
+
+    private ProgrammingSubmission studentProgrammingSubmission;
 
     private final int NUMBER_OF_STUDENTS = 3;
 
@@ -149,7 +151,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
-        solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseRepository
+                .findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, TEST_PREFIX + "student1");
 
@@ -159,6 +162,10 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         modelingExerciseRepository.save(modelingExercise);
         studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
 
+        studentProgrammingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        studentProgrammingSubmission.setParticipation(studentParticipation);
+        studentProgrammingSubmission = submissionRepository.save(studentProgrammingSubmission);
+
         Exam exam = examUtilService.addExamWithExerciseGroup(this.course, true);
         this.examModelingExercise = new ModelingExercise();
         this.examModelingExercise.setMaxPoints(100D);
@@ -166,11 +173,20 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         this.modelingExerciseRepository.save(this.examModelingExercise);
         this.examRepository.save(exam);
 
-        Result result = ParticipationFactory.generateResult(true, 200D).participation(programmingExerciseStudentParticipation);
+        Result result = ParticipationFactory.generateResult(true, 200D);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
+        programmingSubmission.addResult(result);
+        submissionRepository.save(programmingSubmission);
+
+        solutionProgrammingSubmission = new ProgrammingSubmission();
+        solutionProgrammingSubmission.setParticipation(solutionParticipation);
+        submissionRepository.save(solutionProgrammingSubmission);
 
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
@@ -179,7 +195,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered() throws Exception {
-        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, studentProgrammingSubmission);
         result = participationUtilService.addSampleFeedbackToResults(result);
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
@@ -195,7 +211,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnTheResultDetailsForAStudentParticipation_studentForbidden() throws Exception {
-        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, studentProgrammingSubmission);
         result = participationUtilService.addSampleFeedbackToResults(result);
 
         request.getList("/api/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
@@ -205,7 +221,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_studentForbidden() throws Exception {
-        Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, solutionProgrammingSubmission);
         result = participationUtilService.addSampleFeedbackToResults(result);
         request.getList("/api/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
                 Feedback.class);
@@ -214,7 +230,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNotFoundForNonExistingResult() throws Exception {
-        Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, solutionProgrammingSubmission);
         participationUtilService.addSampleFeedbackToResults(result);
         request.getList("/api/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + UUID.randomUUID().getMostSignificantBits() + "/details",
                 HttpStatus.NOT_FOUND, Feedback.class);
@@ -223,7 +239,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestForNonMatchingParticipationId() throws Exception {
-        Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, solutionProgrammingSubmission);
         participationUtilService.addSampleFeedbackToResults(result);
         request.getList("/api/participations/" + 1337 + "/results/" + result.getId() + "/details", HttpStatus.BAD_REQUEST, Feedback.class);
     }
@@ -241,7 +257,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(submissionType).submitted(true)
                 .submissionDate(submissionDate);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(programmingExerciseStudentParticipation, programmingSubmission);
+        Result result = participationUtilService.addResultToSubmission(programmingExerciseStudentParticipation, programmingSubmission);
 
         result.setRatedIfNotAfterDueDate();
         assertThat(result.isRated()).isSameAs(shouldBeRated);
@@ -255,7 +271,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
         var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(programmingExerciseStudentParticipation, submission);
+        Result result = participationUtilService.addResultToSubmission(programmingExerciseStudentParticipation, submission);
 
         result.setRatedIfNotAfterDueDate();
         // The participation is a test run -> should not be rated
@@ -437,7 +453,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getResult() throws Exception {
-        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, studentProgrammingSubmission);
         result = participationUtilService.addSampleFeedbackToResults(result);
         Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK, Result.class);
         assertThat(returnedResult).isNotNull().isEqualTo(result);
@@ -446,7 +462,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getResult_asStudent() throws Exception {
-        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, studentProgrammingSubmission);
         request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
     }
 
@@ -520,7 +536,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(Long.MAX_VALUE));
 
-        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, studentProgrammingSubmission);
         result = participationUtilService.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
         assertThat(resultRepository.existsById(result.getId())).isFalse();
@@ -530,7 +546,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteResult_wrongParticipationId() throws Exception {
-        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, studentProgrammingSubmission);
         result = participationUtilService.addSampleFeedbackToResults(result);
         long randomId = 1653;
         request.delete("/api/participations/" + randomId + "/results/" + result.getId(), HttpStatus.BAD_REQUEST);
@@ -540,7 +556,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteResultStudent() throws Exception {
-        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, studentProgrammingSubmission);
         result = participationUtilService.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN);
     }
@@ -628,7 +644,10 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         course.addExercises(modelingExercise);
         modelingExerciseRepository.save(modelingExercise);
         var participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        var result = participationUtilService.addResultToParticipation(null, null, participation);
+        var modelingSubmission = ParticipationFactory.generateModelingSubmission("", true);
+        modelingSubmission.setParticipation(participation);
+        modelingSubmission = submissionRepository.save(modelingSubmission);
+        var result = participationUtilService.addResultToSubmission(null, null, modelingSubmission);
         request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -654,14 +673,14 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         textSubmission = submissionRepository.save(textSubmission);
 
         // result 1
-        var result1 = participationUtilService.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, TEST_PREFIX + "instructor1",
+        var result1 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), studentProgrammingSubmission, TEST_PREFIX + "instructor1",
                 new ArrayList<>());
         result1.setRated(true);
         result1 = participationUtilService.addFeedbackToResults(result1);
         result1.setSubmission(textSubmission);
 
         // result 2
-        var result2 = participationUtilService.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, TEST_PREFIX + "tutor1",
+        var result2 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), studentProgrammingSubmission, TEST_PREFIX + "tutor1",
                 new ArrayList<>());
         result2.setRated(true);
         result2 = participationUtilService.addFeedbackToResults(result2);
@@ -701,15 +720,15 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         // result 1
-        Result result1 = participationUtilService.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation,
-                TEST_PREFIX + "instructor1", new ArrayList<>());
+        Result result1 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), programmingSubmission, TEST_PREFIX + "instructor1",
+                new ArrayList<>());
         result1.setRated(true);
         result1 = participationUtilService.addFeedbackToResults(result1);
         result1.setSubmission(programmingSubmission);
 
         // result 2
-        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation,
-                TEST_PREFIX + "tutor1", new ArrayList<>());
+        Result result2 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), programmingSubmission, TEST_PREFIX + "tutor1",
+                new ArrayList<>());
         result2.setRated(true);
         result2 = participationUtilService.addFeedbackToResults(result2);
         result2.setSubmission(programmingSubmission);

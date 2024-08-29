@@ -1043,7 +1043,10 @@ public class CourseTestService {
                 student1);
         practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
-        Result practiceResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
+        Submission practiceSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        practiceSubmission.setParticipation(practiceParticipation);
+        practiceSubmission = submissionRepository.save(practiceSubmission);
+        Result practiceResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceSubmission);
         practiceResult.setRated(false);
         resultRepo.save(practiceResult);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(practiceResult, practiceParticipation, "ghjk");
@@ -2905,7 +2908,7 @@ public class CourseTestService {
         complaint.setResult(result1);
         complaint = complaintRepo.save(complaint);
 
-        complaint.getResult().setParticipation(null);
+        complaint.getResult().setSubmission(null);
 
         // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", complaint);
@@ -2938,7 +2941,7 @@ public class CourseTestService {
         feedbackRequest.setResult(result2);
         feedbackRequest = complaintRepo.save(feedbackRequest);
 
-        feedbackRequest.getResult().setParticipation(null);
+        feedbackRequest.getResult().setSubmission(null);
 
         ComplaintResponse feedbackResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", feedbackRequest);
         feedbackResponse.getComplaint().setAccepted(true);

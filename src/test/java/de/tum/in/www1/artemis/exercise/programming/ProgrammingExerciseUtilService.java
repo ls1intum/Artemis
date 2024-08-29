@@ -842,6 +842,21 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
+     * Adds a programming submission to result and participation of a programming exercise.
+     *
+     * @param participation The participation of the programming exercise.
+     * @param commitHash    The commit hash of the submission.
+     * @return The newly created programming submission.
+     */
+    public ProgrammingSubmission addProgrammingSubmissionParticipation(StudentParticipation participation, String commitHash) {
+        ProgrammingSubmission submission = createProgrammingSubmission(participation, false);
+        submission.setCommitHash(commitHash);
+        participation.addSubmission(submission);
+        studentParticipationRepo.save(participation);
+        return submissionRepository.save(submission);
+    }
+
+    /**
      * Adds 3 hints to the given programming exercise. Each hint has a unique content and title. All have a display threshold of 3.
      *
      * @param exercise The exercise to which hints should be added.

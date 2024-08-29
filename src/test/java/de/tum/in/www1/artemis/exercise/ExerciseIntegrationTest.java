@@ -48,9 +48,11 @@ import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
@@ -88,6 +90,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     static final int NUMBER_OF_TUTORS = 1;
 
@@ -428,19 +433,25 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
+                var participation = exercise.getStudentParticipations().iterator().next();
+                Submission submission = ParticipationFactory.generateProgrammingSubmission(true);
+                submission.setParticipation(participation);
+                submission = submissionRepository.save(submission);
+                participation.addSubmission(submission);
+                participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), submission);
             }
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
                 // Programming exercises should only have one automatic result
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(participation.getResults()).hasSize(1);
-                    assertThat(participation.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+                    assertThat(participation.getSubmissions()).hasSize(1);
+                    var results = participation.getSubmissions().iterator().next().getResults();
+                    assertThat(results).hasSize(1);
+                    assertThat(results.getFirst().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
                 }
                 else {
                     // All other exercises should not display a result at all
-                    assertThat(participation.getResults()).isEmpty();
+                    assertThat(participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream())).isEmpty();
                 }
             }
         }
@@ -453,20 +464,25 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
+                var participation = exercise.getStudentParticipations().iterator().next();
+                Submission submission = ParticipationFactory.generateProgrammingSubmission(true);
+                submission.setParticipation(participation);
+                submission = submissionRepository.save(submission);
+                participation.addSubmission(submission);
+                participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), submission);
             }
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
                 // Programming exercises should now how two results and the latest one is the manual result.
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(participation.getResults()).hasSize(2);
-                    assertThat(participation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
+                    var results = participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream()).toList();
+                    assertThat(results).hasSize(2);
+                    assertThat(results.stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
                             .isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                 }
                 else {
                     // All other exercises have only one visible result now
-                    assertThat(participation.getResults()).hasSize(1);
+                    assertThat(participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream())).hasSize(1);
                 }
             }
         }
@@ -493,22 +509,25 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                exercise.getStudentParticipations().iterator().next().setResults(Set.of(participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
-                        ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
+                var participation = exercise.getStudentParticipations().iterator().next();
+                Submission submission = ParticipationFactory.generateProgrammingSubmission(true);
+                submission.setParticipation(participation);
+                submission = submissionRepository.save(submission);
+                participation.addSubmission(submission);
+                participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), submission);
             }
             exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
 
             StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
             Submission submission = participation.getSubmissions().iterator().next();
+            var results = submission.getResults();
             if (exercise instanceof ProgrammingExercise) {
                 // Programming exercises should only have one automatic result
-                assertThat(participation.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
                 assertThat(participation.getSubmissions()).hasSize(1);
                 assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
             else {
                 // All other exercises have no visible result
-                assertThat(participation.getResults()).isEmpty();
                 assertThat(submission.getResults()).isEmpty();
             }
         }
@@ -521,18 +540,22 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
-                exercise.getStudentParticipations().iterator().next().setResults(Set.of(result));
-                exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResults(new ArrayList<>());
-                exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().addResult(result);
+                var participation = exercise.getStudentParticipations().iterator().next();
+                Submission submission = participation.getSubmissions().iterator().next();
+                submission.setResults(List.of());
+                Submission submission2 = participation.getSubmissions().iterator().next();
+                Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), submission2);
+                submission2.addResult(result);
             }
             exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
             // All exercises have one result
-            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
+            var participation = exercise.getStudentParticipations().iterator().next();
+            var results = participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream()).toList();
+            assertThat(results).hasSize(1);
             // Programming exercises should now have one manual result
             if (exercise instanceof ProgrammingExercise) {
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+                var programmingResults = exercise.getStudentParticipations().iterator().next().getSubmissions().stream().flatMap(sub -> sub.getResults().stream()).toList();
+                assertThat(programmingResults.getFirst().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
             }
         }
     }

@@ -261,11 +261,13 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     public void addResult(Result result) {
         this.results.add(result);
+        result.setSubmission(this);
     }
 
     /**
      * Set the results list to the specified list.
      * NOTE: You must correctly persist this change in the database manually!
+     * s
      *
      * @param results The list of {@link Result} which should replace the existing results of the submission
      */
@@ -280,6 +282,11 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     public void setParticipation(Participation participation) {
         this.participation = participation;
+    }
+
+    public Submission participation(Participation participation) {
+        this.participation = participation;
+        return this;
     }
 
     public Submission submissionDate(ZonedDateTime submissionDate) {

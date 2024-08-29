@@ -437,9 +437,10 @@ public class SubmissionService {
             return saveNewEmptyResult(submission);
         }
         Result newResult = new Result();
-        newResult.setParticipation(submission.getParticipation());
+        newResult.setSubmission(submission);
+        submission.addResult(newResult);
         copyFeedbackToNewResult(newResult, oldResult);
-        return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+        return copyResultContent(newResult, oldResult);
     }
 
     /**
@@ -455,9 +456,10 @@ public class SubmissionService {
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
         updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
-        newResult.setParticipation(submission.getParticipation());
+        newResult.setSubmission(submission);
+        submission.addResult(newResult);
         copyFeedbackToResult(newResult, feedbacks);
-        newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+        newResult = copyResultContent(newResult, oldResult);
         return newResult;
     }
 
@@ -469,39 +471,17 @@ public class SubmissionService {
     }
 
     /**
-     * Copies the content of one result to another, and adds the second result to the submission.
+     * Copies the content of one result to another
      *
-     * @param submission the submission which both results belong to, the newResult comes after the oldResult in the result list
-     * @param newResult  the result where the content is set
-     * @param oldResult  the result from which the content is copied from
+     * @param newResult the result where the content is set
+     * @param oldResult the result from which the content is copied from
      * @return the newResult
      */
-    private Result copyResultContentAndAddToSubmission(Submission submission, Result newResult, Result oldResult) {
+    private Result copyResultContent(Result newResult, Result oldResult) {
         newResult.setScore(oldResult.getScore());
         newResult.setRated(oldResult.isRated());
         newResult.copyProgrammingExerciseCounters(oldResult);
-        var savedResult = resultRepository.save(newResult);
-        savedResult.setSubmission(submission);
-        submission.addResult(savedResult);
-        submissionRepository.save(submission);
-        return savedResult;
-    }
-
-    /**
-     * used to assign and save results to submissions
-     * Make sure submission.results is loaded
-     *
-     * @param submission the parent submission of the result
-     * @param result     the result which we want to save and order
-     * @return the result with correctly persisted relationship to its submission
-     */
-    public Result saveNewResult(Submission submission, final Result result) {
-        result.setSubmission(null);
-        var savedResult = resultRepository.save(result);
-        savedResult.setSubmission(submission);
-        submission.addResult(savedResult);
-        submissionRepository.save(submission);
-        return savedResult;
+        return resultRepository.save(newResult);
     }
 
     /**
@@ -523,7 +503,7 @@ public class SubmissionService {
             var latestSubmission = studentParticipation.findLatestSubmission();
             if (latestSubmission.isPresent() && latestSubmission.get().getResultForCorrectionRound(correctionRound) == null) {
                 Result result = new Result();
-                result.setParticipation(studentParticipation);
+                result.setSubmission(latestSubmission.get());
                 result.setAssessor(assessor);
                 result.setCompletionDate(ZonedDateTime.now());
                 result.setScore(score, studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember());
@@ -531,7 +511,8 @@ public class SubmissionService {
                 // we set the assessment type to semi-automatic so that it does not appear to the tutors for manual assessment
                 // if we would use AssessmentType.AUTOMATIC, it would be eligible for manual assessment
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                result = saveNewResult(latestSubmission.get(), result);
+                latestSubmission.get().addResult(result);
+                result = resultRepository.save(result);
 
                 var feedback = new Feedback();
                 feedback.setCredits(0.0);

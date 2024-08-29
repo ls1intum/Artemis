@@ -646,8 +646,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
-                programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), submission);
 
         result.setSubmission(submission);
         submission.addResult(result);
@@ -705,8 +704,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         submission.setParticipation(programmingExerciseStudentParticipation);
         submission = submissionRepository.save(submission);
 
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
-                programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), submission);
 
         result.setSubmission(submission);
         submission.addResult(result);
@@ -729,10 +727,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
-        var result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
-                programmingExerciseStudentParticipation);
-        var submission = programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation,
-                "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        var submission = programmingExerciseUtilService.addProgrammingSubmissionParticipation(programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), submission);
         exercise.setAssessmentType(AssessmentType.AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -769,10 +765,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         exerciseUtilService.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var newResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), programmingExerciseStudentParticipation);
-        programmingExerciseStudentParticipation.addResult(newResult);
-        var submission = programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation,
-                "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        var submission = programmingExerciseUtilService.addProgrammingSubmissionParticipation(programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        var newResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
 
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
