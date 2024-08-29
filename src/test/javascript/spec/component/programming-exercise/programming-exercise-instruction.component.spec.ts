@@ -447,7 +447,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     it('should update the markdown on a theme change', () => {
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
-        themeService.applyThemeExplicitly(Theme.DARK);
+        themeService.applyTheme(Theme.DARK);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
     });
 

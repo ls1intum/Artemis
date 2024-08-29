@@ -61,7 +61,7 @@ describe('ThemeService', () => {
     });
 
     it('applies theme changes correctly', () => {
-        service.applyThemeExplicitly(Theme.DARK);
+        service.applyTheme(Theme.DARK);
 
         expect(documentGetElementMock).toHaveBeenCalledOnce();
         expect(documentGetElementMock).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
@@ -80,21 +80,21 @@ describe('ThemeService', () => {
         expect(headElement.insertBefore).toHaveBeenCalledOnce();
         expect(headElement.insertBefore).toHaveBeenCalledWith(newElement, undefined);
 
-        expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
+        expect(service.currentTheme()).toBe(Theme.LIGHT);
         expect(storeSpy).toHaveBeenCalledWith(THEME_LOCAL_STORAGE_KEY, 'DARK');
 
         // @ts-ignore
         newElement.onload();
 
         expect(linkElement.remove).toHaveBeenCalledOnce();
-        expect(service.getCurrentTheme()).toBe(Theme.DARK);
+        expect(service.currentTheme()).toBe(Theme.DARK);
 
-        service.applyThemeExplicitly(Theme.LIGHT);
+        service.applyTheme(Theme.LIGHT);
 
         expect(documentGetElementMock).toHaveBeenCalledTimes(2);
         expect(documentGetElementMock).toHaveBeenNthCalledWith(2, THEME_OVERRIDE_ID);
         expect(linkElement.remove).toHaveBeenCalledTimes(2);
-        expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
+        expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
 
     it('restores stored theme correctly', () => {
@@ -103,7 +103,7 @@ describe('ThemeService', () => {
         service.initialize();
 
         expect(retrieveSpy).toHaveBeenCalledTimes(2);
-        expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
+        expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
 
     it('applies dark OS preferences', () => {
@@ -126,7 +126,7 @@ describe('ThemeService', () => {
         expect(retrieveSpy).toHaveBeenCalledTimes(2);
         expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(1, '(prefers-color-scheme: dark)');
-        expect(service.getCurrentTheme()).toBe(Theme.DARK);
+        expect(service.currentTheme()).toBe(Theme.DARK);
     });
 
     it('applies light OS preferences', () => {
@@ -137,7 +137,7 @@ describe('ThemeService', () => {
         expect(retrieveSpy).toHaveBeenCalledTimes(2);
         expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(1, '(prefers-color-scheme: dark)');
-        expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
+        expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
 
     it('does print correctly', fakeAsync(() => {

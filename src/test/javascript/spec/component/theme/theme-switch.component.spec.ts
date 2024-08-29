@@ -31,7 +31,7 @@ describe('ThemeSwitchComponent', () => {
 
     afterEach(() => jest.restoreAllMocks());
 
-    it('theme toggles correctly', fakeAsync(() => {
+    it('theme toggles correctly', fakeAsync(async () => {
         const applyThemeSpy = jest.spyOn(themeService, 'applyTheme');
 
         component.ngOnInit();
@@ -42,6 +42,7 @@ describe('ThemeSwitchComponent', () => {
         expect(component.openPopupAfterNextChange()).toBeTrue();
 
         tick();
+        await fixture.whenStable();
 
         expectSwitchToDark();
 
@@ -64,18 +65,18 @@ describe('ThemeSwitchComponent', () => {
 
     it('opens and closes the popover', fakeAsync(() => {
         component.openPopover();
-        expect(component.popover.open).toHaveBeenCalledOnce();
+        expect(component.popover().open).toHaveBeenCalledOnce();
         component.closePopover();
-        expect(component.popover.close).toHaveBeenCalledOnce();
+        expect(component.popover().close).toHaveBeenCalledOnce();
     }));
 
     it('closes on mouse leave after 200ms', fakeAsync(() => {
         component.openPopover();
-        expect(component.popover.open).toHaveBeenCalledOnce();
+        expect(component.popover().open).toHaveBeenCalledOnce();
         component.mouseLeave();
-        expect(component.popover.close).not.toHaveBeenCalled();
+        expect(component.popover().close).not.toHaveBeenCalled();
         tick(250);
-        expect(component.popover.close).toHaveBeenCalledOnce();
+        expect(component.popover().close).toHaveBeenCalledOnce();
     }));
 
     function expectSwitchToDark() {
@@ -85,6 +86,6 @@ describe('ThemeSwitchComponent', () => {
 
         tick(250);
 
-        expect(component.popover.open).toHaveBeenCalledOnce();
+        expect(component.popover().open).toHaveBeenCalledOnce();
     }
 });
