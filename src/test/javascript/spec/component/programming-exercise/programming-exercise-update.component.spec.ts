@@ -67,6 +67,7 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { ProgrammingExerciseBuildDetailsComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-build-details.component';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -127,6 +128,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(ModePickerComponent),
                 MockComponent(ExerciseUpdateNotificationComponent),
                 MockComponent(ExerciseUpdatePlagiarismComponent),
+                MockComponent(ProgrammingExerciseBuildDetailsComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -991,12 +993,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 formValid: true,
             },
         } as ProgrammingExerciseDifficultyComponent;
+        comp.exerciseBuildDetailsComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseBuildDetailsComponent;
         comp.exerciseLanguageComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseLanguageComponent;
         comp.exerciseGradingComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseGradingComponent;
         comp.exercisePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
 
         comp.ngAfterViewInit();
-        expect(comp.inputFieldSubscriptions).toHaveLength(5);
+        expect(comp.inputFieldSubscriptions).toHaveLength(6);
         comp.calculateFormStatusSections();
 
         for (const section of comp.formStatusSections) {
@@ -1018,10 +1021,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         comp.programmingExercise.allowOfflineIde = false;
         comp.programmingExercise.allowOnlineEditor = false;
         comp.calculateFormStatusSections();
-        expect(comp.formStatusSections[1].valid).toBeFalse();
+        expect(comp.formStatusSections[2].valid).toBeFalse();
         comp.programmingExercise.allowOnlineEditor = true;
         comp.calculateFormStatusSections();
-        expect(comp.formStatusSections[1].valid).toBeTrue();
+        expect(comp.formStatusSections[2].valid).toBeTrue();
 
         comp.ngOnDestroy();
 
