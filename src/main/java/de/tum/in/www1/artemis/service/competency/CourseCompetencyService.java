@@ -188,6 +188,7 @@ public class CourseCompetencyService {
      * Imports the given competencies and relations into a course
      *
      * @param course                 the course to import into
+     * @param competenciesToImport   the source competencies that were imported
      * @param idToImportedCompetency map of original competency id to imported competency
      * @param importOptions          the import options
      * @return The set of imported competencies, each also containing the relations it is the tail competency for.
