@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, Input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, Input, Renderer2, ViewChild } from '@angular/core';
 import { updateHeaderHeightScssVariableBasedOnNavbar } from 'app/shared/util/navbar.util';
 
 export type FormSectionStatus = {
@@ -6,10 +6,6 @@ export type FormSectionStatus = {
     valid: boolean;
     empty?: boolean;
 };
-
-const SAFARI_USER_AGENT_REGEX: RegExp = /^((?!chrome|android).)*safari/i;
-const SAFARI_HEADLINE_OFFSET = 8;
-const CHROME_HEADLINE_OFFSET = 4;
 
 @Component({
     selector: 'jhi-form-status-bar',
@@ -20,6 +16,10 @@ export class FormStatusBarComponent implements AfterViewInit {
     @Input()
     formStatusSections: FormSectionStatus[];
 
+    @ViewChild('statusBar', { static: false }) statusBar: ElementRef;
+
+    constructor(private renderer: Renderer2) {}
+
     @HostListener('window:resize')
     onResizeAddDistanceFromStatusBarToNavbar() {
         updateHeaderHeightScssVariableBasedOnNavbar();
@@ -29,18 +29,17 @@ export class FormStatusBarComponent implements AfterViewInit {
         this.onResizeAddDistanceFromStatusBarToNavbar();
     }
 
-    private isSafari() {
-        return SAFARI_USER_AGENT_REGEX.test(navigator.userAgent);
-    }
-
     scrollToHeadline(id: string) {
         const element = document.getElementById(id);
         if (element) {
-            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement)?.offsetHeight;
+            const navbarHeight = (this.renderer.selectRootElement('jhi-navbar', true) as HTMLElement)?.getBoundingClientRect().height;
+            const breadcrumbContainerHeight = (this.renderer.selectRootElement('.breadcrumb-container', true) as HTMLElement)?.getBoundingClientRect().height;
+            const statusBarHeight = this.statusBar.nativeElement.getBoundingClientRect().height;
 
-            const offset = this.isSafari() ? SAFARI_HEADLINE_OFFSET : CHROME_HEADLINE_OFFSET;
+            /** Needs to be applied to the scrollMarginTop to ensure that the scroll to element is not hidden behind header elements */
+            const scrollOffsetInPx = navbarHeight + breadcrumbContainerHeight + statusBarHeight;
 
-            element.style.scrollMarginTop = `calc(${offset}rem + ${headerHeight}px)`;
+            element.style.scrollMarginTop = `${scrollOffsetInPx}px`;
             element.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
         }
     }
