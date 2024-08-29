@@ -247,7 +247,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'text-secondary';
     }
 
-    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && reuslt.successful === undefined) {
+    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === undefined) {
         return 'text-secondary';
     }
 
