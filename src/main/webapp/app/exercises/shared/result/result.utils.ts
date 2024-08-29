@@ -10,7 +10,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -293,7 +293,7 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
         if (result.successful === undefined) {
-            return faSpinner;
+            return faCircleNotch;
         }
         return faQuestionCircle;
     }

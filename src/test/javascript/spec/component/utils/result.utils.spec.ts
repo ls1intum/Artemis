@@ -12,7 +12,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 
@@ -125,7 +125,7 @@ describe('ResultUtils', () => {
         {
             result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result being generated test case' }], assessmentType: AssessmentType.AUTOMATIC_ATHENA },
             templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
-            expected: faSpinner,
+            expected: faCircleNotch,
         },
         {
             result: {
