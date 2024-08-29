@@ -247,7 +247,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'text-secondary';
     }
 
-    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === undefined) {
+    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
         return 'text-secondary';
     }
 
@@ -291,8 +291,11 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === undefined) {
-        return faSpinner;
+    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+        if (result.successful === undefined) {
+            return faSpinner;
+        }
+        return faQuestionCircle;
     }
 
     if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {
