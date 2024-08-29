@@ -33,7 +33,8 @@
             "manage": "Manage",
             "studentView": "Student view",
             "general": {
-                "noDataFound": "No data found."
+                "noDataFound": "No data found.",
+                "noElementFoundWithAppliedFilter": "No element matches the applied filter."
             },
             "sidebar": {
                 "past": "Past",
@@ -88,6 +89,17 @@
                 "communication": "Communication",
                 "plagiarismCases": "Plagiarism Cases",
                 "gradingSystem": "Grading System"
+            },
+            "exerciseFilter": {
+                "filter": "Filter",
+                "modalTitle": "Filter Exercises",
+                "dueDateRange": "Due Date Range",
+                "achievedScore": "Achieved Score",
+                "achievablePoints": "Achievable Points",
+                "applyFilter": "Apply filter",
+                "clearFilter": "Clear filter",
+                "noFilterAvailable": "There are no distinguishing filter options for the existing exercises",
+                "noMoreOptions": "No more options"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
