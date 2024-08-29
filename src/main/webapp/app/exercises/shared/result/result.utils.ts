@@ -291,7 +291,7 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (resultIsPreliminary(result) && result.successful == undefined) {
+    if (resultIsPreliminary(result) && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === undefined) {
         return faSpinner;
     }
 

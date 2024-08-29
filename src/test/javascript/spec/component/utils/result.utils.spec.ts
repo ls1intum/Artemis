@@ -12,6 +12,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 
@@ -65,6 +66,11 @@ describe('ResultUtils', () => {
             expected: 'text-secondary',
         },
         { result: { score: undefined, successful: true }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
+        {
+            result: { score: undefined, successful: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
+            templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
+            expected: 'text-secondary',
+        },
         { result: { score: undefined, successful: false }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
         { result: { score: MIN_SCORE_GREEN, testCaseCount: 1 }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
         { result: { score: MIN_SCORE_ORANGE, testCaseCount: 1 }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
@@ -115,6 +121,11 @@ describe('ResultUtils', () => {
             result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
+        },
+        {
+            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result being generated test case' }], assessmentType: AssessmentType.AUTOMATIC_ATHENA },
+            templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
+            expected: faSpinner,
         },
     ])('should correctly determine result icon', ({ result, templateStatus, expected }) => {
         expect(getResultIconClass(result, templateStatus!)).toBe(expected);
