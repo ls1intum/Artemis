@@ -118,8 +118,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testRegisterUserInExam_studentExamGenerated() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        examRepository.save(exam);
         exam.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        examRepository.save(exam);
 
         Set<StudentExam> studentExamsBefore = studentExamRepository.findByExamId(exam.getId());
         assertThat(studentExamsBefore).isEmpty();
