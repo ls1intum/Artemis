@@ -7,7 +7,7 @@
                     <div class="input-group ps-0" [class.search-active]="!!searchText">
                         <span class="input-group-text">
                             <fa-icon [icon]="faSearch" size="sm" />
-                            <span [hidden]="true" id="inputLabel">{{ 'artemisApp.conversationsLayout.conversationMessages.searchLabel' | artemisTranslate }}</span>
+                            <span [hidden]="true" id="inputLabel" jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchLabel"></span>
                         </span>
                         <input
                             id="searchInput"
@@ -27,20 +27,23 @@
                                 aria-labelledby="clearSearchLabel"
                                 id="clearSearchButton"
                             >
-                                <span id="clearSearchLabel" [hidden]="true">{{ 'artemisApp.conversationsLayout.conversationMessages.clearSearch' | artemisTranslate }}</span>
+                                <span id="clearSearchLabel" [hidden]="true" jhiTranslate="artemisApp.conversationsLayout.conversationMessages.clearSearch"></span>
                                 <fa-icon [icon]="faTimes" size="xs" />
                             </button>
                         }
                         <span class="input-group-text" [hidden]="!searchText" id="searchResult">
                             @switch (totalNumberOfPosts) {
                                 @case (0) {
-                                    <span>{{ 'artemisApp.conversationsLayout.conversationMessages.searchResultsNone' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsNone"></span>
                                 }
                                 @case (1) {
-                                    <span>{{ 'artemisApp.conversationsLayout.conversationMessages.searchResultsSingle' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsSingle"></span>
                                 }
                                 @default {
-                                    <span>{{ 'artemisApp.conversationsLayout.conversationMessages.searchResultsMultiple' | artemisTranslate: { count: totalNumberOfPosts } }}</span>
+                                    <span
+                                        jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsMultiple"
+                                        [translateValues]="{ count: totalNumberOfPosts }"
+                                    ></span>
                                 }
                             }
                         </span>
@@ -91,9 +94,7 @@
                     <div>
                         @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">
-                                <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
-                                    {{ 'artemisApp.metis.newAnnouncement' | artemisTranslate }}
-                                </button>
+                                <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
                                 <jhi-post-create-edit-modal
                                     #createEditModal
                                     [posting]="newPost!"

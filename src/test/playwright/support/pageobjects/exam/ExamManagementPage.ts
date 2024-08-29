@@ -114,7 +114,7 @@ export class ExamManagementPage {
     }
 
     async typeAnnouncementMessage(message: string) {
-        await this.page.locator('.ace_text-input').fill(message);
+        await this.page.locator('.monaco-editor textarea').fill(message);
     }
 
     async verifyAnnouncementContent(announcementTime: Dayjs, message: string, authorUsername: string) {

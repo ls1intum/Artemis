@@ -11,10 +11,10 @@
             @if (!warningDismissed) {
                 <div class="alert alert-warning alert-dismissible text-start fade show" role="alert">
                     <button type="button" class="btn-close" (click)="closeAlert()" aria-label="Close"></button>
-                    <h4 class="alert-heading">{{ 'artemisApp.messageWarning.headerText' | artemisTranslate }}</h4>
-                    <p>{{ 'artemisApp.messageWarning.mainParagraph' | artemisTranslate }}</p>
+                    <h4 class="alert-heading" jhiTranslate="artemisApp.messageWarning.headerText"></h4>
+                    <p jhiTranslate="artemisApp.messageWarning.mainParagraph"></p>
                     <hr />
-                    <p class="mb-0">{{ 'artemisApp.messageWarning.lastParagraph' | artemisTranslate }}</p>
+                    <p class="mb-0" jhiTranslate="artemisApp.messageWarning.lastParagraph"></p>
                 </div>
             }
             @if (editType === EditType.UPDATE) {

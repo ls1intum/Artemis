@@ -4,7 +4,8 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostingEditType } from 'app/shared/metis/metis.util';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
+
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 // Note: this number should be the same as in Posting.java
 const MAX_CONTENT_LENGTH = 5000;
