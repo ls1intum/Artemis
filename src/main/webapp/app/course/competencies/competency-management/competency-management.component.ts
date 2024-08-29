@@ -109,7 +109,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     async loadData() {
         try {
             this.isLoading = true;
-            this.relations = await this.courseCompetencyApiService.getCourseCompetencyRelations(this.courseId);
+            this.relations = (await this.courseCompetencyApiService.getCourseCompetencyRelations(this.courseId)).map(dtoToCompetencyRelation);
             this.courseCompetencies = await this.courseCompetencyApiService.getCourseCompetenciesByCourseId(this.courseId);
             this.competencies = this.courseCompetencies.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY);
             this.prerequisites = this.courseCompetencies.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE);
@@ -162,7 +162,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             .map((dto) => dto.tailRelations)
             .flat()
             .filter((element): element is CompetencyRelationDTO => !!element)
-            .map((dto) => dtoToCompetencyRelation(dto));
+            .map(dtoToCompetencyRelation);
 
         this.competencies = this.competencies.concat(importedCompetencies);
         this.prerequisites = this.prerequisites.concat(importedPrerequisites);
