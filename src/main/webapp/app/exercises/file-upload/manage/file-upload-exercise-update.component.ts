@@ -7,7 +7,6 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForImport } from 'app/entities/exercise.model';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
@@ -54,7 +53,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     goBackAfterSaving = false;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
-    EditorMode = EditorMode;
     notificationText?: string;
     domainActionsProblemStatement = [new MonacoFormulaAction()];
     domainActionsExampleSolution = [new MonacoFormulaAction()];
