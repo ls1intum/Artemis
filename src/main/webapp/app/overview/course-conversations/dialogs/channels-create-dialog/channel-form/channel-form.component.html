@@ -4,7 +4,7 @@
             <form [formGroup]="form" (ngSubmit)="submitForm()">
                 <!-- CHANNEL NAME -->
                 <div class="form-group">
-                    <label class="required" for="name">{{ 'artemisApp.dialogs.createChannel.channelForm.nameInput.label' | artemisTranslate }}</label>
+                    <label class="required" for="name" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.label"></label>
                     <div class="input-group">
                         <span class="input-group-text">
                             <jhi-channel-icon [isPublic]="isPublicControl?.value" [isAnnouncementChannel]="isisAnnouncementChannelControl?.value" />
@@ -20,36 +20,30 @@
                     @if (nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (nameControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.dialogs.createChannel.channelForm.nameInput.requiredValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.requiredValidationError"></div>
                             }
                             @if (nameControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError' | artemisTranslate: { max: '30' } }}
-                                </div>
+                                <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError" [translateValues]="{ max: '30' }"></div>
                             }
                             @if (!nameControl?.errors?.required && !nameControl?.errors?.maxlength && nameControl?.errors?.pattern) {
-                                <div>
-                                    {{ 'artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError"></div>
                             }
                         </div>
                     }
                 </div>
                 <!-- DESCRIPTION -->
                 <div class="form-group">
-                    <label for="description">{{ 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.label' | artemisTranslate }}</label>
+                    <label for="description" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.label"></label>
                     <input type="text" class="form-control" id="description" formControlName="description" />
-                    <small id="descriptionHelp" class="form-text text-body-secondary">{{
-                        'artemisApp.dialogs.createChannel.channelForm.descriptionInput.descriptionHelp' | artemisTranslate
-                    }}</small>
+                    <small
+                        id="descriptionHelp"
+                        class="form-text text-body-secondary"
+                        jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.descriptionHelp"
+                    ></small>
                     @if (descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (descriptionControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationError' | artemisTranslate: { max: '250' } }}
-                                </div>
+                                <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationError" [translateValues]="{ max: '250' }"></div>
                             }
                         </div>
                     }
@@ -57,45 +51,49 @@
                 <!--Public Channel / Private Channel -->
                 <div>
                     <div class="form-group">
-                        <label class="d-block">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.label' | artemisTranslate }}</label>
+                        <label class="d-block" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></label>
                         <div class="btn-group" role="group">
                             <input formControlName="isPublic" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
-                            <label class="btn btn-outline-secondary" for="public">{{
-                                'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' | artemisTranslate
-                            }}</label>
+                            <label class="btn btn-outline-secondary" for="public" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.public"></label>
                             <input formControlName="isPublic" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
-                            <label class="btn btn-outline-secondary" for="private">{{
-                                'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' | artemisTranslate
-                            }}</label>
+                            <label class="btn btn-outline-secondary" for="private" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.private"></label>
                         </div>
-                        <small id="isPublicHelp" class="form-text text-body-secondary d-block">{{
-                            'artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation' | artemisTranslate
-                        }}</small>
+                        <small
+                            id="isPublicHelp"
+                            class="form-text text-body-secondary d-block"
+                            jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation"
+                        ></small>
                     </div>
                 </div>
                 <!--Announcement Channel -->
                 <div>
                     <div class="form-group">
-                        <label class="d-block">{{ 'artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.label' | artemisTranslate }}</label>
+                        <label class="d-block" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.label"></label>
                         <div class="btn-group" role="group">
                             <input formControlName="isAnnouncementChannel" type="radio" class="btn-check" id="isAnnouncementChannel" autocomplete="off" checked [value]="true" />
-                            <label class="btn btn-outline-secondary" for="isAnnouncementChannel">{{
-                                'artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.true' | artemisTranslate
-                            }}</label>
+                            <label
+                                class="btn btn-outline-secondary"
+                                for="isAnnouncementChannel"
+                                jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.true"
+                            ></label>
                             <input formControlName="isAnnouncementChannel" type="radio" class="btn-check" id="isNotAnnouncementChannel" autocomplete="off" [value]="false" />
-                            <label class="btn btn-outline-secondary" for="isNotAnnouncementChannel">{{
-                                'artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.false' | artemisTranslate
-                            }}</label>
+                            <label
+                                class="btn btn-outline-secondary"
+                                for="isNotAnnouncementChannel"
+                                jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.false"
+                            ></label>
                         </div>
-                        <small id="isAnnouncementChannelHelp" class="form-text text-body-secondary d-block">{{
-                            'artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.explanation' | artemisTranslate
-                        }}</small>
+                        <small
+                            id="isAnnouncementChannelHelp"
+                            class="form-text text-body-secondary d-block"
+                            jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.explanation"
+                        ></small>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-12 text-end">
                         <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
-                            <span>{{ 'artemisApp.dialogs.createChannel.channelForm.createButton' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.dialogs.createChannel.channelForm.createButton"></span>
                         </button>
                     </div>
                 </div>

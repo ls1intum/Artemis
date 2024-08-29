@@ -7,7 +7,7 @@
     <div>
         <div class="plagiarism-cases--toolbar row mb-3">
             <div class="col-auto">
-                <button class="btn btn-primary" (click)="exportPlagiarismCases()">{{ 'artemisApp.plagiarism.cases.exportCsv' | artemisTranslate }}</button>
+                <button class="btn btn-primary" (click)="exportPlagiarismCases()" jhiTranslate="artemisApp.plagiarism.cases.exportCsv"></button>
             </div>
         </div>
         @for (exercise of exercisesWithPlagiarismCases; track exercise; let i = $index) {
@@ -57,9 +57,11 @@
                                 </a>
                             </div>
                             @if (plagiarismCase.plagiarismSubmissions) {
-                                <div class="col-2 text-center">
-                                    {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions.length } }}
-                                </div>
+                                <div
+                                    class="col-2 text-center"
+                                    jhiTranslate="artemisApp.plagiarism.plagiarismCases.appearsInComparisons"
+                                    [translateValues]="{ count: plagiarismCase.plagiarismSubmissions.length }"
+                                ></div>
                             }
                             @if (plagiarismCase.post) {
                                 <div class="col-3 text-center">
@@ -67,15 +69,13 @@
                                 </div>
                             }
                             @if (!plagiarismCase.post) {
-                                <div class="col-3 text-center">{{ 'artemisApp.plagiarism.plagiarismCases.notNotified' | artemisTranslate }}</div>
+                                <div class="col-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notNotified"></div>
                             }
                             @if (hasStudentAnswer(plagiarismCase)) {
-                                <div class="col-3 text-center">
-                                    {{ 'artemisApp.plagiarism.plagiarismCases.respondedByStudent' | artemisTranslate }}
-                                </div>
+                                <div class="col-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.respondedByStudent"></div>
                             }
                             @if (!hasStudentAnswer(plagiarismCase)) {
-                                <div class="col-3 text-center">{{ 'artemisApp.plagiarism.plagiarismCases.notResponded' | artemisTranslate }}</div>
+                                <div class="col-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notResponded"></div>
                             }
                             <div class="col-3">
                                 <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" [hideDetails]="true" />

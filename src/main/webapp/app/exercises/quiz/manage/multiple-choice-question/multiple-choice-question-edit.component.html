@@ -47,9 +47,9 @@
                     [disabled]="question.singleChoice ?? false"
                     title="scoring type"
                 >
-                    <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</option>
-                    <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
-                    <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
+                    <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
+                    <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
+                    <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
                 </select>
                 <jhi-quiz-scoring-info-modal />
             </div>
@@ -94,19 +94,20 @@
         </div>
         <div class="markupEditorArea">
             <div class="question-content">
-                <jhi-markdown-editor
+                <jhi-markdown-editor-monaco
                     #markdownEditor
                     [markdown]="questionEditorText"
                     [showPreviewButton]="true"
-                    [showVisualModeButton]="true"
-                    [domainCommands]="commandMultipleChoiceQuestions"
+                    [showVisualButton]="true"
+                    [domainActions]="multipleChoiceActions"
                     (markdownChange)="changesInMarkdown()"
-                    (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                    (textWithDomainActionsFound)="domainActionsFound($event)"
+                    (onLeaveVisualTab)="onLeaveVisualTab()"
                     [showDefaultPreview]="false"
                     class="h-auto"
                 >
                     <!-- Preview -->
-                    <ng-container id="preview">
+                    <ng-container id="previewMonaco">
                         @if (showMultipleChoiceQuestionPreview) {
                             <jhi-multiple-choice-question [question]="question" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex" />
                         }
@@ -114,13 +115,13 @@
                     </ng-container>
                     <!-- End of Preview-->
                     <!-- Visual -->
-                    <ng-container id="visual" #visual>
+                    <ng-container id="visual">
                         @if (showMultipleChoiceQuestionVisual) {
-                            <jhi-multiple-choice-visual-question [question]="question" (questionChanged)="changesInVisualMode()" />
+                            <jhi-multiple-choice-visual-question #visual [question]="question" (questionChanged)="changesInVisualMode()" />
                         }
                     </ng-container>
                     <!-- End of Visual -->
-                </jhi-markdown-editor>
+                </jhi-markdown-editor-monaco>
             </div>
         </div>
     </div>
