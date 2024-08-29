@@ -63,10 +63,6 @@ describe('SidebarAccordionComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should toggle collapse state for a group', () => {
         const groupKey = 'noDate';
         component.toggleGroupCategoryCollapse(groupKey);
@@ -89,10 +85,20 @@ describe('SidebarAccordionComponent', () => {
         component.searchValue = 'test';
         component.ngOnChanges();
 
+        expect(component.expandAll).toHaveBeenCalledOnce();
+    });
+
+    it('should call expandAll when filter is active', () => {
+        jest.spyOn(component, 'expandAll');
+
+        component.isFilterActive = true;
+        component.ngOnChanges();
+
         fixture.detectChanges();
 
-        expect(component.expandAll).toHaveBeenCalled();
+        expect(component.expandAll).toHaveBeenCalledOnce();
     });
+
     it('should correctly call setStoredCollapseState when searchValue is cleared', () => {
         const expectedStateAfterClear = component.collapseState;
         component.searchValue = 'initial value';
@@ -106,7 +112,7 @@ describe('SidebarAccordionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.setStoredCollapseState).toHaveBeenCalled();
+        expect(component.setStoredCollapseState).toHaveBeenCalledOnce();
         expect(component.collapseState).toEqual(expectedStateAfterClear);
     });
 
