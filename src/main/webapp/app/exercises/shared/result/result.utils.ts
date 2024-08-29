@@ -247,7 +247,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'text-secondary';
     }
 
-    if (resultIsPreliminary(result) && result.participation?.exercise?.type === ExerciseType.TEXT) {
+    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && reuslt.successful === undefined) {
         return 'text-secondary';
     }
 
@@ -291,7 +291,7 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (resultIsPreliminary(result) && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === undefined) {
+    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === undefined) {
         return faSpinner;
     }
 
