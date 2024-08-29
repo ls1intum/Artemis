@@ -104,7 +104,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return findResultsWithFeedbacksAndTestCaseByIdIn(ids);
     }
 
-    Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);
+    Optional<Result> findFirstBySubmission_ParticipationIdOrderByCompletionDateDesc(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
@@ -118,7 +118,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      *         or an empty {@code Optional} if no result is found
      */
     default Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
-        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        var resultOptional = findFirstBySubmission_ParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -138,7 +138,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      *         or an empty {@code Optional} if no result is found
      */
     default Optional<Result> findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
-        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        var resultOptional = findFirstBySubmission_ParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -158,7 +158,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      *         or an empty {@code Optional} if no result is found
      */
     default Optional<Result> findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(long participationId) {
-        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        var resultOptional = findFirstBySubmission_ParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
         }

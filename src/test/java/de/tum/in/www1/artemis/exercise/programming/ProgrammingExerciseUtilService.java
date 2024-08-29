@@ -203,7 +203,10 @@ public class ProgrammingExerciseUtilService {
         participation.setInitializationState(InitializationState.INITIALIZED);
         templateProgrammingExerciseParticipationRepo.save(participation);
         exercise.setTemplateParticipation(participation);
-        return programmingExerciseRepository.save(exercise);
+        var savedExercise = programmingExerciseRepository.save(exercise);
+        // Prevent lazy loading issues
+        savedExercise.setTemplateParticipation(participation);
+        return savedExercise;
     }
 
     /**
@@ -221,7 +224,10 @@ public class ProgrammingExerciseUtilService {
         participation.setInitializationState(InitializationState.INITIALIZED);
         solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);
-        return programmingExerciseRepository.save(exercise);
+        var savedExercise = programmingExerciseRepository.save(exercise);
+        // Prevent lazy loading issues
+        savedExercise.setSolutionParticipation(participation);
+        return savedExercise;
     }
 
     /**
@@ -748,17 +754,14 @@ public class ProgrammingExerciseUtilService {
      */
     public Result addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
-        submission = programmingSubmissionRepo.save(submission);
-        Result result = resultRepo.save(new Result().participation(participation));
         participation.addSubmission(submission);
-        submission.setParticipation(participation);
+
+        Result result = new Result();
         submission.addResult(result);
+        submission.setParticipation(participation);
         submission = programmingSubmissionRepo.save(submission);
-        result.setSubmission(submission);
-        result = resultRepo.save(result);
-        participation.addResult(result);
-        studentParticipationRepo.save(participation);
-        return result;
+
+        return programmingSubmissionRepo.findWithEagerResultsById(submission.getId()).orElseThrow().getLatestResult();
     }
 
     /**
@@ -772,16 +775,11 @@ public class ProgrammingExerciseUtilService {
         var templateParticipation = templateProgrammingExerciseParticipationRepo.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = submissionRepository.save(submission);
-        Result result = resultRepo.save(new Result().participation(templateParticipation));
-        templateParticipation.addSubmission(submission);
-        submission.setParticipation(templateParticipation);
+        Result result = new Result();
         submission.addResult(result);
-        submission = submissionRepository.save(submission);
-        result.setSubmission(submission);
-        result = resultRepo.save(result);
-        templateParticipation.addResult(result);
-        templateProgrammingExerciseParticipationRepo.save(templateParticipation);
-        return result;
+        submission.setParticipation(templateParticipation);
+        submission = programmingSubmissionRepo.save(submission);
+        return programmingSubmissionRepo.findWithEagerResultsById(submission.getId()).orElseThrow().getLatestResult();
     }
 
     /**
