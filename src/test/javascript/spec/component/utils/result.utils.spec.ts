@@ -127,6 +127,26 @@ describe('ResultUtils', () => {
             templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
             expected: faSpinner,
         },
+        {
+            result: {
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result >= 100' }],
+                participation: { type: ParticipationType.STUDENT, exercise: { type: ExerciseType.TEXT } },
+                successful: true,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            } as Result,
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faQuestionCircle,
+        },
+        {
+            result: {
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result < 100' }],
+                participation: { type: ParticipationType.STUDENT, exercise: { type: ExerciseType.TEXT } },
+                successful: false,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            } as Result,
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faQuestionCircle,
+        },
     ])('should correctly determine result icon', ({ result, templateStatus, expected }) => {
         expect(getResultIconClass(result, templateStatus!)).toBe(expected);
     });
