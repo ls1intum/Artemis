@@ -162,7 +162,6 @@ public class LearningObjectImportService {
         courseCompetencyRepository.saveAll(importedCourseCompetencies);
         exerciseRepository.saveAll(importedExercises);
         lectureRepository.saveAll(importedLectures);
-        lectureUnitRepository.saveAll(importedLectureUnits);
     }
 
     private void importOrLoadExercises(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
@@ -299,13 +298,7 @@ public class LearningObjectImportService {
                 LectureUnit importedLectureUnit;
                 if (foundLectureUnit.isEmpty()) {
                     Lecture sourceLecture = sourceLectureUnit.getLecture();
-
-                    Optional<Lecture> foundLecture = Optional.ofNullable(titleToImportedLectures.get(sourceLecture.getTitle()));
-                    if (foundLecture.isEmpty()) {
-                        foundLecture = lectureRepository.findByTitleAndCourseIdWithLectureUnits(sourceLecture.getTitle(), courseToImportInto.getId());
-                    }
-                    Lecture importedLecture = foundLecture.orElseGet(() -> lectureImportService.importLecture(sourceLecture, courseToImportInto, false));
-                    titleToImportedLectures.put(importedLecture.getTitle(), importedLecture);
+                    Lecture importedLecture = importOrLoadLecture(sourceLecture, courseToImportInto, titleToImportedLectures);
 
                     importedLectureUnit = foundLectureUnit.orElseGet(() -> lectureUnitRepository.save(lectureUnitImportService.importLectureUnit(sourceLectureUnit)));
 
@@ -318,9 +311,21 @@ public class LearningObjectImportService {
 
                 importedLectureUnits.add(importedLectureUnit);
 
+                importedLectureUnit.getCompetencies().add(idToImportedCompetency.get(sourceCourseCompetency.getId()).competency());
                 idToImportedCompetency.get(sourceCourseCompetency.getId()).competency().getLectureUnits().add(importedLectureUnit);
             }
         }
+    }
+
+    private Lecture importOrLoadLecture(Lecture sourceLecture, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures) {
+        Optional<Lecture> foundLecture = Optional.ofNullable(titleToImportedLectures.get(sourceLecture.getTitle()));
+        if (foundLecture.isEmpty()) {
+            foundLecture = lectureRepository.findByTitleAndCourseIdWithLectureUnits(sourceLecture.getTitle(), courseToImportInto.getId());
+        }
+        Lecture importedLecture = foundLecture.orElseGet(() -> lectureImportService.importLecture(sourceLecture, courseToImportInto, false));
+        titleToImportedLectures.put(importedLecture.getTitle(), importedLecture);
+
+        return importedLecture;
     }
 
     private void setAllDates(Set<Exercise> importedExercises, Set<Lecture> importedLectures, Set<LectureUnit> importedLectureUnits,
