@@ -24,6 +24,7 @@ export enum ProgrammingLanguage {
     OCAML = 'OCAML',
     EMPTY = 'EMPTY',
     RUST = 'RUST',
+    R = 'R',
 }
 
 export enum ProjectType {

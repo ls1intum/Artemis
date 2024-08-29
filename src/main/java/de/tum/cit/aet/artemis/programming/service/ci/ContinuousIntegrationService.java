@@ -219,8 +219,8 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY, RUST -> "assignment";
-                    case JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
+                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY, RUST, R -> "assignment";
+                    case JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, TYPESCRIPT, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
                         throw new UnsupportedOperationException("Unsupported programming language: " + language);
                 };
             }
@@ -230,9 +230,9 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY, RUST -> "";
+                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY, RUST, R -> "";
                     case C, VHDL, ASSEMBLER, OCAML -> "tests";
-                    case JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
+                    case JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, TYPESCRIPT, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
                         throw new UnsupportedOperationException("Unsupported programming language: " + language);
                 };
             }
@@ -242,9 +242,9 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case HASKELL, OCAML -> "solution";
-                    case JAVA, PYTHON, KOTLIN, SWIFT, EMPTY, C, VHDL, ASSEMBLER, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO, MATLAB, BASH, RUBY, POWERSHELL,
-                            ADA, DART, PHP ->
+                    case HASKELL, OCAML, R -> "solution";
+                    case JAVA, PYTHON, KOTLIN, SWIFT, EMPTY, C, VHDL, ASSEMBLER, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, TYPESCRIPT, RUST, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA,
+                            DART, PHP ->
                         throw new IllegalArgumentException("The solution repository is not checked out during the template/submission build plan for " + language);
                 };
             }

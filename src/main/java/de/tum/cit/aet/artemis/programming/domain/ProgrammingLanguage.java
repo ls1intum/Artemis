@@ -48,7 +48,8 @@ public enum ProgrammingLanguage {
         ASSEMBLER,
         SWIFT,
         OCAML,
-        RUST
+        RUST,
+        R
     );
     // @formatter:on
 
