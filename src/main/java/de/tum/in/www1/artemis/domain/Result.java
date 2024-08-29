@@ -92,7 +92,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonView(QuizView.Before.class)
     private Boolean rated;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonView(QuizView.Before.class)
     private Submission submission;
 
