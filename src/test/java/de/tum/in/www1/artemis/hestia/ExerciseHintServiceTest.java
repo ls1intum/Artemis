@@ -254,7 +254,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAvailableExerciseHints_skippedTestsConsideredAsNegative() {
         // create result with feedbacks with "null" for attribute "positive"
         addResultWithSuccessfulTestCases(exercise.getTestCases());
-        var results = resultRepository.findAllByParticipationExerciseId(exercise.getId());
+        var results = resultRepository.findAllBySubmission_ParticipationExerciseId(exercise.getId());
         var optionalResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(results.iterator().next().getId());
         assertThat(optionalResult).isPresent();
 

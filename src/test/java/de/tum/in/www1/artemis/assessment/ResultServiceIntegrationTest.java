@@ -534,7 +534,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdWithEagerFeedbacksElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(Long.MAX_VALUE));
+                .isThrownBy(() -> resultRepository.findFirstWithFeedbacksBySubmission_ParticipationIdOrderByCompletionDateDescElseThrow(Long.MAX_VALUE));
 
         Result result = participationUtilService.addResultToSubmission(null, null, studentProgrammingSubmission);
         result = participationUtilService.addSampleFeedbackToResults(result);

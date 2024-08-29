@@ -68,7 +68,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param complaintType - type of complaint we want to filter by
      * @return number of more feedback requests associated to course courseId
      */
-    long countByResult_Participation_Exercise_Course_IdAndComplaintType(Long courseId, ComplaintType complaintType);
+    long countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(Long courseId, ComplaintType complaintType);
 
     /**
      * This magic method counts the number of complaints by complaint type associated to an exam id
@@ -77,7 +77,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param complaintType - type of complaint we want to filter by
      * @return number of complaints associated to course examId
      */
-    long countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(Long examId, ComplaintType complaintType);
+    long countByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(Long examId, ComplaintType complaintType);
 
     @Query("""
             SELECT c
@@ -198,7 +198,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND c.result.submission.participation.testRun = FALSE
                 AND c.result.submission.participation.exercise.id = :exerciseId
             """)
-    long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
+    long countByResultSubmissionParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
 
     /**
      * Delete all complaints that belong to the given result

@@ -572,7 +572,7 @@ public class LocalVCLocalCITestService {
             int expectedCodeIssueCount, Integer timeoutInSeconds) {
         // wait for result to be persisted
         Duration timeoutDuration = timeoutInSeconds != null ? Duration.ofSeconds(timeoutInSeconds) : Duration.ofSeconds(DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS);
-        await().atMost(timeoutDuration).until(() -> resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
+        await().atMost(timeoutDuration).until(() -> resultRepository.findFirstWithSubmissionsBySubmission_ParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);

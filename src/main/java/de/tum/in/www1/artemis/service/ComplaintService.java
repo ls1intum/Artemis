@@ -170,11 +170,11 @@ public class ComplaintService {
     }
 
     public long countComplaintsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+        return complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
     }
 
     public long countMoreFeedbackRequestsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
     }
 
     /**
@@ -184,7 +184,7 @@ public class ComplaintService {
      * @return the number of responses
      */
     public long countComplaintResponsesByCourseId(long courseId) {
-        return complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
+        return complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
                 ComplaintType.COMPLAINT);
     }
 
@@ -195,7 +195,7 @@ public class ComplaintService {
      * @return the number of responses
      */
     public long countMoreFeedbackRequestResponsesByCourseId(long courseId) {
-        return complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
+        return complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
                 ComplaintType.MORE_FEEDBACK);
     }
 

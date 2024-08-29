@@ -48,8 +48,8 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
      * @param submissionId the id of the modeling submission that should be loaded from the database
      * @return the modeling submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote", "participation" })
-    Optional<ModelingSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(Long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote" })
+    Optional<ModelingSubmission> findWithResultsFeedbacksAssessorAssessmentNoteById(Long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ModelingSubmission> findWithEagerResultById(Long submissionId);
@@ -77,13 +77,13 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
 
     /**
      * Get the modeling submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
-     * the assessment note of the result, its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given
+     * the assessment note of the result and its participation (eagerly loaded). Throws an EntityNotFoundException if no submission could be found for the given
      * id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the modeling submission with the given id
      */
-    default ModelingSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(Long submissionId) {
-        return getValueElseThrow(findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId), submissionId);
+    default ModelingSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteElseThrow(Long submissionId) {
+        return getValueElseThrow(findWithResultsFeedbacksAssessorAssessmentNoteById(submissionId), submissionId);
     }
 }

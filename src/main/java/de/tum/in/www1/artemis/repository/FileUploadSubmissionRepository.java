@@ -44,8 +44,8 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      * @param submissionId the id of the file upload submission that should be loaded from the database
      * @return the file upload submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote", "participation" })
-    Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote" })
+    Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAssessmentNoteById(long submissionId);
 
     @Query("""
             SELECT submission
@@ -73,15 +73,15 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
 
     /**
      * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the
-     * result, the assessment note of the result, its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the
+     * result, the assessment note of the result and its participation (eagerly loaded). Throws an EntityNotFoundException if no submission could be found for the
      * given id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
     @NotNull
-    default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(long submissionId) {
-        return getValueElseThrow(findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId), submissionId);
+    default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteElseThrow(long submissionId) {
+        return getValueElseThrow(findWithResultsFeedbacksAssessorAssessmentNoteById(submissionId), submissionId);
     }
 
     /**

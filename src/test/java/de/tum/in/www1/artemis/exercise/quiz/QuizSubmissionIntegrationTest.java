@@ -616,7 +616,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExerciseService.reEvaluate(quizExercise, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
         assertThat(quizSubmissionRepository.findByQuizExerciseId(quizExercise.getId())).isPresent();
 
-        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        List<Result> results = resultRepository.findBySubmission_ParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         assertThat(results).hasSize(1);
         var result = results.getFirst();
 
@@ -657,7 +657,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExerciseService.reEvaluate(quizExercise, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(1);
 
-        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        List<Result> results = resultRepository.findBySubmission_ParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         assertThat(results).hasSize(1);
         var result = results.getFirst();
 

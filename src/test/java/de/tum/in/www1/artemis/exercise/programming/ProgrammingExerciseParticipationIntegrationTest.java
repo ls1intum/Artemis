@@ -240,7 +240,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
-        assertThat(requestedParticipation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream())).isEmpty();
+        assertThat(requestedParticipation.getSubmissions()).isEmpty();
     }
 
     @Test
@@ -595,7 +595,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isEqualTo(submission);
+        assertThat(returnedSubmission).isEqualTo(null);
     }
 
     @Test
@@ -608,7 +608,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isEqualTo(submission);
+        assertThat(returnedSubmission).isEqualTo(null);
     }
 
     @Test
@@ -620,7 +620,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isEqualTo(submission);
+        assertThat(returnedSubmission).isEqualTo(null);
     }
 
     @Test

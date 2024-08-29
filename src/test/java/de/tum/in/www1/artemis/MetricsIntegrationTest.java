@@ -108,8 +108,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
 
-            final var expectedMap = exercises.stream().map(Exercise::getId).collect(
-                    Collectors.toMap(Function.identity(), id -> resultRepository.findAllByParticipationExerciseId(id).stream().mapToDouble(Result::getScore).average().orElse(0)));
+            final var expectedMap = exercises.stream().map(Exercise::getId).collect(Collectors.toMap(Function.identity(),
+                    id -> resultRepository.findAllBySubmission_ParticipationExerciseId(id).stream().mapToDouble(Result::getScore).average().orElse(0)));
 
             assertThat(averageScores).isEqualTo(expectedMap);
         }

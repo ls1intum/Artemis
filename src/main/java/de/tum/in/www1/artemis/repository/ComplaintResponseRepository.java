@@ -34,7 +34,7 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to course courseId
      */
-    long countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(Long courseId, ComplaintType complaintType);
+    long countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(Long courseId, ComplaintType complaintType);
 
     /**
      * This magic method counts the number of complaints responses by complaint type associated to an exam id
@@ -43,7 +43,8 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to exam examId
      */
-    long countByComplaint_Result_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(Long examId, ComplaintType complaintType);
+    long countByComplaint_Result_Submission_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(Long examId,
+            ComplaintType complaintType);
 
     /**
      * This magic method counts the number of complaints responses by complaint type associated to an exercise id

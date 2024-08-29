@@ -94,7 +94,7 @@ public class QuizParticipationResource {
 
         StudentParticipation participation = participationService.startExercise(exercise, user, true);
 
-        Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true);
+        Optional<Result> optionalResult = resultRepository.findFirstBySubmission_ParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true);
 
         Submission submission;
         Result result;

@@ -54,16 +54,16 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Optional<Result> findByIdWithEagerAssessor(@Param("resultId") long resultId);
 
-    List<Result> findByParticipationIdOrderByCompletionDateDesc(long participationId);
+    List<Result> findBySubmission_ParticipationIdOrderByCompletionDateDesc(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
-    List<Result> findAllByParticipationIdOrderByCompletionDateDesc(long participationId);
+    List<Result> findAllBySubmission_ParticipationIdOrderByCompletionDateDesc(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
-    List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(long exerciseId);
+    List<Result> findBySubmission_ParticipationExerciseIdOrderByCompletionDateAsc(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
-    List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(long exerciseId);
+    List<Result> findWithEagerSubmissionAndFeedbackBySubmission_ParticipationExerciseId(long exerciseId);
 
     @Query("""
             SELECT DISTINCT r
@@ -117,7 +117,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return an {@code Optional} containing the first {@code Result} with feedback and test cases, ordered by completion date in descending order,
      *         or an empty {@code Optional} if no result is found
      */
-    default Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
+    default Optional<Result> findFirstWithFeedbacksTestCasesBySubmission_ParticipationIdOrderByCompletionDateDesc(long participationId) {
         var resultOptional = findFirstBySubmission_ParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
@@ -137,7 +137,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return an {@code Optional} containing the first {@code Result} with submission, feedback, and test cases, ordered by completion date in descending order,
      *         or an empty {@code Optional} if no result is found
      */
-    default Optional<Result> findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
+    default Optional<Result> findFirstWithSubmissionAndFeedbacksAndTestCasesBySubmission_ParticipationIdOrderByCompletionDateDesc(long participationId) {
         var resultOptional = findFirstBySubmission_ParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
@@ -157,7 +157,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return an {@code Optional} containing the first {@code Result} with submissions, ordered by completion date in descending order,
      *         or an empty {@code Optional} if no result is found
      */
-    default Optional<Result> findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(long participationId) {
+    default Optional<Result> findFirstWithSubmissionsBySubmission_ParticipationIdOrderByCompletionDateDesc(long participationId) {
         var resultOptional = findFirstBySubmission_ParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
@@ -166,7 +166,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return findResultWithSubmissionsById(id);
     }
 
-    Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
+    Optional<Result> findFirstBySubmission_ParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
 
     /**
      * Finds the first rated or unrated result by participation ID, including its submission, ordered by completion date in descending order.
@@ -177,8 +177,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return an {@code Optional} containing the first {@code Result} with submissions, ordered by completion date in descending order,
      *         or an empty {@code Optional} if no result is found
      */
-    default Optional<Result> findFirstByParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(long participationId, boolean rated) {
-        var resultOptional = findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, rated);
+    default Optional<Result> findFirstBySubmission_ParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(long participationId, boolean rated) {
+        var resultOptional = findFirstBySubmission_ParticipationIdAndRatedOrderByCompletionDateDesc(participationId, rated);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -210,7 +210,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") long resultId);
 
-    Set<Result> findAllByParticipationExerciseId(long exerciseId);
+    Set<Result> findAllBySubmission_ParticipationExerciseId(long exerciseId);
 
     /**
      * Load a result from the database by its id together with the associated submission, the list of feedback items, its assessor and assessment note.
@@ -358,7 +358,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     List<Long> countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
-    Set<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(long exerciseId);
+    Set<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndSubmission_Participation_ExerciseIdAndCompletionDateIsNotNull(long exerciseId);
 
     @Query("""
             SELECT COUNT(DISTINCT p)
@@ -402,7 +402,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    List<Result> getResultsOrderedBySubmission_ParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT r
@@ -417,7 +417,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+    List<Result> getResultsOrderedBySubmission_ParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
     @Query("""
             SELECT r
@@ -433,7 +433,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    List<Result> getRatedResultsOrderedBySubmission_ParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId,
+            @Param("studentId") long studentId);
 
     @Query("""
             SELECT r
@@ -449,7 +450,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+    List<Result> getRatedResultsOrderedBySubmission_ParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
     List<Result> findAllByLastModifiedDateAfter(Instant lastModifiedDate);
 
@@ -459,7 +460,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @param participationId the id of the participation to check.
      * @return true if a result for the given participation exists, false otherwise.
      */
-    boolean existsByParticipationId(long participationId);
+    boolean existsBySubmission_ParticipationId(long participationId);
 
     /**
      * Returns true if there is at least one result for the given exercise.
@@ -467,7 +468,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @param exerciseId id of an Exercise.
      * @return true if there is a result, false if not.
      */
-    boolean existsByParticipation_ExerciseId(long exerciseId);
+    boolean existsBySubmission_Participation_ExerciseId(long exerciseId);
 
     /**
      * Use this method only for exams!
@@ -808,15 +809,15 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      */
     default Optional<Result> findLatestResultWithFeedbacksForParticipation(long participationId, boolean withSubmission) {
         if (withSubmission) {
-            return findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findFirstWithSubmissionAndFeedbacksAndTestCasesBySubmission_ParticipationIdOrderByCompletionDateDesc(participationId);
         }
         else {
-            return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findFirstWithFeedbacksTestCasesBySubmission_ParticipationIdOrderByCompletionDateDesc(participationId);
         }
     }
 
-    default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
-        return getValueElseThrow(findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId));
+    default Result findFirstWithFeedbacksBySubmission_ParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
+        return getValueElseThrow(findFirstWithFeedbacksTestCasesBySubmission_ParticipationIdOrderByCompletionDateDesc(participationId));
     }
 
     default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(long resultId) {

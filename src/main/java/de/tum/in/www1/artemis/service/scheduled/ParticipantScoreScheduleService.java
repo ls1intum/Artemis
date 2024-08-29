@@ -388,12 +388,12 @@ public class ParticipantScoreScheduleService {
         Optional<Result> resultOrdered;
         if (participantScore instanceof StudentScore studentScore) {
             resultOrdered = resultRepository
-                    .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
-                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
+                    .getResultsOrderedBySubmission_ParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId())
+                    .stream().filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
         }
         else if (participantScore instanceof TeamScore teamScore) {
             resultOrdered = resultRepository
-                    .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
+                    .getResultsOrderedBySubmission_ParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
                     .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
         }
         else {
@@ -414,14 +414,13 @@ public class ParticipantScoreScheduleService {
         // the new last rated result (rated result with the highest id of submission with the highest id) will be at the beginning of the list
         Optional<Result> ratedResultsOrdered;
         if (participantScore instanceof StudentScore studentScore) {
-            ratedResultsOrdered = resultRepository
-                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
-                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
+            ratedResultsOrdered = resultRepository.getRatedResultsOrderedBySubmission_ParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(),
+                    studentScore.getUser().getId()).stream().filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
         }
         else if (participantScore instanceof TeamScore teamScore) {
             ratedResultsOrdered = resultRepository
-                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
-                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
+                    .getRatedResultsOrderedBySubmission_ParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId())
+                    .stream().filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
         }
         else {
             return Optional.empty();

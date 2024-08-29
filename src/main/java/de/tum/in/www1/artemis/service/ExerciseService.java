@@ -253,7 +253,7 @@ public class ExerciseService {
 
         long numberOfComplaints;
         if (examMode) {
-            numberOfComplaints = complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exerciseId, ComplaintType.COMPLAINT);
+            numberOfComplaints = complaintRepository.countByResultSubmissionParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exerciseId, ComplaintType.COMPLAINT);
         }
         else {
             numberOfComplaints = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
@@ -695,7 +695,7 @@ public class ExerciseService {
         // update the grading criteria to re-calculate the results considering the updated usage limits
         gradingCriterionRepository.saveAll(exercise.getGradingCriteria());
 
-        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackBySubmission_ParticipationExerciseId(exercise.getId());
 
         // add example submission results that belong exercise
         if (!exercise.getExampleSubmissions().isEmpty()) {

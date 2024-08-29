@@ -112,7 +112,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> fileUploadSubmissionRepository.findByIdElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(Long.MAX_VALUE));
+                .isThrownBy(() -> fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(Long.MAX_VALUE));

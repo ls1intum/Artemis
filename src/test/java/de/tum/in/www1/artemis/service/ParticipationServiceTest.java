@@ -136,7 +136,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
 
-        List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        List<Result> results = resultRepository.findAllBySubmission_ParticipationIdOrderByCompletionDateDesc(participation.getId());
 
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results);
         assertThat(resultBuildJobMap).hasSize(0);

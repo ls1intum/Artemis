@@ -86,7 +86,7 @@ public class QuizStatisticService {
             Result latestRatedResult = null;
             Result latestUnratedResult = null;
 
-            var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            var results = resultRepository.findAllBySubmission_ParticipationIdOrderByCompletionDateDesc(participation.getId());
             // update all Results of a participation
             for (Result result : results) {
                 // find the latest rated Result
@@ -168,7 +168,8 @@ public class QuizStatisticService {
     private Result getPreviousResult(Result newResult) {
         Result oldResult = null;
 
-        List<Result> allResultsForParticipation = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(newResult.getSubmission().getParticipation().getId());
+        List<Result> allResultsForParticipation = resultRepository
+                .findAllBySubmission_ParticipationIdOrderByCompletionDateDesc(newResult.getSubmission().getParticipation().getId());
         for (Result result : allResultsForParticipation) {
             // find the latest Result, which is presented in the Statistics
             if (result.isRated() == newResult.isRated() && result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult)
