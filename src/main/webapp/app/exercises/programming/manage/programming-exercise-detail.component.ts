@@ -756,7 +756,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if the build configuration is available and sets the windFile if it is, helpful for reliably displaying
+     * Checks if the build configuration is available and sets the Windfile if it is, helpful for reliably displaying
      * the build configuration in the UI
      * @param exercise the programming exercise to check
      */

@@ -50,7 +50,7 @@
             />
             @if (!programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExerciseCreationConfig.auxiliaryRepositoriesSupported) {
                 <div class="form-group">
-                    @if (programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0) {
+                    @if (programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length) {
                         <ngx-datatable
                             id="auxiliaryRepositoryTable"
                             class="bootstrap"
