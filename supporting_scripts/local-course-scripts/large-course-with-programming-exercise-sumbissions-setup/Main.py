@@ -7,6 +7,7 @@ from createStudents import create_users, user_credentials
 from manageCourse import add_users_to_groups_of_course
 from manageProgrammingExercise import create_programming_exercise, add_participation, commit
 from deleteStudents import delete_users
+
 # Load configuration and constants
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -14,6 +15,7 @@ config.read('config.ini')
 # Constants
 STUDENTS_TO_CREATE = int(config.get('Settings', 'students')) + 1
 COMMITS_PER_STUDENT = int(config.get('Settings', 'commits'))
+EXERCISES_TO_CREATE = int(config.get('Settings', 'exercises'))
 
 CLIENT_URL = config.get('Settings', 'client_url')
 SERVER_URL = config.get('Settings', 'server_url')
@@ -52,9 +54,11 @@ def main():
     # Step 4: Add users to the course
     add_users_to_groups_of_course(session, course_id, SERVER_URL, STUDENTS_TO_CREATE)
 
-    # Step 5: Create a programming exercise
-    response_data = create_programming_exercise(session, course_id, SERVER_URL).json()
-    exercise_id = response_data.get('id')
+    # Step 5: Create programming exercises
+    exercise_ids = []
+    for i in range(EXERCISES_TO_CREATE):
+        response_data = create_programming_exercise(session, course_id, SERVER_URL, short_name_index=i+1).json()
+        exercise_ids.append(response_data.get('id'))
 
     # Step 6: Add participation and commit for each user
     print("Created users and their credentials:")
@@ -63,15 +67,15 @@ def main():
         user_session = requests.Session()
         authenticate_user(username, password, SERVER_URL, user_session)
 
+        for exercise_id in exercise_ids:
+            participation_response = add_participation(user_session, exercise_id, CLIENT_URL)
+            logging.info(f"Added participation for {username} in the programming exercise {exercise_id} successfully")
+            participation_id = participation_response.get('id')
 
-        participation_response = add_participation(user_session, exercise_id, CLIENT_URL)
-        logging.info(f"Added participation for {username} in the programming exercise {exercise_id} successfully")
-        participation_id = participation_response.get('id')
-
-        for _ in range(COMMITS_PER_STUDENT):
-            commit(user_session, participation_id, CLIENT_URL)
-            logging.info(f"Added commit for {username} in the programming exercise {exercise_id} successfully")
-        print(f"Participation and Commit done for user: {username}")
+            for _ in range(COMMITS_PER_STUDENT):
+                commit(user_session, participation_id, CLIENT_URL)
+                logging.info(f"Added commit for {username} in the programming exercise {exercise_id} successfully")
+            print(f"Participation and Commit done for user: {username}")
 
     # (Optional) Step 7 : Delete all created students
     # delete_all_created_students(session)

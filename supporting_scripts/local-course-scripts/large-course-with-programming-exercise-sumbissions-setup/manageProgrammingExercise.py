@@ -1,14 +1,14 @@
 import logging
 
-def create_programming_exercise(session, course_id, server_url):
+def create_programming_exercise(session, course_id, server_url, short_name_index):
     """Create a programming exercise for the course."""
     url = f"{server_url}/api/programming-exercises/setup"
     headers = {"Content-Type": "application/json"}
 
     programming_exercise = {
         "type": "programming",
-        "title": "Example Programming Exercise",
-        "shortName": "ExProgEx",
+        "title": "Example Programming Exercise" + str(short_name_index),
+        "shortName": "ExProgEx" + str(short_name_index),
         "course": {"id": course_id},
         "programmingLanguage": "JAVA",
         "projectType": "PLAIN_GRADLE",
