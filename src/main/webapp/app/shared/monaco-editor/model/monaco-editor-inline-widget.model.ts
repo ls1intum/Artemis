@@ -1,8 +1,7 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorViewZone } from 'app/shared/monaco-editor/model/monaco-editor-view-zone.model';
 import { MonacoEditorOverlayWidget } from 'app/shared/monaco-editor/model/monaco-editor-overlay-widget.model';
-
-import * as monaco from 'monaco-editor';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 /**
  * Class representing a line widget.
@@ -21,7 +20,7 @@ export class MonacoEditorLineWidget extends MonacoCodeEditorElement {
      * @param contentDomNode The content to render.
      * @param afterLineNumber The line after which this line widget should be rendered.
      */
-    constructor(editor: monaco.editor.ICodeEditor, overlayWidgetId: string, contentDomNode: HTMLElement, afterLineNumber: number) {
+    constructor(editor: MonacoEditorWithActions, overlayWidgetId: string, contentDomNode: HTMLElement, afterLineNumber: number) {
         super(editor, overlayWidgetId);
         this.overlayWidget = new MonacoEditorOverlayWidget(
             editor,

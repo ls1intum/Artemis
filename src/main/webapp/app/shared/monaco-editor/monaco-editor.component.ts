@@ -10,6 +10,7 @@ import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-li
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 export const MAX_TAB_SIZE = 8;
 export type EditorPosition = { lineNumber: number; column: number };
@@ -21,7 +22,7 @@ export type EditorPosition = { lineNumber: number; column: number };
     encapsulation: ViewEncapsulation.None,
 })
 export class MonacoEditorComponent implements OnInit, OnDestroy {
-    private _editor: monaco.editor.IStandaloneCodeEditor;
+    private _editor: MonacoEditorWithActions;
     private monacoEditorContainerElement: HTMLElement;
     themeSubscription?: Subscription;
     models: monaco.editor.IModel[] = [];
@@ -285,9 +286,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     changeTheme(artemisTheme: Theme): void {
-        this._editor.updateOptions({
-            theme: artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light',
-        });
+        monaco.editor.setTheme(artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light');
     }
 
     layout(): void {

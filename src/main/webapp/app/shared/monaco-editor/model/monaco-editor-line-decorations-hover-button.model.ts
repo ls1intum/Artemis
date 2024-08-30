@@ -1,5 +1,12 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
-import * as monaco from 'monaco-editor';
+import {
+    DecorationsCollection,
+    DeltaDecoration,
+    DisposableEditorElement,
+    EditorMouseEvent,
+    MonacoEditorWithActions,
+    makeEditorRange,
+} from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 /**
  * Class representing a hover button that is displayed on a specific line in the editor.
@@ -8,12 +15,12 @@ import * as monaco from 'monaco-editor';
 export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElement {
     private clickCallback: (lineNumber: number) => void;
     private currentLineNumber = 1;
-    private decorationsCollection: monaco.editor.IEditorDecorationsCollection;
+    private decorationsCollection: DecorationsCollection;
     private readonly className: string;
 
-    private mouseMoveListener?: monaco.IDisposable;
-    private mouseDownListener?: monaco.IDisposable;
-    private mouseLeaveListener?: monaco.IDisposable;
+    private mouseMoveListener?: DisposableEditorElement;
+    private mouseDownListener?: DisposableEditorElement;
+    private mouseLeaveListener?: DisposableEditorElement;
 
     /**
      * @param editor The editor to which to add the button.
@@ -21,7 +28,7 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
      * @param className The class name of the button. This is used to uniquely identify the button in the editor.
      * @param clickCallback The callback to be called when the button is clicked. The line number of the button is passed as an argument.
      */
-    constructor(editor: monaco.editor.ICodeEditor, id: string, className: string, clickCallback: (lineNumber: number) => void) {
+    constructor(editor: MonacoEditorWithActions, id: string, className: string, clickCallback: (lineNumber: number) => void) {
         super(editor, id);
         this.clickCallback = clickCallback;
         this.className = className;
@@ -33,7 +40,7 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
 
     protected setupListeners() {
         super.setupListeners();
-        this.mouseMoveListener = this.editor.onMouseMove((editorMouseEvent: monaco.editor.IEditorMouseEvent) => {
+        this.mouseMoveListener = this.editor.onMouseMove((editorMouseEvent: EditorMouseEvent) => {
             // This is undefined e.g. when hovering over a line widget.
             const lineNumber = editorMouseEvent.target?.position?.lineNumber;
             this.moveAndUpdate(lineNumber);
@@ -50,7 +57,7 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
      * Checks if the button was clicked and calls the click callback with the line number as an argument.
      * @param editorMouseEvent The mouse event to react to.
      */
-    onClick(editorMouseEvent: monaco.editor.IEditorMouseEvent): void {
+    onClick(editorMouseEvent: EditorMouseEvent): void {
         const lineNumber = editorMouseEvent.target?.position?.lineNumber;
         // We identify the button via the class name of the element.
         if (lineNumber && editorMouseEvent.target?.element?.classList?.contains(this.className)) {
@@ -83,9 +90,9 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
         this.decorationsCollection.set([this.getAssociatedDeltaDecoration()]);
     }
 
-    private getAssociatedDeltaDecoration(): monaco.editor.IModelDeltaDecoration {
+    private getAssociatedDeltaDecoration(): DeltaDecoration {
         return {
-            range: new monaco.Range(this.currentLineNumber, 1, this.currentLineNumber, 1),
+            range: makeEditorRange(this.currentLineNumber, 1, this.currentLineNumber, 1),
             options: {
                 isWholeLine: true,
                 linesDecorationsClassName: this.className,

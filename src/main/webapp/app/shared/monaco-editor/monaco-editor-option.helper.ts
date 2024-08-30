@@ -1,4 +1,5 @@
-import { MonacoEditorOptionPreset, MonacoEditorOptions } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
+import { MonacoEditorOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 export const SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS = new MonacoEditorOptionPreset({
     // Hide the gutter

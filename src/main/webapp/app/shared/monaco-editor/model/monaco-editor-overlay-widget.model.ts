@@ -1,13 +1,10 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
-import * as monaco from 'monaco-editor';
-
-// null is used by the monaco editor API
-type OverlayWidgetPosition = monaco.editor.IOverlayWidgetPosition | null;
+import { MonacoEditorWithActions, OverlayWidget, OverlayWidgetPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 /**
  * Class representing an overlay widget floating above the editor content.
  */
-export class MonacoEditorOverlayWidget extends MonacoCodeEditorElement implements monaco.editor.IOverlayWidget {
+export class MonacoEditorOverlayWidget extends MonacoCodeEditorElement implements OverlayWidget {
     private readonly domNode: HTMLElement;
     private readonly position: OverlayWidgetPosition;
 
@@ -17,7 +14,7 @@ export class MonacoEditorOverlayWidget extends MonacoCodeEditorElement implement
      * @param domNode The content to render. The user will be able to interact with the widget.
      * @param position The position of the widget or null if the element is positioned by another element (e.g. a view zone).
      */
-    constructor(editor: monaco.editor.ICodeEditor, id: string, domNode: HTMLElement, position: OverlayWidgetPosition) {
+    constructor(editor: MonacoEditorWithActions, id: string, domNode: HTMLElement, position: OverlayWidgetPosition) {
         super(editor, id);
         this.domNode = domNode;
         // Ensure that the widget reaches its maximum width.

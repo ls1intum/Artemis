@@ -2,7 +2,7 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
-import { DisposableEditorElement, EditorPosition, MonacoEditorRange, MonacoEditorWithActions, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { DisposableEditorElement, EditorPosition, EditorRange, MonacoEditorWithActions, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor, DisposableEditorElement {
     // IActionDescriptor
@@ -95,7 +95,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     registerCompletionProviderForCurrentModel<ItemType>(
         editor: MonacoEditorWithActions,
         searchFn: (searchTerm?: string) => Promise<ItemType[]>,
-        mapToSuggestionFn: (item: ItemType, range: MonacoEditorRange) => monaco.languages.CompletionItem,
+        mapToSuggestionFn: (item: ItemType, range: EditorRange) => monaco.languages.CompletionItem,
         triggerCharacter?: string,
         listIncomplete?: boolean,
     ): monaco.IDisposable {
@@ -265,7 +265,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param range The range to replace the text at.
      * @param text The text to replace the range with.
      */
-    replaceTextAtRange(editor: MonacoEditorWithActions, range: MonacoEditorRange, text: string): void {
+    replaceTextAtRange(editor: MonacoEditorWithActions, range: EditorRange, text: string): void {
         editor.executeEdits(this.id, [{ range, text }]);
     }
 
@@ -274,7 +274,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to delete the text in.
      * @param range The range to delete the text at.
      */
-    deleteTextAtRange(editor: MonacoEditorWithActions, range: MonacoEditorRange): void {
+    deleteTextAtRange(editor: MonacoEditorWithActions, range: EditorRange): void {
         this.replaceTextAtRange(editor, range, '');
     }
 
@@ -283,7 +283,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to get the text from.
      * @param range The range to get the text from.
      */
-    getTextAtRange(editor: MonacoEditorWithActions, range: MonacoEditorRange): string | undefined {
+    getTextAtRange(editor: MonacoEditorWithActions, range: EditorRange): string | undefined {
         // End of line preference is important here. Otherwise, Windows may use CRLF line endings.
         return editor.getModel()?.getValueInRange(range, monaco.editor.EndOfLinePreference.LF);
     }
@@ -335,7 +335,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to set the selection in.
      * @param selection The selection to set.
      */
-    setSelection(editor: MonacoEditorWithActions, selection: MonacoEditorRange): void {
+    setSelection(editor: MonacoEditorWithActions, selection: EditorRange): void {
         editor.setSelection(selection);
         editor.revealRangeInCenter(selection);
     }
