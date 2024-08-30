@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -58,6 +60,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RestController
 @RequestMapping("api/")
 public class ProgrammingExerciseParticipationResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
 
@@ -324,6 +328,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        log.info("Fetching VCS access logs for participation ID: {}", participationId);
         List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.findAllByParticipationId(participationId);
         var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
         return ResponseEntity.ok(vcsAccessLogDTOs);
@@ -434,6 +439,7 @@ public class ProgrammingExerciseParticipationResource {
         }
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+        log.info("Fetching VCS access logs for exercise ID: {} and repository type: {}", exerciseId, repositoryType);
 
         var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
 

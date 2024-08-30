@@ -264,14 +264,13 @@ public class LocalVCServletService {
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
         String password = usernameAndPassword.password();
-        if (!password.startsWith("vcpat")) {
+        if (!password.startsWith(TOKEN_PREFIX)) {
             return AuthenticationMechanism.PASSWORD;
         }
         if (password.equals(user.getVcsAccessToken())) {
             return AuthenticationMechanism.USER_VCS_ACCESS_TOKEN;
         }
         return AuthenticationMechanism.PARTICIPATION_VCS_ACCESS_TOKEN;
-
     }
 
     private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri) throws LocalVCAuthException {

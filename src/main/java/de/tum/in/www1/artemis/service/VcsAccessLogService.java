@@ -40,7 +40,7 @@ public class VcsAccessLogService {
      * @param user                    The user accessing the repository
      * @param participation           The participation which owns the repository
      * @param actionType              The action type: READ or WRITE
-     * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation) or SSH
+     * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation), SSH or code editor
      * @param commitHash              The latest commit hash
      * @param ipAddress               The ip address of the user accessing the repository
      */
