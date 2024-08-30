@@ -1,5 +1,5 @@
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
-import * as monaco from 'monaco-editor';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 interface InsertShortAnswerOptionArgs {
     spotNumber?: number;
@@ -29,7 +29,7 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
      * @param editor The editor to insert the option in.
      * @param args The optional arguments for the action. Can include a spot number (will be # otherwise) and the option text (if blank/absent, the default text will be used).
      */
-    run(editor: monaco.editor.ICodeEditor, args?: InsertShortAnswerOptionArgs): void {
+    run(editor: MonacoEditorWithActions, args?: InsertShortAnswerOptionArgs): void {
         // Note that even if the optionText is provided, it may be blank. This is why we use || instead of ?? here.
         const optionText = args?.optionText || MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT;
         let insertedText: string;

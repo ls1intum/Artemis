@@ -1,5 +1,5 @@
-import * as monaco from 'monaco-editor';
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 export class MonacoGradingUsageCountAction extends MonacoEditorDomainAction {
     static readonly ID = 'monaco-grading-usage-count.action';
@@ -10,7 +10,7 @@ export class MonacoGradingUsageCountAction extends MonacoEditorDomainAction {
         super(MonacoGradingUsageCountAction.ID, 'artemisApp.assessmentInstructions.instructions.editor.addUsageCount', undefined, undefined, true);
     }
 
-    run(editor: monaco.editor.ICodeEditor): void {
+    run(editor: MonacoEditorWithActions): void {
         this.addTextWithDomainActionIdentifier(editor, MonacoGradingUsageCountAction.TEXT, true, false);
     }
 

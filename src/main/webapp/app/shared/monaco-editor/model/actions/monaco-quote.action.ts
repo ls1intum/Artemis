@@ -1,6 +1,6 @@
 import { faQuoteLeft } from '@fortawesome/free-solid-svg-icons';
-import * as monaco from 'monaco-editor';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 const QUOTE_OPEN_DELIMITER = '> ';
 
@@ -17,7 +17,7 @@ export class MonacoQuoteAction extends MonacoEditorAction {
      * Toggles the quote delimiter around the selected text in the editor. If the selected text is already quoted, the delimiter is removed.
      * @param editor The editor in which to toggle quote text.
      */
-    run(editor: monaco.editor.ICodeEditor): void {
+    run(editor: MonacoEditorWithActions): void {
         this.toggleDelimiterAroundSelection(editor, QUOTE_OPEN_DELIMITER, '');
         editor.focus();
     }

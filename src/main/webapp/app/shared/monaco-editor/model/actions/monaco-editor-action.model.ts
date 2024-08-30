@@ -2,8 +2,9 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
+import { DisposableEditorElement, EditorPosition, MonacoEditorRange, MonacoEditorWithActions, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
-export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor, monaco.IDisposable {
+export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor, DisposableEditorElement {
     // IActionDescriptor
     id: string;
     label: string;
@@ -21,7 +22,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * The editor (if any) this action is registered in.
      * @private
      */
-    private _editor?: monaco.editor.IStandaloneCodeEditor;
+    private _editor?: MonacoEditorWithActions;
 
     /**
      * Create a new action with the given id, translation key, icon, and keybindings.
@@ -44,7 +45,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor in which the action was triggered.
      * @param args Optional arguments that can be passed to the action. To ensure this is an object, you can use {@link executeInCurrentEditor}.
      */
-    abstract run(editor: monaco.editor.ICodeEditor, args?: unknown): void;
+    abstract run(editor: MonacoEditorWithActions, args?: unknown): void;
 
     /**
      * Execute the action in the current editor. This is a convenience method to trigger the action in the editor without having to pass the editor instance.
@@ -70,11 +71,11 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
 
     /**
      * Register this action in the given editor. This is required to make the action available in the editor. Note that the action can only be registered in one editor at a time.
-     * @param editor The editor to register this action in. Note that its type has to be `monaco.editor.IStandaloneCodeEditor` to ensure it supports the `addAction` method.
+     * @param editor The editor to register this action in.
      * @param translateService The translation service to use for translating the action label.
      * @throws error if the action has already been registered in an editor.
      */
-    register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService): void {
+    register(editor: MonacoEditorWithActions, translateService: TranslateService): void {
         if (this.disposableAction) {
             throw new Error(`Action (id ${this.id}) already belongs to an editor. Dispose it first before registering it in another editor.`);
         }
@@ -92,9 +93,9 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param listIncomplete Whether the list of suggestions is incomplete. If true, Monaco will keep searching for more suggestions.
      */
     registerCompletionProviderForCurrentModel<ItemType>(
-        editor: monaco.editor.IStandaloneCodeEditor,
+        editor: MonacoEditorWithActions,
         searchFn: (searchTerm?: string) => Promise<ItemType[]>,
-        mapToSuggestionFn: (item: ItemType, range: monaco.IRange) => monaco.languages.CompletionItem,
+        mapToSuggestionFn: (item: ItemType, range: MonacoEditorRange) => monaco.languages.CompletionItem,
         triggerCharacter?: string,
         listIncomplete?: boolean,
     ): monaco.IDisposable {
@@ -112,7 +113,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         return monaco.languages.registerCompletionItemProvider(languageId, {
             // We only want to trigger the completion provider if the trigger character is typed. However, we also allow numbers to trigger the completion, as they would not normally trigger it.
             triggerCharacters: triggerCharacter ? [triggerCharacter, ...'0123456789'] : undefined,
-            provideCompletionItems: async (model: monaco.editor.ITextModel, position: monaco.Position): Promise<monaco.languages.CompletionList | undefined> => {
+            provideCompletionItems: async (model: monaco.editor.ITextModel, position: EditorPosition): Promise<monaco.languages.CompletionList | undefined> => {
                 if (model.id !== modelId) {
                     return undefined;
                 }
@@ -155,7 +156,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      */
     findTypedSequenceUntilPosition(
         model: monaco.editor.ITextModel,
-        position: monaco.Position,
+        position: EditorPosition,
         triggerCharacter?: string,
         lengthLimit = 25,
     ): monaco.editor.IWordAtPosition | undefined {
@@ -164,7 +165,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
             return model.getWordUntilPosition(position);
         }
         const scanColumn = Math.max(1, position.column - lengthLimit);
-        const scanRange = new monaco.Range(position.lineNumber, scanColumn, position.lineNumber, position.column);
+        const scanRange = makeEditorRange(position.lineNumber, scanColumn, position.lineNumber, position.column);
         const text = model.getValueInRange(scanRange);
         const triggerIndex = text.lastIndexOf(triggerCharacter);
         if (triggerIndex === -1) {
@@ -186,7 +187,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param closeDelimiter The closing delimiter, e.g. </ins>.
      * @param textToInsert The text to insert between the delimiters if there is no selection. Defaults to an empty string.
      */
-    toggleDelimiterAroundSelection(editor: monaco.editor.ICodeEditor, openDelimiter: string, closeDelimiter: string, textToInsert: string = ''): void {
+    toggleDelimiterAroundSelection(editor: MonacoEditorWithActions, openDelimiter: string, closeDelimiter: string, textToInsert: string = ''): void {
         const selection = editor.getSelection();
         const selectedText = selection ? this.getTextAtRange(editor, selection)?.trim() : undefined;
         const position = editor.getPosition();
@@ -222,7 +223,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to type the text in.
      * @param text The text to type.
      */
-    typeText(editor: monaco.editor.ICodeEditor, text: string): void {
+    typeText(editor: MonacoEditorWithActions, text: string): void {
         editor.trigger('keyboard', 'type', { text });
     }
 
@@ -231,7 +232,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to replace the text in.
      * @param text The text to replace the current selection with.
      */
-    replaceTextAtCurrentSelection(editor: monaco.editor.ICodeEditor, text: string): void {
+    replaceTextAtCurrentSelection(editor: MonacoEditorWithActions, text: string): void {
         const selection = editor.getSelection();
         const selectedText = selection ? this.getTextAtRange(editor, selection)?.trim() : undefined;
         if (selection && selectedText !== undefined) {
@@ -243,7 +244,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * Gets the text of the current selection. If there is no selection, undefined is returned.
      * @param editor The editor to get the selection text from.
      */
-    getSelectedText(editor: monaco.editor.ICodeEditor): string | undefined {
+    getSelectedText(editor: MonacoEditorWithActions): string | undefined {
         const selection = editor.getSelection();
         return selection ? this.getTextAtRange(editor, selection) : undefined;
     }
@@ -254,8 +255,8 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param position The position to insert the text at.
      * @param text The text to insert.
      */
-    insertTextAtPosition(editor: monaco.editor.ICodeEditor, position: monaco.IPosition, text: string): void {
-        this.replaceTextAtRange(editor, new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column), text);
+    insertTextAtPosition(editor: MonacoEditorWithActions, position: EditorPosition, text: string): void {
+        this.replaceTextAtRange(editor, makeEditorRange(position.lineNumber, position.column, position.lineNumber, position.column), text);
     }
 
     /**
@@ -264,7 +265,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param range The range to replace the text at.
      * @param text The text to replace the range with.
      */
-    replaceTextAtRange(editor: monaco.editor.ICodeEditor, range: monaco.IRange, text: string): void {
+    replaceTextAtRange(editor: MonacoEditorWithActions, range: MonacoEditorRange, text: string): void {
         editor.executeEdits(this.id, [{ range, text }]);
     }
 
@@ -273,7 +274,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to delete the text in.
      * @param range The range to delete the text at.
      */
-    deleteTextAtRange(editor: monaco.editor.ICodeEditor, range: monaco.IRange): void {
+    deleteTextAtRange(editor: MonacoEditorWithActions, range: MonacoEditorRange): void {
         this.replaceTextAtRange(editor, range, '');
     }
 
@@ -282,7 +283,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to get the text from.
      * @param range The range to get the text from.
      */
-    getTextAtRange(editor: monaco.editor.ICodeEditor, range: monaco.IRange): string | undefined {
+    getTextAtRange(editor: MonacoEditorWithActions, range: MonacoEditorRange): string | undefined {
         // End of line preference is important here. Otherwise, Windows may use CRLF line endings.
         return editor.getModel()?.getValueInRange(range, monaco.editor.EndOfLinePreference.LF);
     }
@@ -292,7 +293,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to get the text from.
      * @param lineNumber The line number to get the text from. Line numbers start at 1.
      */
-    getLineText(editor: monaco.editor.ICodeEditor, lineNumber: number): string | undefined {
+    getLineText(editor: MonacoEditorWithActions, lineNumber: number): string | undefined {
         return editor.getModel()?.getLineContent(lineNumber);
     }
 
@@ -300,7 +301,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * Gets the number of lines in the editor.
      * @param editor The editor to get the line count from.
      */
-    getLineCount(editor: monaco.editor.ICodeEditor): number {
+    getLineCount(editor: MonacoEditorWithActions): number {
         return editor.getModel()?.getLineCount() ?? 0;
     }
 
@@ -308,7 +309,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * Gets the position of the last character in the editor.
      * @param editor The editor to get the position from.
      */
-    getEndPosition(editor: monaco.editor.ICodeEditor): monaco.IPosition {
+    getEndPosition(editor: MonacoEditorWithActions): EditorPosition {
         return editor.getModel()?.getFullModelRange().getEndPosition() ?? { lineNumber: 1, column: 1 };
     }
 
@@ -318,14 +319,14 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param position The position to set.
      * @param revealLine Whether to scroll the editor to reveal the line the position is on. Defaults to false.
      */
-    setPosition(editor: monaco.editor.ICodeEditor, position: monaco.IPosition, revealLine = false): void {
+    setPosition(editor: MonacoEditorWithActions, position: EditorPosition, revealLine = false): void {
         editor.setPosition(position);
         if (revealLine) {
             editor.revealLineInCenter(position.lineNumber);
         }
     }
 
-    getPosition(editor: monaco.editor.ICodeEditor): monaco.IPosition {
+    getPosition(editor: MonacoEditorWithActions): EditorPosition {
         return editor.getPosition() ?? { lineNumber: 1, column: 1 };
     }
 
@@ -334,7 +335,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to set the selection in.
      * @param selection The selection to set.
      */
-    setSelection(editor: monaco.editor.ICodeEditor, selection: monaco.IRange): void {
+    setSelection(editor: MonacoEditorWithActions, selection: MonacoEditorRange): void {
         editor.setSelection(selection);
         editor.revealRangeInCenter(selection);
     }
@@ -343,17 +344,17 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * Clears the current selection in the given editor, but preserves the cursor position.
      * @param editor The editor to clear the selection in.
      */
-    clearSelection(editor: monaco.editor.ICodeEditor): void {
+    clearSelection(editor: MonacoEditorWithActions): void {
         const position = this.getPosition(editor);
-        this.setSelection(editor, new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column));
+        this.setSelection(editor, makeEditorRange(position.lineNumber, position.column, position.lineNumber, position.column));
     }
 
     /**
      * Adjusts the cursor position so it is at the end of the current line.
      * @param editor The editor to adjust the cursor position in.
      */
-    moveCursorToEndOfLine(editor: monaco.editor.ICodeEditor): void {
-        const position: monaco.IPosition = { ...this.getPosition(editor), column: Number.POSITIVE_INFINITY };
+    moveCursorToEndOfLine(editor: MonacoEditorWithActions): void {
+        const position: EditorPosition = { ...this.getPosition(editor), column: Number.POSITIVE_INFINITY };
         this.setPosition(editor, position);
     }
 
@@ -362,7 +363,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to toggle the fullscreen mode for.
      * @param element The element to toggle the fullscreen mode for.
      */
-    toggleFullscreen(editor: monaco.editor.ICodeEditor, element?: HTMLElement): void {
+    toggleFullscreen(editor: MonacoEditorWithActions, element?: HTMLElement): void {
         const fullscreenElement = element ?? editor.getDomNode();
         if (isFullScreen()) {
             exitFullscreen();

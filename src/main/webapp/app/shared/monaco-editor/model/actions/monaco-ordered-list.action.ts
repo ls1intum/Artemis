@@ -1,6 +1,6 @@
-import * as monaco from 'monaco-editor';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { faListOl } from '@fortawesome/free-solid-svg-icons';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 const NUMBER_REGEX = /^\d+\.\s.*/;
 
@@ -18,7 +18,7 @@ export class MonacoOrderedListAction extends MonacoEditorAction {
      * If no text is selected, the prefix "1. " is inserted at the current cursor position.
      * @param editor The editor in which to toggle the ordered list.
      */
-    run(editor: monaco.editor.ICodeEditor): void {
+    run(editor: MonacoEditorWithActions): void {
         const selection = editor.getSelection();
         if (!selection) return;
 
@@ -36,8 +36,9 @@ export class MonacoOrderedListAction extends MonacoEditorAction {
         }
 
         if (allLinesEmpty) {
-            this.insertTextAtPosition(editor, new monaco.Position(selection.startLineNumber, 1), '1. ');
-            editor.setPosition(new monaco.Position(selection.startLineNumber, 1 + 3));
+            this.insertTextAtPosition(editor, { lineNumber: selection.startLineNumber, column: 1 }, '1. ');
+            // Move the cursor to after the inserted "1. "
+            editor.setPosition({ lineNumber: selection.startLineNumber, column: 4 });
             editor.focus();
             return;
         }
@@ -48,9 +49,13 @@ export class MonacoOrderedListAction extends MonacoEditorAction {
 
             if (isOrderedList) {
                 const idx = lineContent.indexOf('. ');
-                if (idx >= 0) this.deleteTextAtRange(editor, new monaco.Range(lineNumber, 1, lineNumber, idx + 3));
+                if (idx >= 0) this.deleteTextAtRange(editor, { startLineNumber: lineNumber, startColumn: 1, endLineNumber: lineNumber, endColumn: idx + 3 });
             } else {
-                this.replaceTextAtRange(editor, new monaco.Range(lineNumber, 1, lineNumber, 1), `${lineNumber - selection.startLineNumber + 1}. `);
+                this.replaceTextAtRange(
+                    editor,
+                    { startLineNumber: lineNumber, startColumn: 1, endLineNumber: lineNumber, endColumn: 1 },
+                    `${lineNumber - selection.startLineNumber + 1}. `,
+                );
             }
         }
     }

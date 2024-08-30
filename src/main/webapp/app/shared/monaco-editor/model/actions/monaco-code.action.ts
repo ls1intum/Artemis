@@ -1,6 +1,6 @@
-import * as monaco from 'monaco-editor';
 import { faCode } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 const CODE_DELIMITER = '`';
 
@@ -18,7 +18,7 @@ export class MonacoCodeAction extends MonacoEditorAction {
      * If no text is selected, the code delimiter is inserted at the current cursor position.
      * @param editor The editor in which to toggle code text.
      */
-    run(editor: monaco.editor.ICodeEditor) {
+    run(editor: MonacoEditorWithActions) {
         this.toggleDelimiterAroundSelection(editor, CODE_DELIMITER, CODE_DELIMITER);
         editor.focus();
     }

@@ -1,5 +1,5 @@
-import * as monaco from 'monaco-editor';
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 const FORMULA_OPEN_DELIMITER = '$$ ';
 const FORMULA_CLOSE_DELIMITER = ' $$';
@@ -19,7 +19,7 @@ export class MonacoFormulaAction extends MonacoEditorDomainAction {
      * If no text is selected, the default formula is inserted at the current cursor position.
      * @param editor The editor in which to toggle formula text.
      */
-    run(editor: monaco.editor.ICodeEditor) {
+    run(editor: MonacoEditorWithActions) {
         this.toggleDelimiterAroundSelection(editor, this.getOpeningIdentifier(), FORMULA_CLOSE_DELIMITER, MonacoFormulaAction.DEFAULT_FORMULA);
         editor.focus();
     }

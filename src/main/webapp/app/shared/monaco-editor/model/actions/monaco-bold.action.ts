@@ -1,6 +1,6 @@
-import * as monaco from 'monaco-editor';
 import { faBold } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { KeyCode, KeyModifier, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 const BOLD_DELIMITER = '**';
 
@@ -11,7 +11,7 @@ export class MonacoBoldAction extends MonacoEditorAction {
     static readonly ID = 'monaco-bold.action';
 
     constructor() {
-        super(MonacoBoldAction.ID, 'artemisApp.multipleChoiceQuestion.editor.bold', faBold, [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB]);
+        super(MonacoBoldAction.ID, 'artemisApp.multipleChoiceQuestion.editor.bold', faBold, [KeyModifier.CtrlCmd | KeyCode.KeyB]);
     }
 
     /**
@@ -19,7 +19,7 @@ export class MonacoBoldAction extends MonacoEditorAction {
      * If no text is selected, the delimiter is inserted at the current cursor position.
      * @param editor The editor in which to toggle bold text.
      */
-    run(editor: monaco.editor.ICodeEditor) {
+    run(editor: MonacoEditorWithActions) {
         this.toggleDelimiterAroundSelection(editor, BOLD_DELIMITER, BOLD_DELIMITER);
         editor.focus();
     }

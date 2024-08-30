@@ -1,5 +1,5 @@
 import { MonacoEditorAction } from './monaco-editor-action.model';
-import * as monaco from 'monaco-editor';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 /**
  * Class representing domain actions for Artemis-specific use cases.
@@ -15,7 +15,7 @@ export abstract class MonacoEditorDomainAction extends MonacoEditorAction {
      * @param indent Whether to indent the inserted text with a tab.
      * @param updateSelection Whether to update the selection after inserting the text
      */
-    addTextWithDomainActionIdentifier(editor: monaco.editor.ICodeEditor, text: string, indent = false, updateSelection = true): void {
+    addTextWithDomainActionIdentifier(editor: MonacoEditorWithActions, text: string, indent = false, updateSelection = true): void {
         this.clearSelection(editor);
         this.moveCursorToEndOfLine(editor);
         const identifierWithText = text ? `${this.getOpeningIdentifier()} ${text}` : this.getOpeningIdentifier();

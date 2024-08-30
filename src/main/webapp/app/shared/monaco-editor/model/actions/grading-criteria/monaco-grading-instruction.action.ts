@@ -1,10 +1,10 @@
-import * as monaco from 'monaco-editor';
 import { MonacoEditorDomainAction } from '../monaco-editor-domain-action.model';
 import { MonacoGradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-credits.action';
 import { MonacoGradingScaleAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-scale.action';
 import { MonacoGradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-description.action';
 import { MonacoGradingFeedbackAction } from './monaco-grading-feedback.action';
 import { MonacoGradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-usage-count.action';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 export class MonacoGradingInstructionAction extends MonacoEditorDomainAction {
     static readonly ID = 'monaco-grading-instruction.action';
@@ -20,7 +20,7 @@ export class MonacoGradingInstructionAction extends MonacoEditorDomainAction {
         super(MonacoGradingInstructionAction.ID, 'artemisApp.assessmentInstructions.instructions.editor.addInstruction');
     }
 
-    run(editor: monaco.editor.ICodeEditor): void {
+    run(editor: MonacoEditorWithActions): void {
         this.addTextWithDomainActionIdentifier(editor, '', false, false);
         this.creditsAction.executeInCurrentEditor();
         this.scaleAction.executeInCurrentEditor();

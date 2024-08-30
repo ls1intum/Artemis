@@ -1,6 +1,6 @@
-import * as monaco from 'monaco-editor';
 import { faItalic } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { KeyCode, KeyModifier, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 const ITALIC_DELIMITER = '*';
 
@@ -10,7 +10,7 @@ const ITALIC_DELIMITER = '*';
 export class MonacoItalicAction extends MonacoEditorAction {
     static readonly ID = 'monaco-italic.action';
     constructor() {
-        super(MonacoItalicAction.ID, 'artemisApp.multipleChoiceQuestion.editor.italic', faItalic, [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI]);
+        super(MonacoItalicAction.ID, 'artemisApp.multipleChoiceQuestion.editor.italic', faItalic, [KeyModifier.CtrlCmd | KeyCode.KeyI]);
     }
 
     /**
@@ -18,7 +18,7 @@ export class MonacoItalicAction extends MonacoEditorAction {
      * If no text is selected, the delimiter is inserted at the current cursor position.
      * @param editor The editor in which to toggle italic text.
      */
-    run(editor: monaco.editor.ICodeEditor): void {
+    run(editor: MonacoEditorWithActions): void {
         this.toggleDelimiterAroundSelection(editor, ITALIC_DELIMITER, ITALIC_DELIMITER);
         editor.focus();
     }

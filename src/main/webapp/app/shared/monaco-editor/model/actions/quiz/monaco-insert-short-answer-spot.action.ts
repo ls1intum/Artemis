@@ -1,6 +1,6 @@
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
-import * as monaco from 'monaco-editor';
 import { MonacoInsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-option.action';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 /**
  * Action to insert a short answer spot at the current cursor position.
@@ -22,7 +22,7 @@ export class MonacoInsertShortAnswerSpotAction extends MonacoEditorAction {
      * Then, it inserts an option linked to the spot. If the selected text is not empty, it will be used as the option's text.
      * @param editor The editor to insert the spot in.
      */
-    run(editor: monaco.editor.ICodeEditor): void {
+    run(editor: MonacoEditorWithActions): void {
         // Changes to the editor contents will trigger an update of the spot number. We keep it stored here to use it when inserting the spot.
         const number = this.spotNumber;
         const text = `[-spot ${number}]`;

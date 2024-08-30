@@ -1,18 +1,18 @@
 import { faAt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
-import * as monaco from 'monaco-editor';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { UserNameAndLoginDTO } from 'app/core/user/user.model';
+import { CompletionItemKind, DisposableEditorElement, MonacoEditorRange, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 /**
  * Action to insert a user mention into the editor. Users that type a @ will see a list of available users to mention.
  * Users will be fetched repeatedly as the user types to provide up-to-date results.
  */
 export class MonacoUserMentionAction extends MonacoEditorAction {
-    disposableCompletionProvider?: monaco.IDisposable;
+    disposableCompletionProvider?: DisposableEditorElement;
 
     static readonly ID = 'monaco-user-mention.action';
     static readonly DEFAULT_INSERT_TEXT = '@';
@@ -29,14 +29,14 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
      * @param editor The editor to register the action in.
      * @param translateService The translate service to use for translations, e.g. the label.
      */
-    register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
+    register(editor: MonacoEditorWithActions, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<UserNameAndLoginDTO>(
             editor,
             this.loadUsersForSearchTerm.bind(this),
-            (user: UserNameAndLoginDTO, range: monaco.IRange) => ({
+            (user: UserNameAndLoginDTO, range: MonacoEditorRange) => ({
                 label: `@${user.name}`,
-                kind: monaco.languages.CompletionItemKind.User,
+                kind: CompletionItemKind.User,
                 insertText: `[user]${user.name}(${user.login})[/user]`,
                 range,
                 detail: this.label,
@@ -50,7 +50,7 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
      * Types the text '@' into the editor and focuses it. This will trigger the completion provider to show the available users.
      * @param editor The editor to type the text into.
      */
-    run(editor: monaco.editor.ICodeEditor) {
+    run(editor: MonacoEditorWithActions) {
         this.typeText(editor, MonacoUserMentionAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }

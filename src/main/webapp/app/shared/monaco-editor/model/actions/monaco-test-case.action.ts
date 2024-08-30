@@ -1,6 +1,7 @@
 import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 import { DomainActionWithOptionsArguments, MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 /**
  * Action to insert a test case into the editor. It also registers a completion item provider offers all possible test cases as completion items to the user.
@@ -21,7 +22,7 @@ export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
      * @param translateService The translation service to use for translating the action label.
      * @throws error If the action is already registered with an editor or no model is attached to the editor.
      */
-    register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
+    register(editor: MonacoEditorWithActions, translateService: TranslateService) {
         super.register(editor, translateService);
         const model = editor.getModel();
         if (!model) {
@@ -70,7 +71,7 @@ export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
         super.executeInCurrentEditor(args);
     }
 
-    run(editor: monaco.editor.ICodeEditor, args?: DomainActionWithOptionsArguments) {
+    run(editor: MonacoEditorWithActions, args?: DomainActionWithOptionsArguments) {
         this.replaceTextAtCurrentSelection(editor, args?.selectedItem?.value ?? MonacoTestCaseAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }

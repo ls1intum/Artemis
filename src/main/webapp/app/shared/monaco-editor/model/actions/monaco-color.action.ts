@@ -1,5 +1,5 @@
-import * as monaco from 'monaco-editor';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 interface ColorArguments {
     color: string;
@@ -30,7 +30,7 @@ export class MonacoColorAction extends MonacoEditorAction {
      * @param editor The editor in which to toggle color text.
      * @param args The color to apply to the selected text. If no color is provided, the default color red is used.
      */
-    run(editor: monaco.editor.ICodeEditor, args?: ColorArguments) {
+    run(editor: MonacoEditorWithActions, args?: ColorArguments) {
         const openDelimiter = `<span class="${args?.color ?? 'red'}">`;
         this.toggleDelimiterAroundSelection(editor, openDelimiter, CLOSE_DELIMITER);
         editor.focus();

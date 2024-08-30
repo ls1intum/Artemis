@@ -1,6 +1,6 @@
-import * as monaco from 'monaco-editor';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { faHeading } from '@fortawesome/free-solid-svg-icons';
+import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 function getTranslationKeyForLevel(level: number): string {
     const suffix = level === 3 ? 'Three' : level === 2 ? 'Two' : 'One';
@@ -29,7 +29,7 @@ export class MonacoHeadingAction extends MonacoEditorAction {
      * Toggles the heading prefix ("# ", "## ", ...) for the selected text based on the heading level. If the selected text is already a heading, the prefix is removed.
      * @param editor The editor in which to toggle heading text.
      */
-    run(editor: monaco.editor.ICodeEditor) {
+    run(editor: MonacoEditorWithActions) {
         const selection = editor.getSelection();
         const selectedText = selection ? this.getTextAtRange(editor, selection) : undefined;
         if (selection && selectedText !== undefined) {

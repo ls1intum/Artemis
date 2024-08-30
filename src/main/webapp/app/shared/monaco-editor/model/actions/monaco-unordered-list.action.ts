@@ -1,6 +1,6 @@
-import * as monaco from 'monaco-editor';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { faListUl } from '@fortawesome/free-solid-svg-icons';
+import { MonacoEditorWithActions, makeEditorPosition, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 const LIST_BULLET = '- ';
 
@@ -18,7 +18,7 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
      * If no text is selected, the prefix is inserted at the current cursor position.
      * @param editor The editor in which to toggle the unordered list.
      */
-    run(editor: monaco.editor.ICodeEditor): void {
+    run(editor: MonacoEditorWithActions): void {
         const selection = editor.getSelection();
         if (!selection) return;
 
@@ -36,8 +36,8 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
         }
 
         if (allLinesEmpty) {
-            this.insertTextAtPosition(editor, new monaco.Position(selection.startLineNumber, 1), LIST_BULLET);
-            editor.setPosition(new monaco.Position(selection.startLineNumber, 1 + LIST_BULLET.length));
+            this.insertTextAtPosition(editor, makeEditorPosition(selection.startLineNumber, 1), LIST_BULLET);
+            editor.setPosition(makeEditorPosition(selection.startLineNumber, 1 + LIST_BULLET.length));
             editor.focus();
             return;
         }
@@ -47,9 +47,9 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
             if (!lineContent) continue;
 
             if (isUnorderedList) {
-                this.deleteTextAtRange(editor, new monaco.Range(lineNumber, 1, lineNumber, 1 + LIST_BULLET.length));
+                this.deleteTextAtRange(editor, makeEditorRange(lineNumber, 1, lineNumber, 1 + LIST_BULLET.length));
             } else {
-                this.insertTextAtPosition(editor, new monaco.Position(lineNumber, 1), LIST_BULLET);
+                this.insertTextAtPosition(editor, makeEditorPosition(lineNumber, 1), LIST_BULLET);
             }
         }
     }
