@@ -10,6 +10,7 @@ import java.util.Optional;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.NonUniqueResultException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -82,6 +83,15 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
     Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
 
+    /**
+     * Finds a quiz exercise by title and course id. Currently, name duplicates are allowed but this method throws an exception if multiple exercises with
+     * the same title are found.
+     *
+     * @param title    the title of the exercise
+     * @param courseId the id of the course containing the exercise
+     * @return the exercise with the given title and course id
+     * @throws NonUniqueResultException if multiple exercises with the same name in the same course are found
+     */
     @Query("""
             SELECT q
             FROM QuizExercise q
@@ -89,7 +99,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
             WHERE q.title = :title
                 AND q.course.id = :courseId
             """)
-    Optional<QuizExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+    Optional<QuizExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
 
     @NotNull
     default QuizExercise findWithEagerBatchesByIdOrElseThrow(Long quizExerciseId) {

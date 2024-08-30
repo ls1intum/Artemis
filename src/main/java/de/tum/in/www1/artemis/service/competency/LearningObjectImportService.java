@@ -311,14 +311,14 @@ public class LearningObjectImportService {
 
     private void importOrLoadLectureUnit(LectureUnit sourceLectureUnit, CourseCompetency sourceCourseCompetency, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
             Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) {
-        Optional<LectureUnit> foundLectureUnit = lectureUnitRepository.findByNameAndCourseIdWithCompetencies(sourceLectureUnit.getName(), courseToImportInto.getId());
+        Lecture sourceLecture = sourceLectureUnit.getLecture();
+        Lecture importedLecture = importOrLoadLecture(sourceLecture, courseToImportInto, titleToImportedLectures);
 
+        Optional<LectureUnit> foundLectureUnit = lectureUnitRepository.findByNameAndLectureTitleAndCourseIdWithCompetencies(sourceLectureUnit.getName(), sourceLecture.getTitle(),
+                courseToImportInto.getId());
         LectureUnit importedLectureUnit;
         if (foundLectureUnit.isEmpty()) {
-            Lecture sourceLecture = sourceLectureUnit.getLecture();
-            Lecture importedLecture = importOrLoadLecture(sourceLecture, courseToImportInto, titleToImportedLectures);
-
-            importedLectureUnit = foundLectureUnit.orElseGet(() -> lectureUnitRepository.save(lectureUnitImportService.importLectureUnit(sourceLectureUnit)));
+            importedLectureUnit = lectureUnitImportService.importLectureUnit(sourceLectureUnit);
 
             importedLecture.getLectureUnits().add(importedLectureUnit);
             importedLectureUnit.setLecture(importedLecture);
