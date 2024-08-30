@@ -61,7 +61,7 @@ public class LectureUnitImportService {
      * @param lecture         The new lecture to which the lecture units are appended
      */
     public void importLectureUnits(Lecture importedLecture, Lecture lecture) {
-        log.debug("Importing lecture units from lecture");
+        log.debug("Importing lecture units from lecture with Id {}", importedLecture.getId());
         List<LectureUnit> lectureUnits = new ArrayList<>();
         for (LectureUnit lectureUnit : importedLecture.getLectureUnits()) {
             LectureUnit clonedLectureUnit = importLectureUnit(lectureUnit);
@@ -141,7 +141,7 @@ public class LectureUnitImportService {
     }
 
     /**
-     * This function imports the {@code importedAttachment} (and duplicates its file) and returns it
+     * This function imports the {@code importedAttachment}, and duplicates its file and returns it
      *
      * @param entityId           The id of the new entity to which the attachment is linked
      * @param importedAttachment The original attachment to be copied

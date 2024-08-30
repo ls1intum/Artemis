@@ -264,7 +264,7 @@ public class PrerequisiteResource {
         var sourceCourse = courseRepository.findByIdElseThrow(importOptions.sourceCourseId().get());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
-        var prerequisites = prerequisiteRepository.findAllForCourseWithExercisesAndLectureUnitsAndLectures(sourceCourse.getId());
+        var prerequisites = prerequisiteRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
         Set<CompetencyWithTailRelationDTO> importedPrerequisites = prerequisiteService.importPrerequisites(targetCourse, prerequisites, importOptions);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites);

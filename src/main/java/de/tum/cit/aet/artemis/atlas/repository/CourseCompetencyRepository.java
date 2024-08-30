@@ -54,7 +54,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 LEFT JOIN FETCH l.attachments
             WHERE c.course.id = :courseId
             """)
-    Set<CourseCompetency> findAllForCourseWithExercisesAndLectureUnitsAndLectures(@Param("courseId") long courseId);
+    Set<CourseCompetency> findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(@Param("courseId") long courseId);
 
     @Query("""
             SELECT c

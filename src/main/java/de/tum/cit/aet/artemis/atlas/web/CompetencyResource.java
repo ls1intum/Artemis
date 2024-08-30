@@ -261,7 +261,7 @@ public class CompetencyResource {
         var sourceCourse = courseRepository.findByIdElseThrow(importOptions.sourceCourseId().get());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
-        var competencies = competencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLectures(sourceCourse.getId());
+        var competencies = competencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
         Set<CompetencyWithTailRelationDTO> importedCompetencies = competencyService.importCompetencies(targetCourse, competencies, importOptions);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
