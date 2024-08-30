@@ -20,7 +20,6 @@ export class ProgrammingDiffReportDetailComponent {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
     protected readonly TooltipPlacement = TooltipPlacement;
-
     protected readonly WARNING = ButtonType.WARNING;
 
     protected readonly faCodeCompare = faCodeCompare;
