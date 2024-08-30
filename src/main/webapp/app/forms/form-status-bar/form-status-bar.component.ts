@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, Input, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, Input, ViewChild } from '@angular/core';
 import { updateHeaderHeightScssVariableBasedOnNavbar } from 'app/shared/util/navbar.util';
 
 export type FormSectionStatus = {
@@ -18,8 +18,6 @@ export class FormStatusBarComponent implements AfterViewInit {
 
     @ViewChild('statusBar', { static: false }) statusBar: ElementRef;
 
-    constructor(private renderer: Renderer2) {}
-
     @HostListener('window:resize')
     onResizeAddDistanceFromStatusBarToNavbar() {
         updateHeaderHeightScssVariableBasedOnNavbar();
@@ -32,9 +30,9 @@ export class FormStatusBarComponent implements AfterViewInit {
     scrollToHeadline(id: string) {
         const element = document.getElementById(id);
         if (element) {
-            const navbarHeight = (this.renderer.selectRootElement('jhi-navbar', true) as HTMLElement)?.getBoundingClientRect().height;
-            const breadcrumbContainerHeight = (this.renderer.selectRootElement('.breadcrumb-container', true) as HTMLElement)?.getBoundingClientRect().height;
-            const statusBarHeight = this.statusBar.nativeElement.getBoundingClientRect().height;
+            const navbarHeight = (document.querySelector('jhi-navbar') as HTMLElement)?.getBoundingClientRect().height;
+            const breadcrumbContainerHeight = (document.querySelector('.breadcrumb-container') as HTMLElement)?.getBoundingClientRect().height;
+            const statusBarHeight = this.statusBar?.nativeElement.getBoundingClientRect().height;
 
             /** Needs to be applied to the scrollMarginTop to ensure that the scroll to element is not hidden behind header elements */
             const scrollOffsetInPx = navbarHeight + breadcrumbContainerHeight + statusBarHeight;
