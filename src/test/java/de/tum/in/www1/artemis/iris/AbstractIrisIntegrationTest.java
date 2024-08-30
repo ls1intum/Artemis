@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -111,15 +110,13 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     /**
-     * Verify that the given messages were sent through the websocket for the given chat session,
-     * and that there were exactly `matchers.length` messages sent.
+     * Verify that the given messages were sent through the websocket for the given user and topic.
      *
-     * @param session  The chat session
-     * @param matchers Argument matchers which describe the messages that should have been sent
+     * @param userLogin   The user login
+     * @param topicSuffix The chat session
+     * @param matchers    Argument matchers which describe the messages that should have been sent
      */
-    protected void verifyWebsocketActivityWasExactly(IrisExerciseChatSession session, ArgumentMatcher<?>... matchers) {
-        var userLogin = session.getUser().getLogin();
-        var topicSuffix = "" + session.getId();
+    protected void verifyWebsocketActivityWasExactly(String userLogin, String topicSuffix, ArgumentMatcher<?>... matchers) {
         for (ArgumentMatcher<?> callDescriptor : matchers) {
             verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
         }
@@ -133,7 +130,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      * @param topicSuffix The topic suffix, e.g. "sessions/123"
      * @param matcher     Argument matcher which describes the message that should have been sent
      */
-    private void verifyMessageWasSentOverWebsocket(String userLogin, String topicSuffix, ArgumentMatcher<?> matcher) {
+    protected void verifyMessageWasSentOverWebsocket(String userLogin, String topicSuffix, ArgumentMatcher<?> matcher) {
         // @formatter:off
         verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1))
                 .sendMessageToUser(
@@ -147,7 +144,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     /**
      * Verify that exactly `numberOfCalls` messages were sent through the websocket for the given user and topic.
      */
-    private void verifyNumberOfCallsToWebsocket(String userLogin, String topicSuffix, int numberOfCalls) {
+    protected void verifyNumberOfCallsToWebsocket(String userLogin, String topicSuffix, int numberOfCalls) {
         // @formatter:off
         verify(websocketMessagingService, times(numberOfCalls))
                 .sendMessageToUser(
