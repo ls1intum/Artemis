@@ -15,7 +15,7 @@ import type {
     TextDetail,
 } from 'app/detail-overview-list/detail.model';
 import { TextDetailComponent } from 'app/detail-overview-list/components/text-detail/text-detail.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { DateDetailComponent } from 'app/detail-overview-list/components/date-detail/date-detail.component';
 import { LinkDetailComponent } from 'app/detail-overview-list/components/link-detail/link-detail.component';
@@ -24,6 +24,7 @@ import { ProgrammingRepositoryButtonsDetailComponent } from 'app/detail-overview
 import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
 import { ProgrammingTestStatusDetailComponent } from 'app/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
 import { ProgrammingDiffReportDetailComponent } from 'app/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     template: `<div jhiExerciseDetail [detail]="detail"></div>`,
@@ -39,7 +40,13 @@ describe('ExerciseDetailDirective', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [TestDetailHostComponent, ExerciseDetailDirective, MockComponent(TextDetailComponent)],
+            declarations: [
+                TestDetailHostComponent,
+                ExerciseDetailDirective,
+                MockDirective(TranslateDirective),
+                MockComponent(TextDetailComponent),
+                MockComponent(ProgrammingDiffReportDetailComponent),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestDetailHostComponent);
