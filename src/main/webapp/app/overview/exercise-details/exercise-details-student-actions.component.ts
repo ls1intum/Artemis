@@ -344,14 +344,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         const afterDueDate = !this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
         const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
         if (afterDueDate) {
-            window.alert(dueDateWarning);
+            this.alertService.warning(dueDateWarning);
             return false;
         }
 
         const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
         const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
         if (requestAlreadySent) {
-            window.alert(requestAlreadySentWarning);
+            this.alertService.warning(requestAlreadySentWarning);
             return false;
         }
 
@@ -361,7 +361,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
             if (countOfSuccessfulRequests >= 10) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
-                this.alertService.error(rateLimitExceededWarning);
+                this.alertService.warning(rateLimitExceededWarning);
                 return false;
             }
         }
