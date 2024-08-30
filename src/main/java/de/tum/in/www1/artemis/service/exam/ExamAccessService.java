@@ -87,8 +87,14 @@ public class ExamAccessService {
             Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
             // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
             boolean canExamBeStarted = ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(examWithExerciseGroupsAndExercises));
-            // Generate a student exam if the exam is a test exam or if the student is registered for a normal exam and user can click start button
-            if (examWithExerciseGroupsAndExercises.isTestExam() || (examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId()) && canExamBeStarted)) {
+            boolean isExamEnded = ZonedDateTime.now().isAfter(examWithExerciseGroupsAndExercises.getEndDate());
+            // Generate a student exam if the following conditions are met:
+            // 1. The exam has not ended.
+            // 2. The exam is either a test exam, OR it is a normal exam where the user is registered and can click the start button.
+            // Allowing student exams to be generated only when students can click the start button prevents inconsistencies.
+            // For example, this avoids a scenario where a student generates an exam and an instructor adds an exercise group afterward.
+            if (!isExamEnded
+                    && (examWithExerciseGroupsAndExercises.isTestExam() || (examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId()) && canExamBeStarted))) {
                 studentExam = studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, currentUser);
                 // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
                 studentExam.setExercises(null);
@@ -96,8 +102,7 @@ public class ExamAccessService {
             }
             else {
                 // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
-                throw new BadRequestAlertException("Cannot generate student exam for exam ID " + examId + ". Student is not registered for the exam", ENTITY_NAME,
-                        "StudentExamGenerationOnlyForRegisteredStudents", true);
+                throw new BadRequestAlertException("Cannot generate student exam for exam ID " + examId + ".", ENTITY_NAME, "cannotGenerateStudentExam", true);
             }
         }
 
