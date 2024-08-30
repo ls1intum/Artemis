@@ -62,6 +62,7 @@ describe('ThemeService', () => {
 
     it('applies theme changes correctly', () => {
         service.applyTheme(Theme.DARK);
+        TestBed.flushEffects();
 
         expect(documentGetElementMock).toHaveBeenCalledOnce();
         expect(documentGetElementMock).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
@@ -90,6 +91,7 @@ describe('ThemeService', () => {
         expect(service.currentTheme()).toBe(Theme.DARK);
 
         service.applyTheme(Theme.LIGHT);
+        TestBed.flushEffects();
 
         expect(documentGetElementMock).toHaveBeenCalledTimes(2);
         expect(documentGetElementMock).toHaveBeenNthCalledWith(2, THEME_OVERRIDE_ID);
@@ -101,8 +103,9 @@ describe('ThemeService', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue('LIGHT');
 
         service.initialize();
+        TestBed.flushEffects();
 
-        expect(retrieveSpy).toHaveBeenCalledTimes(2);
+        expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
 
@@ -120,10 +123,11 @@ describe('ThemeService', () => {
         });
 
         service.initialize();
+        TestBed.flushEffects();
         // @ts-ignore
         newElement?.onload();
 
-        expect(retrieveSpy).toHaveBeenCalledTimes(2);
+        expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(1, '(prefers-color-scheme: dark)');
         expect(service.currentTheme()).toBe(Theme.DARK);
@@ -133,8 +137,9 @@ describe('ThemeService', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
 
         service.initialize();
+        TestBed.flushEffects();
 
-        expect(retrieveSpy).toHaveBeenCalledTimes(2);
+        expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(1, '(prefers-color-scheme: dark)');
         expect(service.currentTheme()).toBe(Theme.LIGHT);

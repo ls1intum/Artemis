@@ -104,7 +104,8 @@ export class ThemeService {
             }
         });
 
-        this._preference.set(this.getStoredTheme());
+        const osTheme = this.darkSchemeMediaQuery.matches ? Theme.DARK : Theme.LIGHT;
+        this._preference.set(this.getStoredTheme() ?? osTheme);
     }
 
     /**
