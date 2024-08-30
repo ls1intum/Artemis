@@ -52,6 +52,9 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
+
+    protected readonly faCodeCompare = faCodeCompare;
+
     readonly CHAT = IrisSubSettingsType.CHAT;
 
     @Input()
@@ -61,9 +64,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     headlines: { id: string; translationKey: string }[];
     // headline record to avoid function call in html
     headlinesRecord: Record<string, string>;
-
-    // icons
-    readonly faCodeCompare = faCodeCompare;
 
     WARNING = ButtonType.WARNING;
 

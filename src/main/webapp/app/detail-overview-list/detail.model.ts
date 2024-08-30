@@ -97,7 +97,7 @@ export interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase 
     data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number };
 }
 
-interface ProgrammingTestStatusDetail extends DetailBase {
+export interface ProgrammingTestStatusDetail extends DetailBase {
     type: DetailType.ProgrammingTestStatus;
     data: {
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
