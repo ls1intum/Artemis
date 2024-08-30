@@ -2,7 +2,14 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
-import { Disposable, EditorPosition, EditorRange, MonacoEditorWithActions, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import {
+    Disposable,
+    EditorPosition,
+    EditorRange,
+    MonacoEditorTextModel,
+    MonacoEditorWithActions,
+    makeEditorRange,
+} from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor, Disposable {
     // IActionDescriptor
@@ -17,7 +24,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     /**
      * The disposable action that is returned by `editor.addAction`. This is required to unregister the action from the editor.
      */
-    disposableAction?: monaco.IDisposable;
+    disposableAction?: Disposable;
     /**
      * The editor (if any) this action is registered in.
      * @private
@@ -113,7 +120,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         return monaco.languages.registerCompletionItemProvider(languageId, {
             // We only want to trigger the completion provider if the trigger character is typed. However, we also allow numbers to trigger the completion, as they would not normally trigger it.
             triggerCharacters: triggerCharacter ? [triggerCharacter, ...'0123456789'] : undefined,
-            provideCompletionItems: async (model: monaco.editor.ITextModel, position: EditorPosition): Promise<monaco.languages.CompletionList | undefined> => {
+            provideCompletionItems: async (model: MonacoEditorTextModel, position: EditorPosition): Promise<monaco.languages.CompletionList | undefined> => {
                 if (model.id !== modelId) {
                     return undefined;
                 }
@@ -154,12 +161,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param triggerCharacter The character that triggers the sequence. If not provided, the sequence is assumed to start at the beginning of the word.
      * @param lengthLimit The maximum length of the sequence to find. Defaults to 25.
      */
-    findTypedSequenceUntilPosition(
-        model: monaco.editor.ITextModel,
-        position: EditorPosition,
-        triggerCharacter?: string,
-        lengthLimit = 25,
-    ): monaco.editor.IWordAtPosition | undefined {
+    findTypedSequenceUntilPosition(model: MonacoEditorTextModel, position: EditorPosition, triggerCharacter?: string, lengthLimit = 25): monaco.editor.IWordAtPosition | undefined {
         // Find the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word.
         if (!triggerCharacter) {
             return model.getWordUntilPosition(position);
