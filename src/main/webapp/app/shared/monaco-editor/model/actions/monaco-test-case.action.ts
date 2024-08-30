@@ -1,13 +1,13 @@
 import { TranslateService } from '@ngx-translate/core';
 import { DomainActionWithOptionsArguments, MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
-import { CompletionItemKind, DisposableEditorElement, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { CompletionItemKind, Disposable, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { ValueItem } from 'app/shared/markdown-editor/value-item.model';
 
 /**
  * Action to insert a test case into the editor. It also registers a completion item provider offers all possible test cases as completion items to the user.
  */
 export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
-    disposableCompletionProvider?: DisposableEditorElement;
+    disposableCompletionProvider?: Disposable;
 
     static readonly ID = 'monaco-test-case.action';
     static readonly DEFAULT_INSERT_TEXT = 'testCaseName()';

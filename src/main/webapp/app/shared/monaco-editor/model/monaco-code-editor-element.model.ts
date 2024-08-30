@@ -1,9 +1,9 @@
-import { DisposableEditorElement, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 /**
  * Abstract class representing an element in the Monaco editor, e.g. a line widget.
  */
-export abstract class MonacoCodeEditorElement implements DisposableEditorElement {
+export abstract class MonacoCodeEditorElement implements Disposable {
     static readonly CSS_HIDDEN_CLASS = 'monaco-hidden-element';
 
     private id: string | undefined;

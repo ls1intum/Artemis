@@ -5,15 +5,15 @@ import * as monaco from 'monaco-editor';
  */
 
 // Generic Monaco editor types
-export type DisposableEditorElement = monaco.IDisposable;
-export type MonacoEditorWithActions = monaco.editor.ICodeEditor & { addAction: (action: monaco.editor.IActionDescriptor) => DisposableEditorElement };
-export type EditorPosition = monaco.IPosition;
-export type EditorRange = monaco.IRange;
-export type MonacoEditorOptions = monaco.editor.IEditorOptions;
+export type Disposable = monaco.IDisposable;
+export type MonacoEditorWithActions = monaco.editor.ICodeEditor & { addAction: (action: monaco.editor.IActionDescriptor) => Disposable };
+export type Position = monaco.IPosition;
+export type Range = monaco.IRange;
+export type EditorOptions = monaco.editor.IEditorOptions;
 export type EditorMouseEvent = monaco.editor.IEditorMouseEvent;
 // Types for elements in the editor
-export type DecorationsCollection = monaco.editor.IEditorDecorationsCollection;
-export type DeltaDecoration = monaco.editor.IModelDeltaDecoration;
+export type EditorDecorationsCollection = monaco.editor.IEditorDecorationsCollection;
+export type ModelDeltaDecoration = monaco.editor.IModelDeltaDecoration;
 export type GlyphMarginWidget = monaco.editor.IGlyphMarginWidget;
 export type GlyphMarginLane = monaco.editor.GlyphMarginLane;
 export type GlyphMarginPosition = monaco.editor.IGlyphMarginWidgetPosition;
@@ -27,10 +27,10 @@ export const KeyModifier = monaco.KeyMod;
 export const KeyCode = monaco.KeyCode;
 export const CompletionItemKind = monaco.languages.CompletionItemKind;
 
-export function makeEditorPosition(lineNumber: number, column: number): EditorPosition {
+export function makeEditorPosition(lineNumber: number, column: number): Position {
     return { lineNumber, column };
 }
 
-export function makeEditorRange(startLineNumber: number, startColumn: number, endLineNumber: number, endColumn: number): EditorRange {
+export function makeEditorRange(startLineNumber: number, startColumn: number, endLineNumber: number, endColumn: number): Range {
     return { startLineNumber, startColumn, endLineNumber, endColumn };
 }

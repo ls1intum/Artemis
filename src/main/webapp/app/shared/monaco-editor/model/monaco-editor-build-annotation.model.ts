@@ -1,10 +1,10 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorGlyphMarginWidget } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-widget.model';
 import {
-    DecorationsCollection,
-    DeltaDecoration,
-    DisposableEditorElement,
+    Disposable,
+    EditorDecorationsCollection,
     GlyphMarginLane,
+    ModelDeltaDecoration,
     MonacoEditorWithActions,
     TrackedRangeStickiness,
     makeEditorRange,
@@ -23,11 +23,11 @@ export enum MonacoEditorBuildAnnotationType {
  */
 export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
     private glyphMarginWidget: MonacoEditorGlyphMarginWidget;
-    private decorationsCollection: DecorationsCollection;
+    private decorationsCollection: EditorDecorationsCollection;
     private outdated: boolean;
     private hoverMessage: string;
     private type: MonacoEditorBuildAnnotationType;
-    private updateListener: DisposableEditorElement;
+    private updateListener: Disposable;
 
     /**
      * @param editor The editor to render this annotation in.
@@ -54,7 +54,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
      * Returns an object (a delta decoration) detailing the position and styling of the annotation.
      * @private
      */
-    private getAssociatedDeltaDecoration(): DeltaDecoration {
+    private getAssociatedDeltaDecoration(): ModelDeltaDecoration {
         const marginClassName = this.outdated ? 'monaco-annotation-outdated' : `monaco-annotation-${this.type}`;
         const lineNumber = this.getLineNumber();
         return {

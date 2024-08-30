@@ -1,5 +1,5 @@
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
-import { MonacoEditorOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { EditorOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 export const SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS = new MonacoEditorOptionPreset({
     // Hide the gutter
@@ -16,7 +16,7 @@ export const SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS = new MonacoEditorOptionP
     renderLineHighlight: 'none',
 });
 
-const defaultMarkdownOptions: MonacoEditorOptions = {
+const defaultMarkdownOptions: EditorOptions = {
     // Sets up the layout to make the editor look more like a text field (no line numbers, margin, or highlights).
     lineNumbers: 'off',
     glyphMargin: false,

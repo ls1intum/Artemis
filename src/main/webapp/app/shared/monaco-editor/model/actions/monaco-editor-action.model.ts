@@ -2,9 +2,9 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
-import { DisposableEditorElement, EditorPosition, EditorRange, MonacoEditorWithActions, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable, MonacoEditorWithActions, Position, Range, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
-export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor, DisposableEditorElement {
+export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor, Disposable {
     // IActionDescriptor
     id: string;
     label: string;
@@ -95,7 +95,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     registerCompletionProviderForCurrentModel<ItemType>(
         editor: MonacoEditorWithActions,
         searchFn: (searchTerm?: string) => Promise<ItemType[]>,
-        mapToSuggestionFn: (item: ItemType, range: EditorRange) => monaco.languages.CompletionItem,
+        mapToSuggestionFn: (item: ItemType, range: Range) => monaco.languages.CompletionItem,
         triggerCharacter?: string,
         listIncomplete?: boolean,
     ): monaco.IDisposable {
@@ -113,7 +113,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         return monaco.languages.registerCompletionItemProvider(languageId, {
             // We only want to trigger the completion provider if the trigger character is typed. However, we also allow numbers to trigger the completion, as they would not normally trigger it.
             triggerCharacters: triggerCharacter ? [triggerCharacter, ...'0123456789'] : undefined,
-            provideCompletionItems: async (model: monaco.editor.ITextModel, position: EditorPosition): Promise<monaco.languages.CompletionList | undefined> => {
+            provideCompletionItems: async (model: monaco.editor.ITextModel, position: Position): Promise<monaco.languages.CompletionList | undefined> => {
                 if (model.id !== modelId) {
                     return undefined;
                 }
@@ -154,12 +154,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param triggerCharacter The character that triggers the sequence. If not provided, the sequence is assumed to start at the beginning of the word.
      * @param lengthLimit The maximum length of the sequence to find. Defaults to 25.
      */
-    findTypedSequenceUntilPosition(
-        model: monaco.editor.ITextModel,
-        position: EditorPosition,
-        triggerCharacter?: string,
-        lengthLimit = 25,
-    ): monaco.editor.IWordAtPosition | undefined {
+    findTypedSequenceUntilPosition(model: monaco.editor.ITextModel, position: Position, triggerCharacter?: string, lengthLimit = 25): monaco.editor.IWordAtPosition | undefined {
         // Find the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word.
         if (!triggerCharacter) {
             return model.getWordUntilPosition(position);
@@ -255,7 +250,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param position The position to insert the text at.
      * @param text The text to insert.
      */
-    insertTextAtPosition(editor: MonacoEditorWithActions, position: EditorPosition, text: string): void {
+    insertTextAtPosition(editor: MonacoEditorWithActions, position: Position, text: string): void {
         this.replaceTextAtRange(editor, makeEditorRange(position.lineNumber, position.column, position.lineNumber, position.column), text);
     }
 
@@ -265,7 +260,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param range The range to replace the text at.
      * @param text The text to replace the range with.
      */
-    replaceTextAtRange(editor: MonacoEditorWithActions, range: EditorRange, text: string): void {
+    replaceTextAtRange(editor: MonacoEditorWithActions, range: Range, text: string): void {
         editor.executeEdits(this.id, [{ range, text }]);
     }
 
@@ -274,7 +269,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to delete the text in.
      * @param range The range to delete the text at.
      */
-    deleteTextAtRange(editor: MonacoEditorWithActions, range: EditorRange): void {
+    deleteTextAtRange(editor: MonacoEditorWithActions, range: Range): void {
         this.replaceTextAtRange(editor, range, '');
     }
 
@@ -283,7 +278,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to get the text from.
      * @param range The range to get the text from.
      */
-    getTextAtRange(editor: MonacoEditorWithActions, range: EditorRange): string | undefined {
+    getTextAtRange(editor: MonacoEditorWithActions, range: Range): string | undefined {
         // End of line preference is important here. Otherwise, Windows may use CRLF line endings.
         return editor.getModel()?.getValueInRange(range, monaco.editor.EndOfLinePreference.LF);
     }
@@ -309,7 +304,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * Gets the position of the last character in the editor.
      * @param editor The editor to get the position from.
      */
-    getEndPosition(editor: MonacoEditorWithActions): EditorPosition {
+    getEndPosition(editor: MonacoEditorWithActions): Position {
         return editor.getModel()?.getFullModelRange().getEndPosition() ?? { lineNumber: 1, column: 1 };
     }
 
@@ -319,14 +314,14 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param position The position to set.
      * @param revealLine Whether to scroll the editor to reveal the line the position is on. Defaults to false.
      */
-    setPosition(editor: MonacoEditorWithActions, position: EditorPosition, revealLine = false): void {
+    setPosition(editor: MonacoEditorWithActions, position: Position, revealLine = false): void {
         editor.setPosition(position);
         if (revealLine) {
             editor.revealLineInCenter(position.lineNumber);
         }
     }
 
-    getPosition(editor: MonacoEditorWithActions): EditorPosition {
+    getPosition(editor: MonacoEditorWithActions): Position {
         return editor.getPosition() ?? { lineNumber: 1, column: 1 };
     }
 
@@ -335,7 +330,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to set the selection in.
      * @param selection The selection to set.
      */
-    setSelection(editor: MonacoEditorWithActions, selection: EditorRange): void {
+    setSelection(editor: MonacoEditorWithActions, selection: Range): void {
         editor.setSelection(selection);
         editor.revealRangeInCenter(selection);
     }
@@ -354,7 +349,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to adjust the cursor position in.
      */
     moveCursorToEndOfLine(editor: MonacoEditorWithActions): void {
-        const position: EditorPosition = { ...this.getPosition(editor), column: Number.POSITIVE_INFINITY };
+        const position: Position = { ...this.getPosition(editor), column: Number.POSITIVE_INFINITY };
         this.setPosition(editor, position);
     }
 

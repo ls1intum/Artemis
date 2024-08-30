@@ -1,9 +1,9 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import {
-    DecorationsCollection,
-    DeltaDecoration,
-    DisposableEditorElement,
+    Disposable,
+    EditorDecorationsCollection,
     EditorMouseEvent,
+    ModelDeltaDecoration,
     MonacoEditorWithActions,
     makeEditorRange,
 } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
@@ -15,12 +15,12 @@ import {
 export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElement {
     private clickCallback: (lineNumber: number) => void;
     private currentLineNumber = 1;
-    private decorationsCollection: DecorationsCollection;
+    private decorationsCollection: EditorDecorationsCollection;
     private readonly className: string;
 
-    private mouseMoveListener?: DisposableEditorElement;
-    private mouseDownListener?: DisposableEditorElement;
-    private mouseLeaveListener?: DisposableEditorElement;
+    private mouseMoveListener?: Disposable;
+    private mouseDownListener?: Disposable;
+    private mouseLeaveListener?: Disposable;
 
     /**
      * @param editor The editor to which to add the button.
@@ -90,7 +90,7 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
         this.decorationsCollection.set([this.getAssociatedDeltaDecoration()]);
     }
 
-    private getAssociatedDeltaDecoration(): DeltaDecoration {
+    private getAssociatedDeltaDecoration(): ModelDeltaDecoration {
         return {
             range: makeEditorRange(this.currentLineNumber, 1, this.currentLineNumber, 1),
             options: {

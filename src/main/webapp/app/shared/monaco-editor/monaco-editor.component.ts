@@ -10,10 +10,9 @@ import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-li
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
-import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { MonacoEditorWithActions, Position } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 export const MAX_TAB_SIZE = 8;
-export type EditorPosition = { lineNumber: number; column: number };
 
 @Component({
     selector: 'jhi-monaco-editor',
@@ -158,11 +157,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    getPosition(): EditorPosition {
+    getPosition(): Position {
         return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
     }
 
-    setPosition(position: EditorPosition) {
+    setPosition(position: Position) {
         this._editor.setPosition(position);
     }
 

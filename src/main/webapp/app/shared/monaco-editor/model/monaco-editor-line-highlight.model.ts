@@ -1,9 +1,9 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import {
-    DecorationsCollection,
-    DeltaDecoration,
-    EditorRange,
+    EditorDecorationsCollection,
+    ModelDeltaDecoration,
     MonacoEditorWithActions,
+    Range,
     TrackedRangeStickiness,
     makeEditorRange,
 } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
@@ -13,10 +13,10 @@ import {
  * The highlighted lines can have separate styles for the margin and the line.
  */
 export class MonacoEditorLineHighlight extends MonacoCodeEditorElement {
-    private range: EditorRange;
+    private range: Range;
     private className?: string;
     private marginClassName?: string;
-    private decorationsCollection: DecorationsCollection;
+    private decorationsCollection: EditorDecorationsCollection;
 
     /**
      * @param editor The editor to highlight lines in.
@@ -34,7 +34,7 @@ export class MonacoEditorLineHighlight extends MonacoCodeEditorElement {
         this.decorationsCollection = editor.createDecorationsCollection([]);
     }
 
-    private getAssociatedDeltaDecoration(): DeltaDecoration {
+    private getAssociatedDeltaDecoration(): ModelDeltaDecoration {
         return {
             range: this.range,
             options: {

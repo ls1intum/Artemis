@@ -2,7 +2,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
 import { ValueItem } from 'app/shared/markdown-editor/value-item.model';
-import { CompletionItemKind, DisposableEditorElement, EditorRange, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { CompletionItemKind, Disposable, MonacoEditorWithActions, Range } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 /**
  * Action to insert a reference to an exercise into the editor. Users that type a / will see a list of available exercises to reference.
@@ -11,7 +11,7 @@ export class MonacoExerciseReferenceAction extends MonacoEditorDomainActionWithO
     static readonly ID = 'monaco-exercise-reference.action';
     static readonly DEFAULT_INSERT_TEXT = '/exercise';
 
-    disposableCompletionProvider?: DisposableEditorElement;
+    disposableCompletionProvider?: Disposable;
 
     constructor(private readonly metisService: MetisService) {
         super(MonacoExerciseReferenceAction.ID, 'artemisApp.metis.editor.exercise');
@@ -35,7 +35,7 @@ export class MonacoExerciseReferenceAction extends MonacoEditorDomainActionWithO
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ValueItem>(
             editor,
             () => Promise.resolve(this.getValues()),
-            (item: ValueItem, range: EditorRange) => ({
+            (item: ValueItem, range: Range) => ({
                 label: `/exercise ${item.value}`,
                 kind: CompletionItemKind.Constant,
                 insertText: `[${item.type}]${item.value}(${this.metisService.getLinkForExercise(item.id)})[/${item.type}]`,
