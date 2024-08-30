@@ -7,7 +7,6 @@ import * as monaco from 'monaco-editor';
 // Generic Monaco editor types
 export type DisposableEditorElement = monaco.IDisposable;
 export type MonacoEditorWithActions = monaco.editor.ICodeEditor & { addAction: (action: monaco.editor.IActionDescriptor) => DisposableEditorElement };
-export type MonacoEditorTextModel = monaco.editor.ITextModel;
 export type EditorPosition = monaco.IPosition;
 export type EditorRange = monaco.IRange;
 export type MonacoEditorOptions = monaco.editor.IEditorOptions;
@@ -21,10 +20,9 @@ export type GlyphMarginPosition = monaco.editor.IGlyphMarginWidgetPosition;
 export type OverlayWidget = monaco.editor.IOverlayWidget;
 export type OverlayWidgetPosition = monaco.editor.IOverlayWidgetPosition | null; // null is used by the monaco editor API
 export type ViewZone = monaco.editor.IViewZone;
+// Enums
 export const GlyphMarginLane = monaco.editor.GlyphMarginLane;
 export const TrackedRangeStickiness = monaco.editor.TrackedRangeStickiness;
-
-// Enums for Actions
 export const KeyModifier = monaco.KeyMod;
 export const KeyCode = monaco.KeyCode;
 export const CompletionItemKind = monaco.languages.CompletionItemKind;

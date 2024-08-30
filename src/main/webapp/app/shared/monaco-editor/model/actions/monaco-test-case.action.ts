@@ -1,13 +1,13 @@
 import { TranslateService } from '@ngx-translate/core';
-import * as monaco from 'monaco-editor';
 import { DomainActionWithOptionsArguments, MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
-import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { CompletionItemKind, DisposableEditorElement, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { ValueItem } from 'app/shared/markdown-editor/value-item.model';
 
 /**
  * Action to insert a test case into the editor. It also registers a completion item provider offers all possible test cases as completion items to the user.
  */
 export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
-    disposableCompletionProvider?: monaco.IDisposable;
+    disposableCompletionProvider?: DisposableEditorElement;
 
     static readonly ID = 'monaco-test-case.action';
     static readonly DEFAULT_INSERT_TEXT = 'testCaseName()';
@@ -24,38 +24,19 @@ export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
      */
     register(editor: MonacoEditorWithActions, translateService: TranslateService) {
         super.register(editor, translateService);
-        const model = editor.getModel();
-        if (!model) {
-            throw new Error(`A model must be attached to the editor to use the ${this.id} action.`);
-        }
-        const languageId = model.getLanguageId();
-        const modelId = model.id;
-        this.disposableCompletionProvider = monaco.languages.registerCompletionItemProvider(languageId, {
-            provideCompletionItems: (model: monaco.editor.ITextModel, position: monaco.Position): monaco.languages.CompletionList | undefined => {
-                if (model.id !== modelId) {
-                    return undefined;
-                }
-                // Replace the current word with the inserted test case
-                const wordUntilPosition = model.getWordUntilPosition(position);
-                const range = {
-                    startLineNumber: position.lineNumber,
-                    startColumn: wordUntilPosition.startColumn,
-                    endLineNumber: position.lineNumber,
-                    endColumn: wordUntilPosition.endColumn,
-                };
-
-                // We can simply map all possible values here. The Monaco editor filters the items based on the user input.
+        this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ValueItem>(
+            editor,
+            () => Promise.resolve(this.values),
+            (item, range) => {
                 return {
-                    suggestions: this.values.map((value) => ({
-                        label: value.value,
-                        kind: monaco.languages.CompletionItemKind.Constant,
-                        insertText: value.value,
-                        range,
-                        detail: 'Test',
-                    })),
+                    label: item.value,
+                    kind: CompletionItemKind.Constant,
+                    insertText: item.value,
+                    range,
+                    detail: 'Test',
                 };
             },
-        });
+        );
     }
 
     dispose() {
