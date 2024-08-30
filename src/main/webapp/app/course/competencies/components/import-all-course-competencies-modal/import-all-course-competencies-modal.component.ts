@@ -44,7 +44,6 @@ export interface ImportAllCourseCompetenciesResult {
         },
     ],
     templateUrl: './import-all-course-competencies-modal.component.html',
-    styleUrl: './import-all-course-competencies-modal.component.scss',
 })
 export class ImportAllCourseCompetenciesModalComponent {
     protected readonly tableColumns = tableColumns;
