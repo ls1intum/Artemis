@@ -16,7 +16,7 @@ export class FormStatusBarComponent implements AfterViewInit {
     @Input()
     formStatusSections: FormSectionStatus[];
 
-    @ViewChild('statusBar', { static: false }) statusBar: ElementRef;
+    @ViewChild('statusBar', { static: false }) statusBar?: ElementRef;
 
     @HostListener('window:resize')
     onResizeAddDistanceFromStatusBarToNavbar() {
@@ -31,11 +31,10 @@ export class FormStatusBarComponent implements AfterViewInit {
         const element = document.getElementById(id);
         if (element) {
             const navbarHeight = (document.querySelector('jhi-navbar') as HTMLElement)?.getBoundingClientRect().height;
-            const breadcrumbContainerHeight = (document.querySelector('.breadcrumb-container') as HTMLElement)?.getBoundingClientRect().height;
             const statusBarHeight = this.statusBar?.nativeElement.getBoundingClientRect().height;
 
             /** Needs to be applied to the scrollMarginTop to ensure that the scroll to element is not hidden behind header elements */
-            const scrollOffsetInPx = navbarHeight + breadcrumbContainerHeight + statusBarHeight;
+            const scrollOffsetInPx = navbarHeight + statusBarHeight;
 
             element.style.scrollMarginTop = `${scrollOffsetInPx}px`;
             element.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
