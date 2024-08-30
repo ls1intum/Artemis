@@ -86,7 +86,7 @@ describe('LearningPathLectureUnitComponent', () => {
     });
 
     it('should get lecture unit', async () => {
-        const getLectureUnitSpy = jest.spyOn(component, 'getLectureUnit');
+        const getLectureUnitSpy = jest.spyOn(component, 'loadLectureUnit');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -102,7 +102,7 @@ describe('LearningPathLectureUnitComponent', () => {
     });
 
     it('should set loading state correctly', async () => {
-        const setIsLoadingSpy = jest.spyOn(component.isLectureUnitLoading, 'set');
+        const setIsLoadingSpy = jest.spyOn(component.isLoading, 'set');
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();

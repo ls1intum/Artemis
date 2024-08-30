@@ -132,7 +132,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     }
 
     /**
-     * Sets up an ace editor for the build plan script
+     * Sets up the Monaco editor for the build plan script
      */
     setupEditor(): void {
         if (!this._editor) {

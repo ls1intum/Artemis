@@ -4,7 +4,6 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, Subscription, filter, switchMap } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseHintService } from '../shared/exercise-hint.service';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
@@ -23,6 +22,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 const DEFAULT_DISPLAY_THRESHOLD = 3;
 

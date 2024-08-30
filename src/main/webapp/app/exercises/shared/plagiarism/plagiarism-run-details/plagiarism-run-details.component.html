@@ -1,49 +1,37 @@
 <div class="plagiarism-run-details">
     <div class="plagiarism-run-details-stats">
         <div class="plagiarism-run-details-stats-item">
-            <div class="plagiarism-run-details-label">
-                {{ 'artemisApp.plagiarism.numberOfDetectedSubmissions' | artemisTranslate }}
-            </div>
+            <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.numberOfDetectedSubmissions"></div>
             <div class="plagiarism-run-details-info">
                 {{ plagiarismResultStats?.numberOfDetectedSubmissions }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
-            <div class="plagiarism-run-details-label">
-                {{ 'artemisApp.plagiarism.averageSimilarity' | artemisTranslate }}
-            </div>
+            <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.averageSimilarity"></div>
             <div class="plagiarism-run-details-info">
                 {{ plagiarismResultStats?.averageSimilarity?.toFixed(2) + ' %' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
-            <div class="plagiarism-run-details-label">
-                {{ 'artemisApp.plagiarism.maximalSimilarity' | artemisTranslate }}
-            </div>
+            <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.maximalSimilarity"></div>
             <div class="plagiarism-run-details-info">
                 {{ plagiarismResultStats?.maximalSimilarity?.toFixed(2) + ' %' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
-            <div class="plagiarism-run-details-label">
-                {{ 'artemisApp.plagiarism.duration' | artemisTranslate }}
-            </div>
+            <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.duration"></div>
             <div class="plagiarism-run-details-info duration">
                 {{ plagiarismResult?.duration | date: 'HH:mm:ss' : 'GMT' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
-            <div class="plagiarism-run-details-label">
-                {{ 'artemisApp.plagiarism.startedAt' | artemisTranslate }}
-            </div>
+            <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.startedAt"></div>
             <div class="plagiarism-run-details-info">
                 {{ plagiarismResult?.createdDate?.toLocaleString() | date: 'dd.MM.YY HH:mm' : 'GMT' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
-            <div class="plagiarism-run-details-label">
-                {{ 'artemisApp.plagiarism.startedBy' | artemisTranslate }}
-            </div>
+            <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.startedBy"></div>
             <div class="plagiarism-run-details-info">
                 {{ plagiarismResultStats?.createdBy ?? 'unknown' }}
             </div>
@@ -69,15 +57,15 @@
                 (select)="onSelect($event)"
             >
                 <ng-template #tooltipTemplate let-model="model">
-                    <b>{{ 'artemisApp.plagiarism.numberIdentifiedPairs' | artemisTranslate: { amount: model.value } }} </b> <br />
-                    <span> {{ 'artemisApp.plagiarism.confirmed' | artemisTranslate: { amount: getBucketDTO(model.label).confirmed } }}</span> <br />
-                    <span> {{ 'artemisApp.plagiarism.denied' | artemisTranslate: { amount: getBucketDTO(model.label).denied } }}</span> <br />
-                    <span> {{ 'artemisApp.plagiarism.open' | artemisTranslate: { amount: getBucketDTO(model.label).open } }}</span> <br />
-                    <span>{{ 'artemisApp.plagiarism.withSimilarity' | artemisTranslate: { range: model.name } }}</span> <br />
-                    <b>{{
-                        'artemisApp.plagiarism.portionOfAllCases'
-                            | artemisTranslate: { percentage: totalDetectedPlagiarisms > 0 ? round((model.value * 100) / totalDetectedPlagiarisms, 2) : 0 }
-                    }}</b>
+                    <b jhiTranslate="artemisApp.plagiarism.numberIdentifiedPairs" [translateValues]="{ amount: model.value }"></b> <br />
+                    <span jhiTranslate="artemisApp.plagiarism.confirmed" [translateValues]="{ amount: getBucketDTO(model.label).confirmed }"></span> <br />
+                    <span jhiTranslate="artemisApp.plagiarism.denied" [translateValues]="{ amount: getBucketDTO(model.label).denied }"></span> <br />
+                    <span jhiTranslate="artemisApp.plagiarism.open" [translateValues]="{ amount: getBucketDTO(model.label).open }"></span> <br />
+                    <span jhiTranslate="artemisApp.plagiarism.withSimilarity" [translateValues]="{ range: model.name }"></span> <br />
+                    <b
+                        jhiTranslate="artemisApp.plagiarism.portionOfAllCases"
+                        [translateValues]="{ percentage: totalDetectedPlagiarisms > 0 ? round((model.value * 100) / totalDetectedPlagiarisms, 2) : 0 }"
+                    ></b>
                 </ng-template>
             </ngx-charts-bar-vertical>
         </div>

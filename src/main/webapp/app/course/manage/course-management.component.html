@@ -37,14 +37,10 @@
                             <span style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ 'global.generic.unset' | artemisTranslate }} </span>
                         }
                         @if (semester === 'test') {
-                            <span style="font-size: 24px">
-                                {{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}
-                            </span>
+                            <span style="font-size: 24px" jhiTranslate="artemisApp.course.testCourse.plural"></span>
                         }
                         @if (semester === 'recent') {
-                            <span style="font-size: 24px">
-                                {{ 'artemisApp.course.recentlyAccessed' | artemisTranslate }}
-                            </span>
+                            <span style="font-size: 24px" jhiTranslate="artemisApp.course.recentlyAccessed"></span>
                         }
                     </div>
                     @if (!semesterCollapsed[semester]) {

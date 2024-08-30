@@ -2,7 +2,7 @@
     @if (isLoading) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
-                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                <span class="sr-only" jhiTranslate="loading"></span>
             </div>
         </div>
     } @else {
@@ -35,26 +35,26 @@
                 <thead>
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
                         <th class="d-md-table-cell" jhiSortBy="id">
-                            <span>{{ 'global.field.id' | artemisTranslate }}</span>
+                            <span jhiTranslate="global.field.id"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th></th>
                         <th class="d-md-table-cell" jhiSortBy="login">
-                            <span>{{ 'artemisApp.examManagement.examStudents.login' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.examManagement.examStudents.login"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th class="d-md-table-cell" jhiSortBy="registrationNumber">
-                            <span>{{ 'artemisApp.examManagement.examStudents.registrationNumber' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th class="d-md-table-cell">
-                            <span>{{ 'artemisApp.examManagement.examStudents.attendanceChecks' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.examManagement.examStudents.attendanceChecks"></span>
                         </th>
                         <th class="d-md-table-cell">
-                            <span>{{ 'artemisApp.studentExams.started' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.studentExams.started"></span>
                         </th>
                         <th class="d-md-table-cell">
-                            <span>{{ 'artemisApp.studentExams.submitted' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.studentExams.submitted"></span>
                         </th>
                     </tr>
                 </thead>
@@ -91,10 +91,10 @@
                                 }
                             </td>
                             <td class="d-md-table-cell">
-                                <span>{{ (examUser?.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                                <span jhiTranslate="{{ examUser?.started ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                             </td>
                             <td class="d-md-table-cell">
-                                <span>{{ (examUser?.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                                <span jhiTranslate="{{ examUser?.submitted ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                             </td>
                         </tr>
                     }
