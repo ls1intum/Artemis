@@ -66,7 +66,7 @@ public class JWTCookieService {
         boolean isSecure = !activeProfiles.contains(CYPRESS_PROFILE) && !activeProfiles.contains(DEVELOPMENT_PROFILE);
 
         return ResponseCookie.from(JWT_COOKIE_NAME, jwt).httpOnly(true) // Must be httpOnly
-                .sameSite("Lax") // Must be Lax to allow navigation links to Artemis to work
+                .sameSite("None") // Must be None to allow cross-site requests to Artemis from the VS Code plugin
                 .secure(isSecure) // Must be secure
                 .path("/") // Must be "/" to be sent in ALL request
                 .maxAge(duration) // Duration should match the duration of the jwt
