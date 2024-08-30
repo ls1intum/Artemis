@@ -8,6 +8,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.NonUniqueResultException;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -100,13 +101,22 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndSlidesAndAttachments(@Param("lectureId") long lectureId);
 
+    /**
+     * Finds a lecture by title and course id. Currently, name duplicates are allowed but this method throws an exception if multiple lectures with the
+     * same title are found.
+     *
+     * @param title    the title of the lecture
+     * @param courseId the id of the course containing the lecture
+     * @return the lecture with the given title and course id
+     * @throws NonUniqueResultException if multiple lectures with the same name in the same course are found
+     */
     @Query("""
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.lectureUnits
             WHERE lecture.title = :title AND lecture.course.id = :courseId
             """)
-    Optional<Lecture> findByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId);
+    Optional<Lecture> findByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);

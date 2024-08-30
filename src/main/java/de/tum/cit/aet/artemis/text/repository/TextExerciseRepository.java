@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.NonUniqueResultException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -77,6 +78,15 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
     Optional<TextExercise> findWithGradingCriteriaById(long exerciseId);
 
+    /**
+     * Finds a text exercise by title and course id. Currently, name duplicates are allowed but this method throws an exception if multiple exercises with
+     * the same title are found.
+     *
+     * @param title    the title of the exercise
+     * @param courseId the id of the course containing the exercise
+     * @return the exercise with the given title and course id
+     * @throws NonUniqueResultException if multiple exercises with the same name in the same course are found
+     */
     @Query("""
             SELECT t
             FROM TextExercise t
@@ -84,7 +94,7 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
             WHERE t.title = :title
                 AND t.course.id = :courseId
             """)
-    Optional<TextExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+    Optional<TextExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
 
     @NotNull
     default TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {

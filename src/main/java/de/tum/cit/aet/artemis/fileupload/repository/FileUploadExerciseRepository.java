@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.NonUniqueResultException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -38,6 +39,15 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
 
+    /**
+     * Finds a file upload exercise by title and course id. Currently, name duplicates are allowed but this method throws an exception if multiple exercises with
+     * the same title are found.
+     *
+     * @param title    the title of the exercise
+     * @param courseId the id of the course containing the exercise
+     * @return the exercise with the given title and course id
+     * @throws NonUniqueResultException if multiple exercises with the same name in the same course are found
+     */
     @Query("""
             SELECT f
             FROM FileUploadExercise f
@@ -45,7 +55,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
             WHERE f.title = :title
                 AND f.course.id = :courseId
             """)
-    Optional<FileUploadExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+    Optional<FileUploadExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
 
     @NotNull
     default FileUploadExercise findWithEagerCompetenciesByIdElseThrow(Long exerciseId) {
