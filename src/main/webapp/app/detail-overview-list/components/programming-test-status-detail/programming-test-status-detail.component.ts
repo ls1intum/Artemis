@@ -1,8 +1,6 @@
 import { Component, Input } from '@angular/core';
 import type { ProgrammingTestStatusDetail } from 'app/detail-overview-list/detail.model';
-import { NoDataComponent } from 'app/shared/no-data-component';
 import { RouterModule } from '@angular/router';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
@@ -13,15 +11,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-programming-test-status-detail',
     templateUrl: 'programming-test-status-detail.component.html',
     standalone: true,
-    imports: [
-        NoDataComponent,
-        RouterModule,
-        ArtemisSharedComponentModule,
-        ArtemisProgrammingExerciseActionsModule,
-        SubmissionResultStatusModule,
-        ArtemisProgrammingExerciseStatusModule,
-        TranslateDirective,
-    ],
+    imports: [RouterModule, ArtemisProgrammingExerciseActionsModule, SubmissionResultStatusModule, ArtemisProgrammingExerciseStatusModule, TranslateDirective],
 })
 export class ProgrammingTestStatusDetailComponent {
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
