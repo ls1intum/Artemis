@@ -27,7 +27,7 @@
                 "userId": "Benutzer Id",
                 "author": "Author",
                 "actionType": "Aktionstyp",
-                "authMechanism": "Authentifizierung",
+                "authMechanism": "Zugriffsart",
                 "commitHash": "Commit Hash",
                 "timeStamp": "Zeitstempel",
                 "error": "VCS-Zugriffsprotokoll konnte nicht abgerufen werden"
