@@ -8,14 +8,13 @@ import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/gi
 import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-programming-diff-report-detail',
     templateUrl: 'programming-diff-report-detail.component.html',
     standalone: true,
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisProgrammingExerciseActionsModule, GitDiffReportModule],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffReportModule],
 })
 export class ProgrammingDiffReportDetailComponent {
     protected readonly FeatureToggle = FeatureToggle;
