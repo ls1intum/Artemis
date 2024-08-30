@@ -357,6 +357,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_noStudentExamPresent_examCanBeStarted() {
         exam1.setStudentExams(Set.of());
         exam1.setStartDate(ZonedDateTime.now().plusMinutes(3));
+        exam1.setEndDate(ZonedDateTime.now().plusMinutes(10));
         examRepository.save(exam1);
         studentExamRepository.delete(studentExam1);
         assertThatNoException().isThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId()));
@@ -367,6 +368,18 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_noStudentExamPresent_examCannotBeStarted() {
         exam1.setStudentExams(Set.of());
         exam1.setStartDate(ZonedDateTime.now().plusMinutes(7));
+        examRepository.save(exam1);
+        studentExamRepository.delete(studentExam1);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
+                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_noStudentExamPresent_examHasEnded() {
+        exam1.setStudentExams(Set.of());
+        exam1.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(7));
         examRepository.save(exam1);
         studentExamRepository.delete(studentExam1);
         assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
