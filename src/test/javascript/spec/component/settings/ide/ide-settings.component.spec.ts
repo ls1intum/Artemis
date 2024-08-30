@@ -9,8 +9,6 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 describe('IdeSettingsComponent', () => {
     let component: IdeSettingsComponent;
     let fixture: ComponentFixture<IdeSettingsComponent>;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let ideSettingsService: IdeSettingsService;
 
     const mockIdeSettingsService = {
         loadPredefinedIdes: jest.fn(),
@@ -29,7 +27,10 @@ describe('IdeSettingsComponent', () => {
 
         fixture = TestBed.createComponent(IdeSettingsComponent);
         component = fixture.componentInstance;
-        ideSettingsService = TestBed.inject(IdeSettingsService);
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
     });
 
     it('should load predefined IDEs and IDE preferences on init', () => {
@@ -44,12 +45,14 @@ describe('IdeSettingsComponent', () => {
 
         component.ngOnInit();
 
-        expect(mockIdeSettingsService.loadPredefinedIdes).toHaveBeenCalled();
-        expect(mockIdeSettingsService.loadIdePreferences).toHaveBeenCalled();
+        expect(mockIdeSettingsService.loadPredefinedIdes).toHaveBeenCalledOnce();
+        expect(mockIdeSettingsService.loadIdePreferences).toHaveBeenCalledOnce();
         expect(component.PREDEFINED_IDE).toEqual(predefinedIdes);
         expect(component.programmingLanguageToIde()).toEqual(idePreferences);
         expect(component.assignedProgrammingLanguages).toEqual([ProgrammingLanguage.JAVA]);
-        expect(component.remainingProgrammingLanguages).toEqual(Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.JAVA));
+        expect(component.remainingProgrammingLanguages).toEqual(
+            Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.JAVA && x !== ProgrammingLanguage.EMPTY),
+        );
     });
 
     it('should add a programming language and update the lists', () => {
@@ -60,7 +63,7 @@ describe('IdeSettingsComponent', () => {
 
         component.addProgrammingLanguage(programmingLanguage);
 
-        expect(mockIdeSettingsService.saveIdePreference).toHaveBeenCalledWith(programmingLanguage, ide);
+        expect(mockIdeSettingsService.saveIdePreference).toHaveBeenCalledExactlyOnceWith(programmingLanguage, ide);
         expect(component.programmingLanguageToIde().get(programmingLanguage)).toEqual(ide);
         expect(component.assignedProgrammingLanguages).toContain(programmingLanguage);
         expect(component.remainingProgrammingLanguages).not.toContain(programmingLanguage);
@@ -77,7 +80,7 @@ describe('IdeSettingsComponent', () => {
 
         component.changeIde(programmingLanguage, intelliJ);
 
-        expect(mockIdeSettingsService.saveIdePreference).toHaveBeenCalledWith(programmingLanguage, intelliJ);
+        expect(mockIdeSettingsService.saveIdePreference).toHaveBeenCalledExactlyOnceWith(programmingLanguage, intelliJ);
         expect(component.programmingLanguageToIde().get(programmingLanguage)).toEqual(intelliJ);
     });
 
@@ -92,7 +95,7 @@ describe('IdeSettingsComponent', () => {
 
         component.removeProgrammingLanguage(programmingLanguage);
 
-        expect(mockIdeSettingsService.deleteIdePreference).toHaveBeenCalledWith(programmingLanguage);
+        expect(mockIdeSettingsService.deleteIdePreference).toHaveBeenCalledExactlyOnceWith(programmingLanguage);
         expect(component.programmingLanguageToIde().size).toBe(0);
         expect(component.assignedProgrammingLanguages).not.toContain(programmingLanguage);
         expect(component.remainingProgrammingLanguages).toContain(programmingLanguage);

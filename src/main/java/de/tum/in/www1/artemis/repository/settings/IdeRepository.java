@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.settings.ide.Ide;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
- * Spring Data repository for the UserIdeMapping entity.
+ * Spring Data repository for the Ide entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
