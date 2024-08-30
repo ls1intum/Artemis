@@ -1,11 +1,7 @@
 import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ButtonSize, TooltipPlacement } from 'app/shared/components/button.component';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -53,8 +49,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly ButtonSize = ButtonSize;
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
 
-    protected readonly faCodeCompare = faCodeCompare;
-
     readonly CHAT = IrisSubSettingsType.CHAT;
 
     @Input()
@@ -65,13 +59,10 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     // headline record to avoid function call in html
     headlinesRecord: Record<string, string>;
 
-    WARNING = ButtonType.WARNING;
-
     profileSubscription: Subscription;
     isLocalVC = false;
 
     constructor(
-        private modalService: NgbModal,
         private modelingExerciseService: ModelingExerciseService,
         private alertService: AlertService,
         private profileService: ProfileService,
@@ -90,15 +81,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
         this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
             return { ...previousValue, [currentValue.translationKey]: currentValue.id };
         }, {});
-    }
-
-    showGitDiff(gitDiff?: ProgrammingExerciseGitDiffReport) {
-        if (!gitDiff) {
-            return;
-        }
-
-        const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: 'diff-view-modal' });
-        modalRef.componentInstance.report = gitDiff;
     }
 
     downloadApollonDiagramAsPDf(umlModel?: UMLModel, title?: string) {

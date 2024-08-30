@@ -8,6 +8,7 @@ import type {
     LinkDetail,
     NotShownDetail,
     ProgrammingAuxiliaryRepositoryButtonsDetail,
+    ProgrammingDiffReportDetail,
     ProgrammingRepositoryButtonsDetail,
     ProgrammingTestStatusDetail,
     ShownDetail,
@@ -22,6 +23,7 @@ import { BooleanDetailComponent } from 'app/detail-overview-list/components/bool
 import { ProgrammingRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-repository-buttons-detail/programming-repository-buttons-detail.component';
 import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
 import { ProgrammingTestStatusDetailComponent } from 'app/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
+import { ProgrammingDiffReportDetailComponent } from 'app/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
 
 @Component({
     template: `<div jhiExerciseDetail [detail]="detail"></div>`,
@@ -91,6 +93,10 @@ describe('ExerciseDetailDirective', () => {
 
         it('should create ProgrammingTestStatusDetail component', () => {
             checkComponentForDetailWasCreated({ type: DetailType.ProgrammingTestStatus } as ProgrammingTestStatusDetail, ProgrammingTestStatusDetailComponent);
+        });
+
+        it('should create ProgrammingDiffReportDetail component', () => {
+            checkComponentForDetailWasCreated({ type: DetailType.ProgrammingDiffReport } as ProgrammingDiffReportDetail, ProgrammingDiffReportDetailComponent);
         });
     });
 
