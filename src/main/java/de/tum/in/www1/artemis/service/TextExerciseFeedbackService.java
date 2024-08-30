@@ -76,7 +76,7 @@ public class TextExerciseFeedbackService {
      * Handles the request for generating feedback for a text exercise.
      * Unlike programming exercises a tutor is not notified if Athena is not available.
      *
-     * @param exerciseId    the id of the programming exercise.
+     * @param exerciseId    the id of the text exercise.
      * @param participation the student participation associated with the exercise.
      * @param textExercise  the text exercise object.
      * @return StudentParticipation updated text exercise for an AI assessment
@@ -90,7 +90,7 @@ public class TextExerciseFeedbackService {
     }
 
     /**
-     * Generates automatic non-graded feedback for a programming exercise submission.
+     * Generates automatic non-graded feedback for a text exercise submission.
      * This method leverages the Athena service to generate feedback based on the latest submission.
      *
      * @param participation the student participation associated with the exercise.
@@ -144,8 +144,6 @@ public class TextExerciseFeedbackService {
             automaticResult = this.resultRepository.save(automaticResult);
             resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
             submissionService.saveNewResult(submission, automaticResult);
-            // This will create a new submission without results, this is important so that tutor assessment works as it used to.
-            textSubmissionService.saveNewSubmissionAfterAthenaFeedback((TextSubmission) submission, textExercise, participation.getStudent().get());
             this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
         }
         catch (Exception e) {

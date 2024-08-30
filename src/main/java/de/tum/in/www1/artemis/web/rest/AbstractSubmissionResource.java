@@ -81,6 +81,10 @@ public abstract class AbstractSubmissionResource {
             if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
                 submission.getParticipation().setExercise(null);
             }
+            // Important for text exercises with Athena results
+            if (assessedByTutor) {
+                submission.setResults(submission.getManualResults());
+            }
         });
 
         return ResponseEntity.ok().body(submissions);

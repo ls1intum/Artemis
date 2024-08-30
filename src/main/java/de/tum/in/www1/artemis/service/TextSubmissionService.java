@@ -82,21 +82,13 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission.setSubmitted(true);
         }
 
+        // if athena results are present than create new submission on submit
+        if (!textSubmission.getResults().isEmpty()) {
+            textSubmission.setId(null);
+        }
+
         textSubmission = save(textSubmission, participation, exercise, user);
         return textSubmission;
-    }
-
-    /**
-     *
-     * @param textSubmission The submission to save
-     * @param textExercise   The corresponding text exercise
-     * @param user           The corresponding user
-     * @return the saved text submission
-     */
-    public TextSubmission saveNewSubmissionAfterAthenaFeedback(TextSubmission textSubmission, TextExercise textExercise, User user) {
-        final var participation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyStateElseThrow(textExercise, user.getLogin());
-        textSubmission.setId(null);
-        return save(textSubmission, participation, textExercise, user);
     }
 
     /**
