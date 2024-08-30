@@ -335,18 +335,10 @@ public class LearningObjectImportService {
             return;
         }
 
-        for (Exercise exercise : importedExercises) {
-            setAllExerciseDates(exercise, timeOffset);
-        }
-        for (Lecture lecture : importedLectures) {
-            setAllLectureDates(lecture, timeOffset);
-        }
-        for (LectureUnit lectureUnit : importedLectureUnits) {
-            setAllLectureUnitDates(lectureUnit, timeOffset);
-        }
-        for (CourseCompetency competency : importedCourseCompetencies) {
-            setAllCompetencyDates(competency, timeOffset);
-        }
+        importedExercises.forEach(exercise -> setAllExerciseDates(exercise, timeOffset));
+        importedLectures.forEach(lecture -> setAllLectureDates(lecture, timeOffset));
+        importedLectureUnits.forEach(lectureUnit -> setAllLectureUnitDates(lectureUnit, timeOffset));
+        importedCourseCompetencies.forEach(competency -> setAllCompetencyDates(competency, timeOffset));
     }
 
     /**

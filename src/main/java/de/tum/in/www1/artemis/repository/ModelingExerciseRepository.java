@@ -57,7 +57,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
                 LEFT JOIN FETCH modelingExercise.gradingCriteria
             WHERE modelingExercise.id = :exerciseId
             """)
-    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(@Param("exerciseId") Long exerciseId);
+    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all modeling exercises that need to be scheduled: Those must satisfy one of the following requirements:
@@ -116,7 +116,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
 
     @NotNull
     default ModelingExercise findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(long exerciseId) {
-        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(exerciseId), exerciseId);
+        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(exerciseId), exerciseId);
     }
 
     @NotNull
