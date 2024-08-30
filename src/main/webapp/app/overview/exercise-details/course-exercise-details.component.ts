@@ -257,7 +257,10 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     sortResults() {
         if (this.studentParticipations?.length) {
             this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
-            this.sortedHistoryResults = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.resultSortFunction);
+            this.sortedHistoryResults = this.studentParticipations
+                .flatMap((participation) => participation.results ?? [])
+                .sort(this.resultSortFunction)
+                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful == undefined));
         }
     }
 

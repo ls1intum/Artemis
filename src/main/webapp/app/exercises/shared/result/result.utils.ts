@@ -248,11 +248,14 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
     }
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+        if (result.successful == undefined) {
+            return 'text-primary';
+        }
         return 'text-secondary';
     }
 
     if (templateStatus === ResultTemplateStatus.LATE) {
-        return 'result-late';
+        return 'late';
     }
 
     if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {

@@ -357,11 +357,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
         if (this.gradedParticipation?.results) {
             const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
-            const countOfSuccessfulRequests = athenaResults.filter((result) => result.successful === true).length;
+            const countOfSuccessfulRequests = athenaResults.filter((result) => result.successful !== undefined).length;
 
             if (countOfSuccessfulRequests >= 10) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
-                window.alert(rateLimitExceededWarning);
+                this.alertService.error(rateLimitExceededWarning);
                 return false;
             }
         }

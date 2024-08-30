@@ -69,6 +69,11 @@ describe('ResultUtils', () => {
         {
             result: { score: 0, successful: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
             templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
+            expected: 'text-primary',
+        },
+        {
+            result: { score: 0, successful: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-secondary',
         },
         { result: { score: undefined, successful: false }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
