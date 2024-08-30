@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
@@ -69,9 +70,8 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
  * @returns the results or undefined if submission or the result for the requested correctionRound is undefined
  */
 export function getSubmissionResultByCorrectionRound(submission: Submission | undefined, correctionRound: number): Result | undefined {
-    const filteredResults = submission?.results?.filter((result) => Result.isAthenaAIResult(result));
-    if (filteredResults && filteredResults.length >= correctionRound) {
-        return filteredResults[correctionRound];
+    if (submission?.results && submission?.results.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA).length >= correctionRound) {
+        return submission.results.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)[correctionRound];
     }
     return undefined;
 }
