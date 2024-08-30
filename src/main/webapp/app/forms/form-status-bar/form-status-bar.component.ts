@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, HostListener, Input, ViewChild } from '@angular/core';
-import { updateHeaderHeightScssVariableBasedOnNavbar } from 'app/shared/util/navbar.util';
+import { updateHeaderHeight } from 'app/shared/util/navbar.util';
 
 export type FormSectionStatus = {
     title: string;
@@ -20,7 +20,7 @@ export class FormStatusBarComponent implements AfterViewInit {
 
     @HostListener('window:resize')
     onResizeAddDistanceFromStatusBarToNavbar() {
-        updateHeaderHeightScssVariableBasedOnNavbar();
+        updateHeaderHeight();
     }
 
     ngAfterViewInit() {

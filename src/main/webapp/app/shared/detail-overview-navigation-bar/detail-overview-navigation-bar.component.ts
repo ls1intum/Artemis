@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, HostListener, Input } from '@angular/core';
-import { updateHeaderHeightScssVariableBasedOnNavbar } from 'app/shared/util/navbar.util';
+import { updateHeaderHeight } from 'app/shared/util/navbar.util';
 
 @Component({
     selector: 'jhi-detail-overview-navigation-bar',
@@ -12,7 +12,7 @@ export class DetailOverviewNavigationBarComponent implements AfterViewInit {
 
     @HostListener('window:resize')
     onResizeAddDistanceFromStatusBarToNavbar() {
-        updateHeaderHeightScssVariableBasedOnNavbar();
+        updateHeaderHeight();
     }
 
     ngAfterViewInit() {

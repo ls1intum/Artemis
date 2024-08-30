@@ -4,7 +4,7 @@
  * The navbar height can change based on the screen size and the content of the navbar
  * (e.g. long breadcrumbs due to longs exercise names)
  */
-export function updateHeaderHeightScssVariableBasedOnNavbar() {
+export function updateHeaderHeight() {
     setTimeout(() => {
         const navbar = document.querySelector('jhi-navbar');
         if (navbar) {

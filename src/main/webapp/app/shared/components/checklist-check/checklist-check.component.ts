@@ -5,7 +5,6 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-checklist-check',
     templateUrl: './checklist-check.component.html',
-    styleUrls: ['./checklist-check.component.scss'],
 })
 export class ChecklistCheckComponent {
     protected readonly faTimes = faTimes;
