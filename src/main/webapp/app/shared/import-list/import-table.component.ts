@@ -47,13 +47,14 @@ export class ImportTableComponent<T extends BaseEntity> {
     private readonly searchResult = signal<SearchResult<T> | undefined>(undefined);
     readonly resultsOnPage = computed(() => this.searchResult()?.resultsOnPage ?? []);
 
-    private readonly defaultSortingOrder = SortingOrder.ASCENDING;
+    private readonly DEFAULT_SORTING_ORDER = SortingOrder.ASCENDING;
+    private readonly PAGE_SIZE = 10;
 
     readonly searchTerm = signal<string>('');
-    readonly sortingOrder = signal<SortingOrder>(this.defaultSortingOrder);
+    readonly sortingOrder = signal<SortingOrder>(this.DEFAULT_SORTING_ORDER);
     readonly sortedColumn = signal<string>('ID');
     readonly page = signal<number>(1);
-    readonly pageSize = signal<number>(10).asReadonly();
+    readonly pageSize = signal<number>(this.PAGE_SIZE).asReadonly();
     readonly collectionSize = computed(() => {
         const numberOfPages = this.searchResult()?.numberOfPages ?? 1;
         return numberOfPages === 1 ? this.resultsOnPage().length : numberOfPages * this.pageSize();
@@ -99,7 +100,7 @@ export class ImportTableComponent<T extends BaseEntity> {
 
     protected async setSortedColumn(sortedColumn: string): Promise<void> {
         const sortingOrder = this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING;
-        this.sortingOrder.set(this.sortedColumn() === sortedColumn ? sortingOrder : this.defaultSortingOrder);
+        this.sortingOrder.set(this.sortedColumn() === sortedColumn ? sortingOrder : this.DEFAULT_SORTING_ORDER);
         this.sortedColumn.set(sortedColumn);
         await this.loadData();
     }

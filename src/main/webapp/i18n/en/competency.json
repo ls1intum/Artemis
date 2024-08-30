@@ -186,7 +186,7 @@
                 "referenceDateTypeLabel": "Reference date type",
                 "referenceDateTypeTooltip": "'Release date' refers to the release date of exercises and lecture units as well as the visible date of lectures. 'Due date' refers to the due date of exercises and competencies as well as the end date of lectures.",
                 "referenceDateType": {
-                    "noSelection": "-- choose a reference date first --",
+                    "noSelection": "-- Choose a reference date first --",
                     "releaseDate": "Release date",
                     "dueDate": "Due date"
                 }

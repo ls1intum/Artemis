@@ -14,7 +14,7 @@ export abstract class BaseApiHttpService {
      * @param callback The function to debounce.
      * @param delay The delay in milliseconds to wait before calling the function.
      */
-    public static debounce<T extends unknown[]>(callback: (...args: T) => void, delay: number) {
+    public static debounce<T extends unknown[]>(callback: (...args: T) => void, delay: number): (...args: T) => void {
         let timer: NodeJS.Timeout | undefined;
         return function (...args: T) {
             if (timer) {
@@ -48,7 +48,7 @@ export abstract class BaseApiHttpService {
      * @param url     The endpoint URL excluding the base server url (/api).
      * @param options The HTTP options to send with the request.
      *
-     * @return  An `Promise` of the response body of type `T`.
+     * @return  A `Promise` of the response body of type `T`.
      */
     private async request<T>(
         method: HttpMethod,
@@ -90,7 +90,7 @@ export abstract class BaseApiHttpService {
      * @param options The HTTP options to send with the request.
      * @protected
      *
-     * @return An `Promise` of type `Object` (T),
+     * @return A `Promise` of type `Object` (T),
      */
     protected async get<T>(
         url: string,
@@ -119,7 +119,7 @@ export abstract class BaseApiHttpService {
      * @param options The HTTP options to send with the request.
      * @protected
      *
-     * @return An `Promise` of type `Object` (T),
+     * @return A `Promise` of type `Object` (T),
      */
     protected async post<T>(
         url: string,
@@ -148,7 +148,7 @@ export abstract class BaseApiHttpService {
      * @param options The HTTP options to send with the request.
      * @protected
      *
-     * @return An `Promise` of type `Object` (T),
+     * @return A `Promise` of type `Object` (T),
      */
     protected async delete<T>(
         url: string,
