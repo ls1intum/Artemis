@@ -7,6 +7,7 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-test-status-detail',
@@ -19,6 +20,7 @@ import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programmin
         ArtemisProgrammingExerciseActionsModule,
         SubmissionResultStatusModule,
         ArtemisProgrammingExerciseStatusModule,
+        TranslateDirective,
     ],
 })
 export class ProgrammingTestStatusDetailComponent {
