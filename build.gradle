@@ -330,7 +330,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.12.6"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.13.3"
     implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
