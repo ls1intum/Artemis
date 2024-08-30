@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import type { ProgrammingTestStatusDetail } from 'app/detail-overview-list/detail.model';
 import { NoDataComponent } from 'app/shared/no-data-component';
 import { RouterModule } from '@angular/router';
@@ -24,5 +24,5 @@ import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programmin
 export class ProgrammingTestStatusDetailComponent {
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
 
-    detail = input.required<ProgrammingTestStatusDetail>();
+    @Input() detail: ProgrammingTestStatusDetail;
 }
