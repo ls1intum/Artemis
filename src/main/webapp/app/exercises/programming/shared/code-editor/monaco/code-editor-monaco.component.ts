@@ -21,9 +21,9 @@ import { fromPairs, pickBy } from 'lodash-es';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
-import { Position } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
-type FileSession = { [fileName: string]: { code: string; cursor: Position; loadingError: boolean } };
+type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',

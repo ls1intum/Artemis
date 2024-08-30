@@ -10,7 +10,7 @@ import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-li
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
-import { MonacoEditorWithActions, Position } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 export const MAX_TAB_SIZE = 8;
 
@@ -24,7 +24,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private _editor: MonacoEditorWithActions;
     private monacoEditorContainerElement: HTMLElement;
     themeSubscription?: Subscription;
-    models: monaco.editor.IModel[] = [];
+    models: MonacoEditorTextModel[] = [];
     lineWidgets: MonacoEditorLineWidget[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
@@ -105,9 +105,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Output()
     onBlurEditor = new EventEmitter<void>();
 
-    private contentHeightListener?: monaco.IDisposable;
-    private textChangedListener?: monaco.IDisposable;
-    private blurEditorWidgetListener?: monaco.IDisposable;
+    private contentHeightListener?: Disposable;
+    private textChangedListener?: Disposable;
+    private blurEditorWidgetListener?: Disposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
@@ -157,15 +157,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    getPosition(): Position {
+    getPosition(): EditorPosition {
         return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
     }
 
-    setPosition(position: Position) {
+    setPosition(position: EditorPosition) {
         this._editor.setPosition(position);
     }
 
-    setSelection(range: monaco.IRange): void {
+    setSelection(range: EditorRange): void {
         this._editor.setSelection(range);
     }
 
@@ -209,6 +209,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * All elements currently rendered in the editor will be disposed.
      * @param fileName The name of the file to switch to.
      * @param newFileContent The content of the file (will be retrieved from the model if left out).
+     * @param languageId The language ID to use for syntax highlighting (will be inferred from the file extension if left out).
      */
     changeModel(fileName: string, newFileContent?: string, languageId?: string) {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
