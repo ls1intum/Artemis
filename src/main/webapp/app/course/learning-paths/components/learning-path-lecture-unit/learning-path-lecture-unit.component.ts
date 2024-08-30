@@ -1,12 +1,11 @@
-import { Component, InputSignal, Signal, WritableSignal, inject, input, signal } from '@angular/core';
+import { Component, InputSignal, WritableSignal, effect, inject, input, signal } from '@angular/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
-import { Observable, lastValueFrom, switchMap } from 'rxjs';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { lastValueFrom } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
@@ -27,18 +26,22 @@ export class LearningPathLectureUnitComponent {
     private readonly alertService: AlertService = inject(AlertService);
 
     readonly lectureUnitId: InputSignal<number> = input.required<number>();
-    readonly isLectureUnitLoading: WritableSignal<boolean> = signal(false);
-    private readonly lectureUnit$: Observable<LectureUnit | undefined> = toObservable(this.lectureUnitId).pipe(switchMap((lectureUnitId) => this.getLectureUnit(lectureUnitId)));
-    readonly lectureUnit: Signal<LectureUnit | undefined> = toSignal(this.lectureUnit$);
+    readonly isLoading: WritableSignal<boolean> = signal(false);
+    readonly lectureUnit = signal<LectureUnit | undefined>(undefined);
 
-    async getLectureUnit(lectureUnitId: number): Promise<LectureUnit | undefined> {
+    constructor() {
+        effect(() => this.loadLectureUnit(this.lectureUnitId()), { allowSignalWrites: true });
+    }
+
+    async loadLectureUnit(lectureUnitId: number): Promise<void> {
         try {
-            this.isLectureUnitLoading.set(true);
-            return await lastValueFrom(this.lectureUnitService.getLectureUnitById(lectureUnitId));
+            this.isLoading.set(true);
+            const lectureUnit = await lastValueFrom(this.lectureUnitService.getLectureUnitById(lectureUnitId));
+            this.lectureUnit.set(lectureUnit);
         } catch (error) {
             this.alertService.error(error);
         } finally {
-            this.isLectureUnitLoading.set(false);
+            this.isLoading.set(false);
         }
     }
 
