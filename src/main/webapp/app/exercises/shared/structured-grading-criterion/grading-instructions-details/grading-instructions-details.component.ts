@@ -1,6 +1,5 @@
 import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
@@ -11,7 +10,7 @@ import { MonacoGradingScaleAction } from 'app/shared/monaco-editor/model/actions
 import { MonacoGradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-description.action';
 import { MonacoGradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-feedback.action';
 import { MonacoGradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-usage-count.action';
-import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoGradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-criterion.action';
 import { MonacoGradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-instruction.action';
 
@@ -21,8 +20,6 @@ import { MonacoGradingInstructionAction } from 'app/shared/monaco-editor/model/a
     styleUrls: ['./grading-instructions-details.component.scss'],
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
-    /** Ace Editor configuration constants **/
-    markdownEditorText = '';
     @ViewChildren('markdownEditors')
     private markdownEditors: QueryList<MarkdownEditorMonacoComponent>;
     @ViewChild('markdownEditor', { static: false })
@@ -33,6 +30,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     private criteria: GradingCriterion[];
 
     backupExercise: Exercise;
+    markdownEditorText = '';
+    showEditMode: boolean;
 
     creditsAction = new MonacoGradingCreditsAction();
     gradingScaleAction = new MonacoGradingScaleAction();
@@ -51,8 +50,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.gradingInstructionAction,
         this.gradingCriterionAction,
     ];
-
-    showEditMode: boolean;
 
     domainActionsForGradingInstructionParsing: MonacoEditorDomainAction[] = [
         this.creditsAction,
