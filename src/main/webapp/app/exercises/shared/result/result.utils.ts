@@ -255,7 +255,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
     }
 
     if (templateStatus === ResultTemplateStatus.LATE) {
-        return 'late';
+        return 'result-late';
     }
 
     if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {

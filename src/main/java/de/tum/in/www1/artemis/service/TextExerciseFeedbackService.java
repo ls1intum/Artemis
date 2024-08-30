@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -47,18 +46,14 @@ public class TextExerciseFeedbackService {
 
     private final ResultRepository resultRepository;
 
-    private final TextSubmissionService textSubmissionService;
-
     public TextExerciseFeedbackService(Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService,
-            ResultService resultService, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository,
-            ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextSubmissionService textSubmissionService) {
+            ResultService resultService, ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService) {
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.resultWebsocketService = resultWebsocketService;
         this.participationService = participationService;
-        this.textSubmissionService = textSubmissionService;
     }
 
     private void checkRateLimitOrThrow(StudentParticipation participation) {

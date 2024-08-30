@@ -84,6 +84,7 @@ public class TextSubmissionService extends SubmissionService {
 
         // if athena results are present than create new submission on submit
         if (!textSubmission.getResults().isEmpty()) {
+            log.debug("Creating a new submission due to Athena results for user: {}", user.getLogin());
             textSubmission.setId(null);
         }
 

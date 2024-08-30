@@ -41,7 +41,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() examMode: boolean;
     @Input() isGeneratingFeedback: boolean;
 
-    @Output() generatingFeedback = new EventEmitter<void>();
+    @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
@@ -357,7 +357,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
         if (this.gradedParticipation?.results) {
             const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
-            const countOfSuccessfulRequests = athenaResults.filter((result) => result.successful !== undefined).length;
+            const countOfSuccessfulRequests = athenaResults.length;
 
             if (countOfSuccessfulRequests >= 10) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
