@@ -11,20 +11,14 @@
                     [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.sourcePlaceHolder' | artemisTranslate"
                     (change)="onLinkChanged()"
                 />
-                <small id="urlHelperExplanation" class="form-text text-body-secondary">{{
-                    'artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder' | artemisTranslate
-                }}</small>
+                <small id="urlHelperExplanation" class="form-text text-body-secondary" jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder"></small>
                 @if (sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (sourceControl?.errors?.required) {
-                            <div>
-                                {{ 'artemisApp.onlineUnit.createOnlineUnit.sourceRequiredValidationError' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.sourceRequiredValidationError"></div>
                         }
                         @if (sourceControl?.errors?.invalidUrl) {
-                            <div>
-                                {{ 'artemisApp.onlineUnit.createOnlineUnit.sourceURLValidationError' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.sourceURLValidationError"></div>
                         }
                     </div>
                 }
@@ -41,20 +35,16 @@
                 @if (nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (nameControl?.errors?.required) {
-                            <div>
-                                {{ 'artemisApp.onlineUnit.createOnlineUnit.nameRequiredValidationError' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.nameRequiredValidationError"></div>
                         }
                         @if (nameControl?.errors?.maxlength) {
-                            <div>
-                                {{ 'artemisApp.onlineUnit.createOnlineUnit.nameMaxLengthValidationError' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.nameMaxLengthValidationError"></div>
                         }
                     </div>
                 }
             </div>
             <div class="form-group">
-                <label for="description">{{ 'artemisApp.onlineUnit.createOnlineUnit.description' | artemisTranslate }}</label>
+                <label for="description" jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.description"></label>
                 <textarea
                     class="form-control"
                     id="description"
@@ -65,9 +55,7 @@
                 @if (descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (descriptionControl?.errors?.maxlength) {
-                            <div>
-                                {{ 'artemisApp.onlineUnit.createOnlineUnit.descriptionMaxLengthValidationError' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.descriptionMaxLengthValidationError"></div>
                         }
                     </div>
                 }
@@ -86,7 +74,7 @@
             <div class="row">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                        <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                        <span jhiTranslate="entity.action.submit"></span>
                     </button>
                     @if (hasCancelButton) {
                         <button type="button" (click)="cancelForm()" class="btn btn-default">
