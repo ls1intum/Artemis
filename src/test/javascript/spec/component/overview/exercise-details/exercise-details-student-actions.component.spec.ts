@@ -35,6 +35,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { ArtemisTestModule } from '../../../test.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { Submission } from 'app/entities/submission.model';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -552,6 +553,35 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAfterDueDate');
+        expect(result).toBeFalse();
+    });
+
+    it('assureConditionsSatisfied should alert and return false if the latest submission already has athena result', () => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
+        const submission: Submission = { id: 42 };
+        comp.exercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                            score: 100,
+                            submission: submission,
+                        },
+                    ],
+                    submissions: [submission],
+                },
+            ] as StudentParticipation[],
+        } as TextExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.submissionAlreadyHasAthenaResult');
         expect(result).toBeFalse();
     });
 

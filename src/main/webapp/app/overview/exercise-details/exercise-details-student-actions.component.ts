@@ -366,6 +366,22 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             }
         }
 
+        if (this.hasAthenaResultForlatestSubmission()) {
+            const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
+            this.alertService.warning(submitFirstWarning);
+            return false;
+        }
         return true;
+    }
+
+    hasAthenaResultForlatestSubmission(): boolean {
+        if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
+            // submissions.results is always undefined so this is neccessary
+            return (
+                this.gradedParticipation.submissions.last()?.id ===
+                this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA).first()?.submission?.id
+            );
+        }
+        return false;
     }
 }

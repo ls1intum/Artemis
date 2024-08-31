@@ -213,6 +213,11 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaAutomatic()).collect(Collectors.toCollection(ArrayList::new));
     }
 
+    @JsonIgnore
+    public List<Result> getNonAthenaResults() {
+        return results.stream().filter(result -> result != null && !result.isAthenaAutomatic()).collect(Collectors.toCollection(ArrayList::new));
+    }
+
     /**
      * Get the manual result by id of the submission
      *
