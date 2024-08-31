@@ -85,7 +85,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     filePreviewPaths: Map<string, string> = new Map<string, string>();
     dropAllowed = false;
     showPreview = false;
-    const CLICK_LAYER_DIMENSION: number = 200;
+    readonly CLICK_LAYER_DIMENSION: number = 200;
     /** Status boolean for collapse status **/
     isQuestionCollapsed = false;
 
