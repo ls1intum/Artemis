@@ -28,7 +28,7 @@
     <div class="card-body rounded-bottom-4 border-lightgrey pt-3">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="d-flex flex-column justify-content-between gap-1">
-            <div class="information-box-wrapper ms-1 ms-sm-3 ms-md-1">
+            <div class="information-box-wrapper ms-1">
                 <div class="row mt-1">
                     <div class="col-7" [ngClass]="{ 'col-12': !(exerciseCount && (totalReachableScore || totalAbsoluteScore)) }">
                         @if (exerciseCount && (totalReachableScore || totalAbsoluteScore)) {
@@ -88,7 +88,7 @@
                 </div>
             </div>
             @if (course.isAtLeastTutor && course.id) {
-                <div class="d-flex justify-content-start align-items-center ms-1 ms-sm-3 ms-md-1 mt-1 btn-management">
+                <div class="d-flex justify-content-start align-items-center ms-1 mt-1">
                     <a class="fw-bold btn-wrapper" [routerLink]="['/course-management', course.id]">
                         <span jhiTranslate="artemisApp.studentDashboard.cardManageCourse"></span>
                         <fa-icon class="ms-1" [icon]="faArrowRight" />

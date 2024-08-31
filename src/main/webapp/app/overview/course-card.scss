@@ -1,20 +1,10 @@
 .card {
+    // best possible height to fit header, information, and manage course button: 80px header + 200px card content
     height: 283px;
+    // needed, otherwise score chart will appear outside of the card
     min-width: 320px;
     max-width: 400px;
     transition: transform 0.2s linear;
-
-    @media screen and (max-width: 768px) and (min-width: 478px) {
-        max-width: 550px !important;
-    }
-
-    @media screen and (min-width: 2000px) {
-        max-width: 500px !important;
-    }
-
-    @media screen and (min-width: 2700px) {
-        max-width: 600px !important;
-    }
 
     &:hover {
         transform: scale(1.012);
@@ -51,6 +41,7 @@
         }
 
         .course-circle {
+            // same size as the course icons
             height: 65px;
             min-width: 65px;
             background-color: var(--course-image-bg);
@@ -63,24 +54,12 @@
     .card-body {
         .information-box-wrapper {
             height: 135px;
-
-            @media screen and (min-width: 2000px) {
-                margin-left: 1rem !important;
-            }
         }
 
         .chart-container {
             display: flex;
             align-items: center;
             justify-content: center;
-
-            @media screen and (max-width: 768px) and (min-width: 478px) {
-                justify-content: flex-end !important;
-            }
-
-            @media screen and (min-width: 2000px) {
-                justify-content: flex-end !important;
-            }
 
             .chart-level {
                 z-index: 2;
@@ -92,12 +71,6 @@
             // needed, otherwise button won't work due to stretched-link class
             z-index: 2;
             position: relative;
-        }
-
-        .btn-management {
-            @media screen and (min-width: 2000px) {
-                margin-left: 1rem !important;
-            }
         }
 
         .exercise-title {
