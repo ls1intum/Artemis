@@ -28,13 +28,6 @@ export default defineConfig({
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry',
         ignoreHTTPSErrors: false,
-        clientCertificates: [
-            {
-                origin: process.env.BASE_URL!,
-                certPath: './certs/artemis-nginx+4.pem',
-                keyPath: './certs/artemis-nginx+4-key.pem',
-            },
-        ],
     },
 
     /* Configure projects for major browsers */
