@@ -10,12 +10,12 @@ export class MonacoTextEditorAdapter implements TextEditor {
     constructor(private editor: monaco.editor.IStandaloneCodeEditor) {}
 
     addAction(action: MonacoEditorAction): Disposable {
-        const actionDescriptor = {
+        const actionDescriptor: monaco.editor.IActionDescriptor = {
             id: action.id,
             label: action.label,
             keybindings: action.keybindings,
-            run: () => {
-                action.run(this as any); // TODO
+            run: (_, args) => {
+                action.run(this, args);
             },
         };
         return this.editor.addAction(actionDescriptor);
