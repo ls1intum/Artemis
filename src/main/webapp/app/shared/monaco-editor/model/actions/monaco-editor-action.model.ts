@@ -1,6 +1,5 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
-import * as monaco from 'monaco-editor';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
@@ -101,7 +100,7 @@ export abstract class MonacoEditorAction implements Disposable {
         mapToCompletionItemFn: (item: ItemType, range: TextEditorRange) => TextEditorCompletionItem,
         triggerCharacter?: string,
         listIncomplete?: boolean,
-    ): monaco.IDisposable {
+    ): Disposable {
         return editor.addCompleter({
             triggerCharacter,
             incomplete: listIncomplete ?? false,
