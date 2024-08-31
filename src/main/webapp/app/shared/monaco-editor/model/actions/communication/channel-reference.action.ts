@@ -13,7 +13,7 @@ import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shar
 /**
  * Action to insert a reference to a channel into the editor. Users that type a # will see a list of available channels to reference.
  */
-export class MonacoChannelReferenceAction extends TextEditorAction {
+export class ChannelReferenceAction extends TextEditorAction {
     static readonly ID = 'monaco-channel-reference.action';
     static readonly DEFAULT_INSERT_TEXT = '#';
 
@@ -24,7 +24,7 @@ export class MonacoChannelReferenceAction extends TextEditorAction {
         private readonly metisService: MetisService,
         private readonly channelService: ChannelService,
     ) {
-        super(MonacoChannelReferenceAction.ID, 'artemisApp.metis.editor.channel', faHashtag);
+        super(ChannelReferenceAction.ID, 'artemisApp.metis.editor.channel', faHashtag);
     }
 
     /**
@@ -48,7 +48,7 @@ export class MonacoChannelReferenceAction extends TextEditorAction {
      * @param editor The editor to type the text into.
      */
     run(editor: TextEditor) {
-        this.typeText(editor, MonacoChannelReferenceAction.DEFAULT_INSERT_TEXT);
+        this.typeText(editor, ChannelReferenceAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
 

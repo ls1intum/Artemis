@@ -13,7 +13,7 @@ const HEADING_TEXT = 'Heading';
 /**
  * Action to toggle heading text in the editor. It wraps the selected text with the heading delimiter, e.g. switching between text and # text for level 1.
  */
-export class MonacoHeadingAction extends TextEditorAction {
+export class HeadingAction extends TextEditorAction {
     level: number;
 
     /**

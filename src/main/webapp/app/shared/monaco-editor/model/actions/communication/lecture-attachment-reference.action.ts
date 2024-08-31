@@ -28,7 +28,7 @@ interface LectureAttachmentReferenceActionArgs {
  * Action to insert a reference to a lecture, attachment, slide, or attachment unit into the editor.
  * The specific format of the reference depends on the type of reference.
  */
-export class MonacoLectureAttachmentReferenceAction extends TextEditorAction {
+export class LectureAttachmentReferenceAction extends TextEditorAction {
     static readonly ID = 'monaco-lecture-attachment-reference.action';
 
     lecturesWithDetails: LectureWithDetails[] = [];
@@ -37,7 +37,7 @@ export class MonacoLectureAttachmentReferenceAction extends TextEditorAction {
         private readonly metisService: MetisService,
         private readonly lectureService: LectureService,
     ) {
-        super(MonacoLectureAttachmentReferenceAction.ID, 'artemisApp.metis.editor.lecture');
+        super(LectureAttachmentReferenceAction.ID, 'artemisApp.metis.editor.lecture');
         firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
             const lectures = response.body;
             if (lectures) {

@@ -1,20 +1,20 @@
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
-export class MonacoWrongMultipleChoiceAnswerAction extends TextEditorDomainAction {
+export class WrongMultipleChoiceAnswerAction extends TextEditorDomainAction {
     static readonly ID = 'monaco-incorrect-multiple-choice-answer.action';
     static readonly IDENTIFIER = '[wrong]';
     static readonly TEXT = 'Enter a wrong answer option here';
 
     constructor() {
-        super(MonacoWrongMultipleChoiceAnswerAction.ID, 'artemisApp.multipleChoiceQuestion.editor.addInCorrectAnswerOption');
+        super(WrongMultipleChoiceAnswerAction.ID, 'artemisApp.multipleChoiceQuestion.editor.addInCorrectAnswerOption');
     }
 
     run(editor: TextEditor): void {
-        this.addTextWithDomainActionIdentifier(editor, MonacoWrongMultipleChoiceAnswerAction.TEXT);
+        this.addTextWithDomainActionIdentifier(editor, WrongMultipleChoiceAnswerAction.TEXT);
     }
 
     getOpeningIdentifier(): string {
-        return MonacoWrongMultipleChoiceAnswerAction.IDENTIFIER;
+        return WrongMultipleChoiceAnswerAction.IDENTIFIER;
     }
 }

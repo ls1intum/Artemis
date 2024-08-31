@@ -10,14 +10,14 @@ interface InsertShortAnswerOptionArgs {
 /**
  * Action to insert a short answer option ([-option #] Option text) at the end of the editor.
  */
-export class MonacoInsertShortAnswerOptionAction extends TextEditorAction {
+export class InsertShortAnswerOptionAction extends TextEditorAction {
     static readonly ID = 'monaco-insert-short-answer-option.action';
     static readonly DEFAULT_TEXT = 'Enter an answer option here and ensure the spot number is correct.';
     static readonly DEFAULT_TEXT_SHORT = 'Enter an answer option here.';
 
     constructor() {
-        super(MonacoInsertShortAnswerOptionAction.ID, 'artemisApp.shortAnswerQuestion.editor.addOption', undefined);
-        this.id = MonacoInsertShortAnswerOptionAction.ID;
+        super(InsertShortAnswerOptionAction.ID, 'artemisApp.shortAnswerQuestion.editor.addOption', undefined);
+        this.id = InsertShortAnswerOptionAction.ID;
         this.translationKey = 'artemisApp.shortAnswerQuestion.editor.addOption';
     }
 
@@ -32,7 +32,7 @@ export class MonacoInsertShortAnswerOptionAction extends TextEditorAction {
      */
     run(editor: TextEditor, args?: InsertShortAnswerOptionArgs): void {
         // Note that even if the optionText is provided, it may be blank. This is why we use || instead of ?? here.
-        const optionText = args?.optionText || MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT;
+        const optionText = args?.optionText || InsertShortAnswerOptionAction.DEFAULT_TEXT;
         let insertedText: string;
         if (args?.spotNumber) {
             insertedText = `\n[-option ${args.spotNumber}] ${optionText}`;
@@ -45,11 +45,11 @@ export class MonacoInsertShortAnswerOptionAction extends TextEditorAction {
         }
         this.insertTextAtPosition(editor, this.getEndPosition(editor), insertedText);
         // For convenience, we want to select the option text if it is the default text
-        if (optionText === MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT) {
+        if (optionText === InsertShortAnswerOptionAction.DEFAULT_TEXT) {
             const newEndPosition = this.getEndPosition(editor);
             const selection = makeTextEditorRange(
                 newEndPosition.getLineNumber(),
-                newEndPosition.getColumn() - MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT.length,
+                newEndPosition.getColumn() - InsertShortAnswerOptionAction.DEFAULT_TEXT.length,
                 newEndPosition.getLineNumber(),
                 newEndPosition.getColumn(),
             );

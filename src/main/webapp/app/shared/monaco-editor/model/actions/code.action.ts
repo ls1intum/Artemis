@@ -7,10 +7,10 @@ const CODE_DELIMITER = '`';
 /**
  * Action to toggle code text in the editor. It wraps the selected text with the code delimiter, e.g. switching between text and `text`.
  */
-export class MonacoCodeAction extends TextEditorAction {
+export class CodeAction extends TextEditorAction {
     static readonly ID = 'monaco-code.action';
     constructor() {
-        super(MonacoCodeAction.ID, 'artemisApp.multipleChoiceQuestion.editor.code', faCode, undefined);
+        super(CodeAction.ID, 'artemisApp.multipleChoiceQuestion.editor.code', faCode, undefined);
     }
 
     /**

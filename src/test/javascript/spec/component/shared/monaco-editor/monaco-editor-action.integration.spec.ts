@@ -3,24 +3,24 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { ArtemisTestModule } from '../../../test.module';
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
-import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
+import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
-import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
-import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
-import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
-import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/quote.action';
-import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
+import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
+import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
+import { ColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
+import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
+import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { QuoteAction } from 'app/shared/monaco-editor/model/actions/quote.action';
+import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
 import * as FullscreenUtil from 'app/shared/util/fullscreen.util';
-import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
-import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
-import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
-import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
-import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
-import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
+import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
+import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
+import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
 import * as monaco from 'monaco-editor';
 
 describe('MonacoEditorActionIntegration', () => {
@@ -49,16 +49,16 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it('should throw when trying to register an action twice', () => {
-        const action = new MonacoBoldAction();
+        const action = new BoldAction();
         comp.registerAction(action);
         const registerAction = () => comp.registerAction(action);
         expect(registerAction).toThrow(Error);
     });
 
     it.each([
-        { action: new MonacoAttachmentAction(), text: 'Attachment', url: 'https://test.invalid/img.png', defaultText: MonacoAttachmentAction.DEFAULT_INSERT_TEXT },
-        { action: new MonacoUrlAction(), text: 'Link', url: 'https://test.invalid/', defaultText: MonacoUrlAction.DEFAULT_INSERT_TEXT },
-    ])('should insert $text', ({ action, text, url, defaultText }: { action: MonacoUrlAction | MonacoAttachmentAction; text: string; url: string; defaultText: string }) => {
+        { action: new AttachmentAction(), text: 'Attachment', url: 'https://test.invalid/img.png', defaultText: AttachmentAction.DEFAULT_INSERT_TEXT },
+        { action: new UrlAction(), text: 'Link', url: 'https://test.invalid/', defaultText: UrlAction.DEFAULT_INSERT_TEXT },
+    ])('should insert $text', ({ action, text, url, defaultText }: { action: UrlAction | AttachmentAction; text: string; url: string; defaultText: string }) => {
         const prefix = text === 'Attachment' ? '!' : '';
         comp.registerAction(action);
         action.executeInCurrentEditor({ text, url });
@@ -70,14 +70,14 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it('should insert unordered list', () => {
-        const action = new MonacoUnorderedListAction();
+        const action = new UnorderedListAction();
         comp.registerAction(action);
         action.executeInCurrentEditor();
         expect(comp.getText()).toBe('- ');
     });
 
     it('should toggle unordered list, skipping empty lines', () => {
-        const action = new MonacoUnorderedListAction();
+        const action = new UnorderedListAction();
         comp.registerAction(action);
         const lines = ['One', '', 'Two', 'Three'];
         const bulletedLines = lines.map((line) => (line ? `- ${line}` : ''));
@@ -92,14 +92,14 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it('should insert ordered list', () => {
-        const action = new MonacoOrderedListAction();
+        const action = new OrderedListAction();
         comp.registerAction(action);
         action.executeInCurrentEditor();
         expect(comp.getText()).toBe('1. ');
     });
 
     it('should toggle ordered list, skipping empty lines', () => {
-        const action = new MonacoOrderedListAction();
+        const action = new OrderedListAction();
         comp.registerAction(action);
         const lines = ['One', '', 'Two', 'Three'];
         const numberedLines = lines.map((line, index) => (line ? `${index + 1}. ${line}` : ''));
@@ -114,7 +114,7 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it.each([1, 2, 3])('Should toggle heading %i on selected line', (headingLevel) => {
-        const action = new MonacoHeadingAction(headingLevel);
+        const action = new HeadingAction(headingLevel);
         comp.registerAction(action);
         // No selection -> insert heading
         action.executeInCurrentEditor();
@@ -128,7 +128,7 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it('should insert test case names', () => {
-        const action = new MonacoTestCaseAction();
+        const action = new TestCaseAction();
         const testCaseName = 'testCase()';
         action.values = [{ value: testCaseName, id: '1' }];
         // With specified test case
@@ -138,11 +138,11 @@ describe('MonacoEditorActionIntegration', () => {
         // Without specified test case
         comp.setText('');
         action.executeInCurrentEditor();
-        expect(comp.getText()).toBe(MonacoTestCaseAction.DEFAULT_INSERT_TEXT);
+        expect(comp.getText()).toBe(TestCaseAction.DEFAULT_INSERT_TEXT);
     });
 
     it('should throw when trying to register a completer without a model', () => {
-        const action = new MonacoTestCaseAction();
+        const action = new TestCaseAction();
         const registerAction = () => comp.registerAction(action);
         // Detach model (should not happen in practice)
         comp['_editor'].setModel(null);
@@ -152,7 +152,7 @@ describe('MonacoEditorActionIntegration', () => {
     it('should provide test case completions', async () => {
         comp.changeModel('testCase', '', 'custom-md');
         const model = comp.models[0];
-        const action = new MonacoTestCaseAction();
+        const action = new TestCaseAction();
         action.values = [
             { value: 'testCase1', id: '1' },
             { value: 'testCase2', id: '2' },
@@ -177,14 +177,14 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it('should insert tasks', () => {
-        const action = new MonacoTaskAction();
+        const action = new TaskAction();
         comp.registerAction(action);
         action.executeInCurrentEditor();
-        expect(comp.getText()).toBe(`[task]${MonacoTaskAction.TEXT}`);
+        expect(comp.getText()).toBe(`[task]${TaskAction.TEXT}`);
     });
 
     it('should enter fullscreen', () => {
-        const action = new MonacoFullscreenAction();
+        const action = new FullscreenAction();
         comp.registerAction(action);
         const enterFullscreenStub = jest.spyOn(FullscreenUtil, 'enterFullscreen').mockImplementation();
         jest.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(false);
@@ -202,7 +202,7 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it('should leave fullscreen', () => {
-        const action = new MonacoFullscreenAction();
+        const action = new FullscreenAction();
         comp.registerAction(action);
         const exitFullscreenStub = jest.spyOn(FullscreenUtil, 'exitFullscreen').mockImplementation();
         jest.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(true);
@@ -211,36 +211,36 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it.each([
-        { action: new MonacoBoldAction(), textWithoutDelimiters: 'Here is some bold text.', textWithDelimiters: '**Here is some bold text.**' },
-        { action: new MonacoItalicAction(), textWithoutDelimiters: 'Here is some italic text.', textWithDelimiters: '*Here is some italic text.*' },
-        { action: new MonacoUnderlineAction(), textWithoutDelimiters: 'Here is some underlined text.', textWithDelimiters: '<ins>Here is some underlined text.</ins>' },
-        { action: new MonacoCodeAction(), textWithoutDelimiters: 'Here is some code.', textWithDelimiters: '`Here is some code.`' },
+        { action: new BoldAction(), textWithoutDelimiters: 'Here is some bold text.', textWithDelimiters: '**Here is some bold text.**' },
+        { action: new ItalicAction(), textWithoutDelimiters: 'Here is some italic text.', textWithDelimiters: '*Here is some italic text.*' },
+        { action: new UnderlineAction(), textWithoutDelimiters: 'Here is some underlined text.', textWithDelimiters: '<ins>Here is some underlined text.</ins>' },
+        { action: new CodeAction(), textWithoutDelimiters: 'Here is some code.', textWithDelimiters: '`Here is some code.`' },
         {
-            action: new MonacoColorAction(),
+            action: new ColorAction(),
             textWithoutDelimiters: 'Here is some blue.',
             textWithDelimiters: '<span class="blue">Here is some blue.</span>',
             actionArgs: { color: 'blue' },
         },
         {
-            action: new MonacoColorAction(),
+            action: new ColorAction(),
             textWithoutDelimiters: 'Here is some red.',
             textWithDelimiters: '<span class="red">Here is some red.</span>', // No argument -> default color is red
         },
-        { action: new MonacoCodeBlockAction(), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```\npublic void main() { }\n```' },
-        { action: new MonacoCodeBlockAction('java'), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```java\npublic void main() { }\n```' },
+        { action: new CodeBlockAction(), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```\npublic void main() { }\n```' },
+        { action: new CodeBlockAction('java'), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```java\npublic void main() { }\n```' },
         {
-            action: new MonacoQuoteAction(),
+            action: new QuoteAction(),
             initialText: '> ',
             textToType: 'some quoted text',
             textWithDelimiters: '> some quoted text',
             textWithoutDelimiters: 'some quoted text',
         },
         {
-            action: new MonacoFormulaAction(),
-            initialText: `$$ ${MonacoFormulaAction.DEFAULT_FORMULA} $$`,
+            action: new FormulaAction(),
+            initialText: `$$ ${FormulaAction.DEFAULT_FORMULA} $$`,
             textToType: '+ 42x',
-            textWithDelimiters: `$$ ${MonacoFormulaAction.DEFAULT_FORMULA}+ 42x $$`,
-            textWithoutDelimiters: `${MonacoFormulaAction.DEFAULT_FORMULA}+ 42x`,
+            textWithDelimiters: `$$ ${FormulaAction.DEFAULT_FORMULA}+ 42x $$`,
+            textWithoutDelimiters: `${FormulaAction.DEFAULT_FORMULA}+ 42x`,
         },
     ])(
         'Delimiter action ($action.id) should insert delimiters at position and toggle around selection',

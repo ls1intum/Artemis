@@ -10,11 +10,11 @@ interface AttachmentArguments {
 /**
  * Action to insert an attachment into the editor. They follow the format ![text](url).
  */
-export class MonacoAttachmentAction extends TextEditorAction {
+export class AttachmentAction extends TextEditorAction {
     static readonly ID = 'monaco-attachment.action';
     static readonly DEFAULT_INSERT_TEXT = '![](https://)';
     constructor() {
-        super(MonacoAttachmentAction.ID, 'artemisApp.multipleChoiceQuestion.editor.imageUpload', faImage, undefined);
+        super(AttachmentAction.ID, 'artemisApp.multipleChoiceQuestion.editor.imageUpload', faImage, undefined);
     }
 
     /**
@@ -32,7 +32,7 @@ export class MonacoAttachmentAction extends TextEditorAction {
      */
     run(editor: TextEditor, args?: AttachmentArguments): void {
         if (!args?.text || !args?.url) {
-            this.replaceTextAtCurrentSelection(editor, MonacoAttachmentAction.DEFAULT_INSERT_TEXT);
+            this.replaceTextAtCurrentSelection(editor, AttachmentAction.DEFAULT_INSERT_TEXT);
         } else {
             this.replaceTextAtCurrentSelection(editor, `![${args.text}](${args.url})`);
         }

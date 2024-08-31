@@ -14,7 +14,7 @@ import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shar
  * Action to insert a user mention into the editor. Users that type a @ will see a list of available users to mention.
  * Users will be fetched repeatedly as the user types to provide up-to-date results.
  */
-export class MonacoUserMentionAction extends TextEditorAction {
+export class UserMentionAction extends TextEditorAction {
     disposableCompletionProvider?: Disposable;
 
     static readonly ID = 'monaco-user-mention.action';
@@ -24,7 +24,7 @@ export class MonacoUserMentionAction extends TextEditorAction {
         private readonly courseManagementService: CourseManagementService,
         private readonly metisService: MetisService,
     ) {
-        super(MonacoUserMentionAction.ID, 'artemisApp.metis.editor.user', faAt);
+        super(UserMentionAction.ID, 'artemisApp.metis.editor.user', faAt);
     }
 
     /**
@@ -49,7 +49,7 @@ export class MonacoUserMentionAction extends TextEditorAction {
      * @param editor The editor to type the text into.
      */
     run(editor: TextEditor) {
-        this.typeText(editor, MonacoUserMentionAction.DEFAULT_INSERT_TEXT);
+        this.typeText(editor, UserMentionAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
 

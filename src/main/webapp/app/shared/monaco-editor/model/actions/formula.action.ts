@@ -7,11 +7,11 @@ const FORMULA_CLOSE_DELIMITER = ' $$';
 /**
  * Action to toggle formula text in the editor. It wraps the selected text with the formula delimiter, e.g. switching between text and $$ text $$.
  */
-export class MonacoFormulaAction extends TextEditorDomainAction {
+export class FormulaAction extends TextEditorDomainAction {
     static readonly ID = 'monaco-formula.action';
     static readonly DEFAULT_FORMULA = 'e^{\\frac{1}{4} y^2}';
     constructor() {
-        super(MonacoFormulaAction.ID, 'artemisApp.markdownEditor.commands.katex', undefined, undefined);
+        super(FormulaAction.ID, 'artemisApp.markdownEditor.commands.katex', undefined, undefined);
     }
 
     /**
@@ -20,7 +20,7 @@ export class MonacoFormulaAction extends TextEditorDomainAction {
      * @param editor The editor in which to toggle formula text.
      */
     run(editor: TextEditor) {
-        this.toggleDelimiterAroundSelection(editor, this.getOpeningIdentifier(), FORMULA_CLOSE_DELIMITER, MonacoFormulaAction.DEFAULT_FORMULA);
+        this.toggleDelimiterAroundSelection(editor, this.getOpeningIdentifier(), FORMULA_CLOSE_DELIMITER, FormulaAction.DEFAULT_FORMULA);
         editor.focus();
     }
 

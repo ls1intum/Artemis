@@ -6,13 +6,13 @@ import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-
 /**
  * Action to toggle fullscreen mode in the editor.
  */
-export class MonacoFullscreenAction extends TextEditorAction {
+export class FullscreenAction extends TextEditorAction {
     static readonly ID = 'monaco-fullscreen.action';
 
     element?: HTMLElement;
 
     constructor() {
-        super(MonacoFullscreenAction.ID, 'artemisApp.markdownEditor.commands.fullscreen', faCompress);
+        super(FullscreenAction.ID, 'artemisApp.markdownEditor.commands.fullscreen', faCompress);
     }
 
     /**

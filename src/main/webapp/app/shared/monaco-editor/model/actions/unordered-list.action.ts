@@ -9,10 +9,10 @@ const LIST_BULLET = '- ';
 /**
  * Action to toggle unordered list in the editor. It toggles the "- " prefix for the entire selection.
  */
-export class MonacoUnorderedListAction extends TextEditorAction {
+export class UnorderedListAction extends TextEditorAction {
     static readonly ID = 'monaco-unordered-list.action';
     constructor() {
-        super(MonacoUnorderedListAction.ID, 'artemisApp.multipleChoiceQuestion.editor.unorderedList', faListUl, undefined);
+        super(UnorderedListAction.ID, 'artemisApp.multipleChoiceQuestion.editor.unorderedList', faListUl, undefined);
     }
 
     /**

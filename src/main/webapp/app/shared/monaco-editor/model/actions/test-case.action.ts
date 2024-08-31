@@ -9,14 +9,14 @@ import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shar
 /**
  * Action to insert a test case into the editor. It also registers a completion item provider offers all possible test cases as completion items to the user.
  */
-export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
+export class TestCaseAction extends MonacoEditorDomainActionWithOptions {
     disposableCompletionProvider?: Disposable;
 
     static readonly ID = 'monaco-test-case.action';
     static readonly DEFAULT_INSERT_TEXT = 'testCaseName()';
 
     constructor() {
-        super(MonacoTestCaseAction.ID, 'artemisApp.programmingExercise.problemStatement.testCaseCommand', undefined, undefined);
+        super(TestCaseAction.ID, 'artemisApp.programmingExercise.problemStatement.testCaseCommand', undefined, undefined);
     }
 
     /**
@@ -48,7 +48,7 @@ export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
     }
 
     run(editor: TextEditor, args?: DomainActionWithOptionsArguments) {
-        this.replaceTextAtCurrentSelection(editor, args?.selectedItem?.value ?? MonacoTestCaseAction.DEFAULT_INSERT_TEXT);
+        this.replaceTextAtCurrentSelection(editor, args?.selectedItem?.value ?? TestCaseAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
 

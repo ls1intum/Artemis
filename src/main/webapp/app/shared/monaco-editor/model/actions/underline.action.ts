@@ -9,10 +9,10 @@ const UNDERLINE_CLOSE_DELIMITER = '</ins>';
 /**
  * Action to toggle underline text in the editor. It wraps the selected text with the underline delimiter, e.g. switching between text and <ins>text</ins>.
  */
-export class MonacoUnderlineAction extends TextEditorAction {
+export class UnderlineAction extends TextEditorAction {
     static readonly ID = 'monaco-underline.action';
     constructor() {
-        super(MonacoUnderlineAction.ID, 'artemisApp.multipleChoiceQuestion.editor.underline', faUnderline, [
+        super(UnderlineAction.ID, 'artemisApp.multipleChoiceQuestion.editor.underline', faUnderline, [
             new TextEditorKeybinding(TextEditorKeyCode.KeyU, TextEditorKeyModifier.CtrlCmd),
         ]);
     }

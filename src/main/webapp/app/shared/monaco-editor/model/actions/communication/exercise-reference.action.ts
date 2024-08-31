@@ -10,14 +10,14 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 /**
  * Action to insert a reference to an exercise into the editor. Users that type a / will see a list of available exercises to reference.
  */
-export class MonacoExerciseReferenceAction extends MonacoEditorDomainActionWithOptions {
+export class ExerciseReferenceAction extends MonacoEditorDomainActionWithOptions {
     static readonly ID = 'monaco-exercise-reference.action';
     static readonly DEFAULT_INSERT_TEXT = '/exercise';
 
     disposableCompletionProvider?: Disposable;
 
     constructor(private readonly metisService: MetisService) {
-        super(MonacoExerciseReferenceAction.ID, 'artemisApp.metis.editor.exercise');
+        super(ExerciseReferenceAction.ID, 'artemisApp.metis.editor.exercise');
     }
 
     /**
@@ -56,7 +56,7 @@ export class MonacoExerciseReferenceAction extends MonacoEditorDomainActionWithO
      * @param editor The editor to type the text into.
      */
     run(editor: TextEditor): void {
-        this.typeText(editor, MonacoExerciseReferenceAction.DEFAULT_INSERT_TEXT);
+        this.typeText(editor, ExerciseReferenceAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
 

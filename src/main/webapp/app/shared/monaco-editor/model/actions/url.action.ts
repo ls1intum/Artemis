@@ -10,12 +10,12 @@ interface UrlArguments {
 /**
  * Action to insert a URL into the editor. They follow the format [text](url).
  */
-export class MonacoUrlAction extends TextEditorAction {
+export class UrlAction extends TextEditorAction {
     static readonly ID = 'monaco-url.action';
     static readonly DEFAULT_INSERT_TEXT = '[](https://)';
 
     constructor() {
-        super(MonacoUrlAction.ID, 'artemisApp.multipleChoiceQuestion.editor.link', faLink, undefined);
+        super(UrlAction.ID, 'artemisApp.multipleChoiceQuestion.editor.link', faLink, undefined);
     }
 
     /**
@@ -33,7 +33,7 @@ export class MonacoUrlAction extends TextEditorAction {
      */
     run(editor: TextEditor, args?: UrlArguments): void {
         if (!args?.text || !args?.url) {
-            this.replaceTextAtCurrentSelection(editor, MonacoUrlAction.DEFAULT_INSERT_TEXT);
+            this.replaceTextAtCurrentSelection(editor, UrlAction.DEFAULT_INSERT_TEXT);
         } else {
             this.replaceTextAtCurrentSelection(editor, `[${args.text}](${args.url})`);
         }

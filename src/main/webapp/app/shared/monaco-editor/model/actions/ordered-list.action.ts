@@ -9,10 +9,10 @@ const NUMBER_REGEX = /^\d+\.\s.*/;
 /**
  * Action to toggle unordered list in the editor. It toggles the "1. ", "2. ", ... prefix for the entire selection.
  */
-export class MonacoOrderedListAction extends TextEditorAction {
+export class OrderedListAction extends TextEditorAction {
     static readonly ID = 'monaco-ordered-list.action';
     constructor() {
-        super(MonacoOrderedListAction.ID, 'artemisApp.multipleChoiceQuestion.editor.orderedList', faListOl, undefined);
+        super(OrderedListAction.ID, 'artemisApp.multipleChoiceQuestion.editor.orderedList', faListOl, undefined);
     }
 
     /**

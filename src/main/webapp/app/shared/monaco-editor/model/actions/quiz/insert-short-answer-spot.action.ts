@@ -1,20 +1,20 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { MonacoInsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-option.action';
+import { InsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-option.action';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 /**
  * Action to insert a short answer spot at the current cursor position.
  * After inserting the spot, this action also inserts an option linked to the spot.
  */
-export class MonacoInsertShortAnswerSpotAction extends TextEditorAction {
+export class InsertShortAnswerSpotAction extends TextEditorAction {
     static readonly ID = 'monaco-insert-short-answer-spot.action';
     spotNumber = 1;
 
     /**
      * @param insertShortAnswerOptionAction The action to insert a short answer option. This action will be executed after inserting the spot. Must be registered in the same editor.
      */
-    constructor(readonly insertShortAnswerOptionAction: MonacoInsertShortAnswerOptionAction) {
-        super(MonacoInsertShortAnswerSpotAction.ID, 'artemisApp.shortAnswerQuestion.editor.addSpot', undefined);
+    constructor(readonly insertShortAnswerOptionAction: InsertShortAnswerOptionAction) {
+        super(InsertShortAnswerSpotAction.ID, 'artemisApp.shortAnswerQuestion.editor.addSpot', undefined);
     }
 
     /**

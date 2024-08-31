@@ -15,29 +15,29 @@ import {
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
-import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
-import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
-import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/quote.action';
-import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
-import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
-import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
-import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
-import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
-import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
+import { QuoteAction } from 'app/shared/monaco-editor/model/actions/quote.action';
+import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
+import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
+import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
-import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
-import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
-import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
+import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
+import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
+import { ColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
-import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/shared/metis/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
@@ -56,14 +56,14 @@ export enum MarkdownEditorHeight {
 
 interface MarkdownActionsByGroup {
     standard: TextEditorAction[];
-    header: MonacoHeadingAction[];
-    color?: MonacoColorAction;
+    header: HeadingAction[];
+    color?: ColorAction;
     domain: {
         withoutOptions: TextEditorDomainAction[];
         withOptions: MonacoEditorDomainActionWithOptions[];
     };
     // Special case due to the complex structure of lectures, attachments, and their slides
-    lecture?: MonacoLectureAttachmentReferenceAction;
+    lecture?: LectureAttachmentReferenceAction;
     meta: TextEditorAction[];
 }
 
@@ -144,36 +144,36 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Input()
     defaultActions: TextEditorAction[] = [
-        new MonacoBoldAction(),
-        new MonacoItalicAction(),
-        new MonacoUnderlineAction(),
-        new MonacoQuoteAction(),
-        new MonacoCodeAction(),
-        new MonacoCodeBlockAction('java'),
-        new MonacoUrlAction(),
-        new MonacoAttachmentAction(),
-        new MonacoOrderedListAction(),
-        new MonacoUnorderedListAction(),
+        new BoldAction(),
+        new ItalicAction(),
+        new UnderlineAction(),
+        new QuoteAction(),
+        new CodeAction(),
+        new CodeBlockAction('java'),
+        new UrlAction(),
+        new AttachmentAction(),
+        new OrderedListAction(),
+        new UnorderedListAction(),
     ];
 
     @Input()
-    headerActions?: TextEditorActionGroup<MonacoHeadingAction> = new TextEditorActionGroup<MonacoHeadingAction>(
+    headerActions?: TextEditorActionGroup<HeadingAction> = new TextEditorActionGroup<HeadingAction>(
         'artemisApp.multipleChoiceQuestion.editor.style',
-        [1, 2, 3].map((level) => new MonacoHeadingAction(level)),
+        [1, 2, 3].map((level) => new HeadingAction(level)),
         undefined,
     );
 
     @Input()
-    lectureReferenceAction?: MonacoLectureAttachmentReferenceAction = undefined;
+    lectureReferenceAction?: LectureAttachmentReferenceAction = undefined;
 
     @Input()
-    colorAction?: MonacoColorAction = new MonacoColorAction();
+    colorAction?: ColorAction = new ColorAction();
 
     @Input()
     domainActions: TextEditorDomainAction[] = [];
 
     @Input()
-    metaActions: TextEditorAction[] = [new MonacoFullscreenAction()];
+    metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     @Output()
     markdownChange = new EventEmitter<string>();
@@ -304,7 +304,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         ]
             .flat()
             .forEach((action) => {
-                if (action instanceof MonacoFullscreenAction) {
+                if (action instanceof FullscreenAction) {
                     // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
                     action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
                 }
@@ -467,8 +467,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 (response) => {
                     const extension = file.name.split('.').last()?.toLocaleLowerCase();
 
-                    const attachmentAction: MonacoAttachmentAction | undefined = this.defaultActions.find((action) => action instanceof MonacoAttachmentAction);
-                    const urlAction: MonacoUrlAction | undefined = this.defaultActions.find((action) => action instanceof MonacoUrlAction);
+                    const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction);
+                    const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
                     if (!attachmentAction || !urlAction || !response.path) {
                         throw new Error('Cannot process file upload.');
                     }

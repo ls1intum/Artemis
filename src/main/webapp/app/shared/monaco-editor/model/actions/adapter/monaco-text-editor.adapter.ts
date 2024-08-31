@@ -32,7 +32,7 @@ export class MonacoTextEditorAdapter implements TextEditor {
     }
 
     executeAction(action: TextEditorAction, args?: object): void {
-        this.editor.trigger('MonacoTextEditorAdapter::executeAction', action.id, args);
+        this.editor.trigger('TextEditorAdapter::executeAction', action.id, args);
     }
 
     addCompleter(completer: TextEditorCompleter<unknown>): Disposable {
