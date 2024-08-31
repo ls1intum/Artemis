@@ -1,7 +1,7 @@
 import { faItalic } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
-import { KeyCode, KeyModifier } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from './adapter/text-editor.interface';
+import { TextEditorKeyCode, TextEditorKeyModifier, TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
 
 const ITALIC_DELIMITER = '*';
 
@@ -11,7 +11,9 @@ const ITALIC_DELIMITER = '*';
 export class MonacoItalicAction extends MonacoEditorAction {
     static readonly ID = 'monaco-italic.action';
     constructor() {
-        super(MonacoItalicAction.ID, 'artemisApp.multipleChoiceQuestion.editor.italic', faItalic, [KeyModifier.CtrlCmd | KeyCode.KeyI]);
+        super(MonacoItalicAction.ID, 'artemisApp.multipleChoiceQuestion.editor.italic', faItalic, [
+            new TextEditorKeybinding(TextEditorKeyCode.KeyI, TextEditorKeyModifier.CtrlCmd),
+        ]);
     }
 
     /**

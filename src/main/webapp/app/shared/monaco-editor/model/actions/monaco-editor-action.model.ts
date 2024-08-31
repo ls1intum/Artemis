@@ -7,12 +7,13 @@ import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
+import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
 
 export abstract class MonacoEditorAction implements Disposable {
     id: string;
     label: string;
     translationKey: string;
-    keybindings?: number[];
+    keybindings?: TextEditorKeybinding[];
     icon?: IconDefinition;
     readonly hideInEditor: boolean;
 
@@ -34,7 +35,7 @@ export abstract class MonacoEditorAction implements Disposable {
      * @param keybindings The keybindings to trigger the action, if any.
      * @param hideInEditor Whether to hide the action in the editor toolbar. Defaults to false.
      */
-    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: number[], hideInEditor?: boolean) {
+    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: TextEditorKeybinding[], hideInEditor?: boolean) {
         this.id = id;
         this.translationKey = translationKey;
         this.icon = icon;

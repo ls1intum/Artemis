@@ -1,7 +1,7 @@
 import { faUnderline } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
-import { KeyCode, KeyModifier } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { TextEditorKeyCode, TextEditorKeyModifier, TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
 
 const UNDERLINE_OPEN_DELIMITER = '<ins>';
 const UNDERLINE_CLOSE_DELIMITER = '</ins>';
@@ -12,7 +12,9 @@ const UNDERLINE_CLOSE_DELIMITER = '</ins>';
 export class MonacoUnderlineAction extends MonacoEditorAction {
     static readonly ID = 'monaco-underline.action';
     constructor() {
-        super(MonacoUnderlineAction.ID, 'artemisApp.multipleChoiceQuestion.editor.underline', faUnderline, [KeyModifier.CtrlCmd | KeyCode.KeyU]);
+        super(MonacoUnderlineAction.ID, 'artemisApp.multipleChoiceQuestion.editor.underline', faUnderline, [
+            new TextEditorKeybinding(TextEditorKeyCode.KeyU, TextEditorKeyModifier.CtrlCmd),
+        ]);
     }
 
     /**

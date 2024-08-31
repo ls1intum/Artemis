@@ -6,15 +6,24 @@ import { TextEditorCompleter } from 'app/shared/monaco-editor/model/actions/adap
 import { TextEditorRange, makeTextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorCompletionItemKind } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
+import { TextEditorKeyCode, TextEditorKeyModifier, TextEditorKeybinding } from './text-editor-keybinding.model';
 
 export class MonacoTextEditorAdapter implements TextEditor {
+    private static readonly KEY_CODE_MAP = new Map<TextEditorKeyCode, number>([
+        [TextEditorKeyCode.KeyB, monaco.KeyCode.KeyB],
+        [TextEditorKeyCode.KeyI, monaco.KeyCode.KeyI],
+        [TextEditorKeyCode.KeyU, monaco.KeyCode.KeyU],
+    ]);
+
+    private static readonly MODIFIER_MAP = new Map<TextEditorKeyModifier, number>([[TextEditorKeyModifier.CtrlCmd, monaco.KeyMod.CtrlCmd]]);
+
     constructor(private editor: monaco.editor.IStandaloneCodeEditor) {}
 
     addAction(action: MonacoEditorAction): Disposable {
         const actionDescriptor: monaco.editor.IActionDescriptor = {
             id: action.id,
             label: action.label,
-            keybindings: action.keybindings,
+            keybindings: action.keybindings?.map(this.toMonacoKeybinding),
             run: (_, args) => {
                 action.run(this, args);
             },
@@ -206,5 +215,11 @@ export class MonacoTextEditorAdapter implements TextEditor {
             default:
                 return monaco.languages.CompletionItemKind.Constant;
         }
+    }
+
+    private toMonacoKeybinding(keybinding: TextEditorKeybinding): number {
+        const keyCode = MonacoTextEditorAdapter.KEY_CODE_MAP.get(keybinding.getKey()) ?? monaco.KeyCode.Unknown;
+        const modifier = MonacoTextEditorAdapter.MODIFIER_MAP.get(keybinding.getModifier()) ?? 0;
+        return keyCode | modifier;
     }
 }
