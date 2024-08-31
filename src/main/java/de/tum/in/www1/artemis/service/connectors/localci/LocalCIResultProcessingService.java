@@ -20,7 +20,6 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
@@ -73,8 +72,6 @@ public class LocalCIResultProcessingService {
 
     private IMap<String, BuildAgentInformation> buildAgentInformation;
 
-    private FencedLock resultQueueLock;
-
     private UUID listenerId;
 
     public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
@@ -97,7 +94,6 @@ public class LocalCIResultProcessingService {
     public void init() {
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
-        this.resultQueueLock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
 
@@ -112,9 +108,7 @@ public class LocalCIResultProcessingService {
     public void processResult() {
 
         // set lock to prevent multiple nodes from processing the same build job
-        resultQueueLock.lock();
         ResultQueueItem resultQueueItem = resultQueue.poll();
-        resultQueueLock.unlock();
 
         if (resultQueueItem == null) {
             return;
