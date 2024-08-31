@@ -1,6 +1,6 @@
 import { faImage } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
-import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
 
 interface AttachmentArguments {
     text: string;
@@ -30,7 +30,7 @@ export class MonacoAttachmentAction extends MonacoEditorAction {
      * @param editor The editor in which to insert the attachment.
      * @param args The text and url of the attachment to insert. If one or both are not provided, the default text will be inserted.
      */
-    run(editor: MonacoEditorWithActions, args?: AttachmentArguments): void {
+    run(editor: TextEditor, args?: AttachmentArguments): void {
         if (!args?.text || !args?.url) {
             this.replaceTextAtCurrentSelection(editor, MonacoAttachmentAction.DEFAULT_INSERT_TEXT);
         } else {

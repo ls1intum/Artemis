@@ -1,6 +1,7 @@
 import { faItalic } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
-import { KeyCode, KeyModifier, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { KeyCode, KeyModifier } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from './adapter/text-editor-adapter.model';
 
 const ITALIC_DELIMITER = '*';
 
@@ -18,7 +19,7 @@ export class MonacoItalicAction extends MonacoEditorAction {
      * If no text is selected, the delimiter is inserted at the current cursor position.
      * @param editor The editor in which to toggle italic text.
      */
-    run(editor: MonacoEditorWithActions): void {
+    run(editor: TextEditor): void {
         this.toggleDelimiterAroundSelection(editor, ITALIC_DELIMITER, ITALIC_DELIMITER);
         editor.focus();
     }

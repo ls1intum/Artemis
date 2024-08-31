@@ -1,6 +1,7 @@
 import { faBold } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
-import { KeyCode, KeyModifier, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { KeyCode, KeyModifier } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
 
 const BOLD_DELIMITER = '**';
 
@@ -19,7 +20,7 @@ export class MonacoBoldAction extends MonacoEditorAction {
      * If no text is selected, the delimiter is inserted at the current cursor position.
      * @param editor The editor in which to toggle bold text.
      */
-    run(editor: MonacoEditorWithActions) {
+    run(editor: TextEditor) {
         this.toggleDelimiterAroundSelection(editor, BOLD_DELIMITER, BOLD_DELIMITER);
         editor.focus();
     }

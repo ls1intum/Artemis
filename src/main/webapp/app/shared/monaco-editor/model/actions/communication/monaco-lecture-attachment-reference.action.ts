@@ -7,7 +7,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
 
 interface LectureWithDetails {
     id: number;
@@ -71,7 +71,7 @@ export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
      * @param editor The editor to insert the reference in.
      * @param args An object containing the item to reference and the type of reference.
      */
-    run(editor: MonacoEditorWithActions, args?: LectureAttachmentReferenceActionArgs): void {
+    run(editor: TextEditor, args?: LectureAttachmentReferenceActionArgs): void {
         switch (args?.reference) {
             case ReferenceType.LECTURE:
                 this.insertLectureReference(editor, args.lecture);
@@ -108,23 +108,23 @@ export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
         this.lecturesWithDetails = [];
     }
 
-    insertLectureReference(editor: MonacoEditorWithActions, lecture: LectureWithDetails): void {
+    insertLectureReference(editor: TextEditor, lecture: LectureWithDetails): void {
         this.replaceTextAtCurrentSelection(editor, `[lecture]${lecture.title}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
     }
 
-    insertAttachmentReference(editor: MonacoEditorWithActions, attachment: Attachment): void {
+    insertAttachmentReference(editor: TextEditor, attachment: Attachment): void {
         const shortLink = attachment.link?.split('attachments/')[1];
         this.replaceTextAtCurrentSelection(editor, `[attachment]${attachment.name}(${shortLink})[/attachment]`);
     }
 
-    insertSlideReference(editor: MonacoEditorWithActions, attachmentUnit: AttachmentUnit, slide: Slide): void {
+    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide): void {
         const shortLink = slide.slideImagePath?.split('attachments/')[1];
         // Remove the trailing slash and the file name.
         const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
         this.replaceTextAtCurrentSelection(editor, `[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`);
     }
 
-    insertAttachmentUnitReference(editor: MonacoEditorWithActions, attachmentUnit: AttachmentUnit): void {
+    insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentUnit): void {
         const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
         this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${attachmentUnit.name}(${shortLink})[/lecture-unit]`);
     }

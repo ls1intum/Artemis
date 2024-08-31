@@ -5,7 +5,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MetisService } from 'app/shared/metis/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { UserNameAndLoginDTO } from 'app/core/user/user.model';
-import { CompletionItemKind, Disposable, EditorRange, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { CompletionItemKind, Disposable, EditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
 
 /**
  * Action to insert a user mention into the editor. Users that type a @ will see a list of available users to mention.
@@ -29,7 +30,7 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
      * @param editor The editor to register the action in.
      * @param translateService The translate service to use for translations, e.g. the label.
      */
-    register(editor: MonacoEditorWithActions, translateService: TranslateService) {
+    register(editor: TextEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<UserNameAndLoginDTO>(
             editor,
@@ -50,7 +51,7 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
      * Types the text '@' into the editor and focuses it. This will trigger the completion provider to show the available users.
      * @param editor The editor to type the text into.
      */
-    run(editor: MonacoEditorWithActions) {
+    run(editor: TextEditor) {
         this.typeText(editor, MonacoUserMentionAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }

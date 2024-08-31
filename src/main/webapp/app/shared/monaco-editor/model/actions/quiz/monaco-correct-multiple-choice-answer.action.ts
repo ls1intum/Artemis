@@ -1,5 +1,5 @@
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
-import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
 
 export class MonacoCorrectMultipleChoiceAnswerAction extends MonacoEditorDomainAction {
     static readonly ID = 'artemisApp.multipleChoiceQuestion.editor.addCorrectAnswerOption';
@@ -10,7 +10,7 @@ export class MonacoCorrectMultipleChoiceAnswerAction extends MonacoEditorDomainA
         super(MonacoCorrectMultipleChoiceAnswerAction.ID, 'artemisApp.multipleChoiceQuestion.editor.addCorrectAnswerOption');
     }
 
-    run(editor: MonacoEditorWithActions): void {
+    run(editor: TextEditor): void {
         this.addTextWithDomainActionIdentifier(editor, MonacoCorrectMultipleChoiceAnswerAction.TEXT);
     }
 

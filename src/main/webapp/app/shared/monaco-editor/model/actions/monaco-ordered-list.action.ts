@@ -1,6 +1,6 @@
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { faListOl } from '@fortawesome/free-solid-svg-icons';
-import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from './adapter/text-editor-adapter.model';
 
 const NUMBER_REGEX = /^\d+\.\s.*/;
 
@@ -18,7 +18,7 @@ export class MonacoOrderedListAction extends MonacoEditorAction {
      * If no text is selected, the prefix "1. " is inserted at the current cursor position.
      * @param editor The editor in which to toggle the ordered list.
      */
-    run(editor: MonacoEditorWithActions): void {
+    run(editor: TextEditor): void {
         const selection = editor.getSelection();
         if (!selection) return;
 

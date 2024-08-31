@@ -1,6 +1,6 @@
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
-import { MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
 
 /**
  * Action to insert a task into the editor. They follow the format [task][Task Short Description](testCaseName).
@@ -19,7 +19,7 @@ export class MonacoTaskAction extends MonacoEditorDomainAction {
      * Inserts, at the current selection, the markdown task.
      * @param editor The editor in which to insert the task.
      */
-    run(editor: MonacoEditorWithActions): void {
+    run(editor: TextEditor): void {
         this.replaceTextAtCurrentSelection(editor, `${this.getOpeningIdentifier()}${MonacoTaskAction.TEXT}`);
         editor.focus();
     }

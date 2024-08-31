@@ -1,6 +1,7 @@
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { faListUl } from '@fortawesome/free-solid-svg-icons';
-import { MonacoEditorWithActions, makeEditorPosition, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { makeEditorPosition, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
 
 const LIST_BULLET = '- ';
 
@@ -18,7 +19,7 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
      * If no text is selected, the prefix is inserted at the current cursor position.
      * @param editor The editor in which to toggle the unordered list.
      */
-    run(editor: MonacoEditorWithActions): void {
+    run(editor: TextEditor): void {
         const selection = editor.getSelection();
         if (!selection) return;
 

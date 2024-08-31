@@ -1,4 +1,4 @@
-import { TextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import * as monaco from 'monaco-editor';
@@ -7,7 +7,7 @@ import { TextEditorModel } from 'app/shared/monaco-editor/model/actions/adapter/
 import { TextEditorRange, makeTextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 
-export class MonacoTextEditorAdapter implements TextEditorAdapter {
+export class MonacoTextEditorAdapter implements TextEditor {
     constructor(private editor: monaco.editor.IStandaloneCodeEditor) {}
 
     addAction(action: MonacoEditorAction): Disposable {

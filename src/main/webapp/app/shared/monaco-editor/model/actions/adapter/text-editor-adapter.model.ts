@@ -5,7 +5,7 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 import { TextEditorModel } from './text-editor-model.model';
 import { TextEditorCompleter } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completer.model';
 
-export interface TextEditorAdapter {
+export interface TextEditor {
     /**
      * Adds an action to the editor. An action should only be in one editor at a time.
      * @param action The action to add to the editor.

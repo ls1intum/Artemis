@@ -5,7 +5,8 @@ import { ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.mod
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { firstValueFrom } from 'rxjs';
-import { CompletionItemKind, Disposable, EditorRange, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { CompletionItemKind, Disposable, EditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
 
 /**
  * Action to insert a reference to a channel into the editor. Users that type a # will see a list of available channels to reference.
@@ -29,7 +30,7 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
      * @param editor The editor to register the action in.
      * @param translateService The translate service to use for translations, e.g. the label.
      */
-    register(editor: MonacoEditorWithActions, translateService: TranslateService) {
+    register(editor: TextEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ChannelIdAndNameDTO>(
             editor,
@@ -49,7 +50,7 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
      * Types the text '#' into the editor and focuses it. This will trigger the completion provider to show the available channels.
      * @param editor The editor to type the text into.
      */
-    run(editor: MonacoEditorWithActions) {
+    run(editor: TextEditor) {
         this.typeText(editor, MonacoChannelReferenceAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
