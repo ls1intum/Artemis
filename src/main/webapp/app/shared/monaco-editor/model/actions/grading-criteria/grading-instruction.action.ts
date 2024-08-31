@@ -1,4 +1,4 @@
-import { MonacoEditorDomainAction } from '../monaco-editor-domain-action.model';
+import { TextEditorDomainAction } from '../text-editor-domain-action.model';
 import { MonacoGradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-credits.action';
 import { MonacoGradingScaleAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-scale.action';
 import { MonacoGradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-description.action';
@@ -6,7 +6,7 @@ import { MonacoGradingFeedbackAction } from './grading-feedback.action';
 import { MonacoGradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-usage-count.action';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
-export class MonacoGradingInstructionAction extends MonacoEditorDomainAction {
+export class MonacoGradingInstructionAction extends TextEditorDomainAction {
     static readonly ID = 'monaco-grading-instruction.action';
     static readonly IDENTIFIER = '[instruction]';
 

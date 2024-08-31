@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { DomainActionWithOptionsArguments, MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
+import { DomainActionWithOptionsArguments, MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { ValueItem } from 'app/shared/markdown-editor/value-item.model';
 import { TextEditor } from './adapter/text-editor.interface';

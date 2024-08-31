@@ -1,4 +1,4 @@
-import { MonacoEditorDomainAction } from './monaco-editor-domain-action.model';
+import { TextEditorDomainAction } from './text-editor-domain-action.model';
 import { ValueItem } from 'app/shared/markdown-editor/value-item.model';
 
 export interface DomainActionWithOptionsArguments {
@@ -8,7 +8,7 @@ export interface DomainActionWithOptionsArguments {
 /**
  * Class representing domain actions for Artemis-specific use cases with options. The user can select an item from a list of options.
  */
-export abstract class MonacoEditorDomainActionWithOptions extends MonacoEditorDomainAction {
+export abstract class MonacoEditorDomainActionWithOptions extends TextEditorDomainAction {
     values: ValueItem[] = [];
 
     setValues(values: ValueItem[]) {

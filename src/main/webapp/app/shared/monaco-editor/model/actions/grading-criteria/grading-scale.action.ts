@@ -1,7 +1,7 @@
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
-export class MonacoGradingScaleAction extends MonacoEditorDomainAction {
+export class MonacoGradingScaleAction extends TextEditorDomainAction {
     static readonly ID = 'monaco-grading-scale.action';
     static readonly IDENTIFIER = '[gradingScale]';
     static readonly TEXT = 'Add instruction grading scale here (only visible for tutors)';

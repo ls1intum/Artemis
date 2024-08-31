@@ -17,7 +17,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/
 import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -33,7 +33,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     taskRegex = MonacoTaskAction.GLOBAL_TASK_REGEX;
     testCaseAction = new MonacoTestCaseAction();
-    domainActions: MonacoEditorDomainAction[] = [new MonacoFormulaAction(), new MonacoTaskAction(), this.testCaseAction];
+    domainActions: TextEditorDomainAction[] = [new MonacoFormulaAction(), new MonacoTaskAction(), this.testCaseAction];
 
     savingInstructions = false;
     unsavedChangesValue = false;

@@ -29,14 +29,14 @@ import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-so
 import { v4 as uuid } from 'uuid';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { MonacoEditorActionGroup } from 'app/shared/monaco-editor/model/actions/monaco-editor-action-group.model';
+import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
 import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
 import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
-import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
+import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/shared/metis/metis.util';
@@ -59,7 +59,7 @@ interface MarkdownActionsByGroup {
     header: MonacoHeadingAction[];
     color?: MonacoColorAction;
     domain: {
-        withoutOptions: MonacoEditorDomainAction[];
+        withoutOptions: TextEditorDomainAction[];
         withOptions: MonacoEditorDomainActionWithOptions[];
     };
     // Special case due to the complex structure of lectures, attachments, and their slides
@@ -67,7 +67,7 @@ interface MarkdownActionsByGroup {
     meta: TextEditorAction[];
 }
 
-export type TextWithDomainAction = { text: string; action?: MonacoEditorDomainAction };
+export type TextWithDomainAction = { text: string; action?: TextEditorDomainAction };
 
 const EXTERNAL_HEIGHT = 'external';
 
@@ -157,7 +157,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ];
 
     @Input()
-    headerActions?: MonacoEditorActionGroup<MonacoHeadingAction> = new MonacoEditorActionGroup<MonacoHeadingAction>(
+    headerActions?: TextEditorActionGroup<MonacoHeadingAction> = new TextEditorActionGroup<MonacoHeadingAction>(
         'artemisApp.multipleChoiceQuestion.editor.style',
         [1, 2, 3].map((level) => new MonacoHeadingAction(level)),
         undefined,
@@ -170,7 +170,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     colorAction?: MonacoColorAction = new MonacoColorAction();
 
     @Input()
-    domainActions: MonacoEditorDomainAction[] = [];
+    domainActions: TextEditorDomainAction[] = [];
 
     @Input()
     metaActions: TextEditorAction[] = [new MonacoFullscreenAction()];
@@ -425,7 +425,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
     }
 
-    parseMarkdown(domainActionsToCheck: MonacoEditorDomainAction[] = this.domainActions): void {
+    parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions): void {
         if (this.showDefaultPreview) {
             this.defaultPreviewHtml = this.artemisMarkdown.safeHtmlForMarkdown(this._markdown);
             this.onDefaultPreviewHtmlChanged.emit(this.defaultPreviewHtml);

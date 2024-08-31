@@ -1,7 +1,7 @@
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
-export class MonacoCorrectMultipleChoiceAnswerAction extends MonacoEditorDomainAction {
+export class MonacoCorrectMultipleChoiceAnswerAction extends TextEditorDomainAction {
     static readonly ID = 'artemisApp.multipleChoiceQuestion.editor.addCorrectAnswerOption';
     static readonly IDENTIFIER = '[correct]';
     static readonly TEXT = 'Enter a correct answer option here';

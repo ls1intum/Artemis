@@ -1,11 +1,11 @@
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 /**
  * Action to insert a task into the editor. They follow the format [task][Task Short Description](testCaseName).
  */
-export class MonacoTaskAction extends MonacoEditorDomainAction {
+export class MonacoTaskAction extends TextEditorDomainAction {
     static readonly ID = 'monaco-task.action';
     static readonly TEXT = '[Task Short Description](testCaseName)\n';
     static readonly IDENTIFIER = '[task]';

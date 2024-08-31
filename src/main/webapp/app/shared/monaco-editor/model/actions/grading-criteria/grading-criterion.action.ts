@@ -1,8 +1,8 @@
-import { MonacoEditorDomainAction } from '../monaco-editor-domain-action.model';
+import { TextEditorDomainAction } from '../text-editor-domain-action.model';
 import { MonacoGradingInstructionAction } from './grading-instruction.action';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
-export class MonacoGradingCriterionAction extends MonacoEditorDomainAction {
+export class MonacoGradingCriterionAction extends TextEditorDomainAction {
     static readonly ID = 'monaco-grading-criterion.action';
     static readonly IDENTIFIER = '[criterion]';
     static readonly TEXT = 'Add criterion title (only visible to tutors)';

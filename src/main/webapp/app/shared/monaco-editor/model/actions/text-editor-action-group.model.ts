@@ -1,7 +1,7 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 
-export class MonacoEditorActionGroup<ActionType extends TextEditorAction> {
+export class TextEditorActionGroup<ActionType extends TextEditorAction> {
     translationKey: string;
     actions: ActionType[];
     icon?: IconDefinition;

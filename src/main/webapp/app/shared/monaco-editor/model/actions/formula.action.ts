@@ -1,4 +1,4 @@
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 const FORMULA_OPEN_DELIMITER = '$$ ';
@@ -7,7 +7,7 @@ const FORMULA_CLOSE_DELIMITER = ' $$';
 /**
  * Action to toggle formula text in the editor. It wraps the selected text with the formula delimiter, e.g. switching between text and $$ text $$.
  */
-export class MonacoFormulaAction extends MonacoEditorDomainAction {
+export class MonacoFormulaAction extends TextEditorDomainAction {
     static readonly ID = 'monaco-formula.action';
     static readonly DEFAULT_FORMULA = 'e^{\\frac{1}{4} y^2}';
     constructor() {
