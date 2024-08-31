@@ -1,5 +1,6 @@
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { makeTextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 
 interface InsertShortAnswerOptionArgs {
     spotNumber?: number;
@@ -46,12 +47,12 @@ export class MonacoInsertShortAnswerOptionAction extends MonacoEditorAction {
         // For convenience, we want to select the option text if it is the default text
         if (optionText === MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT) {
             const newEndPosition = this.getEndPosition(editor);
-            const selection = {
-                startLineNumber: newEndPosition.lineNumber,
-                startColumn: newEndPosition.column - MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT.length,
-                endLineNumber: newEndPosition.lineNumber,
-                endColumn: newEndPosition.column,
-            };
+            const selection = makeTextEditorRange(
+                newEndPosition.getLineNumber(),
+                newEndPosition.getColumn() - MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT.length,
+                newEndPosition.getLineNumber(),
+                newEndPosition.getColumn(),
+            );
             this.setSelection(editor, selection);
         }
         editor.focus();

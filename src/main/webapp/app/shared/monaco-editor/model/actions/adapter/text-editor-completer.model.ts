@@ -1,4 +1,5 @@
 import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
+import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 
 /**
  * An interface for a completer that can be used with a text editor.
@@ -6,14 +7,14 @@ import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions
  */
 export interface TextEditorCompleter<ItemType> {
     /**
-     * The trigger characters that should cause the completer to search for completions.
+     * An optional character that, upon being typed, triggers the completer to show completion items.
      */
-    triggerCharacters: string[];
+    triggerCharacter?: string;
 
     /**
      * Whether the completer has more completions that can be searched for (e.g. if the results depend on a rest call).
      */
-    completionsAreIncomplete: boolean;
+    incomplete: boolean;
 
     /**
      * Searches for completion items based on the given search string.
@@ -24,6 +25,7 @@ export interface TextEditorCompleter<ItemType> {
     /**
      * Maps a completion item to a text editor completion item.
      * @param item The completion item to map.
+     * @param range The range in the editor where the completion item should be inserted.
      */
-    mapCompletionItem(item: ItemType): TextEditorCompletionItem;
+    mapCompletionItem(item: ItemType, range: TextEditorRange): TextEditorCompletionItem;
 }

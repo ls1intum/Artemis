@@ -1,5 +1,6 @@
 import { TextEditor } from './adapter/text-editor.interface';
 import { MonacoEditorAction } from './monaco-editor-action.model';
+import { makeTextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 
 /**
  * Class representing domain actions for Artemis-specific use cases.
@@ -24,12 +25,10 @@ export abstract class MonacoEditorDomainAction extends MonacoEditorAction {
         if (updateSelection) {
             const newPosition = this.getPosition(editor);
             // Set the selection to cover exactly the text part
-            this.setSelection(editor, {
-                startLineNumber: newPosition.lineNumber,
-                endLineNumber: newPosition.lineNumber,
-                startColumn: newPosition.column - text.length,
-                endColumn: newPosition.column,
-            });
+            this.setSelection(
+                editor,
+                makeTextEditorRange(newPosition.getLineNumber(), newPosition.getColumn() - text.length, newPosition.getLineNumber(), newPosition.getColumn()),
+            );
         }
         editor.focus();
     }

@@ -5,8 +5,10 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MetisService } from 'app/shared/metis/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { UserNameAndLoginDTO } from 'app/core/user/user.model';
-import { CompletionItemKind, Disposable, EditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
+import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 
 /**
  * Action to insert a user mention into the editor. Users that type a @ will see a list of available users to mention.
@@ -35,13 +37,8 @@ export class MonacoUserMentionAction extends MonacoEditorAction {
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<UserNameAndLoginDTO>(
             editor,
             this.loadUsersForSearchTerm.bind(this),
-            (user: UserNameAndLoginDTO, range: EditorRange) => ({
-                label: `@${user.name}`,
-                kind: CompletionItemKind.User,
-                insertText: `[user]${user.name}(${user.login})[/user]`,
-                range,
-                detail: this.label,
-            }),
+            (user: UserNameAndLoginDTO, range: TextEditorRange) =>
+                new TextEditorCompletionItem(`@${user.name}`, this.label, `[user]${user.name}(${user.login})[/user]`, TextEditorCompletionItemKind.User, range),
             '@',
             true,
         );

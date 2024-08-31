@@ -1,5 +1,5 @@
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
-import { TextEditor } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 export class MonacoQuizExplanationAction extends MonacoEditorDomainAction {
     static readonly ID = 'monaco-quiz-explanation.action';

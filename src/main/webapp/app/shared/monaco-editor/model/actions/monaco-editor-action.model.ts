@@ -2,10 +2,11 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
-import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable, EditorPosition, MonacoEditorTextModel, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
+import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 
 export abstract class MonacoEditorAction implements Disposable {
     // IActionDescriptor
@@ -91,62 +92,22 @@ export abstract class MonacoEditorAction implements Disposable {
      * Registers a completion provider for the current model of the given editor. This is useful to provide completion items for a specific editor, which is not supported by the monaco API.
      * @param editor The editor whose model to register the completion provider for.
      * @param searchFn Function that returns all relevant items for the current search term. Note that Monaco also filters the items based on the user input.
-     * @param mapToSuggestionFn Function that maps an item to a Monaco completion suggestion.
+     * @param mapToCompletionItemFn Function that maps an item to a Monaco completion suggestion.
      * @param triggerCharacter The character that triggers the completion provider.
      * @param listIncomplete Whether the list of suggestions is incomplete. If true, Monaco will keep searching for more suggestions.
      */
     registerCompletionProviderForCurrentModel<ItemType>(
         editor: TextEditor,
         searchFn: (searchTerm?: string) => Promise<ItemType[]>,
-        mapToSuggestionFn: (item: ItemType, range: EditorRange) => monaco.languages.CompletionItem,
+        mapToCompletionItemFn: (item: ItemType, range: TextEditorRange) => TextEditorCompletionItem,
         triggerCharacter?: string,
         listIncomplete?: boolean,
     ): monaco.IDisposable {
-        const model = editor.getModel();
-        if (!model) {
-            throw new Error(`A model must be attached to the editor to register a completion provider.`);
-        }
-        if (triggerCharacter !== undefined && triggerCharacter.length !== 1) {
-            throw new Error(`The trigger character must be a single character.`);
-        }
-        const languageId = model.getLanguageId();
-        const modelId = model.id;
-        // We have to subtract an offset of 1 from the start column to include the trigger character in the range that will be replaced.
-        const triggerCharacterOffset = triggerCharacter ? 1 : 0;
-        return monaco.languages.registerCompletionItemProvider(languageId, {
-            // We only want to trigger the completion provider if the trigger character is typed. However, we also allow numbers to trigger the completion, as they would not normally trigger it.
-            triggerCharacters: triggerCharacter ? [triggerCharacter, ...'0123456789'] : undefined,
-            provideCompletionItems: async (model: MonacoEditorTextModel, position: EditorPosition): Promise<monaco.languages.CompletionList | undefined> => {
-                if (model.id !== modelId) {
-                    return undefined;
-                }
-                const sequenceUntilPosition = this.findTypedSequenceUntilPosition(model, position, triggerCharacter);
-                if (!sequenceUntilPosition) {
-                    return undefined;
-                }
-                const range = {
-                    startLineNumber: position.lineNumber,
-                    startColumn: sequenceUntilPosition.startColumn - triggerCharacterOffset,
-                    endLineNumber: position.lineNumber,
-                    endColumn: sequenceUntilPosition.endColumn,
-                };
-                const beforeWord = model.getValueInRange({
-                    startLineNumber: position.lineNumber,
-                    startColumn: sequenceUntilPosition.startColumn - triggerCharacterOffset,
-                    endLineNumber: position.lineNumber,
-                    endColumn: sequenceUntilPosition.startColumn,
-                });
-
-                // We only want suggestions if the trigger character is at the beginning of the word.
-                if (triggerCharacter && sequenceUntilPosition.word !== triggerCharacter && beforeWord !== triggerCharacter) {
-                    return undefined;
-                }
-                const items = await searchFn(sequenceUntilPosition.word);
-                return {
-                    suggestions: items.map((item) => mapToSuggestionFn(item, range)),
-                    incomplete: listIncomplete,
-                };
-            },
+        return editor.addCompleter({
+            triggerCharacter,
+            incomplete: listIncomplete ?? false,
+            searchItems: searchFn,
+            mapCompletionItem: mapToCompletionItemFn,
         });
     }
 

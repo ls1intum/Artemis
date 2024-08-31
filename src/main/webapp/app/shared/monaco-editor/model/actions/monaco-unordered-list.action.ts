@@ -1,8 +1,8 @@
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { faListUl } from '@fortawesome/free-solid-svg-icons';
-import { makeEditorPosition, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
+import { makeTextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 
 const LIST_BULLET = '- ';
 
@@ -41,7 +41,7 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
         }
 
         if (allLinesEmpty) {
-            this.insertTextAtPosition(editor, makeEditorPosition(startLineNumber, 1), LIST_BULLET);
+            this.insertTextAtPosition(editor, new TextEditorPosition(startLineNumber, 1), LIST_BULLET);
             editor.setPosition(new TextEditorPosition(startLineNumber, 1 + LIST_BULLET.length));
             editor.focus();
             return;
@@ -52,9 +52,9 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
             if (!lineContent) continue;
 
             if (isUnorderedList) {
-                this.deleteTextAtRange(editor, makeEditorRange(lineNumber, 1, lineNumber, 1 + LIST_BULLET.length));
+                this.deleteTextAtRange(editor, makeTextEditorRange(lineNumber, 1, lineNumber, 1 + LIST_BULLET.length));
             } else {
-                this.insertTextAtPosition(editor, makeEditorPosition(lineNumber, 1), LIST_BULLET);
+                this.insertTextAtPosition(editor, new TextEditorPosition(lineNumber, 1), LIST_BULLET);
             }
         }
     }

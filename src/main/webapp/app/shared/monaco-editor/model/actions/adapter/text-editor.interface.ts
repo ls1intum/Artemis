@@ -6,7 +6,7 @@ import { TextEditorCompleter } from 'app/shared/monaco-editor/model/actions/adap
 
 export interface TextEditor {
     /**
-     * Adds an action to the editor. An action should only be in one editor at a time.
+     * Adds an action to the editor. An action should only be registered in one editor at a time.
      * @param action The action to add to the editor.
      * @return A disposable that can be used to remove the action from the editor.
      */

@@ -2,6 +2,7 @@ import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monac
 import { faListOl } from '@fortawesome/free-solid-svg-icons';
 import { TextEditor } from './adapter/text-editor.interface';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
+import { makeTextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 
 const NUMBER_REGEX = /^\d+\.\s.*/;
 
@@ -40,7 +41,7 @@ export class MonacoOrderedListAction extends MonacoEditorAction {
         }
 
         if (allLinesEmpty) {
-            this.insertTextAtPosition(editor, { lineNumber: startLineNumber, column: 1 }, '1. ');
+            this.insertTextAtPosition(editor, new TextEditorPosition(startLineNumber, 1), '1. ');
             // Move the cursor to after the inserted "1. "
             editor.setPosition(new TextEditorPosition(startLineNumber, 1 + '1. '.length));
             editor.focus();
@@ -53,9 +54,9 @@ export class MonacoOrderedListAction extends MonacoEditorAction {
 
             if (isOrderedList) {
                 const idx = lineContent.indexOf('. ');
-                if (idx >= 0) this.deleteTextAtRange(editor, { startLineNumber: lineNumber, startColumn: 1, endLineNumber: lineNumber, endColumn: idx + 3 });
+                if (idx >= 0) this.deleteTextAtRange(editor, makeTextEditorRange(lineNumber, 1, lineNumber, idx + 3));
             } else {
-                this.replaceTextAtRange(editor, { startLineNumber: lineNumber, startColumn: 1, endLineNumber: lineNumber, endColumn: 1 }, `${lineNumber - startLineNumber + 1}. `);
+                this.replaceTextAtRange(editor, makeTextEditorRange(lineNumber, 1, lineNumber, 1), `${lineNumber - startLineNumber + 1}. `);
             }
         }
     }

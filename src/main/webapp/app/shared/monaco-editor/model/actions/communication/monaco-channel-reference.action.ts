@@ -5,8 +5,10 @@ import { ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.mod
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { firstValueFrom } from 'rxjs';
-import { CompletionItemKind, Disposable, EditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
+import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 
 /**
  * Action to insert a reference to a channel into the editor. Users that type a # will see a list of available channels to reference.
@@ -35,13 +37,8 @@ export class MonacoChannelReferenceAction extends MonacoEditorAction {
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ChannelIdAndNameDTO>(
             editor,
             this.fetchChannels.bind(this),
-            (channel: ChannelIdAndNameDTO, range: EditorRange) => ({
-                label: `#${channel.name}`,
-                kind: CompletionItemKind.Constant,
-                insertText: `[channel]${channel.name}(${channel.id})[/channel]`,
-                range,
-                detail: this.label,
-            }),
+            (channel: ChannelIdAndNameDTO, range: TextEditorRange) =>
+                new TextEditorCompletionItem(`#${channel.name}`, this.label, `[channel]${channel.name}(${channel.id})[/channel]`, TextEditorCompletionItemKind.Default, range),
             '#',
         );
     }

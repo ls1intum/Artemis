@@ -2,8 +2,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
 import { ValueItem } from 'app/shared/markdown-editor/value-item.model';
-import { CompletionItemKind, Disposable, EditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
+import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 
 /**
  * Action to insert a reference to an exercise into the editor. Users that type a / will see a list of available exercises to reference.
@@ -33,16 +35,18 @@ export class MonacoExerciseReferenceAction extends MonacoEditorDomainActionWithO
                 type: exercise.type,
             })),
         );
+
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ValueItem>(
             editor,
             () => Promise.resolve(this.getValues()),
-            (item: ValueItem, range: EditorRange) => ({
-                label: `/exercise ${item.value}`,
-                kind: CompletionItemKind.Constant,
-                insertText: `[${item.type}]${item.value}(${this.metisService.getLinkForExercise(item.id)})[/${item.type}]`,
-                range,
-                detail: item.type!,
-            }),
+            (item: ValueItem, range: TextEditorRange) =>
+                new TextEditorCompletionItem(
+                    `/exercise ${item.value}`,
+                    item.type,
+                    `[${item.type}]${item.value}(${this.metisService.getLinkForExercise(item.id)})[/${item.type}]`,
+                    TextEditorCompletionItemKind.Default,
+                    range,
+                ),
             '/',
         );
     }
