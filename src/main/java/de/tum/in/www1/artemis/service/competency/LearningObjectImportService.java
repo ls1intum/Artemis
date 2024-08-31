@@ -176,7 +176,6 @@ public class LearningObjectImportService {
                     idToImportedCompetency.get(sourceCourseCompetency.getId()).competency().getExercises().add(importedExercise);
                 }
                 catch (Exception e) {
-                    // Catch exception, so we can still import the other learning objects
                     log.error("Failed to import exercise with title {} together with its competency with id {}", sourceExercise.getTitle(), sourceCourseCompetency.getId(), e);
                 }
             }
@@ -302,7 +301,6 @@ public class LearningObjectImportService {
                     importOrLoadLectureUnit(sourceLectureUnit, sourceCourseCompetency, idToImportedCompetency, courseToImportInto, titleToImportedLectures, importedLectureUnits);
                 }
                 catch (Exception e) {
-                    // Catch exception, so we can still import the other learning objects
                     log.error("Failed to import lecture unit with name {} together with its competency with id {}", sourceLectureUnit.getName(), sourceCourseCompetency.getId(), e);
                 }
             }
