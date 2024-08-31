@@ -131,7 +131,7 @@ describe('DeleteUsersButtonComponent', () => {
 
             // THEN
             expect(adminUserService.deleteUsers).toHaveBeenCalledWith(dummyUserLogins);
-            expect(comp.deletionCompleted.emit).toHaveBeenCalledTimes(0);
+            expect(comp.deletionCompleted.emit).not.toHaveBeenCalled();
         }));
 
         it('Empty users list', fakeAsync(() => {
@@ -143,8 +143,8 @@ describe('DeleteUsersButtonComponent', () => {
             comp.onConfirm();
 
             // THEN
-            expect(adminUserService.deleteUsers).toHaveBeenCalledTimes(0);
-            expect(comp.deletionCompleted.emit).toHaveBeenCalledTimes(0);
+            expect(adminUserService.deleteUsers).not.toHaveBeenCalled();
+            expect(comp.deletionCompleted.emit).not.toHaveBeenCalled();
         }));
     });
 });
