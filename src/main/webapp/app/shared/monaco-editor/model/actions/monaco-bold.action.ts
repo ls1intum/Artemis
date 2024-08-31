@@ -1,7 +1,7 @@
 import { faBold } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { KeyCode, KeyModifier } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
-import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 const BOLD_DELIMITER = '**';
 

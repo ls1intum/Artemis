@@ -1,7 +1,7 @@
 import { faItalic } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { KeyCode, KeyModifier } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
-import { TextEditor } from './adapter/text-editor-adapter.model';
+import { TextEditor } from './adapter/text-editor.interface';
 
 const ITALIC_DELIMITER = '*';
 

@@ -1,6 +1,6 @@
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
-import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 /**
  * Action to insert a task into the editor. They follow the format [task][Task Short Description](testCaseName).

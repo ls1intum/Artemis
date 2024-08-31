@@ -1,6 +1,6 @@
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { faHeading } from '@fortawesome/free-solid-svg-icons';
-import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-adapter.model';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 function getTranslationKeyForLevel(level: number): string {
     const suffix = level === 3 ? 'Three' : level === 2 ? 'Two' : 'One';

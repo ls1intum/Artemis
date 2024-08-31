@@ -1,6 +1,6 @@
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { faListOl } from '@fortawesome/free-solid-svg-icons';
-import { TextEditor } from './adapter/text-editor-adapter.model';
+import { TextEditor } from './adapter/text-editor.interface';
 
 const NUMBER_REGEX = /^\d+\.\s.*/;
 

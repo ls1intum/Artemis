@@ -1,4 +1,4 @@
-import { TextEditor } from './adapter/text-editor-adapter.model';
+import { TextEditor } from './adapter/text-editor.interface';
 import { MonacoEditorAction } from './monaco-editor-action.model';
 
 /**
