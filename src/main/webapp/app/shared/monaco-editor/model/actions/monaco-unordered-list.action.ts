@@ -1,4 +1,4 @@
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { faListUl } from '@fortawesome/free-solid-svg-icons';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
@@ -9,7 +9,7 @@ const LIST_BULLET = '- ';
 /**
  * Action to toggle unordered list in the editor. It toggles the "- " prefix for the entire selection.
  */
-export class MonacoUnorderedListAction extends MonacoEditorAction {
+export class MonacoUnorderedListAction extends TextEditorAction {
     static readonly ID = 'monaco-unordered-list.action';
     constructor() {
         super(MonacoUnorderedListAction.ID, 'artemisApp.multipleChoiceQuestion.editor.unorderedList', faListUl, undefined);

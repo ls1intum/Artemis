@@ -1,6 +1,6 @@
 import { faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
@@ -13,7 +13,7 @@ import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shar
 /**
  * Action to insert a reference to a channel into the editor. Users that type a # will see a list of available channels to reference.
  */
-export class MonacoChannelReferenceAction extends MonacoEditorAction {
+export class MonacoChannelReferenceAction extends TextEditorAction {
     static readonly ID = 'monaco-channel-reference.action';
     static readonly DEFAULT_INSERT_TEXT = '#';
 

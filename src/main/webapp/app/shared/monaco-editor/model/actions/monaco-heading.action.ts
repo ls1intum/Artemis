@@ -1,4 +1,4 @@
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { faHeading } from '@fortawesome/free-solid-svg-icons';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
@@ -13,7 +13,7 @@ const HEADING_TEXT = 'Heading';
 /**
  * Action to toggle heading text in the editor. It wraps the selected text with the heading delimiter, e.g. switching between text and # text for level 1.
  */
-export class MonacoHeadingAction extends MonacoEditorAction {
+export class MonacoHeadingAction extends TextEditorAction {
     level: number;
 
     /**

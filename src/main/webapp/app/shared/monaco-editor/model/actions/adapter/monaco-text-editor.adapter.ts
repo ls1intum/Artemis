@@ -1,5 +1,5 @@
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { Disposable, EditorPosition, MonacoEditorTextModel, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import * as monaco from 'monaco-editor';
 import { TextEditorCompleter } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completer.model';
@@ -19,7 +19,7 @@ export class MonacoTextEditorAdapter implements TextEditor {
 
     constructor(private editor: monaco.editor.IStandaloneCodeEditor) {}
 
-    addAction(action: MonacoEditorAction): Disposable {
+    addAction(action: TextEditorAction): Disposable {
         const actionDescriptor: monaco.editor.IActionDescriptor = {
             id: action.id,
             label: action.label,
@@ -31,7 +31,7 @@ export class MonacoTextEditorAdapter implements TextEditor {
         return this.editor.addAction(actionDescriptor);
     }
 
-    executeAction(action: MonacoEditorAction, args?: object): void {
+    executeAction(action: TextEditorAction, args?: object): void {
         this.editor.trigger('MonacoTextEditorAdapter::executeAction', action.id, args);
     }
 

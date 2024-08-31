@@ -1,6 +1,6 @@
 import { faAt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { firstValueFrom } from 'rxjs';
@@ -14,7 +14,7 @@ import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shar
  * Action to insert a user mention into the editor. Users that type a @ will see a list of available users to mention.
  * Users will be fetched repeatedly as the user types to provide up-to-date results.
  */
-export class MonacoUserMentionAction extends MonacoEditorAction {
+export class MonacoUserMentionAction extends TextEditorAction {
     disposableCompletionProvider?: Disposable;
 
     static readonly ID = 'monaco-user-mention.action';

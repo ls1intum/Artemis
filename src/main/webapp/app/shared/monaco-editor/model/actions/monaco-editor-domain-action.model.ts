@@ -1,11 +1,11 @@
 import { TextEditor } from './adapter/text-editor.interface';
-import { MonacoEditorAction } from './monaco-editor-action.model';
+import { TextEditorAction } from './text-editor-action.model';
 import { makeTextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 
 /**
  * Class representing domain actions for Artemis-specific use cases.
  */
-export abstract class MonacoEditorDomainAction extends MonacoEditorAction {
+export abstract class MonacoEditorDomainAction extends TextEditorAction {
     abstract getOpeningIdentifier(): string;
 
     /**

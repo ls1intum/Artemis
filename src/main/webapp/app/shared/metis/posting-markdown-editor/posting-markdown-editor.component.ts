@@ -18,7 +18,7 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { isCommunicationEnabled } from 'app/entities/course.model';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
 import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
 import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
@@ -53,7 +53,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() suppressNewlineOnEnter = true;
     @Output() valueChange = new EventEmitter();
     lectureAttachmentReferenceAction: MonacoLectureAttachmentReferenceAction;
-    defaultActions: MonacoEditorAction[];
+    defaultActions: TextEditorAction[];
     content?: string;
     previewMode = false;
 

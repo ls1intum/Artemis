@@ -34,7 +34,7 @@ import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-u
 import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
 import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
 import { MonacoInsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-spot.action';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MonacoInsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-option.action';
 import { SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 
@@ -52,7 +52,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     @ViewChild('question', { static: false })
     questionElement: ElementRef;
 
-    markdownActions: MonacoEditorAction[];
+    markdownActions: TextEditorAction[];
     insertShortAnswerOptionAction = new MonacoInsertShortAnswerOptionAction();
     insertShortAnswerSpotAction = new MonacoInsertShortAnswerSpotAction(this.insertShortAnswerOptionAction);
 

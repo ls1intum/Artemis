@@ -1,4 +1,4 @@
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { faListOl } from '@fortawesome/free-solid-svg-icons';
 import { TextEditor } from './adapter/text-editor.interface';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
@@ -9,7 +9,7 @@ const NUMBER_REGEX = /^\d+\.\s.*/;
 /**
  * Action to toggle unordered list in the editor. It toggles the "1. ", "2. ", ... prefix for the entire selection.
  */
-export class MonacoOrderedListAction extends MonacoEditorAction {
+export class MonacoOrderedListAction extends TextEditorAction {
     static readonly ID = 'monaco-ordered-list.action';
     constructor() {
         super(MonacoOrderedListAction.ID, 'artemisApp.multipleChoiceQuestion.editor.orderedList', faListOl, undefined);

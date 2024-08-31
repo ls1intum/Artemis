@@ -14,7 +14,7 @@ import {
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
 import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
 import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
@@ -55,7 +55,7 @@ export enum MarkdownEditorHeight {
 }
 
 interface MarkdownActionsByGroup {
-    standard: MonacoEditorAction[];
+    standard: TextEditorAction[];
     header: MonacoHeadingAction[];
     color?: MonacoColorAction;
     domain: {
@@ -64,7 +64,7 @@ interface MarkdownActionsByGroup {
     };
     // Special case due to the complex structure of lectures, attachments, and their slides
     lecture?: MonacoLectureAttachmentReferenceAction;
-    meta: MonacoEditorAction[];
+    meta: TextEditorAction[];
 }
 
 export type TextWithDomainAction = { text: string; action?: MonacoEditorDomainAction };
@@ -143,7 +143,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     resizableMinHeight = MarkdownEditorHeight.SMALL;
 
     @Input()
-    defaultActions: MonacoEditorAction[] = [
+    defaultActions: TextEditorAction[] = [
         new MonacoBoldAction(),
         new MonacoItalicAction(),
         new MonacoUnderlineAction(),
@@ -173,7 +173,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     domainActions: MonacoEditorDomainAction[] = [];
 
     @Input()
-    metaActions: MonacoEditorAction[] = [new MonacoFullscreenAction()];
+    metaActions: TextEditorAction[] = [new MonacoFullscreenAction()];
 
     @Output()
     markdownChange = new EventEmitter<string>();
@@ -271,11 +271,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         };
     }
 
-    filterDisplayedActions<T extends MonacoEditorAction>(actions: T[]): T[] {
+    filterDisplayedActions<T extends TextEditorAction>(actions: T[]): T[] {
         return actions.filter((action) => !action.hideInEditor);
     }
 
-    filterDisplayedAction<T extends MonacoEditorAction>(action?: T): T | undefined {
+    filterDisplayedAction<T extends TextEditorAction>(action?: T): T | undefined {
         return action?.hideInEditor ? undefined : action;
     }
 

@@ -16,7 +16,7 @@ import { MonacoChannelReferenceAction } from 'app/shared/monaco-editor/model/act
 import { MonacoUserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-user-mention.action';
 import { MonacoExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-exercise-reference.action';
 import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisTutor, metisUser1, metisUser2 } from '../../../helpers/sample/metis-sample-data';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
@@ -75,7 +75,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         jest.restoreAllMocks();
     });
 
-    const registerActionWithCompletionProvider = (action: MonacoEditorAction, triggerCharacter?: string) => {
+    const registerActionWithCompletionProvider = (action: TextEditorAction, triggerCharacter?: string) => {
         const registerCompletionProviderStub = jest.spyOn(monaco.languages, 'registerCompletionItemProvider').mockImplementation();
         comp.registerAction(action);
         expect(registerCompletionProviderStub).toHaveBeenCalledOnce();

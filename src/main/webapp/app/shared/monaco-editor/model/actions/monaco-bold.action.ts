@@ -1,5 +1,5 @@
 import { faBold } from '@fortawesome/free-solid-svg-icons';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorKeyCode, TextEditorKeyModifier, TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
 
@@ -8,7 +8,7 @@ const BOLD_DELIMITER = '**';
 /**
  * Action to toggle bold text in the editor. It wraps the selected text with the bold delimiter, e.g. switching between text and **text**.
  */
-export class MonacoBoldAction extends MonacoEditorAction {
+export class MonacoBoldAction extends TextEditorAction {
     static readonly ID = 'monaco-bold.action';
 
     constructor() {

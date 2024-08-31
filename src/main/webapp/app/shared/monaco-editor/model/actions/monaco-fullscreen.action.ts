@@ -1,4 +1,4 @@
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
@@ -6,7 +6,7 @@ import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-
 /**
  * Action to toggle fullscreen mode in the editor.
  */
-export class MonacoFullscreenAction extends MonacoEditorAction {
+export class MonacoFullscreenAction extends TextEditorAction {
     static readonly ID = 'monaco-fullscreen.action';
 
     element?: HTMLElement;

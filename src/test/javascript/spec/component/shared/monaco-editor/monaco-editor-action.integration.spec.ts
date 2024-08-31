@@ -4,7 +4,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
 import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
 import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco-color.action';
@@ -252,7 +252,7 @@ describe('MonacoEditorActionIntegration', () => {
             textToType,
             initialText,
         }: {
-            action: MonacoEditorAction;
+            action: TextEditorAction;
             textWithoutDelimiters: string;
             textWithDelimiters: string;
             actionArgs?: object;
@@ -273,7 +273,7 @@ describe('MonacoEditorActionIntegration', () => {
      * @param initialText The initial text to expect after the action has been triggered without a selection.
      */
     function testDelimiterAction(
-        action: MonacoEditorAction,
+        action: TextEditorAction,
         textWithoutDelimiters: string,
         textWithDelimiters: string,
         actionArgs?: object,

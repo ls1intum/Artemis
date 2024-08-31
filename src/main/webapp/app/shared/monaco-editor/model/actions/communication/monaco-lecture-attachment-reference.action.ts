@@ -1,4 +1,4 @@
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -28,7 +28,7 @@ interface LectureAttachmentReferenceActionArgs {
  * Action to insert a reference to a lecture, attachment, slide, or attachment unit into the editor.
  * The specific format of the reference depends on the type of reference.
  */
-export class MonacoLectureAttachmentReferenceAction extends MonacoEditorAction {
+export class MonacoLectureAttachmentReferenceAction extends TextEditorAction {
     static readonly ID = 'monaco-lecture-attachment-reference.action';
 
     lecturesWithDetails: LectureWithDetails[] = [];

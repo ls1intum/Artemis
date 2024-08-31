@@ -1,4 +1,4 @@
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 interface ColorArguments {
@@ -10,7 +10,7 @@ const CLOSE_DELIMITER = '</span>';
 /**
  * Action to toggle color text in the editor. It wraps the selected text with the color delimiter, e.g. switching between text and <span class="color">text</span>.
  */
-export class MonacoColorAction extends MonacoEditorAction {
+export class MonacoColorAction extends TextEditorAction {
     static readonly ID = 'monaco-color.action';
 
     constructor() {

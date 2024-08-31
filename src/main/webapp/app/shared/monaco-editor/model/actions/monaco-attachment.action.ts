@@ -1,5 +1,5 @@
 import { faImage } from '@fortawesome/free-solid-svg-icons';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 interface AttachmentArguments {
@@ -10,7 +10,7 @@ interface AttachmentArguments {
 /**
  * Action to insert an attachment into the editor. They follow the format ![text](url).
  */
-export class MonacoAttachmentAction extends MonacoEditorAction {
+export class MonacoAttachmentAction extends TextEditorAction {
     static readonly ID = 'monaco-attachment.action';
     static readonly DEFAULT_INSERT_TEXT = '![](https://)';
     constructor() {

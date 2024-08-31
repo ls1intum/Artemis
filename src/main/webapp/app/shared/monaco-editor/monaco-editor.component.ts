@@ -7,7 +7,7 @@ import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'ap
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
@@ -30,7 +30,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     lineWidgets: MonacoEditorLineWidget[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
-    actions: MonacoEditorAction[] = [];
+    actions: TextEditorAction[] = [];
     lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
 
     /**
@@ -383,7 +383,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * Registers an action to be available in the editor. The action will be disposed when the editor is disposed.
      * @param action The action to register.
      */
-    registerAction(action: MonacoEditorAction): void {
+    registerAction(action: TextEditorAction): void {
         action.register(this.textEditorAdapter, this.translateService);
         this.actions.push(action);
     }

@@ -1,4 +1,4 @@
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MonacoInsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-option.action';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
@@ -6,7 +6,7 @@ import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-
  * Action to insert a short answer spot at the current cursor position.
  * After inserting the spot, this action also inserts an option linked to the spot.
  */
-export class MonacoInsertShortAnswerSpotAction extends MonacoEditorAction {
+export class MonacoInsertShortAnswerSpotAction extends TextEditorAction {
     static readonly ID = 'monaco-insert-short-answer-spot.action';
     spotNumber = 1;
 

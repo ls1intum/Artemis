@@ -1,4 +1,4 @@
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
@@ -10,14 +10,14 @@ export interface TextEditor {
      * @param action The action to add to the editor.
      * @return A disposable that can be used to remove the action from the editor.
      */
-    addAction(action: MonacoEditorAction): Disposable;
+    addAction(action: TextEditorAction): Disposable;
 
     /**
      * Executes the given action in the editor. It must be an action that has been added to the editor.
      * @param action The action to execute.
      * @param args Optional arguments to pass to the action.
      */
-    executeAction(action: MonacoEditorAction, args?: object): void;
+    executeAction(action: TextEditorAction, args?: object): void;
 
     /**
      * Layouts the editor's content and dimensions, e.g. after a resize.

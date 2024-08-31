@@ -1,5 +1,5 @@
 import { faItalic } from '@fortawesome/free-solid-svg-icons';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from './adapter/text-editor.interface';
 import { TextEditorKeyCode, TextEditorKeyModifier, TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
 
@@ -8,7 +8,7 @@ const ITALIC_DELIMITER = '*';
 /**
  * Action to toggle italic text in the editor. It wraps the selected text with the italic delimiter, e.g. switching between text and *text*.
  */
-export class MonacoItalicAction extends MonacoEditorAction {
+export class MonacoItalicAction extends TextEditorAction {
     static readonly ID = 'monaco-italic.action';
     constructor() {
         super(MonacoItalicAction.ID, 'artemisApp.multipleChoiceQuestion.editor.italic', faItalic, [

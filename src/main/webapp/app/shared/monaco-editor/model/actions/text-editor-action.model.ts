@@ -8,7 +8,7 @@ import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapt
 import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
 
-export abstract class MonacoEditorAction implements Disposable {
+export abstract class TextEditorAction implements Disposable {
     id: string;
     label: string;
     translationKey: string;
