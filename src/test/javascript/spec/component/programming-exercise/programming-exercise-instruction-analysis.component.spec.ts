@@ -10,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
+import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;

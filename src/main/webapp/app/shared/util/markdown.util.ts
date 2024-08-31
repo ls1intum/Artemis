@@ -1,7 +1,7 @@
 import { ExerciseHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
-import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
-import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
+import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 
 const hintOrExpRegex = new RegExp(
     escapeStringForUseInRegex(`${MonacoQuizExplanationAction.IDENTIFIER}`) + '|' + escapeStringForUseInRegex(`${MonacoQuizHintAction.IDENTIFIER}`),

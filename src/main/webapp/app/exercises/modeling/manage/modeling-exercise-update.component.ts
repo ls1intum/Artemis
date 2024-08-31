@@ -30,7 +30,7 @@ import { NgModel } from '@angular/forms';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',

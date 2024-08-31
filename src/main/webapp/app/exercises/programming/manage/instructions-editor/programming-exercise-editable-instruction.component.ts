@@ -14,9 +14,9 @@ import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
-import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
-import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
+import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 
 @Component({

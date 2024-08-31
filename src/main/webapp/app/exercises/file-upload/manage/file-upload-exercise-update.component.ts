@@ -25,7 +25,7 @@ import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-f
 import { NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',

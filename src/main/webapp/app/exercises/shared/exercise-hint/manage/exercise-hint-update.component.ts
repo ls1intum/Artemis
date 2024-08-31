@@ -21,7 +21,7 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 const DEFAULT_DISPLAY_THRESHOLD = 3;
