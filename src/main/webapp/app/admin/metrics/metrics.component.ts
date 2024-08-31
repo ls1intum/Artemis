@@ -40,7 +40,6 @@ export class MetricsComponent implements OnInit {
             this.threads = threadDump.threads;
             this.updatingMetrics = false;
             this.changeDetector.markForCheck();
-            console.log(metrics);
         });
     }
 
