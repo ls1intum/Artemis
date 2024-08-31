@@ -75,6 +75,7 @@ export interface TextEditorAdapter {
     /**
      * Adds a completer to the editor.
      * @param completer The completer to add to the editor.
+     * @return A disposable that can be used to remove the completer from the editor.
      */
     addCompleter<ItemType>(completer: TextEditorCompleter<ItemType>): Disposable;
 }
