@@ -5,7 +5,7 @@ import * as monaco from 'monaco-editor';
  */
 
 // Generic Monaco editor types
-export type Disposable = monaco.IDisposable;
+export type Disposable = { dispose(): void };
 export type MonacoEditorWithActions = monaco.editor.ICodeEditor & { addAction: (action: monaco.editor.IActionDescriptor) => Disposable };
 export type MonacoEditorTextModel = monaco.editor.ITextModel;
 export type EditorPosition = monaco.IPosition;
@@ -26,11 +26,6 @@ export const GlyphMarginLane = monaco.editor.GlyphMarginLane;
 export const TrackedRangeStickiness = monaco.editor.TrackedRangeStickiness;
 export const KeyModifier = monaco.KeyMod;
 export const KeyCode = monaco.KeyCode;
-export const CompletionItemKind = monaco.languages.CompletionItemKind;
-
-export function makeEditorPosition(lineNumber: number, column: number): EditorPosition {
-    return { lineNumber, column };
-}
 
 export function makeEditorRange(startLineNumber: number, startColumn: number, endLineNumber: number, endColumn: number): EditorRange {
     return { startLineNumber, startColumn, endLineNumber, endColumn };

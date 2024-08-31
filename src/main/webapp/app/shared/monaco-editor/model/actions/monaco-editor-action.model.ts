@@ -2,19 +2,17 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
-import { Disposable, EditorPosition, MonacoEditorTextModel, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 
 export abstract class MonacoEditorAction implements Disposable {
-    // IActionDescriptor
     id: string;
     label: string;
     translationKey: string;
     keybindings?: number[];
-
     icon?: IconDefinition;
     readonly hideInEditor: boolean;
 
@@ -109,33 +107,6 @@ export abstract class MonacoEditorAction implements Disposable {
             searchItems: searchFn,
             mapCompletionItem: mapToCompletionItemFn,
         });
-    }
-
-    /**
-     * Finds the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word (default Monaco behavior).
-     * @param model The model to find the typed sequence in.
-     * @param position The position until which to find the typed sequence.
-     * @param triggerCharacter The character that triggers the sequence. If not provided, the sequence is assumed to start at the beginning of the word.
-     * @param lengthLimit The maximum length of the sequence to find. Defaults to 25.
-     */
-    findTypedSequenceUntilPosition(model: MonacoEditorTextModel, position: EditorPosition, triggerCharacter?: string, lengthLimit = 25): monaco.editor.IWordAtPosition | undefined {
-        // Find the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word.
-        if (!triggerCharacter) {
-            return model.getWordUntilPosition(position);
-        }
-        const scanColumn = Math.max(1, position.column - lengthLimit);
-        const scanRange = makeEditorRange(position.lineNumber, scanColumn, position.lineNumber, position.column);
-        const text = model.getValueInRange(scanRange);
-        const triggerIndex = text.lastIndexOf(triggerCharacter);
-        if (triggerIndex === -1) {
-            return undefined;
-        }
-        // The word not including the trigger character.
-        return {
-            word: text.slice(triggerIndex + 1),
-            startColumn: scanRange.startColumn + triggerIndex + 1,
-            endColumn: position.column,
-        };
     }
 
     /**
