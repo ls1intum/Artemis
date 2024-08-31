@@ -2,6 +2,7 @@ import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monac
 import { faListUl } from '@fortawesome/free-solid-svg-icons';
 import { makeEditorPosition, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 
 const LIST_BULLET = '- ';
 
@@ -23,9 +24,12 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
         const selection = editor.getSelection();
         if (!selection) return;
 
+        const startLineNumber = selection.getStartPosition().getLineNumber();
+        const endLineNumber = selection.getEndPosition().getLineNumber();
+
         let isUnorderedList = true;
         let allLinesEmpty = true;
-        for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
+        for (let lineNumber = startLineNumber; lineNumber <= endLineNumber; lineNumber++) {
             const lineContent = this.getLineText(editor, lineNumber);
             if (lineContent) {
                 allLinesEmpty = false;
@@ -37,13 +41,13 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
         }
 
         if (allLinesEmpty) {
-            this.insertTextAtPosition(editor, makeEditorPosition(selection.startLineNumber, 1), LIST_BULLET);
-            editor.setPosition(makeEditorPosition(selection.startLineNumber, 1 + LIST_BULLET.length));
+            this.insertTextAtPosition(editor, makeEditorPosition(startLineNumber, 1), LIST_BULLET);
+            editor.setPosition(new TextEditorPosition(startLineNumber, 1 + LIST_BULLET.length));
             editor.focus();
             return;
         }
 
-        for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
+        for (let lineNumber = startLineNumber; lineNumber <= endLineNumber; lineNumber++) {
             const lineContent = this.getLineText(editor, lineNumber);
             if (!lineContent) continue;
 

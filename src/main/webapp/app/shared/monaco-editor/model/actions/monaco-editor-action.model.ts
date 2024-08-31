@@ -4,8 +4,10 @@ import * as monaco from 'monaco-editor';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
+import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 
-export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor, Disposable {
+export abstract class MonacoEditorAction implements Disposable {
     // IActionDescriptor
     id: string;
     label: string;
@@ -58,7 +60,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         if (!this._editor) {
             throw new Error('Action is not registered in an editor.');
         }
-        this._editor.trigger(`${this.id}::executeInCurrentEditor`, this.id, args);
+        this._editor.executeAction(this, args);
     }
 
     /**
@@ -198,9 +200,9 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
             // Move the cursor to the end of the inserted text. Note that the delimiters may have newlines.
             const textBeforeCursor = `${openDelimiter}${textToInsert}`;
             const lines = textBeforeCursor.split('\n');
-            const newLineNumber = position.lineNumber + lines.length - 1;
-            const newColumn = lines.length === 1 ? position.column + lines[0].length : lines[lines.length - 1].length + 1;
-            editor.setPosition({ lineNumber: newLineNumber, column: newColumn });
+            const newLineNumber = position.getLineNumber() + lines.length - 1;
+            const newColumn = lines.length === 1 ? position.getColumn() + lines[0].length : lines[lines.length - 1].length + 1;
+            editor.setPosition(new TextEditorPosition(newLineNumber, newColumn));
         }
     }
 
@@ -220,7 +222,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param text The text to type.
      */
     typeText(editor: TextEditor, text: string): void {
-        editor.trigger('keyboard', 'type', { text });
+        editor.typeText(text);
     }
 
     /**
@@ -251,8 +253,8 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param position The position to insert the text at.
      * @param text The text to insert.
      */
-    insertTextAtPosition(editor: TextEditor, position: EditorPosition, text: string): void {
-        this.replaceTextAtRange(editor, makeEditorRange(position.lineNumber, position.column, position.lineNumber, position.column), text);
+    insertTextAtPosition(editor: TextEditor, position: TextEditorPosition, text: string): void {
+        this.replaceTextAtRange(editor, new TextEditorRange(position, position), text);
     }
 
     /**
@@ -261,8 +263,8 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param range The range to replace the text at.
      * @param text The text to replace the range with.
      */
-    replaceTextAtRange(editor: TextEditor, range: EditorRange, text: string): void {
-        editor.executeEdits(this.id, [{ range, text }]);
+    replaceTextAtRange(editor: TextEditor, range: TextEditorRange, text: string): void {
+        editor.replaceTextAtRange(range, text);
     }
 
     /**
@@ -270,7 +272,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to delete the text in.
      * @param range The range to delete the text at.
      */
-    deleteTextAtRange(editor: TextEditor, range: EditorRange): void {
+    deleteTextAtRange(editor: TextEditor, range: TextEditorRange): void {
         this.replaceTextAtRange(editor, range, '');
     }
 
@@ -279,9 +281,9 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to get the text from.
      * @param range The range to get the text from.
      */
-    getTextAtRange(editor: TextEditor, range: EditorRange): string | undefined {
+    getTextAtRange(editor: TextEditor, range: TextEditorRange): string | undefined {
         // End of line preference is important here. Otherwise, Windows may use CRLF line endings.
-        return editor.getModel()?.getValueInRange(range, monaco.editor.EndOfLinePreference.LF);
+        return editor.getTextAtRange(range);
     }
 
     /**
@@ -290,7 +292,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param lineNumber The line number to get the text from. Line numbers start at 1.
      */
     getLineText(editor: TextEditor, lineNumber: number): string | undefined {
-        return editor.getModel()?.getLineContent(lineNumber);
+        return editor.getLineText(lineNumber);
     }
 
     /**
@@ -298,15 +300,15 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to get the line count from.
      */
     getLineCount(editor: TextEditor): number {
-        return editor.getModel()?.getLineCount() ?? 0;
+        return editor.getNumberOfLines();
     }
 
     /**
      * Gets the position of the last character in the editor.
      * @param editor The editor to get the position from.
      */
-    getEndPosition(editor: TextEditor): EditorPosition {
-        return editor.getModel()?.getFullModelRange().getEndPosition() ?? { lineNumber: 1, column: 1 };
+    getEndPosition(editor: TextEditor): TextEditorPosition {
+        return editor.getEndPosition();
     }
 
     /**
@@ -315,15 +317,15 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param position The position to set.
      * @param revealLine Whether to scroll the editor to reveal the line the position is on. Defaults to false.
      */
-    setPosition(editor: TextEditor, position: EditorPosition, revealLine = false): void {
+    setPosition(editor: TextEditor, position: TextEditorPosition, revealLine = false): void {
         editor.setPosition(position);
         if (revealLine) {
-            editor.revealLineInCenter(position.lineNumber);
+            editor.revealRange(new TextEditorRange(position, position));
         }
     }
 
-    getPosition(editor: TextEditor): EditorPosition {
-        return editor.getPosition() ?? { lineNumber: 1, column: 1 };
+    getPosition(editor: TextEditor): TextEditorPosition {
+        return editor.getPosition();
     }
 
     /**
@@ -331,9 +333,9 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to set the selection in.
      * @param selection The selection to set.
      */
-    setSelection(editor: TextEditor, selection: EditorRange): void {
+    setSelection(editor: TextEditor, selection: TextEditorRange): void {
         editor.setSelection(selection);
-        editor.revealRangeInCenter(selection);
+        editor.revealRange(selection);
     }
 
     /**
@@ -342,7 +344,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      */
     clearSelection(editor: TextEditor): void {
         const position = this.getPosition(editor);
-        this.setSelection(editor, makeEditorRange(position.lineNumber, position.column, position.lineNumber, position.column));
+        this.setSelection(editor, new TextEditorRange(position, position));
     }
 
     /**
@@ -350,7 +352,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param editor The editor to adjust the cursor position in.
      */
     moveCursorToEndOfLine(editor: TextEditor): void {
-        const position: EditorPosition = { ...this.getPosition(editor), column: Number.POSITIVE_INFINITY };
+        const position = this.getPosition(editor).withColumn(Number.MAX_VALUE);
         this.setPosition(editor, position);
     }
 

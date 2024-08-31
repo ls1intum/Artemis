@@ -7,6 +7,14 @@ export class TextEditorPosition {
         private readonly column: number,
     ) {}
 
+    /**
+     * Creates a copy of this position with the given column.
+     * @param column The column of the new position.
+     */
+    withColumn(column: number): TextEditorPosition {
+        return new TextEditorPosition(this.lineNumber, column);
+    }
+
     getLineNumber(): number {
         return this.lineNumber;
     }

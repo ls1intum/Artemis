@@ -44,43 +44,76 @@ export class MonacoTextEditorAdapter implements TextEditor {
         this.editor.focus();
     }
 
+    replaceTextAtRange(range: TextEditorRange, text: string): void {
+        this.editor.executeEdits('MonacoTextEditorAdapter::replaceTextAtRange', [
+            {
+                range: this.toMonacoRange(range),
+                text,
+            },
+        ]);
+    }
+
     getDomNode(): HTMLElement | undefined {
         return this.editor.getDomNode() ?? undefined;
     }
 
+    typeText(text: string) {
+        this.editor.trigger('MonacoTextEditorAdapter::typeText', 'type', { text });
+    }
+
+    getTextAtRange(range: TextEditorRange): string {
+        return this.editor.getModel()?.getValueInRange(this.toMonacoRange(range), monaco.editor.EndOfLinePreference.LF) ?? '';
+    }
+
+    getLineText(lineNumber: number): string {
+        return this.editor.getModel()?.getLineContent(lineNumber) ?? '';
+    }
+
+    getNumberOfLines(): number {
+        return this.editor.getModel()?.getLineCount() ?? 0;
+    }
+
+    getEndPosition(): TextEditorPosition {
+        return this.fromMonacoPosition(this.editor.getModel()?.getFullModelRange().getEndPosition() ?? { lineNumber: 1, column: 1 });
+    }
+
     getPosition(): TextEditorPosition {
         const position = this.editor.getPosition() ?? { column: 1, lineNumber: 1 };
-        return new TextEditorPosition(position.lineNumber, position.column);
+        return this.fromMonacoPosition(position);
     }
 
     setPosition(position: TextEditorPosition): void {
-        this.editor.setPosition({ lineNumber: position.getLineNumber(), column: position.getColumn() });
+        this.editor.setPosition(this.toMonacoPosition(position));
     }
 
     getSelection(): TextEditorRange {
         const selection = this.editor.getSelection() ?? { startColumn: 1, startLineNumber: 1, endColumn: 1, endLineNumber: 1 };
-        return makeTextEditorRange(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn);
+        return this.fromMonacoRange(selection);
     }
 
     setSelection(selection: TextEditorRange): void {
-        const startPosition = selection.getStartPosition();
-        const endPosition = selection.getEndPosition();
-        this.editor.setSelection({
-            startLineNumber: startPosition.getLineNumber(),
-            startColumn: startPosition.getColumn(),
-            endLineNumber: endPosition.getLineNumber(),
-            endColumn: endPosition.getColumn(),
-        });
+        this.editor.setSelection(this.toMonacoRange(selection));
     }
 
     revealRange(range: TextEditorRange): void {
+        this.editor.revealRangeInCenter(this.toMonacoRange(range));
+    }
+
+    private toMonacoPosition(position: TextEditorPosition): monaco.IPosition {
+        return new monaco.Position(position.getLineNumber(), position.getColumn());
+    }
+
+    private fromMonacoPosition(position: monaco.IPosition): TextEditorPosition {
+        return new TextEditorPosition(position.lineNumber, position.column);
+    }
+
+    private toMonacoRange(range: TextEditorRange): monaco.IRange {
         const startPosition = range.getStartPosition();
         const endPosition = range.getEndPosition();
-        this.editor.revealRangeInCenter({
-            startLineNumber: startPosition.getLineNumber(),
-            startColumn: startPosition.getColumn(),
-            endLineNumber: endPosition.getLineNumber(),
-            endColumn: endPosition.getColumn(),
-        });
+        return new monaco.Range(startPosition.getLineNumber(), startPosition.getColumn(), endPosition.getLineNumber(), endPosition.getColumn());
+    }
+
+    private fromMonacoRange(range: monaco.IRange): TextEditorRange {
+        return makeTextEditorRange(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
     }
 }

@@ -31,9 +31,45 @@ export interface TextEditor {
     focus(): void;
 
     /**
+     * Replaces the text in the editor at the given range with the given text.
+     * @param range The range to replace the text at.
+     * @param text The text to replace the range with.
+     */
+    replaceTextAtRange(range: TextEditorRange, text: string): void;
+
+    /**
      * Gets the DOM node associated with the editor, or undefined if no such node exists.
      */
     getDomNode(): HTMLElement | undefined;
+
+    /**
+     * Types the given text into the editor as if the user had typed it, e.g. to trigger a completer registered in the editor.
+     * @param text The text to type into the editor.
+     */
+    typeText(text: string): void;
+
+    /**
+     * Retrieves the text at the given range in the editor.
+     * Line endings are normalized to '\n'. If no suitable text exists, an empty string is returned.
+     * @param range The range to get the text from.
+     */
+    getTextAtRange(range: TextEditorRange): string;
+
+    /**
+     * Retrieves the text of the line at the given line number in the editor.
+     * @param lineNumber The line number to get the text from. Line numbers start at 1.
+     */
+    getLineText(lineNumber: number): string;
+
+    /**
+     * Retrieves the number of lines in the editor.
+     */
+    getNumberOfLines(): number;
+
+    /**
+     * Gets the position after the last character in the editor.
+     */
+    getEndPosition(): TextEditorPosition;
 
     /**
      * Gets the position of the cursor in the editor.
