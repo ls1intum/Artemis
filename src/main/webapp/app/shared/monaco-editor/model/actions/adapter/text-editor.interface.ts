@@ -2,7 +2,6 @@ import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monac
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
-import { TextEditorModel } from './text-editor-model.model';
 import { TextEditorCompleter } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completer.model';
 
 export interface TextEditor {
@@ -101,12 +100,6 @@ export interface TextEditor {
      * @param range The range to reveal.
      */
     revealRange(range: TextEditorRange): void;
-
-    /**
-     * Gets the model of the editor.
-     * The model represents the content of the editor.
-     */
-    getModel(): TextEditorModel;
 
     /**
      * Adds a completer to the editor.

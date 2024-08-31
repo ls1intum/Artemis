@@ -3,7 +3,6 @@ import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monac
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import * as monaco from 'monaco-editor';
 import { TextEditorCompleter } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completer.model';
-import { TextEditorModel } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-model.model';
 import { TextEditorRange, makeTextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 
@@ -30,10 +29,6 @@ export class MonacoTextEditorAdapter implements TextEditor {
     addCompleter<ItemType>(completer: TextEditorCompleter<ItemType>): Disposable {
         // TODO
         return { dispose: () => {} };
-    }
-
-    getModel(): TextEditorModel {
-        return new TextEditorModel(); // TODO
     }
 
     layout(): void {
