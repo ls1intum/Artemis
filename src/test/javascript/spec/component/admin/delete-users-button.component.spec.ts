@@ -4,11 +4,13 @@ import { HttpResponse } from '@angular/common/http';
 import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-users-button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { ArtemisTestModule } from '../../test.module';
+import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 
 describe('DeleteUsersButtonComponent', () => {
     let comp: DeleteUsersButtonComponent;
     let fixture: ComponentFixture<DeleteUsersButtonComponent>;
     let adminUserService: AdminUserService;
+    let deleteDialogService: DeleteDialogService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -19,6 +21,7 @@ describe('DeleteUsersButtonComponent', () => {
                 fixture = TestBed.createComponent(DeleteUsersButtonComponent);
                 comp = fixture.componentInstance;
                 adminUserService = TestBed.inject(AdminUserService);
+                deleteDialogService = TestBed.inject(DeleteDialogService);
             });
     });
 
@@ -78,6 +81,19 @@ describe('DeleteUsersButtonComponent', () => {
             expect(adminUserService.queryNotEnrolledUsers).toHaveBeenCalledOnce();
             expect(comp.users()).toBeUndefined();
             // TODO How to check if the / a message was shown?
+        }));
+    });
+
+    describe('openDeleteDialog', () => {
+        it('calls method', fakeAsync(() => {
+            // GIVEN
+            jest.spyOn(deleteDialogService, 'openDeleteDialog').mockImplementation();
+
+            // WHEN
+            comp.openDeleteDialog();
+
+            // THEN
+            expect(deleteDialogService.openDeleteDialog).toHaveBeenCalledOnce();
         }));
     });
 });
