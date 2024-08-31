@@ -4,12 +4,28 @@
             @if (searchFieldEnabled) {
                 <div class="mt-2 mb-2">
                     <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
+                    @if (showFilter) {
+                        <div class="ms-2 mt-1 text-primary">
+                            <a (click)="openFilterExercisesDialog()">
+                                @if (isFilterActive) {
+                                    <fa-icon [icon]="faFilterCurrentlyApplied" />
+                                } @else {
+                                    <fa-icon [icon]="faFilter" />
+                                }
+                                <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.filter"></span>
+                            </a>
+                        </div>
+                    }
                 </div>
             }
             @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                 <div
                     [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
-                    jhiTranslate="artemisApp.courseOverview.general.noDataFound"
+                    [jhiTranslate]="
+                        (sidebarDataBeforeFiltering?.ungroupedData?.length ?? 0) > 0 && sidebarData.ungroupedData?.length === 0
+                            ? 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter'
+                            : 'artemisApp.courseOverview.general.noDataFound'
+                    "
                     class="mt-2 text-center scrollable-item-content"
                 ></div>
             } @else {
@@ -36,6 +52,7 @@
                             [channelTypeIcon]="channelTypeIcon"
                             [collapseState]="collapseState"
                             (onUpdateSidebar)="onUpdateSidebar.emit()"
+                            [isFilterActive]="isFilterActive"
                         />
                     } @else {
                         @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {
