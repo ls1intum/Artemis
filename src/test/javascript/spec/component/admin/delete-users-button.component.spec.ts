@@ -5,14 +5,18 @@ import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-use
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { ArtemisTestModule } from '../../test.module';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
+import { AlertService } from 'app/core/util/alert.service';
+import * as globalUtils from 'app/shared/util/global.utils';
 
 describe('DeleteUsersButtonComponent', () => {
     let comp: DeleteUsersButtonComponent;
     let fixture: ComponentFixture<DeleteUsersButtonComponent>;
     let adminUserService: AdminUserService;
+    let alertService: AlertService;
     let deleteDialogService: DeleteDialogService;
 
     const dummyUserLogins: string[] = ['student42', 'tutor73'];
+    const dummyError: Error = new Error('Some server side error ...');
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -23,6 +27,7 @@ describe('DeleteUsersButtonComponent', () => {
                 fixture = TestBed.createComponent(DeleteUsersButtonComponent);
                 comp = fixture.componentInstance;
                 adminUserService = TestBed.inject(AdminUserService);
+                alertService = TestBed.inject(AlertService);
                 deleteDialogService = TestBed.inject(DeleteDialogService);
             });
     });
@@ -61,6 +66,7 @@ describe('DeleteUsersButtonComponent', () => {
                     }),
                 ),
             );
+            jest.spyOn(alertService, 'info');
 
             // WHEN
             comp.loadUserList();
@@ -68,12 +74,13 @@ describe('DeleteUsersButtonComponent', () => {
             // THEN
             expect(adminUserService.queryNotEnrolledUsers).toHaveBeenCalledOnce();
             expect(comp.users()).toBeEmpty();
-            // TODO How to check if the / a message was shown?
+            expect(alertService.info).toHaveBeenCalledWith('artemisApp.userManagement.notEnrolled.delete.cancel');
         }));
 
         it('Error response', fakeAsync(() => {
             // GIVEN
-            jest.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(throwError(() => new Error('Some server side error ...')));
+            jest.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(throwError(() => dummyError));
+            jest.spyOn(globalUtils, 'onError');
 
             // WHEN
             comp.loadUserList();
@@ -81,7 +88,7 @@ describe('DeleteUsersButtonComponent', () => {
             // THEN
             expect(adminUserService.queryNotEnrolledUsers).toHaveBeenCalledOnce();
             expect(comp.users()).toBeUndefined();
-            // TODO How to check if the / a message was shown?
+            expect(globalUtils.onError).toHaveBeenCalledWith(alertService, dummyError);
         }));
     });
 
@@ -115,7 +122,7 @@ describe('DeleteUsersButtonComponent', () => {
 
         it('Error response', fakeAsync(() => {
             // GIVEN
-            jest.spyOn(adminUserService, 'deleteUsers').mockReturnValue(throwError(() => new Error('Some server side error ...')));
+            jest.spyOn(adminUserService, 'deleteUsers').mockReturnValue(throwError(() => dummyError));
             jest.spyOn(comp.deletionCompleted, 'emit');
             comp.users.set(dummyUserLogins);
 
