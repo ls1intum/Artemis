@@ -85,7 +85,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     filePreviewPaths: Map<string, string> = new Map<string, string>();
     dropAllowed = false;
     showPreview = false;
-
+    const CLICK_LAYER_DIMENSION: number = 200;
     /** Status boolean for collapse status **/
     isQuestionCollapsed = false;
 
@@ -904,8 +904,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
                     if (context) {
                         // The click layer is 200x200 so it need to be rescaled to the image
-                        const scalarHeight = bgHeight / 200;
-                        const scalarWidth = bgWidth / 200;
+                        const scalarHeight = bgHeight / this.CLICK_LAYER_DIMENSION;
+                        const scalarWidth = bgWidth / this.CLICK_LAYER_DIMENSION;
                         canvas.width = someLocation.width! * scalarWidth;
                         canvas.height = someLocation.height! * scalarHeight;
                         context.drawImage(
@@ -948,8 +948,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             backgroundBlankingCanvas.width = bgWidth;
             backgroundBlankingCanvas.height = bgHeight;
             if (backgroundBlankingContext) {
-                const scalarHeight = bgHeight / 200;
-                const scalarWidth = bgWidth / 200;
+                const scalarHeight = bgHeight / this.CLICK_LAYER_DIMENSION;
+                const scalarWidth = bgWidth / this.CLICK_LAYER_DIMENSION;
 
                 backgroundBlankingContext.drawImage(image, 0, 0);
                 backgroundBlankingContext.fillStyle = 'white';
@@ -976,7 +976,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @returns returns a blob created from the data url
      */
     dataUrlToBlob(dataUrl: string): Blob {
+        // Seperate metadata from base64-encoded content
         const byteString = atob(dataUrl.split(',')[1]);
+        // Isolate the MIME type (e.g "image/png")
         const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
         const ab = new ArrayBuffer(byteString.length);
         const ia = new Uint8Array(ab);
