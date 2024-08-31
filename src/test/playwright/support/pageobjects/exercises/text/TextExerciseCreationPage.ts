@@ -57,7 +57,7 @@ export class TextExerciseCreationPage {
     }
 
     private async typeText(selector: string, text: string) {
-        const textField = this.page.locator(selector).locator('.ace_content');
+        const textField = this.page.locator(selector).locator('.monaco-editor');
         await textField.click();
         await textField.pressSequentially(text);
     }

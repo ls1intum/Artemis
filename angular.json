@@ -21,8 +21,6 @@
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "allowedCommonJsDependencies": [
-              "brace",
-              "brace/mode/java",
               "clone-deep",
               "crypto-js",
               "crypto",
