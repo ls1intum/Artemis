@@ -95,7 +95,7 @@ export class LectureManagementPage {
         await this.openCreateUnit(UnitType.TEXT);
         await this.page.fill('#name', name);
         await this.page.fill('#pick-releaseDate #date-input-field', releaseDate.toString());
-        const contentField = this.page.locator('.ace_content');
+        const contentField = this.page.locator('.monaco-editor');
         await contentField.click();
         await contentField.pressSequentially(text);
         return this.submitUnit();

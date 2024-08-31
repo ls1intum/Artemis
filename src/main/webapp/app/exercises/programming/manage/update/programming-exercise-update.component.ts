@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingExerciseBuildConfig, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,7 +13,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
@@ -85,7 +84,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     notificationText?: string;
     courseId: number;
 
-    EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     rerenderSubject = new Subject<void>();
     // This is used to revert the select if the user cancels to override the new selected programming language.
@@ -264,8 +262,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.selectedProjectTypeValue = this.projectTypes?.[0];
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
-            this.programmingExercise.windFile = undefined;
-            this.programmingExercise.buildPlanConfiguration = undefined;
+            if (this.programmingExercise.buildConfig) {
+                this.programmingExercise.buildConfig.windfile = undefined;
+                this.programmingExercise.buildConfig.buildPlanConfiguration = undefined;
+            } else {
+                this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
+            }
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -277,10 +279,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (language == ProgrammingLanguage.HASKELL || language == ProgrammingLanguage.OCAML) {
             // Instructors typically test against the example solution for Haskell and OCAML exercises.
             // If supported by the current CI configuration, this line activates the option per default.
-            this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
+            this.programmingExercise.buildConfig!.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
         }
         if (!this.checkoutSolutionRepositoryAllowed) {
-            this.programmingExercise.checkoutSolutionRepository = false;
+            this.programmingExercise.buildConfig!.checkoutSolutionRepository = false;
         }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
@@ -385,8 +387,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            if (this.programmingExercise.buildPlanConfiguration) {
-                this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+            if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
+                this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig!.buildPlanConfiguration);
             }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
@@ -611,15 +613,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     saveExercise() {
         // trim potential whitespaces that can lead to issues
-        if (this.programmingExercise.windFile?.metadata?.docker?.image) {
-            this.programmingExercise.windFile.metadata.docker.image = this.programmingExercise.windFile.metadata.docker.image.trim();
+        if (this.programmingExercise.buildConfig!.windfile?.metadata?.docker?.image) {
+            this.programmingExercise.buildConfig!.windfile.metadata.docker.image = this.programmingExercise.buildConfig!.windfile.metadata.docker.image.trim();
         }
 
-        if (this.programmingExercise.customizeBuildPlanWithAeolus) {
-            this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windFile!);
+        if (this.programmingExercise.customizeBuildPlanWithAeolus || this.isImportFromFile) {
+            this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windfile!);
         } else {
-            this.programmingExercise.buildPlanConfiguration = undefined;
-            this.programmingExercise.windFile = undefined;
+            this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
+            this.programmingExercise.buildConfig!.windfile = undefined;
         }
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {

@@ -185,6 +185,32 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCorrectlyNotifyStudentsAboutNewResultsInOngoingExamExercise() throws Exception {
+        programmingExerciseResultTestService.setupProgrammingExerciseForExam(false);
+        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
+        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
+        String folderName = getFolderName(exercise, repoName);
+        var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
+                List.of("test3"), List.of(), List.of(commit), null);
+        programmingExerciseResultTestService.shouldCorrectlyNotifyStudentsAboutNewResults(notification, websocketMessagingService);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotNotifyStudentsAboutNewResultsInEndedExamExercise() throws Exception {
+        programmingExerciseResultTestService.setupProgrammingExerciseForExam(true);
+        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
+        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
+        String folderName = getFolderName(exercise, repoName);
+        var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
+                List.of("test3"), List.of(), List.of(commit), null);
+        programmingExerciseResultTestService.shouldNotNotifyStudentsAboutNewResults(notification, websocketMessagingService);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
         var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);

@@ -1,36 +1,95 @@
-# As this GitHub Workflow currently fails for many valid pull requests, it is currently disabled.
+name: Analysis of Endpoint Connections
 
-#name: Analysis-of-Endpoint-Connections
-#
-#on:
-#  pull_request:
-#    types:
-#      - opened
-#      - synchronize
-#    paths:
-#      - 'src/main/java/**'
-#      - 'src/main/webapp/**'
-#
-#jobs:
-#  analysis-of-endpoint-connections:
-#    timeout-minutes: 10
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0
-#
-#      - name: Get list of modified files
-#        run: |
-#          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
-#
-#      - name: Set up JDK 21
-#        uses: actions/setup-java@v2
-#        with:
-#          java-version: '21'
-#          distribution: 'adopt'
-#
-#      - name: Run analysis-of-endpoint-connections
-#        run: |
-#          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - 'src/main/java/**'
+      - 'src/main/webapp/**'
+
+# Keep in sync with build.yml and test.yml and codeql-analysis.yml
+env:
+  CI: true
+  node: 20
+  java: 21
+
+jobs:
+  Parse-rest-calls-and-endpoints:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '${{ env.java }}'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Set up node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.node }}'
+
+      - name: Parse client sided REST-API calls
+        run: |
+          npm install
+          tsc -p supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/tsconfig.analysisOfEndpointConnections.json
+          node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
+
+      - name: Parse server sided Endpoints
+        run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runEndpointParser
+
+      - name: Upload parsing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: REST API Parsing Results
+          path: |
+            supporting_scripts/analysis-of-endpoint-connections/endpoints.json
+            supporting_scripts/analysis-of-endpoint-connections/restCalls.json
+
+  Analysis-of-endpoint-connections:
+    needs: Parse-rest-calls-and-endpoints
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+          cache: 'gradle'
+
+      - name: Download JSON files
+        uses: actions/download-artifact@v4
+        with:
+          name: REST API Parsing Results
+          path: supporting_scripts/analysis-of-endpoint-connections/
+
+      - name: Analyze endpoints
+        run:
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runEndpointAnalysis
+
+      - name: Analyze rest calls
+        run:
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runRestCallAnalysis
+
+      - name: Upload analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: Endpoint and REST Call Analysis Results
+          path: |
+            supporting_scripts/analysis-of-endpoint-connections/endpointAnalysisResult.json
+            supporting_scripts/analysis-of-endpoint-connections/restCallAnalysisResult.json

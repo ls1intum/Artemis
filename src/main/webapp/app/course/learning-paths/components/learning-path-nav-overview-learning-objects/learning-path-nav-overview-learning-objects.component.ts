@@ -1,10 +1,10 @@
-import { Component, InputSignal, OnInit, OutputEmitterRef, Signal, WritableSignal, computed, inject, input, output, signal } from '@angular/core';
+import { Component, InputSignal, OutputEmitterRef, Signal, WritableSignal, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
-import { IconDefinition, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle, faLock } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -15,8 +15,9 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './learning-path-nav-overview-learning-objects.component.html',
     styleUrl: './learning-path-nav-overview-learning-objects.component.scss',
 })
-export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
+export class LearningPathNavOverviewLearningObjectsComponent {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
+    protected readonly faLock: IconDefinition = faLock;
 
     private readonly alertService: AlertService = inject(AlertService);
     private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
@@ -37,8 +38,13 @@ export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
 
     readonly onLearningObjectSelected: OutputEmitterRef<void> = output();
 
-    ngOnInit(): void {
-        this.loadLearningObjects();
+    constructor() {
+        effect(
+            () => {
+                untracked(async () => await this.loadLearningObjects());
+            },
+            { allowSignalWrites: true },
+        );
     }
 
     async loadLearningObjects(): Promise<void> {
@@ -56,8 +62,10 @@ export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
         }
     }
 
-    selectLearningObject(learningObject: LearningPathNavigationObjectDTO): void {
-        this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
-        this.onLearningObjectSelected.emit();
+    async selectLearningObject(learningObject: LearningPathNavigationObjectDTO): Promise<void> {
+        if (!learningObject.unreleased) {
+            await this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
+            this.onLearningObjectSelected.emit();
+        }
     }
 }

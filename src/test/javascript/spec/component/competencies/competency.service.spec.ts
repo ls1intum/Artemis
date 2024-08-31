@@ -197,7 +197,7 @@ describe('CompetencyService', () => {
         const expected = defaultCompetencies;
         let response: any;
 
-        competencyService.generateCompetenciesFromCourseDescription(description, 1).subscribe((resp) => (response = resp));
+        competencyService.generateCompetenciesFromCourseDescription(1, description, []).subscribe((resp) => (response = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         tick();
@@ -294,7 +294,7 @@ describe('CompetencyService', () => {
     it('should get competency relations', fakeAsync(() => {
         const relation: CompetencyRelation = {
             id: 1,
-            type: CompetencyRelationType.RELATES,
+            type: CompetencyRelationType.ASSUMES,
         };
         const returnedFromService = [relation];
         const expected = [...returnedFromService];
@@ -383,7 +383,7 @@ describe('CompetencyService', () => {
             ],
         };
 
-        competencyService.convertCompetencyResponseFromServer({} as HttpResponse<Competency>);
+        competencyService['convertCompetencyResponseFromServer']({} as HttpResponse<Competency>);
         expect(convertDateSpy).not.toHaveBeenCalled();
         expect(convertLectureUnitsSpy).not.toHaveBeenCalled();
         expect(setAccessRightsCourseSpy).not.toHaveBeenCalled();
@@ -391,7 +391,7 @@ describe('CompetencyService', () => {
         expect(parseCategoriesSpy).not.toHaveBeenCalled();
         expect(setAccessRightsExerciseSpy).not.toHaveBeenCalled();
 
-        competencyService.convertCompetencyResponseFromServer({ body: competencyFromServer } as HttpResponse<Competency>);
+        competencyService['convertCompetencyResponseFromServer']({ body: competencyFromServer } as HttpResponse<Competency>);
 
         expect(convertDateSpy).toHaveBeenCalled();
         expect(convertLectureUnitsSpy).toHaveBeenCalledOnce();

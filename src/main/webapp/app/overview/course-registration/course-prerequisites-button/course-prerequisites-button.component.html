@@ -1,5 +1,3 @@
 @if (course.prerequisites?.length) {
-    <button class="btn btn-secondary" (click)="showPrerequisites(course.id!)">
-        {{ 'artemisApp.studentDashboard.enroll.coursePrerequisites' | artemisTranslate }}
-    </button>
+    <button class="btn btn-secondary" (click)="showPrerequisites(course.id!)" jhiTranslate="artemisApp.studentDashboard.enroll.coursePrerequisites"></button>
 }
