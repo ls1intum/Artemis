@@ -43,7 +43,7 @@ export abstract class TextEditorAction implements Disposable {
     }
 
     /**
-     * The actual implementation of the action. This method is called by Monaco when the action is triggered in the editor.
+     * The actual implementation of the action. This method is called when the action is triggered in the editor.
      * @param editor The editor in which the action was triggered.
      * @param args Optional arguments that can be passed to the action. To ensure this is an object, you can use {@link executeInCurrentEditor}.
      */
@@ -87,7 +87,7 @@ export abstract class TextEditorAction implements Disposable {
     }
 
     /**
-     * Registers a completion provider for the current model of the given editor. This is useful to provide completion items for a specific editor, which is not supported by the monaco API.
+     * Registers a completion provider for the current model of the given editor.
      * @param editor The editor whose model to register the completion provider for.
      * @param searchFn Function that returns all relevant items for the current search term. Note that Monaco also filters the items based on the user input.
      * @param mapToCompletionItemFn Function that maps an item to a Monaco completion suggestion.

@@ -36,7 +36,7 @@ import { ColorAction } from 'app/shared/monaco-editor/model/actions/color.action
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
-import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
+import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/shared/metis/metis.util';
@@ -60,7 +60,7 @@ interface MarkdownActionsByGroup {
     color?: ColorAction;
     domain: {
         withoutOptions: TextEditorDomainAction[];
-        withOptions: MonacoEditorDomainActionWithOptions[];
+        withOptions: TextEditorDomainActionWithOptions[];
     };
     // Special case due to the complex structure of lectures, attachments, and their slides
     lecture?: LectureAttachmentReferenceAction;
@@ -263,8 +263,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             header: this.filterDisplayedActions(this.headerActions?.actions ?? []),
             color: this.filterDisplayedAction(this.colorAction),
             domain: {
-                withoutOptions: this.filterDisplayedActions(this.domainActions.filter((action) => !(action instanceof MonacoEditorDomainActionWithOptions))),
-                withOptions: this.filterDisplayedActions(this.domainActions.filter((action) => action instanceof MonacoEditorDomainActionWithOptions)),
+                withoutOptions: this.filterDisplayedActions(this.domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
+                withOptions: this.filterDisplayedActions(this.domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions)),
             },
             lecture: this.filterDisplayedAction(this.lectureReferenceAction),
             meta: this.filterDisplayedActions(this.metaActions),

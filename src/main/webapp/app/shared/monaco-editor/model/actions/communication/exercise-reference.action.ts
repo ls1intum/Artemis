@@ -1,6 +1,6 @@
 import { TranslateService } from '@ngx-translate/core';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
+import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { ValueItem } from 'app/shared/markdown-editor/value-item.model';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
@@ -10,7 +10,7 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 /**
  * Action to insert a reference to an exercise into the editor. Users that type a / will see a list of available exercises to reference.
  */
-export class ExerciseReferenceAction extends MonacoEditorDomainActionWithOptions {
+export class ExerciseReferenceAction extends TextEditorDomainActionWithOptions {
     static readonly ID = 'exercise-reference.action';
     static readonly DEFAULT_INSERT_TEXT = '/exercise';
 

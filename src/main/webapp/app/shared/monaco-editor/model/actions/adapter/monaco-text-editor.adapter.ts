@@ -35,6 +35,10 @@ export class MonacoTextEditorAdapter implements TextEditor {
         this.editor.trigger('TextEditorAdapter::executeAction', action.id, args);
     }
 
+    /**
+     * Adds a completer to the current model of the editor. This is useful to provide suggestions to the user for a specific editor, which is not supported by the Monaco API.
+     * @param completer The completer to add to the editor's current model.
+     */
     addCompleter(completer: TextEditorCompleter<unknown>): Disposable {
         const model = this.editor.getModel();
         if (!model) {
