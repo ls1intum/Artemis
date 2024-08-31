@@ -27,7 +27,14 @@ export default defineConfig({
         baseURL: process.env.BASE_URL || 'http://localhost:9000',
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry',
-        ignoreHTTPSErrors: true,
+        ignoreHTTPSErrors: false,
+        clientCertificates: [
+            {
+                origin: process.env.BASE_URL!,
+                certPath: './certs/artemis-nginx+4.pem',
+                keyPath: './certs/artemis-nginx+4-key.pem',
+            },
+        ],
     },
 
     /* Configure projects for major browsers */
