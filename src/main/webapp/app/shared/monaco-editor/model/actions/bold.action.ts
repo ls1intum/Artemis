@@ -9,7 +9,7 @@ const BOLD_DELIMITER = '**';
  * Action to toggle bold text in the editor. It wraps the selected text with the bold delimiter, e.g. switching between text and **text**.
  */
 export class BoldAction extends TextEditorAction {
-    static readonly ID = 'monaco-bold.action';
+    static readonly ID = 'bold.action';
 
     constructor() {
         super(BoldAction.ID, 'artemisApp.multipleChoiceQuestion.editor.bold', faBold, [new TextEditorKeybinding(TextEditorKeyCode.KeyB, TextEditorKeyModifier.CtrlCmd)]);

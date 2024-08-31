@@ -7,7 +7,7 @@ import { GradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 export class GradingInstructionAction extends TextEditorDomainAction {
-    static readonly ID = 'monaco-grading-instruction.action';
+    static readonly ID = 'grading-instruction.action';
     static readonly IDENTIFIER = '[instruction]';
 
     constructor(

@@ -11,7 +11,7 @@ const CLOSE_DELIMITER = '</span>';
  * Action to toggle color text in the editor. It wraps the selected text with the color delimiter, e.g. switching between text and <span class="color">text</span>.
  */
 export class ColorAction extends TextEditorAction {
-    static readonly ID = 'monaco-color.action';
+    static readonly ID = 'color.action';
 
     constructor() {
         super(ColorAction.ID, 'artemisApp.multipleChoiceQuestion.editor.color', undefined, undefined);

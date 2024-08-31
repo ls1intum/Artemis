@@ -2,7 +2,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 export class GradingFeedbackAction extends TextEditorDomainAction {
-    static readonly ID = 'monaco-grading-feedback.action';
+    static readonly ID = 'grading-feedback.action';
     static readonly IDENTIFIER = '[feedback]';
     static readonly TEXT = 'Add feedback for students here (visible for students)';
 

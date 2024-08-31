@@ -12,7 +12,7 @@ import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shar
 export class TestCaseAction extends MonacoEditorDomainActionWithOptions {
     disposableCompletionProvider?: Disposable;
 
-    static readonly ID = 'monaco-test-case.action';
+    static readonly ID = 'test-case.action';
     static readonly DEFAULT_INSERT_TEXT = 'testCaseName()';
 
     constructor() {

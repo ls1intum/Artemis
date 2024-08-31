@@ -29,7 +29,7 @@ interface LectureAttachmentReferenceActionArgs {
  * The specific format of the reference depends on the type of reference.
  */
 export class LectureAttachmentReferenceAction extends TextEditorAction {
-    static readonly ID = 'monaco-lecture-attachment-reference.action';
+    static readonly ID = 'lecture-attachment-reference.action';
 
     lecturesWithDetails: LectureWithDetails[] = [];
 

@@ -11,7 +11,7 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
  * Action to insert a reference to an exercise into the editor. Users that type a / will see a list of available exercises to reference.
  */
 export class ExerciseReferenceAction extends MonacoEditorDomainActionWithOptions {
-    static readonly ID = 'monaco-exercise-reference.action';
+    static readonly ID = 'exercise-reference.action';
     static readonly DEFAULT_INSERT_TEXT = '/exercise';
 
     disposableCompletionProvider?: Disposable;

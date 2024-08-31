@@ -7,7 +7,7 @@ import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-
  * After inserting the spot, this action also inserts an option linked to the spot.
  */
 export class InsertShortAnswerSpotAction extends TextEditorAction {
-    static readonly ID = 'monaco-insert-short-answer-spot.action';
+    static readonly ID = 'insert-short-answer-spot.action';
     spotNumber = 1;
 
     /**

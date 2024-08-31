@@ -2,7 +2,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 export class GradingCreditsAction extends TextEditorDomainAction {
-    static readonly ID = 'monaco-grading-credits.action';
+    static readonly ID = 'grading-credits.action';
     static readonly IDENTIFIER = '[credits]';
     static readonly TEXT = '0';
 

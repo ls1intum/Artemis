@@ -14,7 +14,7 @@ import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shar
  * Action to insert a reference to a channel into the editor. Users that type a # will see a list of available channels to reference.
  */
 export class ChannelReferenceAction extends TextEditorAction {
-    static readonly ID = 'monaco-channel-reference.action';
+    static readonly ID = 'channel-reference.action';
     static readonly DEFAULT_INSERT_TEXT = '#';
 
     cachedChannels?: ChannelIdAndNameDTO[];

@@ -7,7 +7,7 @@ import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-
  * Action to toggle fullscreen mode in the editor.
  */
 export class FullscreenAction extends TextEditorAction {
-    static readonly ID = 'monaco-fullscreen.action';
+    static readonly ID = 'fullscreen.action';
 
     element?: HTMLElement;
 

@@ -6,7 +6,7 @@ import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-
  * Action to insert a task into the editor. They follow the format [task][Task Short Description](testCaseName).
  */
 export class TaskAction extends TextEditorDomainAction {
-    static readonly ID = 'monaco-task.action';
+    static readonly ID = 'task.action';
     static readonly TEXT = '[Task Short Description](testCaseName)\n';
     static readonly IDENTIFIER = '[task]';
     static readonly GLOBAL_TASK_REGEX = new RegExp(`${escapeStringForUseInRegex(TaskAction.IDENTIFIER)}(.*)`, 'g');

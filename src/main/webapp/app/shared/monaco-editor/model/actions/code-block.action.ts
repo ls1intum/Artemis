@@ -8,7 +8,7 @@ const CODE_BLOCK_DELIMITER = '```';
  * Action to toggle code block in the editor. It wraps the selected text with the code block delimiters and inserts newlines, e.g. for the default language java, switching between text and ```java\n text \n```.
  */
 export class CodeBlockAction extends TextEditorAction {
-    static readonly ID = 'monaco-code-block.action';
+    static readonly ID = 'code-block.action';
 
     constructor(private readonly defaultLanguage?: string) {
         super(CodeBlockAction.ID, 'artemisApp.multipleChoiceQuestion.editor.codeBlock', faFileCode, undefined);

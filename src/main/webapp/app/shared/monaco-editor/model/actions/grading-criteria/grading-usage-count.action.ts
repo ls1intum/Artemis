@@ -2,7 +2,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 export class GradingUsageCountAction extends TextEditorDomainAction {
-    static readonly ID = 'monaco-grading-usage-count.action';
+    static readonly ID = 'grading-usage-count.action';
     static readonly IDENTIFIER = '[maxCountInScore]';
     static readonly TEXT = '0';
 

@@ -11,7 +11,7 @@ interface AttachmentArguments {
  * Action to insert an attachment into the editor. They follow the format ![text](url).
  */
 export class AttachmentAction extends TextEditorAction {
-    static readonly ID = 'monaco-attachment.action';
+    static readonly ID = 'attachment.action';
     static readonly DEFAULT_INSERT_TEXT = '![](https://)';
     constructor() {
         super(AttachmentAction.ID, 'artemisApp.multipleChoiceQuestion.editor.imageUpload', faImage, undefined);

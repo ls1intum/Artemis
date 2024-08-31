@@ -11,7 +11,7 @@ interface UrlArguments {
  * Action to insert a URL into the editor. They follow the format [text](url).
  */
 export class UrlAction extends TextEditorAction {
-    static readonly ID = 'monaco-url.action';
+    static readonly ID = 'url.action';
     static readonly DEFAULT_INSERT_TEXT = '[](https://)';
 
     constructor() {

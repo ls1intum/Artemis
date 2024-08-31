@@ -2,7 +2,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 export class WrongMultipleChoiceAnswerAction extends TextEditorDomainAction {
-    static readonly ID = 'monaco-incorrect-multiple-choice-answer.action';
+    static readonly ID = 'incorrect-multiple-choice-answer.action';
     static readonly IDENTIFIER = '[wrong]';
     static readonly TEXT = 'Enter a wrong answer option here';
 

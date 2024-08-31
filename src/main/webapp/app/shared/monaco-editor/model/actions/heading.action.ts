@@ -21,7 +21,7 @@ export class HeadingAction extends TextEditorAction {
      * @param level The level of the heading, e.g. 1 for "# Heading", 2 for "## Heading", ...
      */
     constructor(level: number) {
-        super(`monaco-heading-${level}.action`, getTranslationKeyForLevel(level), faHeading);
+        super(`heading-${level}.action`, getTranslationKeyForLevel(level), faHeading);
         this.level = level;
     }
 

@@ -11,7 +11,7 @@ interface InsertShortAnswerOptionArgs {
  * Action to insert a short answer option ([-option #] Option text) at the end of the editor.
  */
 export class InsertShortAnswerOptionAction extends TextEditorAction {
-    static readonly ID = 'monaco-insert-short-answer-option.action';
+    static readonly ID = 'insert-short-answer-option.action';
     static readonly DEFAULT_TEXT = 'Enter an answer option here and ensure the spot number is correct.';
     static readonly DEFAULT_TEXT_SHORT = 'Enter an answer option here.';
 

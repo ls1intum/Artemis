@@ -2,7 +2,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 export class QuizHintAction extends TextEditorDomainAction {
-    static readonly ID = 'monaco-quiz-hint.action';
+    static readonly ID = 'quiz-hint.action';
     static readonly IDENTIFIER = '[hint]';
     static readonly TEXT = 'Add a hint here (visible during the quiz via ?-Button)';
 

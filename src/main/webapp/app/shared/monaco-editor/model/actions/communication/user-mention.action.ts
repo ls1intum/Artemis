@@ -17,7 +17,7 @@ import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shar
 export class UserMentionAction extends TextEditorAction {
     disposableCompletionProvider?: Disposable;
 
-    static readonly ID = 'monaco-user-mention.action';
+    static readonly ID = 'user-mention.action';
     static readonly DEFAULT_INSERT_TEXT = '@';
 
     constructor(

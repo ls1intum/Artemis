@@ -2,7 +2,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 export class QuizExplanationAction extends TextEditorDomainAction {
-    static readonly ID = 'monaco-quiz-explanation.action';
+    static readonly ID = 'quiz-explanation.action';
     static readonly IDENTIFIER = '[exp]';
     static readonly TEXT = 'Add an explanation here (only visible in feedback after quiz has ended)';
 

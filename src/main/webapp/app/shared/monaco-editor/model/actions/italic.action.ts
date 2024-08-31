@@ -9,7 +9,7 @@ const ITALIC_DELIMITER = '*';
  * Action to toggle italic text in the editor. It wraps the selected text with the italic delimiter, e.g. switching between text and *text*.
  */
 export class ItalicAction extends TextEditorAction {
-    static readonly ID = 'monaco-italic.action';
+    static readonly ID = 'italic.action';
     constructor() {
         super(ItalicAction.ID, 'artemisApp.multipleChoiceQuestion.editor.italic', faItalic, [new TextEditorKeybinding(TextEditorKeyCode.KeyI, TextEditorKeyModifier.CtrlCmd)]);
     }
