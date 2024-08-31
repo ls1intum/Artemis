@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class JhiMetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
-    private ObjectMapper objectMapper;  // Jackson ObjectMapper to parse JSON
+    private ObjectMapper objectMapper;
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -21,7 +21,7 @@ public class JhiMetricsIntegrationTest extends AbstractSpringIntegrationIndepend
         var result = request.get("/management/jhimetrics", HttpStatus.OK, String.class);
 
         JsonNode rootNode = objectMapper.readTree(result);
-        // Perform assertions on the parsed JSON data
+
         assertThat(rootNode.has("jvm")).isTrue();
         assertThat(rootNode.path("jvm").has("G1 Old Gen")).isTrue();
         assertThat(rootNode.path("jvm").path("G1 Old Gen").has("committed")).isTrue();
