@@ -1,9 +1,4 @@
 import * as monaco from 'monaco-editor';
-
-/*
- * This file contains type definitions and utility functions for the Monaco editor, which reduces the amount of imports needed in other files.
- */
-
 // Generic Monaco editor types
 export type Disposable = { dispose(): void };
 export type MonacoEditorWithActions = monaco.editor.ICodeEditor & { addAction: (action: monaco.editor.IActionDescriptor) => Disposable };
@@ -11,19 +6,7 @@ export type MonacoEditorTextModel = monaco.editor.ITextModel;
 export type EditorPosition = monaco.IPosition;
 export type EditorRange = monaco.IRange;
 export type EditorOptions = monaco.editor.IEditorOptions;
-export type EditorMouseEvent = monaco.editor.IEditorMouseEvent;
-// Types for elements in the editor
-export type EditorDecorationsCollection = monaco.editor.IEditorDecorationsCollection;
-export type ModelDeltaDecoration = monaco.editor.IModelDeltaDecoration;
-export type GlyphMarginWidget = monaco.editor.IGlyphMarginWidget;
-export type GlyphMarginLane = monaco.editor.GlyphMarginLane;
-export type GlyphMarginPosition = monaco.editor.IGlyphMarginWidgetPosition;
-export type OverlayWidget = monaco.editor.IOverlayWidget;
-export type OverlayWidgetPosition = monaco.editor.IOverlayWidgetPosition | null; // null is used by the monaco editor API
-export type ViewZone = monaco.editor.IViewZone;
 // Enums
-export const GlyphMarginLane = monaco.editor.GlyphMarginLane;
-export const TrackedRangeStickiness = monaco.editor.TrackedRangeStickiness;
 export const KeyModifier = monaco.KeyMod;
 export const KeyCode = monaco.KeyCode;
 

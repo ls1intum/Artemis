@@ -3,7 +3,7 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
-import { Disposable, MonacoEditorWithActions } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 export type MonacoEditorDiffText = { original: string; modified: string };
 @Component({
@@ -186,7 +186,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
      * Returns the content height of the provided editor.
      * @param editor The editor whose content height should be retrieved.
      */
-    getContentHeightOfEditor(editor: MonacoEditorWithActions): number {
+    getContentHeightOfEditor(editor: monaco.editor.IStandaloneCodeEditor): number {
         return editor.getContentHeight();
     }
 

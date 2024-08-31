@@ -1,14 +1,7 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorGlyphMarginWidget } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-widget.model';
-import {
-    Disposable,
-    EditorDecorationsCollection,
-    GlyphMarginLane,
-    ModelDeltaDecoration,
-    MonacoEditorWithActions,
-    TrackedRangeStickiness,
-    makeEditorRange,
-} from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import * as monaco from 'monaco-editor';
 
 export enum MonacoEditorBuildAnnotationType {
     WARNING = 'warning',
@@ -23,7 +16,7 @@ export enum MonacoEditorBuildAnnotationType {
  */
 export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
     private glyphMarginWidget: MonacoEditorGlyphMarginWidget;
-    private decorationsCollection: EditorDecorationsCollection;
+    private decorationsCollection: monaco.editor.IEditorDecorationsCollection;
     private outdated: boolean;
     private hoverMessage: string;
     private type: MonacoEditorBuildAnnotationType;
@@ -37,7 +30,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
      * @param type The type of this annotation: error or warning.
      * @param outdated Whether this annotation is outdated and should be grayed out. Defaults to false.
      */
-    constructor(editor: MonacoEditorWithActions, id: string, lineNumber: number, hoverMessage: string, type: MonacoEditorBuildAnnotationType, outdated = false) {
+    constructor(editor: monaco.editor.IStandaloneCodeEditor, id: string, lineNumber: number, hoverMessage: string, type: MonacoEditorBuildAnnotationType, outdated = false) {
         super(editor, id);
         this.decorationsCollection = this.editor.createDecorationsCollection([]);
         this.hoverMessage = hoverMessage;
@@ -46,7 +39,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         const glyphMarginDomNode = document.createElement('div');
         glyphMarginDomNode.id = `monaco-editor-glyph-margin-widget-${id}`;
         glyphMarginDomNode.className = `codicon codicon-${this.type}`;
-        this.glyphMarginWidget = new MonacoEditorGlyphMarginWidget(editor, id, glyphMarginDomNode, lineNumber, GlyphMarginLane.Center);
+        this.glyphMarginWidget = new MonacoEditorGlyphMarginWidget(editor, id, glyphMarginDomNode, lineNumber, monaco.editor.GlyphMarginLane.Center);
         this.setupListeners();
     }
 
@@ -54,7 +47,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
      * Returns an object (a delta decoration) detailing the position and styling of the annotation.
      * @private
      */
-    private getAssociatedDeltaDecoration(): ModelDeltaDecoration {
+    private getAssociatedDeltaDecoration(): monaco.editor.IModelDeltaDecoration {
         const marginClassName = this.outdated ? 'monaco-annotation-outdated' : `monaco-annotation-${this.type}`;
         const lineNumber = this.getLineNumber();
         return {
@@ -62,7 +55,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
             options: {
                 marginClassName,
                 isWholeLine: true,
-                stickiness: TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+                stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
                 lineNumberHoverMessage: { value: this.hoverMessage },
                 glyphMarginHoverMessage: { value: this.hoverMessage },
             },

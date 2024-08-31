@@ -1,14 +1,15 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
-import { GlyphMarginLane, GlyphMarginPosition, GlyphMarginWidget, MonacoEditorWithActions, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import * as monaco from 'monaco-editor';
 
 /**
  * Class representing a glyph margin widget in the Monaco editor.
  * Glyph margin widgets refer to one line and can contain arbitrary DOM nodes.
  */
-export class MonacoEditorGlyphMarginWidget extends MonacoCodeEditorElement implements GlyphMarginWidget {
+export class MonacoEditorGlyphMarginWidget extends MonacoCodeEditorElement implements monaco.editor.IGlyphMarginWidget {
     private readonly domNode: HTMLElement;
     private lineNumber: number;
-    private readonly lane: GlyphMarginLane;
+    private readonly lane: monaco.editor.GlyphMarginLane;
 
     /**
      * @param editor The editor to render this widget in.
@@ -17,7 +18,7 @@ export class MonacoEditorGlyphMarginWidget extends MonacoCodeEditorElement imple
      * @param lineNumber The line to render this widget in.
      * @param lane The lane (left, center, or right) to render the widget in.
      */
-    constructor(editor: MonacoEditorWithActions, id: string, domNode: HTMLElement, lineNumber: number, lane: GlyphMarginLane) {
+    constructor(editor: monaco.editor.IStandaloneCodeEditor, id: string, domNode: HTMLElement, lineNumber: number, lane: monaco.editor.GlyphMarginLane) {
         super(editor, id);
         this.domNode = domNode;
         this.lineNumber = lineNumber;
@@ -28,7 +29,7 @@ export class MonacoEditorGlyphMarginWidget extends MonacoCodeEditorElement imple
         return this.domNode;
     }
 
-    getPosition(): GlyphMarginPosition {
+    getPosition(): monaco.editor.IGlyphMarginWidgetPosition {
         return {
             lane: this.lane,
             zIndex: 10,
