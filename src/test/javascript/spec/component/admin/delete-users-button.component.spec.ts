@@ -12,6 +12,8 @@ describe('DeleteUsersButtonComponent', () => {
     let adminUserService: AdminUserService;
     let deleteDialogService: DeleteDialogService;
 
+    const dummyUserLogins: string[] = ['student42', 'tutor73'];
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -33,11 +35,10 @@ describe('DeleteUsersButtonComponent', () => {
         it('List of users', fakeAsync(() => {
             // GIVEN
             jest.spyOn(comp, 'openDeleteDialog').mockImplementation(/*Show now dialog*/);
-            const users: string[] = ['student42', 'tutor73'];
             jest.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(
                 of(
                     new HttpResponse({
-                        body: users,
+                        body: dummyUserLogins,
                     }),
                 ),
             );
@@ -48,7 +49,7 @@ describe('DeleteUsersButtonComponent', () => {
             // THEN
             expect(adminUserService.queryNotEnrolledUsers).toHaveBeenCalledOnce();
             expect(comp.openDeleteDialog).toHaveBeenCalledOnce();
-            expect(comp.users()).toEqual(users);
+            expect(comp.users()).toEqual(dummyUserLogins);
         }));
 
         it('Nothing to delete message', fakeAsync(() => {
@@ -94,6 +95,49 @@ describe('DeleteUsersButtonComponent', () => {
 
             // THEN
             expect(deleteDialogService.openDeleteDialog).toHaveBeenCalledOnce();
+        }));
+    });
+
+    describe('onConfirm', () => {
+        it('Users to delete', fakeAsync(() => {
+            // GIVEN
+            jest.spyOn(adminUserService, 'deleteUsers').mockReturnValue(of(new HttpResponse<void>()));
+            jest.spyOn(comp.deletionCompleted, 'emit');
+            comp.users.set(dummyUserLogins);
+
+            //WHEN
+            comp.onConfirm();
+
+            // THEN
+            expect(adminUserService.deleteUsers).toHaveBeenCalledWith(dummyUserLogins);
+            expect(comp.deletionCompleted.emit).toHaveBeenCalledOnce();
+        }));
+
+        it('Error response', fakeAsync(() => {
+            // GIVEN
+            jest.spyOn(adminUserService, 'deleteUsers').mockReturnValue(throwError(() => new Error('Some server side error ...')));
+            jest.spyOn(comp.deletionCompleted, 'emit');
+            comp.users.set(dummyUserLogins);
+
+            //WHEN
+            comp.onConfirm();
+
+            // THEN
+            expect(adminUserService.deleteUsers).toHaveBeenCalledWith(dummyUserLogins);
+            expect(comp.deletionCompleted.emit).toHaveBeenCalledTimes(0);
+        }));
+
+        it('Empty users list', fakeAsync(() => {
+            // GIVEN
+            jest.spyOn(adminUserService, 'deleteUsers').mockImplementation();
+            jest.spyOn(comp.deletionCompleted, 'emit');
+
+            //WHEN
+            comp.onConfirm();
+
+            // THEN
+            expect(adminUserService.deleteUsers).toHaveBeenCalledTimes(0);
+            expect(comp.deletionCompleted.emit).toHaveBeenCalledTimes(0);
         }));
     });
 });
