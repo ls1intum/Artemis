@@ -179,7 +179,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             registerActionWithCompletionProvider(action, triggerCharacter);
             const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, column), {} as any, {} as any);
             expect(providerResult).toBeDefined();
-            expect(providerResult!.incomplete).toBe(actionId === MonacoUserMentionAction.ID ? true : undefined);
+            expect(providerResult!.incomplete).toBe(actionId === MonacoUserMentionAction.ID);
             const suggestions = providerResult!.suggestions;
             switch (actionId) {
                 case MonacoChannelReferenceAction.ID:
