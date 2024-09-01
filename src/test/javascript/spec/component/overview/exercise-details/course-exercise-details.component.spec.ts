@@ -52,7 +52,6 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
@@ -313,14 +312,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exampleSolutionCollapsed).toBeFalse();
     });
 
-    it('should store a reference to child component', () => {
-        comp.exercise = exercise;
-
-        const childComponent = {} as DiscussionSectionComponent;
-        comp.onChildActivate(childComponent);
-        expect(childComponent.exercise).toEqual(exercise);
-    });
-
     it('should activate hint', () => {
         comp.availableExerciseHints = [{ id: 1 }, { id: 2 }];
         comp.activatedExerciseHints = [];
@@ -332,9 +323,6 @@ describe('CourseExerciseDetailsComponent', () => {
     });
 
     it('should handle new programming exercise', () => {
-        const childComponent = {} as DiscussionSectionComponent;
-        comp.onChildActivate(childComponent);
-
         const courseId = programmingExercise.course!.id!;
 
         comp.courseId = courseId;
@@ -343,7 +331,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
-        expect(childComponent.exercise).toEqual(programmingExercise);
     });
 
     it('should handle error when getting latest rated result', fakeAsync(() => {

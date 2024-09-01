@@ -416,18 +416,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         return undefined;
     }
 
-    /**
-     * This function gets called if the router outlet gets activated. This is
-     * used only for the DiscussionComponent
-     * @param instance The component instance
-     */
-    onChildActivate(instance: DiscussionSectionComponent) {
-        this.discussionComponent = instance; // save the reference to the component instance
-        if (this.exercise) {
-            instance.exercise = this.exercise;
-        }
-    }
-
     private onError(error: string) {
         this.alertService.error(error);
     }

@@ -30,6 +30,7 @@ import { ProblemStatementComponent } from 'app/overview/exercise-details/problem
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 import { ArtemisExerciseInfoModule } from 'app/exercises/shared/exercise-info/exercise-info.module';
 import { IrisModule } from 'app/iris/iris.module';
+import { DiscussionSectionModule } from 'app/overview/discussion-section/discussion-section.module';
 
 const routes: Routes = [
     {
@@ -76,6 +77,7 @@ const routes: Routes = [
         ArtemisFeedbackModule,
         ArtemisExerciseInfoModule,
         IrisModule,
+        DiscussionSectionModule,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, ProblemStatementComponent],
