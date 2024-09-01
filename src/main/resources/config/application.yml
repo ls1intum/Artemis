@@ -198,6 +198,9 @@ spring:
             thread-name-prefix: artemis-scheduling-
             pool:
                 size: 2
+    threads:
+        virtual:
+            enabled: true
     thymeleaf:
         mode: HTML
     output:
