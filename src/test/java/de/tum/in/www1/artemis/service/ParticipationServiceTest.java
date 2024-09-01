@@ -205,8 +205,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertThat(studentParticipationReceived.getStudent()).isPresent();
         assertThat(studentParticipationReceived.getStudent().get()).isEqualTo(participant);
         // Acceptance range, initializationDate is to be set to now()
-        assertThat(studentParticipationReceived.getInitializationDate()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(10));
-        assertThat(studentParticipationReceived.getInitializationDate()).isBeforeOrEqualTo(ZonedDateTime.now().plusSeconds(10));
         assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 

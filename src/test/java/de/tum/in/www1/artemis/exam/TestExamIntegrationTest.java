@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -237,5 +238,23 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var studentExam5 = examUtilService.addStudentExamForTestExam(testExam, student1);
         StudentExam studentExamReceived = request.get("/api/courses/" + course2.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamReceived).isEqualTo(studentExam5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetStudentExamForTestExamForStart_ExamEnded() throws Exception {
+        testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
+        examRepository.save(testExam1);
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetStudentExamForTestExamForStart_MultipleUnfinishedAttempts() throws Exception {
+        examUtilService.addStudentExamForTestExam(testExam1, student1);
+        examUtilService.addStudentExamForTestExam(testExam1, student1);
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.INTERNAL_SERVER_ERROR, StudentExam.class);
     }
 }
