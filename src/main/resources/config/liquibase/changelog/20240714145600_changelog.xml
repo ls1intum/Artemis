@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="20240714145600" author="kaancayli">
+        <!-- Add new column for enable_auto_update_proactivity settings -->
+        <addColumn tableName="iris_settings">
+            <column name="enable_auto_update_proactivity" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="iris_proactivity_settings_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add new table for iris_event_settings -->
+        <createTable tableName="iris_event_settings">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="discriminator" type="varchar(64)"/>
+            <column name="is_active" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pipeline_variant" defaultValue="default" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="iris_proactivity_settings_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- Add foreign key constraint for iris_lecture_ingestion_settings_id -->
+        <addForeignKeyConstraint
+                baseColumnNames="iris_proactivity_settings_id"
+                baseTableName="iris_settings"
+                constraintName="FK_IRIS_SETTINGS_ON_IRIS_PROACTIVITY_SETTINGS"
+                referencedColumnNames="id"
+                referencedTableName="iris_sub_settings"/>
+
+        <!-- Add foreign key constraint for iris_proactivity_settings_id -->
+        <addForeignKeyConstraint
+                baseColumnNames="iris_proactivity_settings_id"
+                baseTableName="iris_event_settings"
+                constraintName="FK_IRIS_EVENT_SETTINGS_ON_IRIS_PROACTIVITY_SETTINGS"
+                referencedColumnNames="id"
+                referencedTableName="iris_sub_settings"/>
+    </changeSet>
+</databaseChangeLog>

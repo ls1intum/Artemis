@@ -27,6 +27,25 @@
                     },
                     "hestiaSettings": "Hestia Settings",
                     "competencyGenerationSettings": "Competency Generation Settings",
+                    "proactivitySettings": {
+                        "title": "Proactivity Settings",
+                        "eventSettings": {
+                            "title": "Event Settings",
+                            "progressStalled": "Progress Stalled Event",
+                            "buildFailed": "Build Failed Event",
+                            "jol": "Judgement of Learning Event",
+                            "active": "Active",
+                            "inactive": "Inactive",
+                            "target": "Target",
+                            "pipelineVariant": "Pipeline Variant",
+                            "tooltips": {
+                                "active": "If the event is active, it will be considered for proactivity.",
+                                "inactive": "If the event is inactive, it will not be considered for proactivity.",
+                                "target": "The target of the event. Target determines the type of Iris Chat session that the event response will be delivered.",
+                                "pipelineVariant": "The Pyris pipeline variant that should be used for the event."
+                            }
+                        }
+                    },
                     "enabled-disabled": "Enabled/Disabled",
                     "models": {
                         "title": "Models",
@@ -70,7 +89,8 @@
                     "chatLabel": "Auto Update Chat Settings",
                     "hestiaLabel": "Auto Update Hestia Settings",
                     "lectureIngestionLabel": "Auto Update Lecture Ingestion Settings",
-                    "competencyGenerationLabel": "Auto Update Competency Generation Settings"
+                    "competencyGenerationLabel": "Auto Update Competency Generation Settings",
+                    "proactivityLabel": "Auto Update Proactivity Settings"
                 }
             },
             "error": {

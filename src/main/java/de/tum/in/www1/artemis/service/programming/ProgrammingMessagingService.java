@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -27,6 +28,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
+import de.tum.in.www1.artemis.service.connectors.pyris.event.NewResultEvent;
+import de.tum.in.www1.artemis.service.connectors.pyris.event.PyrisEventService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
@@ -48,13 +51,29 @@ public class ProgrammingMessagingService {
 
     private final TeamRepository teamRepository;
 
+    private final Optional<PyrisEventService> pyrisEventService;
+
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository) {
+            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
+            Optional<PyrisEventService> pyrisEventService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
         this.teamRepository = teamRepository;
+        this.pyrisEventService = pyrisEventService;
+    }
+
+    private static String getExerciseTopicForTAAndAbove(long exerciseId) {
+        return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
+    }
+
+    public static String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
+    }
+
+    private static String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
     }
 
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
@@ -144,18 +163,6 @@ public class ProgrammingMessagingService {
         groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, notificationText);
     }
 
-    private static String getExerciseTopicForTAAndAbove(long exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
-    }
-
-    public static String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
-    }
-
-    private static String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
-    }
-
     /**
      * Notify user about new result.
      *
@@ -167,9 +174,34 @@ public class ProgrammingMessagingService {
         // notify user via websocket
         resultWebsocketService.broadcastNewResult((Participation) participation, result);
 
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && ltiNewResultService.isPresent()) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations
-            ltiNewResultService.get().onNewResult(studentParticipation);
+            ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(studentParticipation));
+            // Inform Iris about the submission status
+            notifyIrisAboutSubmissionStatus(result, studentParticipation);
+        }
+    }
+
+    /**
+     * Notify Iris about the submission status for the given result and student participation.
+     * If the submission was successful, Iris will be informed about the successful submission.
+     * If the submission failed, Iris will be informed about the submission failure.
+     * Iris will only be informed about the submission status if the participant is a user.
+     *
+     * @param result               the result for which Iris should be informed about the submission status
+     * @param studentParticipation the student participation for which Iris should be informed about the submission status
+     */
+    private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
+        if (studentParticipation.getParticipant() instanceof User) {
+            pyrisEventService.ifPresent(eventService -> {
+                // Inform event service about the new result
+                try {
+                    eventService.trigger(new NewResultEvent(result));
+                }
+                catch (Exception e) {
+                    log.error("Could not trigger service for result {}", result.getId(), e);
+                }
+            });
         }
     }
 }
