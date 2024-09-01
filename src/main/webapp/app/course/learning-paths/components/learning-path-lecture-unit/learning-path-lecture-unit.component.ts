@@ -12,12 +12,12 @@ import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-u
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
-import { DiscussionSectionModule } from 'app/overview/discussion-section/discussion-section.module';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
     standalone: true,
-    imports: [ArtemisLectureUnitsModule, ArtemisSharedModule, VideoUnitComponent, TextUnitComponent, AttachmentUnitComponent, OnlineUnitComponent, DiscussionSectionModule],
+    imports: [ArtemisLectureUnitsModule, ArtemisSharedModule, VideoUnitComponent, TextUnitComponent, AttachmentUnitComponent, OnlineUnitComponent, DiscussionSectionComponent],
     templateUrl: './learning-path-lecture-unit.component.html',
 })
 export class LearningPathLectureUnitComponent {
