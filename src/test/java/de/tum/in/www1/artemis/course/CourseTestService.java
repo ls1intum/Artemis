@@ -3341,7 +3341,7 @@ public class CourseTestService {
     }
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
-        return "/api/courses/" + courseId + "/onlineCourseConfiguration";
+        return "/api/courses/" + courseId + "/online-course-configuration";
     }
 
     // Test
