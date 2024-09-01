@@ -10,10 +10,10 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { Router } from '@angular/router';
-import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDownAZ, faArrowUpAZ, faDoorOpen, faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { sortCourses } from 'app/shared/util/course.util';
+import { sortCourses, sortCoursesDescending } from 'app/shared/util/course.util';
 
 @Component({
     selector: 'jhi-overview',
@@ -21,6 +21,11 @@ import { sortCourses } from 'app/shared/util/course.util';
     styleUrls: ['./courses.component.scss'],
 })
 export class CoursesComponent implements OnInit, OnDestroy {
+    protected readonly faPenAlt = faPenAlt;
+    protected readonly faArrowDownAZ = faArrowDownAZ;
+    protected readonly faArrowUpAZ = faArrowUpAZ;
+    protected readonly faDoorOpen = faDoorOpen;
+
     courses: Course[];
     public nextRelevantCourse?: Course;
     nextRelevantCourseForExam?: Course;
@@ -31,11 +36,10 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
     courseForGuidedTour?: Course;
     quizExercisesChannels: string[] = [];
-
-    // Icons
-    faPenAlt = faPenAlt;
+    searchCourseText = '';
 
     coursesLoaded = false;
+    isSortAscending = true;
 
     constructor(
         private courseService: CourseManagementService,
@@ -124,5 +128,21 @@ export class CoursesComponent implements OnInit, OnDestroy {
      */
     openExam(): void {
         this.router.navigate(['courses', this.nextRelevantCourseForExam?.id, 'exams', this.nextRelevantExam!.id]);
+    }
+
+    setSearchValue(searchValue: string): void {
+        this.searchCourseText = searchValue;
+    }
+
+    /**
+     * Sorts the courses and changes the sort direction in the end
+     */
+    onSort(isAscending: boolean): void {
+        const sortFunction = isAscending ? sortCourses : sortCoursesDescending;
+        if (this.courses) {
+            this.regularCourses = [...sortFunction(this.regularCourses)];
+            this.recentlyAccessedCourses = [...sortFunction(this.recentlyAccessedCourses)];
+            this.isSortAscending = isAscending;
+        }
     }
 }
