@@ -11,9 +11,12 @@
             "cardTitle": "Your overall points:",
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
-            "cardExerciseLabel": "Next Exercise:",
+            "cardExerciseLabel": "Next Exercise",
             "oldCourses": "Looking for old courses? Click ",
             "here": "here",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points ({{ totalRelativeScore }}%)",
+            "cardScore": "Score",
+            "cardManageCourse": "Manage Course",
             "enroll": {
                 "title": "Course Enrollment",
                 "enrollSuccessful": "Enrollment successful",

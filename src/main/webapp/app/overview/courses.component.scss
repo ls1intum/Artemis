@@ -14,25 +14,36 @@
     opacity: 1;
 }
 
-.col-12 {
-    width: 100% !important;
-}
-
-@media screen and (min-width: 992px) {
-    .col-lg-6 {
-        width: 50% !important;
+/** 
+* Column width adjustments derived from course card width sizes
+* Ensures that no cards will appear on top of each other 
+*/
+@media screen and (max-width: 2550px) {
+    .col-2 {
+        width: 20% !important;
     }
 }
 
-@media screen and (min-width: 1200px) {
-    .col-xl-4 {
+@media screen and (max-width: 2000px) {
+    .col-2 {
+        width: 25% !important;
+    }
+}
+
+@media screen and (max-width: 1650px) {
+    .col-2 {
         width: 33.33% !important;
     }
 }
 
-@media screen and (min-width: 1900px) {
-    .col-xl-4 {
-        flex: 0 0 25;
-        width: 25% !important;
+@media screen and (max-width: 1172px) {
+    .col-2 {
+        width: 50% !important;
+    }
+}
+
+@media screen and (max-width: 819px) {
+    .col-2 {
+        width: 100% !important;
     }
 }

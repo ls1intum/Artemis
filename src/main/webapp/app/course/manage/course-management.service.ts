@@ -710,11 +710,11 @@ export class CourseManagementService {
         return this.http.get<number>(`${this.resourceUrl}/${courseId}/allowed-complaints?teamMode=${teamMode}`) ?? 0;
     }
 
-    setCourseOverviewBackground() {
+    enableCourseOverviewBackground() {
         this.courseOverviewSubject.next(true);
     }
 
-    resetCourseOverviewBackground() {
+    disableCourseOverviewBackground() {
         this.courseOverviewSubject.next(false);
     }
 

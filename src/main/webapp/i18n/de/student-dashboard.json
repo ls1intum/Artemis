@@ -11,9 +11,12 @@
             "cardTitle": "Deine insgesamte Punktzahl:",
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
-            "cardExerciseLabel": "Nächste Übung:",
+            "cardExerciseLabel": "Nächste Übung",
             "oldCourses": "Suchst du nach alten Kursen? Klicke ",
             "here": "hier",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Punkte ({{ totalRelativeScore }}%)",
+            "cardScore": "Punktzahl",
+            "cardManageCourse": "Kurs Verwalten",
             "enroll": {
                 "title": "Kurseinschreibung",
                 "enrollSuccessful": "Einschreibung erfolgreich",
