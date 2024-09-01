@@ -59,5 +59,4 @@ export class MetricsComponent implements OnInit {
         return Boolean(this.metrics?.[key] && JSON.stringify(this.metrics[key]) !== '{}');
     }
 
-    protected readonly console = console;
 }
