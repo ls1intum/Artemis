@@ -97,7 +97,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 AND participation.student.login = :username
             ORDER BY participation.id DESC
             """)
-    List<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
+    List<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(@Param("exerciseId") long exerciseId,
+            @Param("username") String username);
 
     default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
         return getValueElseThrow(findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username));
@@ -109,8 +110,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
 
-    Optional<ProgrammingExerciseStudentParticipation> findFirstByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(@Param("exerciseId") long exerciseId,
-            @Param("username") String username, @Param("testRun") boolean testRun);
+    Optional<ProgrammingExerciseStudentParticipation> findFirstByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(long exerciseId, String username, boolean testRun);
 
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
@@ -196,8 +196,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 AND participation.testRun = :testRun
             ORDER BY participation.id DESC
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
+    List<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(@Param("exerciseId") long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
+
+    default Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun) {
+        return findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(exerciseId, username, testRun).stream().findFirst();
+    }
 
     @Query("""
             SELECT participation
