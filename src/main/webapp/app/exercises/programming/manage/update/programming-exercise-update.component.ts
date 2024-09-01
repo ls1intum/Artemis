@@ -13,7 +13,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
@@ -85,7 +84,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     notificationText?: string;
     courseId: number;
 
-    EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     rerenderSubject = new Subject<void>();
     // This is used to revert the select if the user cancels to override the new selected programming language.
