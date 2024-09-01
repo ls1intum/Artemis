@@ -53,8 +53,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 LEFT JOIN FETCH se.studentParticipations
             WHERE se.id = :studentExamId
             """)
-    // TODO Michal Kawka rename
-    Optional<StudentExam> findWithExercisesSubmissionPolicyAndSessionsById(@Param("studentExamId") long studentExamId);
+    Optional<StudentExam> findWithExercisesAndSessionsById(@Param("studentExamId") long studentExamId);
 
     @Query("""
             SELECT DISTINCT se
@@ -398,9 +397,8 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @return the student exam with exercises
      */
     @NotNull
-    // TODO Michal Kawka rename
-    default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
-        return getValueElseThrow(findWithExercisesSubmissionPolicyAndSessionsById(studentExamId), studentExamId);
+    default StudentExam findByIdWithExercisesAndSessionsElseThrow(Long studentExamId) {
+        return getValueElseThrow(findWithExercisesAndSessionsById(studentExamId), studentExamId);
     }
 
     /**
