@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 
 @Component
@@ -91,6 +92,20 @@ public class IrisRequestMockProvider {
                 var mockRequest = (MockClientHttpRequest) request;
                 var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
                 responseConsumer.accept(dto);
+                return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+            });
+        // @formatter:on
+    }
+
+    public void mockRunCompetencyExtractionResponseAnd(Consumer<PyrisCompetencyExtractionPipelineExecutionDTO> executionDTOConsumer) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/competency-extraction/default/run"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(request -> {
+                var mockRequest = (MockClientHttpRequest) request;
+                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCompetencyExtractionPipelineExecutionDTO.class);
+                executionDTOConsumer.accept(dto);
                 return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
             });
         // @formatter:on
