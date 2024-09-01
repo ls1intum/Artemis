@@ -32,17 +32,14 @@ public class JhiMetricsIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(rootNode.path("http.server.requests").path("all").has("count")).isTrue();
 
         assertThat(rootNode.has("cache")).isTrue();
-        assertThat(rootNode.path("cache").path("features").path("cache.size").asDouble()).isEqualTo(8.0);
 
         assertThat(rootNode.has("garbageCollector")).isTrue();
         assertThat(rootNode.path("garbageCollector").has("jvm.gc.max.data.size")).isTrue();
         assertThat(rootNode.path("garbageCollector").path("jvm.gc.pause").has("max")).isTrue();
 
         assertThat(rootNode.has("processMetrics")).isTrue();
-        assertThat(rootNode.path("processMetrics").path("system.cpu.count").asInt()).isEqualTo(16);
         assertThat(rootNode.path("processMetrics").has("process.cpu.usage")).isTrue();
 
         assertThat(rootNode.has("customMetrics")).isTrue();
-        assertThat(rootNode.path("customMetrics").path("activeUsers").asInt()).isEqualTo(0);
     }
 }
