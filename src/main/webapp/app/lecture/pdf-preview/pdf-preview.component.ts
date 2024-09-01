@@ -120,11 +120,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const numPages = pdf.numPages;
             const initialPageCount = this.totalPages;
 
-            if (!append) {
-                this.totalPages = 0;
-                this.pdfContainer.nativeElement.innerHTML = '';
-            }
-
             this.totalPages += numPages;
 
             for (let i = 1; i <= numPages; i++) {
@@ -233,7 +228,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     private createCheckbox(pageIndex: number): HTMLDivElement {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.classList.add('slide-checkbox');
         checkbox.style.cssText = `position: absolute; top: -5px; right: -5px; z-index: 4;`;
         checkbox.checked = this.selectedPages.has(pageIndex);
         checkbox.addEventListener('change', () => {
