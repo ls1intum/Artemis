@@ -12,7 +12,7 @@ import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -26,6 +26,7 @@ type NavigationDirection = 'next' | 'prev';
 export class PdfPreviewComponent implements OnInit, OnDestroy {
     @ViewChild('pdfContainer', { static: true }) pdfContainer: ElementRef<HTMLDivElement>;
     @ViewChild('enlargedCanvas') enlargedCanvas: ElementRef<HTMLCanvasElement>;
+    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
 
     readonly DEFAULT_SLIDE_WIDTH = 250;
     course?: Course;
@@ -37,11 +38,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
     selectedPages: Set<number> = new Set();
+    isMergedPdfLoading = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
+    faFileImport = faFileImport;
     faTrash = faTrash;
 
     constructor(
@@ -57,13 +60,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             if ('attachment' in data) {
                 this.attachment = data.attachment;
                 this.attachmentSub = this.attachmentService.getAttachmentFile(this.course!.id!, this.attachment!.id!).subscribe({
-                    next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
+                    next: (blob: Blob) => this.loadOrAppendPdf(URL.createObjectURL(blob)),
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit = data.attachmentUnit;
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course!.id!, this.attachmentUnit!.id!).subscribe({
-                    next: (blob: Blob) => this.loadPdf(URL.createObjectURL(blob)),
+                    next: (blob: Blob) => this.loadOrAppendPdf(URL.createObjectURL(blob)),
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             }
@@ -103,16 +106,28 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Loads a PDF from a provided URL and initializes viewer setup.
-     * @param fileUrl The URL of the file to load.
+     * Loads or appends a PDF from a provided URL.
+     * @param fileUrl The URL of the file to load or append.
+     * @param append Whether the document should be appended to the existing one.
      */
-    async loadPdf(fileUrl: string) {
+    async loadOrAppendPdf(fileUrl: string, append: boolean = false): Promise<void> {
+        if (append) {
+            this.isMergedPdfLoading = true;
+        }
         try {
             const loadingTask = PDFJS.getDocument(fileUrl);
             const pdf = await loadingTask.promise;
-            this.totalPages = pdf.numPages;
+            const numPages = pdf.numPages;
+            const initialPageCount = this.totalPages;
 
-            for (let i = 1; i <= pdf.numPages; i++) {
+            if (!append) {
+                this.totalPages = 0;
+                this.pdfContainer.nativeElement.innerHTML = '';
+            }
+
+            this.totalPages += numPages;
+
+            for (let i = 1; i <= numPages; i++) {
                 const page = await pdf.getPage(i);
                 const viewport = page.getViewport({ scale: 2 });
                 const canvas = this.createCanvas(viewport);
@@ -121,14 +136,31 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     await page.render({ canvasContext: context, viewport }).promise;
                 }
 
-                const container = this.createContainer(canvas, i);
+                const container = this.createContainer(canvas, initialPageCount + i);
                 this.pdfContainer.nativeElement.appendChild(container);
             }
 
             URL.revokeObjectURL(fileUrl);
+
+            if (append) {
+                setTimeout(() => this.scrollToBottom(), 100);
+            }
         } catch (error) {
             onError(this.alertService, error);
+        } finally {
+            if (append) {
+                this.isMergedPdfLoading = false;
+            }
         }
+    }
+
+    scrollToBottom(): void {
+        const scrollOptions: ScrollToOptions = {
+            top: this.pdfContainer.nativeElement.scrollHeight,
+            left: 0,
+            behavior: 'smooth' as ScrollBehavior,
+        };
+        this.pdfContainer.nativeElement.scrollTo(scrollOptions);
     }
 
     /**
@@ -379,5 +411,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
         this.selectedPages.clear();
         this.dialogErrorSource.next('');
+    }
+
+    triggerFileInput(): void {
+        this.fileInput.nativeElement.click();
+    }
+
+    mergePDF(event: Event): void {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (file) {
+            const fileUrl = URL.createObjectURL(file);
+            this.loadOrAppendPdf(fileUrl, true);
+        }
     }
 }
