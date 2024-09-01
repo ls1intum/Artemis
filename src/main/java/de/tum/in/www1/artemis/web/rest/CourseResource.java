@@ -363,7 +363,7 @@ public class CourseResource {
     }
 
     /**
-     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given course.
+     * PUT courses/:courseId/online-course-configuration : Updates the onlineCourseConfiguration for the given course.
      *
      * @param courseId                  the id of the course to update
      * @param onlineCourseConfiguration the online course configuration to update
