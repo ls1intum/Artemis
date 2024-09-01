@@ -1,11 +1,9 @@
 <div>
     <div class="modal-header">
-        <h3 class="modal-title">
-            {{
-                (diffForTemplateAndSolution ? 'artemisApp.programmingExercise.diffReport.title' : 'artemisApp.programmingExercise.diffReport.titleForSubmissions')
-                    | artemisTranslate
-            }}
-        </h3>
+        <h3
+            class="modal-title"
+            jhiTranslate="{{ diffForTemplateAndSolution ? 'artemisApp.programmingExercise.diffReport.title' : 'artemisApp.programmingExercise.diffReport.titleForSubmissions' }}"
+        ></h3>
         <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
     </div>
     <div class="modal-body">

@@ -6,7 +6,7 @@ import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -19,6 +19,8 @@ import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/for
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 describe('PrerequisiteFormComponent', () => {
     let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
@@ -29,9 +31,12 @@ describe('PrerequisiteFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
-            declarations: [],
             providers: [MockProvider(PrerequisiteService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
+            .overrideModule(ArtemisMarkdownEditorModule, {
+                remove: { exports: [MarkdownEditorMonacoComponent] },
+                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
+            })
             .compileComponents()
             .then(() => {
                 prerequisiteFormComponentFixture = TestBed.createComponent(PrerequisiteFormComponent);
