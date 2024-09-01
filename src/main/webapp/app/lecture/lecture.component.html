@@ -141,7 +141,25 @@
                             <td>{{ lecture.startDate | artemisDate }}</td>
                             <td>{{ lecture.endDate | artemisDate }}</td>
                             @if (lectureIngestionEnabled) {
-                                <td>{{ lecture.ingested }}</td>
+                                <td>
+                                    @switch (lecture.ingested) {
+                                        @case (IngestionState.PARTIALLY_INGESTED) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.partiallyIngested"></span>
+                                        }
+                                        @case (IngestionState.ERROR) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.error"></span>
+                                        }
+                                        @case (IngestionState.DONE) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.done"></span>
+                                        }
+                                        @case (IngestionState.IN_PROGRESS) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.inProgress"></span>
+                                        }
+                                        @default {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.notStarted"></span>
+                                        }
+                                    }
+                                </td>
                             }
                             <td class="text-end">
                                 <div class="btn-group flex-btn-group-container">

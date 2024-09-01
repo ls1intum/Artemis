@@ -16,11 +16,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.iris.IrisCompetencyGenerationService;
 
 class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTest {

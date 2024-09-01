@@ -16,6 +16,7 @@ import { Subject, Subscription } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -219,4 +220,6 @@ export class LectureComponent implements OnInit, OnDestroy {
             });
         }
     }
+
+    protected readonly IngestionState = IngestionState;
 }

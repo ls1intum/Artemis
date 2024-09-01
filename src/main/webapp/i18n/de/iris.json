@@ -83,6 +83,13 @@
             },
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?"
+            },
+            "ingestionStates": {
+                "notStarted": "Nicht gestartet",
+                "inProgress": "In Bearbeitung",
+                "done": "Abgeschlossen",
+                "error": "Fehler",
+                "partiallyIngested": "Teilweise abgeschlossen"
             }
         }
     }
