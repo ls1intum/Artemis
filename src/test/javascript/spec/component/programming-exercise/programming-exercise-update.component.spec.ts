@@ -975,7 +975,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         fixture.detectChanges();
         tick();
 
-        const categories = [new ExerciseCategory()];
+        const categories = [new ExerciseCategory(undefined, undefined)];
         expect(comp.exerciseCategories).toBeUndefined();
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
