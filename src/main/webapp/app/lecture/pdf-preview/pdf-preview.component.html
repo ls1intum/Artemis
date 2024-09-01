@@ -1,14 +1,29 @@
 <div class="row justify-content-center">
     <div class="col-12">
         <div>
-            <h4>
-                <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
-                @if (attachment) {
-                    {{ attachment.id }}: {{ attachment.name }}
-                } @else if (attachmentUnit) {
-                    {{ attachmentUnit.id }}: {{ attachmentUnit.name }}
-                }
-            </h4>
+            <div class="d-flex justify-content-between align-items-center">
+                <h4>
+                    <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
+                    @if (attachment) {
+                        {{ attachment.id }}: {{ attachment.name }}
+                    } @else if (attachmentUnit) {
+                        {{ attachmentUnit.id }}: {{ attachmentUnit.name }}
+                    }
+                </h4>
+                <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    jhiDeleteButton
+                    [renderButtonStyle]="false"
+                    [renderButtonText]="false"
+                    (delete)="deleteSelectedSlides()"
+                    [dialogError]="dialogError$"
+                    [disabled]="isDeleteDisabled()"
+                >
+                    <fa-icon [icon]="faTrash" />
+                    <span jhiTranslate="entity.action.delete"></span>
+                </button>
+            </div>
             <div class="row">
                 <div class="pdf-container" #pdfContainer>
                     @if (isEnlargedView) {

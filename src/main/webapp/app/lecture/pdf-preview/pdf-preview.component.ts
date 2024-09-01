@@ -8,10 +8,11 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -35,6 +36,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     totalPages = 0;
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
+    selectedPages: Set<number> = new Set();
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faTrash = faTrash;
 
     constructor(
         public route: ActivatedRoute,
@@ -88,6 +96,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     @HostListener('window:resize')
     resizeCanvasBasedOnContainer() {
         this.adjustCanvasSize();
+    }
+
+    isDeleteDisabled(): boolean {
+        return this.selectedPages.size === 0;
     }
 
     /**
@@ -150,12 +162,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         /* Dynamically created elements are not detected by DOM, that is why we need to set the styles manually.
          * See: https://stackoverflow.com/a/70911189
          */
+        container.id = `pdf-page-${pageIndex}`;
         container.classList.add('pdf-page-container');
         container.style.cssText = `position: relative; display: inline-block; width: ${canvas.style.width}; height: ${canvas.style.height}; margin: 20px; box-shadow: 0 2px 6px var(--pdf-preview-canvas-shadow);`;
 
         const overlay = this.createOverlay(pageIndex);
+        const checkbox = this.createCheckbox(pageIndex);
         container.appendChild(canvas);
         container.appendChild(overlay);
+        container.appendChild(checkbox);
 
         container.addEventListener('mouseenter', () => {
             overlay.style.opacity = '1';
@@ -181,6 +196,22 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
          */
         overlay.style.cssText = `position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: white; z-index: 1; transition: opacity 0.3s ease; opacity: 0; cursor: pointer; background-color: var(--pdf-preview-container-overlay)`;
         return overlay;
+    }
+
+    private createCheckbox(pageIndex: number): HTMLDivElement {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.classList.add('slide-checkbox');
+        checkbox.style.cssText = `position: absolute; top: -5px; right: -5px; z-index: 4;`;
+        checkbox.checked = this.selectedPages.has(pageIndex);
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                this.selectedPages.add(pageIndex);
+            } else {
+                this.selectedPages.delete(pageIndex);
+            }
+        });
+        return checkbox;
     }
 
     /**
@@ -337,5 +368,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const canvas = this.pdfContainer.nativeElement.querySelectorAll('.pdf-page-container canvas')[this.currentPage - 1] as HTMLCanvasElement;
             this.updateEnlargedCanvas(canvas);
         }
+    }
+
+    deleteSelectedSlides() {
+        this.selectedPages.forEach((page) => {
+            const pageElement = this.pdfContainer.nativeElement.querySelector(`#pdf-page-${page}`);
+            if (pageElement) {
+                this.pdfContainer.nativeElement.removeChild(pageElement);
+            }
+        });
+        this.selectedPages.clear();
+        this.dialogErrorSource.next('');
     }
 }
