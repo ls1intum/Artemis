@@ -35,20 +35,20 @@
     }
 
     .student-status {
-        @include status-change-transition;
-
         display: inline-flex;
         color: var(--secondary);
+
+        @include status-change-transition;
     }
 
     .student-name {
-        @include status-change-transition;
-
         max-width: 190px;
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
         color: var(--secondary);
+
+        @include status-change-transition;
     }
 
     .online {

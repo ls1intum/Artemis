@@ -1,0 +1,32 @@
+<div class="slider m-2 mb-5">
+    <div class="range-input">
+        <div class="progress" [style.left.%]="sliderMinPercentage" [style.right.%]="sliderMaxPercentage"></div>
+        <span class="slider-value" [style.left.%]="sliderMinPercentage * SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR" [style.margin-left]="LABEL_MARGIN + 'rem'"
+            >{{ selectedMinValue }}{{ labelSymbol }}</span
+        >
+        <span class="slider-value" [style.right.%]="sliderMaxPercentage * SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR" [style.margin-right]="LABEL_MARGIN + 'rem'"
+            >{{ selectedMaxValue }}{{ labelSymbol }}</span
+        >
+
+        <input
+            type="range"
+            [min]="generalMinValue"
+            [max]="generalMaxValue"
+            [(ngModel)]="selectedMinValue"
+            class="range-min"
+            [step]="step"
+            (change)="onSelectedMinValueChanged($event)"
+            (input)="updateMinPercentage()"
+        />
+        <input
+            type="range"
+            [min]="generalMinValue"
+            [max]="generalMaxValue"
+            [(ngModel)]="selectedMaxValue"
+            class="range-max"
+            [step]="step"
+            (change)="onSelectedMaxValueChanged($event)"
+            (input)="updateMaxPercentage()"
+        />
+    </div>
+</div>

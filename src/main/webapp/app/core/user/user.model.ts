@@ -14,6 +14,7 @@ export class User extends Account {
     public visibleRegistrationNumber?: string;
     public password?: string;
     public vcsAccessToken?: string;
+    public vcsAccessTokenExpiryDate?: string;
     public sshPublicKey?: string;
     public irisAccepted?: dayjs.Dayjs;
 
@@ -35,6 +36,7 @@ export class User extends Account {
         password?: string,
         imageUrl?: string,
         vcsAccessToken?: string,
+        vcsAccessTokenExpiryDate?: string,
         sshPublicKey?: string,
         irisAccepted?: dayjs.Dayjs,
     ) {
@@ -48,6 +50,7 @@ export class User extends Account {
         this.lastNotificationRead = lastNotificationRead;
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
+        this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
         this.sshPublicKey = sshPublicKey;
         this.irisAccepted = irisAccepted;
     }

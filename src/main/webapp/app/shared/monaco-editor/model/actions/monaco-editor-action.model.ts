@@ -11,6 +11,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     keybindings?: number[];
 
     icon?: IconDefinition;
+    readonly hideInEditor: boolean;
 
     /**
      * The disposable action that is returned by `editor.addAction`. This is required to unregister the action from the editor.
@@ -28,12 +29,14 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param translationKey The translation key of the action label.
      * @param icon The icon to display in the editor toolbar, if any.
      * @param keybindings The keybindings to trigger the action, if any.
+     * @param hideInEditor Whether to hide the action in the editor toolbar. Defaults to false.
      */
-    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: number[]) {
+    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: number[], hideInEditor?: boolean) {
         this.id = id;
         this.translationKey = translationKey;
         this.icon = icon;
         this.keybindings = keybindings;
+        this.hideInEditor = hideInEditor ?? false;
     }
 
     /**
@@ -61,6 +64,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      */
     dispose(): void {
         this.disposableAction?.dispose();
+        this.disposableAction = undefined;
         this._editor = undefined;
     }
 
@@ -77,6 +81,101 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         this.label = translateService.instant(this.translationKey);
         this.disposableAction = editor.addAction(this);
         this._editor = editor;
+    }
+
+    /**
+     * Registers a completion provider for the current model of the given editor. This is useful to provide completion items for a specific editor, which is not supported by the monaco API.
+     * @param editor The editor whose model to register the completion provider for.
+     * @param searchFn Function that returns all relevant items for the current search term. Note that Monaco also filters the items based on the user input.
+     * @param mapToSuggestionFn Function that maps an item to a Monaco completion suggestion.
+     * @param triggerCharacter The character that triggers the completion provider.
+     * @param listIncomplete Whether the list of suggestions is incomplete. If true, Monaco will keep searching for more suggestions.
+     */
+    registerCompletionProviderForCurrentModel<ItemType>(
+        editor: monaco.editor.IStandaloneCodeEditor,
+        searchFn: (searchTerm?: string) => Promise<ItemType[]>,
+        mapToSuggestionFn: (item: ItemType, range: monaco.IRange) => monaco.languages.CompletionItem,
+        triggerCharacter?: string,
+        listIncomplete?: boolean,
+    ): monaco.IDisposable {
+        const model = editor.getModel();
+        if (!model) {
+            throw new Error(`A model must be attached to the editor to register a completion provider.`);
+        }
+        if (triggerCharacter !== undefined && triggerCharacter.length !== 1) {
+            throw new Error(`The trigger character must be a single character.`);
+        }
+        const languageId = model.getLanguageId();
+        const modelId = model.id;
+        // We have to subtract an offset of 1 from the start column to include the trigger character in the range that will be replaced.
+        const triggerCharacterOffset = triggerCharacter ? 1 : 0;
+        return monaco.languages.registerCompletionItemProvider(languageId, {
+            // We only want to trigger the completion provider if the trigger character is typed. However, we also allow numbers to trigger the completion, as they would not normally trigger it.
+            triggerCharacters: triggerCharacter ? [triggerCharacter, ...'0123456789'] : undefined,
+            provideCompletionItems: async (model: monaco.editor.ITextModel, position: monaco.Position): Promise<monaco.languages.CompletionList | undefined> => {
+                if (model.id !== modelId) {
+                    return undefined;
+                }
+                const sequenceUntilPosition = this.findTypedSequenceUntilPosition(model, position, triggerCharacter);
+                if (!sequenceUntilPosition) {
+                    return undefined;
+                }
+                const range = {
+                    startLineNumber: position.lineNumber,
+                    startColumn: sequenceUntilPosition.startColumn - triggerCharacterOffset,
+                    endLineNumber: position.lineNumber,
+                    endColumn: sequenceUntilPosition.endColumn,
+                };
+                const beforeWord = model.getValueInRange({
+                    startLineNumber: position.lineNumber,
+                    startColumn: sequenceUntilPosition.startColumn - triggerCharacterOffset,
+                    endLineNumber: position.lineNumber,
+                    endColumn: sequenceUntilPosition.startColumn,
+                });
+
+                // We only want suggestions if the trigger character is at the beginning of the word.
+                if (triggerCharacter && sequenceUntilPosition.word !== triggerCharacter && beforeWord !== triggerCharacter) {
+                    return undefined;
+                }
+                const items = await searchFn(sequenceUntilPosition.word);
+                return {
+                    suggestions: items.map((item) => mapToSuggestionFn(item, range)),
+                    incomplete: listIncomplete,
+                };
+            },
+        });
+    }
+
+    /**
+     * Finds the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word (default Monaco behavior).
+     * @param model The model to find the typed sequence in.
+     * @param position The position until which to find the typed sequence.
+     * @param triggerCharacter The character that triggers the sequence. If not provided, the sequence is assumed to start at the beginning of the word.
+     * @param lengthLimit The maximum length of the sequence to find. Defaults to 25.
+     */
+    findTypedSequenceUntilPosition(
+        model: monaco.editor.ITextModel,
+        position: monaco.Position,
+        triggerCharacter?: string,
+        lengthLimit = 25,
+    ): monaco.editor.IWordAtPosition | undefined {
+        // Find the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word.
+        if (!triggerCharacter) {
+            return model.getWordUntilPosition(position);
+        }
+        const scanColumn = Math.max(1, position.column - lengthLimit);
+        const scanRange = new monaco.Range(position.lineNumber, scanColumn, position.lineNumber, position.column);
+        const text = model.getValueInRange(scanRange);
+        const triggerIndex = text.lastIndexOf(triggerCharacter);
+        if (triggerIndex === -1) {
+            return undefined;
+        }
+        // The word not including the trigger character.
+        return {
+            word: text.slice(triggerIndex + 1),
+            startColumn: scanRange.startColumn + triggerIndex + 1,
+            endColumn: position.column,
+        };
     }
 
     /**
@@ -119,6 +218,15 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     }
 
     /**
+     * Types the given text in the editor at the current cursor position. You can use this e.g. to trigger a suggestion.
+     * @param editor The editor to type the text in.
+     * @param text The text to type.
+     */
+    typeText(editor: monaco.editor.ICodeEditor, text: string): void {
+        editor.trigger('keyboard', 'type', { text });
+    }
+
+    /**
      * Replaces the text at the current selection with the given text. If there is no selection, the text is inserted at the current cursor position.
      * @param editor The editor to replace the text in.
      * @param text The text to replace the current selection with.
@@ -129,6 +237,15 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         if (selection && selectedText !== undefined) {
             this.replaceTextAtRange(editor, selection, text);
         }
+    }
+
+    /**
+     * Gets the text of the current selection. If there is no selection, undefined is returned.
+     * @param editor The editor to get the selection text from.
+     */
+    getSelectedText(editor: monaco.editor.ICodeEditor): string | undefined {
+        const selection = editor.getSelection();
+        return selection ? this.getTextAtRange(editor, selection) : undefined;
     }
 
     /**
@@ -177,6 +294,67 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      */
     getLineText(editor: monaco.editor.ICodeEditor, lineNumber: number): string | undefined {
         return editor.getModel()?.getLineContent(lineNumber);
+    }
+
+    /**
+     * Gets the number of lines in the editor.
+     * @param editor The editor to get the line count from.
+     */
+    getLineCount(editor: monaco.editor.ICodeEditor): number {
+        return editor.getModel()?.getLineCount() ?? 0;
+    }
+
+    /**
+     * Gets the position of the last character in the editor.
+     * @param editor The editor to get the position from.
+     */
+    getEndPosition(editor: monaco.editor.ICodeEditor): monaco.IPosition {
+        return editor.getModel()?.getFullModelRange().getEndPosition() ?? { lineNumber: 1, column: 1 };
+    }
+
+    /**
+     * Sets the position of the cursor in the given editor.
+     * @param editor The editor to set the position in.
+     * @param position The position to set.
+     * @param revealLine Whether to scroll the editor to reveal the line the position is on. Defaults to false.
+     */
+    setPosition(editor: monaco.editor.ICodeEditor, position: monaco.IPosition, revealLine = false): void {
+        editor.setPosition(position);
+        if (revealLine) {
+            editor.revealLineInCenter(position.lineNumber);
+        }
+    }
+
+    getPosition(editor: monaco.editor.ICodeEditor): monaco.IPosition {
+        return editor.getPosition() ?? { lineNumber: 1, column: 1 };
+    }
+
+    /**
+     * Sets the selection of the given editor to the given range and reveals it in the center of the editor.
+     * @param editor The editor to set the selection in.
+     * @param selection The selection to set.
+     */
+    setSelection(editor: monaco.editor.ICodeEditor, selection: monaco.IRange): void {
+        editor.setSelection(selection);
+        editor.revealRangeInCenter(selection);
+    }
+
+    /**
+     * Clears the current selection in the given editor, but preserves the cursor position.
+     * @param editor The editor to clear the selection in.
+     */
+    clearSelection(editor: monaco.editor.ICodeEditor): void {
+        const position = this.getPosition(editor);
+        this.setSelection(editor, new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column));
+    }
+
+    /**
+     * Adjusts the cursor position so it is at the end of the current line.
+     * @param editor The editor to adjust the cursor position in.
+     */
+    moveCursorToEndOfLine(editor: monaco.editor.ICodeEditor): void {
+        const position: monaco.IPosition = { ...this.getPosition(editor), column: Number.POSITIVE_INFINITY };
+        this.setPosition(editor, position);
     }
 
     /**

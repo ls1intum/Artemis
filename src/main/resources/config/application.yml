@@ -87,6 +87,8 @@ artemis:
                     default: "ls1tum/artemis-swift-swiftlint-docker:latest"
                 ocaml:
                     default: "ls1tum/artemis-ocaml-docker:v1"
+                rust:
+                    default: "ghcr.io/ls1intum/artemis-rust-docker:v0.9.70"
 
 management:
     endpoints:
@@ -163,7 +165,7 @@ spring:
             hibernate.generate_statistics: false
             hibernate.order_inserts: true
             hibernate.order_updates: true
-#            hibernate.query.fail_on_pagination_over_collection_fetch: true  # not appropriate in our case: https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch/
+            hibernate.query.fail_on_pagination_over_collection_fetch: true  # prevents issues, see https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch
             hibernate.query.in_clause_parameter_padding: true
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
@@ -196,6 +198,9 @@ spring:
             thread-name-prefix: artemis-scheduling-
             pool:
                 size: 2
+    threads:
+        virtual:
+            enabled: true
     thymeleaf:
         mode: HTML
     output:

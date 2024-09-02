@@ -1,9 +1,9 @@
-import { Component, InputSignal, OnInit, Signal, WritableSignal, computed, inject, input, signal } from '@angular/core';
+import { Component, InputSignal, Signal, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
 import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { CommonModule } from '@angular/common';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faCheckCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle, faChevronDown, faFlag } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-nav-overview/learning-path-nav-overview.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
@@ -15,9 +15,10 @@ import { LearningPathNavigationService } from 'app/course/learning-paths/service
     templateUrl: './learning-path-student-nav.component.html',
     styleUrl: './learning-path-student-nav.component.scss',
 })
-export class LearningPathNavComponent implements OnInit {
+export class LearningPathNavComponent {
     protected readonly faChevronDown: IconDefinition = faChevronDown;
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
+    protected readonly faFlag: IconDefinition = faFlag;
 
     private learningPathNavigationService: LearningPathNavigationService = inject(LearningPathNavigationService);
 
@@ -36,12 +37,16 @@ export class LearningPathNavComponent implements OnInit {
 
     readonly isDropdownOpen: WritableSignal<boolean> = signal(false);
 
-    ngOnInit(): void {
-        this.learningPathNavigationService.loadLearningPathNavigation(this.learningPathId());
+    constructor() {
+        effect(async () => await this.learningPathNavigationService.loadLearningPathNavigation(this.learningPathId()), { allowSignalWrites: true });
     }
 
-    selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO): void {
-        this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), selectedLearningObject);
+    async selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO): Promise<void> {
+        await this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), selectedLearningObject);
+    }
+
+    completeLearningPath(): void {
+        this.learningPathNavigationService.completeLearningPath();
     }
 
     setIsDropdownOpen(isOpen: boolean): void {

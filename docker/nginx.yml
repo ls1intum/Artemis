@@ -27,7 +27,8 @@ services:
                 hard: 1048576
         ports:
             - "80:80"
-            - "443:443"
+            - "443:443/tcp"
+            - "443:443/udp" # HTTP/3
             - "7921:7921" # Git SSH
         # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:

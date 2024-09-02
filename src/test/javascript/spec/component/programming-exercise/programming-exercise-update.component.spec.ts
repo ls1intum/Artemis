@@ -437,15 +437,15 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         it('should clear custom build definition on programming language change', fakeAsync(() => {
             // WHEN
             fixture.detectChanges();
-            comp.programmingExercise.buildPlanConfiguration = 'some custom build definition';
-            comp.programmingExercise.windFile = new WindFile();
+            comp.programmingExercise.buildConfig!.buildPlanConfiguration = 'some custom build definition';
+            comp.programmingExercise.buildConfig!.windfile = new WindFile();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
             comp.onProjectTypeChange(ProjectType.FACT);
 
             // THEN
-            expect(comp.programmingExercise.buildPlanConfiguration).toBeUndefined();
-            expect(comp.programmingExercise.windFile).toBeUndefined();
+            expect(comp.programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
+            expect(comp.programmingExercise.buildConfig?.windfile).toBeUndefined();
         }));
     });
 
@@ -906,7 +906,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick();
 
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
-            expect(comp.programmingExercise.testwiseCoverageEnabled).toBeFalse();
+            expect(comp.programmingExercise.buildConfig?.testwiseCoverageEnabled).toBeFalse();
         }));
 
         it('should disable options for java dejagnu project type and re-enable them after changing back to maven or gradle', fakeAsync(() => {
@@ -975,7 +975,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         fixture.detectChanges();
         tick();
 
-        const categories = [new ExerciseCategory()];
+        const categories = [new ExerciseCategory(undefined, undefined)];
         expect(comp.exerciseCategories).toBeUndefined();
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);

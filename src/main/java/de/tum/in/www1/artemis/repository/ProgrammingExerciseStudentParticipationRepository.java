@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -75,16 +74,17 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
+    List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
+
     default ProgrammingExerciseStudentParticipation findByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return findByExerciseIdAndStudentLogin(exerciseId, username).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
+        return getValueElseThrow(findByExerciseIdAndStudentLogin(exerciseId, username));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(long exerciseId, String username);
 
     default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username)
-                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
+        return getValueElseThrow(findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username));
     }
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
@@ -114,6 +114,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") long exerciseId,
             @Param("teamShortName") String teamShortName);
+
+    @Query("""
+            SELECT DISTINCT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.team team
+                LEFT JOIN FETCH team.students student
+            WHERE participation.exercise.id = :exerciseId
+                AND student.id = :studentId
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     List<ProgrammingExerciseStudentParticipation> findByExerciseId(long exerciseId);
 
@@ -176,7 +186,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     }
 
     default ProgrammingExerciseStudentParticipation findWithTeamStudentsByIdElseThrow(long participationId) {
-        return findWithTeamStudentsById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
+        return getValueElseThrow(findWithTeamStudentsById(participationId), participationId);
     }
 
     @Transactional // ok because of modifying query

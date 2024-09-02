@@ -13,7 +13,7 @@
             <fa-icon
                 [icon]="getIcon(competency.taxonomy)"
                 size="2x"
-                [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                 container="body"
             />
         </a>
@@ -50,19 +50,17 @@
                 }
                 <ng-content />
             </div>
-            @if (!isPrerequisite && competency.softDueDate) {
+            @if (competency.softDueDate) {
                 <div class="col-sm col py-2" style="max-width: fit-content">
-                    <span style="vertical-align: middle"> {{ 'artemisApp.competency.competencyCard.softDueDate' | artemisTranslate }} </span>
+                    <span style="vertical-align: middle" jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
                     <span class="badge" [ngClass]="softDueDatePassed && !isMastered ? 'bg-danger' : 'bg-success'" id="date-badge">
                         {{ competency.softDueDate! | artemisTimeAgo }}
                     </span>
                 </div>
             }
-            @if (!isPrerequisite) {
-                <div class="col-sm col text-end py-1 px-2" style="max-width: 95px">
-                    <jhi-competency-rings [progress]="progress" [mastery]="mastery" [hideProgress]="hideProgress" />
-                </div>
-            }
+            <div class="col-sm col text-end py-1 px-2" style="max-width: 95px">
+                <jhi-competency-rings [progress]="progress" [mastery]="mastery" [hideProgress]="hideProgress" />
+            </div>
         </div>
     </div>
 </div>

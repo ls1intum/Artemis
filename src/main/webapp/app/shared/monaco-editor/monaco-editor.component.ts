@@ -9,8 +9,11 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
-type EditorPosition = { row: number; column: number };
+export const MAX_TAB_SIZE = 8;
+export type EditorPosition = { lineNumber: number; column: number };
+
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
@@ -96,6 +99,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Output()
     textChanged = new EventEmitter<string>();
 
+    @Output()
+    contentHeightChanged = new EventEmitter<number>();
+
+    @Output()
+    onBlurEditor = new EventEmitter<void>();
+
+    private contentHeightListener?: monaco.IDisposable;
+    private textChangedListener?: monaco.IDisposable;
+    private blurEditorWidgetListener?: monaco.IDisposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
@@ -104,9 +116,19 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
         resizeObserver.observe(this.monacoEditorContainerElement);
 
-        this._editor.onDidChangeModelContent(() => {
+        this.textChangedListener = this._editor.onDidChangeModelContent(() => {
             this.emitTextChangeEvent();
         }, this);
+
+        this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
+            if (event.contentHeightChanged) {
+                this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight));
+            }
+        });
+
+        this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+            this.onBlurEditor.emit();
+        });
 
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
@@ -115,6 +137,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.reset();
         this._editor.dispose();
         this.themeSubscription?.unsubscribe();
+        this.textChangedListener?.dispose();
+        this.contentHeightListener?.dispose();
+        this.blurEditorWidgetListener?.dispose();
     }
 
     private emitTextChangeEvent() {
@@ -132,14 +157,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    // Workaround: The rest of the code expects { row, column } - we have { lineNumber, column }. Can be removed when Ace is removed.
     getPosition(): EditorPosition {
-        const position = this._editor.getPosition() ?? new monaco.Position(0, 0);
-        return { row: position.lineNumber, column: position.column };
+        return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
     }
 
     setPosition(position: EditorPosition) {
-        this._editor.setPosition({ lineNumber: position.row, column: position.column });
+        this._editor.setPosition(position);
     }
 
     setSelection(range: monaco.IRange): void {
@@ -148,6 +171,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     getText(): string {
         return this._editor.getValue();
+    }
+
+    getContentHeight(): number {
+        return this._editor.getContentHeight() + this._editor.getOption(monaco.editor.EditorOption.lineHeight);
     }
 
     setText(text: string): void {
@@ -363,5 +390,23 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.updateOptions({
             wordWrap: value ? 'on' : 'off',
         });
+    }
+
+    /**
+     * Sets the line number from which the editor should start counting.
+     * @param startLineNumber The line number to start counting from (starting at 1).
+     */
+    setStartLineNumber(startLineNumber: number): void {
+        this._editor.updateOptions({
+            lineNumbers: (number) => `${startLineNumber + number - 1}`,
+        });
+    }
+
+    /**
+     * Applies the given options to the editor.
+     * @param options The options to apply.
+     */
+    applyOptionPreset(options: MonacoEditorOptionPreset): void {
+        options.apply(this._editor);
     }
 }

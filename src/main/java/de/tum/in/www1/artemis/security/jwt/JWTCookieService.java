@@ -33,7 +33,7 @@ public class JWTCookieService {
      * Builds the cookie containing the jwt for a login
      *
      * @param rememberMe boolean used to determine the duration of the jwt.
-     * @return the login ResponseCookie contaning the JWT
+     * @return the login ResponseCookie containing the JWT
      */
     public ResponseCookie buildLoginCookie(boolean rememberMe) {
         String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), rememberMe);

@@ -1,8 +1,6 @@
 <div>
     @if (!displayOnExamCover) {
-        <h3 id="general-information-title">
-            {{ 'artemisApp.exam.examSummary.generalInformation' | artemisTranslate }}
-        </h3>
+        <h3 id="general-information-title" jhiTranslate="artemisApp.exam.examSummary.generalInformation"></h3>
     }
     <div class="ml-4 mt-3 mb-4">
         <table class="table table-borderless mx-auto d-block">
@@ -11,7 +9,7 @@
                     <tr>
                         <th>{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</th>
                         <td>
-                            <span class="badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
+                            <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
                         </td>
                     </tr>
                 }
@@ -93,7 +91,7 @@
                                 <span>{{ exam.examStudentReviewEnd | artemisDate }}</span>
                             }
                             @if (reviewIsOpen) {
-                                <div class="mx-2 badge bg-success">{{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}</div>
+                                <div class="mx-2 badge bg-success" jhiTranslate="artemisApp.exam.studentReviewEnabled"></div>
                             }
                         </td>
                     </tr>

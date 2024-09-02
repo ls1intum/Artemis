@@ -59,6 +59,7 @@ import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -94,6 +95,9 @@ public class ExamUtilService {
 
     @Autowired
     private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ExamUserRepository examUserRepository;
@@ -630,6 +634,10 @@ public class ExamUtilService {
         return addStudentExamWithUser(exam, userRepo.findOneByLogin(userLogin).orElseThrow());
     }
 
+    public StudentExam addStudentExamWithUserAndWorkingTime(Exam exam, String userLogin, int workingTime) {
+        return addStudentExamWithUserAndWorkingTime(exam, userRepo.findOneByLogin(userLogin).orElseThrow(), workingTime);
+    }
+
     /**
      * Creates and saves a StudentExam for the given Exam and User.
      *
@@ -638,9 +646,21 @@ public class ExamUtilService {
      * @return The newly created StudentExam
      */
     public StudentExam addStudentExamWithUser(Exam exam, User user) {
+        return addStudentExamWithUserAndWorkingTime(exam, user, exam.getDuration());
+    }
+
+    /**
+     * Creates and saves a StudentExam for the given Exam and User with the given working time.
+     *
+     * @param exam        The Exam for which the StudentExam should be created
+     * @param user        The User for which the StudentExam should be created
+     * @param workingTime The working time for the StudentExam
+     * @return The newly created StudentExam
+     */
+    public StudentExam addStudentExamWithUserAndWorkingTime(Exam exam, User user, int workingTime) {
         StudentExam studentExam = ExamFactory.generateStudentExam(exam);
         studentExam.setUser(user);
-        studentExam.setWorkingTime(exam.getDuration());
+        studentExam.setWorkingTime(workingTime);
         studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }
@@ -813,6 +833,7 @@ public class ExamUtilService {
             var exerciseGroup6 = exam.getExerciseGroups().get(6);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup6, "Programming");
+            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepo.save(programmingExercise1);
             programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
@@ -860,6 +881,7 @@ public class ExamUtilService {
             var exerciseGroup2 = exam.getExerciseGroups().get(2);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup2);
+            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepo.save(programmingExercise1);
             programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);

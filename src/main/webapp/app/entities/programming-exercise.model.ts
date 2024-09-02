@@ -58,6 +58,23 @@ export class WindFile {
     actions: BuildAction[];
 }
 
+export class ProgrammingExerciseBuildConfig {
+    public sequentialTestRuns?: boolean;
+    public buildPlanConfiguration?: string;
+    public buildScript?: string;
+    public checkoutSolutionRepository?: boolean;
+    public checkoutPath?: string;
+    public timeoutSeconds?: number;
+    public dockerFlags?: string;
+    public windfile?: WindFile;
+    public testwiseCoverageEnabled?: boolean;
+
+    constructor() {
+        this.checkoutSolutionRepository = false; // default value
+        this.testwiseCoverageEnabled = false; // default value
+    }
+}
+
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
     PYTHON = 'PYTHON',
@@ -69,6 +86,7 @@ export enum ProgrammingLanguage {
     SWIFT = 'SWIFT',
     OCAML = 'OCAML',
     EMPTY = 'EMPTY',
+    RUST = 'RUST',
 }
 
 export enum ProjectType {
@@ -98,25 +116,19 @@ export class ProgrammingExercise extends Exercise {
     public allowOfflineIde?: boolean;
     public programmingLanguage?: ProgrammingLanguage;
     public packageName?: string;
-    public sequentialTestRuns?: boolean;
     public showTestNamesToStudents?: boolean;
-    public checkoutSolutionRepository?: boolean;
     public auxiliaryRepositories?: AuxiliaryRepository[];
     public submissionPolicy?: SubmissionPolicy;
     public exerciseHints?: ExerciseHint[];
     public gitDiffReport?: ProgrammingExerciseGitDiffReport;
     public buildLogStatistics?: BuildLogStatisticsDTO;
+    public buildConfig?: ProgrammingExerciseBuildConfig;
     public releaseTestsWithExampleSolution?: boolean;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     public testCasesChanged?: boolean;
 
     public projectType?: ProjectType;
-    public windFile?: WindFile;
-    public buildScript?: string;
-    public buildPlanConfiguration?: string;
-
-    public testwiseCoverageEnabled?: boolean;
 
     // helper attributes
 
@@ -140,10 +152,9 @@ export class ProgrammingExercise extends Exercise {
         this.allowOfflineIde = true; // default value
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
-        this.checkoutSolutionRepository = false; // default value
         this.projectType = ProjectType.PLAIN_GRADLE; // default value
         this.showTestNamesToStudents = false; // default value
-        this.testwiseCoverageEnabled = false; // default value
+        this.buildConfig = new ProgrammingExerciseBuildConfig();
     }
 }
 
@@ -154,4 +165,22 @@ export function resetProgrammingForImport(exercise: ProgrammingExercise) {
     exercise.releaseTestsWithExampleSolution = false;
     exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
     exercise.assessmentType = AssessmentType.AUTOMATIC;
+}
+
+/**
+ * Copy the build configuration from the given exerciseJson to this build configuration. This is to ensure compatibility with old exported programming exercises.
+ */
+export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExerciseBuildConfig): ProgrammingExerciseBuildConfig {
+    const buildConfig = new ProgrammingExerciseBuildConfig();
+    buildConfig.sequentialTestRuns = exerciseJson.sequentialTestRuns ?? false;
+    buildConfig.checkoutPath = exerciseJson.checkoutPath ?? '';
+    buildConfig.buildPlanConfiguration = exerciseJson.buildPlanConfiguration ?? '';
+    buildConfig.checkoutSolutionRepository = exerciseJson.checkoutSolutionRepository ?? false;
+    buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;
+    buildConfig.windfile = exerciseJson.windfile ?? undefined;
+    buildConfig.buildScript = exerciseJson.buildScript ?? '';
+    buildConfig.testwiseCoverageEnabled = exerciseJson.testwiseCoverageEnabled ?? false;
+    buildConfig.dockerFlags = exerciseJson.dockerFlags ?? '';
+
+    return buildConfig;
 }

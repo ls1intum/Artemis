@@ -5,52 +5,42 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
+import de.tum.in.www1.artemis.service.iris.dto.IrisChatWebsocketDTO;
 
 @Service
 @Profile("iris")
-public class IrisChatWebsocketService extends IrisWebsocketService {
+public class IrisChatWebsocketService {
+
+    private final IrisWebsocketService websocketService;
 
     private final IrisRateLimitService rateLimitService;
 
-    public IrisChatWebsocketService(WebsocketMessagingService websocketMessagingService, IrisRateLimitService rateLimitService) {
-        super(websocketMessagingService);
+    public IrisChatWebsocketService(IrisWebsocketService websocketService, IrisRateLimitService rateLimitService) {
+        this.websocketService = websocketService;
         this.rateLimitService = rateLimitService;
     }
 
-    private User checkSessionTypeAndGetUser(IrisSession irisSession) {
-        if (!(irisSession instanceof IrisChatSession chatSession)) {
-            throw new UnsupportedOperationException("Only IrisChatSessions are supported");
-        }
-        return chatSession.getUser();
-    }
-
     /**
-     * Sends a message over the websocket to a specific user
+     * Sends a message and/or a status update over the websocket to the user
+     * involved in the session. At least one of the message or the stages must be
+     * non-null, otherwise there is no need to send a message.
+     * This is currently used for both the exercise and course chat sessions, but
+     * this could be split up in the future.
      *
+     * @param session     the session to send the message to
      * @param irisMessage that should be sent over the websocket
      * @param stages      that should be sent over the websocket
      */
-    public void sendMessage(IrisMessage irisMessage, List<PyrisStageDTO> stages) {
-        var session = irisMessage.getSession();
-        var user = checkSessionTypeAndGetUser(session);
+    public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages) {
+        var user = session.getUser();
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
-        super.send(user, session.getId(), new IrisWebsocketDTO(irisMessage, rateLimitInfo, stages, null));
-    }
-
-    /**
-     * Sends a message over the websocket to a specific user without stages and suggestions
-     *
-     * @param message that should be sent over the websocket
-     */
-    public void sendMessage(IrisMessage message) {
-        sendMessage(message, null);
+        var topic = "" + session.getId(); // Todo: add more specific topic
+        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null);
+        websocketService.send(user.getLogin(), topic, payload);
     }
 
     /**
@@ -59,7 +49,7 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
      * @param session the session to send the status update to
      * @param stages  the stages to send
      */
-    public void sendStatusUpdate(IrisSession session, List<PyrisStageDTO> stages) {
+    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages) {
         this.sendStatusUpdate(session, stages, null);
     }
 
@@ -70,8 +60,11 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
      * @param stages      the stages to send
      * @param suggestions the suggestions to send
      */
-    public void sendStatusUpdate(IrisSession session, List<PyrisStageDTO> stages, List<String> suggestions) {
-        var user = checkSessionTypeAndGetUser(session);
-        super.send(user, session.getId(), new IrisWebsocketDTO(null, rateLimitService.getRateLimitInformation(user), stages, suggestions));
+    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, List<String> suggestions) {
+        var user = session.getUser();
+        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
+        var topic = "" + session.getId(); // Todo: add more specific topic
+        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, suggestions);
+        websocketService.send(user.getLogin(), topic, payload);
     }
 }

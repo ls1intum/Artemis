@@ -31,6 +31,9 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenManagementService;
 /**
  * Provides VCS access token services for GitLab via means of personal access tokens.
  */
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
+
 @Service
 @Profile("gitlab")
 public class GitLabPersonalAccessTokenManagementService extends VcsTokenManagementService {
@@ -54,8 +57,8 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
     /**
      * The config parameter for enabling VCS access tokens.
      */
-    @Value("${artemis.version-control.version-control-access-token:#{false}}")
-    private Boolean versionControlAccessToken;
+    @Value("${artemis.version-control.use-version-control-access-token:#{false}}")
+    private boolean useVersionControlAccessToken;
 
     public GitLabPersonalAccessTokenManagementService(UserRepository userRepository, GitLabApi gitlabApi, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
         this.userRepository = userRepository;
@@ -72,7 +75,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
      */
     @Override
     public void createAccessToken(User user, Duration lifetime) {
-        if (versionControlAccessToken) {
+        if (useVersionControlAccessToken) {
             if (user.getVcsAccessToken() != null) {
                 throw new IllegalArgumentException("User already has an access token");
             }
@@ -115,7 +118,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
      */
     @Override
     public void renewAccessToken(User user, Duration newLifetime) {
-        if (versionControlAccessToken) {
+        if (useVersionControlAccessToken) {
             if (user.getVcsAccessToken() == null) {
                 throw new IllegalArgumentException("User has no VCS access token to be renewed");
             }

@@ -15,9 +15,12 @@ import org.springframework.util.StreamUtils;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractBuildPlanCreator;
+
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
 
 @Service
 @Profile("gitlabci")
@@ -29,9 +32,9 @@ public class GitLabCIBuildPlanService extends AbstractBuildPlanCreator {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public GitLabCIBuildPlanService(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+    public GitLabCIBuildPlanService(BuildPlanRepository buildPlanRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             ResourceLoaderService resourceLoaderService) {
-        super(buildPlanRepository, programmingExerciseRepository);
+        super(buildPlanRepository, programmingExerciseBuildConfigRepository);
 
         this.resourceLoaderService = resourceLoaderService;
     }
@@ -45,7 +48,7 @@ public class GitLabCIBuildPlanService extends AbstractBuildPlanCreator {
     @Override
     public String generateDefaultBuildPlan(ProgrammingExercise programmingExercise) {
         final Optional<String> projectTypeName = getProjectTypeName(programmingExercise);
-        final Path resourcePath = buildResourcePath(programmingExercise.getProgrammingLanguage(), projectTypeName, programmingExercise.hasSequentialTestRuns());
+        final Path resourcePath = buildResourcePath(programmingExercise.getProgrammingLanguage(), projectTypeName, programmingExercise.getBuildConfig().hasSequentialTestRuns());
         final Resource resource = resourceLoaderService.getResource(resourcePath);
 
         try {
