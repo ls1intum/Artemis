@@ -3,6 +3,12 @@
 Jenkins and GitLab Setup
 ------------------------
 
+.. warning::
+
+    GitLab support will be removed with Artemis 8.0.0.
+    Please use :ref:`LocalVC and Jenkins <Jenkins and LocalVC Setup>` instead for new installations with Jenkins as the CI system.
+    For existing Jenkins and GitLab Setups, you can migrate to LocalVC with this `not merged Pull Request <https://github.com/ls1intum/Artemis/pull/8972>`__.
+
 This section describes how to set up a programming exercise environment
 based on Jenkins and GitLab. Optional commands are in curly brackets ``{}``.
 
