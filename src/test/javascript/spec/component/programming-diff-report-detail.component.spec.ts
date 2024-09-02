@@ -15,8 +15,8 @@ describe('ProgrammingDiffReportDetailComponent', () => {
     let fixture: ComponentFixture<ProgrammingDiffReportDetailComponent>;
     let modalService: NgbModal;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ProgrammingDiffReportDetailComponent],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -24,11 +24,8 @@ describe('ProgrammingDiffReportDetailComponent', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                modalService = fixture.debugElement.injector.get(NgbModal);
-            });
+        }).compileComponents();
+        modalService = fixture.debugElement.injector.get(NgbModal);
 
         fixture = TestBed.createComponent(ProgrammingDiffReportDetailComponent);
         component = fixture.componentInstance;
