@@ -60,7 +60,7 @@
                 </tr>
             } @empty {
                 <tr>
-                    <td [colSpan]="columns().length + 2" class="text-center text-secondary"><em jhiTranslate="global.generic.emptyList"></em></td>
+                    <td [colSpan]="numberOfColumns()" class="text-center text-secondary"><em jhiTranslate="global.generic.emptyList"></em></td>
                 </tr>
             }
         </tbody>
