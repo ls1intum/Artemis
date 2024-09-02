@@ -81,7 +81,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 LEFT JOIN FETCH l.attachments
             WHERE c.id IN :ids
             """)
-    Set<CourseCompetency> findAllByIdWithExercisesAndLectureUnitsAndLectures(@Param("ids") Set<Long> ids);
+    Set<CourseCompetency> findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(@Param("ids") Set<Long> ids);
 
     /**
      * Fetches all information related to the calculation of the mastery for exercises in a competency.

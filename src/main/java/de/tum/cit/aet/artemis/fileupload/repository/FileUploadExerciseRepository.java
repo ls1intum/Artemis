@@ -5,6 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -17,6 +18,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 
 /**
@@ -39,15 +41,6 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
 
-    /**
-     * Finds a file upload exercise by title and course id. Currently, name duplicates are allowed but this method throws an exception if multiple exercises with
-     * the same title are found.
-     *
-     * @param title    the title of the exercise
-     * @param courseId the id of the course containing the exercise
-     * @return the exercise with the given title and course id
-     * @throws NonUniqueResultException if multiple exercises with the same name in the same course are found
-     */
     @Query("""
             SELECT f
             FROM FileUploadExercise f
@@ -55,7 +48,15 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
             WHERE f.title = :title
                 AND f.course.id = :courseId
             """)
-    Optional<FileUploadExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
+    Set<FileUploadExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
+
+    default Optional<FileUploadExercise> findUniqueWithCompetenciesByTitleAndCourseId(String title, long courseId) throws NoUniqueQueryException {
+        Set<FileUploadExercise> allExercises = findAllWithCompetenciesByTitleAndCourseId(title, courseId);
+        if (allExercises.size() > 1) {
+            throw new NoUniqueQueryException("Found multiple exercises with title " + title + " in course with id " + courseId);
+        }
+        return allExercises.stream().findFirst();
+    }
 
     @NotNull
     default FileUploadExercise findWithEagerCompetenciesByIdElseThrow(Long exerciseId) {

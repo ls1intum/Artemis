@@ -222,7 +222,7 @@ public class CompetencyResource {
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
-        Set<CourseCompetency> competenciesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLectures(importOptions.competencyIds());
+        Set<CourseCompetency> competenciesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(importOptions.competencyIds());
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         competenciesToImport.forEach(competencyToImport -> {

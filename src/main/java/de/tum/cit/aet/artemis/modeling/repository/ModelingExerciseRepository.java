@@ -6,10 +6,10 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.hibernate.NonUniqueResultException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -18,6 +18,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
 /**
@@ -96,15 +97,6 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
 
-    /**
-     * Finds a modeling exercise by title and course id. Currently, name duplicates are allowed but this method throws an exception if multiple exercises with
-     * the same title are found.
-     *
-     * @param title    the title of the exercise
-     * @param courseId the id of the course containing the exercise
-     * @return the exercise with the given title and course id
-     * @throws NonUniqueResultException if multiple exercises with the same name in the same course are found
-     */
     @Query("""
             SELECT m
             FROM ModelingExercise m
@@ -112,7 +104,15 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             WHERE m.title = :title
                 AND m.course.id = :courseId
             """)
-    Optional<ModelingExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
+    Set<ModelingExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    default Optional<ModelingExercise> findUniqueWithCompetenciesByTitleAndCourseId(String title, long courseId) throws NoUniqueQueryException {
+        Set<ModelingExercise> allExercises = findAllWithCompetenciesByTitleAndCourseId(title, courseId);
+        if (allExercises.size() > 1) {
+            throw new NoUniqueQueryException("Found multiple exercises with title " + title + " in course with id " + courseId);
+        }
+        return allExercises.stream().findFirst();
+    }
 
     @NotNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {

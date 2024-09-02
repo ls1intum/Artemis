@@ -5,10 +5,10 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.hibernate.NonUniqueResultException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -17,6 +17,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -78,15 +79,6 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
     Optional<TextExercise> findWithGradingCriteriaById(long exerciseId);
 
-    /**
-     * Finds a text exercise by title and course id. Currently, name duplicates are allowed but this method throws an exception if multiple exercises with
-     * the same title are found.
-     *
-     * @param title    the title of the exercise
-     * @param courseId the id of the course containing the exercise
-     * @return the exercise with the given title and course id
-     * @throws NonUniqueResultException if multiple exercises with the same name in the same course are found
-     */
     @Query("""
             SELECT t
             FROM TextExercise t
@@ -94,7 +86,15 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
             WHERE t.title = :title
                 AND t.course.id = :courseId
             """)
-    Optional<TextExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
+    Set<TextExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    default Optional<TextExercise> findUniqueWithCompetenciesByTitleAndCourseId(String title, long courseId) throws NoUniqueQueryException {
+        Set<TextExercise> allExercises = findAllWithCompetenciesByTitleAndCourseId(title, courseId);
+        if (allExercises.size() > 1) {
+            throw new NoUniqueQueryException("Found multiple exercises with title " + title + " in course with id " + courseId);
+        }
+        return allExercises.stream().findFirst();
+    }
 
     @NotNull
     default TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {

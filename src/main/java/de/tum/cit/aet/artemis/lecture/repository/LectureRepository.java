@@ -8,7 +8,6 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.hibernate.NonUniqueResultException;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -18,6 +17,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
+import de.tum.in.www1.artemis.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
@@ -101,22 +101,29 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndSlidesAndAttachments(@Param("lectureId") long lectureId);
 
-    /**
-     * Finds a lecture by title and course id. Currently, name duplicates are allowed but this method throws an exception if multiple lectures with the
-     * same title are found.
-     *
-     * @param title    the title of the lecture
-     * @param courseId the id of the course containing the lecture
-     * @return the lecture with the given title and course id
-     * @throws NonUniqueResultException if multiple lectures with the same name in the same course are found
-     */
     @Query("""
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.lectureUnits
             WHERE lecture.title = :title AND lecture.course.id = :courseId
             """)
-    Optional<Lecture> findByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
+    Set<Lecture> findAllByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId);
+
+    /**
+     * Finds a lecture by its title and course id and throws a NoUniqueQueryException if multiple lectures are found.
+     *
+     * @param title    the title of the lecture
+     * @param courseId the id of the course
+     * @return the lecture with the given title and course id
+     * @throws NoUniqueQueryException if multiple lectures are found with the same title
+     */
+    default Optional<Lecture> findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
+        Set<Lecture> allLectures = findAllByTitleAndCourseIdWithLectureUnits(title, courseId);
+        if (allLectures.size() > 1) {
+            throw new NoUniqueQueryException("Found multiple lectures with title " + title + " in course with id " + courseId);
+        }
+        return allLectures.stream().findFirst();
+    }
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
