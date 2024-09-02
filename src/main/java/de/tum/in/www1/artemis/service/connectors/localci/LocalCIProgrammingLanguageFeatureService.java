@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.ASSEMBLER;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.EMPTY;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.HASKELL;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.KOTLIN;
@@ -36,7 +37,7 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
 
     public LocalCIProgrammingLanguageFeatureService() {
         // Must be extended once a new programming language is added
-        // TODO LOCALVC_CI: Local CI is not supporting EMPTY at the moment.
+        programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of(), false, true));
         programmingLanguageFeatures.put(JAVA,
                 new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN), false, true));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, false, false, true, false, false, List.of(), false, true));

@@ -1,0 +1,18 @@
+api: v0.0.1
+metadata:
+  name: Empty
+  id: empty
+  description: Provides a starting point
+actions:
+  - name: install_dependencies
+    script: echo 'Install dependencies'
+  - name: run_tests
+    script: echo 'Hello World'
+  - name: process_results
+    script: |-
+      rm -rf results
+      mkdir results
+    results:
+      - name: junit
+        path: results/*.xml
+        type: junit

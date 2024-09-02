@@ -29,9 +29,7 @@ private void runTestSteps() {
  */
 private void test() {
     stage('Build') {
-        sh '''
-        mvn --version
-        '''
+        sh 'echo "Hello World"'
     }
 }
 
