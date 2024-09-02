@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -50,16 +51,20 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
 
     private final UriService uriService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public MigrationEntryGitLabToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            UserRepository userRepository, AbstractVersionControlService sourceVersionControlService, UriService uriService) {
+            UserRepository userRepository, AbstractVersionControlService sourceVersionControlService, UriService uriService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         super(programmingExerciseRepository, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
                 programmingExerciseStudentParticipationRepository, auxiliaryRepositoryRepository);
         this.userRepository = userRepository;
         this.sourceVersionControlService = sourceVersionControlService;
         this.uriService = uriService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -77,7 +82,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     }
 
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws URISyntaxException {
-        return cloneRepositoryFromSourceVCSAndMoveToLocalVC(programmingExercise, programmingExercise.getTestRepositoryUri(), programmingExercise.getBranch());
+        return cloneRepositoryFromSourceVCSAndMoveToLocalVC(programmingExercise, programmingExercise.getTestRepositoryUri(), programmingExercise.getBuildConfig().getBranch());
     }
 
     /**
@@ -122,7 +127,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
                 if (isRepositoryUriNotNull(solutionParticipation, "Repository URI is null for solution participation with id {}, cant migrate")) {
                     var programmingExercise = solutionParticipation.getProgrammingExercise();
                     var url = cloneRepositoryFromSourceVCSAndMoveToLocalVC(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri(),
-                            programmingExercise.getBranch());
+                            programmingExercise.getBuildConfig().getBranch());
                     if (url == null) {
                         log.error("Failed to migrate solution repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
                         errorList.add(solutionParticipation);
@@ -133,16 +138,17 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
                         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
                     }
                     url = migrateTestRepo(solutionParticipation.getProgrammingExercise());
-                    var oldBranch = programmingExercise.getBranch();
+                    var oldBranch = programmingExercise.getBuildConfig().getBranch();
                     if (url == null) {
                         log.error("Failed to migrate test repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
                         errorList.add(solutionParticipation);
                     }
                     else {
                         log.debug("Migrated test repository for solution participation with id {} to {}", solutionParticipation.getId(), url);
-                        if (!defaultBranch.equals(programmingExercise.getBranch())) {
-                            programmingExercise.setBranch(defaultBranch);
-                            log.debug("Changed branch of programming exercise with id {} to {}", programmingExercise.getId(), programmingExercise.getBranch());
+                        if (!defaultBranch.equals(programmingExercise.getBuildConfig().getBranch())) {
+                            programmingExercise.getBuildConfig().setBranch(defaultBranch);
+                            programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+                            log.debug("Changed branch of programming exercise with id {} to {}", programmingExercise.getId(), programmingExercise.getBuildConfig().getBranch());
                         }
                         programmingExercise.setTestRepositoryUri(url);
                         programmingExerciseRepository.save(programmingExercise);
@@ -166,7 +172,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
             try {
                 if (isRepositoryUriNotNull(templateParticipation, "Repository URI is null for template participation with id {}, cant migrate")) {
                     var url = cloneRepositoryFromSourceVCSAndMoveToLocalVC(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUri(),
-                            templateParticipation.getProgrammingExercise().getBranch());
+                            templateParticipation.getProgrammingExercise().getBuildConfig().getBranch());
                     if (url == null) {
                         log.error("Failed to migrate template repository for template participation with id {}, keeping the url in the database", templateParticipation.getId());
                         errorList.add(templateParticipation);
