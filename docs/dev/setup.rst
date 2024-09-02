@@ -47,7 +47,7 @@ following dependencies/tools on your machine:
 
    * :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`
    * :ref:`LocalVC and Jenkins <Jenkins and LocalVC Setup>`
-   * :ref:`GitLab and Jenkins <Jenkins and GitLab Setup>`
+   * :ref:`GitLab and Jenkins <Jenkins and GitLab Setup>` (deprecated)
    * :ref:`GitLab and GitLab CI <GitLab CI and GitLab Setup>` (experimental, not yet production ready)
 
 ------------------------------------------------------------------------------------------------------------------------
