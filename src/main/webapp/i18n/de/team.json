@@ -17,7 +17,7 @@
                 "students": {
                     "login": "Login",
                     "name": "Name",
-                    "email": "Email"
+                    "email": "E-Mail"
                 },
                 "noOwner": "Keine Tutor:innen",
                 "participationsTable": {
