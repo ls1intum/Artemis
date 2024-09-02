@@ -88,6 +88,14 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
             """)
     Set<TextExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
 
+    /**
+     * Finds a text exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
+     *
+     * @param title    the title of the exercise
+     * @param courseId the id of the course
+     * @return the exercise with the given title and course id
+     * @throws NoUniqueQueryException if multiple exercises are found with the same title
+     */
     default Optional<TextExercise> findUniqueWithCompetenciesByTitleAndCourseId(String title, long courseId) throws NoUniqueQueryException {
         Set<TextExercise> allExercises = findAllWithCompetenciesByTitleAndCourseId(title, courseId);
         if (allExercises.size() > 1) {

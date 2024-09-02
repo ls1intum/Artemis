@@ -93,6 +93,14 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
             """)
     Set<QuizExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
 
+    /**
+     * Finds a quiz exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
+     *
+     * @param title    the title of the exercise
+     * @param courseId the id of the course
+     * @return the exercise with the given title and course id
+     * @throws NoUniqueQueryException if multiple exercises are found with the same title
+     */
     default Optional<QuizExercise> findUniqueWithCompetenciesByTitleAndCourseId(String title, long courseId) throws NoUniqueQueryException {
         Set<QuizExercise> allExercises = findAllWithCompetenciesByTitleAndCourseId(title, courseId);
         if (allExercises.size() > 1) {
