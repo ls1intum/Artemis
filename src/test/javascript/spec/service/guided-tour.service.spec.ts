@@ -591,8 +591,8 @@ describe('GuidedTourService', () => {
                 guidedTourService.enableUserInteraction(htmlTarget, userInteractionEvent);
                 expect(querySelectorSpy).not.toHaveBeenCalled();
             }));
-            it('should enableUserInteraction with UserInteractionEvent.ACE_EDITOR', fakeAsync(() => {
-                const userInteractionEvent = UserInteractionEvent.ACE_EDITOR;
+            it('should enableUserInteraction with UserInteractionEvent.MONACO_EDITOR', fakeAsync(() => {
+                const userInteractionEvent = UserInteractionEvent.MONACO_EDITOR;
                 observeMutationsStub.mockReturnValue(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
                 guidedTourService.enableUserInteraction(htmlTarget, userInteractionEvent);
                 expect(querySelectorSpy).toHaveBeenCalledOnce();
