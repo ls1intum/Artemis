@@ -45,7 +45,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
@@ -70,6 +70,9 @@ import { MockScienceService } from '../../../helpers/mocks/service/mock-science-
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -91,7 +94,15 @@ describe('CourseExerciseDetailsComponent', () => {
     let scienceService: ScienceService;
     let logEventStub: jest.SpyInstance;
 
-    const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [], course: {} } as unknown as Exercise;
+    const exercise = {
+        id: 42,
+        type: ExerciseType.TEXT,
+        studentParticipations: [],
+        course: {
+            id: 1,
+            courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+        },
+    } as unknown as Exercise;
 
     const textExercise = {
         id: 24,
@@ -118,11 +129,15 @@ describe('CourseExerciseDetailsComponent', () => {
 
     const parentParams = { courseId: 1 };
     const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
-    const route = { params: of({ exerciseId: exercise.id }), parent: parentRoute, queryParams: of({ welcome: '' }) } as any as ActivatedRoute;
+    const route = {
+        params: of({ exerciseId: exercise.id }),
+        parent: parentRoute,
+        queryParams: of({ welcome: '' }),
+    } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [MockComponent(DiscussionSectionComponent)],
             declarations: [
                 CourseExerciseDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -151,6 +166,8 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ExerciseInfoComponent),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -194,7 +211,11 @@ describe('CourseExerciseDetailsComponent', () => {
 
                 // mock teamService, needed for team assignment
                 teamService = fixture.debugElement.injector.get(TeamService);
-                const teamAssignmentPayload = { exerciseId: 2, teamId: 2, studentParticipations: [] } as TeamAssignmentPayload;
+                const teamAssignmentPayload = {
+                    exerciseId: 2,
+                    teamId: 2,
+                    studentParticipations: [],
+                } as TeamAssignmentPayload;
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(teamAssignmentPayload)));
 
                 // mock participationService, needed for team assignment
@@ -321,6 +342,27 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.availableExerciseHints).not.toContain(activatedHint);
         expect(comp.activatedExerciseHints).toContain(activatedHint);
     });
+
+    it('should show discussion section when communication is enabled', fakeAsync(() => {
+        fixture.detectChanges();
+        tick(500);
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeTruthy();
+    }));
+
+    it('should not show discussion section when communication is disabled', fakeAsync(() => {
+        const newExercise = {
+            ...exercise,
+            course: { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
+        };
+        getExerciseDetailsMock.mockReturnValue(of({ body: newExercise }));
+
+        comp.handleNewExercise({ exercise });
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeFalsy();
+    }));
 
     it('should handle new programming exercise', () => {
         const courseId = programmingExercise.course!.id!;

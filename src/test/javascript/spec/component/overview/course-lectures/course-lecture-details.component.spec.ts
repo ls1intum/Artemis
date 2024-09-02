@@ -20,7 +20,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { Lecture } from 'app/entities/lecture.model';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
@@ -52,19 +52,22 @@ describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
     let lecture: Lecture;
+    let course: Course;
     let lectureUnit1: AttachmentUnit;
     let lectureUnit2: AttachmentUnit;
     let lectureUnit3: TextUnit;
     let debugElement: DebugElement;
     let profileService: ProfileService;
+    let lectureService: LectureService;
 
     let getProfileInfoMock: jest.SpyInstance;
 
     beforeEach(async () => {
         const releaseDate = dayjs('18-03-2020', 'DD-MM-YYYY');
 
-        const course = new Course();
+        course = new Course();
         course.id = 456;
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
 
         lecture = new Lecture();
         lecture.id = 1;
@@ -141,6 +144,10 @@ describe('CourseLectureDetailsComponent', () => {
                 MockProvider(ScienceService),
             ],
         }).compileComponents();
+
+        lectureService = TestBed.inject(LectureService);
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(response);
+        jest.spyOn(lectureService, 'find').mockReturnValue(response);
 
         fixture = TestBed.createComponent(CourseLectureDetailsComponent);
         courseLecturesDetailsComponent = fixture.componentInstance;
@@ -247,6 +254,27 @@ describe('CourseLectureDetailsComponent', () => {
 
         attachment.link = undefined;
         expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('N/A');
+    }));
+
+    it('should show discussion section when communication is enabled', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeTruthy();
+    }));
+
+    it('should not show discussion section when communication is disabled', fakeAsync(() => {
+        const lecture = {
+            ...lectureUnit3.lecture,
+            course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
+        };
+        const response = of(new HttpResponse({ body: { ...lecture }, status: 200 }));
+        jest.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(response);
+
+        fixture.detectChanges();
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeFalsy();
     }));
 
     it('should download file for attachment', fakeAsync(() => {
