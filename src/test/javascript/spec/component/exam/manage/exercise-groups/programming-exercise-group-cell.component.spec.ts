@@ -30,6 +30,7 @@ describe('Programming Exercise Group Cell Component', () => {
         },
         allowOfflineIde: true,
         allowOnlineEditor: true,
+        allowOnlineIde: false,
     } as any as ProgrammingExercise;
 
     let mockedProfileService: ProfileService;
@@ -93,11 +94,15 @@ describe('Programming Exercise Group Cell Component', () => {
 
         const div0 = fixture.debugElement.query(By.css('div > div > div:first-child'));
         expect(div0).not.toBeNull();
-        expect(div0.nativeElement.textContent?.trim()).toBe('artemisApp.programmingExercise.offlineIde : true');
+        expect(div0.nativeElement.textContent?.trim()).toBe(': true');
 
         const div1 = fixture.debugElement.query(By.css('div > div > div:nth-child(2)'));
         expect(div1).not.toBeNull();
-        expect(div1.nativeElement.textContent?.trim()).toBe('artemisApp.programmingExercise.onlineEditor : true');
+        expect(div1.nativeElement.textContent?.trim()).toBe(': true');
+
+        const div2 = fixture.debugElement.query(By.css('div > div > div:nth-child(3)'));
+        expect(div2).not.toBeNull();
+        expect(div2.nativeElement.textContent?.trim()).toBe(': false');
     });
 
     it('should download the repository', () => {
