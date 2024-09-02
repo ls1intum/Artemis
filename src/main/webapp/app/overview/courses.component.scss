@@ -18,6 +18,25 @@
 * Column width adjustments derived from course card width sizes
 * Ensures that no cards will appear on top of each other 
 */
+
+@media screen and (min-width: 3350px) {
+    .col-2 {
+        width: 14.28% !important;
+    }
+}
+
+@media screen and (min-width: 3800px) {
+    .col-2 {
+        width: 12.5% !important;
+    }
+}
+
+@media screen and (min-width: 4700px) {
+    .col-2 {
+        width: 11.11% !important;
+    }
+}
+
 @media screen and (max-width: 2550px) {
     .col-2 {
         width: 20% !important;
