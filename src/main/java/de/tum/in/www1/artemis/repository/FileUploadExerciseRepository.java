@@ -50,6 +50,14 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
             """)
     Set<FileUploadExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
 
+    /**
+     * Finds a file upload exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
+     *
+     * @param title    the title of the exercise
+     * @param courseId the id of the course
+     * @return the exercise with the given title and course id
+     * @throws NoUniqueQueryException if multiple exercises are found with the same title
+     */
     default Optional<FileUploadExercise> findUniqueWithCompetenciesByTitleAndCourseId(String title, long courseId) throws NoUniqueQueryException {
         Set<FileUploadExercise> allExercises = findAllWithCompetenciesByTitleAndCourseId(title, courseId);
         if (allExercises.size() > 1) {
