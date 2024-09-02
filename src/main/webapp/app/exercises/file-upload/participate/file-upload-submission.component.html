@@ -53,8 +53,8 @@
                             <span> {{ submission!.submissionDate! | artemisTimeAgo }}</span>
                         </h6>
                     } @else {
-                        <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
-                        <span>{{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}</span>
+                        <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
+                        <span jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName }"></span>
                     }
                     <br />
                     <div class="mt-2">

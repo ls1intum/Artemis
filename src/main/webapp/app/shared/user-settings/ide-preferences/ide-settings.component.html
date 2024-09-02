@@ -47,7 +47,7 @@
             <div
                 class="btn"
                 [ngClass]="isIdeOfProgrammingLanguage(programmingLanguage, ide) ? 'btn-primary selected' : 'btn-default'"
-                (click)="changeIde(ProgrammingLanguage.EMPTY, ide)"
+                (click)="changeIde(programmingLanguage, ide)"
             >
                 {{ ide.name }}
             </div>
