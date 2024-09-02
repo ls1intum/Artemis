@@ -332,12 +332,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.allowOfflineIde.title',
-                    data: { boolean: exercise.allowOfflineIde },
+                    data: { boolean: exercise.allowOfflineIde ?? false },
                 },
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.allowOnlineEditor.title',
-                    data: { boolean: exercise.allowOnlineEditor },
+                    data: { boolean: exercise.allowOnlineEditor ?? false },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.allowOnlineIde.title',
+                    data: { boolean: exercise.allowOnlineIde ?? false },
                 },
             ],
         };
@@ -456,13 +461,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     },
                 },
                 !!exercise.buildConfig?.buildScript &&
-                    !!exercise.buildConfig?.windFile?.metadata?.docker?.image && {
+                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.dockerImage',
-                        data: { text: exercise.buildConfig?.windFile?.metadata?.docker?.image },
+                        data: { text: exercise.buildConfig?.windfile?.metadata?.docker?.image },
                     },
                 !!exercise.buildConfig?.buildScript &&
-                    !!exercise.buildConfig?.windFile?.metadata?.docker?.image && {
+                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
@@ -752,8 +757,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkAndSetWindFile(exercise: ProgrammingExercise) {
-        if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windFile) {
-            exercise.buildConfig!.windFile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
+        if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windfile) {
+            exercise.buildConfig!.windfile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
         }
     }
 
