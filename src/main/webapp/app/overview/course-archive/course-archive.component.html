@@ -1,17 +1,34 @@
-<div class="row mb-3 mx-3 module-bg p-2 rounded-3">
+<div class="module-bg p-3 rounded-3 mb-3">
     <div class="d-flex justify-content-between align-items-center">
-        <div class="col-sm-8">
+        <!-- <div class="col-sm-8">
             <div class="d-flex justify-content-start gap-1">
                 <h3 class="fw-medium mb-0" jhiTranslate="artemisApp.course.archive.title"></h3>
                 <fa-icon
-                    [icon]="faQuestionCircle"
-                    [size]="iconSize"
-                    class="text-secondary align-self-center"
-                    ngbTooltip="{{ 'artemisApp.course.archive.tip' | artemisTranslate }}"
+                [icon]="faQuestionCircle"
+                [size]="iconSize"
+                class="text-secondary align-self-center"
+                ngbTooltip="{{ 'artemisApp.course.archive.tip' | artemisTranslate }}"
                 />
             </div>
         </div>
         <div class="d-flex justfiy-content-between gap-3 align-items-center">
+            <div class="text-primary d-inline-flex">
+                <a (click)="onSort()" class="d-inline-flex align-items-center">
+                    @if (isSortAscending) {
+                        <fa-icon [icon]="faArrowDownAZ" />
+                        } @else {
+                            <fa-icon [icon]="faArrowUpAZ" />
+                            }
+                            <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
+                        </a>
+                    </div>
+                    <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="my-0" />
+                </div> -->
+        <div class="d-flex justify-content-start gap-1">
+            <h3 class="fw-medium mb-0" jhiTranslate="artemisApp.course.archive.title"></h3>
+            <fa-icon [icon]="faQuestionCircle" [size]="iconSize" class="text-secondary align-self-center" ngbTooltip="{{ 'artemisApp.course.archive.tip' | artemisTranslate }}" />
+        </div>
+        <div class="d-flex justfiy-content-between gap-3 align-items-center ms-1">
             <div class="text-primary d-inline-flex">
                 <a (click)="onSort()" class="d-inline-flex align-items-center">
                     @if (isSortAscending) {
@@ -27,29 +44,20 @@
     </div>
 </div>
 @if (courses) {
-    <div class="module-bg mx-3 py-2 px-3 rounded-3">
-        <div class="table-responsive">
+    <div class="module-bg px-3 py-3 rounded-3">
+        <div class="table mb-0">
             @for (semester of semesters; track semester; let last = $last) {
-                <div class="course-table-container mb-3">
-                    <div class="control-label my-3" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
-                        <fa-icon size="2x" class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />
-                        @if (semester !== '') {
-                            <span style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }} </span>
+                <div class="d-flex justify-content-between align-items-center" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
+                    <span class="fw-bold"> {{ mapSemesterString(semester) }}</span>
+                    <fa-icon [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />
+                </div>
+                @if (!semesterCollapsed[semester]) {
+                    <div class="row">
+                        @for (course of coursesBySemester[semester] | searchFilter: ['title'] : searchCourseText; track course) {
+                            <jhi-course-card-header class="col-2 p-2" [course]="course" [courseColor]="courseColor" [archiveMode]="true" />
                         }
                     </div>
-                    @if (!semesterCollapsed[semester]) {
-                        <div>
-                            @for (course of coursesBySemester[semester] | searchFilter: ['title'] : searchCourseText; track course) {
-                                <div class="card text-center mb-2">
-                                    <div class="course-card card-body" [ngStyle]="{ '--background-color-for-hover': course.color ?? ARTEMIS_DEFAULT_COLOR }">
-                                        <a class="stretched-link" [routerLink]="['/courses', course.id]"></a>
-                                        <h3 class="text-white">{{ course.title }}</h3>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-                </div>
+                }
                 @if (!last) {
                     <hr />
                 }

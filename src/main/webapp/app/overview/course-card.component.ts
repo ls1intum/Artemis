@@ -1,7 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -21,7 +20,6 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 export class CourseCardComponent implements OnChanges {
     protected readonly faArrowRight = faArrowRight;
 
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     @Input() course: Course;
     @Input() hasGuidedTour: boolean;
 
@@ -80,8 +78,6 @@ export class CourseCardComponent implements OnChanges {
             this.ngxDoughnutData[1].value = scoreNotReached;
             this.ngxDoughnutData = [...this.ngxDoughnutData];
         }
-
-        this.courseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
     }
 
     /**

@@ -1,33 +1,33 @@
-.course-table {
-    padding: 5px 0;
-    background-color: var(--overview-light-background-color);
-    border-radius: 3px;
-    transition: box-shadow 0.1s linear;
+.table {
+    cursor: pointer;
 }
 
-.course-table-container {
-    .control-label {
-        cursor: pointer;
-        margin-bottom: 16px;
-    }
-
-    .container {
-        display: inline-flex;
+@media screen and (max-width: 2550px) {
+    .col-2 {
+        width: 20% !important;
     }
 }
 
-.table-responsive {
-    overflow-x: hidden;
+@media screen and (max-width: 2000px) {
+    .col-2 {
+        width: 25% !important;
+    }
 }
 
-.course-card {
-    background-color: var(--background-color-for-hover) !important;
-    transition: 0.15s;
-    filter: alpha(opacity = 100);
-    opacity: 1;
+@media screen and (max-width: 1650px) {
+    .col-2 {
+        width: 33.33% !important;
+    }
+}
 
-    &:hover {
-        transform: scale(1.012);
-        background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
+@media screen and (max-width: 1172px) {
+    .col-2 {
+        width: 50% !important;
+    }
+}
+
+@media screen and (max-width: 819px) {
+    .col-2 {
+        width: 100% !important;
     }
 }

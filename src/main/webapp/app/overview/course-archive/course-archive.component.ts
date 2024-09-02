@@ -1,6 +1,4 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../../course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -9,13 +7,10 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subscription } from 'rxjs';
 import { faAngleDown, faAngleUp, faArrowDownAZ, faArrowUpAZ, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { sortCourses } from 'app/shared/util/course.util';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
-    standalone: true,
     selector: 'course-archive',
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
     templateUrl: './course-archive.component.html',
     styleUrls: ['./course-archive.component.scss'],
 })
@@ -24,14 +19,13 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     courses: Course[];
     semesters: string[];
+    expandedSemesterStrings: { [key: string]: string };
     semesterCollapsed: { [key: string]: boolean };
     coursesBySemester: { [key: string]: Course[] };
     courseColor: string;
     searchCourseText = '';
     isSortAscending = true;
     iconSize: SizeProp = 'lg';
-
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     //Icons
     readonly faAngleDown = faAngleDown;
@@ -47,7 +41,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.loadArchivedCourses();
-        this.courseService.setCourseOverviewBackground();
+        this.courseService.enableCourseOverviewBackground();
     }
 
     /**
@@ -77,7 +71,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.archiveCourseSubscription.unsubscribe();
-        this.courseService.resetCourseOverviewBackground();
+        this.courseService.disableCourseOverviewBackground();
     }
 
     setSearchValue(searchValue: string): void {
@@ -98,6 +92,15 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
         for (const semester of this.semesters) {
             const hasMatchingCourse = this.coursesBySemester[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText.toLowerCase()));
             this.semesterCollapsed[semester] = !hasMatchingCourse;
+        }
+    }
+
+    mapSemesterString(semester: string): string {
+        const year = semester.slice(2);
+        if (semester.startsWith('WS')) {
+            return `Wintersemester 20${year}`;
+        } else {
+            return `Sommersemester 20${year}`;
         }
     }
 }
