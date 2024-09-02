@@ -259,9 +259,12 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
     void refreshLock_complaintAlreadyResolved_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
+        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
         complaint.setAccepted(true);
-        complaint = complaintRepository.saveAndFlush(complaint);
+        complaint.setComplaintResponse(initialLockComplaintResponse);
+        complaint = complaintRepository.save(complaint);
+        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
         request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
@@ -341,8 +344,11 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void removeLock_complaintIsAlreadyHandled_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
+        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
         complaint.setAccepted(true);
+        complaint.setComplaintResponse(initialLockComplaintResponse);
         complaintRepository.saveAndFlush(complaint);
+        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
         request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }

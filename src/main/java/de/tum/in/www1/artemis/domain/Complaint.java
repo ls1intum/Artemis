@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import jakarta.annotation.Nullable;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -48,7 +50,7 @@ public class Complaint extends DomainObject {
     @Column(name = "complaint_type", nullable = false)
     private ComplaintType complaintType = ComplaintType.COMPLAINT;      // default value
 
-    @OneToOne(mappedBy = "complaint")
+    @OneToOne(mappedBy = "complaint", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "complaint", allowGetters = true)
     private ComplaintResponse complaintResponse;
 
@@ -144,8 +146,24 @@ public class Complaint extends DomainObject {
         return complaintResponse;
     }
 
-    public void setComplaintResponse(ComplaintResponse complaintResponse) {
+    public void setComplaintResponse(@Nullable ComplaintResponse complaintResponse) {
+        // If the current complaintResponse is the same as the new one, do nothing
+        if (this.complaintResponse == complaintResponse) {
+            return;
+        }
+
+        // Break the existing relationship, if any
+        if (this.complaintResponse != null) {
+            this.complaintResponse.setComplaint(null);
+        }
+
+        // Assign the new complaintResponse
         this.complaintResponse = complaintResponse;
+
+        // Establish the new relationship, if the new complaintResponse is not null
+        if (complaintResponse != null && complaintResponse.getComplaint() != this) {
+            complaintResponse.setComplaint(this);
+        }
     }
 
     /**
@@ -154,18 +172,14 @@ public class Complaint extends DomainObject {
      * @param participant either a team or user
      */
     public void setParticipant(Participant participant) {
-        if (participant instanceof User) {
-            this.student = (User) participant;
-        }
-        else if (participant instanceof Team) {
-            this.team = (Team) participant;
-        }
-        else if (participant == null) {
-            this.student = null;
-            this.team = null;
-        }
-        else {
-            throw new Error("Unknown participant type");
+        switch (participant) {
+            case User aUser -> this.student = aUser;
+            case Team aTeam -> this.team = aTeam;
+            case null -> {
+                this.student = null;
+                this.team = null;
+            }
+            default -> throw new Error("Unknown participant type");
         }
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

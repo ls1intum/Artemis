@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_RESPONSE_TEXT_LI
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -117,7 +118,7 @@ public class ComplaintResponse extends AbstractAuditingEntity {
         return this;
     }
 
-    public void setComplaint(Complaint complaint) {
+    public void setComplaint(@Nullable Complaint complaint) {
         this.complaint = complaint;
     }
 

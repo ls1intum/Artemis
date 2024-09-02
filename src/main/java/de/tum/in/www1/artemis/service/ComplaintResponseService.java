@@ -75,7 +75,9 @@ public class ComplaintResponseService {
         if (blockedByLock(complaintResponseRepresentingLock, user)) {
             throw new ComplaintResponseLockedException(complaintResponseRepresentingLock);
         }
-        complaintResponseRepository.deleteById(complaintResponseRepresentingLock.getId());
+        complaint.setComplaintResponse(null);
+        // this deletes the complaint response and thus the lock
+        complaintRepository.save(complaint);
         log.debug("Removed empty complaint and thus lock for complaint with id : {}", complaint.getId());
     }
 
@@ -113,7 +115,7 @@ public class ComplaintResponseService {
         }
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for refreshing the lock on the complaint");
         }
@@ -122,9 +124,8 @@ public class ComplaintResponseService {
             throw new ComplaintResponseLockedException(complaintResponseRepresentingLock);
         }
 
-        complaintResponseRepository.deleteById(complaintResponseRepresentingLock.getId());
         complaint.setComplaintResponse(null);
-        complaintResponseRepository.flush();
+        complaint = complaintRepository.save(complaint);
 
         ComplaintResponse refreshedEmptyComplaintResponse = new ComplaintResponse();
         refreshedEmptyComplaintResponse.setReviewer(user); // owner of the lock
