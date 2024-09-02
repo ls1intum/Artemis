@@ -45,6 +45,8 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -88,7 +90,7 @@ describe('CourseLectureDetailsComponent', () => {
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
 
         await TestBed.configureTestingModule({
-            imports: [provideHttpClient(), provideHttpClientTesting()],
+            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover)],
             declarations: [
                 CourseLectureDetailsComponent,
                 MockComponent(AttachmentUnitComponent),
@@ -111,8 +113,11 @@ describe('CourseLectureDetailsComponent', () => {
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(SubmissionResultStatusComponent),
+                MockComponent(DiscussionSectionComponent),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(LectureService, {
                     find: () => {
                         return response;
