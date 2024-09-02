@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import type { ProgrammingDiffReportDetail } from 'app/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
@@ -24,9 +24,9 @@ export class ProgrammingDiffReportDetailComponent {
 
     protected readonly faCodeCompare = faCodeCompare;
 
-    @Input() detail: ProgrammingDiffReportDetail;
+    private readonly modalService = inject(NgbModal);
 
-    constructor(private modalService: NgbModal) {}
+    @Input({ required: true }) detail: ProgrammingDiffReportDetail;
 
     showGitDiff(gitDiff?: ProgrammingExerciseGitDiffReport) {
         if (!gitDiff) {

@@ -16,5 +16,5 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class ProgrammingTestStatusDetailComponent {
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
 
-    @Input() detail: ProgrammingTestStatusDetail;
+    @Input({ required: true }) detail: ProgrammingTestStatusDetail;
 }
