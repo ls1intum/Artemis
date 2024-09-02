@@ -1,0 +1,9 @@
+theia:
+    portal-url: https://your-theia-instance.com
+
+    images:
+        java:
+            Java-17: "ghcr.io/ls1intum/theia/java-17:latest"
+            Java-Non-Existent: "this-is-not-a-valid-image"
+        c:
+            C: "ghcr.io/ls1intum/theia/c:latest"

@@ -67,6 +67,9 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_THEIA } from 'app/app.constants';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -80,6 +83,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let exerciseGroupService: ExerciseGroupService;
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
+    let profileService: ProfileService;
+
+    let getProfileInfoSub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -147,6 +153,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
                 programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
                 alertService = debugElement.injector.get(AlertService);
+                profileService = debugElement.injector.get(ProfileService);
+
+                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+                const newProfileInfo = new ProfileInfo();
+                newProfileInfo.activeProfiles = [];
+                getProfileInfoSub.mockReturnValue(of(newProfileInfo));
             });
     });
 
@@ -792,11 +804,56 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
-        it('find validation errors for invalid ide selection', () => {
+        it.each([
+            [
+                'find validation errors for invalid ide selection',
+                {
+                    activeProfiles: [PROFILE_THEIA],
+                },
+                {
+                    translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                    translateValues: {},
+                },
+            ],
+            [
+                'find validation errors for invalid ide selection without theia profile',
+                {
+                    activeProfiles: [],
+                },
+                {
+                    translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia',
+                    translateValues: {},
+                },
+            ],
+        ])('%s', (description, profileInfo, expectedException) => {
+            getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+
+            const newProfileInfo = new ProfileInfo();
+            newProfileInfo.activeProfiles = profileInfo.activeProfiles;
+
+            getProfileInfoSub.mockReturnValue(of(newProfileInfo));
+
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: comp.programmingExercise });
+
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
             comp.programmingExercise.allowOnlineEditor = false;
             comp.programmingExercise.allowOfflineIde = false;
+            comp.programmingExercise.allowOnlineIde = false;
+
+            fixture.detectChanges();
+
+            expect(comp.getInvalidReasons()).toContainEqual(expectedException);
+        });
+
+        it('find validation errors for invalid online IDE image', () => {
+            comp.programmingExercise.allowOnlineIde = true;
+            comp.programmingExercise.buildConfig!.theiaImage = undefined;
             expect(comp.getInvalidReasons()).toContainEqual({
-                translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                translateKey: 'artemisApp.programmingExercise.theiaImage.alert',
                 translateValues: {},
             });
         });
@@ -832,6 +889,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.maxStaticCodeAnalysisPenalty = 60;
             comp.programmingExercise.allowOfflineIde = true;
             comp.programmingExercise.allowOnlineEditor = false;
+            comp.programmingExercise.allowOnlineIde = false;
             comp.programmingExercise.packageName = 'de.tum.in';
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
 
@@ -975,7 +1033,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         fixture.detectChanges();
         tick();
 
-        const categories = [new ExerciseCategory()];
+        const categories = [new ExerciseCategory(undefined, undefined)];
         expect(comp.exerciseCategories).toBeUndefined();
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
@@ -1017,6 +1075,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         comp.programmingExercise.allowOfflineIde = false;
         comp.programmingExercise.allowOnlineEditor = false;
+        comp.programmingExercise.allowOnlineIde = false;
         comp.calculateFormStatusSections();
         expect(comp.formStatusSections[1].valid).toBeFalse();
         comp.programmingExercise.allowOnlineEditor = true;
