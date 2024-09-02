@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.5.1"
+version = "7.5.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -284,7 +284,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.6"
+    implementation "net.sourceforge.plantuml:plantuml:1.2024.5"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -447,6 +447,9 @@ dependencies {
 
     // use newest version of gson to avoid security issues through outdated dependencies
     implementation "com.google.code.gson:gson:2.11.0"
+
+
+    implementation "com.google.errorprone:error_prone_annotations:2.31.0"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {

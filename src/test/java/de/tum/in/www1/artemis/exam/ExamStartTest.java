@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -124,7 +123,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         registeredUsers = Set.of(student1, student2);
-        exam.setExamUsers(Set.of(new ExamUser()));
         // setting dates
         exam.setStartDate(ZonedDateTime.now().plusHours(2));
         exam.setEndDate(ZonedDateTime.now().plusHours(3));
@@ -137,6 +135,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
             programmingExerciseTestService.tearDown();
         }
 
+        // TODO: why do we remove the student exams here? This is not really necessary
         // Cleanup of Bidirectional Relationships
         for (StudentExam studentExam : createdStudentExams) {
             exam.removeStudentExam(studentExam);
