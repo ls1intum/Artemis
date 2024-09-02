@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
@@ -13,8 +12,6 @@ import { MockPostService } from '../../../helpers/mocks/service/mock-post.servic
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
-import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,7 +22,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { getElement, getElements } from '../../../helpers/utils/general.utils';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import {
     messagesBetweenUser1User2,
     metisCourse,
@@ -47,6 +43,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
@@ -66,11 +63,12 @@ describe('DiscussionSectionComponent', () => {
     let getChannelOfLectureSpy: jest.SpyInstance;
     let getChannelOfExerciseSpy: jest.SpyInstance;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent],
             providers: [
                 provideHttpClient(),
+                provideHttpClientTesting(),
                 FormBuilder,
                 MockProvider(SessionStorageService),
                 MockProvider(ChannelService),
@@ -89,52 +87,47 @@ describe('DiscussionSectionComponent', () => {
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
                 },
             ],
-            declarations: [
-                DiscussionSectionComponent,
-                InfiniteScrollStubDirective,
-                MockComponent(PostingThreadComponent),
-                MockComponent(PostCreateEditModalComponent),
-                MockComponent(FaIconComponent),
-                MockComponent(ButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
-            ],
+            declarations: [InfiniteScrollStubDirective, MockComponent(FaIconComponent)],
         })
             .overrideComponent(DiscussionSectionComponent, {
                 set: {
                     providers: [{ provide: MetisService, useClass: MetisService }],
                 },
             })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(DiscussionSectionComponent);
-                component = fixture.componentInstance;
-                metisService = fixture.debugElement.injector.get(MetisService);
-                channelService = TestBed.inject(ChannelService);
-                getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: metisLectureChannelDTO,
-                            status: 200,
-                        }),
-                    ),
-                );
-                getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: metisExerciseChannelDTO,
-                            status: 200,
-                        }),
-                    ),
-                );
-                metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
-                component.lecture = { ...metisLecture, course: metisCourse };
-                component.ngOnInit();
-                fixture.detectChanges();
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(DiscussionSectionComponent);
+        component = fixture.componentInstance;
+        metisService = fixture.debugElement.injector.get(MetisService);
+        channelService = TestBed.inject(ChannelService);
+        getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: metisLectureChannelDTO,
+                    status: 200,
+                }),
+            ),
+        );
+        getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: metisExerciseChannelDTO,
+                    status: 200,
+                }),
+            ),
+        );
+        metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
+        component.lecture = { ...metisLecture, course: metisCourse };
+        component.ngOnInit();
+        fixture.detectChanges();
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        expect(component).toBeTruthy();
     });
 
     it('should set course and messages for lecture with lecture channel on initialization', fakeAsync(() => {

@@ -23,7 +23,6 @@ import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -86,7 +85,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     isAfterAssessmentDueDate: boolean;
     allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
-    private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
     submissionPolicy?: SubmissionPolicy;
@@ -224,10 +222,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
 
-        if (this.discussionComponent && this.exercise) {
-            // We need to manually update the exercise property of the posts component
-            this.discussionComponent.exercise = this.exercise;
-        }
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
     }
 

@@ -2,14 +2,13 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { BehaviorSubject, of } from 'rxjs';
-import { CourseLectureDetailsComponent } from '../../../../../../main/webapp/app/overview/course-lectures/course-lecture-details.component';
+import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
@@ -28,7 +27,7 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { FileService } from 'app/shared/http/file.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
@@ -39,13 +38,13 @@ import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ScienceService } from 'app/shared/science/science.service';
 import * as DownloadUtils from 'app/shared/util/download.util';
-import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -59,7 +58,7 @@ describe('CourseLectureDetailsComponent', () => {
 
     let getProfileInfoMock: jest.SpyInstance;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         const releaseDate = dayjs('18-03-2020', 'DD-MM-YYYY');
 
         const course = new Course();
@@ -88,8 +87,8 @@ describe('CourseLectureDetailsComponent', () => {
         headers = headers.set('Content-Type', 'application/json; charset=utf-8');
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
 
-        TestBed.configureTestingModule({
-            imports: [RouterTestingModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover)],
+        await TestBed.configureTestingModule({
+            imports: [provideHttpClient(), provideHttpClientTesting()],
             declarations: [
                 CourseLectureDetailsComponent,
                 MockComponent(AttachmentUnitComponent),
@@ -136,20 +135,18 @@ describe('CourseLectureDetailsComponent', () => {
                 MockProvider(Router),
                 MockProvider(ScienceService),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseLectureDetailsComponent);
-                courseLecturesDetailsComponent = fixture.componentInstance;
-                debugElement = fixture.debugElement;
+        }).compileComponents();
 
-                // mock profileService
-                profileService = fixture.debugElement.injector.get(ProfileService);
-                getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                const profileInfo = { inProduction: false } as ProfileInfo;
-                const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
-                getProfileInfoMock.mockReturnValue(profileInfoSubject);
-            });
+        fixture = TestBed.createComponent(CourseLectureDetailsComponent);
+        courseLecturesDetailsComponent = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+
+        // mock profileService
+        profileService = fixture.debugElement.injector.get(ProfileService);
+        getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
+        const profileInfo = { inProduction: false } as ProfileInfo;
+        const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
+        getProfileInfoMock.mockReturnValue(profileInfoSubject);
     });
 
     afterEach(() => {
