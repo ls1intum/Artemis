@@ -23,11 +23,12 @@ public class ScienceUtilService {
      * @param identity   The login of the user associated with the event.
      * @param type       The type of the event.
      * @param resourceId The id of the resource associated with the event.
+     * @param timestamp  The timestamp of the event.
      */
-    public ScienceEvent createScienceEvent(String identity, ScienceEventType type, Long resourceId) {
+    public ScienceEvent createScienceEvent(String identity, ScienceEventType type, Long resourceId, ZonedDateTime timestamp) {
         ScienceEvent event = new ScienceEvent();
         event.setIdentity(identity);
-        event.setTimestamp(ZonedDateTime.now());
+        event.setTimestamp(timestamp);
         event.setType(type);
         event.setResourceId(resourceId);
         return scienceEventRepository.save(event);
@@ -39,14 +40,7 @@ public class ScienceUtilService {
      */
     public static Comparator<ScienceEvent> scienceEventComparator = Comparator.comparing(ScienceEvent::getResourceId).thenComparing(ScienceEvent::getType)
             .thenComparing((ScienceEvent e1, ScienceEvent e2) -> {
-
-                Duration d = Duration.between(e1.getTimestamp(), e2.getTimestamp());
-                if (d.toNanos() > 500) {
-                    return 1;
-                }
-                else if (d.toNanos() < -500) {
-                    return -1;
-                }
-                return 0;
-            });
+                Duration duration = Duration.between(e1.getTimestamp(), e2.getTimestamp());
+                return Math.abs(duration.toNanos()) < 1e5 ? 0 : duration.isNegative() ? -1 : 1;
+            }).thenComparing(ScienceEvent::getIdentity);
 }

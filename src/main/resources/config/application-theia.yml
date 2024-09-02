@@ -1,2 +1,13 @@
 theia:
-  portal-url: https://your-theia-instance.com
+    portal-url: https://your-theia-instance.com
+
+    # Theia IDE images available for the different programming languages
+    images:
+        # Upper level key is the language category (must match the language key in the programming-exercise configuration)
+        java:
+            # Lower level key can be multiple flavors of the image, e.g. version, tag, or additional dependencies
+            Java-17: "my-registry/my-image:my-tag"
+            # Add more flavors here (e.g. Java-11, Java-8, etc.)
+        # Add more languages here (e.g. c, python, etc.)
+        c:
+            C: "my-registry/my-image:my-tag"

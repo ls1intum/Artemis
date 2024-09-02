@@ -9,12 +9,20 @@
     }
 }
 <div class="btn-group">
-    <div class="btn" [ngClass]="{ 'btn-success selected': enabled, 'btn-default': !enabled }" [class.disabled]="isSettingsSwitchDisabled" (click)="onEnable()">
-        {{ 'artemisApp.iris.settings.subSettings.enabled.on' | artemisTranslate }}
-    </div>
-    <div class="btn" [ngClass]="{ 'btn-danger selected': !enabled, 'btn-default': enabled }" [class.disabled]="isSettingsSwitchDisabled" (click)="onDisable()">
-        {{ 'artemisApp.iris.settings.subSettings.enabled.off' | artemisTranslate }}
-    </div>
+    <div
+        class="btn"
+        [ngClass]="{ 'btn-success selected': enabled, 'btn-default': !enabled }"
+        [class.disabled]="isSettingsSwitchDisabled"
+        (click)="onEnable()"
+        jhiTranslate="artemisApp.iris.settings.subSettings.enabled.on"
+    ></div>
+    <div
+        class="btn"
+        [ngClass]="{ 'btn-danger selected': !enabled, 'btn-default': enabled }"
+        [class.disabled]="isSettingsSwitchDisabled"
+        (click)="onDisable()"
+        jhiTranslate="artemisApp.iris.settings.subSettings.enabled.off"
+    ></div>
 </div>
 <h4 class="form-label mt-3" jhiTranslate="artemisApp.iris.settings.subSettings.models.title"></h4>
 <span><span class="fw-bold fs-5" jhiTranslate="artemisApp.iris.settings.subSettings.models.allowedModels.title"></span>: </span>
