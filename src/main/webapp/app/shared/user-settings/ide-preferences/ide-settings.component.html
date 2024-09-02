@@ -43,7 +43,6 @@
 
 <ng-template #ideButtonRow let-programmingLanguage="language">
     <div class="btn-group">
-        <!-- when using the ng loop, the buttons are not grouped nicely -->
         @for (ide of PREDEFINED_IDE; track ide) {
             <div
                 class="btn"
