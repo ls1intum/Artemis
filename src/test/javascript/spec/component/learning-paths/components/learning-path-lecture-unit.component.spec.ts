@@ -17,6 +17,9 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { of } from 'rxjs';
+import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { MockComponent } from 'ng-mocks';
 
 describe('LearningPathLectureUnitComponent', () => {
     let component: LearningPathLectureUnitComponent;
@@ -30,7 +33,12 @@ describe('LearningPathLectureUnitComponent', () => {
         id: 1,
         description: 'Example video unit',
         name: 'Example video',
-        lecture: { id: 2 },
+        lecture: {
+            id: 2,
+            course: {
+                courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+            },
+        },
         completed: false,
         visibleToStudents: true,
         source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
@@ -38,7 +46,7 @@ describe('LearningPathLectureUnitComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [LearningPathLectureUnitComponent],
+            imports: [LearningPathLectureUnitComponent, MockComponent(DiscussionSectionComponent)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -109,5 +117,26 @@ describe('LearningPathLectureUnitComponent', () => {
 
         expect(setIsLoadingSpy).toHaveBeenCalledWith(true);
         expect(setIsLoadingSpy).toHaveBeenCalledWith(false);
+    });
+
+    it('should show discussion section when communication is enabled', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeTruthy();
+    });
+
+    it('should not show discussion section when communication is disabled', async () => {
+        const lecture = { ...lectureUnit.lecture, course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED } };
+        getLectureUnitByIdSpy.mockReturnValue(of({ ...lectureUnit, lecture }));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeFalsy();
     });
 });

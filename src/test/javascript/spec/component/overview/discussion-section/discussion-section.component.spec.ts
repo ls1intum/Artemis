@@ -126,10 +126,6 @@ describe('DiscussionSectionComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should set course and messages for lecture with lecture channel on initialization', fakeAsync(() => {
         component.lecture = { ...metisLecture, course: metisCourse };
         component.ngOnInit();
