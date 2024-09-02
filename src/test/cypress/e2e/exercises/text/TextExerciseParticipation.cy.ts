@@ -1,7 +1,7 @@
 import { Interception } from 'cypress/types/net-stubbing';
 
 import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 
 import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, textExerciseEditor } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';

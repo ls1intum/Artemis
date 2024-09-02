@@ -3,7 +3,7 @@ import { COURSE_BASE, DELETE, Exercise, POST } from '../constants';
 import { CypressCredentials } from '../users';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import dayjs from 'dayjs/esm';
 

@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 
 import { examStartEnd } from '../../artemis';
 import { COURSE_BASE, DELETE, PATCH, POST } from '../../constants';

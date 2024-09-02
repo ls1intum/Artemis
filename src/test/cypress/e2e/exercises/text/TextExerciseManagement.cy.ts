@@ -2,7 +2,7 @@ import { Interception } from 'cypress/types/net-stubbing';
 import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 
 import {
     courseManagement,

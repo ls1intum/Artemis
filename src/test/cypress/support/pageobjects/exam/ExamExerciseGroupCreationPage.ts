@@ -1,4 +1,4 @@
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { examAPIRequests, exerciseAPIRequest } from '../../artemis';
@@ -6,7 +6,7 @@ import { AdditionalData, COURSE_BASE, ExerciseType, POST, PUT } from '../../cons
 import { convertModelAfterMultiPart, generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { Visibility } from 'app/entities/programming-exercise-test-case.model';
+import { Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam exercise group creation page.
