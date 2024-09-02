@@ -17,7 +17,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.service.plagiarism.*;
 import org.junit.jupiter.api.Test;
 
 import de.jplag.exceptions.BasecodeException;
@@ -44,6 +43,11 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.in.www1.artemis.service.plagiarism.ContinuousPlagiarismControlService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismPostService;
+import de.tum.in.www1.artemis.service.plagiarism.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 
 class ContinuousPlagiarismControlServiceTest {
 
