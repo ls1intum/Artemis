@@ -183,7 +183,7 @@ describe('DiscussionSectionComponent', () => {
         component.posts = metisExercisePosts;
         fixture.detectChanges();
         tick();
-        const newPostButtons = getElements(fixture.debugElement, '.btn-primary');
+        const newPostButtons = getElements(fixture.debugElement, '#new-post');
         expect(newPostButtons).not.toBeNull();
         expect(newPostButtons).toHaveLength(1);
     }));
@@ -193,7 +193,7 @@ describe('DiscussionSectionComponent', () => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
-        const newPostButtons = getElements(fixture.debugElement, '.btn-primary');
+        const newPostButtons = getElements(fixture.debugElement, '#new-post');
         expect(newPostButtons).not.toBeNull();
         expect(newPostButtons).toHaveLength(1);
     }));
