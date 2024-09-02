@@ -83,6 +83,7 @@ import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.Enforce
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.GradingScaleService;
+import de.tum.in.www1.artemis.service.ModelingExerciseFeedbackService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TextExerciseFeedbackService;
@@ -167,6 +168,8 @@ public class ParticipationResource {
 
     private final TextExerciseFeedbackService textExerciseFeedbackService;
 
+    private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -176,7 +179,8 @@ public class ParticipationResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
-            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, TextExerciseFeedbackService textExerciseFeedbackService) {
+            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, TextExerciseFeedbackService textExerciseFeedbackService,
+            ModelingExerciseFeedbackService modelingExerciseFeedbackService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -203,6 +207,7 @@ public class ParticipationResource {
         this.gradingScaleService = gradingScaleService;
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textExerciseFeedbackService = textExerciseFeedbackService;
+        this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
     }
 
     /**
@@ -363,7 +368,7 @@ public class ParticipationResource {
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        if (!(exercise instanceof TextExercise) && !(exercise instanceof ProgrammingExercise)) {
+        if (!(exercise instanceof TextExercise) && !(exercise instanceof ProgrammingExercise) && !(exercise instanceof ModelingExercise)) {
             throw new BadRequestAlertException("Unsupported exercise type", "participation", "unsupported type");
         }
 
@@ -371,6 +376,8 @@ public class ParticipationResource {
     }
 
     private ResponseEntity<StudentParticipation> handleExerciseFeedbackRequest(Exercise exercise, Principal principal) {
+        var nonProgrammingExercise = exercise instanceof TextExercise || exercise instanceof ModelingExercise;
+
         // Validate exercise and timing
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
@@ -393,7 +400,7 @@ public class ParticipationResource {
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
 
         // Check submission requirements
-        if (exercise instanceof TextExercise) {
+        if (nonProgrammingExercise) {
             if (submissionRepository.findAllByParticipationId(participation.getId()).isEmpty()) {
                 throw new BadRequestAlertException("You need to submit at least once", "participation", "preconditions not met");
             }
@@ -415,6 +422,9 @@ public class ParticipationResource {
         StudentParticipation updatedParticipation;
         if (exercise instanceof TextExercise) {
             updatedParticipation = textExerciseFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(), participation, (TextExercise) exercise);
+        }
+        else if (exercise instanceof ModelingExercise) {
+            updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(), participation, (ModelingExercise) exercise);
         }
         else {
             updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),

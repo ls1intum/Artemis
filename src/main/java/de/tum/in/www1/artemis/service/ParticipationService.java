@@ -716,7 +716,7 @@ public class ParticipationService {
      * @return the participation with latest submission and result
      * @throws EntityNotFoundException
      */
-    public StudentParticipation findTextExerciseParticipationWithLatestSubmissionAndResultElseThrow(Long participationId) throws EntityNotFoundException {
+    public StudentParticipation findExerciseParticipationWithLatestSubmissionAndResultElseThrow(Long participationId) throws EntityNotFoundException {
         Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
         if (participation.isEmpty() || !(participation.get() instanceof StudentParticipation studentParticipation)) {
             throw new EntityNotFoundException("No text exercise participation found with id " + participationId);

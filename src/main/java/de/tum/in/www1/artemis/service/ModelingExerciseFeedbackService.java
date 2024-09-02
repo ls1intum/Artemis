@@ -14,10 +14,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -28,9 +28,9 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 @Profile(PROFILE_CORE)
 @Service
-public class TextExerciseFeedbackService {
+public class ModelingExerciseFeedbackService {
 
-    private static final Logger log = LoggerFactory.getLogger(TextExerciseFeedbackService.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingExerciseFeedbackService.class);
 
     public static final String NON_GRADED_FEEDBACK_SUGGESTION = "NonGradedFeedbackSuggestion:";
 
@@ -46,7 +46,7 @@ public class TextExerciseFeedbackService {
 
     private final ResultRepository resultRepository;
 
-    public TextExerciseFeedbackService(Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService,
+    public ModelingExerciseFeedbackService(Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService,
             ResultService resultService, ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService) {
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.submissionService = submissionService;
@@ -68,31 +68,31 @@ public class TextExerciseFeedbackService {
     }
 
     /**
-     * Handles the request for generating feedback for a text exercise.
+     * Handles the request for generating feedback for a modeling exercise.
      * Unlike programming exercises a tutor is not notified if Athena is not available.
      *
-     * @param exerciseId    the id of the text exercise.
-     * @param participation the student participation associated with the exercise.
-     * @param textExercise  the text exercise object.
-     * @return StudentParticipation updated text exercise for an AI assessment
+     * @param exerciseId       the id of the modeling exercise.
+     * @param participation    the student participation associated with the exercise.
+     * @param modelingExercise the modeling exercise object.
+     * @return StudentParticipation updated modeling exercise for an AI assessment
      */
-    public StudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, StudentParticipation participation, TextExercise textExercise) {
+    public StudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, StudentParticipation participation, ModelingExercise modelingExercise) {
         if (this.athenaFeedbackSuggestionsService.isPresent()) {
             this.checkRateLimitOrThrow(participation);
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, textExercise));
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, modelingExercise));
         }
         return participation;
     }
 
     /**
-     * Generates automatic non-graded feedback for a text exercise submission.
+     * Generates automatic non-graded feedback for a modeling exercise submission.
      * This method leverages the Athena service to generate feedback based on the latest submission.
      *
-     * @param participation the student participation associated with the exercise.
-     * @param textExercise  the text exercise object.
+     * @param participation    the student participation associated with the exercise.
+     * @param modelingExercise the modeling exercise object.
      */
-    public void generateAutomaticNonGradedFeedback(StudentParticipation participation, TextExercise textExercise) {
-        log.debug("Using athena to generate (text exercise) feedback request: {}", textExercise.getId());
+    public void generateAutomaticNonGradedFeedback(StudentParticipation participation, ModelingExercise modelingExercise) {
+        log.debug("Using athena to generate (modeling exercise) feedback request: {}", modelingExercise.getId());
 
         // athena takes over the control here
         var submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
@@ -114,7 +114,7 @@ public class TextExerciseFeedbackService {
 
             log.debug("Submission id: {}", submission.getId());
 
-            var athenaResponse = this.athenaFeedbackSuggestionsService.orElseThrow().getTextFeedbackSuggestions(textExercise, (TextSubmission) submission, false);
+            var athenaResponse = this.athenaFeedbackSuggestionsService.orElseThrow().getModelingFeedbackSuggestions(modelingExercise, (ModelingSubmission) submission, false);
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {
                 var feedback = new Feedback();
@@ -130,7 +130,7 @@ public class TextExerciseFeedbackService {
             for (Feedback feedback : feedbacks) {
                 totalFeedbacksScore += feedback.getCredits();
             }
-            totalFeedbacksScore = totalFeedbacksScore / textExercise.getMaxPoints() * 100;
+            totalFeedbacksScore = totalFeedbacksScore / modelingExercise.getMaxPoints() * 100;
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());
 
