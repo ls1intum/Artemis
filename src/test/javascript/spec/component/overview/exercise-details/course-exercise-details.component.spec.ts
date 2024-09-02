@@ -343,27 +343,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.activatedExerciseHints).toContain(activatedHint);
     });
 
-    it('should show discussion section when communication is enabled', fakeAsync(() => {
-        fixture.detectChanges();
-        tick(500);
-
-        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
-        expect(discussionSection).toBeTruthy();
-    }));
-
-    it('should not show discussion section when communication is disabled', fakeAsync(() => {
-        const newExercise = {
-            ...exercise,
-            course: { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
-        };
-        getExerciseDetailsMock.mockReturnValue(of({ body: newExercise }));
-
-        comp.handleNewExercise({ exercise });
-
-        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
-        expect(discussionSection).toBeFalsy();
-    }));
-
     it('should handle new programming exercise', () => {
         const courseId = programmingExercise.course!.id!;
 
@@ -461,4 +440,25 @@ describe('CourseExerciseDetailsComponent', () => {
         fixture.detectChanges();
         expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.EXERCISE__OPEN, exercise.id);
     });
+
+    it('should not show discussion section when communication is disabled', fakeAsync(() => {
+        const newExercise = {
+            ...exercise,
+            course: { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
+        };
+        getExerciseDetailsMock.mockReturnValue(of({ body: newExercise }));
+
+        comp.handleNewExercise({ exercise });
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeFalsy();
+    }));
+
+    it('should show discussion section when communication is enabled', fakeAsync(() => {
+        fixture.detectChanges();
+        tick(500);
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeTruthy();
+    }));
 });
