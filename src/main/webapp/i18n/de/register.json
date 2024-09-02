@@ -13,7 +13,7 @@
                     "pattern": "Dein Login darf nur Kleinbuchstaben und Ziffern enthalten"
                 }
             },
-            "success": "<strong>Registrierung gespeichert!</strong> Bitte überprüfe deine Emails für die Bestätigung.",
+            "success": "<strong>Registrierung gespeichert!</strong> Bitte überprüfe deine E-Mails für die Bestätigung.",
             "error": {
                 "fail": "<strong>Registrierung fehlgeschlagen!</strong> Bitte versuche es später nochmal.",
                 "userExists": "<strong>Login bereits vergeben!</strong> Bitte wähle einen anderen aus.",
