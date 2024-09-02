@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.function.ThrowingBiFunction;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exception.NoUniqueQueryException;
 import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
@@ -185,14 +187,15 @@ public class LearningObjectImportService {
     private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) throws JsonProcessingException {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
-            case FileUploadExercise fileUploadExercise -> importOrLoadExercise(fileUploadExercise, course, fileUploadExerciseRepository::findWithCompetenciesByTitleAndCourseId,
-                    fileUploadExerciseRepository::findWithGradingCriteriaByIdElseThrow, fileUploadExerciseImportService::importFileUploadExercise);
-            case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findWithCompetenciesByTitleAndCourseId,
+            case FileUploadExercise fileUploadExercise ->
+                importOrLoadExercise(fileUploadExercise, course, fileUploadExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
+                        fileUploadExerciseRepository::findWithGradingCriteriaByIdElseThrow, fileUploadExerciseImportService::importFileUploadExercise);
+            case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow,
                     modelingExerciseImportService::importModelingExercise);
-            case TextExercise textExercise -> importOrLoadExercise(textExercise, course, textExerciseRepository::findWithCompetenciesByTitleAndCourseId,
+            case TextExercise textExercise -> importOrLoadExercise(textExercise, course, textExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     textExerciseRepository::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, textExerciseImportService::importTextExercise);
-            case QuizExercise quizExercise -> importOrLoadExercise(quizExercise, course, quizExerciseRepository::findWithCompetenciesByTitleAndCourseId,
+            case QuizExercise quizExercise -> importOrLoadExercise(quizExercise, course, quizExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     quizExerciseRepository::findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, (exercise, templateExercise) -> {
                         try {
                             return quizExerciseImportService.importQuizExercise(exercise, templateExercise, null);
@@ -268,8 +271,8 @@ public class LearningObjectImportService {
      * @return The imported or loaded exercise
      * @param <E> The type of the exercise
      */
-    private <E extends Exercise> Exercise importOrLoadExercise(E exercise, Course course, BiFunction<String, Long, Optional<E>> findFunction, Function<Long, E> loadForImport,
-            BiFunction<E, E, E> importFunction) {
+    private <E extends Exercise> Exercise importOrLoadExercise(E exercise, Course course, ThrowingBiFunction<String, Long, Optional<E>> findFunction,
+            Function<Long, E> loadForImport, BiFunction<E, E, E> importFunction) {
         Optional<E> foundByTitle = findFunction.apply(exercise.getTitle(), course.getId());
         if (foundByTitle.isPresent()) {
             return foundByTitle.get();
@@ -308,7 +311,7 @@ public class LearningObjectImportService {
     }
 
     private void importOrLoadLectureUnit(LectureUnit sourceLectureUnit, CourseCompetency sourceCourseCompetency, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
-            Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) {
+            Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) throws NoUniqueQueryException {
         Lecture sourceLecture = sourceLectureUnit.getLecture();
         Lecture importedLecture = importOrLoadLecture(sourceLecture, courseToImportInto, titleToImportedLectures);
 
@@ -331,10 +334,10 @@ public class LearningObjectImportService {
         idToImportedCompetency.get(sourceCourseCompetency.getId()).competency().getLectureUnits().add(importedLectureUnit);
     }
 
-    private Lecture importOrLoadLecture(Lecture sourceLecture, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures) {
+    private Lecture importOrLoadLecture(Lecture sourceLecture, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures) throws NoUniqueQueryException {
         Optional<Lecture> foundLecture = Optional.ofNullable(titleToImportedLectures.get(sourceLecture.getTitle()));
         if (foundLecture.isEmpty()) {
-            foundLecture = lectureRepository.findByTitleAndCourseIdWithLectureUnits(sourceLecture.getTitle(), courseToImportInto.getId());
+            foundLecture = lectureRepository.findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(sourceLecture.getTitle(), courseToImportInto.getId());
         }
         Lecture importedLecture = foundLecture.orElseGet(() -> lectureImportService.importLecture(sourceLecture, courseToImportInto, false));
         titleToImportedLectures.put(importedLecture.getTitle(), importedLecture);

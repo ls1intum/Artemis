@@ -225,7 +225,7 @@ public class PrerequisiteResource {
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
-        Set<CourseCompetency> prerequisitesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLectures(importOptions.competencyIds());
+        Set<CourseCompetency> prerequisitesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(importOptions.competencyIds());
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         prerequisitesToImport.forEach(prerequisiteToImport -> {
