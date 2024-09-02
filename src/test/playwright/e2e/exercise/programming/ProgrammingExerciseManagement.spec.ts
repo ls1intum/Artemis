@@ -7,7 +7,9 @@ import { generateUUID } from '../../../support/utils';
 import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode } from '../../../support/constants';
 
-test.describe('Programming Exercise Management', () => {
+test.describe('Programming Exercise Management', { tag: '@slow' }, () => {
+    test.describe.configure({ timeout: 60000 });
+
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
@@ -104,9 +106,12 @@ test.describe('Programming Exercise Management', () => {
             await exerciseTeams.checkTeamOnList(teamShortName);
 
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(programmingExerciseOverview.getExerciseDetails().locator('.view-team')).toBeVisible();
+            const exerciseDetails = programmingExerciseOverview.getExerciseDetails();
+            await exerciseDetails.waitFor({ state: 'visible' });
+            await expect(exerciseDetails.locator('.view-team')).toBeVisible();
             await login(studentFour, `/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText(/No team yet/);
+            await exerciseDetails.waitFor({ state: 'visible' });
+            await expect(exerciseDetails).toHaveText(/No team yet/);
         });
     });
 

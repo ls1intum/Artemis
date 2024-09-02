@@ -11,7 +11,9 @@ import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIReques
 import { Commands } from '../../../support/commands';
 import { newBrowserPage } from '../../../support/utils';
 
-test.describe('Modeling Exercise Assessment', () => {
+test.describe('Modeling Exercise Assessment', { tag: '@fast' }, () => {
+    test.describe.configure({ timeout: 25000 });
+
     let course: Course;
     let modelingExercise: ModelingExercise;
 
@@ -35,14 +37,6 @@ test.describe('Modeling Exercise Assessment', () => {
     });
 
     test.describe.serial('Handling complaints', () => {
-        // test.beforeEach('Ending assessment period', async ({ browser }) => {
-        //     const context = await browser.newContext();
-        //     const page = await context.newPage();
-        //     const exerciseAPIRequests = new ExerciseAPIRequests(page);
-        //     const response = await exerciseAPIRequests.updateModelingExerciseAssessmentDueDate(modelingExercise, dayjs());
-        //     modelingExercise = await response.json();
-        // });
-
         test('Tutor can assess a submission', async ({ login, courseManagement, courseAssessment, exerciseAssessment, modelingExerciseAssessment }) => {
             await login(tutor, '/course-management');
             await courseManagement.openAssessmentDashboardOfCourse(course.id!);
