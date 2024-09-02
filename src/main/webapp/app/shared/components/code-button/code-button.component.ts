@@ -332,7 +332,11 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     }
 
     getIde(): Ide {
-        return this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ?? this.vscodeFallback;
+        return (
+            this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
+            this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
+            this.vscodeFallback
+        );
     }
 
     switchPracticeMode() {
