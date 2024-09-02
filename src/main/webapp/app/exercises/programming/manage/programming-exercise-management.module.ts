@@ -24,7 +24,6 @@ import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exe
 import { TestwiseCoverageReportModule } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report.module';
 import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.module';
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { IrisModule } from 'app/iris/iris.module';
@@ -53,7 +52,6 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
         GitDiffReportModule,
         TestwiseCoverageReportModule,
         ArtemisCodeHintGenerationOverviewModule,
-        AceEditorModule,
         ArtemisCodeEditorModule,
         ArtemisExerciseModule,
         DetailModule,

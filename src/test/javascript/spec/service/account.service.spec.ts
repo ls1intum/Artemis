@@ -14,7 +14,6 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
-import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 
 describe('AccountService', () => {
     let accountService: AccountService;
@@ -53,7 +52,6 @@ describe('AccountService', () => {
             httpService,
             new MockWebsocketService(),
             new MockFeatureToggleService(),
-            new MockProfileService(),
         );
         getStub = jest.spyOn(httpService, 'get');
         postStub = jest.spyOn(httpService, 'post');
@@ -538,17 +536,7 @@ describe('AccountService', () => {
             fetchStub = jest.spyOn(accountService, 'fetch');
         });
 
-        it('should retrieve user if vcs token is missing', () => {
-            accountService['versionControlAccessTokenRequired'] = true;
-            user.vcsAccessToken = undefined;
-            accountService.userIdentity = user;
-
-            accountService.identity();
-            expect(fetchStub).toHaveBeenCalledOnce();
-        });
-
         it('should not retrieve user if vcs token is missing but not required', () => {
-            accountService['versionControlAccessTokenRequired'] = false;
             user.vcsAccessToken = undefined;
             accountService.userIdentity = user;
 
@@ -557,7 +545,6 @@ describe('AccountService', () => {
         });
 
         it('should not retrieve user if vcs token is present', () => {
-            accountService['versionControlAccessTokenRequired'] = true;
             user.vcsAccessToken = 'iAmAToken';
             accountService.userIdentity = user;
 
