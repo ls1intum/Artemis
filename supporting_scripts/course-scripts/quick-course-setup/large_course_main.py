@@ -28,20 +28,20 @@ COURSE_ID: str = config.get('CourseSettings', 'course_id')
 IS_LOCAL_COURSE: bool = config.get('CourseSettings', 'is_local_course').lower() == 'true'
 
 def delete_all_created_students(session: Session) -> None:
-    authenticate_user(ADMIN_USER, ADMIN_PASSWORD, SERVER_URL, session)
+    authenticate_user(ADMIN_USER, ADMIN_PASSWORD, session)
     delete_students(session, CLIENT_URL)
     logging.info(f"Deleted all created students successfully")
 
 def main() -> None:
     # Step 1: Authenticate as admin
     session: Session = requests.session()
-    authenticate_user(ADMIN_USER, ADMIN_PASSWORD, SERVER_URL, session)
+    authenticate_user(ADMIN_USER, ADMIN_PASSWORD, session)
 
     # Step 2: Create users
     create_students(session, STUDENTS_TO_CREATE)
 
     # Step 3: Create a course
-    created_course_response = create_course(session, SERVER_URL, COURSE_NAME, IS_LOCAL_COURSE)
+    created_course_response = create_course(session)
     response_data = created_course_response.json()
     course_id: int = response_data["id"]
 
@@ -56,7 +56,7 @@ def main() -> None:
 
     for username, password in user_credentials:
         user_session: Session = requests.Session()
-        authenticate_user(username, password, SERVER_URL, user_session)
+        authenticate_user(username, password, user_session)
 
         for exercise_id in exercise_ids:
             participation_response = add_participation(user_session, exercise_id, CLIENT_URL)
