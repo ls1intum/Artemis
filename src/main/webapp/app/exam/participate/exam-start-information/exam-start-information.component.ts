@@ -29,6 +29,7 @@ export class ExamStartInformationComponent implements OnInit {
     numberOfExercisesInExam?: number;
     examinedStudent?: string;
     startDate?: dayjs.Dayjs;
+    endDate?: dayjs.Dayjs;
     gracePeriodInMinutes?: number;
 
     ngOnInit(): void {
@@ -40,6 +41,7 @@ export class ExamStartInformationComponent implements OnInit {
         this.numberOfExercisesInExam = this.exam.numberOfExercisesInExam;
         this.examinedStudent = this.studentExam.user?.name;
         this.startDate = this.exam.startDate;
+        this.endDate = this.exam.endDate;
         this.gracePeriodInMinutes = Math.floor(this.exam.gracePeriod! / 60);
 
         this.prepareInformationBoxData();
@@ -71,9 +73,23 @@ export class ExamStartInformationComponent implements OnInit {
             const informationBoxExaminedStudent = this.buildInformationBox('artemisApp.exam.examinedStudent', this.examinedStudent!);
             this.examInformationBoxData.push(informationBoxExaminedStudent);
         }
-        if (this.startDate) {
-            const informationBoxStartDate = this.buildInformationBox('artemisApp.exam.date', this.startDate.toString(), 'formatedDate');
-            this.examInformationBoxData.push(informationBoxStartDate);
+
+        // For test exams, display both the start and end dates, as the working time applies to a single attempt.
+        if (this.exam.testExam) {
+            if (this.startDate) {
+                const informationBoxStartDate = this.buildInformationBox('artemisApp.exam.startDate', this.startDate.toString(), 'formatedDate');
+                this.examInformationBoxData.push(informationBoxStartDate);
+            }
+
+            if (this.endDate) {
+                const informationBoxStartDate = this.buildInformationBox('artemisApp.exam.endDate', this.endDate.toString(), 'formatedDate');
+                this.examInformationBoxData.push(informationBoxStartDate);
+            }
+        } else {
+            if (this.startDate) {
+                const informationBoxStartDate = this.buildInformationBox('artemisApp.exam.date', this.startDate.toString(), 'formatedDate');
+                this.examInformationBoxData.push(informationBoxStartDate);
+            }
         }
 
         const informationBoxTotalWorkingTime = this.buildInformationBox('artemisApp.exam.workingTime', this.exam.workingTime!, 'workingTime');
