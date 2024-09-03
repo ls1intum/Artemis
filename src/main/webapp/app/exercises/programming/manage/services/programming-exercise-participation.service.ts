@@ -147,9 +147,9 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     }
 
     /**
-     * Get the repository files with content for a given participation id at a specific commit hash.
-     * The current user needs to be at least a instructor in the course of the participation.
-     * @param participationId of the participation to get the commit infos for
+     * Get the vcs access log for a given participation id.
+     * The current user needs to be at least an instructor in the course of the participation.
+     * @param participationId of the participation to get the vcs Access log
      */
     getVcsAccessLogForParticipation(participationId: number): Observable<VcsAccessLogDTO[] | undefined> {
         return this.http
@@ -157,7 +157,13 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
             .pipe(map((res: HttpResponse<VcsAccessLogDTO[]>) => res.body ?? undefined));
     }
 
-    getVcsAccessLogForRepository(exerciseId: number, repositoryType: string) {
+    /**
+     * Get the vcs access log for a given exercise id and the repository type.
+     * The current user needs to be at least a instructor in the course of the participation.
+     * @param exerciseId      of the exercise to get the vcs Access log
+     * @param repositoryType  of the repository of the exercise, to get the vcs Access log
+     */
+    getVcsAccessLogForRepository(exerciseId: number, repositoryType: string): Observable<VcsAccessLogDTO[] | undefined> {
         const params: { [key: string]: number | string } = {};
         if (repositoryType) {
             params['repositoryType'] = repositoryType;
