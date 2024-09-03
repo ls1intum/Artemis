@@ -6,9 +6,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
-import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/programming/static-code-analysis-category.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { CategoryIssuesMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('SCA category distribution chart', () => {

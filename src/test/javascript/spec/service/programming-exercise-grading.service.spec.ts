@@ -5,7 +5,7 @@ import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.se
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { Result } from 'app/entities/result.model';
 import { HttpClient } from '@angular/common/http';
 

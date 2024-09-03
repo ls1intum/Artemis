@@ -39,9 +39,9 @@ public interface ExamSessionRepository extends ArtemisJpaRepository<ExamSession,
             @Param("studentExamId") Long studentExamId, @Param("ipAddress") String ipAddress, @Param("browserFingerprintHash") String browserFingerprintHash);
 
     @Query("""
-                SELECT es
-                FROM ExamSession es
-                WHERE es.studentExam.exam.id = :examId
+            SELECT es
+            FROM ExamSession es
+            WHERE es.studentExam.exam.id = :examId
             """)
     Set<ExamSession> findAllExamSessionsByExamId(@Param("examId") long examId);
 }
