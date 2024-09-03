@@ -703,18 +703,38 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Retrieves all distinct `StudentParticipation` entities for a specific exercise,
+     * including their latest non-illegal submission and the latest rated result for each submission.
+     * The method fetches related submissions, results, student, and team data to avoid the N+1 select problem.
+     *
+     * <p>
+     * The method ensures that:
+     * <ul>
+     * <li>Only participations belonging to the specified exercise are retrieved.</li>
+     * <li>Participations marked as a test run are excluded.</li>
+     * <li>Only the latest non-illegal submission for each participation is considered.</li>
+     * <li>Only the latest rated result for each submission is considered.</li>
+     * </ul>
+     *
+     * @param exerciseId the ID of the exercise for which to retrieve participations.
+     * @return a list of distinct `StudentParticipation` entities matching the criteria.
+     */
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.results r
-                LEFT JOIN FETCH r.submission rs
                 LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results sr
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.team
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
-                AND p.submissions IS NOT EMPTY
-                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND (rs.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR rs.type IS NULL)
+                AND s.id = (SELECT MAX(s2.id)
+                            FROM p.submissions s2
+                            WHERE s2.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s2.type IS NULL)
+                AND r.id = (SELECT MAX(r2.id)
+                            FROM s.results r2
+                            WHERE r2.rated = TRUE)
             """)
     List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
 

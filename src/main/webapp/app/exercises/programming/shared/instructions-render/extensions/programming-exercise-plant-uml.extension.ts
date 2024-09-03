@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
