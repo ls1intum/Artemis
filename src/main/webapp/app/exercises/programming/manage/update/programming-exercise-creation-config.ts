@@ -1,8 +1,8 @@
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { Observable } from 'rxjs';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 
 export type ProgrammingExerciseCreationConfig = {
     titleNamePattern: string;
