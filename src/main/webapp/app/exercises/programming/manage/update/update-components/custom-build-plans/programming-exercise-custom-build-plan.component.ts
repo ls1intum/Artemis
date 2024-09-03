@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
@@ -132,7 +132,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     }
 
     /**
-     * Sets up an ace editor for the build plan script
+     * Sets up the Monaco editor for the build plan script
      */
     setupEditor(): void {
         if (!this._editor) {

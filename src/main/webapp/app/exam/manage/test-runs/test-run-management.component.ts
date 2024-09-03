@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';

@@ -14,8 +14,8 @@ import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.uti
 import { TranslateService } from '@ngx-translate/core';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { captureException } from '@sentry/angular';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';

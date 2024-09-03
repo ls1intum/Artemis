@@ -78,9 +78,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     @Output() addNewFile = new EventEmitter<{ fileName: string; path?: string; file: File }>();
     @Output() removeFile = new EventEmitter<string>();
 
-    /** Ace Editor configuration constants **/
     questionEditorText = '';
-
     backupQuestion: DragAndDropQuestion;
     filePreviewPaths: Map<string, string> = new Map<string, string>();
     dropAllowed = false;

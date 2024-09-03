@@ -17,12 +17,13 @@ import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { Exam } from 'app/entities/exam.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { NgModel } from '@angular/forms';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('FileUploadExerciseUpdateComponent', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -321,7 +322,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
     it('should updateCategories properly by making category available for selection again when removing it', () => {
         comp.fileUploadExercise = fileUploadExercise;
         comp.exerciseCategories = [];
-        const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+        const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
         comp.updateCategories(newCategories);
 
