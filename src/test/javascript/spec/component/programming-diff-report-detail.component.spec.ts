@@ -25,9 +25,9 @@ describe('ProgrammingDiffReportDetailComponent', () => {
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
             ],
         }).compileComponents();
-        modalService = fixture.debugElement.injector.get(NgbModal);
-
         fixture = TestBed.createComponent(ProgrammingDiffReportDetailComponent);
+
+        modalService = fixture.debugElement.injector.get(NgbModal);
         component = fixture.componentInstance;
     });
 
