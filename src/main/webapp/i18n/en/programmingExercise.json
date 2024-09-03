@@ -646,6 +646,19 @@
                 "template": "Template",
                 "history": "Commit History",
                 "result": "Result"
+            },
+            "otherLanguageHints": {
+                "title": "To use another language, complete the following tasks:",
+                "setImage": "Set a Docker image with installed dependencies.",
+                "buildScript": {
+                    "title": "Customize the build script to:",
+                    "dependencies": "Optional: Install exercise specific dependencies.",
+                    "runTests": "Run all tests. They should generate JUnit XML files.",
+                    "moveResults": "Move the XML files into the <code>{{resultsDirectory}}</code> directory."
+                },
+                "pushExercise": "Push the exercise code to its repository. It will be checked out at <code>{{checkoutDirectory}}</code>.",
+                "pushSolution": "Push the solution code to its repository. It will not be checked out.",
+                "pushTest": "Push the test code to its repository. It will be checked out at <code>{{checkoutDirectory}}</code>."
             }
         },
         "error": {
