@@ -139,7 +139,7 @@ This is ideal as a quickstart for developers. For a more detailed setup, see
 `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
 In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config-localvc.yml``).
 
-1. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
+#. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
 
     .. code:: bash
 
@@ -149,42 +149,42 @@ In a production setup, you have to at least change the user credentials (in the 
    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
    in ``jenkins-casc-config-localvc.yml`` (defaults to ``artemis_admin`` as both username and password).
 
-2. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config-localvc.yml``:
+#. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config-localvc.yml``:
 
-.. code:: yaml
+    .. code:: yaml
 
-    artemis:
-        user-management:
-            use-external: false
-            internal-admin:
-                username: artemis_admin
+        artemis:
+            user-management:
+                use-external: false
+                internal-admin:
+                    username: artemis_admin
+                    password: artemis_admin
+            version-control:
+                url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
+                user: root
+                password: dummy # have to be set, but does not matter for LocalVC
+                build-agent-git-username: jenkins
+                build-agent-git-password: artemis_admin # choose some strong password and username (gives read access to all repositories)
+            continuous-integration:
+                user: artemis_admin
                 password: artemis_admin
-        version-control:
-            url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
-            user: root
-            password: dummy # have to be set, but does not matter for LocalVC
-            build-agent-git-username: jenkins
-            build-agent-git-password: artemis_admin # choose some strong password and username (gives read access to all repositories)
-        continuous-integration:
-            user: artemis_admin
-            password: artemis_admin
-            url: http://localhost:8082
-            vcs-credentials: artemis_localvc_credentials
-            artemis-authentication-token-key: artemis_notification_plugin_token
-            artemis-authentication-token-value: artemis_admin
+                url: http://localhost:8082
+                vcs-credentials: artemis_localvc_credentials
+                artemis-authentication-token-key: artemis_notification_plugin_token
+                artemis-authentication-token-value: artemis_admin
 
-5. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
+#. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
    Again, if you are using a development setup, the template in the beginning of this page already contains the
    correct values.
 
-.. code:: yaml
+    .. code:: yaml
 
-    jenkins:
-        internal-urls:
-            ci-url: http://jenkins:8080
-            vcs-url: http://localhost:8080
+        jenkins:
+            internal-urls:
+                ci-url: http://jenkins:8080
+                vcs-url: http://localhost:8080
 
-6. You're done. You can now run Artemis with the LocalVC/Jenkins environment.
+#. You're done. You can now run Artemis with the LocalVC/Jenkins environment.
 
 Manual Jenkins Server Setup
 """""""""""""""""""""""""""
