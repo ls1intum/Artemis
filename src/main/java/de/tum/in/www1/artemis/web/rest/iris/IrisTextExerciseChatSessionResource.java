@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.Enforce
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisHealthIndicator;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisTextExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -34,23 +35,25 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RequestMapping("api/iris/text-exercise-chat/")
 public class IrisTextExerciseChatSessionResource {
 
-    protected final UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    protected final IrisSessionService irisSessionService;
+    private final IrisSessionService irisSessionService;
 
-    protected final IrisSettingsService irisSettingsService;
+    private final IrisSettingsService irisSettingsService;
 
-    protected final PyrisHealthIndicator pyrisHealthIndicator;
+    private final PyrisHealthIndicator pyrisHealthIndicator;
 
-    protected final IrisRateLimitService irisRateLimitService;
+    private final IrisRateLimitService irisRateLimitService;
 
-    protected final TextExerciseRepository textExerciseRepository;
+    private final TextExerciseRepository textExerciseRepository;
+
+    private final IrisTextExerciseChatSessionService irisTextExerciseChatSessionService;
 
     private final IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository;
 
     protected IrisTextExerciseChatSessionResource(IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository, UserRepository userRepository,
             TextExerciseRepository textExerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService) {
+            PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService, IrisTextExerciseChatSessionService irisTextExerciseChatSessionService) {
         this.irisTextExerciseChatSessionRepository = irisTextExerciseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
@@ -58,6 +61,7 @@ public class IrisTextExerciseChatSessionResource {
         this.pyrisHealthIndicator = pyrisHealthIndicator;
         this.irisRateLimitService = irisRateLimitService;
         this.textExerciseRepository = textExerciseRepository;
+        this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
     }
 
     /**
@@ -72,7 +76,7 @@ public class IrisTextExerciseChatSessionResource {
         var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var sessionOptional = irisTextExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream()
@@ -84,26 +88,6 @@ public class IrisTextExerciseChatSessionResource {
         }
 
         return createSessionForExercise(exerciseId);
-    }
-
-    /**
-     * GET exercise-chat/{exerciseId}/sessions: Retrieve all Iris Sessions for the programming exercise
-     *
-     * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the exercise or {@code 404 (Not Found)} if no session exists
-     */
-    @GetMapping("{exerciseId}/sessions")
-    @EnforceAtLeastStudentInExercise
-    public ResponseEntity<List<IrisTextExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
-        var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        validateExercise(exercise);
-
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-
-        var sessions = irisTextExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
-        sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-        return ResponseEntity.ok(sessions);
     }
 
     /**
@@ -120,13 +104,36 @@ public class IrisTextExerciseChatSessionResource {
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         validateExercise(textExercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, textExercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, textExercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var session = irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);
+    }
+
+    /**
+     * GET exercise-chat/{exerciseId}/sessions: Retrieve all Iris Sessions for the programming exercise
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the exercise or {@code 404 (Not Found)} if no session exists
+     */
+    @GetMapping("{exerciseId}/sessions")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<List<IrisTextExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
+        var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        validateExercise(exercise);
+
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        user.hasAcceptedIrisElseThrow();
+
+        var sessions = irisTextExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+        // TODO: Discuss this with the team: should we filter out sessions where the user does not have access, or throw an exception?
+        // Access check might not even be necessary here -> see comments in hasAccess method
+        var filteredSessions = sessions.stream().filter(session -> irisTextExerciseChatSessionService.hasAccess(user, session)).toList();
+        return ResponseEntity.ok(filteredSessions);
     }
 
     private static void validateExercise(TextExercise exercise) {
