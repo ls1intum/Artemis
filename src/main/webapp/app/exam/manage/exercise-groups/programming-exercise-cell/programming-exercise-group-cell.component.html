@@ -84,12 +84,13 @@
     @if (displayEditorModus) {
         <div>
             <div class="d-flex justify-content-between">
-                {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}
-                : {{ programmingExercise.allowOfflineIde || false }}
+                <span jhiTranslate="'artemisApp.programmingExercise.offlineIde'">: {{ programmingExercise.allowOfflineIde || false }}</span>
             </div>
             <div class="d-flex justify-content-between">
-                {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}
-                : {{ programmingExercise.allowOnlineEditor || false }}
+                <span jhiTranslate="'artemisApp.programmingExercise.onlineEditor'">: {{ programmingExercise.allowOnlineEditor || false }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span jhiTranslate="'artemisApp.programmingExercise.onlineIde'">: {{ programmingExercise.allowOnlineIde || false }}</span>
             </div>
         </div>
     }
