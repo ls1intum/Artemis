@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, O
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
+import { ExamExerciseOverviewItem } from 'app/entities/exam/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { facSaveSuccess, facSaveWarning } from '../../../../../content/icons/icons';

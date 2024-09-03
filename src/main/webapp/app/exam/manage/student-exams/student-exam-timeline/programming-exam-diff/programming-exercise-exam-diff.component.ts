@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';

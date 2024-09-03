@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
