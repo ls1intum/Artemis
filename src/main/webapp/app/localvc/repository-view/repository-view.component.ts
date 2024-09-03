@@ -43,7 +43,8 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     routeVcsAccessLog: string;
     repositoryUri: string;
     repositoryType: ProgrammingExerciseInstructorRepositoryType | 'USER';
-    vcsAccessLogEnabled = false;
+    enableVcsAccessLogButton = false;
+    allowVcsAccessLogButton = false;
     result: Result;
     resultHasInlineFeedback = false;
     showInlineFeedback = false;
@@ -88,8 +89,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             const participationId = Number(params['participationId']);
             this.repositoryType = participationId ? 'USER' : params['repositoryType'];
             this.routeVcsAccessLog = this.router.url + '/vcs-access-log';
-            this.vcsAccessLogEnabled = this.router.url.includes('course-management') && params['repositoryType'] != 'TESTS';
-
+            this.enableVcsAccessLogButton = this.router.url.includes('course-management') && params['repositoryType'] !== 'TESTS';
             if (this.repositoryType === 'USER') {
                 this.loadStudentParticipation(participationId);
             } else {
@@ -126,6 +126,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                         this.participationCouldNotBeFetched = true;
                         this.loadingParticipation = false;
                     }
+                    this.allowVcsAccessLogButton = this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(this.exercise));
                 }),
             )
             .subscribe({
@@ -150,6 +151,8 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                     this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                     this.participation = participationWithResults;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
+                    this.allowVcsAccessLogButton = this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(this.exercise));
+                    console.log(this.allowVcsAccessLogButton);
                     this.repositoryUri = this.participation.repositoryUri!;
                 }),
             )

@@ -34,7 +34,7 @@
                         <span jhiTranslate="artemisApp.repository.commitHistory.openCommitHistory"></span>
                     </a>
                 }
-                @if (routeVcsAccessLog && vcsAccessLogEnabled) {
+                @if (routeVcsAccessLog && enableVcsAccessLogButton && allowVcsAccessLogButton) {
                     <a [routerLink]="routeVcsAccessLog" class="btn btn-primary">
                         <fa-icon [icon]="faClockRotateLeft" />
                         <span jhiTranslate="artemisApp.repository.vcsAccessLog.openVcsAccessLog"></span>

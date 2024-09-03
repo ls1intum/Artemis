@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
