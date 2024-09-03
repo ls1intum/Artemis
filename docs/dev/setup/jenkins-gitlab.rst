@@ -69,7 +69,6 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
         user: artemis_admin
         password: artemis_admin
         url: http://localhost:8082
-        secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
         vcs-credentials: artemis_gitlab_admin_credentials
         artemis-authentication-token-key: artemis_notification_plugin_token
         artemis-authentication-token-value: artemis_admin
@@ -473,7 +472,7 @@ The following steps describe how to deploy a pre-configured version of the Jenki
 This is ideal as a quickstart for developers. For a more detailed setup, see
 `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
 In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config-gitlab.yml``) and
-generate random access tokens and push tokens.
+generate random access tokens.
 
 1. Create a new access token in GitLab named ``Jenkins`` and give it **api** and **read_repository** rights. You can
 do either do it manually or using the following command:

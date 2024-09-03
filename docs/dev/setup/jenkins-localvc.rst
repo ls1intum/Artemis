@@ -63,7 +63,6 @@ below into your ``application-artemis.yml`` or ``application-local.yml`` file (t
         user: artemis_admin
         password: artemis_admin
         url: http://localhost:8082
-        secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
         vcs-credentials: artemis_localvc_credentials
         artemis-authentication-token-key: artemis_notification_plugin_token
         artemis-authentication-token-value: artemis_admin
@@ -138,7 +137,7 @@ Automated Jenkins Server Setup
 The following steps describe how to deploy a pre-configured version of the Jenkins server.
 This is ideal as a quickstart for developers. For a more detailed setup, see
 `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
-In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config-localvc.yml``) and push tokens.
+In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config-localvc.yml``).
 
 1. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
 
