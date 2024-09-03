@@ -1,9 +1,8 @@
 .card {
     // best possible height to fit header, information, and manage course button: 80px header + 200px card content
     height: 283px;
-    // needed, otherwise score chart will appear outside of the card
-    min-width: 320px;
-    max-width: 400px;
+    // ensure the card takes the full width of its column in the container
+    width: 100%;
     transition: transform 0.2s linear;
 
     &:hover {
