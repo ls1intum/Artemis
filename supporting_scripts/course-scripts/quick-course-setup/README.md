@@ -6,13 +6,14 @@ This project contains Python scripts that automate the setup and management of c
 
 ### 1. Install Python and the Python Plugin for IntelliJ
 
-- Ensure that Python (preferably version 3.7 or 3.9) is installed on your system.
+- Ensure that Python (preferably version 3.9) is installed on your system.
 - Install the [Python Plugin for IntelliJ](https://plugins.jetbrains.com/plugin/631-python).
 - Enable Python support in IntelliJ:
   - Go to `File > Project Structure > Facets > Add - Python`.
-  - Add a Python environment by configuring the Python interpreter.
+  - Add a Python environment by configuring the Python interpreter. 
+  ![IntelliJ Python Facet Configuration](./images/facets-config.png)
   - Add a module in IntelliJ by navigating to `File > Project Structure > Modules > Add - Python`.
-
+  ![IntelliJ Module Configuration](./images/module-config.png)
 ### 2. Configure the Environment
 
 - Start your local Artemis instance.
@@ -22,9 +23,9 @@ This project contains Python scripts that automate the setup and management of c
   ```shell
   python3.9 -m pip install <packageName>
 
-## Usage
+# Usage
 
-### Section 1: Create Local Course and Users
+## Section 1: Create Local Course and Users
 
 These scripts help you configure and set up your first Artemis course quickly.
 
@@ -39,7 +40,7 @@ These scripts help you configure and set up your first Artemis course quickly.
    •	Use the play button within IntelliJ (if Python is configured properly).
    •	Alternatively, follow the command line instructions for each script.
 
-#### Creating a Course with Standard User Groups
+### Creating a Course with Standard User Groups
 
 Creates a course for which the users are registered according to their user groups (students, tutors, editors, instructors).
 
@@ -47,7 +48,7 @@ Creates a course for which the users are registered according to their user grou
 python3 create_course.py
 ```
 
-#### Create Users
+### Create Users
 
 Creates users 1-20 (students, tutors, editors, instructors - 5 for each group) and users needed for Cypress E2E testing (100-106).
     
@@ -55,7 +56,7 @@ Creates users 1-20 (students, tutors, editors, instructors - 5 for each group) a
 python3 create_users.py
 ```
 
-#### Authenticate Users
+### Authenticate Users
 
 If the users have already been created, they still need to be logged in order to be added to a course (without a first login, Artemis does not know that the users exist).
     
@@ -63,9 +64,9 @@ If the users have already been created, they still need to be logged in order to
 python3 authenticate_all_users.py
 ```
 
-### Test Servers
+## Test Servers
 
-#### To configure the scripts for use with Artemis test servers:
+### To configure the scripts for use with Artemis test servers:
 
 1.	Adjust server_url and client_url according to the test server.
 2.  Update admin_user and admin_password to valid values for the test server.
@@ -84,7 +85,7 @@ Define the name of your course in the config.ini as course_name.
 python3 create_course.py
 ```
 
-#### Add Users to Existing Course
+### Add Users to Existing Course
 
 Define the course_id in the config.ini.
 
@@ -92,7 +93,7 @@ Define the course_id in the config.ini.
 python3 add_users_to_course.py
 ```
 
-### Notes
+## Notes
 
 1.  Ensure that the config.ini file is correctly configured before running any scripts.
 2.  Always test the scripts on a local setup before running them on a production or test server.
