@@ -1,6 +1,5 @@
 import logging
 from requests import Session
-from typing import List, Tuple
 from create_users import user_credentials
 
 def delete_students(session: Session, client_url: str) -> None:
