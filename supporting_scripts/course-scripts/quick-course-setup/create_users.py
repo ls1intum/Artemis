@@ -1,6 +1,6 @@
 import requests
 import configparser
-import logging
+from logging_config import logging
 from requests import Session
 from typing import List, Tuple
 

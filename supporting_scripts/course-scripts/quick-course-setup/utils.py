@@ -1,6 +1,6 @@
 import requests
 import configparser
-import logging
+from logging_config import logging
 from typing import Dict, Any, List
 
 config = configparser.ConfigParser()

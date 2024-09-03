@@ -1,4 +1,4 @@
-import logging
+from logging_config import logging
 from typing import List, Dict, Any
 from requests import Session
 

@@ -2,23 +2,28 @@
 
 This project contains Python scripts that automate the setup and management of courses and users in an Artemis instance. The scripts help you create a course, generate users, enroll them into courses, and manage programming exercises, including participation and commits. The project is useful for setting up test environments or quickly initializing a course with a large number of students.
 
-## Setup
+# Setup
 
 ### 1. Install Python and the Python Plugin for IntelliJ
 
 - Ensure that Python (preferably version 3.9) is installed on your system.
+```shell
+python3.9 --version
+```
 - Install the [Python Plugin for IntelliJ](https://plugins.jetbrains.com/plugin/631-python).
 - Enable Python support in IntelliJ:
   - Go to `File > Project Structure > Facets > Add - Python`.
   - Add a Python environment by configuring the Python interpreter. 
-  ![IntelliJ Python Facet Configuration](./images/facets-config.png)
+
+    ![IntelliJ Python Facet Configuration](./images/facets-config.png)
   - Add a module in IntelliJ by navigating to `File > Project Structure > Modules > Add - Python`.
-  ![IntelliJ Module Configuration](./images/module-config.png)
+
+    ![IntelliJ Module Configuration](./images/module-config.png)
 ### 2. Configure the Environment
 
 - Start your local Artemis instance.
 - Configure the [config.ini](./config.ini) file according to your local or test server setup.
-- Install the necessary Python packages using the following command (replace `<packageName>` with the actual package name):
+- If packages are missing when running the script, install the necessary Python packages using the following command (replace `<packageName>` with the actual package name and the python version with your used python version):
 
   ```shell
   python3.9 -m pip install <packageName>

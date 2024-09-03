@@ -1,6 +1,6 @@
 import requests
 import configparser
-import logging
+from logging_config import logging
 from requests import Session
 
 from utils import login_as_admin, get_user_details_by_index, add_user_to_course, get_student_details_by_index

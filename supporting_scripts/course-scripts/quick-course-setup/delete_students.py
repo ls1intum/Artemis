@@ -1,4 +1,4 @@
-import logging
+from logging_config import logging
 from requests import Session
 from create_users import user_credentials
 

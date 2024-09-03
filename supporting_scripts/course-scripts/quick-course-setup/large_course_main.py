@@ -1,6 +1,6 @@
 import requests
 import configparser
-import logging
+from logging_config import logging
 from requests import Session
 from utils import authenticate_user
 from create_course import create_course
@@ -51,7 +51,7 @@ def main() -> None:
     create_programming_exercise(session, course_id, SERVER_URL, EXERCISES_TO_CREATE)
 
     # Step 6: Add participation and commit for each user
-    print("Created users and their credentials:")
+    logging.info("Created users and their credentials:")
 
     for username, password in user_credentials:
         user_session: Session = requests.Session()
@@ -64,7 +64,6 @@ def main() -> None:
 
             commit(user_session, participation_id, CLIENT_URL, COMMITS_PER_STUDENT)
             logging.info(f"Added commit for {username} in the programming exercise {exercise_id} successfully")
-            print(f"Participation and Commit done for user: {username}")
 
     # (Optional) Step 7 : Delete all created students
     # delete_all_created_students(session)

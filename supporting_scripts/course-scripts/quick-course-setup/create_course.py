@@ -3,7 +3,7 @@ import configparser
 import json
 import urllib3
 import re
-import logging
+from logging_config import logging
 from requests import Session
 from utils import login_as_admin
 from add_users_to_course import add_users_to_groups_of_course
@@ -91,7 +91,7 @@ def create_course(session: Session) -> requests.Response:
                       "Is 'is_local_course' in 'config.ini' set to 'False'?")
         raise Exception(
             f"Could not create course {course_name}; Status code: {response.status_code}\n"
-            f"Double check whether the courseShortName {course_short_name} is not already used for another course!\n"
+            f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-') not already used for another course!\n"
             f"Response content: {response.text}")
 
     return response
