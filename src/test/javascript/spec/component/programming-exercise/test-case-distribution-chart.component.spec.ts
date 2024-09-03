@@ -5,10 +5,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BarChartModule } from '@swimlane/ngx-charts';
-import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { TestCaseStatsMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('Test case distribution chart', () => {

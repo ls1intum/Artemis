@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';

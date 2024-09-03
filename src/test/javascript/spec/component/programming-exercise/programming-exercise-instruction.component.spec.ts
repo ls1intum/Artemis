@@ -31,7 +31,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';

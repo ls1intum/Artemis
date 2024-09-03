@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
