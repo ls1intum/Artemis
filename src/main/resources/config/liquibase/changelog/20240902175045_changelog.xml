@@ -7,13 +7,22 @@
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="question_title" type="varchar(100)">
+            <column name="question_title" type="varchar(2000)">
                 <constraints nullable="false"/>
             </column>
-            <column name="question_answer" type="varchar(500)">
+            <column name="question_answer" type="varchar(2000)">
                 <constraints nullable="false"/>
             </column>
             <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="faq_state" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="varchar(45)"/>
+            <column name="last_modified_by" type="varchar(45)"/>
+            <column name="last_modified_date" type="datetime(3)"/>
+            <column name="created_date" type="timestamp">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -21,7 +30,7 @@
             <column name="faq_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="categories" type="varchar(50)"/>
+            <column name="category" type="varchar(50)"/>
         </createTable>
         <addColumn tableName="course">
             <column name="faq_enabled" type="boolean" defaultValue="false">

@@ -92,7 +92,7 @@ public class FaqResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated faq, or with status 400 (Bad Request) if the faq is not valid, or with status 500 (Internal
      *         Server Error) if the faq couldn't be updated
      */
-    @PutMapping("faqs")
+    @PutMapping("faqs/{faqId}")
     @EnforceAtLeastEditor
     public ResponseEntity<Faq> updateFaq(@RequestBody Faq faq) {
         log.debug("REST request to update Faq : {}", faq);

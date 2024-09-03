@@ -7,6 +7,8 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -25,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "faq")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Faq extends DomainObject {
+public class Faq extends AbstractAuditingEntity {
 
     @Column(name = "question_title")
     private String questionTitle;
@@ -37,6 +39,10 @@ public class Faq extends DomainObject {
     @CollectionTable(name = "faq_categories", joinColumns = @JoinColumn(name = "faq_id"))
     @Column(name = "categories")
     private Set<String> categories = new HashSet<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "faq_state")
+    private FaqState faqState;
 
     @ManyToOne
     @JsonIgnoreProperties(value = { "faqs" }, allowSetters = true)
@@ -74,9 +80,17 @@ public class Faq extends DomainObject {
         this.categories = categories;
     }
 
+    public FaqState getFaqState() {
+        return faqState;
+    }
+
+    public void setFaqState(FaqState faqState) {
+        this.faqState = faqState;
+    }
+
     @Override
     public String toString() {
-        return "Faq{" + "id=" + getId() + ", title='" + getQuestionTitle() + "'" + ", description='" + getQuestionTitle() + "'" + "}";
+        return "Faq{" + "id=" + getId() + ", title='" + getQuestionTitle() + "'" + ", description='" + getQuestionTitle() + "'" + ", faqState='" + getFaqState() + "}";
     }
 
 }
