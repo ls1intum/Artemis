@@ -215,10 +215,12 @@ Manual Jenkins Server Setup
 
    This might take a while because Docker will download Java, but this
    is only required once.
+Nginx proxy setup
+#################
 
-3. **If you run your own NGINX or if you install Jenkins on a local development computer, then skip the next steps (4-7)**
+If you run your own NGINX or if you install Jenkins on a local development computer, you can skip this section.
 
-4. Create a file increasing the maximum file size for the nginx proxy.
+#. Create a file increasing the maximum file size for the Nginx proxy.
    The nginx-proxy uses a default file limit that is too small for the
    plugin that will be uploaded later. **Skip this step if you have your
    own NGINX instance.**
