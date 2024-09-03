@@ -1,5 +1,5 @@
 import { AfterViewChecked, AfterViewInit, Component, EventEmitter, Input, OnDestroy, ViewChild } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';

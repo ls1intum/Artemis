@@ -5,7 +5,7 @@ import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, t
 import { generateUUID } from '../../support/utils';
 import javaAllSuccessfulSubmission from '../../fixtures/exercise/programming/java/all_successful/submission.json';
 import dayjs from 'dayjs';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { expect } from '@playwright/test';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
 import { Commands } from '../../support/commands';
