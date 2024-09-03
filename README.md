@@ -135,7 +135,7 @@ Setting up Artemis in your development environment or a demo production environm
 
 Artemis can also be set up in conjunction with external tools for version control and continuous integration:
 1. [LocalVC and Jenkins](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-localvc-setup)
-2. [GitLab and Jenkins](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup) (deprecated)
+2. [GitLab and Jenkins (deprecated)](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup)
 3. [GitLab and GitLab CI (experimental)](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup)
 
 Artemis uses these external tools for user management and the configuration of programming exercises.
