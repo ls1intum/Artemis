@@ -302,6 +302,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should react to srcoll up event', fakeAsync(() => {
+        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
         fixture.detectChanges();
         const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
