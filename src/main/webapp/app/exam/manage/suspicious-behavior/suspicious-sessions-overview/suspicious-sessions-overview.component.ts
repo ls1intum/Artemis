@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
 import { cloneDeep } from 'lodash-es';
 
 @Component({

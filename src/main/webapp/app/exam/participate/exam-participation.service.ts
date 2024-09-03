@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angula
 import { Injectable } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

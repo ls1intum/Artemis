@@ -3,7 +3,7 @@ import { MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 
 describe('StudentExamWorkingTimeComponent', () => {

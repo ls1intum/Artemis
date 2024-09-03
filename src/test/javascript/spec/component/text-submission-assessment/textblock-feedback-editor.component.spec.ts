@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
-import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -16,7 +16,7 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { NgModel } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
