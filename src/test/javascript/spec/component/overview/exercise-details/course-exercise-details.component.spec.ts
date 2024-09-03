@@ -72,7 +72,6 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('CourseExerciseDetailsComponent', () => {
