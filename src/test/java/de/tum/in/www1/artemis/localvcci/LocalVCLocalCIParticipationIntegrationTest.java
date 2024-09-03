@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.vcstokens.AuthenticationMechanism;
 import de.tum.in.www1.artemis.domain.vcstokens.VcsAccessLog;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.VcsAccessLogRepository;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -38,9 +37,6 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
     private VcsAccessLogRepository vcsAccessLogRepository;
 
     @Autowired
-    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     private ProgrammingExercise programmingExercise;
@@ -50,12 +46,14 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartParticipation() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         // Set the branch to null to force the usage of LocalVCService#getDefaultBranchOfRepository().

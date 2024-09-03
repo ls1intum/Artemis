@@ -46,7 +46,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.VcsAccessLogService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
@@ -90,13 +89,11 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<VcsAccessLogRepository> vcsAccessLogRepository;
 
-    private final VcsAccessLogService vcsAccessLogService;
-
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, VcsAccessLogService vcsAccessLogService) {
+            StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -109,7 +106,6 @@ public class ProgrammingExerciseParticipationResource {
         this.repositoryService = repositoryService;
         this.studentExamRepository = studentExamRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
-        this.vcsAccessLogService = vcsAccessLogService;
     }
 
     /**
