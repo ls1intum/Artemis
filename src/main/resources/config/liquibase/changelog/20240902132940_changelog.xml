@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240902132940" author="cremer">
+        <createTable tableName="faq">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="question_title" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="question_answer" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="faq_categories">
+            <column name="faq_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="categories" type="varchar(50)"/>
+        </createTable>
+        <addColumn tableName="course">
+            <column name="faq_enabled" type="boolean" defaultValue="false">
+                <constraints nullable="false" />
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="course_id"
+                                 baseTableName="faq"
+                                 constraintName="faq_course_id"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
+                                 onDelete="RESTRICT" onUpdate="RESTRICT"
+                                 referencedColumnNames="id"
+                                 referencedTableName="course"
+                                 validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="faq_id"
+                                 baseTableName="faq_categories"
+                                 constraintName="faq_categories_id"
+                                 deferrable="false" initiallyDeferred="false"
+                                 onDelete="RESTRICT" onUpdate="RESTRICT"
+                                 referencedColumnNames="id"
+                                 referencedTableName="faq"
+                                 validate="true"/>
+    </changeSet>
+</databaseChangeLog>
