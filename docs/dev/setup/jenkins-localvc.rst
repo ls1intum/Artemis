@@ -56,7 +56,7 @@ below into your ``application-artemis.yml`` or ``application-local.yml`` file (t
     version-control:
         url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
         user: root
-        password: dummy # have to be set, but does not matter for LocalVC
+        password: dummy # has to be set, but does not matter for LocalVC
         build-agent-git-username: jenkins
         build-agent-git-password: artemis_admin # choose some strong password and username (gives read access to all repositories)
     continuous-integration:
