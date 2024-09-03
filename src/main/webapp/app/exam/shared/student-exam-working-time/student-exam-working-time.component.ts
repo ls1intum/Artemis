@@ -14,7 +14,7 @@ export class StudentExamWorkingTimeComponent implements OnInit {
     isTestRun = false;
 
     ngOnInit() {
-        if (this.studentExam.exam && this.studentExam.workingTime) {
+        if (this.studentExam.exam && this.studentExam.workingTime && !this.studentExam.exam.testExam) {
             this.percentDifference = getRelativeWorkingTimeExtension(this.studentExam.exam, this.studentExam.workingTime);
         }
         this.isTestRun = this.studentExam.testRun ?? false;
