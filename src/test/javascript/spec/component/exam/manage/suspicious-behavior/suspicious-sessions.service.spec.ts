@@ -2,7 +2,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
-import { SuspiciousExamSessions, SuspiciousSessionReason, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionReason, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam/exam-session.model';
 
 describe('SuspiciousSessionsService', () => {
     let service: SuspiciousSessionsService;

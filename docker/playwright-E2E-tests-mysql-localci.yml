@@ -17,8 +17,8 @@ services:
             mysql:
                 condition: service_healthy
         env_file:
-            - ./artemis/config/cypress.env
-            - ./artemis/config/cypress-local.env
+            - ./artemis/config/playwright.env
+            - ./artemis/config/playwright-local.env
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
 
@@ -31,11 +31,11 @@ services:
             artemis-app:
                 condition: service_started
         volumes:
-            - ./nginx/artemis-nginx-cypress.conf:/etc/nginx/conf.d/artemis-nginx-cypress.conf:ro
+            - ./nginx/artemis-nginx-playwright.conf:/etc/nginx/conf.d/artemis-nginx-playwright.conf:ro
         ports:
             - '80:80'
             - '443:443'
-            # see comments in artemis/config/cypress.env why this port is necessary
+            # see comments in artemis/config/playwright.env why this port is necessary
             - '54321:54321'
 
     artemis-playwright:
