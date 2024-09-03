@@ -99,20 +99,20 @@ python3 add_users_to_course.py
 
 ## Section 2: Artemis Large Course with Submissions on Programming Exercise Automation
 
-This section details how to use the main script that orchestrates the entire process, from user creation to course setup, and finally user participation in programming exercises.
+This section details how to use the large_course_main script that orchestrates the entire process, from user creation to course setup, and finally user participation in programming exercises.
 
-### Running the Main Script
+### Running the large_course_main Script
 
-The main script performs all necessary steps to set up a large course with multiple students and submissions.
+The large_course_main script performs all necessary steps to set up a large course with multiple students and submissions.
 
 ### Steps to Run:
 
 1. Open the project in IntelliJ. 
-2. Locate the main.py file in the project directory.
+2. Locate the large_course_main.py file in the project directory.
 3. To change the number of students created, modify the students variable in the config.ini file.
 4. To change the number of commits each student should perform in the example exercise, modify the commits variable in the config.ini file.
 5. To change the number of programming exercises created, modify the exercises variable in the config.ini file.
-6. You can use the play button within IntelliJ (if Python is configured properly) to run the script. (Run main.py)
+6. You can use the play button within IntelliJ (if Python is configured properly) to run the script. (Run large_course_main.py)
 
 The script will automatically perform all the necessary steps:
 
@@ -127,6 +127,6 @@ The script will automatically perform all the necessary steps:
 
 If you want to delete all the students created by the script:
 
-1.	Uncomment the relevant section in main.py that calls the delete_all_created_students() function. 
+1.	Uncomment the relevant section in large_course_main.py that calls the delete_all_created_students() function. 
 2.  Comment out steps 2 to 6.
 3.	Re-run the script.
