@@ -13,22 +13,24 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
- * An IrisProgrammingExerciseChatSession represents a conversation between a user and an LLM.
+ * An IrisExerciseChatSession represents a conversation between a user and an LLM.
  * This is used for students receiving tutor assistance from Iris while working on an exercise.
  */
 @Entity
 @DiscriminatorValue("CHAT") // TODO: Legacy. Should ideally be "PROGRAMMING_EXERCISE_CHAT"
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisProgrammingExerciseChatSession extends IrisChatSession {
+// TODO: Rename to IrisProgrammingExerciseChatSession
+public class IrisExerciseChatSession extends IrisChatSession {
 
     @ManyToOne
     @JsonIgnore
+    // TODO: Change to ProgrammingExercise?
     private Exercise exercise;
 
-    public IrisProgrammingExerciseChatSession() {
+    public IrisExerciseChatSession() {
     }
 
-    public IrisProgrammingExerciseChatSession(Exercise exercise, User user) {
+    public IrisExerciseChatSession(Exercise exercise, User user) {
         super(user);
         this.exercise = exercise;
     }
@@ -43,6 +45,6 @@ public class IrisProgrammingExerciseChatSession extends IrisChatSession {
 
     @Override
     public String toString() {
-        return "IrisProgrammingExerciseChatSession{" + "user=" + Optional.ofNullable(getUser()).map(User::getLogin).orElse("null") + "," + "exercise=" + exercise + '}';
+        return "IrisExerciseChatSession{" + "user=" + Optional.ofNullable(getUser()).map(User::getLogin).orElse("null") + "," + "exercise=" + exercise + '}';
     }
 }

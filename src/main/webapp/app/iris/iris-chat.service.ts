@@ -4,7 +4,7 @@ import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from '
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
-import { IrisProgrammingExerciseChatSession } from 'app/entities/iris/iris-programming-exercise-chat-session.model';
+import { IrisExerciseChatSession } from 'app/entities/iris/iris-exercise-chat-session.model';
 import { IrisStageDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/entities/iris/iris-chat-websocket-dto.model';
@@ -245,12 +245,12 @@ export class IrisChatService implements OnDestroy {
     /**
      * Retrieves the current session or creates a new one if it doesn't exist.
      */
-    private getCurrentSessionOrCreate(): Observable<IrisProgrammingExerciseChatSession> {
+    private getCurrentSessionOrCreate(): Observable<IrisExerciseChatSession> {
         if (!this.sessionCreationIdentifier) {
             throw new Error('Session creation identifier not set');
         }
         return this.http.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
-            map((response: HttpResponse<IrisProgrammingExerciseChatSession>) => {
+            map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
                 } else {
@@ -264,12 +264,12 @@ export class IrisChatService implements OnDestroy {
     /**
      * Creates a new session
      */
-    private createNewSession(): Observable<IrisProgrammingExerciseChatSession> {
+    private createNewSession(): Observable<IrisExerciseChatSession> {
         if (!this.sessionCreationIdentifier) {
             throw new Error('Session creation identifier not set');
         }
         return this.http.createSession(this.sessionCreationIdentifier).pipe(
-            map((response: HttpResponse<IrisProgrammingExerciseChatSession>) => {
+            map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
                 } else {
