@@ -30,7 +30,7 @@ def parse_course_name_to_short_name() -> str:
 
 def create_course(session: Session) -> requests.Response:
     """Create a course using the given session."""
-    url = f"{server_url}/api/admin/courses"
+    url = f"{server_url}/admin/courses"
     course_short_name = parse_course_name_to_short_name()
 
     default_course = {

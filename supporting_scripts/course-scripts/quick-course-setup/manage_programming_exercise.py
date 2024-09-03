@@ -7,7 +7,7 @@ exercise_ids: List[int] = []
 def create_programming_exercise(session: Session, course_id: int, server_url: str, exercises_to_create: int) -> None:
     """Create multiple programming exercises for the course."""
     for i in range(exercises_to_create):
-        url: str = f"{server_url}/api/programming-exercises/setup"
+        url: str = f"{server_url}/programming-exercises/setup"
         headers: Dict[str, str] = {"Content-Type": "application/json"}
         short_name_index: int = i + 1
 
@@ -41,7 +41,7 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
 
 def add_participation(session: Session, exercise_id: int, client_url: str) -> Dict[str, Any]:
     """Add a participation for the exercise."""
-    url: str = f"{client_url}/api/exercises/{exercise_id}/participations"
+    url: str = f"{client_url}/exercises/{exercise_id}/participations"
     headers: Dict[str, str] = {"Content-Type": "application/json"}
 
     response = session.post(url, headers=headers)
@@ -53,7 +53,7 @@ def add_participation(session: Session, exercise_id: int, client_url: str) -> Di
 def commit(session: Session, participation_id: int, client_url: str, commits_per_student: int) -> None:
     """Commit the participation to the repository multiple times."""
     for _ in range(commits_per_student):
-        url: str = f"{client_url}/api/repository/{participation_id}/commit"
+        url: str = f"{client_url}/repository/{participation_id}/commit"
         headers: Dict[str, str] = {"Content-Type": "application/json"}
 
         response = session.post(url, headers=headers)

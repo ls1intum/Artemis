@@ -2,7 +2,6 @@ import requests
 import configparser
 import logging
 from requests import Session
-from typing import List, Tuple
 from utils import authenticate_user
 from create_course import create_course
 from create_users import create_students, user_credentials

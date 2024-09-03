@@ -9,7 +9,7 @@ def delete_students(session: Session, client_url: str) -> None:
 
 def delete_student(session: Session, username: str, client_url: str) -> None:
     """Send a DELETE request to delete a user."""
-    url = f"{client_url}/api/admin/users/{username}"
+    url = f"{client_url}/admin/users/{username}"
     response = session.delete(url)
 
     if response.status_code == 200:
