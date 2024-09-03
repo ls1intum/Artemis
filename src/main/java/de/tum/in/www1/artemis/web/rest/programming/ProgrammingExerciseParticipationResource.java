@@ -46,6 +46,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.VcsAccessLogService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
@@ -87,13 +88,15 @@ public class ProgrammingExerciseParticipationResource {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final VcsAccessLogRepository vcsAccessLogRepository;
+    private final Optional<VcsAccessLogRepository> vcsAccessLogRepository;
+
+    private final VcsAccessLogService vcsAccessLogService;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            StudentExamRepository studentExamRepository, VcsAccessLogRepository vcsAccessLogRepository) {
+            StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, VcsAccessLogService vcsAccessLogService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -106,6 +109,7 @@ public class ProgrammingExerciseParticipationResource {
         this.repositoryService = repositoryService;
         this.studentExamRepository = studentExamRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
+        this.vcsAccessLogService = vcsAccessLogService;
     }
 
     /**
@@ -326,10 +330,13 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise-participations/{participationId}/vcs-access-log")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForParticipationRepo(@PathVariable long participationId) {
+        if (vcsAccessLogRepository.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         log.info("Fetching VCS access logs for participation ID: {}", participationId);
-        List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.findAllByParticipationId(participationId);
+        List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.get().findAllByParticipationId(participationId);
         var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
         return ResponseEntity.ok(vcsAccessLogDTOs);
     }
@@ -433,7 +440,9 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise/{exerciseId}/vcs-access-log/{repositoryType}")
     @EnforceAtLeastEditor
     public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForExerciseRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) {
-
+        if (vcsAccessLogRepository.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         if (repositoryType != RepositoryType.TEMPLATE && repositoryType != RepositoryType.SOLUTION) {
             throw new BadRequestAlertException("Can only get vcs access log from template and assignment repositories", ENTITY_NAME, "incorrect repositoryType");
         }
@@ -443,7 +452,7 @@ public class ProgrammingExerciseParticipationResource {
 
         var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
 
-        List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+        List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.get().findAllByParticipationId(participation.getId());
         var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
         return ResponseEntity.ok(vcsAccessLogDTOs);
     }

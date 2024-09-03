@@ -16,6 +16,8 @@ import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Feedback } from 'app/entities/feedback.model';
+import { PROFILE_LOCALVC } from 'app/app.constants';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-repository-view',
@@ -48,6 +50,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     result: Result;
     resultHasInlineFeedback = false;
     showInlineFeedback = false;
+    localVcEnabled = false;
 
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub: Subscription;
@@ -57,6 +60,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         public domainService: DomainService,
         private route: ActivatedRoute,
+        private profileService: ProfileService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseService: ProgrammingExerciseService,
         private router: Router,
@@ -95,6 +99,9 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             } else {
                 this.loadDifferentParticipation(this.repositoryType, exerciseId);
             }
+        });
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.localVcEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
 

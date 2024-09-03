@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.VcsAccessLogRepository;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_LOCALVC)
 @Service
 public class VcsAccessLogService {
 

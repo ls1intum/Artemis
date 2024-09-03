@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
  * If you don't need deleted user entities, add `WHERE user.isDeleted = FALSE` to your query.
  * </p>
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_LOCALVC)
 @Repository
 public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLog, Long> {
 

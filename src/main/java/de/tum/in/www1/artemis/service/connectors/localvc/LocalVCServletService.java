@@ -102,7 +102,8 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final VcsAccessLogService vcsAccessLogService;
+    // TODO As soon as only LocalVC is supported, this Optional can be removed
+    private final Optional<VcsAccessLogService> vcsAccessLogService;
 
     private static URL localVCBaseUrl;
 
@@ -136,7 +137,7 @@ public class LocalVCServletService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, VcsAccessLogService vcsAccessLogService) {
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -451,8 +452,8 @@ public class LocalVCServletService {
             log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
         }
         // Write a access log entry to the database
-        vcsAccessLogService.storeAccessLog(user, participation, repositoryActionType, authenticationMechanism, commitHash, ipAddress);
-
+        String finalCommitHash = commitHash;
+        vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, repositoryActionType, authenticationMechanism, finalCommitHash, ipAddress));
     }
 
     /**
@@ -521,7 +522,8 @@ public class LocalVCServletService {
             processNewPushToRepository(participation, commit);
 
             // For push the correct commitHash is only available here, therefore the preliminary null value is overwritten
-            vcsAccessLogService.updateCommitHash(participation, commitHash);
+            String finalCommitHash = commitHash;
+            vcsAccessLogService.ifPresent(service -> service.updateCommitHash(participation, finalCommitHash));
         }
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
