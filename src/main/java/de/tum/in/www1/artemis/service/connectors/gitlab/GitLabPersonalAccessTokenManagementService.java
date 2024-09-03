@@ -31,6 +31,9 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenManagementService;
 /**
  * Provides VCS access token services for GitLab via means of personal access tokens.
  */
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
+
 @Service
 @Profile("gitlab")
 public class GitLabPersonalAccessTokenManagementService extends VcsTokenManagementService {
