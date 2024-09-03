@@ -134,7 +134,6 @@ describe('LearningPathLectureUnitComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeFalsy();
