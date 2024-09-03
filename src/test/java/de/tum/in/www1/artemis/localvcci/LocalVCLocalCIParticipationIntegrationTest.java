@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,9 +16,16 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.vcstokens.AuthenticationMechanism;
+import de.tum.in.www1.artemis.domain.vcstokens.VcsAccessLog;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.VcsAccessLogRepository;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.web.rest.dto.VcsAccessLogDTO;
+import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -26,12 +34,28 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    @Autowired
+    private VcsAccessLogRepository vcsAccessLogRepository;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    private ProgrammingExercise programmingExercise;
+
+    @BeforeEach
+    void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartParticipation() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         // Set the branch to null to force the usage of LocalVCService#getDefaultBranchOfRepository().
@@ -63,4 +87,27 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
 
         templateRepository.resetLocalRepo();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetVcsAccessLog() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
+        var user = userRepository.getUser();
+        vcsAccessLogRepository.save(new VcsAccessLog(user, participation, "instructor", "instructorMail@mail.de", RepositoryActionType.READ, AuthenticationMechanism.SSH, "", ""));
+        var li = request.getList("/api/programming-exercise-participations/" + participation.getId() + "/vcs-access-log", HttpStatus.OK, VcsAccessLogDTO.class);
+        assertThat(li.size()).isEqualTo(1);
+        assertThat(li.getFirst().userId()).isEqualTo(user.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetVcsAccessLogOfTemplateParticipation() throws Exception {
+        var user = userRepository.getUser();
+        vcsAccessLogRepository.save(new VcsAccessLog(user, programmingExercise.getTemplateParticipation(), "instructor", "instructorMail@mail.de", RepositoryActionType.READ,
+                AuthenticationMechanism.SSH, "", ""));
+        var li = request.getList("/api/programming-exercise/" + programmingExercise.getId() + "/vcs-access-log/TEMPLATE", HttpStatus.OK, VcsAccessLogDTO.class);
+        assertThat(li.size()).isEqualTo(1);
+        assertThat(li.getFirst().userId()).isEqualTo(user.getId());
+    }
+
 }
