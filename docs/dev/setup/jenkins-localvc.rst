@@ -72,6 +72,8 @@ below into your ``application-artemis.yml`` or ``application-local.yml`` file (t
         name: Artemis
         email: artemis@xcit.tum.de
    jenkins:
+       # only required if Artemis and Jenkins cannot communicate on their public URLs
+       # e.g., Jenkins is only available in a local container network
        internal-urls:
            ci-url: http://jenkins:8080
            vcs-url: http://localhost:8080
