@@ -6,8 +6,8 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { HttpResponse } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';

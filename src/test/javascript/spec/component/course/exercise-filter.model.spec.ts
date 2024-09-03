@@ -1,15 +1,13 @@
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 
 describe('Exercise Filter Test', () => {
-    const category1 = new ExerciseCategory();
-    category1.category = 'Easy';
-    const category2 = new ExerciseCategory();
-    category2.category = 'Hard';
+    const category1 = new ExerciseCategory('Easy', undefined);
+    const category2 = new ExerciseCategory('Hard', undefined);
     const course: Course = { id: 123 } as Course;
     const exercise1 = new ProgrammingExercise(course, undefined);
     exercise1.id = 1;

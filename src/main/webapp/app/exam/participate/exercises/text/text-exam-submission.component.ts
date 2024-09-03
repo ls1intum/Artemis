@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
