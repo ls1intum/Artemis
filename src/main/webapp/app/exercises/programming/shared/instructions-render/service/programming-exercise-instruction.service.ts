@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { Result } from 'app/entities/result.model';
 
 /**
