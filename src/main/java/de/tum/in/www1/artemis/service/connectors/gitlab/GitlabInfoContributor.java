@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.Constants;
 
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
+
 @Component
 @Profile("gitlab")
 public class GitlabInfoContributor implements InfoContributor {

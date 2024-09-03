@@ -4,7 +4,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/ent
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
@@ -22,7 +22,7 @@ import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } fro
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 import { Course } from 'app/entities/course.model';
 

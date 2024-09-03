@@ -732,8 +732,9 @@ public class ProgrammingExercise extends Exercise {
     public void validateProgrammingSettings() {
 
         // Check if a participation mode was selected
-        if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde())) {
-            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
+        if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !isAllowOnlineIde()) {
+            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", "Exercise",
+                    "noParticipationModeAllowed");
         }
 
         // Check if Xcode has no online code editor enabled
@@ -744,6 +745,11 @@ public class ProgrammingExercise extends Exercise {
         // Check if programming language is set
         if (getProgrammingLanguage() == null) {
             throw new BadRequestAlertException("No programming language was specified", "Exercise", "programmingLanguageNotSet");
+        }
+
+        // Check if theia image was selected if the online IDE is enabled
+        if (isAllowOnlineIde() && buildConfig.getTheiaImage() == null) {
+            throw new BadRequestAlertException("The Theia image must be selected if the online IDE is enabled", "Exercise", "theiaImageNotSet");
         }
     }
 

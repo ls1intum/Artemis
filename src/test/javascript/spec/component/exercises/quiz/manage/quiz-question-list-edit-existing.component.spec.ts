@@ -10,7 +10,7 @@ import { QuizQuestionListEditExistingComponent, State } from 'app/exercises/quiz
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { FormsModule } from '@angular/forms';
