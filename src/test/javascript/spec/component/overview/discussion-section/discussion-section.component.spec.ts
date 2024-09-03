@@ -117,7 +117,6 @@ describe('DiscussionSectionComponent', () => {
             ),
         );
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
-        component.lecture = { ...metisLecture, course: metisCourse };
     });
 
     afterEach(() => {
@@ -125,8 +124,8 @@ describe('DiscussionSectionComponent', () => {
     });
 
     it('should set course and messages for lecture with lecture channel on initialization', fakeAsync(() => {
-        component.lecture = { ...metisLecture, course: metisCourse };
-        component.ngOnInit();
+        fixture.componentRef.setInput('lecture', { ...metisLecture, course: metisCourse });
+        fixture.detectChanges();
         tick();
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
@@ -136,9 +135,8 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should set course and messages for exercise with exercise channel on initialization', fakeAsync(() => {
-        component.lecture = undefined;
-        component.exercise = { ...metisExercise, course: metisCourse };
-        component.ngOnInit();
+        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.detectChanges();
         tick();
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
@@ -148,6 +146,8 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should reset current post', fakeAsync(() => {
+        fixture.componentRef.setInput('lecture', { ...metisLecture, course: metisCourse });
+        fixture.detectChanges();
         component.resetCurrentPost();
         tick();
         expect(component.currentPost).toBeUndefined();
@@ -155,9 +155,8 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should initialize correctly for exercise posts with default settings', fakeAsync(() => {
-        component.lecture = undefined;
-        component.exercise = { ...metisExercise, course: metisCourse };
-        component.ngOnInit();
+        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.detectChanges();
         tick();
         expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
         expect(component.formGroup.get('filterToOwn')?.value).toBeFalse();
@@ -169,8 +168,8 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should display one new message button for more then 3 messages in channel', fakeAsync(() => {
-        component.exercise = { ...metisExercise, course: metisCourse };
-        component.ngOnInit();
+        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.detectChanges();
         tick();
         fixture.detectChanges();
         tick();
@@ -183,8 +182,8 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should display one new message button', fakeAsync(() => {
-        component.exercise = { ...metisExercise, course: metisCourse };
-        component.ngOnInit();
+        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.detectChanges();
         tick();
         fixture.detectChanges();
         const newPostButtons = getElements(fixture.debugElement, '#new-post');
@@ -193,8 +192,8 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should show search-bar and filters if not focused to a post', fakeAsync(() => {
-        component.exercise = { ...metisExercise, course: metisCourse };
-        component.ngOnInit();
+        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.detectChanges();
         tick();
         fixture.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
@@ -209,8 +208,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should hide search-bar and filters if focused to a post', fakeAsync(() => {
-        component.lecture = undefined;
-        component.ngOnInit();
+        fixture.detectChanges();
         tick();
         fixture.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
@@ -225,10 +223,9 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('triggering filters should invoke the metis service', fakeAsync(() => {
-        fixture.detectChanges();
-        component.exercise = { ...metisExercise, course: metisCourse };
+        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         metisServiceGetFilteredPostsSpy.mockReset();
-        component.ngOnInit();
+        fixture.detectChanges();
         tick();
         fixture.detectChanges();
         component.formGroup.patchValue({
@@ -256,8 +253,8 @@ describe('DiscussionSectionComponent', () => {
 
     it('loads exercise messages if communication only', fakeAsync(() => {
         component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
-        component.exercise = { id: 2 } as Exercise;
-        component.lecture = undefined;
+        fixture.componentRef.setInput('exercise', { id: 2 } as Exercise);
+        fixture.detectChanges();
 
         component.setChannel(1);
 
@@ -271,7 +268,8 @@ describe('DiscussionSectionComponent', () => {
 
     it('loads lecture messages if communication only', fakeAsync(() => {
         component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
-        component.lecture = { id: 2 } as Lecture;
+        fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
+        fixture.detectChanges();
 
         component.setChannel(1);
 
@@ -285,7 +283,8 @@ describe('DiscussionSectionComponent', () => {
 
     it('collapses sidebar if no channel exists', fakeAsync(() => {
         component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
-        component.lecture = { id: 2 } as Lecture;
+        fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
+        fixture.detectChanges();
         getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
             of(
                 new HttpResponse({
@@ -303,6 +302,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should react to srcoll up event', fakeAsync(() => {
+        fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
         fixture.detectChanges();
         const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
 
@@ -330,6 +330,8 @@ describe('DiscussionSectionComponent', () => {
     });
 
     it('fetches new messages on scroll up if more messages are available', fakeAsync(() => {
+        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
         fixture.detectChanges();
         component.posts = [];
         const commandMetisToFetchPostsSpy = jest.spyOn(component, 'fetchNextPage');
