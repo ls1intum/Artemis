@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import dayjs from 'dayjs/esm';
