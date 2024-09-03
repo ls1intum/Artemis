@@ -3,19 +3,19 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { Course } from 'app/entities/course.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
-import { ExamInformationDTO } from 'app/entities/exam-information.model';
+import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('Exam Management Service Tests', () => {

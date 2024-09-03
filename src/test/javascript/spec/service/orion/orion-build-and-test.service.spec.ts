@@ -5,13 +5,13 @@ import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mo
 import { Result } from 'app/entities/result.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ArtemisTestModule } from '../../test.module';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

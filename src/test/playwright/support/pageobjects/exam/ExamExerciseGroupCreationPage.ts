@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamAPIRequests } from '../../requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../requests/ExerciseAPIRequests';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
@@ -8,7 +8,7 @@ import { generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { Visibility } from 'app/entities/programming-exercise-test-case.model';
+import { Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 
 export class ExamExerciseGroupCreationPage {
     private readonly page: Page;
