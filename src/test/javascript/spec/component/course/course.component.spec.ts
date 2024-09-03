@@ -32,7 +32,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Component } from '@angular/core';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');

@@ -9,9 +9,9 @@ import { TextResultComponent } from 'app/exercises/text/participate/text-result/
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/entities/result.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlock } from 'app/entities/text/text-block.model';
 import { TextResultBlock } from 'app/exercises/text/participate/text-result/text-result-block';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
