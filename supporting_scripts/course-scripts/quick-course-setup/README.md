@@ -17,7 +17,7 @@ This project contains Python scripts that automate the setup and management of c
 ### 2. Configure the Environment
 
 - Start your local Artemis instance.
-- Configure the `config.ini` file according to your local or test server setup. This includes settings like `server_url`, `client_url`, `admin_user`, `admin_password`, and course-specific configurations.
+- Configure the [config.ini](./config.ini) file according to your local or test server setup.
 - Install the necessary Python packages using the following command (replace `<packageName>` with the actual package name):
 
   ```shell
