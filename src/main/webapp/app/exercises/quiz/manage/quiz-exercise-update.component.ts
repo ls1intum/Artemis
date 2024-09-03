@@ -19,7 +19,7 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { cloneDeep } from 'lodash-es';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 import { ExerciseCategory } from 'app/entities/exercise-category.model';

@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { BuildJob } from 'app/entities/build-job.model';
+import { BuildJob } from 'app/entities/programming/build-job.model';
 
 export class BuildAgent implements BaseEntity {
     public id?: number;

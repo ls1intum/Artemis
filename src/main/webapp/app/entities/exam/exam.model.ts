@@ -1,4 +1,4 @@
-import { ExamUser } from 'app/entities/exam-user.model';
+import { ExamUser } from 'app/entities/exam/exam-user.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
