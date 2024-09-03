@@ -2,7 +2,7 @@ import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryLis
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';

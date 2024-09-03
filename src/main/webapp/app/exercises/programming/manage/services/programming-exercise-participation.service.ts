@@ -7,7 +7,7 @@ import { Result } from 'app/entities/result.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable, map, tap } from 'rxjs';
-import { CommitInfo } from 'app/entities/programming-submission.model';
+import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number, withSubmission: boolean) => Observable<Result | undefined>;

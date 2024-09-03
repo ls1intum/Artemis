@@ -5,7 +5,7 @@ import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { By } from '@angular/platform-browser';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';

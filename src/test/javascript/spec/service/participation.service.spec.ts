@@ -14,7 +14,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 describe('Participation Service', () => {
     let service: ParticipationService;
