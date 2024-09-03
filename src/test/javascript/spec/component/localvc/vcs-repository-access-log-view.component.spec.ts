@@ -71,7 +71,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
     it('should load participation vcs access log', () => {
         component.ngOnInit();
         expect(component).toBeTruthy();
-        expect(participationVcsAccessLogSpy).toHaveBeenCalled();
+        expect(participationVcsAccessLogSpy).toHaveBeenCalledOnce();
         expect(component.vcsAccessLogEntries).toHaveLength(2);
         expect(component.vcsAccessLogEntries[0].userId).toBe(userId);
     });
