@@ -79,7 +79,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
     it('should load template repository vcs access log', () => {
         route.params = of({ exerciseId: '10', repositoryType: 'TEMPLATE' });
         component.ngOnInit();
-        expect(repositoryVcsAccessLogSpy).toHaveBeenCalled();
+        expect(repositoryVcsAccessLogSpy).toHaveBeenCalledOnce();
         expect(component.vcsAccessLogEntries).toHaveLength(2);
         expect(component.vcsAccessLogEntries[0].userId).toBe(userId);
     });
