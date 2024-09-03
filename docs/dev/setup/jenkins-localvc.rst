@@ -305,9 +305,7 @@ Start Jenkins
             -u root \
             jenkins/jenkins:lts
 
-    If you still need the old setup with Python & Maven installed locally, use ``jenkins-artemis`` instead of
-    ``jenkins/jenkins:lts``.
-    Also note that you can omit the ``-u root``, ``-v /var/run/docker.sock:/var/run/docker.sock`` and
+    Note that you can omit the ``-u root``, ``-v /var/run/docker.sock:/var/run/docker.sock`` and
     ``-v /usr/bin/docker:/usr/bin/docker:ro`` parameters, if you do not want to run Docker builds on the Jenkins controller
     (but e.g. use remote agents).
 
