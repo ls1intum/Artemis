@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExamChecklist } from 'app/entities/exam-checklist.model';
-import { Exam } from 'app/entities/exam.model';
+import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';

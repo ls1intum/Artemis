@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestwiseCoverageFileComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-file.component';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { TestwiseCoverageReportEntry } from 'app/entities/hestia/testwise-coverage-report-entry.model';
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
 import { MatExpansionModule } from '@angular/material/expansion';

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Subscription, interval, lastValueFrom } from 'rxjs';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentExam } from 'app/entities/student-exam.model';
