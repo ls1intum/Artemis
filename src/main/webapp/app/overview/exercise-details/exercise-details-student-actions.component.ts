@@ -110,7 +110,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
-
                 // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
                 if (profileInfo.activeProfiles?.includes(PROFILE_THEIA)) {
                     this.theiaEnabled = true;
@@ -126,6 +125,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+            });
         } else if (this.exercise.type === ExerciseType.TEXT) {
             this.editorLabel = 'openTextEditor';
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
