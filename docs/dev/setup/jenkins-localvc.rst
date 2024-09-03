@@ -217,6 +217,7 @@ Manual Jenkins Server Setup
 
    This might take a while because Docker will download Java, but this
    is only required once.
+
 Nginx proxy setup
 #################
 
