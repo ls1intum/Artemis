@@ -1,14 +1,14 @@
 import logging
-import requests
-import configparser
-from createStudents import user_credentials
+from requests import Session
+from typing import List, Tuple
+from create_users import user_credentials
 
-def delete_users(session, client_url):
+def delete_students(session: Session, client_url: str) -> None:
     """Delete multiple users based on their credentials."""
     for username, _ in user_credentials:
-        delete_user(session, username, client_url)
+        delete_student(session, username, client_url)
 
-def delete_user(session, username, client_url):
+def delete_student(session: Session, username: str, client_url: str) -> None:
     """Send a DELETE request to delete a user."""
     url = f"{client_url}/api/admin/users/{username}"
     response = session.delete(url)
