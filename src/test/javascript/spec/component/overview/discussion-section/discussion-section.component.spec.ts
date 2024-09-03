@@ -118,8 +118,6 @@ describe('DiscussionSectionComponent', () => {
         );
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
         component.lecture = { ...metisLecture, course: metisCourse };
-        component.ngOnInit();
-        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -227,6 +225,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('triggering filters should invoke the metis service', fakeAsync(() => {
+        fixture.detectChanges();
         component.exercise = { ...metisExercise, course: metisCourse };
         metisServiceGetFilteredPostsSpy.mockReset();
         component.ngOnInit();
@@ -304,6 +303,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should react to srcoll up event', fakeAsync(() => {
+        fixture.detectChanges();
         const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
 
         const scrolledUp = new CustomEvent('scrolledUp');
@@ -321,6 +321,7 @@ describe('DiscussionSectionComponent', () => {
     });
 
     it('should change sort direction', () => {
+        fixture.detectChanges();
         component.currentSortDirection = SortDirection.ASCENDING;
         component.onChangeSortDir();
         expect(component.currentSortDirection).toBe(SortDirection.DESCENDING);
@@ -329,6 +330,7 @@ describe('DiscussionSectionComponent', () => {
     });
 
     it('fetches new messages on scroll up if more messages are available', fakeAsync(() => {
+        fixture.detectChanges();
         component.posts = [];
         const commandMetisToFetchPostsSpy = jest.spyOn(component, 'fetchNextPage');
 

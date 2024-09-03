@@ -11,7 +11,7 @@ import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/vide
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 
 @Component({
@@ -34,7 +34,6 @@ export class LearningPathLectureUnitComponent {
     readonly lecture = computed(() => this.lectureUnit()?.lecture);
 
     readonly isCommunicationEnabled = computed(() => isCommunicationEnabled(this.lecture()?.course));
-    readonly isMessagingEnabled = computed(() => isMessagingEnabled(this.lecture()?.course));
 
     constructor() {
         effect(() => this.loadLectureUnit(this.lectureUnitId()), { allowSignalWrites: true });
