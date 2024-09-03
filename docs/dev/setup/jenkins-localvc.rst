@@ -197,32 +197,12 @@ Manual Jenkins Server Setup
 
        docker pull jenkins/jenkins:lts
 
-2. Create a custom docker image
-
-   In order to install and use Maven with Java in the Jenkins container,
-   you have to first install maven, then download Java and finally
-   configure Maven to use Java instead of the default version.
-   You also need to install Swift and SwiftLint if you want to be able to
-   create Swift programming exercises.
-
-   To perform all these steps automatically, you can prepare a Docker
-   image:
-
-   Create a Dockerfile with the content found `here <docker/jenkins/Dockerfile>`.
-   Copy it in a file named ``Dockerfile``, e.g. in
-   the folder ``/opt/jenkins/`` using ``vim Dockerfile``.
-
-   Now run the command ``docker build --no-cache -t jenkins-artemis .``
-
-   This might take a while because Docker will download Java, but this
-   is only required once.
-
 Nginx proxy setup
 #################
 
 If you run your own NGINX or if you install Jenkins on a local development computer, you can skip this section.
 
-#. Create a file increasing the maximum file size for the Nginx proxy.
+2. Create a file increasing the maximum file size for the Nginx proxy.
    The nginx-proxy uses a default file limit that is too small for the
    plugin that will be uploaded later. **Skip this step if you have your
    own NGINX instance.**
@@ -231,7 +211,7 @@ If you run your own NGINX or if you install Jenkins on a local development compu
 
        echo "client_max_body_size 16m;" > client_max_body_size.conf
 
-5. The NGINX default timeout is pretty low. For plagiarism check and unlocking student repos for the exam a higher
+3. The NGINX default timeout is pretty low. For plagiarism check and unlocking student repos for the exam a higher
    timeout is advisable. Therefore we write our own nginx.conf and load it in the container.
 
 
@@ -273,7 +253,7 @@ If you run your own NGINX or if you install Jenkins on a local development compu
             }
             daemon off
 
-6. Run the NGINX proxy docker container, this will automatically setup
+4. Run the NGINX proxy docker container, this will automatically setup
    all reverse proxies and force https on all connections. (This image
    would also setup proxies for all other running containers that have
    the VIRTUAL_HOST and VIRTUAL_PORT environment variables). **Skip this
@@ -292,7 +272,7 @@ If you run your own NGINX or if you install Jenkins on a local development compu
            -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf:ro \
            jwilder/nginx-proxy
 
-7. The nginx proxy needs another docker-container to generate
+5. The nginx proxy needs another docker-container to generate
    letsencrypt certificates. Run the following command to start it (make
    sure to change the email-address). **Skip this step if you have your
    own NGINX instance.**
@@ -309,7 +289,7 @@ If you run your own NGINX or if you install Jenkins on a local development compu
 Start Jenkins
 #############
 
-8.  Run Jenkins by executing the following command (change the hostname
+6.  Run Jenkins by executing the following command (change the hostname
     and choose which port alternative you need)
 
     .. code:: bash
@@ -331,7 +311,7 @@ Start Jenkins
     ``-v /usr/bin/docker:/usr/bin/docker:ro`` parameters, if you do not want to run Docker builds on the Jenkins controller
     (but e.g. use remote agents).
 
-9. Open Jenkins in your browser (e.g. ``localhost:8082``) and setup the
+7. Open Jenkins in your browser (e.g. ``localhost:8082``) and setup the
     admin user account (install all suggested plugins). You can get the
     initial admin password using the following command.
 
@@ -342,7 +322,7 @@ Start Jenkins
        or alternatively
        docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
-10. Set the chosen credentials in the Artemis configuration
+8. Set the chosen credentials in the Artemis configuration
     *application-artemis.yml*
 
     .. code:: yaml
