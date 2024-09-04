@@ -17,9 +17,7 @@
             [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
         >
             @for (supportedLanguage of programmingExerciseCreationConfig.supportedLanguages; track supportedLanguage) {
-                <option [value]="supportedLanguage">
-                    {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}
-                </option>
+                <option [value]="supportedLanguage" [jhiTranslate]="'artemisApp.ProgrammingLanguage.' + supportedLanguage"></option>
             }
         </select>
     </div>
