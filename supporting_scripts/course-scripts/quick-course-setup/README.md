@@ -19,7 +19,37 @@ python3.12 --version
   - Add a module in IntelliJ by navigating to `File > Project Structure > Modules > Add - Python`.
 
     ![IntelliJ Module Configuration](./images/module-config.png)
-### 2. Configure the Environment
+
+### 2. **(Optional)**: Setting Up a Virtual Environment
+
+It is recommended to use a virtual environment to manage dependencies in isolation from the global Python environment. This approach can prevent version conflicts and keep your system environment clean.
+
+- Install `virtualenv` if it's not already installed:
+```shell
+python3.12 -m pip install virtualenv
+```
+
+- Create a virtual environment in your project folder:
+```shell
+python3.12 -m virtualenv venv
+```
+
+- Activate the virtual environment:
+
+- On **Windows**:
+```shell
+venv\Scripts\activate
+```
+
+- On **macOS/Linux**:
+```shell
+source venv/bin/activate
+```
+
+Once the virtual environment is activated, you will see the `(venv)` prefix in your terminal prompt. All dependencies will now be installed locally to this environment.
+
+To install any packages into this virtual environment, proceed with the same steps as described below.
+### 3. Configure the Environment
 
 - Start your local Artemis instance.
 - Configure the [config.ini](./config.ini) file according to your local or test server setup.

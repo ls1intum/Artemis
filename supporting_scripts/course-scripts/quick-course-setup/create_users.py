@@ -3,6 +3,7 @@ import configparser
 from logging_config import logging
 from requests import Session
 from typing import List, Tuple
+from concurrent.futures import ThreadPoolExecutor
 
 from authenticate_all_users import authenticate_all_generated_users
 from utils import login_as_admin, get_user_details_by_index, get_student_details_by_index
@@ -13,6 +14,7 @@ config.read('config.ini')
 
 # Constants from config file
 CLIENT_URL: str = config.get('Settings', 'client_url')
+MAX_THREADS: int = int(config.get('Settings', 'max_threads'))
 
 # Store user credentials
 user_credentials: List[Tuple[str, str]] = []
@@ -25,7 +27,6 @@ def make_create_user_post_request(session: Session, user_details: dict) -> None:
 
     if response.status_code == 201:
         logging.info(f"{user_details['login']} was created successfully")
-        print(f"{user_details['login']} was created successfully")
         user_credentials.append((user_details['login'], user_details['password']))
     elif response.status_code == 400 and "userExists" in response.json().get("errorKey", ""):
         logging.info(f"User {user_details['login']} already exists.")
@@ -37,16 +38,18 @@ def make_create_user_post_request(session: Session, user_details: dict) -> None:
         )
 
 def create_course_users(session: Session) -> None:
-    """Create a predefined set of course users."""
-    for userIndex in range(1, 21):
-        user_details = get_user_details_by_index(userIndex)
-        make_create_user_post_request(session, user_details)
+    """Create a predefined set of course users using multithreading."""
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        for userIndex in range(1, 21):
+            user_details = get_user_details_by_index(userIndex)
+            executor.submit(make_create_user_post_request, session, user_details)
 
 def create_students(session: Session, students_to_create: int) -> None:
-    """Create multiple students and store their credentials."""
-    for user_index in range(1, students_to_create):
-        user_details = get_student_details_by_index(user_index)
-        make_create_user_post_request(session, user_details)
+    """Create multiple students using multithreading and store their credentials."""
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        for user_index in range(1, students_to_create):
+            user_details = get_student_details_by_index(user_index)
+            executor.submit(make_create_user_post_request, session, user_details)
 
 def main() -> None:
     """Main function to create users and authenticate them."""

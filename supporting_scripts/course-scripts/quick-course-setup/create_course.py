@@ -88,7 +88,7 @@ def create_course(session: Session) -> requests.Response:
     if response.status_code == 201:
         logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name} \n {response.json()}")
     elif response.status_code == 400:
-        logging.info(f"Course with shortName {course_short_name} already exists. Please provide the course ID in the config file and set create_course to FALSE.")
+        logging.info(f"Course with shortName {course_short_name} already exists. Please provide the course ID in the config file and set create_course to FALSE if you intend to add programming exercises to this course.")
         sys.exit(0)
     else:
         logging.error("Problem with the group 'students' and interacting with a test server? "
