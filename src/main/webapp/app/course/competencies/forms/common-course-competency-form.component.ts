@@ -16,13 +16,23 @@ import { FormsModule } from 'app/forms/forms.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
     templateUrl: './common-course-competency-form.component.html',
     styleUrls: ['./common-course-competency-form.component.scss'],
     standalone: true,
-    imports: [ArtemisSharedModule, FormDateTimePickerModule, ArtemisMarkdownModule, NgbDropdownModule, FormsModule, ArtemisCompetenciesModule, ArtemisSharedComponentModule],
+    imports: [
+        ArtemisSharedModule,
+        FormDateTimePickerModule,
+        ArtemisMarkdownModule,
+        NgbDropdownModule,
+        FormsModule,
+        ArtemisCompetenciesModule,
+        ArtemisSharedComponentModule,
+        ArtemisMarkdownEditorModule,
+    ],
 })
 export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input()

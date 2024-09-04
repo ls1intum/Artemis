@@ -16,7 +16,7 @@ import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
