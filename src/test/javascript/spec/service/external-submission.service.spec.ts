@@ -7,7 +7,7 @@ import { Result } from 'app/entities/result.model';
 import { User } from 'app/core/user/user.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 describe('External Submission Service', () => {
     let httpMock: HttpTestingController;

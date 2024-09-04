@@ -1,7 +1,7 @@
 @if (isLoading) {
     <div class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
-            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+            <span class="sr-only" jhiTranslate="loading"></span>
         </div>
     </div>
 }
@@ -70,6 +70,16 @@
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
                         @if (lecture.course?.id && showCompetencies) {
                             <jhi-competencies-popover [courseId]="lecture.course!.id!" [competencies]="lectureUnit.competencies || []" [navigateTo]="'competencyManagement'" />
+                        }
+                        @if (viewButtonAvailable[lectureUnit.id!]) {
+                            <a
+                                type="button"
+                                class="btn btn-primary btn-sm flex-grow-1"
+                                [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', lectureUnit.id, 'view']"
+                                [ngbTooltip]="'entity.action.view' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faEye" />
+                            </a>
                         }
                         <div class="d-flex gap-1 w-100">
                             @if (this.emitEditEvents) {

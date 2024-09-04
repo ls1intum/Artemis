@@ -4,7 +4,7 @@ import { ComplaintResponseService } from 'app/complaints/complaint-response.serv
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -17,6 +17,7 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
@@ -29,7 +30,13 @@ describe('ComplaintsForTutorComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), FormsModule],
-            declarations: [ComplaintsForTutorComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockComponent(TextareaCounterComponent)],
+            declarations: [
+                ComplaintsForTutorComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockComponent(TextareaCounterComponent),
+                MockDirective(TranslateDirective),
+            ],
             providers: [MockProvider(ComplaintResponseService), MockProvider(ComplaintService), MockProvider(AlertService)],
         })
             .compileComponents()

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.EMPTY;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.RUST;
 import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.MAVEN_MAVEN;
 import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.PLAIN_MAVEN;
 
@@ -13,6 +14,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
+
 @Service
 @Profile("gitlabci")
 public class GitLabCIProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
@@ -20,5 +24,6 @@ public class GitLabCIProgrammingLanguageFeatureService extends ProgrammingLangua
     public GitLabCIProgrammingLanguageFeatureService() {
         programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of(), false, false));
         programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, false, false, false, true, false, List.of(PLAIN_MAVEN, MAVEN_MAVEN), false, false));
+        programmingLanguageFeatures.put(RUST, new ProgrammingLanguageFeature(RUST, false, false, false, false, false, List.of(), false, false));
     }
 }

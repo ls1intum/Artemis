@@ -27,25 +27,21 @@
             </div>
             <div class="col-4">
                 <div class="input-group">
-                    <label class="input-group-text" for="searchFilter">{{ 'artemisApp.dialogs.conversationDetail.memberTab.filter' | artemisTranslate }}</label>
+                    <label class="input-group-text" for="searchFilter" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.filter"></label>
                     <select (ngModelChange)="onFilterChange($event)" [ngModel]="selectedFilter" class="form-select form-select" id="searchFilter">
-                        <option id="allFilter" [value]="ALL">{{ 'artemisApp.dialogs.conversationDetail.memberTab.allFilter' | artemisTranslate }}</option>
-                        <option id="instructorFilter" [value]="INSTRUCTOR_FILTER_OPTION">
-                            {{ 'artemisApp.dialogs.conversationDetail.memberTab.instructorFilter' | artemisTranslate }}
-                        </option>
-                        <option id="tutorFilter" [value]="TUTOR_FILTER_OPTION">{{ 'artemisApp.dialogs.conversationDetail.memberTab.tutorFilter' | artemisTranslate }}</option>
-                        <option id="studentFilter" [value]="STUDENT_FILTER_OPTION">{{ 'artemisApp.dialogs.conversationDetail.memberTab.studentFilter' | artemisTranslate }}</option>
+                        <option id="allFilter" [value]="ALL" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.allFilter"></option>
+                        <option id="instructorFilter" [value]="INSTRUCTOR_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.instructorFilter"></option>
+                        <option id="tutorFilter" [value]="TUTOR_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.tutorFilter"></option>
+                        <option id="studentFilter" [value]="STUDENT_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.studentFilter"></option>
                         @if (isChannel(activeConversation)) {
-                            <option [value]="CHANNEL_MODERATOR_FILTER_OPTION">
-                                {{ 'artemisApp.dialogs.conversationDetail.memberTab.channelModeratorFilter' | artemisTranslate }}
-                            </option>
+                            <option [value]="CHANNEL_MODERATOR_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.channelModeratorFilter"></option>
                         }
                     </select>
                 </div>
             </div>
             @if (isSearching) {
                 <div class="col-12">
-                    <small class="form-text text-body-secondary d-inline-block">{{ 'artemisApp.dialogs.conversationDetail.memberTab.searching' | artemisTranslate }}</small>
+                    <small class="form-text text-body-secondary d-inline-block" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.searching"></small>
                 </div>
             }
         </div>

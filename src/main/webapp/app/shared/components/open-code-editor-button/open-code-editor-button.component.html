@@ -32,9 +32,7 @@
         @if (participations && participations.length > 1) {
             <div class="form-check form-switch">
                 <input id="switchPracticeMode" mdbCheckbox class="form-check-input" type="checkbox" [checked]="isPracticeMode" (click)="switchPracticeMode()" />
-                <label for="switchPracticeMode" class="form-check-label">
-                    {{ 'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate }}
-                </label>
+                <label for="switchPracticeMode" class="form-check-label" jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></label>
             </div>
         }
         <button

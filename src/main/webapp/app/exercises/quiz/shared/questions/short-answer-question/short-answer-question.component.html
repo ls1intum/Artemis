@@ -116,14 +116,10 @@
     @if (showResult && !forceSampleSolution) {
         <div>
             @if (!showingSampleSolution) {
-                <div class="btn btn-outline-primary" (click)="showSampleSolution()">
-                    {{ 'artemisApp.quizQuestion.showSampleSolution' | artemisTranslate }}
-                </div>
+                <div class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></div>
             }
             @if (showingSampleSolution) {
-                <div class="btn btn-outline-primary" (click)="hideSampleSolution()">
-                    {{ 'artemisApp.quizQuestion.hideSampleSolution' | artemisTranslate }}
-                </div>
+                <div class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></div>
             }
         </div>
     }

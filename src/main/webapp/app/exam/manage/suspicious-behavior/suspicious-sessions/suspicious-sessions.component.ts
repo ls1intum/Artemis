@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({

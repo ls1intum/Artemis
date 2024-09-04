@@ -52,7 +52,7 @@
                     <jhi-submission-policy-update #policyUpdate [programmingExercise]="programmingExercise" [editable]="programmingExercise.isAtLeastInstructor!" />
                     @if (programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy !== undefined) {
                         <ngb-alert [dismissible]="false" [type]="'info'">
-                            <span>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation"></span>
                         </ngb-alert>
                     }
                 </div>
@@ -71,7 +71,7 @@
                         </div>
                         <div class="col-5">
                             <h2 class="mb-5 fw-medium">
-                                <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
                                 @if (!!changedTestCaseIds.length) {
                                     <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
                                 }
@@ -239,7 +239,7 @@
                         </div>
                         <div class="col-5">
                             <h2 class="mb-5 fw-medium">
-                                <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
                                 @if (!!changedCategoryIds.length) {
                                     <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
                                 }

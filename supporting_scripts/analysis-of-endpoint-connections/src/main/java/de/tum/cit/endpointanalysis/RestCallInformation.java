@@ -1,17 +1,22 @@
 package de.tum.cit.endpointanalysis;
 
-public record RestCallInformation(String method, String url, int line, String fileName) {
+public record RestCallInformation(String method, String url, String filePath, int line) {
 
-    public String buildCompleteRestCallURI() {
+    String buildCompleteRestCallURI() {
         return this.url.replace("`", "");
     }
 
-    public String buildComparableRestCallUri() {
+    String buildComparableRestCallUri() {
         // Replace arguments with placeholder
         String result = this.buildCompleteRestCallURI().replaceAll("\\$\\{.*?\\}", ":param:");
 
         // Remove query parameters
         result = result.split("\\?")[0];
+
+        // Some URIs in the artemis client start with a redundant `/`. To be able to compare them to the endpoint URIs, we remove it.
+        if (result.startsWith("/")) {
+            result = result.substring(1);
+        }
 
         return result;
     }
