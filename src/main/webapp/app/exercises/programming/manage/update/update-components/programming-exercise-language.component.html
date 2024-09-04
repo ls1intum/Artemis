@@ -119,7 +119,7 @@
     }
 
     <!-- Static code analysis checkbox -->
-    @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed) {
+    @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed && !isSimpleMode()) {
         <div>
             <div class="form-check custom-control custom-checkbox">
                 <input
@@ -146,7 +146,7 @@
     }
     <!-- Sequential Test Runs checkbox
     It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
-    @if (programmingExerciseCreationConfig.sequentialTestRunsAllowed) {
+    @if (programmingExerciseCreationConfig.sequentialTestRunsAllowed && !isSimpleMode()) {
         <div>
             <div class="form-check custom-control custom-checkbox">
                 <input
@@ -197,12 +197,14 @@
             </label>
         </div>
     }
-    @if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
-        <jhi-programming-exercise-custom-build-plan [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig" />
-    } @else if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_AEOLUS) {
-        <jhi-programming-exercise-custom-aeolus-build-plan
-            [programmingExercise]="programmingExercise"
-            [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig"
-        />
+    @if (!isSimpleMode()) {
+        @if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
+            <jhi-programming-exercise-custom-build-plan [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig" />
+        } @else if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_AEOLUS) {
+            <jhi-programming-exercise-custom-aeolus-build-plan
+                [programmingExercise]="programmingExercise"
+                [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig"
+            />
+        }
     }
 </section>

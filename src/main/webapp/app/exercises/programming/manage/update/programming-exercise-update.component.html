@@ -33,7 +33,11 @@
                 (triggerValidation)="calculateFormStatusSections()"
             />
             <hr class="mb-5" />
-            <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()" />
+            <jhi-programming-exercise-language
+                [programmingExercise]="programmingExercise"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                [isSimpleMode]="isSimpleMode()"
+            />
             <hr class="mb-5" />
             <jhi-programming-exercise-problem
                 [(exercise)]="programmingExercise"
