@@ -62,7 +62,7 @@
         <div>
             <p>
                 <fa-icon [icon]="faExclamationTriangle" size="xl" class="text-warning"></fa-icon>
-                <span jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.title"></span>
+                <span jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.title" [translateValues]="{ documentationLink: DOCUMENTATION_LINK }"></span>
             </p>
             <ol>
                 <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.setImage" [translateValues]="DOCKER_REGISTRY_LINKS"></li>
