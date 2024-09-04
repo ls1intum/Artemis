@@ -6,12 +6,17 @@ import org.gitlab4j.api.models.Trigger;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
+
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
 
 @Profile("gitlabci")
 @Service
@@ -21,14 +26,19 @@ public class GitLabCITriggerService implements ContinuousIntegrationTriggerServi
 
     private final UriService uriService;
 
-    public GitLabCITriggerService(GitLabApi gitlab, UriService uriService) {
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    public GitLabCITriggerService(GitLabApi gitlab, UriService uriService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.gitlab = gitlab;
         this.uriService = uriService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws ContinuousIntegrationException {
-        triggerBuild(participation.getVcsRepositoryUri(), participation.getProgrammingExercise().getBranch());
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
+        triggerBuild(participation.getVcsRepositoryUri(), programmingExercise.getBuildConfig().getBranch());
     }
 
     private void triggerBuild(VcsRepositoryUri vcsRepositoryUri, String branch) {

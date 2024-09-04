@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { faArrowUpRightFromSquare, faCodeBranch, faCodeCompare, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
@@ -9,7 +9,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -63,10 +63,7 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     headlinesRecord: Record<string, string>;
 
     // icons
-    readonly faExclamationTriangle = faExclamationTriangle;
     readonly faCodeCompare = faCodeCompare;
-    readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-    readonly faCodeBranch = faCodeBranch;
 
     WARNING = ButtonType.WARNING;
 

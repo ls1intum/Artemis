@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';

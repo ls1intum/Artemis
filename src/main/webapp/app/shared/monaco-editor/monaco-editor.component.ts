@@ -11,7 +11,9 @@ import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monac
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
-type EditorPosition = { row: number; column: number };
+export const MAX_TAB_SIZE = 8;
+export type EditorPosition = { lineNumber: number; column: number };
+
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
@@ -100,8 +102,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Output()
     contentHeightChanged = new EventEmitter<number>();
 
+    @Output()
+    onBlurEditor = new EventEmitter<void>();
+
     private contentHeightListener?: monaco.IDisposable;
     private textChangedListener?: monaco.IDisposable;
+    private blurEditorWidgetListener?: monaco.IDisposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
@@ -120,6 +126,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             }
         });
 
+        this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+            this.onBlurEditor.emit();
+        });
+
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
@@ -129,6 +139,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.themeSubscription?.unsubscribe();
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
+        this.blurEditorWidgetListener?.dispose();
     }
 
     private emitTextChangeEvent() {
@@ -146,14 +157,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    // Workaround: The rest of the code expects { row, column } - we have { lineNumber, column }. Can be removed when Ace is removed.
     getPosition(): EditorPosition {
-        const position = this._editor.getPosition() ?? new monaco.Position(0, 0);
-        return { row: position.lineNumber, column: position.column };
+        return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
     }
 
     setPosition(position: EditorPosition) {
-        this._editor.setPosition({ lineNumber: position.row, column: position.column });
+        this._editor.setPosition(position);
     }
 
     setSelection(range: monaco.IRange): void {
@@ -391,43 +400,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.updateOptions({
             lineNumbers: (number) => `${startLineNumber + number - 1}`,
         });
-    }
-
-    /**
-     * Enables a text field mode for the editor. This will make the editor look more like a text field and less like a code editor.
-     * In particular, line numbers, margins, and highlights will be disabled.
-     */
-    enableTextFieldMode(): void {
-        this._editor.updateOptions({
-            // Sets up the layout to make the editor look more like a text field (no line numbers, margin, or highlights).
-            lineNumbers: 'off',
-            glyphMargin: false,
-            folding: false,
-            lineDecorationsWidth: '1ch',
-            lineNumbersMinChars: 0,
-            padding: {
-                top: 5,
-            },
-            renderLineHighlight: 'none',
-            selectionHighlight: false,
-            occurrencesHighlight: 'off',
-            // Only show scrollbars if required.
-            scrollbar: {
-                vertical: 'auto',
-                horizontal: 'auto',
-            },
-            overviewRulerLanes: 0,
-            hideCursorInOverviewRuler: true,
-            // The suggestions from showWords are shared between editors of the same language.
-            suggest: {
-                showWords: false,
-            },
-            // Separates the editor suggest widget from the editor's layout. It will stick to the page, but it won't interfere with other elements.
-            fixedOverflowWidgets: true,
-            // We use the 'simple' strategy for word wraps to prevent performance issues. This prevents us from switching to a different font as the lines would no longer break correctly.
-            wrappingStrategy: 'simple',
-        });
-        this.setWordWrap(true);
     }
 
     /**

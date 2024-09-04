@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.Constants;
 
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
+
 @Component
 @Profile("gitlab")
 public class GitlabInfoContributor implements InfoContributor {
@@ -24,8 +27,11 @@ public class GitlabInfoContributor implements InfoContributor {
     @Value("${artemis.version-control.ssh-keys-url-path:#{null}}")
     private Optional<String> gitlabSshKeysUrlPath;
 
-    @Value("${artemis.version-control.version-control-access-token:#{false}}")
-    private Boolean versionControlAccessToken;
+    @Value("${artemis.version-control.use-version-control-access-token:#{false}}")
+    private Boolean useVersionControlAccessToken;
+
+    @Value("${artemis.version-control.show-clone-url-without-token:true}")
+    private boolean showCloneUrlWithoutToken;
 
     @Override
     public void contribute(Info.Builder builder) {
@@ -49,6 +55,7 @@ public class GitlabInfoContributor implements InfoContributor {
             }
         }
 
-        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, versionControlAccessToken);
+        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, useVersionControlAccessToken);
+        builder.withDetail(Constants.INFO_SHOW_CLONE_URL_WITHOUT_TOKEN, showCloneUrlWithoutToken);
     }
 }

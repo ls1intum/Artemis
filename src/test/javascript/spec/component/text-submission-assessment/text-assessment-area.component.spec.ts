@@ -2,11 +2,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { ArtemisTestModule } from '../../test.module';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { By } from '@angular/platform-browser';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextAssessmentAreaComponent', () => {
     let component: TextAssessmentAreaComponent;
@@ -15,7 +16,13 @@ describe('TextAssessmentAreaComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TextAssessmentAreaComponent, MockComponent(TextblockAssessmentCardComponent), MockComponent(ManualTextblockSelectionComponent), TranslatePipeMock],
+            declarations: [
+                TextAssessmentAreaComponent,
+                MockComponent(TextblockAssessmentCardComponent),
+                MockComponent(ManualTextblockSelectionComponent),
+                TranslatePipeMock,
+                MockDirective(TranslateDirective),
+            ],
         })
             .compileComponents()
             .then(() => {

@@ -3,15 +3,14 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
 import { CodeAnalysisPagingService } from 'app/exercises/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
 import { ButtonComponent } from 'app/shared/components/button.component';

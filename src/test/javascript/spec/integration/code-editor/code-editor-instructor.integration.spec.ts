@@ -27,7 +27,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
@@ -56,7 +56,6 @@ import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
@@ -107,7 +106,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 UpdatingResultComponent,
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
                 ProgrammingExerciseEditableInstructionComponent,
-                MockComponent(MarkdownEditorComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
                 ProgrammingExerciseInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),

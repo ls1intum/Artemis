@@ -1,6 +1,6 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { CodeHint, CodeHintGenerationStep } from 'app/entities/hestia/code-hint-model';
 import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
@@ -15,7 +15,7 @@ describe('CodeHintGenerationOverview Component', () => {
 
     const exercise = new ProgrammingExercise(undefined, undefined);
     exercise.id = 1;
-    exercise.testwiseCoverageEnabled = true;
+    exercise.buildConfig!.testwiseCoverageEnabled = true;
 
     let latestStepSpy: jest.SpyInstance;
 

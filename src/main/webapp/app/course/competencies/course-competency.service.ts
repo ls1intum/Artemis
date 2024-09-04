@@ -20,6 +20,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { CompetencyRecommendation } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 
 type EntityResponseType = HttpResponse<CourseCompetency>;
 type EntityArrayResponseType = HttpResponse<CourseCompetency[]>;
@@ -105,8 +106,14 @@ export class CourseCompetencyService {
         );
     }
 
-    generateCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.post<CourseCompetency[]>(`${this.resourceURL}/courses/${courseId}/course-competencies/generate-from-description`, courseDescription, {
+    // triggers the generation of competencies from the given course description
+    // the generated competencies are returned asynchronously over the websocket on the topic /topic/iris/competencies/{courseId}
+    generateCompetenciesFromCourseDescription(courseId: number, courseDescription: string, currentCompetencies: CompetencyRecommendation[]): Observable<HttpResponse<void>> {
+        const params = {
+            courseDescription: courseDescription,
+            currentCompetencies: currentCompetencies,
+        };
+        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/course-competencies/generate-from-description`, params, {
             observe: 'response',
         });
     }

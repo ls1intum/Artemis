@@ -10,6 +10,7 @@
                         [smallButtons]="true"
                         [repositoryUri]="participation?.userIndependentRepositoryUri || ''"
                         [routerLinkForRepositoryView]="routerLink + '/exercises/' + exercise.id + '/repository/' + participation.id"
+                        [participations]="[participation]"
                     />
                     <br />
                     <span>
