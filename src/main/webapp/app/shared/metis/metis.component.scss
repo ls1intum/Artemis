@@ -21,19 +21,30 @@
     color: var(--metis-green);
 }
 
-.badge {
+.post-profile-picture {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gray-400);
     color: var(--white);
 }
 
-.badge-student {
+.post-authority-icon-student {
+    display: none;
+}
+
+.post-profile-picture-student {
     background-color: var(--cyan);
 }
 
-.badge-tutor {
+.post-profile-picture-tutor {
     background-color: var(--orange);
 }
 
-.badge-instructor {
+.post-profile-picture-instructor {
     background-color: var(--graph-red);
 }
 

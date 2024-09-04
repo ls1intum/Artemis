@@ -6,13 +6,13 @@
 <div class="modal-body">
     <div class="row">
         <image-cropper
-            [imageFile]="courseImageUploadFile"
+            [imageFile]="uploadFile"
             [maintainAspectRatio]="true"
             [aspectRatio]="1"
             [resizeToWidth]="200"
             [cropperMinWidth]="100"
             [onlyScaleDown]="true"
-            [roundCropper]="true"
+            [roundCropper]="roundCropper"
             (imageCropped)="imageCropped($event)"
         />
     </div>

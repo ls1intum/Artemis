@@ -1,15 +1,29 @@
 <div class="d-flex justify-content-between">
     <div id="header-author-date" class="d-flex align-items-center gap-2 flex-wrap">
         @if (posting.author) {
-            <span
-                [jhiTranslate]="userRoleBadge"
-                ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}"
-                class="badge fs-xx-small rounded-3"
-                [ngClass]="'badge-' + userAuthority"
-                id="role-badge"
-            ></span>
-            <span class="fs-small fw-semibold">
-                {{ posting.author?.name }}
+            <span ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}" class="d-inline-flex align-items-center gap-2 flex-wrap">
+                @if (posting.author.imageUrl === undefined) {
+                    <strong
+                        class="post-profile-picture rounded-3"
+                        [ngStyle]="{ 'background-color': userProfilePictureBackgroundColor }"
+                        [ngClass]="'post-profile-picture-' + userAuthority"
+                        >{{ userProfilePictureInitials }}</strong
+                    >
+                } @else {
+                    <img
+                        [alt]="'Profile picture of ' + posting.author?.name"
+                        class="post-profile-picture rounded-3"
+                        [src]="posting.author.imageUrl"
+                        [ngStyle]="{ 'background-color': userProfilePictureBackgroundColor }"
+                        [ngClass]="'post-profile-picture-' + userAuthority"
+                    />
+                }
+                <span class="fs-small fw-semibold">
+                    {{ posting.author?.name }}
+                </span>
+                <span [ngClass]="'post-authority-icon-' + userAuthority" id="role-badge">
+                    <fa-icon [icon]="userAuthorityIcon" />
+                </span>
             </span>
         }
         <span>-</span>

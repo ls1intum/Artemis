@@ -287,6 +287,12 @@ export class AccountService implements IAccountService {
         return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : undefined;
     }
 
+    setImageUrl(url: string | undefined) {
+        if (this.userIdentity != null) {
+            this.userIdentity!.imageUrl = url;
+        }
+    }
+
     /**
      * Sets a new language key for the current user
      *

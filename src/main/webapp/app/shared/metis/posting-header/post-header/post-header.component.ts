@@ -6,6 +6,7 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { CachingStrategy } from 'app/shared/image/secured-image.component';
 
 @Component({
     selector: 'jhi-post-header',
@@ -64,4 +65,6 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
             (isCourseWideChannel && this.isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
+
+    protected readonly CachingStrategy = CachingStrategy;
 }

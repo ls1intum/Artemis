@@ -332,6 +332,9 @@ public class FileService implements DisposableBean {
         if (targetFolder.equals(FilePathService.getCourseIconFilePath())) {
             return "CourseIcon_";
         }
+        if (pathContains(targetFolder, FilePathService.getProfilePictureFilePath())) {
+            return "ProfilePicture_";
+        }
         if (targetFolder.equals(FilePathService.getExamUserSignatureFilePath())) {
             return "ExamUserSignature_";
         }

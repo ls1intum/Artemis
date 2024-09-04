@@ -727,6 +727,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     void updateUserNotificationReadDate(@Param("userId") long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
 
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.imageUrl = :imageUrl
+            WHERE user.id = :userId
+            """)
+    void updateUserImageUrl(@Param("userId") long userId, @Param("imageUrl") String imageUrl);
+
     /**
      * Update user notification hide until property for current user
      * I.e. updates the filter that hides all notifications with a creation/notification date prior to the set value.

@@ -7,8 +7,9 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
     templateUrl: './image-cropper-modal.component.html',
 })
 export class ImageCropperModalComponent {
-    courseImageUploadFile?: File;
+    uploadFile?: File;
     croppedImage?: string;
+    roundCropper = true;
 
     constructor(private activeModal: NgbActiveModal) {}
 
